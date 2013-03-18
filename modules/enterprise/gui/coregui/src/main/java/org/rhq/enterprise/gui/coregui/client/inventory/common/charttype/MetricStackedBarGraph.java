@@ -435,6 +435,9 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                 var  barAvgLine = $wnd.d3.svg.line()
                                 .interpolate("linear")
+                                .defined(function(d){
+                                    return !d.nodata ;
+                                })
                                 .x(function (d) {
                                     return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
                                 })

@@ -421,6 +421,13 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                         LinkItem oldLink = AbstractActivityView.newLinkItem("*",
                                                             destination);
                                                         oldLink.setTooltip("Link to Old Charts");
+                                                        oldLink.setTitleVAlign(VerticalAlignment.TOP);
+                                                        oldLink.setAlign(Alignment.LEFT);
+                                                        oldLink.setClipValue(true);
+                                                        oldLink.setWrap(true);
+                                                        oldLink.setHeight(26);
+                                                        oldLink.setWidth("100%");
+
                                                         oldLink.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
@@ -438,10 +445,14 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                             .convertLastValueForDisplay(lastValue, md);
                                                         StaticTextItem value = AbstractActivityView
                                                             .newTextItem(convertedValue);
+                                                        value.setVAlign(VerticalAlignment.TOP);
+                                                        value.setAlign(Alignment.RIGHT);
+                                                        value.setWidth("100%");
 
                                                         row.setItems(graphContainer, link, oldLink, value);
+                                                        row.setWidth100();
                                                         //if graph content returned
-                                                        if ((md.getName().trim().indexOf("Trait.") == -1)
+                                                        if ((!md.getName().trim().contains("Trait."))
                                                             && (lastValue != -1)) {
                                                             column.addMember(row);
                                                             someChartedData = true;

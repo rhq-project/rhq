@@ -432,8 +432,9 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
             function createAvgLines() {
                 console.time("drawAvgLine");
-
-                var  barAvgLine = $wnd.d3.svg.line()
+                var showBarAvgTrendline =
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::showBarAvgTrendLine()(),
+                        barAvgLine = $wnd.d3.svg.line()
                                 .interpolate("linear")
                                 .defined(function(d){
                                     return !d.nodata ;
@@ -442,28 +443,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                     return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
                                 })
                                 .y(function (d,i) {
-
-                                    var showBarAvgTrendline =
-                                            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::showBarAvgTrendLine()();
-
                                     if(showBarAvgTrendline){
-                                    // on a bar avg line if the value is undefined then use the last defined value
-                                        if(d.y == undefined){
-                                            if(i >= 1){
-                                                // count backward until there is a defined value
-                                                for(var j=i; j>=1;j--){
-                                                   if(this.__data__[j].y != undefined){
-                                                       return yScale(this.__data__[j].y);
-                                                   }
-                                                }
-                                                return yScale(0);
-                                            }else {
-                                                return yScale(0);
-                                            }
-
-                                        }else {
-                                            return yScale(+d.y);
-                                        }
+                                        return yScale(d.y);
                                     }else {
                                         return yScale(0);
                                     }
@@ -530,8 +511,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         xValue = (d.x == undefined) ? 0 : +d.x,
                         date = new Date(+xValue),
                         barDuration = d.barDuration,
-                        timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
-                        dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
+                        timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
+                        dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                         highValue =  d.high.toFixed(2),
                         lowValue =  d.low.toFixed(2),
                         avgValue =  d.y.toFixed(2);

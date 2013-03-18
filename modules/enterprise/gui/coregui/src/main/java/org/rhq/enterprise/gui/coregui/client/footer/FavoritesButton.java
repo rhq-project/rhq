@@ -231,7 +231,7 @@ public class FavoritesButton extends IMenuButton {
             MenuItem item = new MenuItem(String.valueOf(groupId));
             item.setTitle(group.getName());
             item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(),
-                groupComposite.getImplicitAvailabilityType()));
+                groupComposite.getExplicitAvailabilityType()));
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {
@@ -300,7 +300,7 @@ public class FavoritesButton extends IMenuButton {
             MenuItem item = new MenuItem(String.valueOf(groupId));
             item.setTitle(group.getName());
             item.setIcon(ImageManager.getGroupIcon(group.getGroupCategory(),
-                groupComposite.getImplicitAvailabilityType()));
+                groupComposite.getExplicitAvailabilityType()));
 
             item.addClickHandler(new com.smartgwt.client.widgets.menu.events.ClickHandler() {
                 public void onClick(MenuItemClickEvent event) {

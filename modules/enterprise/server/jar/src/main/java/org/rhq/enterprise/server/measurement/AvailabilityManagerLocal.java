@@ -27,6 +27,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerBean.MergeInfo;
 
 /**
@@ -59,6 +60,32 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
     AvailabilityType getCurrentAvailabilityTypeForResource(Subject subject, int resourceId);
 
     /**
+     * Get Availability records for a resource covering the desired time span.
+     *
+     * @param  subject
+     * @param  resourceId The relevant resource
+     * @param  startTime  If start time precedes recorded availability UNKNOWN will be used to fill the gap 
+     * @param  endTime    If end time is in the future the current Availability will be extended to fill the gap            
+     *     
+     * @return the availabilities over the given time span, in increasing time order
+     */
+    List<Availability> getAvailabilitiesForResource(Subject subject, int resourceId, long startTime, long endTime);
+
+    /**
+     * Get ResourceGroupAvailability records for a resource group covering the desired time span. See
+     * {@link ResourceGroupAvailability} for more on how group availability is calculated.
+     *
+     * @param  subject
+     * @param  resourceGroupId The relevant resource group
+     * @param  startTime  If start time precedes recorded availability UNKNOWN will be used to fill the gap 
+     * @param  endTime    If end time is in the future the current Availability will be extended to fill the gap            
+     *     
+     * @return the resource group availabilities over the given time span, in increasing time order
+     */
+    List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(Subject subject, int resourceGroupId,
+        long startTime, long endTime);
+
+    /**
      * Get the individual availability data points for the given resource.
      *
      * @param  subject
@@ -70,6 +97,7 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
+     * @deprecated going away with portal war removal
      */
     List<AvailabilityPoint> findAvailabilitiesForResource(Subject subject, int resourceId, long begin, long end,
         int points, boolean withCurrentAvailability);
@@ -86,6 +114,7 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
+     * @deprecated going away with portal war removal 
      */
     List<AvailabilityPoint> findAvailabilitiesForResourceGroup(Subject subject, int groupId, long begin, long end,
         int points, boolean withCurrentAvailability);
@@ -103,6 +132,7 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
      *                                 availability no matter what
      *
      * @return the availabilities over the given time span in a list
+     * @deprecated going away with portal war removal 
      */
     List<AvailabilityPoint> findAvailabilitiesForAutoGroup(Subject subject, int parentResourceId, int resourceTypeId,
         long begin, long end, int points, boolean withCurrentAvailability);

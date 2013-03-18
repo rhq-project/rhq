@@ -190,6 +190,8 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
         graphView.setWidth("95%");
         graphView.setHeight(225);
 
-        graphsVLayout.addMember(graphView);
+        if(graphsVLayout != null){
+            graphsVLayout.addMember(graphView);
+        }
     }
 }

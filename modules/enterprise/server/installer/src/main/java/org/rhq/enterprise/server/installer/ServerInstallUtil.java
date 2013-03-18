@@ -68,6 +68,7 @@ import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.communications.util.SecurityUtil;
 
@@ -1230,6 +1231,30 @@ public class ServerInstallUtil {
 
         LOG.info("Creating https connector...");
         ConnectorConfiguration connector = buildSecureConnectorConfiguration(configDirStr, serverProperties);
+
+        // verify that we have a truststore file - if user is relying on our self-signed certs, we'll have to create one for them
+        String truststoreFileString = connector.getSslConfiguration().getCaCertificateFile();
+        if (truststoreFileString == null) {
+            LOG.warn("Missing a valid truststore location - you must specify a valid truststore location!");
+        } else {
+            File truststoreFile = new File(truststoreFileString);
+            if (!truststoreFile.exists()) {
+                // user didn't provide a truststore file, copy the keystore and use it as the truststore; tell the user about this
+                File keystoreFile = new File(connector.getSslConfiguration().getCertificateKeyFile());
+                if (!keystoreFile.isFile()) {
+                    LOG.warn("Missing both keystore [" + keystoreFile + "] and truststore [" + truststoreFile + "]");
+                } else {
+                    LOG.warn("Missing the truststore [" + truststoreFile + "] - will copy the keystore ["
+                        + keystoreFile + "] and make the copy the truststore.");
+                    try {
+                        FileUtil.copyFile(keystoreFile, truststoreFile);
+                    } catch (Exception e) {
+                        LOG.error("Failed to copy keystore to make truststore - a truststore still does not exist", e);
+                    }
+                }
+            }
+        }
+
         client.addConnector("https", connector);
         LOG.info("https connector created.");
 
@@ -1342,7 +1367,7 @@ public class ServerInstallUtil {
     /**
      * Creates a keystore whose cert has a CN of this server's public endpoint address.
      * 
-     * @param serverDetails details of the server being installed
+     * @param serverDetails details of the server being installed - must not be null and endpoint must be included in it
      * @param configDirStr location of a configuration directory where the keystore is to be stored
      * @return where the keystore file should be created (if an error occurs, this file won't exist)
      */

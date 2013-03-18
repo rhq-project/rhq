@@ -279,7 +279,8 @@ public class InstallerServiceImpl implements InstallerService {
             ServerInstallUtil.configureLogging(mcc, serverProperties);
 
             // create a keystore whose cert has a CN of this server's public endpoint address
-            File keystoreFile = ServerInstallUtil.createKeystore(serverDetails, appServerConfigDir);
+            File keystoreFile = ServerInstallUtil.createKeystore(serverDetails != null ? serverDetails
+                : getServerDetailsFromPropertiesOnly(serverProperties), appServerConfigDir);
 
             // make sure all necessary web connectors are configured
             ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);

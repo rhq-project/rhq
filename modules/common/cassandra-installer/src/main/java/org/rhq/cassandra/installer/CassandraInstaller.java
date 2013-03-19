@@ -90,6 +90,12 @@ public class CassandraInstaller {
 
     private File logDir;
 
+    private String commitLogDir = "/var/lib/cassandra/commitlog";
+
+    private String dataDir = "/var/lib/cassandra/data";
+
+    private String savedCachesDir = "/var/lib/cassandra/saved_caches";
+
     public CassandraInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");
         rhqBaseDir = new File(basedir);
@@ -113,13 +119,25 @@ public class CassandraInstaller {
             "Defaults to 7200.");
         jmxPort.setArgName("JMX_PORT");
 
-        Option startOption = new Option("s", "start", true, "Start the storage node after installing it on disk. " +
+        Option startOption = new Option(null, "start", true, "Start the storage node after installing it on disk. " +
             "Defaults to true.");
         startOption.setArgName("true|false");
 
-        Option checkStatus = new Option("c", "check-status", true, "Check the node status to verify that it is up " +
+        Option checkStatus = new Option(null, "check-status", true, "Check the node status to verify that it is up " +
             "after starting it. This option is ignored if the start option is not set. Defaults to true.");
         checkStatus.setArgName("true|false");
+
+        Option commitLogOption = new Option(null, "commitlog", true, "The directory where the storage node keeps " +
+            "commit log files. Defaults to /var/lib/cassandra/commitlog.");
+        commitLogOption.setArgName("DIR");
+
+        Option dataDirOption = new Option(null, "data", true, "The directory where the storage node keeps data files. " +
+            "Defaults to /var/lib/cassandra/data");
+        dataDirOption.setArgName("DIR");
+
+        Option savedCachesDirOption = new Option(null, "saved-caches", true, "The directory where the storage node " +
+            "keeps saved cache files. Defaults to /var/lib/cassandra/saved_caches");
+        savedCachesDirOption.setArgName("DIR");
 
         options = new Options()
             .addOption(new Option("h", "help", false, "Show this message."))
@@ -128,7 +146,10 @@ public class CassandraInstaller {
             //.addOption(seeds)
             .addOption(jmxPort)
             .addOption(startOption)
-            .addOption(checkStatus);
+            .addOption(checkStatus)
+            .addOption(commitLogOption)
+            .addOption(dataDirOption)
+            .addOption(savedCachesDirOption);
     }
 
     public void run(CommandLine cmdLine) throws Exception {
@@ -154,12 +175,11 @@ public class CassandraInstaller {
             deploymentOptions.setListenAddress(hostname);
             deploymentOptions.setRpcAddress(hostname);
 
-            String seeds;
-            if (cmdLine.hasOption("s")) {
-                seeds = cmdLine.getOptionValue("s");
-            } else {
-                seeds = hostname;
-            }
+            // TODO add support for getting updated seeds list
+            // Rather than have the user specify the seeds for each node, the installer can
+            // obtain the list either from the RHQ server or directly from querying the
+            // database.
+            String seeds = hostname;
             deploymentOptions.setSeeds(seeds);
 
             Integer jmxPort;
@@ -170,9 +190,9 @@ public class CassandraInstaller {
             }
             deploymentOptions.setJmxPort(jmxPort);
 
-            deploymentOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
-            deploymentOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
-            deploymentOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
+            deploymentOptions.setCommitLogDir(cmdLine.getOptionValue("commitlog", commitLogDir));
+            deploymentOptions.setDataDir(cmdLine.getOptionValue("data", dataDir));
+            deploymentOptions.setSavedCachesDir(cmdLine.getOptionValue("saved-caches", savedCachesDir));
             deploymentOptions.setLogDir(logDir.getAbsolutePath());
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
@@ -200,7 +220,7 @@ public class CassandraInstaller {
                 log.info("Starting RHQ Storage Node");
                 startNode(deploymentOptions);
 
-                if (cmdLine.hasOption("c")) {
+                if (cmdLine.hasOption("check-status")) {
                     checkStatus = Boolean.parseBoolean(cmdLine.getOptionValue("c"));
                 }
                 if (checkStatus) {

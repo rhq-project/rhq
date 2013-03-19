@@ -27,11 +27,12 @@
 }
 
 .y.axis  text, .x.axis text {
-    font-family: Arial, Verdana, sans-serif;
+    font-family: 'Liberation Sans', Arial, Helvetica, sans-serif;
     font-size: 10px;
     font-weight: normal;
     font-style: normal;
     stroke: #50505a;
+    text-rendering: optimize-legibility;
 
 }
 

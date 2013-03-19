@@ -358,10 +358,15 @@ public class ThrowableUtil {
     }
 
     public static String getRootMessage(Throwable t) {
+        t = getRootCause(t);
+        String rootMessage = t.getMessage();
+        return (rootMessage != null) ? rootMessage : t.getClass().getName();
+    }
+
+    public static Throwable getRootCause(Throwable t) {
         while ((t.getCause() != null) && (t != t.getCause())) {
             t = t.getCause();
         }
-        String rootMessage = t.getMessage();
-        return (rootMessage != null) ? rootMessage : t.getClass().getName();
+        return t;
     }
 }

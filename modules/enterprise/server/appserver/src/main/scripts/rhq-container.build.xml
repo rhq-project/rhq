@@ -175,6 +175,11 @@
         <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-installer/${project.version}/rhq-cassandra-installer-${project.version}.zip"
                dest="${jboss.modules.dir}"/>
 
+        <echo>Updating module descriptor for sun.jdk to work around https://issues.jboss.org/browse/AS7-2138</echo>
+        <copy file="src/main/bin-resources/jbossas/modules/sun/jdk/main/module.xml"
+              tofile="${jboss.home}/modules/sun/jdk/main/module.xml"
+              overwrite="true"/>
+
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
     	<!-- make sure we have an oracle driver jar so the AS7 module is valid and loadable, this is empty -->
         <copy file="src/main/module-resources/ojdbc6-readme.jar"

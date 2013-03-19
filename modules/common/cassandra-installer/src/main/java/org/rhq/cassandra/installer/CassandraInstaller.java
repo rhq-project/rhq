@@ -31,7 +31,15 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -53,6 +61,7 @@ import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
+import org.rhq.core.util.exception.ThrowableUtil;
 
 /**
  * @author John Sanda
@@ -168,6 +177,12 @@ public class CassandraInstaller {
 
             log.info("Starting RHQ Storage Node");
             startNode(deploymentOptions);
+
+            if (verifyNodeIsUp(jmxPort, 5, 3000)) {
+                log.info("RHQ Storage Node is up and running");
+            } else {
+                log.warn("Could not verify that the node is up and running.");
+            }
         }
     }
 
@@ -208,12 +223,49 @@ public class CassandraInstaller {
         }
 
         ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        startScriptExe.setWaitForCompletion(0);
         startScriptExe.setArguments(asList("-p", "cassandra.pid"));
 
         ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
         if (log.isDebugEnabled()) {
             log.debug(startScript + " returned with exit code [" + results.getExitCode() + "]");
         }
+    }
+
+    private boolean verifyNodeIsUp(int jmxPort, int retries, long timeout) throws Exception {
+        String url = "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
+        JMXServiceURL serviceURL = new JMXServiceURL(url);
+        JMXConnector connector = null;
+        MBeanServerConnection serverConnection = null;
+
+
+        Map<String, String> env  = new HashMap<String, String>();
+        env.put("java.naming.factory.initial", RMIContextFactory.class.getName());
+
+        for (int i = 0; i < retries; ++i) {
+            try {
+                connector = JMXConnectorFactory.connect(serviceURL, env);
+                serverConnection = connector.getMBeanServerConnection();
+                ObjectName storageService = new ObjectName("org.apache.cassandra.db:type=StorageService");
+                Boolean nativeTransportRunning = (Boolean) serverConnection.getAttribute(storageService,
+                    "NativeTransportRunning");
+
+                return nativeTransportRunning;
+            } catch (Exception e) {
+                if (i < retries) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("The storage node is not up.", e);
+                    } else {
+                        Throwable rootCause = ThrowableUtil.getRootCause(e);
+                        log.info("The storage node is not up: " + rootCause.getClass().getName() + ": " +
+                            rootCause.getMessage());
+                    }
+                    log.info("Checking storage node status again in " + (timeout * (i + 1)) + " ms...");
+                }
+                Thread.sleep(timeout * (i + 1));
+            }
+        }
+        return false;
     }
 
     public void printUsage() {

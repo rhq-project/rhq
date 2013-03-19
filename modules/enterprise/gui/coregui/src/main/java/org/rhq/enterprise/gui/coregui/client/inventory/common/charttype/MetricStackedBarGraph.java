@@ -147,16 +147,14 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
 
             function createMinAvgPeakSidePanel( minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom ){
-                var fontSize = 12,
-                        fgColor = "#003168",
-                        xLabel = 772,
+                var     xLabel = 772,
                         xValue = 820,
                         yBase = 100,
                         yInc = 25,
-                        decimalPlaces = 0,
+                        decimalPlaces = 0;
 
                 // title/header
-                sidebar = chart.append("g").append("rect")
+                chart.append("g").append("rect")
                         .attr("class", "rightSidePanel")
                         .attr("x", xLabel -10)
                         .attr("y", margin.top + 60)
@@ -170,20 +168,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("class", "highLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase)
-                        .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
-                        .attr("text-anchor", "left")
-                        .text(highLabel + " - ")
-                        .attr("fill", fgColor);
+                        .text(highLabel + " - ");
 
                 chart.append("text")
                         .attr("class", "highText")
                         .attr("x", xValue)
                         .attr("y", yBase)
-                        .attr("font-size", fontSize)
-                        .attr("text-anchor", "left")
-                        .text(highValue.toFixed(decimalPlaces) + " "+ uom)
-                        .attr("fill", fgColor);
+                        .text(highValue.toFixed(decimalPlaces) + " "+ uom);
 
 
                 //avg
@@ -191,20 +182,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("class", "avgLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase + yInc)
-                        .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
-                        .attr("text-anchor", "left")
-                        .text(avgLabel + " - ")
-                        .attr("fill", fgColor);
+                        .text(avgLabel + " - ");
 
                 chart.append("text")
                         .attr("class", "avgText")
                         .attr("x", xValue)
                         .attr("y", yBase + yInc)
-                        .attr("font-size", fontSize)
-                        .attr("text-anchor", "left")
-                        .text(avgValue.toFixed(decimalPlaces) + " "+uom)
-                        .attr("fill", fgColor);
+                        .text(avgValue.toFixed(decimalPlaces) + " "+uom);
 
 
 
@@ -213,20 +197,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("class", "minLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase + 2 * yInc)
-                        .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
-                        .attr("text-anchor", "left")
-                        .text(minLabel + " - ")
-                        .attr("fill", fgColor);
+                        .text(minLabel + " - ");
 
                 chart.append("text")
                         .attr("class", "minText")
                         .attr("x", xValue)
                         .attr("y", yBase + 2 * yInc)
-                        .attr("font-size", fontSize)
-                        .attr("text-anchor", "left")
-                        .text(minValue.toFixed(decimalPlaces)+ " "+uom)
-                        .attr("fill", fgColor);
+                        .text(minValue.toFixed(decimalPlaces)+ " "+uom);
 
 
             }
@@ -323,8 +300,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("data-rhq-value", function(d){
                             return d.y;
                         })
-                        .attr("opacity", 0.9)
-                        .attr("fill", "#1794bc");
+                        .attr("opacity", 0.9);
 
 
                 // lower portion representing avg to low
@@ -349,8 +325,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("width", function () {
                             return  (width / chartContext.data.length - barOffset );
                         })
-                        .attr("opacity", 0.9)
-                        .attr("fill", "#70c4e2");
+                        .attr("opacity", 0.9);
 
                 // if high == low put a "cap" on the bar to show non-aggregated bar
                 svg.selectAll("rect.singleValue")
@@ -375,7 +350,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                 }
                             }
                         })
-                        .attr("width", function (d) {
+                        .attr("width", function () {
                             return  (width / chartContext.data.length - barOffset );
                         })
                         .attr("opacity", 0.9)

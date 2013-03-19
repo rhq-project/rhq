@@ -117,7 +117,11 @@ public class CassandraInstaller {
 
         Option jmxPort = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. " +
             "Defaults to 7200.");
-        jmxPort.setArgName("JMX_PORT");
+        jmxPort.setArgName("PORT");
+
+        Option nativeTransportPortOption = new Option("t", "native-transport-port", true, "The port on which to " +
+            "listen for client requests. Defaults to " + nativeTransportPort);
+        nativeTransportPortOption.setArgName("PORT");
 
         Option startOption = new Option(null, "start", true, "Start the storage node after installing it on disk. " +
             "Defaults to true.");
@@ -128,15 +132,15 @@ public class CassandraInstaller {
         checkStatus.setArgName("true|false");
 
         Option commitLogOption = new Option(null, "commitlog", true, "The directory where the storage node keeps " +
-            "commit log files. Defaults to /var/lib/cassandra/commitlog.");
+            "commit log files. Defaults to " + commitLogDir + ".");
         commitLogOption.setArgName("DIR");
 
         Option dataDirOption = new Option(null, "data", true, "The directory where the storage node keeps data files. " +
-            "Defaults to /var/lib/cassandra/data");
+            "Defaults to " + dataDir + ".");
         dataDirOption.setArgName("DIR");
 
         Option savedCachesDirOption = new Option(null, "saved-caches", true, "The directory where the storage node " +
-            "keeps saved cache files. Defaults to /var/lib/cassandra/saved_caches");
+            "keeps saved cache files. Defaults to " + savedCachesDir + ".");
         savedCachesDirOption.setArgName("DIR");
 
         options = new Options()
@@ -149,7 +153,8 @@ public class CassandraInstaller {
             .addOption(checkStatus)
             .addOption(commitLogOption)
             .addOption(dataDirOption)
-            .addOption(savedCachesDirOption);
+            .addOption(savedCachesDirOption)
+            .addOption(nativeTransportPortOption);
     }
 
     public void run(CommandLine cmdLine) throws Exception {
@@ -196,7 +201,8 @@ public class CassandraInstaller {
             deploymentOptions.setLogDir(logDir.getAbsolutePath());
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
-            deploymentOptions.setNativeTransportPort(nativeTransportPort);
+            deploymentOptions.setNativeTransportPort(Integer.parseInt(cmdLine.getOptionValue("native-transport-port",
+                Integer.toString(nativeTransportPort))));
             deploymentOptions.load();
 
             UnmanagedDeployer deployer = new UnmanagedDeployer();

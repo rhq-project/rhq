@@ -28,6 +28,14 @@
       <artifactId>commons-cli</artifactId>
       <version>1.2</version>
     </dependency>
+
+    <dependency>
+      <groupId>com.sun</groupId>
+      <artifactId>rt</artifactId>
+      <version>1.6.0</version>
+      <scope>system</scope>
+      <systemPath>${java.home}/lib/rt.jar</systemPath>
+    </dependency>
   </dependencies>
 
   <build>

@@ -84,6 +84,10 @@ public class CassandraInstaller {
 
     private int nativeTransportPort = 9042;
 
+    private boolean startNode = true;
+
+    private boolean checkStatus = true;
+
     public CassandraInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");
         rhqBaseDir = new File(basedir);
@@ -103,15 +107,25 @@ public class CassandraInstaller {
         seeds.setArgName("SEEDS");
 
         Option jmxPort = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. " +
-            "Defaults to 7200");
+            "Defaults to 7200.");
         jmxPort.setArgName("JMX_PORT");
+
+        Option startOption = new Option("s", "start", true, "Start the storage node after installing it on disk. " +
+            "Defaults to true.");
+        startOption.setArgName("true|false");
+
+        Option checkStatus = new Option("c", "check-status", true, "Check the node status to verify that it is up " +
+            "after starting it. This option is ignored if the start option is not set. Defaults to true.");
+        checkStatus.setArgName("true|false");
 
         options = new Options()
             .addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
             .addOption(dir)
-            .addOption(seeds)
-            .addOption(jmxPort);
+            //.addOption(seeds)
+            .addOption(jmxPort)
+            .addOption(startOption)
+            .addOption(checkStatus);
     }
 
     public void run(CommandLine cmdLine) throws Exception {
@@ -175,14 +189,25 @@ public class CassandraInstaller {
                 throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
             }
 
-            log.info("Starting RHQ Storage Node");
-            startNode(deploymentOptions);
-
-            if (verifyNodeIsUp(jmxPort, 5, 3000)) {
-                log.info("RHQ Storage Node is up and running");
-            } else {
-                log.warn("Could not verify that the node is up and running.");
+            if (cmdLine.hasOption("start")) {
+                startNode = Boolean.parseBoolean(cmdLine.getOptionValue("s"));
             }
+            if (startNode) {
+                log.info("Starting RHQ Storage Node");
+                startNode(deploymentOptions);
+
+                if (cmdLine.hasOption("c")) {
+                    checkStatus = Boolean.parseBoolean(cmdLine.getOptionValue("c"));
+                }
+                if (checkStatus) {
+                    if (verifyNodeIsUp(jmxPort, 5, 3000)) {
+                        log.info("RHQ Storage Node is up and running");
+                    } else {
+                        log.warn("Could not verify that the node is up and running.");
+                    }
+                }
+            }
+            log.info("Installation of the storage node is complete.");
         }
     }
 

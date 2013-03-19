@@ -44,7 +44,7 @@ public class RMIContextFactory implements InitialContextFactory {
      * @see javax.naming.spi.InitialContextFactory#getInitialContext(java.util.Hashtable)
      */
     @Override
-    public Context getInitialContext(Hashtable<?, ?> environment) throws NamingException {
+    public Context getInitialContext(Hashtable environment) throws NamingException {
         return new rmiURLContext(environment);
     }
 

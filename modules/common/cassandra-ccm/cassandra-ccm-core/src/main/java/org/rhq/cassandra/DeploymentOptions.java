@@ -89,6 +89,7 @@ public class DeploymentOptions {
     private String seeds;
     private String heapSize;
     private String heapNewSize;
+    private String logFileName;
 
     public DeploymentOptions() {
     }
@@ -156,6 +157,7 @@ public class DeploymentOptions {
         setCommitLogDir(loadProperty("rhq.cassandra.commitlog.dir", properties));
         setSavedCachesDir(loadProperty("rhq.cassandra.saved.caches.dir", properties));
         setLogDir(loadProperty("rhq.cassandra.log.dir", properties));
+        setLogFileName(loadProperty("rhq.cassandra.log.file.name", properties));
         setListenAddress(loadProperty("rhq.cassandra.listen.address", properties));
         setRpcAddress(loadProperty("rhq.cassandra.rpc.address", properties));
         setPasswordPropertiesFile(loadProperty("rhq.cassandra.password.properties.file", properties));
@@ -197,6 +199,7 @@ public class DeploymentOptions {
         setCommitLogDir(other.commitLogDir);
         setSavedCachesDir(other.savedCachesDir);
         setLogDir(other.logDir);
+        setLogFileName(other.logFileName);
         setListenAddress(other.listenAddress);
         setRpcAddress(other.rpcAddress);
         setRpcPort(other.rpcPort);
@@ -429,6 +432,17 @@ public class DeploymentOptions {
     public void setLogDir(String dir) {
         if (logDir == null) {
             logDir = dir;
+        }
+    }
+
+    @BundleProperty(name = "rhq.cassandra.log.file.name")
+    public String getLogFileName() {
+        return logFileName;
+    }
+
+    public void setLogFileName(String name) {
+        if (logFileName == null) {
+            logFileName = name;
         }
     }
 

@@ -49,6 +49,12 @@
                         defaultValue="logs"
                         type="string"/>
 
+    <rhq:input-property name="rhq.cassandra.log.file.name"
+                        description="The name of the log file to which Cassandra writes."
+                        required="true"
+                        defaultValue="rhq-storage-node.log"
+                        type="string"/>
+
     <rhq:input-property name="logging.level"
                         description="The log4j logging level to use."
                         required="false"

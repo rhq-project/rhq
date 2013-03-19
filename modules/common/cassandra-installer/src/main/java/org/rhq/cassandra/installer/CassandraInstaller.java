@@ -88,10 +88,13 @@ public class CassandraInstaller {
 
     private boolean checkStatus = true;
 
+    private File logDir;
+
     public CassandraInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");
         rhqBaseDir = new File(basedir);
         defaultDir = new File(basedir, "storage");
+        logDir = new File(rhqBaseDir, "logs");
 
         Option hostname = new Option("n", "hostname", true, "The hostname or IP address on which the node will listen for " +
             "requests. If not specified, defaults to the value returned by InetAddress.getLocalHost().getHostName().");
@@ -170,7 +173,8 @@ public class CassandraInstaller {
             deploymentOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
             deploymentOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
             deploymentOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
-            deploymentOptions.setLogDir(new File(basedir, "logs").getAbsolutePath());
+            deploymentOptions.setLogDir(logDir.getAbsolutePath());
+            deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
             deploymentOptions.setNativeTransportPort(nativeTransportPort);
             deploymentOptions.load();

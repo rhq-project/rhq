@@ -86,6 +86,8 @@ public class DeploymentOptions {
     private String passwordPropertiesFile;
     private String accessPropertiesFile;
     private Integer jmxPort;
+    private Integer storagePort;
+    private Integer sslStoragePort;
     private String seeds;
     private String heapSize;
     private String heapNewSize;
@@ -163,6 +165,8 @@ public class DeploymentOptions {
         setPasswordPropertiesFile(loadProperty("rhq.cassandra.password.properties.file", properties));
         setAccessPropertiesFile(loadProperty("rhq.cassandra.access.properties.file", properties));
         setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
+        setStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.storage.port", properties)));
+        setSslStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.ssl.storage.port", properties)));
         setSeeds(loadProperty("rhq.cassandra.seeds", properties));
         setBasedir(loadProperty("rhq.cassandra.basedir", properties));
         setHeapSize(loadProperty("rhq.cassandra.max.heap.size", properties));
@@ -204,6 +208,8 @@ public class DeploymentOptions {
         setRpcAddress(other.rpcAddress);
         setRpcPort(other.rpcPort);
         setJmxPort(other.jmxPort);
+        setStoragePort(other.storagePort);
+        setSslStoragePort(other.sslStoragePort);
         setSeeds(other.seeds);
         setBasedir(other.basedir);
         setHeapSize(other.heapSize);
@@ -498,6 +504,28 @@ public class DeploymentOptions {
     public void setJmxPort(Integer port) {
         if (jmxPort == null) {
             jmxPort = port;
+        }
+    }
+
+    @BundleProperty(name = "rhq.cassandra.storage.port")
+    public Integer getStoragePort() {
+        return storagePort;
+    }
+
+    public void setStoragePort(Integer port) {
+        if (storagePort == null) {
+            storagePort = port;
+        }
+    }
+
+    @BundleProperty(name = "rhq.cassandra.ssl.storage.port")
+    public Integer getSslStoragePort() {
+        return sslStoragePort;
+    }
+
+    public void setSslStoragePort(Integer port) {
+        if (sslStoragePort == null) {
+            sslStoragePort = port;
         }
     }
 

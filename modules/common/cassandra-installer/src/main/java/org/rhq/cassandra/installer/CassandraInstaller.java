@@ -80,9 +80,15 @@ public class CassandraInstaller {
 
     private File defaultDir;
 
+    private int jmxPort = 7200;
+
     private int rpcPort = 9160;
 
     private int nativeTransportPort = 9042;
+
+    private int storagePort = 7000;
+
+    private int sslStoragePort = 7001;
 
     private boolean startNode = true;
 
@@ -115,13 +121,21 @@ public class CassandraInstaller {
             "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
         seeds.setArgName("SEEDS");
 
-        Option jmxPort = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. " +
-            "Defaults to 7200.");
-        jmxPort.setArgName("PORT");
+        Option jmxPortOption = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. " +
+            "Defaults to " + jmxPort + ".");
+        jmxPortOption.setArgName("PORT");
 
         Option nativeTransportPortOption = new Option("t", "native-transport-port", true, "The port on which to " +
             "listen for client requests. Defaults to " + nativeTransportPort);
         nativeTransportPortOption.setArgName("PORT");
+
+        Option storagePortOption = new Option(null, "storage-port", true, "The port on which to listen for requests " +
+            " from other nodes. Defaults to " + storagePort);
+        storagePortOption.setArgName("PORT");
+
+        Option sslStoragePortOption = new Option(null, "ssl-storage-port", true, "The port on which to listen for " +
+            "encrypted requests from other nodes. Only used when encryption is enabled. Defaults to " + sslStoragePort);
+        sslStoragePortOption.setArgName("PORT");
 
         Option startOption = new Option(null, "start", true, "Start the storage node after installing it on disk. " +
             "Defaults to true.");
@@ -148,13 +162,15 @@ public class CassandraInstaller {
             .addOption(hostname)
             .addOption(dir)
             //.addOption(seeds)
-            .addOption(jmxPort)
+            .addOption(jmxPortOption)
             .addOption(startOption)
             .addOption(checkStatus)
             .addOption(commitLogOption)
             .addOption(dataDirOption)
             .addOption(savedCachesDirOption)
-            .addOption(nativeTransportPortOption);
+            .addOption(nativeTransportPortOption)
+            .addOption(storagePortOption)
+            .addOption(sslStoragePortOption);
     }
 
     public void run(CommandLine cmdLine) throws Exception {
@@ -187,22 +203,16 @@ public class CassandraInstaller {
             String seeds = hostname;
             deploymentOptions.setSeeds(seeds);
 
-            Integer jmxPort;
-            if (cmdLine.hasOption("j")) {
-                jmxPort = Integer.parseInt(cmdLine.getOptionValue("j"));
-            } else {
-                jmxPort = 7200;
-            }
-            deploymentOptions.setJmxPort(jmxPort);
-
             deploymentOptions.setCommitLogDir(cmdLine.getOptionValue("commitlog", commitLogDir));
             deploymentOptions.setDataDir(cmdLine.getOptionValue("data", dataDir));
             deploymentOptions.setSavedCachesDir(cmdLine.getOptionValue("saved-caches", savedCachesDir));
             deploymentOptions.setLogDir(logDir.getAbsolutePath());
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
-            deploymentOptions.setNativeTransportPort(Integer.parseInt(cmdLine.getOptionValue("native-transport-port",
-                Integer.toString(nativeTransportPort))));
+            deploymentOptions.setJmxPort(getPort(cmdLine, "jmx-port", jmxPort));
+            deploymentOptions.setNativeTransportPort(getPort(cmdLine, "native-transport-port", nativeTransportPort));
+            deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
+            deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
             deploymentOptions.load();
 
             UnmanagedDeployer deployer = new UnmanagedDeployer();
@@ -239,6 +249,10 @@ public class CassandraInstaller {
             }
             log.info("Installation of the storage node is complete.");
         }
+    }
+
+    private int getPort(CommandLine cmdLine, String option, int defaultValue) {
+        return Integer.parseInt(cmdLine.getOptionValue(option, Integer.toString(defaultValue)));
     }
 
     private PropertiesFileUpdate getServerProperties() {

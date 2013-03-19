@@ -79,6 +79,18 @@
                         defaultValue="7200"
                         type="string"/>
 
+    <rhq:input-property name="rhq.cassandra.storage.port"
+                        description="The port used for inter-node communication."
+                        required="false"
+                        defaultValue="7000"
+                        type="string"/>
+
+    <rhq:input-property name="rhq.cassandra.ssl.storage.port"
+                        description="The port used for encrypted inter-node communication."
+                        required="false"
+                        defaultValue="7001"
+                        type="string"/>
+
     <rhq:input-property name="listen.address"
                         description="Address used for inter-node communication. Defaults to value of hostname property."
                         required="true"

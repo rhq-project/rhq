@@ -8,7 +8,7 @@
 #
 # This script is customizable by setting the following environment variables:
 #
-#    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
+#    RHQ_STORAGE_DEBUG - If this is defined, the script will emit debug
 #                       messages. If this is not defined or set to "false"
 #                       debug messages are not emitted.
 #
@@ -59,7 +59,7 @@
 debug_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+   if [ -n "$RHQ_STORAGE_DEBUG" ] && [ "$RHQ_STORAGE_DEBUG" != "false" ]; then
       echo $1
    fi
 }
@@ -207,7 +207,7 @@ if [ -z "$RHQ_STORAGE_INSTALLER_JAVA_OPTS" ]; then
 fi
 
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_CCM_JAVA_OPTS.
-if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
+if [ -n "$RHQ_STORAGE_DEBUG" ] && [ "$RHQ_STORAGE_DEBUG" != "false" ]; then
    _RHQ_LOGLEVEL="DEBUG"
 else
    _RHQ_LOGLEVEL="INFO"

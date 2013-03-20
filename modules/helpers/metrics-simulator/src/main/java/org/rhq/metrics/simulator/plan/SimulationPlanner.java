@@ -56,14 +56,18 @@ public class SimulationPlanner {
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
 
         JsonNode schedules = root.get("schedules");
-        if (schedules.isArray()) {
-            for (JsonNode node : schedules) {
-                simulation.addScheduleSet(new ScheduleGroup(getInt(node.get("count"), 2500),
-                    getLong(node.get("interval"), 500L)));
-            }
+        if (schedules == null) {
+            simulation.addScheduleSet(new ScheduleGroup(2500, 500L));
         } else {
-            simulation.addScheduleSet(new ScheduleGroup(getInt(schedules.get("count"), 2500),
-                getLong(schedules.get("interval"), 500L)));
+            if (schedules.isArray()) {
+                for (JsonNode node : schedules) {
+                    simulation.addScheduleSet(new ScheduleGroup(getInt(node.get("count"), 2500),
+                        getLong(node.get("interval"), 500L)));
+                }
+            } else {
+                simulation.addScheduleSet(new ScheduleGroup(getInt(schedules.get("count"), 2500),
+                    getLong(schedules.get("interval"), 500L)));
+            }
         }
 
         MetricsConfiguration serverConfiguration = createDefaultMetricsConfiguration();

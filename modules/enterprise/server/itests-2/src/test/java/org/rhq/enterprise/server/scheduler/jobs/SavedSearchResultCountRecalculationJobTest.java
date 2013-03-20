@@ -71,18 +71,13 @@ public class SavedSearchResultCountRecalculationJobTest extends AbstractEJB3Test
 
     @Override
     protected void beforeMethod() throws Exception {
-        int i = 0;
-        try {
-            savedSearchManager = LookupUtil.getSavedSearchManager();
-            subjectManager = LookupUtil.getSubjectManager();
-            roleManager = LookupUtil.getRoleManager();
-            resourceGroupManager = LookupUtil.getResourceGroupManager();
-            scheduler = LookupUtil.getSchedulerBean();
-            createTestData();
-            prepareScheduler();
-        } catch (Throwable t) {
-            t.printStackTrace();
-        }
+        savedSearchManager = LookupUtil.getSavedSearchManager();
+        subjectManager = LookupUtil.getSubjectManager();
+        roleManager = LookupUtil.getRoleManager();
+        resourceGroupManager = LookupUtil.getResourceGroupManager();
+        scheduler = LookupUtil.getSchedulerBean();
+        createTestData();
+        prepareScheduler();
     }
 
     private void createTestData() {
@@ -141,9 +136,9 @@ public class SavedSearchResultCountRecalculationJobTest extends AbstractEJB3Test
                         resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), resourceGroup.getId());
                     }
                     for (Resource resource : testDataToDelete.getResources()) {
-                        ResourceTreeHelper.deleteResource(em, em.getReference(Resource.class, resource.getId()));
+                        ResourceTreeHelper.deleteResource(em, em.find(Resource.class, resource.getId()));
                     }
-                    em.remove(em.getReference(ResourceType.class, testDataToDelete.getResourceType().getId()));
+                    em.remove(em.find(ResourceType.class, testDataToDelete.getResourceType().getId()));
                     subjectManager.deleteSubjects(subjectManager.getOverlord(), new int[] { testDataToDelete
                         .getSearchesOwner().getId() });
                     roleManager.deleteRoles(subjectManager.getOverlord(), new int[] { testDataToDelete

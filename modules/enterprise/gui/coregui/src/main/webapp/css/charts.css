@@ -62,10 +62,15 @@
     text-rendering: optimize-legibility;
 }
 
-.titleName {
+.chartTitleName {
     font-family: Arial, Verdana, sans-serif;
     font-size: 12px;
     font-weight: bold;
+    fill: #003168;
+}
+.chartTitleBox {
+    fill:none;
+
 }
 
 rect.high {

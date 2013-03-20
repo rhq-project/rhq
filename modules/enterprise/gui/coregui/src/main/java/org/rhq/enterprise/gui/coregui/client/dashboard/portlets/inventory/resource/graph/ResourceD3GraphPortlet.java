@@ -89,7 +89,7 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
 
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        Log.debug("\nResourceD3GraphPortlet Configure !!");
+        Log.debug("\nResourceD3GraphPortlet Configure");
 
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
@@ -272,7 +272,7 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
 
     @Override
     public void redraw() {
-        Log.debug("Redraw Portlet Graph and set data");
+        Log.debug("Redraw Portlet Graph and set data, width: "+portletWindow.getWidth());
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
@@ -284,7 +284,7 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
             graph.getMetricGraphData().setEntityId(simple.getIntegerValue());
             PropertySimple simpleDefId = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
             graph.getMetricGraphData().setDefinitionId(simpleDefId.getIntegerValue());
-            Log.debug(" *** Redraw Portlet for entityId: " + simple.getIntegerValue() + "-"
+            Log.debug("Redraw Portlet for entityId: " + simple.getIntegerValue() + "-"
                 + simpleDefId.getIntegerValue());
             drawGraph();
         }

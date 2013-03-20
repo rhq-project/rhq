@@ -20,11 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
 
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -40,9 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  */
 public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
 
-    //protected HTMLFlow resourceTitle;
     protected AbstractGraph graph;
-    private Integer chartHeight;
     private int entityId;
     private int definitionId;
     private HTMLFlow graphDiv = null;
@@ -145,7 +139,6 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
         new Timer() {
             @Override
             public void run() {
-                Log.debug("Scheduling Graph Rendering");
                 //@todo: this is a hack around timing issue of jsni not seeing the DOM
                 drawJsniChart();
             }
@@ -158,26 +151,11 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
 
     public abstract void drawJsniChart();
 
-    private Img createLiveGraphImage() {
-        Img liveGraph = new Img(IconEnum.RECENT_MEASUREMENTS.getIcon16x16Path(), 16, 16);
-        liveGraph.setTooltip(MSG.view_resource_monitor_graph_live_tooltip());
-
-        liveGraph.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent clickEvent) {
-                displayLiveGraphViewDialog();
-            }
-        });
-        return liveGraph;
-    }
 
     public Integer getChartHeight() {
         return graph.getMetricGraphData().getChartHeight();
     }
 
-    public void setChartHeight(Integer height) {
-        graph.getMetricGraphData().setChartHeight(height);
-    }
 
     /**
      * This is only necessary to set this for the ResourceGraphPortlet case where

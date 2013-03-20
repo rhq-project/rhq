@@ -116,6 +116,9 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     },
                     lowBound = determineLowBound(min, peak),
                     highBound = peak + ((peak - min) * 0.1),
+                    calcBarWidth = function(){
+                        return (width / chartContext.data.length - barOffset  )
+                    },
 
                     yScale = $wnd.d3.scale.linear()
                             .clamp(true)
@@ -261,7 +264,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             }
                         })
                         .attr("width", function () {
-                            return  (width / chartContext.data.length - barOffset  );
+                            return  calcBarWidth();
                         })
 
                         .attr("opacity", ".9")
@@ -295,7 +298,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             }
                         })
                         .attr("width", function () {
-                            return  (width / chartContext.data.length - barOffset  );
+                            return  calcBarWidth();
                         })
                         .attr("data-rhq-value", function(d){
                             return d.y;
@@ -323,7 +326,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             }
                         })
                         .attr("width", function () {
-                            return  (width / chartContext.data.length - barOffset );
+                            return  calcBarWidth();
                         })
                         .attr("opacity", 0.9);
 
@@ -351,7 +354,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             }
                         })
                         .attr("width", function () {
-                            return  (width / chartContext.data.length - barOffset );
+                            return  calcBarWidth();
                         })
                         .attr("opacity", 0.9)
                         .attr("fill", function (d) {

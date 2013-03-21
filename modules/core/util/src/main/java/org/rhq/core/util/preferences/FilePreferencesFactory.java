@@ -17,7 +17,7 @@ import org.apache.commons.logging.LogFactory;
  * property <tt>-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory</tt>.
  * <p/>
  * The file defaults to ${user.home}/.fileprefs, but may be overridden with the system property
- * <tt>org.rhq.core.util.preferences.FilePreferencesFactory.file</tt>
+ * <tt>rhq.preferences.file</tt>
  * <p/>
  * Both the system root and user root default to the user.home system property by default.
  * <p/>
@@ -30,7 +30,7 @@ import org.apache.commons.logging.LogFactory;
 public class FilePreferencesFactory implements PreferencesFactory {
     private static final Log log = LogFactory.getLog(FilePreferencesFactory.class);
 
-    public static final String SYSTEM_PROPERTY_FILE = "org.rhq.core.util.preferences.FilePreferencesFactory.file";
+    public static final String SYSTEM_PROPERTY_FILE = "rhq.preferences.file";
 
     private static File preferencesFile;
 

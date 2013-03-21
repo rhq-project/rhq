@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
  * if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.bundle.deploy.selection;
+package org.rhq.enterprise.gui.coregui.client.components.selector;
 
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.types.TextMatchStyle;
@@ -31,11 +31,17 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 
-@Deprecated
-// could use SingleResourceGroupSelectorItem seeded with addFilterBundleTargetableOnly(true); 
-public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
+public class SingleResourceGroupSelectorItem extends ComboBoxItem {
 
-    public SingleCompatibleResourceGroupSelector(String name, String title) {
+    private ResourceGroupCriteria criteria;
+
+    /**
+     * @param name
+     * @param title
+     * @param criteria initial values for filterId and filterName may be edited in the drop down but will be applied to 
+     * the initial fetch.
+     */
+    public SingleResourceGroupSelectorItem(String name, String title, ResourceGroupCriteria criteria) {
         super(name, title);
 
         ListGridField nameField = new ListGridField("name");
@@ -51,6 +57,8 @@ public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
         setPickListWidth(450);
         setPickListFields(nameField, descriptionField);
         setTextMatchStyle(TextMatchStyle.SUBSTRING);
+
+        this.criteria = (null == criteria) ? new ResourceGroupCriteria() : criteria;
     }
 
     protected class CompatibleResourceGroupsDataSource extends ResourceGroupsDataSource {
@@ -60,7 +68,7 @@ public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
             // We don't want to use the superclass's getFetchCriteria because our selected value
             // is either a Integer (when a real group has been selected) or a String (when a partial search string is selected).
             // So, here we create our own criteria. See BZ 802528.
-            ResourceGroupCriteria result = new ResourceGroupCriteria();
+            ResourceGroupCriteria result = criteria;
             String filterString = getFilter(request, "id", String.class);
             if (filterString != null) {
                 try {
@@ -71,8 +79,6 @@ public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
                 }
             }
 
-            // we only want to show those groups that can have bundles deployed to them
-            result.addFilterBundleTargetableOnly(true);
             return result;
         }
     }

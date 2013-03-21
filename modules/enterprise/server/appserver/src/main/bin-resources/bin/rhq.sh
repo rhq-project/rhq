@@ -1,4 +1,13 @@
 #!/bin/bash
+#
+# Note this script assumes GNU sed is installed. On Mac OS X a different
+# implementation of sed is installed and will not work with this script. If you
+# are on Mac OS X you can install GNU sed with the home brew package manager by
+# running,
+#
+#    $ brew install gnu-sed
+#    $ ln -s /usr/local/bin/gsed /usr/local/bin/sed
+#    $ exec bash  # this reloads the shell for changes to take effect
 
 function install() {
     #echo "install $@"
@@ -8,11 +17,15 @@ function install() {
 
     echo "Installing RHQ Server"
     sh ./rhq-server.sh start
-    wait_for_server_to_init
+    wait_until_server_is_ready_to_run_installer
     sh ./rhq-installer.sh
+
+    wait_until_rhq_is_initialized
+    echo "Installing RHQ agent"
+    install_agent
 }
 
-function wait_for_server_to_init() {
+function wait_until_server_is_ready_to_run_installer() {
      echo "Testing to seeing if RHQ server is initialized"
     ./rhq-installer.sh --test
     while [ $? -ne 0 ]
@@ -24,8 +37,42 @@ function wait_for_server_to_init() {
     echo "RHQ server is initialized and ready for installer to run"
 }
 
+function wait_until_rhq_is_initialized() {
+    delay=15
+    server_log=../logs/server.log
+
+    finished=$(grep -c "StartupBean.*Server started." $server_log)
+    while [ $finished -ne 1 ]
+    do
+        echo "Waiting for RHQ server to initialize..."
+        sleep $delay
+        finished=$(grep -c "StartupBean.*Server started." $server_log)
+    done
+    echo "RHQ server is up"
+}
+
+function install_agent() {
+    agent_installer_dir="../modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent"
+    agent_installer="rhq-enterprise-agent-4.7.0-SNAPSHOT.jar"
+    rhq_host=`hostname`
+
+    cp "$agent_installer_dir/$agent_installer" "$RHQ_SERVER_HOME"/rhq-agent.jar
+    cd $RHQ_SERVER_HOME
+    java -jar rhq-agent.jar --install
+ 
+    sed_cmd="s;<entry key=\"rhq\.agent\.server\.bind-port.*$;\0\n<entry key=\"rhq.agent.server.bind-address\" value=\"$rhq_host\" />;g"
+    sed -i "$sed_cmd" rhq-agent/conf/agent-configuration.xml
+
+    rm "$RHQ_SERVER_HOME/rhq-agent-update.log"
+    rm "$RHQ_SERVER_HOME/rhq-agent.jar"
+
+    cd $RHQ_SERVER_HOME/rhq-agent/bin
+    ./rhq-agent-wrapper.sh start
+}
+
 function start() {
-    echo "start $@"
+    #echo "start $@"
+    wait_until_rhq_is_initialized
 }
 
 function stop() {

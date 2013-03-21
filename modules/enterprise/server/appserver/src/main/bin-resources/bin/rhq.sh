@@ -71,13 +71,24 @@ function install_agent() {
 }
 
 function start() {
-    #echo "start $@"
-    wait_until_rhq_is_initialized
+    echo "Starting RHQ storage node"
+    cd $RHQ_SERVER_HOME/storage/bin
+    ./cassandra -p cassandra.pid 2>/dev/null
+
+    echo "Starting RHQ server"
+    cd $RHQ_SERVER_HOME/bin
+    ./rhq-server.sh start
+
+    echo "Starting RHQ agent"
+    cd $RHQ_SERVER_HOME/rhq-agent/bin
+    ./rhq-agent-wrapper.sh start
 }
 
 function stop() {
     echo "Shutting down RHQ storage node"
-    kill `cat $RHQ_SERVER_HOME/storage/bin/cassandra.pid`
+    storage_pid=`cat $RHQ_SERVER_HOME/storage/bin/cassandra.pid`
+    echo "RHQ storage node (pid=$storage_pid) is stopping..."
+    kill $storage_pid
 
     echo "Shutting down RHQ server"
     $RHQ_SERVER_HOME/bin/rhq-server.sh stop

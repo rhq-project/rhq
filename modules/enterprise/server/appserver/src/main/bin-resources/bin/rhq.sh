@@ -76,7 +76,14 @@ function start() {
 }
 
 function stop() {
-    echo stop $@
+    echo "Shutting down RHQ storage node"
+    kill `cat $RHQ_SERVER_HOME/storage/bin/cassandra.pid`
+
+    echo "Shutting down RHQ server"
+    $RHQ_SERVER_HOME/bin/rhq-server.sh stop
+
+    echo "Shutting down RHQ agent"
+    $RHQ_SERVER_HOME/rhq-agent/bin/rhq-agent-wrapper.sh stop
 }
 
 function usage() {

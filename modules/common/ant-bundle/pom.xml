@@ -48,7 +48,6 @@
         <dependency>
            <groupId>commons-logging</groupId>
            <artifactId>commons-logging</artifactId>
-           <version>1.1.0.jboss</version>
         </dependency>
 
         <dependency>
@@ -73,7 +72,6 @@
         <dependency>
             <groupId>ant-contrib</groupId>
             <artifactId>ant-contrib</artifactId>
-            <version>1.0b3</version>
             <scope>runtime</scope> <!-- needs to be runtime otherwise it will not be included by assembly plugin -->
             <exclusions>
                <exclusion>
@@ -86,7 +84,6 @@
         <dependency>
             <groupId>org.liquibase</groupId>
             <artifactId>liquibase-core</artifactId>
-            <version>1.9.5</version>
         </dependency>
 
     </dependencies>

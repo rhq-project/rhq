@@ -26,7 +26,6 @@
       <dependency>
          <groupId>ant-contrib</groupId>
          <artifactId>ant-contrib</artifactId>
-         <version>${ant.contrib.version}</version>
          <scope>provided</scope>
       </dependency>
 

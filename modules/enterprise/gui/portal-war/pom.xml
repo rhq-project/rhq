@@ -70,7 +70,6 @@
       <dependency>
          <groupId>commons-collections</groupId>
          <artifactId>commons-collections</artifactId>
-         <version>3.2</version>
       </dependency>
 
       <dependency>
@@ -94,7 +93,6 @@
       <dependency>
          <groupId>commons-httpclient</groupId>
          <artifactId>commons-httpclient</artifactId>
-         <version>${commons-httpclient.version}</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -107,14 +105,12 @@
       <dependency>
          <groupId>commons-logging</groupId>
          <artifactId>commons-logging</artifactId>
-         <version>1.0.4</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
       <dependency>
          <groupId>commons-validator</groupId>
          <artifactId>commons-validator</artifactId>
-         <version>1.1.4</version>
       </dependency>
 
       <!-- used by a test JSP -->
@@ -141,7 +137,6 @@
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
-         <version>2.4</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
@@ -186,7 +181,6 @@
       <dependency>
          <groupId>junit</groupId>
          <artifactId>junit</artifactId>
-         <version>3.8.2</version>
       </dependency>
 
       <dependency>
@@ -282,7 +276,6 @@
       <dependency>
          <groupId>xerces</groupId>
          <artifactId>xercesImpl</artifactId>
-         <version>${xercesImpl.version}</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 

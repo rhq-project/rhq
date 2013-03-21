@@ -66,13 +66,11 @@
                                 <artifactItem>
                                     <groupId>ant-contrib</groupId>
                                     <artifactId>ant-contrib</artifactId>
-                                    <version>1.0b3</version>
                                 </artifactItem>
 
                                 <artifactItem>
                                     <groupId>org.liquibase</groupId>
                                     <artifactId>liquibase-core</artifactId>
-                                    <version>1.9.5</version>
                                 </artifactItem>
 
                             </artifactItems>

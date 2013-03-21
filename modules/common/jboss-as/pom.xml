@@ -23,7 +23,6 @@
       <dependency>
          <groupId>jboss</groupId>
          <artifactId>jbpm</artifactId>
-         <version>3.1.1</version>
       </dependency>
 
       <dependency>
@@ -72,7 +71,6 @@
                         <artifactItem>
                            <groupId>jboss</groupId>
                            <artifactId>jbpm</artifactId>
-                           <version>3.1.1</version>
                         </artifactItem>
                      </artifactItems>
                      <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

@@ -63,6 +63,13 @@ function install_agent() {
     sed_cmd="s;<entry key=\"rhq\.agent\.server\.bind-port.*$;\0\n<entry key=\"rhq.agent.server.bind-address\" value=\"$rhq_host\" />;g"
     sed -i "$sed_cmd" rhq-agent/conf/agent-configuration.xml
 
+    if [ `uname` == "Darwin"* ];
+    then
+        rm -rf "$HOME/Library/Prefereces/com.apple.java.util.prefs.plist"
+    else
+        rm -rf "$HOME/.java/.userPrefs/rhq-agent"
+    fi
+
     rm "$RHQ_SERVER_HOME/rhq-agent-update.log"
     rm "$RHQ_SERVER_HOME/rhq-agent.jar"
 
@@ -73,7 +80,7 @@ function install_agent() {
 function start() {
     echo "Starting RHQ storage node"
     cd $RHQ_SERVER_HOME/storage/bin
-    ./cassandra -p cassandra.pid 2>/dev/null
+    ./cassandra -p cassandra.pid > /dev/null 2>&1
 
     echo "Starting RHQ server"
     cd $RHQ_SERVER_HOME/bin

@@ -112,10 +112,6 @@ public class CassandraInstaller {
             "requests. If not specified, defaults to the value returned by InetAddress.getLocalHost().getHostName().");
          hostname.setArgName("HOSTNAME");
 
-        Option dir =  new Option("d", "dir", true, "The directory in which to install the RHQ Storage Node. Defaults " +
-            "to " + defaultDir);
-        dir.setArgName("INSTALL_DIR");
-
         Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that " +
             "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. " +
             "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
@@ -160,7 +156,6 @@ public class CassandraInstaller {
         options = new Options()
             .addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
-            .addOption(dir)
             //.addOption(seeds)
             .addOption(jmxPortOption)
             .addOption(startOption)
@@ -215,6 +210,10 @@ public class CassandraInstaller {
             deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
             deploymentOptions.load();
 
+            checkPerms(options.getOption("saved-caches"), savedCachesDir);
+            checkPerms(options.getOption("commitlog"), commitLogDir);
+            checkPerms(options.getOption("data"), dataDir);
+
             UnmanagedDeployer deployer = new UnmanagedDeployer();
             deployer.unpackBundle();
             deployer.deploy(deploymentOptions, 1);
@@ -253,6 +252,20 @@ public class CassandraInstaller {
 
     private int getPort(CommandLine cmdLine, String option, int defaultValue) {
         return Integer.parseInt(cmdLine.getOptionValue(option, Integer.toString(defaultValue)));
+    }
+
+    private void checkPerms(Option option, String path) {
+        File dir = new File(path);
+
+        if (!dir.isDirectory()) {
+            log.warn(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
+        }
+
+        if (!dir.canWrite()) {
+            log.warn("The user running this installer does not appear to have write permissions to " + path +
+                ". Either make sure that the user running the storage node has write permissions or use the --" +
+                option.getLongOpt() + " to change this value.");
+        }
     }
 
     private PropertiesFileUpdate getServerProperties() {

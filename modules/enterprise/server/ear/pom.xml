@@ -405,6 +405,11 @@
                                     <artifactId>rhq-filetemplate-bundle-plugin</artifactId>
                                     <version>${project.version}</version>
                                 </artifactItem>
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
+                                    <artifactId>rhq-cassandra-plugin</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
                             </artifactItems>
                             <outputDirectory>${earDirectory}/rhq-downloads/rhq-plugins</outputDirectory>
                         </configuration>

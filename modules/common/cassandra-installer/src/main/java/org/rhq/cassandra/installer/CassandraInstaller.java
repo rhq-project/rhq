@@ -198,9 +198,13 @@ public class CassandraInstaller {
             String seeds = hostname;
             deploymentOptions.setSeeds(seeds);
 
-            deploymentOptions.setCommitLogDir(cmdLine.getOptionValue("commitlog", commitLogDir));
-            deploymentOptions.setDataDir(cmdLine.getOptionValue("data", dataDir));
-            deploymentOptions.setSavedCachesDir(cmdLine.getOptionValue("saved-caches", savedCachesDir));
+            commitLogDir = cmdLine.getOptionValue("commitlog", commitLogDir);
+            dataDir = cmdLine.getOptionValue("data", dataDir);
+            savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
+
+            deploymentOptions.setCommitLogDir(cmdLine.getOptionValue(commitLogDir));
+            deploymentOptions.setDataDir(dataDir);
+            deploymentOptions.setSavedCachesDir(savedCachesDir);
             deploymentOptions.setLogDir(logDir.getAbsolutePath());
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
@@ -257,15 +261,26 @@ public class CassandraInstaller {
     private void checkPerms(Option option, String path) {
         File dir = new File(path);
 
-        if (!dir.isDirectory()) {
-            log.warn(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
+        if (dir.exists()) {
+            if (dir.isFile()) {
+                log.warn(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
+            }
+        } else {
+            File parent = findParentDir(new File(path));
+            if (!parent.canWrite()) {
+                log.warn("The user running this installer does not appear to have write permissions to " + parent +
+                    ". Either make sure that the user running the storage node has write permissions or use the --" +
+                    option.getLongOpt() + " to change this value.");
+            }
         }
+    }
 
-        if (!dir.canWrite()) {
-            log.warn("The user running this installer does not appear to have write permissions to " + path +
-                ". Either make sure that the user running the storage node has write permissions or use the --" +
-                option.getLongOpt() + " to change this value.");
+    private File findParentDir(File path) {
+        File dir = path;
+        while (!dir.exists()) {
+            dir = dir.getParentFile();
         }
+        return dir;
     }
 
     private PropertiesFileUpdate getServerProperties() {

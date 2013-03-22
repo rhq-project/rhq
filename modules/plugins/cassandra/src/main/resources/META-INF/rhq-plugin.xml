@@ -5,7 +5,6 @@
         code base of Cassandra which comes from the cassandra-1.1 branch of the Cassandra git repo. The plugin will not
         yet work with 1.2.x Cassandra builds which come out of its trunk (i.e., master) branch."
         package="org.rhq.plugins.cassandra"
-        version="5.0.3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
@@ -49,6 +48,7 @@
     </plugin-configuration>
 
     <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
+    <process-scan name="CassandraDaemon1.2" query="process|basename|match=^java.*,arg|org.apache.cassandra.service.CassandraDaemon|match=.*"/>
 
     <operation name="shutdown" description="Shuts down the Cassandra daemon">
       <results>

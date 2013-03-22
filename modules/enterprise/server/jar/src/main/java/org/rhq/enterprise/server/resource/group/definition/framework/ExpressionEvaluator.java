@@ -1271,6 +1271,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 throw new InvalidExpressionException("Redundant 'memberof' expression[" + normalizedSubExpression
                     + "] - these expressions must be unique");
             }
+            memberSubExpressions.add(normalizedSubExpression);
         } else {
             if (groupedSubExpressions.contains(normalizedSubExpression)) {
                 throw new InvalidExpressionException(

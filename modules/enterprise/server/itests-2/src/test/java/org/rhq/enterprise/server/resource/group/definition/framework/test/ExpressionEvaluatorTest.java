@@ -801,6 +801,16 @@ public class ExpressionEvaluatorTest extends AbstractEJB3Test {
         });
     }
 
+    @Test(expectedExceptions = InvalidExpressionException.class, expectedExceptionsMessageRegExp = "Redundant.*")
+    public void doNotAllowDuplicateMemberOfExpressions() throws Exception {
+        evaluateExpressions(new ExpressionGenerator() {
+            @Override
+            public String[] getExpressions() {
+                return new String[] { "memberof = foo", "memberof = foo" };
+            }
+        });
+    }
+
     private String cleanUp(String result) {
         return result.replaceAll("\\s+", " ").trim();
     }

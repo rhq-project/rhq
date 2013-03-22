@@ -143,6 +143,7 @@
            <module>postgres</module>
            <module>script</module>
            <module>iis</module>
+           <module>cassandra</module>
         </modules>
     </profile>
 

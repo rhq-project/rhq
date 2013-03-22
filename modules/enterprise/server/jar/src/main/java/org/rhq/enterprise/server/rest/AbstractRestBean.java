@@ -35,13 +35,14 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
+import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.cache.MultiTemplateLoader;
 import freemarker.cache.TemplateLoader;
-import freemarker.template.Configuration;
 import freemarker.template.Template;
 import freemarker.template.TemplateException;
 
@@ -51,6 +52,8 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -110,7 +113,7 @@ public class AbstractRestBean {
      */
     protected String renderTemplate(String templateName, Object objectToRender) {
         try {
-            freemarker.template.Configuration config = new Configuration();
+            freemarker.template.Configuration config = new freemarker.template.Configuration();
 
             // XXX fall-over to ClassTL after failure in FTL seems not to work
             // FileTemplateLoader ftl = new FileTemplateLoader(new File("src/main/resources"));
@@ -379,6 +382,10 @@ public class AbstractRestBean {
         uriBuilder.path("/resource/{id}/children");
         uri = uriBuilder.build(res.getId());
         link = new Link("children", uri.toString());
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/resource/{id}/alerts");
+        uri = uriBuilder.build(res.getId());
+        link = new Link("alerts", uri.toString());
         rwt.addLink(link);
         if (parent != null) {
             uriBuilder = uriInfo.getBaseUriBuilder();
@@ -517,6 +524,31 @@ public class AbstractRestBean {
         Link link = new Link("resource", uri.toString());
         ms.addLink(link);
         return ms;
+    }
+
+    Configuration mapToConfiguration(Map<String,Object> in) {
+        Configuration config = new Configuration();
+        for (Map.Entry<String,Object> entry : in.entrySet()) {
+            config.put(new PropertySimple(entry.getKey(),entry.getValue())); // TODO honor more types
+        }
+
+        return config;
+
+    }
+
+    /**
+     * Set the caching header on the response
+     * @param builder Response builder to put the caching header on
+     * @param maxAgeSecs Max retention time on the client. Only set if the value is > 0
+     */
+    protected void setCachingHeader(Response.ResponseBuilder builder, int maxAgeSecs) {
+        CacheControl cc = new CacheControl();
+        cc.setPrivate(false);
+        cc.setNoCache(false);
+        cc.setNoStore(false);
+        if (maxAgeSecs>-1)
+            cc.setMaxAge(maxAgeSecs);
+        builder.cacheControl(cc);
     }
 
     protected static class CacheKey {

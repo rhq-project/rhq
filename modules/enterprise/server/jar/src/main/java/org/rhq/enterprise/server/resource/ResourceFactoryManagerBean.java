@@ -76,6 +76,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.content.ContentManagerHelper;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.rest.ResourceHandlerBean;
 
 /**
  * Bean to handle interaction with the resource factory subsystem of the plugin container. !! Warning, the factory
@@ -684,9 +685,11 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         DeleteResourceRequest request = new DeleteResourceRequest(persistedHistory.getId(), resourceId);
 
         try {
-            AgentClient agentClient = agentManager.getAgentClient(agent);
-            ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
-            resourceFactoryAgentService.deleteResource(request);
+            if (!agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // synthetic agent? We can't do anything at the moment
+                AgentClient agentClient = agentManager.getAgentClient(agent);
+                ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
+                resourceFactoryAgentService.deleteResource(request);
+            }
 
             return persistedHistory;
         } catch (CannotConnectException e) {

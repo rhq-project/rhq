@@ -23,8 +23,6 @@
 package org.rhq.modules.integrationTests.restApi;
 
 
-import java.util.List;
-import java.util.Map;
 
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
@@ -33,7 +31,6 @@ import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
 
 import org.apache.http.HttpStatus;
-import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Availability;
@@ -44,8 +41,8 @@ import static com.jayway.restassured.RestAssured.get;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.RestAssured.with;
 import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 
 /**
@@ -76,6 +73,40 @@ public class ResourcesTest extends AbstractBase {
             .body("links.self", notNullValue())
         .when()
             .get("/resource/{id}");
+
+    }
+
+    @Test
+    public void testGetPlatformAndTypeJson() {
+
+        Integer typeId =
+        given()
+            .header("Accept","application/json")
+            .pathParam("id",_platformId)
+        .expect()
+            .statusCode(200)
+            .contentType(ContentType.JSON)
+            .log().ifError()
+            .body("links.self", notNullValue())
+        .when()
+            .get("/resource/{id}")
+        .jsonPath().getInt("typeId");
+
+        assert typeId!=null;
+        assert typeId>0;
+
+        given()
+            .header(acceptJson)
+            .pathParam("typeId",typeId)
+            .log().everything()
+        .expect()
+            .statusCode(200)
+            .body("id",is(typeId))
+            .body("name",is("Linux"))
+            .body("pluginName",is("Platforms"))
+            .log().everything()
+        .when()
+            .get("/resource/type/{typeId}");
 
     }
 
@@ -163,7 +194,7 @@ public class ResourcesTest extends AbstractBase {
 
         given()
             .header("Accept", "application/xml")
-            .pathParam("id",_platformId)
+            .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
             .contentType(ContentType.XML)
@@ -217,6 +248,25 @@ public class ResourcesTest extends AbstractBase {
             .body(resource)
         .expect()
             .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+    }
+
+    @Test
+    public void testCreatePlatformWithBadType() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("myGreatestOS");
+
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(404)
             .log().ifError()
         .when()
             .post("/resource/platforms");
@@ -339,17 +389,16 @@ public class ResourcesTest extends AbstractBase {
         String platformId = response.jsonPath().getString("resourceId");
 
         try {
-            Response child =
-                with().body("{\"value\":\"CPU\"}") // Type of new resource
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .pathParam("name", "test")
-                    .queryParam("plugin", "Platforms")
-                    .queryParam("parentId", platformId)
-                .expect()
-                        .statusCode(201)
-                        .log().ifError()
-                .when().post("/resource/{name}").andReturn();
+            with().body("{\"value\":\"CPU\"}") // Type of new resource
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .pathParam("name", "test")
+                .queryParam("plugin", "Platforms")
+                .queryParam("parentId", platformId)
+            .expect()
+                    .statusCode(201)
+                    .log().ifError()
+            .when().post("/resource/{name}").andReturn();
         }
         finally {
             given().pathParam("id",platformId)
@@ -419,29 +468,27 @@ public class ResourcesTest extends AbstractBase {
         String platformId = response.jsonPath().getString("resourceId");
 
         try {
-            Response child =
-                with().body("{\"value\":\"CPU\"}") // Type of new resource
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .pathParam("name", "test")
-                    .queryParam("plugin", "Platforms")
-                    .queryParam("parentId", platformId)
-                .expect()
-                        .statusCode(201)
-                        .log().ifError()
-                .when().post("/resource/{name}").andReturn();
+            with().body("{\"value\":\"CPU\"}") // Type of new resource
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .pathParam("name", "test")
+                .queryParam("plugin", "Platforms")
+                .queryParam("parentId", platformId)
+            .expect()
+                    .statusCode(201)
+                    .log().ifError()
+            .when().post("/resource/{name}");
 
-            child =
-                with().body("{\"value\":\"CPU\"}") // Type of new resource
-                    .header("Content-Type", "application/json")
-                    .header("Accept", "application/json")
-                    .pathParam("name", "test")
-                    .queryParam("plugin", "Platforms")
-                    .queryParam("parentId", platformId)
-                .expect()
-                        .statusCode(201)
-                        .log().ifError()
-                .when().post("/resource/{name}").andReturn();
+            with().body("{\"value\":\"CPU\"}") // Type of new resource
+                .header("Content-Type", "application/json")
+                .header("Accept", "application/json")
+                .pathParam("name", "test")
+                .queryParam("plugin", "Platforms")
+                .queryParam("parentId", platformId)
+            .expect()
+                    .statusCode(201)
+                    .log().ifError()
+            .when().post("/resource/{name}");
         }
         finally {
             given().pathParam("id",platformId)
@@ -474,9 +521,9 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testAvailabilityForResource() throws Exception {
+    public void testAvailabilityForResourceJson() throws Exception {
         given()
-            .header("Accept", "application/json")
+            .header(acceptJson)
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
@@ -485,14 +532,67 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testAvailabilityHistoryForResource() throws Exception {
+    public void testAvailabilityForResourceXml() throws Exception {
         given()
-            .header("Accept", "application/json")
+            .header(acceptXml)
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability");
+    }
+
+    @Test
+    public void testAvailabilityHistoryForResourceJson() throws Exception {
+        given()
+            .header(acceptJson)
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
         .when()
             .get("/resource/{id}/availability/history");
+    }
+
+    @Test
+    public void testAvailabilityHistoryForResourceXml() throws Exception {
+        given()
+            .header(acceptXml)
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability/history");
+    }
+
+    @Test
+    public void testAvailabilitySummaryForResourceJson() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+            .log().everything()
+            .body("currentTime", instanceOf(Long.class))
+            .body("failures", instanceOf(Integer.class))
+            .body("current", containsString("UNKNOWN"))
+            .body("upPercentage", instanceOf(Float.class))
+        .when()
+            .get("/resource/{id}/availability/summary");
+    }
+
+    @Test
+    public void testAvailabilitySummaryForResourceXml() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("id", _platformId)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("availabilitySummary.current", containsString("UNKNOWN"))
+        .when()
+            .get("/resource/{id}/availability/summary");
+
     }
 
     @Test
@@ -552,7 +652,7 @@ public class ResourcesTest extends AbstractBase {
     @Test
     public void testNoDisabledForPlatforms() throws Exception {
 
-        // Platforms should not be set to DISABLED according ot JSHAUGHN
+        // Platforms should not be set to DISABLED according to JSHAUGHN
 
         long now = System.currentTimeMillis()-100;
         Availability avail = new Availability(_platformId,now,"DISABLED");
@@ -567,6 +667,34 @@ public class ResourcesTest extends AbstractBase {
             .log().ifError()
         .when()
             .put("/resource/{id}/availability");
+
+    }
+
+    @Test
+    public void testGetUnknownType() throws Exception {
+
+
+        given()
+            .header(acceptJson)
+            .pathParam("typeId",123)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .get("/resource/type/{typeId}");
+
+    }
+
+    @Test
+    public void testUnknownCreateResourceStatusId() throws Exception {
+
+        given()
+            .pathParam("id",123)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/resource/creationStatus/{id}");
+
 
     }
 }

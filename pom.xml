@@ -667,7 +667,6 @@
          <artifactId>jboss-javaee-6.0</artifactId>
          <version>${jboss.javaee6.spec.version}</version>
          <type>pom</type>
-         <scope>import,provided</scope>
       </dependency>
 
       <!-- We want the shrinkwrap dependency resolver to be newer than that included in the Arquillian BOM.
@@ -679,6 +678,11 @@
           <scope>import</scope>
           <type>pom</type>
       </dependency>
+      <dependency>
+          <groupId>org.jboss.shrinkwrap.resolver</groupId>
+          <artifactId>shrinkwrap-resolver-depchain</artifactId>
+          <version>${shrinkwrap-resolver.version}</version>
+      </dependency>
       <!-- This will pull in the compatible versions of shrinkwrap deps too. Note that we want to use an explicit
            version for the shrinkwrap resolver, which revs more often and has bugfixes. -->
       <dependency>
@@ -687,6 +691,12 @@
          <version>${arquillian.version}</version>
          <type>pom</type>
          <scope>import</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.arquillian.testng</groupId>
+         <artifactId>arquillian-testng-container</artifactId>
+         <version>${arquillian.version}</version>
       </dependency>
 
       <dependency>

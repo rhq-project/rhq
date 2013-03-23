@@ -685,7 +685,7 @@ public class ResourceFactoryManagerBean implements ResourceFactoryManagerLocal, 
         DeleteResourceRequest request = new DeleteResourceRequest(persistedHistory.getId(), resourceId);
 
         try {
-            if (!agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // synthetic agent? We can't do anything at the moment
+            if (agent.getName() == null || !agent.getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // synthetic agent? We can't do anything at the moment
                 AgentClient agentClient = agentManager.getAgentClient(agent);
                 ResourceFactoryAgentService resourceFactoryAgentService = agentClient.getResourceFactoryAgentService();
                 resourceFactoryAgentService.deleteResource(request);

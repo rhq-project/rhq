@@ -404,11 +404,13 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // but not if this is a synthetic agent that was created in the REST-api
             // See org.rhq.enterprise.server.rest.ResourceHandlerBean.createPlatformInternal()
             // See also https://docs.jboss.org/author/display/RHQ/Virtual+platforms+and+synthetic+agents
-            if (agentClient != null && !agentClient.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // don't do that on "REST-agents"
-                try {
-                    agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
-                } catch (Exception e) {
-                    log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+            if (agentClient != null) {
+                if (agentClient.getAgent() == null || agentClient.getAgent().getName() == null || !agentClient.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // don't do that on "REST-agents"
+                    try {
+                        agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
+                    } catch (Exception e) {
+                        log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+                    }
                 }
             }
 

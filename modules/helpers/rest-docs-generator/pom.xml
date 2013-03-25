@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   ~ RHQ Management Platform
-  ~ Copyright (C) 2005-2012 Red Hat, Inc.
+  ~ Copyright (C) 2005-2013 Red Hat, Inc.
   ~ All rights reserved.
   ~
   ~ This program is free software; you can redistribute it and/or modify
@@ -14,8 +14,8 @@
   ~ GNU General Public License for more details.
   ~
   ~ You should have received a copy of the GNU General Public License
-  ~ along with this program; if not, write to the Free Software
-  ~ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  ~ along with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
   -->
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
@@ -49,43 +49,56 @@
     <plugins>
 
       <plugin>
-        <groupId>org.bsc.maven</groupId>
-        <artifactId>maven-processor-plugin</artifactId>
-        <version>2.0.6-redhat</version>
-        <configuration>
-          <processors>
-            <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
-          </processors>
-          <compilerArguments>-AtargetDirectory=${project.build.directory}/docs/xml</compilerArguments>
-          <!-- comment in next line to get the xml on stdout for debugging -->
-            <!--<compilerArguments>-Averbose=true</compilerArguments>-->
-        </configuration>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.0</version>
         <executions>
           <execution>
-            <id>create-rest-api-report</id>
-            <phase>process-classes</phase>
+            <!-- Compile the sources i.e. the processor plugin-->
+            <id>compile-processor</id>
+            <phase>compile</phase>
+            <goals>
+              <goal>compile</goal>
+            </goals>
+            <configuration>
+              <proc>none</proc>
+              <verbose>false</verbose>
+            </configuration>
+          </execution>
+          <execution>
+            <!-- Execute the compiled plugin on the test sources -->
+            <id>create-rest-api-reports</id>
+            <phase>process-test-classes</phase>
             <goals>
               <!-- We want to process the classes in test/ -->
-              <goal>process-test</goal>
+              <goal>testCompile</goal>
             </goals>
+            <configuration>
+              <annotationProcessors>
+                <processor>org.rhq.helpers.rest_docs_generator.ClassLevelProcessor</processor>
+              </annotationProcessors>
+              <proc>only</proc>
+              <compilerArguments>
+                <AtargetDirectory>${project.build.directory}/docs/xml</AtargetDirectory>
+                <AmodelPkg>org.rhq.helpers.rest_docs_generator.test</AmodelPkg>
+                <!-- enable the next line to have the output of the processor shown on console -->
+                <!--<Averbose>true</Averbose>-->
+              </compilerArguments>
+              <!-- set the next to true to enable verbose output of the compiler plugin; default from the evn is true, but this is too noisy -->
+              <verbose>false</verbose>
+            </configuration>
+
           </execution>
         </executions>
       </plugin>
-      <!-- Disable annotation processors during normal compilation -->
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <configuration>
-          <compilerArgument>-proc:none</compilerArgument>
-        </configuration>
-      </plugin>
+
       <!-- now xml translate the output from above to html -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>xml-maven-plugin</artifactId>
         <executions>
           <execution>
-            <phase>process-classes</phase>
+            <phase>process-test-classes</phase>
             <goals>
               <goal>transform</goal>
             </goals>

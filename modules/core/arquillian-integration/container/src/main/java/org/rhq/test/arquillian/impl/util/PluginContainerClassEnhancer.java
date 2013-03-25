@@ -66,7 +66,7 @@ public class PluginContainerClassEnhancer {
                 
                 pcClass.toClass(cl, null);
             } catch (Exception e) {
-                throw new IllegalStateException("Could not enhance the PluginContaier class");
+                throw new IllegalStateException("Could not enhance the PluginContainer class", e);
             } finally {
                 initialized = true;
             }

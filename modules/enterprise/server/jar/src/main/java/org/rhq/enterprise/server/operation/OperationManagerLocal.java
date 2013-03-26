@@ -740,7 +740,7 @@ public interface OperationManagerLocal {
      */
     void unscheduleGroupOperation(Subject subject, String jobId, int resourceGroupId) throws UnscheduleException;
 
-    List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
+    PageList<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
 
     PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria);

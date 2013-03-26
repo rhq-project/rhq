@@ -62,7 +62,7 @@
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
-      <!-- adding so we can extend DefaultServlet 
+      <!-- adding so we can extend DefaultServlet
       Chose version 2.0.1 so it's compatible with info here for JBoss 4.2.3
       http://community.jboss.org/wiki/VersionOfTomcatInJBossAS-->
       <dependency>
@@ -76,11 +76,10 @@
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
         </dependency>
-        
+
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.2</version>
         </dependency>
 
         <dependency>
@@ -104,7 +103,6 @@
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
-            <version>1.1.4</version>
         </dependency>
 
         <dependency>
@@ -120,7 +118,6 @@
 
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.1-alpha-1</version>
                 <configuration>
                     <archive>
                         <manifest>

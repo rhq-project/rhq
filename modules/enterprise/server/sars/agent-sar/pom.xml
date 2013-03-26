@@ -36,7 +36,6 @@
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <!-- make sure you match that which is used by standalone agent! -->
     </dependency>
 
     <dependency>

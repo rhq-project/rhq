@@ -57,20 +57,16 @@
       <dependency>
          <groupId>jline</groupId>
          <artifactId>jline</artifactId>
-         <version>${jline.version}</version>
       </dependency>
 
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>${testng.version}</version>
-         <!-- Yes, this is actually meant to be compile, and not test, scoped. -->
       </dependency>
 
       <dependency>
          <groupId>log4j</groupId>
          <artifactId>log4j</artifactId>
-         <version>${log4j.version}</version>
          <scope>runtime</scope>
       </dependency>
 

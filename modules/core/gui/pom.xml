@@ -16,10 +16,6 @@
    <description>JSF utility classes, validators, converters, etc. that are used by both enterprise and embedded
    </description>
 
-   <properties>
-      <!-- dependency versions -->
-      <el.version>1.0</el.version>
-   </properties>
 
    <dependencies>
 
@@ -65,9 +61,7 @@
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>jsp-api</artifactId>
-         <version>2.0</version>
          <scope>provided</scope>
-         <!-- by JBossAS -->
       </dependency>
 
       <dependency>

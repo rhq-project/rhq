@@ -63,15 +63,13 @@
 
         <!-- we need to package this (and ant) in our module -->
         <dependency>
-            <groupId>ant</groupId>
+            <groupId>org.apache.ant</groupId>
             <artifactId>ant-launcher</artifactId>
-            <version>${ant.version}</version>
         </dependency>
 
         <dependency>
-            <groupId>ant</groupId>
+            <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
-            <version>${ant.version}</version>
         </dependency>
 
         <dependency>
@@ -136,11 +134,11 @@
                                     <artifactId>rhq-jboss-as-dmr-client</artifactId>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>ant</groupId>
+                                    <groupId>org.apache.ant</groupId>
                                     <artifactId>ant-launcher</artifactId>
                                 </artifactItem>
                                 <artifactItem>
-                                    <groupId>ant</groupId>
+                                    <groupId>org.apache.ant</groupId>
                                     <artifactId>ant</artifactId>
                                 </artifactItem>
                                 <artifactItem>

@@ -163,6 +163,7 @@
     <servlet-api.version>2.4</servlet-api.version>
 
     <mockito-core.version>1.9.0</mockito-core.version>
+    <el.version>1.0</el.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -445,6 +446,12 @@
         <groupId>commons-httpclient</groupId>
         <artifactId>commons-httpclient</artifactId>
         <version>${commons-httpclient.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.8.2</version>
       </dependency>
 
       <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
@@ -764,6 +771,102 @@
         <artifactId>log4j</artifactId>
         <version>${log4j.version}</version>
       </dependency>
+
+      <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.ant</artifactId>
+        <version>${jacoco.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-jxpath</groupId>
+        <artifactId>commons-jxpath</artifactId>
+        <version>1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.persistence</groupId>
+        <artifactId>persistence-api</artifactId>
+        <version>1.0</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>jsp-api</artifactId>
+        <version>2.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jline</groupId>
+        <artifactId>jline</artifactId>
+        <version>${jline.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss.jboss-embeddable-ejb3</groupId>
+        <artifactId>jboss-ejb3-all</artifactId>
+        <version>1.0.0.Alpha9</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>${jboss-logging.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.ant</groupId>
+        <artifactId>ant</artifactId>
+        <version>1.8.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.ant</groupId>
+        <artifactId>ant-launcher</artifactId>
+        <version>1.8.4</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.ant</groupId>
+        <artifactId>ant-nodeps</artifactId>
+        <version>1.8.1</version>
+      </dependency>
+
+      <dependency>
+        <groupId>dom4j</groupId>
+        <artifactId>dom4j</artifactId>
+        <version>1.6</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-dbcp</groupId>
+         <artifactId>commons-dbcp</artifactId>
+         <version>1.2.1</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-el</groupId>
+         <artifactId>commons-el</artifactId>
+         <version>1.0</version>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.el</groupId>
+         <artifactId>el-api</artifactId>
+         <version>${el.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>javax.servlet-api</artifactId>
+         <version>3.0.1</version>
+      </dependency>
   </dependencies>
 
   </dependencyManagement>
@@ -827,7 +930,7 @@
                <version>${ant.contrib.version}</version>
                <exclusions>
                  <exclusion>
-                   <groupId>ant</groupId>
+                   <groupId>org.apache.ant</groupId>
                    <artifactId>ant</artifactId>
                  </exclusion>
                </exclusions>
@@ -861,7 +964,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-compiler-plugin</artifactId>
-           <version>2.3.2</version>
+           <version>3.0</version>
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
@@ -936,6 +1039,11 @@
            <configuration>
               <argLine>${jacoco.unit-test.args} -Xms32M -Xmx512M</argLine>
            </configuration>
+         </plugin>
+         <plugin>
+           <groupId>org.sonatype.plugins</groupId>
+           <artifactId>jarjar-maven-plugin</artifactId>
+           <version>1.5</version>
          </plugin>
          <plugin>
            <artifactId>maven-war-plugin</artifactId>
@@ -1599,7 +1707,6 @@
                            <artifactItem>
                               <groupId>org.jacoco</groupId>
                               <artifactId>org.jacoco.ant</artifactId>
-                              <version>${jacoco.version}</version>
                            </artifactItem>
                         </artifactItems>
                         <stripVersion>true</stripVersion>
@@ -1659,7 +1766,6 @@
                   <dependency>
                      <groupId>org.jacoco</groupId>
                      <artifactId>org.jacoco.ant</artifactId>
-                     <version>${jacoco.version}</version>
                   </dependency>
                </dependencies>
             </plugin>
@@ -1933,6 +2039,12 @@
            <plugin>
              <artifactId>maven-surefire-report-plugin</artifactId>
              <version>2.6</version>
+           </plugin>
+
+           <plugin>
+             <groupId>org.codehaus.mojo</groupId>
+             <artifactId>clirr-maven-plugin</artifactId>
+             <version>${clirr.version}</version>
            </plugin>
 
 <!--

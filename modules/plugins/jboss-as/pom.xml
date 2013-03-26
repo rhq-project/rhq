@@ -18,7 +18,7 @@
    <properties>
       <rhq.internal>false</rhq.internal>
    </properties>
-   
+
    <dependencies>
       <!-- internal -->
       <!-- TODO: Move this up to the parent pom. -->
@@ -99,7 +99,7 @@
                   </goals>
                   <configuration>
                      <artifactItems>
-                        <!-- 
+                        <!--
                         <artifactItem>
                            <groupId>jboss</groupId>
                            <artifactId>jboss-common</artifactId>
@@ -124,9 +124,8 @@
                            <artifactId>jbpm</artifactId>
                         </artifactItem>
                         <artifactItem>
-                           <groupId>ant</groupId>
+                           <groupId>org.apache.ant</groupId>
                            <artifactId>ant</artifactId>
-                           <version>1.6.5</version>
                         </artifactItem>
                         <artifactItem>
                            <groupId>org.rhq</groupId>
@@ -151,9 +150,8 @@
                          <artifactId>jbpm</artifactId>
                        </artifactItem>
                        <artifactItem>
-                         <groupId>ant</groupId>
+                         <groupId>org.apache.ant</groupId>
                          <artifactId>ant</artifactId>
-                         <version>1.6.5</version>
                        </artifactItem>
                        <artifactItem>
                           <groupId>dom4j</groupId>
@@ -197,7 +195,7 @@
                   <executions>
                      <execution>
                         <phase>pre-integration-test</phase>
-      
+
                   <configuration>
                            <target>
                               <echo>Setting up plugin dependencies...</echo>

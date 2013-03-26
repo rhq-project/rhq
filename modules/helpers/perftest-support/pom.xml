@@ -14,14 +14,12 @@
     </description>
     <dependencies>
         <dependency>
-            <groupId>ant</groupId>
+            <groupId>org.apache.ant</groupId>
             <artifactId>ant</artifactId>
-            <version>1.6.5</version>
         </dependency>
         <dependency>
-            <groupId>ant</groupId>
+            <groupId>org.apache.ant</groupId>
             <artifactId>ant-launcher</artifactId>
-            <version>1.6.5</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -68,7 +66,6 @@
         <dependency>
             <groupId>javax.persistence</groupId>
             <artifactId>persistence-api</artifactId>
-            <version>1.0</version>
         </dependency>
         <dependency>
             <groupId>org.rhq</groupId>

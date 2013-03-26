@@ -43,7 +43,6 @@
     <dependency>
       <groupId>dom4j</groupId>
       <artifactId>dom4j</artifactId>
-      <version>1.6</version>
       <exclusions>
          <exclusion>
             <groupId>xml-apis</groupId>
@@ -87,7 +86,6 @@
     <dependency>
       <groupId>oswego-concurrent</groupId>
       <artifactId>concurrent</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
   </dependencies>

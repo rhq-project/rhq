@@ -18,7 +18,10 @@
  */
 package org.rhq.enterprise.server.operation;
 
+import java.util.Arrays;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Random;
 
@@ -34,6 +37,7 @@ import org.rhq.core.clientapi.agent.operation.CancelResults.InterruptedState;
 import org.rhq.core.clientapi.agent.operation.OperationAgentService;
 import org.rhq.core.clientapi.server.operation.OperationServerService;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.GroupOperationHistory;
@@ -502,7 +506,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
-    public void testScheduleGroupOperation() throws Exception {
+    public void testScheduleGroupOperation1() throws Exception {
         // make it a success
         simulatedOperation_Error = null;
         simulatedOperation_Timeout = false;
@@ -512,6 +516,160 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(overlord, newGroup.getId(),
             new int[] { newResource.getId() }, true, "testOp", null, trigger, "desc");
         assert schedule != null;
+        assert schedule.getDescription().equals("desc");
+        assert schedule.getOperationName().equals("testOp");
+        assert schedule.getParameters() == null;
+        assert schedule.getGroup().getId() == newGroup.getId();
+
+        Thread.sleep(4000L); // wait for it to finish, should be fast
+
+        PageList<GroupOperationHistory> results;
+        results = operationManager.findCompletedGroupOperationHistories(overlord, newGroup.getId(),
+            PageControl.getUnlimitedInstance());
+        assert results != null;
+        assert results.size() == 1;
+        GroupOperationHistory history = results.get(0);
+        assert history.getId() > 0 : history;
+        assert history.getJobId() != null : history;
+        assert history.getJobName() != null : history;
+        assert history.getJobGroup() != null : history;
+        assert history.getErrorMessage() == null : history;
+        assert history.getStatus() == OperationRequestStatus.SUCCESS : history;
+        assert history.getSubjectName().equals(overlord.getName()) : history;
+
+        PageList<GroupOperationLastCompletedComposite> list;
+        list = operationManager.findRecentlyCompletedGroupOperations(overlord, PageControl.getUnlimitedInstance());
+        assert list.size() == 1;
+        assert list.get(0).getOperationHistoryId() == history.getId();
+        assert list.get(0).getGroupId() == newGroup.getId();
+        assert list.get(0).getGroupName().equals(newGroup.getName());
+        assert list.get(0).getOperationName().equals("Test Operation");
+
+        // get the one resource history from the group
+        PageList<ResourceOperationHistory> results2;
+        results2 = operationManager.findCompletedResourceOperationHistories(overlord, newResource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert results2.size() == 1 : "Should have had 1 result: " + results2;
+
+        ResourceOperationHistory rHistory = results2.get(0);
+        assert rHistory.getId() > 0 : rHistory;
+        assert rHistory.getJobId() != null : rHistory;
+        assert rHistory.getJobName() != null : rHistory;
+        assert rHistory.getJobGroup() != null : rHistory;
+        assert rHistory.getErrorMessage() == null : rHistory;
+        assert rHistory.getStatus() == OperationRequestStatus.SUCCESS : rHistory;
+        assert rHistory.getSubjectName().equals(overlord.getName()) : rHistory;
+
+        operationManager.deleteOperationHistory(overlord, history.getId(), false);
+        results = operationManager.findCompletedGroupOperationHistories(overlord, newGroup.getId(),
+            PageControl.getUnlimitedInstance());
+        assert results != null;
+        assert results.size() == 0; // none left, we purged the only group history there was
+
+        // purging group history purges all resource histories that belong to it
+        results2 = operationManager.findCompletedResourceOperationHistories(overlord, newResource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert results2 != null;
+        assert results2.size() == 0;
+
+        list = operationManager.findRecentlyCompletedGroupOperations(overlord, PageControl.getUnlimitedInstance());
+        assert list.size() == 0;
+    }
+    
+    @Test(enabled = ENABLE_TESTS)
+    public void testScheduleGroupOperation2() throws Exception {
+        // make it a success
+        simulatedOperation_Error = null;
+        simulatedOperation_Timeout = false;
+        simulatedOperation_Sleep = 0L;
+
+        GroupOperationSchedule schedule = operationManager.scheduleGroupOperation(overlord, newGroup.getId(),
+            new int[] { newResource.getId() }, true, "testOp", null, 0, 0, 0, 20, "desc");
+        assert schedule != null;
+        assert schedule.getDescription().equals("desc");
+        assert schedule.getOperationName().equals("testOp");
+        assert schedule.getParameters() != null;
+        assert schedule.getGroup().getId() == newGroup.getId();
+
+        Thread.sleep(4000L); // wait for it to finish, should be fast
+
+        PageList<GroupOperationHistory> results;
+        results = operationManager.findCompletedGroupOperationHistories(overlord, newGroup.getId(),
+            PageControl.getUnlimitedInstance());
+        assert results != null;
+        assert results.size() == 1;
+        GroupOperationHistory history = results.get(0);
+        assert history.getId() > 0 : history;
+        assert history.getJobId() != null : history;
+        assert history.getJobName() != null : history;
+        assert history.getJobGroup() != null : history;
+        assert history.getErrorMessage() == null : history;
+        assert history.getStatus() == OperationRequestStatus.SUCCESS : history;
+        assert history.getSubjectName().equals(overlord.getName()) : history;
+
+        PageList<GroupOperationLastCompletedComposite> list;
+        list = operationManager.findRecentlyCompletedGroupOperations(overlord, PageControl.getUnlimitedInstance());
+        assert list.size() == 1;
+        assert list.get(0).getOperationHistoryId() == history.getId();
+        assert list.get(0).getGroupId() == newGroup.getId();
+        assert list.get(0).getGroupName().equals(newGroup.getName());
+        assert list.get(0).getOperationName().equals("Test Operation");
+
+        // get the one resource history from the group
+        PageList<ResourceOperationHistory> results2;
+        results2 = operationManager.findCompletedResourceOperationHistories(overlord, newResource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert results2.size() == 1 : "Should have had 1 result: " + results2;
+
+        ResourceOperationHistory rHistory = results2.get(0);
+        assert rHistory.getId() > 0 : rHistory;
+        assert rHistory.getJobId() != null : rHistory;
+        assert rHistory.getJobName() != null : rHistory;
+        assert rHistory.getJobGroup() != null : rHistory;
+        assert rHistory.getErrorMessage() == null : rHistory;
+        assert rHistory.getStatus() == OperationRequestStatus.SUCCESS : rHistory;
+        assert rHistory.getSubjectName().equals(overlord.getName()) : rHistory;
+
+        operationManager.deleteOperationHistory(overlord, history.getId(), false);
+        results = operationManager.findCompletedGroupOperationHistories(overlord, newGroup.getId(),
+            PageControl.getUnlimitedInstance());
+        assert results != null;
+        assert results.size() == 0; // none left, we purged the only group history there was
+
+        // purging group history purges all resource histories that belong to it
+        results2 = operationManager.findCompletedResourceOperationHistories(overlord, newResource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert results2 != null;
+        assert results2.size() == 0;
+
+        list = operationManager.findRecentlyCompletedGroupOperations(overlord, PageControl.getUnlimitedInstance());
+        assert list.size() == 0;
+    }
+    
+    @Test(enabled = ENABLE_TESTS)
+    public void testScheduleGroupOperation3() throws Exception {
+        // make it a success
+        simulatedOperation_Error = null;
+        simulatedOperation_Timeout = false;
+        simulatedOperation_Sleep = 0L;
+
+        GroupOperationSchedule newSchedule = new GroupOperationSchedule();
+        newSchedule.setGroup(newGroup);
+        newSchedule.setExecutionOrder(Arrays.asList(newResource));
+        newSchedule.setHaltOnFailure(true);
+        newSchedule.setOperationName("testOp");
+        newSchedule.setParameters(null);
+        newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
+        newSchedule.setDescription("desc");
+        
+        int scheduleId = operationManager.scheduleGroupOperation(overlord, newSchedule);
+        List<GroupOperationSchedule> schedules = operationManager.findScheduledGroupOperations(overlord, newGroup.getId());
+        
+        assert schedules != null;
+        assert !schedules.isEmpty();
+        GroupOperationSchedule schedule = schedules.get(0);
+        assert schedule != null;
+        assert schedule.getId() == scheduleId;
         assert schedule.getDescription().equals("desc");
         assert schedule.getOperationName().equals("testOp");
         assert schedule.getParameters() == null;
@@ -1258,7 +1416,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
-    public void testScheduleResourceOperation() throws Exception {
+    public void testScheduleResourceOperation1() throws Exception {
         Resource resource = newResource;
 
         // make it a success after 500ms
@@ -1270,6 +1428,73 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         ResourceOperationSchedule schedule = operationManager.scheduleResourceOperation(overlord, resource.getId(),
             "testOp", null, trigger, "desc");
         assert schedule != null;
+        assert schedule.getDescription().equals("desc");
+        assert schedule.getOperationName().equals("testOp");
+        assert schedule.getParameters() == null;
+        assert schedule.getResource().getId() == newResource.getId();
+
+        Thread.sleep(4000L); // wait for it to finish, should be very quick
+
+        PageList<ResourceOperationHistory> results;
+        results = operationManager.findCompletedResourceOperationHistories(overlord, resource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert results != null;
+        assert results.size() == 1;
+        ResourceOperationHistory history = results.get(0);
+        assert history.getId() > 0 : history;
+        assert history.getJobId() != null : history;
+        assert history.getJobName() != null : history;
+        assert history.getJobGroup() != null : history;
+        assert history.getErrorMessage() == null : history;
+        assert history.getStatus() == OperationRequestStatus.SUCCESS : history;
+        assert history.getSubjectName().equals(overlord.getName()) : history;
+
+        PageList<ResourceOperationLastCompletedComposite> list;
+        list = operationManager.findRecentlyCompletedResourceOperations(overlord, null,
+            PageControl.getUnlimitedInstance());
+        assert list.size() == 1;
+        assert list.get(0).getOperationHistoryId() == history.getId();
+        assert list.get(0).getResourceId() == resource.getId();
+        assert list.get(0).getResourceName().equals(resource.getName());
+        assert list.get(0).getOperationName().equals("Test Operation");
+
+        operationManager.deleteOperationHistory(overlord, history.getId(), false);
+        results = operationManager.findCompletedResourceOperationHistories(overlord, resource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert results != null;
+        assert results.size() == 0;
+
+        list = operationManager.findRecentlyCompletedResourceOperations(overlord, null,
+            PageControl.getUnlimitedInstance());
+        assert list.size() == 0;
+    }
+    
+    @Test(enabled = ENABLE_TESTS)
+    public void testScheduleResourceOperation2() throws Exception {
+        Resource resource = newResource;
+
+        // make it a success after 500ms
+        simulatedOperation_Error = null;
+        simulatedOperation_Timeout = false;
+        simulatedOperation_Sleep = 0L;
+        
+        ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
+        
+        newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
+        newSchedule.setResource(resource);
+        newSchedule.setOperationName("testOp");
+        newSchedule.setDescription("desc");
+        newSchedule.setParameters(null);
+        newSchedule.setParameters(null);
+
+        int scheduleId = operationManager.scheduleResourceOperation(overlord, newSchedule);
+        List<ResourceOperationSchedule> schedules = operationManager.findScheduledResourceOperations(overlord, resource.getId());
+        
+        assert schedules != null;
+        assert !schedules.isEmpty();
+        ResourceOperationSchedule schedule = schedules.get(0);
+        assert schedule != null;
+        assert schedule.getId() == scheduleId;
         assert schedule.getDescription().equals("desc");
         assert schedule.getOperationName().equals("testOp");
         assert schedule.getParameters() == null;
@@ -1530,6 +1755,138 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             LookupUtil.getSubjectManager().deleteUsers(LookupUtil.getSubjectManager().getOverlord(),
                 new int[] { noPermSubject.getId() });
         }
+    }
+    
+    @Test(enabled = ENABLE_TESTS)
+    public void testCronResourceScheduling() throws Exception {
+        Resource resource = newResource;
+        Calendar calendar = new GregorianCalendar();
+        calendar.add(Calendar.SECOND, 2);
+        ResourceOperationSchedule schedule = operationManager.scheduleResourceOperationUsingCron(overlord,
+            resource.getId(), "testOp", calendar.get(Calendar.SECOND) + " " + calendar.get(Calendar.MINUTE)
+                + " * * * ?", 20, null, "desc");
+        
+        assert schedule != null;
+        assert schedule.getDescription().equals("desc");
+        assert schedule.getOperationName().equals("testOp");
+        assert schedule.getParameters() != null;
+        assert schedule.getResource().getId() == resource.getId();
+
+        List<ResourceOperationSchedule> results;
+        results = operationManager.findScheduledResourceOperations(overlord, resource.getId());
+        assert results != null;
+        assert results.size() == 1;
+        ResourceOperationSchedule returnedSchedule = results.get(0);
+        assert returnedSchedule.getId() > 0 : returnedSchedule;
+        assert returnedSchedule.getJobId() != null : returnedSchedule;
+        assert returnedSchedule.getJobName() != null : returnedSchedule;
+        assert returnedSchedule.getJobGroup() != null : returnedSchedule;
+        assert returnedSchedule.getDescription().equals("desc");
+        assert returnedSchedule.getOperationName().equals("testOp");
+        assert returnedSchedule.getParameters() != null;
+        assert returnedSchedule.getResource().getId() == resource.getId();
+        
+        System.out.println("WAITING FOR 4s FOR THE SCHEDULED OPERATION TO FINISH");
+        Thread.sleep(4000L);
+
+        PageList<ResourceOperationHistory> resultsHist;
+        resultsHist = operationManager.findCompletedResourceOperationHistories(overlord, resource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert resultsHist != null;
+        assert resultsHist.size() == 1;
+        ResourceOperationHistory history = resultsHist.get(0);
+        assert history.getId() > 0 : history;
+        assert history.getJobId() != null : history;
+        assert history.getJobName() != null : history;
+        assert history.getJobGroup() != null : history;
+        assert history.getErrorMessage() == null : history;
+        assert history.getStatus() == OperationRequestStatus.SUCCESS : history;
+        assert history.getSubjectName().equals(overlord.getName()) : history;
+
+        PageList<ResourceOperationLastCompletedComposite> list;
+        list = operationManager.findRecentlyCompletedResourceOperations(overlord, null,
+            PageControl.getUnlimitedInstance());
+        assert list.size() == 1;
+        assert list.get(0).getOperationHistoryId() == history.getId();
+        assert list.get(0).getResourceId() == resource.getId();
+        assert list.get(0).getResourceName().equals(resource.getName());
+        assert list.get(0).getOperationName().equals("Test Operation");
+
+        operationManager.deleteOperationHistory(overlord, history.getId(), false);
+        resultsHist = operationManager.findCompletedResourceOperationHistories(overlord, resource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert resultsHist != null;
+        assert resultsHist.size() == 0;
+
+        list = operationManager.findRecentlyCompletedResourceOperations(overlord, null,
+            PageControl.getUnlimitedInstance());
+        assert list.size() == 0;
+    }
+    
+    @Test(enabled = ENABLE_TESTS)
+    public void testCronGroupScheduling() throws Exception {
+        Resource resource = newResource;
+        ResourceGroup group = newGroup;
+        Calendar calendar = new GregorianCalendar();
+        calendar.add(Calendar.SECOND, 2);
+        GroupOperationSchedule schedule = operationManager.scheduleGroupOperationUsingCron(overlord, newGroup.getId(), new int[] { resource.getId() }, true, "testOp", null, calendar.get(Calendar.SECOND) + " " + calendar.get(Calendar.MINUTE)
+            + " * * * ?", 20, "desc");
+
+        assert schedule != null;
+        assert schedule.getDescription().equals("desc");
+        assert schedule.getOperationName().equals("testOp");
+        assert schedule.getParameters() != null;
+        assert schedule.getGroup().getId() == group.getId();
+
+        List<GroupOperationSchedule> results;
+        results = operationManager.findScheduledGroupOperations(overlord, group.getId());
+        assert results != null;
+        assert results.size() == 1;
+        GroupOperationSchedule returnedSchedule = results.get(0);
+        assert returnedSchedule.getId() > 0 : returnedSchedule;
+        assert returnedSchedule.getJobId() != null : returnedSchedule;
+        assert returnedSchedule.getJobName() != null : returnedSchedule;
+        assert returnedSchedule.getJobGroup() != null : returnedSchedule;
+        assert returnedSchedule.getDescription().equals("desc");
+        assert returnedSchedule.getOperationName().equals("testOp");
+        assert returnedSchedule.getParameters() != null;
+        assert returnedSchedule.getGroup().getId() == group.getId();
+
+        System.out.println("WAITING FOR 4s FOR THE SCHEDULED OPERATION TO FINISH");
+        Thread.sleep(4000L);
+
+        PageList<ResourceOperationHistory> resultsHist;
+        resultsHist = operationManager.findCompletedResourceOperationHistories(overlord, resource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert resultsHist != null;
+        assert resultsHist.size() == 1;
+        ResourceOperationHistory history = resultsHist.get(0);
+        assert history.getId() > 0 : history;
+        assert history.getJobId() != null : history;
+        assert history.getJobName() != null : history;
+        assert history.getJobGroup() != null : history;
+        assert history.getErrorMessage() == null : history;
+        assert history.getStatus() == OperationRequestStatus.SUCCESS : history;
+        assert history.getSubjectName().equals(overlord.getName()) : history;
+
+        PageList<ResourceOperationLastCompletedComposite> list;
+        list = operationManager.findRecentlyCompletedResourceOperations(overlord, null,
+            PageControl.getUnlimitedInstance());
+        assert list.size() == 1;
+        assert list.get(0).getOperationHistoryId() == history.getId();
+        assert list.get(0).getResourceId() == resource.getId();
+        assert list.get(0).getResourceName().equals(resource.getName());
+        assert list.get(0).getOperationName().equals("Test Operation");
+
+        operationManager.deleteOperationHistory(overlord, history.getId(), false);
+        resultsHist = operationManager.findCompletedResourceOperationHistories(overlord, resource.getId(), null, null,
+            PageControl.getUnlimitedInstance());
+        assert resultsHist != null;
+        assert resultsHist.size() == 0;
+
+        list = operationManager.findRecentlyCompletedResourceOperations(overlord, null,
+            PageControl.getUnlimitedInstance());
+        assert list.size() == 0;
     }
 
     private Resource createNewResource() throws Exception {

@@ -42,16 +42,14 @@ public class MigrateAgentPreferences extends Task {
     static private final String NODE_PREFIX = NODE_PARENT + NODE_DELIM;
     static private final String DEFAULT_PREFS_FILE = "agent-prefs.properties";
     static private final String MAINTAIN_NATIVE_PREFS_SYSPROP = "rhq.preferences.migrate.keep-native-prefs";
+    // Currently keeping native prefs until we're sure we don't need them.
+    // static private final String MAINTAIN_NATIVE_PREFS_DEFAULT = "false";
+    static private final String MAINTAIN_NATIVE_PREFS_DEFAULT = "true";
     static private final Boolean MAINTAIN_NATIVE_PREFS;
 
     static {
-        Boolean sysProp = Boolean.FALSE;
-        try {
-            sysProp = Boolean.valueOf(System.getProperty(MAINTAIN_NATIVE_PREFS_SYSPROP, "false"));
-        } catch (Throwable t) {
-            sysProp = Boolean.FALSE;
-        }
-        MAINTAIN_NATIVE_PREFS = sysProp;
+        MAINTAIN_NATIVE_PREFS = Boolean.valueOf(System.getProperty(MAINTAIN_NATIVE_PREFS_SYSPROP,
+            MAINTAIN_NATIVE_PREFS_DEFAULT));
     }
 
     private File toDir;

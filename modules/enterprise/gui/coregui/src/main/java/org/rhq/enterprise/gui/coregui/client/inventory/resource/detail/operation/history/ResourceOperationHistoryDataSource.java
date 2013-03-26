@@ -149,7 +149,7 @@ public class ResourceOperationHistoryDataSource extends
 
     @Override
     protected ResourceOperationHistory createOperationHistory() {
-        return new ResourceOperationHistory(null, null, null, null, null, null);
+        return new ResourceOperationHistory(null, null, null, null, null, null, null);
     }
 
     @Override

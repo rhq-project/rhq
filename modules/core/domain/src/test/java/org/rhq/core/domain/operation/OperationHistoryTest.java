@@ -285,8 +285,7 @@ public class OperationHistoryTest extends AbstractEJB3Test {
 
     private ResourceOperationHistory createGroupIndividualResourceHistory(GroupOperationHistory g1) {
         ResourceOperationHistory r2 = new ResourceOperationHistory("job3" + System.currentTimeMillis(), "group3",
-            "user", newOperation, null, newResource);
-        r2.setGroupOperationHistory(g1);
+            "user", newOperation, null, newResource, g1);
         r2.setStartedTime();
         em.persist(r2);
         return r2;
@@ -301,7 +300,7 @@ public class OperationHistoryTest extends AbstractEJB3Test {
 
     private ResourceOperationHistory createIndividualResourceHistory() {
         ResourceOperationHistory r1 = new ResourceOperationHistory("job1" + System.currentTimeMillis(), "group1",
-            "user", newOperation, null, newResource);
+            "user", newOperation, null, newResource, null);
         r1.setStartedTime();
         em.persist(r1);
         return r1;

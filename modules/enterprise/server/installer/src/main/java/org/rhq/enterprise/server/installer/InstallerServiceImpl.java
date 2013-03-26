@@ -677,7 +677,7 @@ public class InstallerServiceImpl implements InstallerService {
      *
      * Note that this is private - it is not exposed to the installer UI. It should have no need to save
      * this data outside of the normal installation process (see {@link #install()}).
-     * 
+     *
      * @param serverProperties the server properties to save
      * @throws Exception if failed to save the properties to the .properties file
      */
@@ -992,11 +992,11 @@ public class InstallerServiceImpl implements InstallerService {
      * props for the management host and port values and will re-try using those values. If the retry
      * succeeds, the host/port it used to successfully connect will be stored in the {@link #installerConfiguration}
      * object. If it still fails, an exception is thrown.
-     * 
+     *
      * @param fallbackProps contains jboss.bind.address.management and/or jboss.native.management.port to use
      *                      if the initial connection attempt fails. If null, will be ignored.
      * @return the app server version that we are connected to
-     * 
+     *
      * @throws Exception if the connection attempts fail
      */
     private String testModelControllerClient(HashMap<String, String> fallbackProps) throws Exception {

@@ -77,7 +77,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      *
      * @throws Exception if failed to create security domain
      */
-    public void createNewSecureIdentitySecurityDomain(String securityDomainName, String username, String password)
+    public void createNewSecureIdentitySecurityDomain71(String securityDomainName, String username, String password)
         throws Exception {
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
@@ -99,6 +99,56 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         loginModulesNode.add(loginModule);
 
         ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
+
+        System.err.println("== security domain ==> " + batch.toJSONString(false));
+
+        ModelNode results = execute(batch);
+        if (!isSuccess(results)) {
+            throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
+        }
+
+        return;
+    }
+
+    /**
+     * Create a new security domain using the SecureIdentity authentication method.
+     * This is used when you want to obfuscate a database password in the configuration.
+     *
+     * This is the version for as7.2+ (e.g. eap 6.1)
+     *
+     * @param securityDomainName the name of the new security domain
+     * @param username the username associated with the security domain
+     * @param password the value of the password to store in the configuration (e.g. the obfuscated password itself)
+     *
+     * @throws Exception if failed to create security domain
+     */
+    public void createNewSecureIdentitySecurityDomain72(String securityDomainName, String username, String password)
+        throws Exception {
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
+        ModelNode addTopNode = createRequest(ADD, addr);
+        addTopNode.get(CACHE_TYPE).set("default");
+
+        Address authAddr = addr.clone().add(AUTHENTICATION, CLASSIC);
+        ModelNode addAuthNode = createRequest(ADD, authAddr);
+
+        Address loginAddr = authAddr.clone().add("login-module","SecureIdentity");
+        ModelNode loginModule = createRequest(ADD,loginAddr);
+
+        loginModule.get(CODE).set("SecureIdentity");
+        loginModule.get(FLAG).set("required");
+        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+        moduleOptions.setEmptyList();
+        // TODO: we really want to use addExpression (e.g. ${rhq.server.database.user-name})
+        // for username and password so rhq-server.properties can be used to set these.
+        // However, AS7.1 doesn't support this yet - see https://issues.jboss.org/browse/AS7-5177
+        moduleOptions.add(USERNAME, username);
+        moduleOptions.add(PASSWORD, password);
+
+        ModelNode batch = createBatchRequest(addTopNode, addAuthNode, loginModule);
+
+        System.err.println("== security domain ==> " + batch.toJSONString(false));
+
         ModelNode results = execute(batch);
         if (!isSuccess(results)) {
             throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
@@ -192,8 +242,9 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * @param hashEncoding if null defaults to "base64"
      * @throws Exception if failed to create security domain
      */
-    public void createNewDatabaseServerSecurityDomain(String securityDomainName, String dsJndiName,
-        String principalsQuery, String rolesQuery, String hashAlgorithm, String hashEncoding) throws Exception {
+    public void createNewDatabaseServerSecurityDomain71(String securityDomainName, String dsJndiName,
+                                                        String principalsQuery, String rolesQuery, String hashAlgorithm,
+                                                        String hashEncoding) throws Exception {
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
         ModelNode addTopNode = createRequest(ADD, addr);
@@ -214,6 +265,52 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         loginModulesNode.add(loginModule);
 
         ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
+        ModelNode results = execute(batch);
+        if (!isSuccess(results)) {
+            throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
+        }
+
+        return;
+    }
+
+    /**
+     * Create a new security domain using the database server authentication method.
+     * This is used when you want to directly authenticate against a db entry.
+     * This is for AS 7.2+ (e.g. EAP 6.1) and works around https://issues.jboss.org/browse/AS7-6527
+     *
+     * @param securityDomainName the name of the new security domain
+     * @param dsJndiName the jndi name for the datasource to query against
+     * @param principalsQuery the SQL query for selecting password info for a principal
+     * @param rolesQuery the SQL query for selecting role info for a principal
+     * @param hashAlgorithm if null defaults to "MD5"
+     * @param hashEncoding if null defaults to "base64"
+     * @throws Exception if failed to create security domain
+     */
+    public void createNewDatabaseServerSecurityDomain72(String securityDomainName, String dsJndiName,
+                                                        String principalsQuery, String rolesQuery, String hashAlgorithm,
+                                                        String hashEncoding) throws Exception {
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
+        ModelNode addTopNode = createRequest(ADD, addr);
+        addTopNode.get(CACHE_TYPE).set("default");
+
+        Address authAddr = addr.clone().add(AUTHENTICATION, CLASSIC);
+        ModelNode addAuthNode = createRequest(ADD, authAddr);
+
+        // Create the login module in a separate step
+        Address loginAddr = authAddr.clone().add("login-module","Database"); // name = code
+        ModelNode loginModule = createRequest(ADD,loginAddr ); //addAuthNode.get(LOGIN_MODULES);
+        loginModule.get(CODE).set("Database");
+        loginModule.get(FLAG).set("required");
+        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+        moduleOptions.setEmptyList();
+        moduleOptions.add(DS_JNDI_NAME, dsJndiName);
+        moduleOptions.add(PRINCIPALS_QUERY, principalsQuery);
+        moduleOptions.add(ROLES_QUERY, rolesQuery);
+        moduleOptions.add(HASH_ALGORITHM, (null == hashAlgorithm ? "MD5" : hashAlgorithm));
+        moduleOptions.add(HASH_ENCODING, (null == hashEncoding ? "base64" : hashEncoding));
+
+        ModelNode batch = createBatchRequest(addTopNode, addAuthNode, loginModule);
         ModelNode results = execute(batch);
         if (!isSuccess(results)) {
             throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
@@ -253,10 +350,22 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      *
      * @param securityDomainName the name of the new security domain
      * @param loginModules an array of login modules to place in the security domain. They are ordered top-down in the
-     * same index order of the array. 
+     * same index order of the array.
      * @throws Exception if failed to create security domain
      */
     public void createNewSecurityDomain(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
+        CoreJBossASClient coreClient = new CoreJBossASClient(getModelControllerClient());
+        String serverVersion = coreClient.getAppServerVersion();
+        if (serverVersion.startsWith("7.2")) {
+            createNewSecurityDomain72(securityDomainName, loginModules);
+        }
+        else {
+            createNewSecurityDomain71(securityDomainName,loginModules);
+        }
+
+    }
+
+    public void createNewSecurityDomain71(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
             removeSecurityDomain(securityDomainName);
@@ -301,6 +410,59 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         return;
     }
 
+    public void createNewSecurityDomain72(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
+
+        if (isSecurityDomain(securityDomainName)) {
+            removeSecurityDomain(securityDomainName);
+        }
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
+
+        ModelNode addTopNode = createRequest(ADD, addr);
+        addTopNode.get(CACHE_TYPE).set("default");
+
+        Address authAddr = addr.clone().add(AUTHENTICATION, CLASSIC);
+        ModelNode addAuthNode = createRequest(ADD, authAddr);
+
+
+        // We add each login module via its own :add request
+        // Add the start we put the 2 "top nodes" so that it works with the varargs below
+        ModelNode[] steps = new ModelNode[loginModules.length+2];
+        steps[0] = addTopNode;
+        steps[1] = addAuthNode;
+
+        for (int i = 0; i < loginModules.length; i++) {
+            LoginModuleRequest moduleRequest = loginModules[i];
+            Address loginAddr = authAddr.clone().add("login-module", moduleRequest.getLoginModuleFQCN());
+
+            ModelNode loginModule = createRequest(ADD, loginAddr);
+            loginModule.get(CODE).set(moduleRequest.getLoginModuleFQCN());
+            loginModule.get(FLAG).set(moduleRequest.getFlagString());
+            ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
+            moduleOptions.setEmptyList();
+
+            Map<String, String> moduleOptionProperties = moduleRequest.getModuleOptionProperties();
+            if (null != moduleOptionProperties) {
+                for (String key : moduleOptionProperties.keySet()) {
+                    String value = moduleOptionProperties.get(key);
+                    if (null != value) {
+                        moduleOptions.add(key, value);
+                    }
+                }
+            }
+
+            steps[i+2]=loginModule;
+        }
+
+        ModelNode batch = createBatchRequest(steps);
+        ModelNode results = execute(batch);
+        if (!isSuccess(results)) {
+            throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
+        }
+
+        return;
+    }
+
     /** Immutable helper */
     public static class LoginModuleRequest {
         private AppConfigurationEntry entry;
@@ -325,7 +487,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         }
 
         // deal with the fact that this dumb LoginModuleControlFlag class gives you no way of getting the
-        // necessary string value.  Don't try to pick it out of the toString() value which seems sensitive to locale       
+        // necessary string value.  Don't try to pick it out of the toString() value which seems sensitive to locale
         public String getFlagString() {
             if (LoginModuleControlFlag.SUFFICIENT.equals(entry.getControlFlag())) {
                 return "sufficient";

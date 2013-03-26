@@ -97,7 +97,8 @@ public abstract class OperationJob implements Job {
 
         ResourceOperationHistory history;
         history = new ResourceOperationHistory(jobName, jobGroup, schedule.getSubject().getName(), op, parameters,
-            schedule.getResource(), groupHistory);
+            schedule.getResource());
+        history.setGroupOperationHistory(groupHistory);
 
         // persist the results of the initial create
         ResourceOperationHistory persisted;

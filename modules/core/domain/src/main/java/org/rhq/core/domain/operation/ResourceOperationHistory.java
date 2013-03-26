@@ -126,12 +126,11 @@ public class ResourceOperationHistory extends OperationHistory {
     protected ResourceOperationHistory() {
     }
 
-    public ResourceOperationHistory(String jobName, String jobGroup, String subjectName,
-        OperationDefinition operationDefinition, Configuration parameters, Resource resource,
-        GroupOperationHistory groupHistory) {
+    public ResourceOperationHistory(
+            String jobName, String jobGroup, String subjectName,
+            OperationDefinition operationDefinition, Configuration parameters, Resource resource) {
         super(jobName, jobGroup, subjectName, operationDefinition, parameters);
         this.resource = resource;
-        setGroupOperationHistory(groupHistory);
     }
 
     public Resource getResource() {

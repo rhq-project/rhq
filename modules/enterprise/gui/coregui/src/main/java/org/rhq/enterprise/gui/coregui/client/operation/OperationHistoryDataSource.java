@@ -431,7 +431,7 @@ public class OperationHistoryDataSource extends
         ResourceOperationHistory resourceOperationHistory = new ResourceOperationHistory(null, null,
             from.getAttribute(Field.SUBJECT),
             (OperationDefinition) from.getAttributeAsObject(Field.OPERATION_DEFINITION),
-            (Configuration) from.getAttributeAsObject(Field.PARAMETERS), resource, null);
+            (Configuration) from.getAttributeAsObject(Field.PARAMETERS), resource);
         resourceOperationHistory.setId(from.getAttributeAsInt(Field.ID));
         return resourceOperationHistory;
     }

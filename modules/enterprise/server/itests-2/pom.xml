@@ -22,11 +22,11 @@
 
   <properties>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
-    <jboss.unzip.location>${basedir}/target/jboss-as-${jboss.version}</jboss.unzip.location>
+    <jboss.unzip.location>${basedir}/target/${jboss.eap.version}</jboss.unzip.location>
     <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager
       -Djava.security.policy==${jboss.unzip.location}/security.policy</jboss.vm.args>
     <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
-    <!-- These properties guide which datasources are used for integration tests. Only one should be true. The default is 
+    <!-- These properties guide which datasources are used for integration tests. Only one should be true. The default is
       Postgres, specify -Pitest.oracle to use Oracle -->
     <skip.postgres>false</skip.postgres>
     <skip.oracle>true</skip.oracle>
@@ -86,7 +86,7 @@
                     <replacetoken>&lt;/extensions></replacetoken>
                     <replacevalue><![CDATA[
     </extensions>
-                    
+
     <!-- FOR RHQ TESTING -->
     <system-properties>
         <property name="project.version" value="${project.version}"/>
@@ -98,7 +98,7 @@
                   <replacefilter>
                     <replacetoken>&lt;/security-domains></replacetoken>
                     <replacevalue><![CDATA[
-                <!-- FOR RHQ TESTING --> 
+                <!-- FOR RHQ TESTING -->
                 <security-domain name="RHQDSSecurityDomain" cache-type="default">
                     <authentication>
                         <login-module code="ConfiguredIdentity" flag="required">
@@ -133,17 +133,17 @@
                   <replacefilter>
                     <replacetoken>&lt;socket-binding name="https" port="8443"/></replacetoken>
                     <replacevalue><![CDATA[
-        <socket-binding name="https" port="8443"/>                    
+        <socket-binding name="https" port="8443"/>
         <!-- FOR RHQ TESTING -->
         <socket-binding name="messaging" port="${rhq.server.socket.binding.port.messaging:4445}"/>
         <socket-binding name="messaging-throughput" port="${rhq.server.socket.binding.port.messaging-throughput:4455}"/>]]></replacevalue>
                   </replacefilter>
 
                   <replacefilter>
-                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.1"/></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.2"></replacetoken>
                     <replacevalue><![CDATA[
         <!-- FOR RHQ TESTING -->
-        <subsystem xmlns="urn:jboss:domain:messaging:1.1">
+        <subsystem xmlns="urn:jboss:domain:messaging:1.3">
             <hornetq-server>
                 <persistence-enabled>true</persistence-enabled>
                 <journal-file-size>102400</journal-file-size>
@@ -239,13 +239,13 @@
                 </jms-destinations>
             </hornetq-server>
         </subsystem>
-        <subsystem xmlns="urn:jboss:domain:naming:1.1"/>]]></replacevalue>
+        <subsystem xmlns="urn:jboss:domain:naming:1.2">]]></replacevalue>
                   </replacefilter>
 
                   <replacefilter>
                     <replacetoken>&lt;/drivers></replacetoken>
-                    <replacevalue><![CDATA[                    
-                    <!-- FOR RHQ TESTING -->               
+                    <replacevalue><![CDATA[
+                    <!-- FOR RHQ TESTING -->
                     <driver name="postgres" module="org.rhq.postgres">
                         <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
                     </driver>
@@ -255,10 +255,11 @@
                 </drivers>]]></replacevalue>
                   </replacefilter>
 
+
                   <replacefilter>
-                    <replacetoken>&lt;/cache-container></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:infinispan:1.4"></replacetoken>
                     <replacevalue><![CDATA[
-            </cache-container>
+        <subsystem xmlns="urn:jboss:domain:infinispan:1.4">
             <!-- FOR RHQ TESTING -->
             <cache-container name="rhq" jndi-name="java:jboss/infinispan/rhq">
                 <local-cache name="rhqCache">
@@ -320,7 +321,7 @@
                   <replacefilter>
                     <replacetoken>&lt;/datasource></replacetoken>
                     <replacevalue><![CDATA[
-                </datasource>                    
+                </datasource>
                 <!-- FOR RHQ TESTING -->
                 <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
                     <connection-url>${rhq.test.ds.connection-url}</connection-url>
@@ -369,7 +370,7 @@
                     </timeout>
                     <statement>
                         <prepared-statement-cache-size>75</prepared-statement-cache-size>
-                    </statement> 
+                    </statement>
                 </xa-datasource>]]></replacevalue>
                   </replacefilter>
 
@@ -395,7 +396,7 @@
                   <replacefilter>
                     <replacetoken>&lt;/datasource></replacetoken>
                     <replacevalue><![CDATA[
-                </datasource>                    
+                </datasource>
                 <!-- FOR RHQ TESTING -->
                 <datasource jta="false" jndi-name="java:jboss/datasources/NoTxRHQDS" pool-name="NoTxRHQDS" enabled="true" use-java-context="true">
                     <connection-url>${rhq.test.ds.connection-url}</connection-url>
@@ -432,7 +433,7 @@
                         <!--
                         Oracle does not like XA connections getting used both inside and outside a JTA transaction.
                         To workaround the problem you can create separate sub-pools for the different contexts using <no-tx-separate-pools/>
-                        -->                        
+                        -->
                         <no-tx-separate-pools>true</no-tx-separate-pools>
                     </xa-pool>
                     <security>
@@ -534,7 +535,7 @@
   <profiles>
 
     <profile>
-      <!-- This profile has been created to avoid unnecessary resolution of test dependencies during a build that does not 
+      <!-- This profile has been created to avoid unnecessary resolution of test dependencies during a build that does not
         run, compile or need tests. There are product build dependencies on this profile, don't remove. -->
 
       <id>test.dependencies</id>
@@ -716,7 +717,7 @@
       </properties>
 
       <dependencies>
-        <!-- The provided scope in the root pom is not sufficient, we need this fo shrinkwrap to resolve dependency and add 
+        <!-- The provided scope in the root pom is not sufficient, we need this fo shrinkwrap to resolve dependency and add
           the jar to the deployment. -->
         <dependency>
           <groupId>com.oracle</groupId>
@@ -739,8 +740,8 @@
       </properties>
     </profile>
 
-    <!-- These two properties allow Arquillian to inspect AS7 through the mgmt port, to determine the ports it needs to interact 
-      with when spawning the AS7 instance. This allows the AS7 to run on non-default ports. If these properties are not set (for 
+    <!-- These two properties allow Arquillian to inspect AS7 through the mgmt port, to determine the ports it needs to interact
+      with when spawning the AS7 instance. This allows the AS7 to run on non-default ports. If these properties are not set (for
       example, in settings.xml) then we must set the defaults here. The offset is then provided via the standalone.xml properties -->
     <profile>
       <id>arquillian-ports</id>

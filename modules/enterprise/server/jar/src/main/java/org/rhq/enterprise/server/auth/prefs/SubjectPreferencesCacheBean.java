@@ -59,7 +59,7 @@ public class SubjectPreferencesCacheBean implements SubjectPreferencesCacheLocal
     @EJB
     private ConfigurationManagerLocal configurationManager;
 
-    private SubjectPreferencesCacheBean() {
+    public SubjectPreferencesCacheBean() {
         subjectPreferences = new HashMap<Integer, Configuration>();
     }
 
@@ -145,7 +145,7 @@ public class SubjectPreferencesCacheBean implements SubjectPreferencesCacheLocal
         }
     }
 
-    /**    
+    /**
      * @param subjectId the subject to get preferences of
      * @return the <b>COPY</b> of the configuration object - changes done to that instance will not be reflected in the persisted
      * preferences
@@ -154,7 +154,7 @@ public class SubjectPreferencesCacheBean implements SubjectPreferencesCacheLocal
     @Lock(LockType.READ)
     public Configuration getPreferences(int subjectId) {
         load(subjectId);
-        
+
         Configuration config = subjectPreferences.get(subjectId);
         if (config == null) {
             return new Configuration();

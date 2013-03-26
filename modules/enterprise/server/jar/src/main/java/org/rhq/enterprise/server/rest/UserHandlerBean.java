@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.rest;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -27,8 +28,6 @@ import java.util.TreeSet;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -56,7 +55,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceNotFoundException;
@@ -94,9 +92,6 @@ public class UserHandlerBean extends AbstractRestBean {
 
     @EJB
     ResourceManagerLocal resourceManager;
-
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    private EntityManager entityManager;
 
     @GZIP
     @GET
@@ -270,6 +265,10 @@ public class UserHandlerBean extends AbstractRestBean {
 
     private void updateResourceFavorites(Set<Integer> favIds) {
         Configuration conf = caller.getUserConfiguration();
+        if (conf==null) {
+            conf = new Configuration();
+        }
+
         StringBuilder builder = buildFavStringFromSet(favIds);
         PropertySimple prop = conf.getSimple(RESOURCE_HEALTH_RESOURCES);
         if (prop == null) {
@@ -283,6 +282,10 @@ public class UserHandlerBean extends AbstractRestBean {
 
     private void updateGroupFavorites(Set<Integer> favIds) {
         Configuration conf = caller.getUserConfiguration();
+        if (conf==null) {
+            conf = new Configuration();
+        }
+
         StringBuilder builder = buildFavStringFromSet(favIds);
         PropertySimple prop = conf.getSimple(GROUP_HEALTH_GROUPS);
         if (prop == null) {
@@ -296,6 +299,8 @@ public class UserHandlerBean extends AbstractRestBean {
 
     private Set<Integer> getResourceIdsForFavorites() {
         Configuration conf = caller.getUserConfiguration();
+        if (conf==null)
+            return new HashSet<Integer>();
         String favsString = conf.getSimpleValue(RESOURCE_HEALTH_RESOURCES, "");
         Set<Integer> favIds = getIdsFromFavString(favsString);
         return favIds;
@@ -303,6 +308,8 @@ public class UserHandlerBean extends AbstractRestBean {
 
     private Set<Integer> getGroupIdsForFavorites() {
         Configuration conf = caller.getUserConfiguration();
+        if (conf==null)
+            return  new HashSet<Integer>();
         String favsString = conf.getSimpleValue(GROUP_HEALTH_GROUPS, "");
         Set<Integer> favIds = getIdsFromFavString(favsString);
         return favIds;

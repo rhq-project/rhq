@@ -36,14 +36,14 @@ import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.NamedQueries;
+import javax.persistence.NamedQuery;
 import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlTransient;
 
-import org.hibernate.annotations.NamedQueries;
-import org.hibernate.annotations.NamedQuery;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.resource.ProductVersion;
@@ -62,7 +62,7 @@ import org.rhq.core.domain.util.OSGiVersionComparator;
         + "SELECT pv FROM PackageVersion AS pv " //
         + " WHERE pv.generalPackage.name = :packageName " //
         + "   AND pv.generalPackage.packageType.name = :packageTypeName " //
-        + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //        
+        + "   AND pv.generalPackage.packageType.resourceType.id = :resourceTypeId " //
         + "   AND pv.version = :version "//
         + " ORDER BY pv.id DESC "),
     @NamedQuery(name = PackageVersion.QUERY_FIND_BY_PACKAGE_SHA, query = "" //
@@ -417,7 +417,7 @@ public class PackageVersion implements Serializable {
     @OneToMany(mappedBy = "packageVersion", fetch = FetchType.LAZY)
     private Set<InstalledPackageHistory> installedPackageHistory;
 
-    // No longer use cascade PERSIST on this.  We'll associate it manually due to intracacies in blob handling     
+    // No longer use cascade PERSIST on this.  We'll associate it manually due to intracacies in blob handling
     @JoinColumn(name = "PACKAGE_BITS_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(cascade = { CascadeType.REMOVE }, fetch = FetchType.LAZY, optional = true)
     @XmlTransient

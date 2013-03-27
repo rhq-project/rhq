@@ -147,8 +147,6 @@ public class SecurityDomainJBossASClient extends JBossASClient {
 
         ModelNode batch = createBatchRequest(addTopNode, addAuthNode, loginModule);
 
-        System.err.println("== security domain ==> " + batch.toJSONString(false));
-
         ModelNode results = execute(batch);
         if (!isSuccess(results)) {
             throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
@@ -365,7 +363,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
 
     }
 
-    public void createNewSecurityDomain71(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
+    private void createNewSecurityDomain71(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
             removeSecurityDomain(securityDomainName);
@@ -378,8 +376,6 @@ public class SecurityDomainJBossASClient extends JBossASClient {
 
         ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
         ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
-
-        ModelNode[] loginModuleNodes = new ModelNode[loginModules.length];
 
         for (int i = 0, len = loginModules.length; i < len; ++i) {
             ModelNode loginModule = new ModelNode();
@@ -410,7 +406,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         return;
     }
 
-    public void createNewSecurityDomain72(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
+    private void createNewSecurityDomain72(String securityDomainName, LoginModuleRequest... loginModules) throws Exception {
 
         if (isSecurityDomain(securityDomainName)) {
             removeSecurityDomain(securityDomainName);

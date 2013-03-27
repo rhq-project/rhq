@@ -187,8 +187,9 @@
                   <artifactId>jbpm</artifactId>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>org.apache.ant</groupId>
+                  <groupId>ant</groupId>
                   <artifactId>ant</artifactId>
+                  <version>1.6.5</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>dom4j</groupId>

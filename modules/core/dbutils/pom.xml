@@ -37,8 +37,9 @@
 
         <!-- 3rd Party Deps -->
         <dependency>
-            <groupId>org.apache.ant</groupId>
+            <groupId>ant</groupId>
             <artifactId>ant</artifactId>
+            <version>1.6.5</version>
         </dependency>
         <dependency>
             <groupId>commons-logging</groupId>
@@ -46,9 +47,10 @@
             <version>1.1.1</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.ant</groupId>
+            <groupId>ant</groupId>
             <artifactId>ant-launcher</artifactId>
             <scope>test</scope>
+            <version>1.6.5</version>
         </dependency>
         <dependency>
             <groupId>i18nlog</groupId>

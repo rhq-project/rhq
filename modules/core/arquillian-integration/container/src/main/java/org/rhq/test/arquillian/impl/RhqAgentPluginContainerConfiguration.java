@@ -18,7 +18,8 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
     private String serverServicesImplementationClassName;
     private boolean nativeSystemInfoEnabled;
     private String additionalPackagesForRootPluginClassLoaderToExclude;
-    
+    private boolean clearDataOnShutdown;
+
     private static final long HUNDRED_YEARS = 100L * 365 * 24 * 60 * 60;
     
     public RhqAgentPluginContainerConfiguration() {
@@ -95,6 +96,14 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
         setRootPluginClassLoaderRegex(newRegex.toString());
     }
 
+    public boolean isClearDataOnShutdown() {
+        return clearDataOnShutdown;
+    }
+
+    public void setClearDataOnShutdown(boolean clearDataOnShutdown) {
+        this.clearDataOnShutdown = clearDataOnShutdown;
+    }
+
     @Override
     public void validate() throws ConfigurationException {
         RhqAgentPluginContainer.init();
@@ -113,5 +122,4 @@ public class RhqAgentPluginContainerConfiguration extends PluginContainerConfigu
                     + getServerServicesImplementationClassName() + "].", e);
         }
     }
-
 }

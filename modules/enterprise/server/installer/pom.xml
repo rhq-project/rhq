@@ -20,6 +20,7 @@
     <properties>
         <moduleName>org.rhq.${project.artifactId}</moduleName>
         <moduleDir>org/rhq/${project.artifactId}</moduleDir>
+        <ant.version>1.6.5</ant.version> <!-- the version used by dbutils that we need to depend on -->
     </properties>
 
     <dependencies>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <module xmlns="urn:jboss:module:1.0" name="${moduleName}">
-  <main-class name="org.rhq.cassandra.installer.CassandraInstaller"/>
+  <main-class name="org.rhq.storage.installer.StorageInstaller"/>
 
   <resources>
     <resource-root path="${project.build.finalName}.jar"/>

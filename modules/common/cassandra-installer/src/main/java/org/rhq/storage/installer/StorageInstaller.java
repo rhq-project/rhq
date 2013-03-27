@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.cassandra.installer;
+package org.rhq.storage.installer;
 
 import static java.util.Arrays.asList;
 
@@ -53,6 +53,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.UnmanagedDeployer;
+import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
@@ -66,13 +67,13 @@ import org.rhq.core.util.exception.ThrowableUtil;
 /**
  * @author John Sanda
  */
-public class CassandraInstaller {
+public class StorageInstaller {
 
     static {
         SystemInfoFactory.disableNativeSystemInfo();
     }
 
-    private final Log log = LogFactory.getLog(CassandraInstaller.class);
+    private final Log log = LogFactory.getLog(StorageInstaller.class);
 
     private Options options;
 
@@ -80,15 +81,15 @@ public class CassandraInstaller {
 
     private File defaultDir;
 
-    private int jmxPort = 7200;
+    private int jmxPort = 7299;
 
     private int rpcPort = 9160;
 
-    private int nativeTransportPort = 9042;
+    private int nativeTransportPort = 9142;
 
-    private int storagePort = 7000;
+    private int storagePort = 7100;
 
-    private int sslStoragePort = 7001;
+    private int sslStoragePort = 7101;
 
     private boolean startNode = true;
 
@@ -96,13 +97,13 @@ public class CassandraInstaller {
 
     private File logDir;
 
-    private String commitLogDir = "/var/lib/cassandra/commitlog";
+    private String commitLogDir = "/var/lib/rhq/storage/commitlog";
 
-    private String dataDir = "/var/lib/cassandra/data";
+    private String dataDir = "/var/lib/rhq/storage/data";
 
-    private String savedCachesDir = "/var/lib/cassandra/saved_caches";
+    private String savedCachesDir = "/var/lib/rhq/storage/saved_caches";
 
-    public CassandraInstaller() {
+    public StorageInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");
         rhqBaseDir = new File(basedir);
         defaultDir = new File(basedir, "storage");
@@ -121,7 +122,7 @@ public class CassandraInstaller {
             "Defaults to " + jmxPort + ".");
         jmxPortOption.setArgName("PORT");
 
-        Option nativeTransportPortOption = new Option("t", "native-transport-port", true, "The port on which to " +
+        Option nativeTransportPortOption = new Option("c", "client-port", true, "The port on which to " +
             "listen for client requests. Defaults to " + nativeTransportPort);
         nativeTransportPortOption.setArgName("PORT");
 
@@ -209,7 +210,7 @@ public class CassandraInstaller {
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
             deploymentOptions.setJmxPort(getPort(cmdLine, "jmx-port", jmxPort));
-            deploymentOptions.setNativeTransportPort(getPort(cmdLine, "native-transport-port", nativeTransportPort));
+            deploymentOptions.setNativeTransportPort(getPort(cmdLine, "client-port", nativeTransportPort));
             deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
             deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
             deploymentOptions.load();
@@ -380,7 +381,7 @@ public class CassandraInstaller {
     }
 
     public static void main(String[] args) throws Exception {
-        CassandraInstaller installer = new CassandraInstaller();
+        StorageInstaller installer = new StorageInstaller();
         installer.log.info("Running RHQ Storage Node installer...");
         try {
             CommandLineParser parser = new PosixParser();

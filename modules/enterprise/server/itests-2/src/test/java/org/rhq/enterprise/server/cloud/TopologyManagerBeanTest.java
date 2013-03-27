@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.testng.annotations.Test;
 
@@ -319,29 +320,87 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
             }
         });
     }
-    
-    
+
     @Test(groups = "integration.ejb3")
     public void testParsingAllCriteriaQueryResults1() throws Exception {
-        testParsingHelperStartingPageEqualTo(0);
+        int startPage = 0;
+        int pageSize = 3;
+        int serverCount = 605;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
     }
-    
-    /**
-     * This test should pass if enabled, but doesn't :(
-     */
-    @Test(groups = "integration.ejb3", enabled = false)
+
+    @Test(groups = "integration.ejb3", enabled = true)
     public void testParsingAllCriteriaQueryResults2() throws Exception {
-        testParsingHelperStartingPageEqualTo(1);
+        int startPage = 1;
+        int pageSize = 3;
+        int serverCount = 605;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
     }
-    
-    /**
-     * This test should pass if enabled, but doesn't :(
-     */
-    @Test(groups = "integration.ejb3", enabled = false)
+
+    @Test(groups = "integration.ejb3", enabled = true)
     public void testParsingAllCriteriaQueryResults3() throws Exception {
-        testParsingHelperStartingPageEqualTo(5);
+        int startPage = 2;
+        int pageSize = 3;
+        int serverCount = 609;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
     }
-    
+
+    @Test(groups = "integration.ejb3", enabled = true)
+    public void testParsingAllCriteriaQueryResults4() throws Exception {
+        int startPage = 3;
+        int pageSize = 7;
+        int serverCount = 800;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
+    }
+
+    @Test(groups = "integration.ejb3", enabled = true)
+    public void testParsingAllCriteriaQueryResults5() throws Exception {
+        int startPage = 4;
+        int pageSize = 2;
+        int serverCount = 444;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
+    }
+
+    @Test(groups = "integration.ejb3", enabled = true)
+    public void testParsingAllCriteriaQueryResults6() throws Exception {
+        int startPage = 5;
+        int pageSize = 3;
+        int serverCount = 605;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
+    }
+
+    @Test(groups = "integration.ejb3", enabled = true)
+    public void testParsingAllCriteriaQueryResults7() throws Exception {
+        int startPage = 1;
+        int pageSize = 5;
+        int serverCount = 934;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
+    }
+
+    @Test(groups = "integration.ejb3", enabled = true)
+    public void testParsingAllCriteriaQueryResults8() throws Exception {
+        int startPage = 4;
+        int pageSize = 7;
+        int serverCount = 1234;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
+    }
+
+    @Test(groups = "integration.ejb3", enabled = true)
+    public void testParsingAllCriteriaQueryResults9() throws Exception {
+        int startPage = 2;
+        int pageSize = 1;
+        int serverCount = 109;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
+    }
+
+    @Test(groups = "integration.ejb3", enabled = true)
+    public void testParsingAllCriteriaQueryResults10() throws Exception {
+        int startPage = 0;
+        int pageSize = 11;
+        int serverCount = 999;
+        testParsingHelperStartingPageEqualTo(startPage, pageSize, serverCount);
+    }
+
     @Test(groups = "integration.ejb3")
     public void testFindNonExistentServer() throws Exception {
 
@@ -390,19 +449,17 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
     }
     
     
-    private void testParsingHelperStartingPageEqualTo(final int startPage) throws Exception {
+    private void testParsingHelperStartingPageEqualTo(final int startPage, final int pageSize, final int serverCount) throws Exception {
 
-        final int serverCount = 605;
-        final int pageSize = 3;
         executeInTransaction(new TransactionCallback() {
             public void execute() throws Exception {
                 // verify that all server objects are actually parsed. 
-                final Set<String> serverNames = new HashSet<String>(serverCount);
+                final Set<String> serverNames = new TreeSet<String>();
                 final String namePrefix = "server";
                 final String addressPrefix = "address";
                 int shouldBeFoundCount = 0;
                 int shouldBeSkipped = pageSize * startPage;
-                
+
                 for (int i = 0; i < serverCount; i++) {
                     String name = namePrefix + String.format(" %03d", i + 1);
                     Server server = new Server();
@@ -413,7 +470,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                         break;
                     case 1:
                         server.setOperationMode(OperationMode.MAINTENANCE);
-                        if (i % 20 == 9 && shouldBeSkipped-- <= 0) {
+                        if (i % 20 == 9) {
                             shouldBeFoundCount++;
                             serverNames.add(name);
                         }
@@ -427,6 +484,15 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                     em.flush();
                 }
                 em.flush();
+                
+                if (shouldBeSkipped > 0) {
+                    // delete the members to be skipped because of the start page
+                    String[] serverNamesArray = serverNames.toArray(new String[serverNames.size()]);
+                    for (int i = 0; i < shouldBeSkipped; i++) {
+                        serverNames.remove(serverNamesArray[serverNamesArray.length - i - 1]);
+                    }
+                    shouldBeFoundCount -= shouldBeSkipped;
+                }
 
                 // query the results and delete the servers
                 ServerCriteria criteria = new ServerCriteria();
@@ -466,7 +532,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                     serverNames.remove(s.getName());
                 }
 
-                final int finderCallCounter = (int) Math.ceil((double) shouldBeFoundCount / pageSize) - startPage;
+                final int finderCallCounter = (int) Math.ceil((double) shouldBeFoundCount / pageSize);
                 assertTrue("While iterating the servers, the findServersByCriteria() should be called "
                     + finderCallCounter + " times. It was called " + pagesFlipped.get(0) + " times.",
                     pagesFlipped.get(0) == finderCallCounter);

@@ -95,8 +95,6 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
             sigar = new File(root, "sigar");
             sigar.mkdir();
         } catch (IOException e) {
-            root = null;
-            deployments = null;
             throw new IllegalStateException(
                 "Could not create the root directory for RHQ plugin container test deployments");
         }
@@ -374,17 +372,23 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
     private boolean stopPc() {
         LOG.debug("Stopping PluginContainer on demand...");
         PluginContainer pc = PluginContainer.getInstance();
-        if (pc.isStarted()) {
+        boolean wasStarted = pc.isStarted();
+        if (wasStarted) {
             boolean shutdownGracefully = pc.shutdown();
             if (shutdownGracefully) {
                 LOG.debug("Stopped PluginContainer gracefully.");
             } else {
                 LOG.debug("Stopped PluginContainer.");
             }
-            return true;
         }
 
-        return false;
+        FileUtil.purge(configuration.getTemporaryDirectory(), false);
+
+        if (configuration.isClearDataOnShutdown()) {
+            FileUtil.purge(configuration.getDataDirectory(), false);
+        }
+
+        return wasStarted;
     }
 
     private void deployPlugin(RhqAgentPluginArchive plugin) {

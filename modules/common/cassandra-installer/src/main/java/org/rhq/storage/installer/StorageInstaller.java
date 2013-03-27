@@ -110,7 +110,7 @@ public class StorageInstaller {
         logDir = new File(rhqBaseDir, "logs");
 
         Option hostname = new Option("n", "hostname", true, "The hostname or IP address on which the node will listen for " +
-            "requests. If not specified, defaults to the value returned by InetAddress.getLocalHost().getHostName().");
+            "requests. If not specified, defaults to the hostname for localhost.");
          hostname.setArgName("HOSTNAME");
 
         Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that " +
@@ -215,9 +215,15 @@ public class StorageInstaller {
             deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
             deploymentOptions.load();
 
-            checkPerms(options.getOption("saved-caches"), savedCachesDir);
-            checkPerms(options.getOption("commitlog"), commitLogDir);
-            checkPerms(options.getOption("data"), dataDir);
+            List<String> errors = new ArrayList<String>();
+            checkPerms(options.getOption("saved-caches"), savedCachesDir, errors);
+            checkPerms(options.getOption("commitlog"), commitLogDir, errors);
+            checkPerms(options.getOption("data"), dataDir, errors);
+
+            if (!errors.isEmpty()) {
+                throw new StorageInstallerException("Problems have been detected with one or more of the directories " +
+                    "to which the storage node will need to store data.", errors);
+            }
 
             UnmanagedDeployer deployer = new UnmanagedDeployer();
             deployer.unpackBundle();
@@ -259,17 +265,17 @@ public class StorageInstaller {
         return Integer.parseInt(cmdLine.getOptionValue(option, Integer.toString(defaultValue)));
     }
 
-    private void checkPerms(Option option, String path) {
+    private void checkPerms(Option option, String path, List<String> errors) {
         File dir = new File(path);
 
         if (dir.exists()) {
             if (dir.isFile()) {
-                log.warn(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
+                errors.add(path + " is not a directory. Use the --" + option.getLongOpt() + " to change this value.");
             }
         } else {
             File parent = findParentDir(new File(path));
             if (!parent.canWrite()) {
-                log.warn("The user running this installer does not appear to have write permissions to " + parent +
+                errors.add("The user running this installer does not appear to have write permissions to " + parent +
                     ". Either make sure that the user running the storage node has write permissions or use the --" +
                     option.getLongOpt() + " to change this value.");
             }
@@ -387,7 +393,13 @@ public class StorageInstaller {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(installer.getOptions(), args);
             installer.run(cmdLine);
-            return;
+        } catch (StorageInstallerException e) {
+            installer.log.warn(e.getMessage());
+            for (String error : e.getErrors()) {
+                installer.log.error(error);
+            }
+            installer.log.error("The installer is exiting due to previous errors.");
+            System.exit(1);
         } catch (ParseException e) {
             installer.printUsage();
         }

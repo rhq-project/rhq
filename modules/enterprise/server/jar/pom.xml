@@ -285,6 +285,11 @@
       <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
     </dependency>
 
+    <!-- this is needed by quartz -->
+    <dependency>
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
+    </dependency>
 
     <dependency>
       <groupId>org.snmp4j</groupId>

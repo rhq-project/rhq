@@ -27,19 +27,21 @@ import java.util.ArrayList;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.PasswordItem;
-import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.Layout;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.install.remote.AgentInstallInfo;
@@ -52,8 +54,9 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RemoteInstallGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -65,10 +68,10 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     private RemoteInstallGWTServiceAsync remoteInstallService = GWTServiceLookup.getRemoteInstallService(600000);
 
     private DynamicForm connectionForm;
-    private DynamicForm buttonsForm;
-    private ButtonItem installButton;
-    private ButtonItem startButton;
-    private ButtonItem stopButton;
+    private Layout buttonsForm;
+    private EnhancedIButton installButton;
+    private EnhancedIButton startButton;
+    private EnhancedIButton stopButton;
     private VLayout agentInfoLayout;
 
     public RemoteAgentInstallView() {
@@ -81,60 +84,65 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
     @Override
     protected void onInit() {
         super.onInit();
-
-        addMember(getConnectionForm());
-        addMember(getButtons());
+        Layout layout = new VLayout();
+        layout.setPadding(10);
+        HTMLFlow header = new HTMLFlow(MSG.view_remoteAgentInstall_connInfo());
+        header.setStyleName("headerItem");
+        header.setExtraSpace(5);
+        layout.addMember(header);
+        layout.addMember(getConnectionForm());
+        header = new HTMLFlow(MSG.common_title_operations());
+        header.setStyleName("headerItem");
+        header.setExtraSpace(5);
+        layout.addMember(header);
+        layout.addMember(getButtons());
 
         agentInfoLayout = new VLayout();
         agentInfoLayout.setWidth100();
         agentInfoLayout.setHeight100();
         agentInfoLayout.setMembersMargin(1);
-        addMember(agentInfoLayout);
+        layout.addMember(agentInfoLayout);
+        addMember(layout);
 
     }
 
     private DynamicForm getConnectionForm() {
         connectionForm = new DynamicForm();
-        connectionForm.setWidth100();
-        connectionForm.setNumCols(3);
+        connectionForm.setNumCols(4);
         connectionForm.setWrapItemTitles(false);
-        connectionForm.setColWidths("25%", "50%", "25%");
-        connectionForm.setMargin(10);
-
-        HeaderItem connectionHeader = new HeaderItem();
-        connectionHeader.setDefaultValue(MSG.view_remoteAgentInstall_connInfo());
+        connectionForm.setColWidths("130", "250", "110");
 
         TextItem host = new TextItem("host", MSG.common_title_host());
         host.setRequired(true);
-        host.setWidth("100%");
+        host.setWidth("240");
         host.setPrompt(MSG.view_remoteAgentInstall_promptHost());
         host.setHoverWidth(300);
-        host.setColSpan(2);
+        host.setEndRow(true);
 
         TextItem port = new TextItem("port", MSG.common_title_port());
         port.setRequired(false);
-        port.setWidth("90");
+        port.setWidth("240");
         port.setPrompt(MSG.view_remoteAgentInstall_promptPort());
         port.setHoverWidth(300);
-        port.setColSpan(1);
+        port.setEndRow(true);
 
         TextItem username = new TextItem("username", MSG.common_title_user());
         username.setRequired(true);
-        username.setWidth("100%");
+        username.setWidth("240");
         username.setPrompt(MSG.view_remoteAgentInstall_promptUser());
         username.setHoverWidth(300);
-        username.setColSpan(2);
+        username.setEndRow(true);
 
         PasswordItem password = new PasswordItem("password", MSG.common_title_password());
         password.setRequired(false);
-        password.setWidth("100%");
+        password.setWidth("240");
         password.setPrompt(MSG.view_remoteAgentInstall_promptPassword());
         password.setHoverWidth(300);
-        password.setColSpan(2);
+        password.setEndRow(true);
 
         TextItem agentInstallPath = new TextItem("agentInstallPath", MSG.view_remoteAgentInstall_installPath());
         agentInstallPath.setRequired(true);
-        agentInstallPath.setWidth("100%");
+        agentInstallPath.setWidth("240");
         agentInstallPath.setPrompt(MSG.view_remoteAgentInstall_promptInstallPath());
         agentInstallPath.setHoverWidth(300);
         agentInstallPath.setStartRow(true);
@@ -144,8 +152,11 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             MSG.view_remoteAgentInstall_buttonFindAgent());
         findAgentInstallPathButton.setStartRow(false);
         findAgentInstallPathButton.setEndRow(true);
-        findAgentInstallPathButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
+        if (findAgentInstallPathButton.getTitle().length() < 15) { //i18n may prolong the title
+            findAgentInstallPathButton.setWidth(100);
+        }
+        findAgentInstallPathButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
                     findAgentInstallPath();
                 }
@@ -156,45 +167,35 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
         agentStatus.setDefaultValue(MSG.view_remoteAgentInstall_agentStatusDefault());
         agentStatus.setRedrawOnChange(true);
         agentStatus.setRedrawOnChange(true);
-        agentStatus.setWidth("100%");
         agentStatus.setStartRow(true);
         agentStatus.setEndRow(false);
 
         ButtonItem statusCheckButton = new ButtonItem("updateStatus", MSG.view_remoteAgentInstall_updateStatus());
         statusCheckButton.setStartRow(false);
         statusCheckButton.setEndRow(true);
-        statusCheckButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent clickEvent) {
+        if (findAgentInstallPathButton.getTitle().length() < 15) { //i18n may prolong the title
+            statusCheckButton.setWidth(100);
+        }
+        statusCheckButton.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
+            public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
                     agentStatusCheck();
                 }
             }
         });
 
-        connectionForm.setFields(connectionHeader, host, port, username, password, agentInstallPath,
+        connectionForm.setFields(host, port, username, password, agentInstallPath,
             findAgentInstallPathButton, agentStatus, statusCheckButton);
+        connectionForm.setExtraSpace(15);
 
         return connectionForm;
     }
 
-    private DynamicForm getButtons() {
-        buttonsForm = new DynamicForm();
-        buttonsForm.setWidth("75%");
-        buttonsForm.setNumCols(4);
-        buttonsForm.setMargin(10);
-        buttonsForm.setColWidths("10%", "30%", "30%", "30%");
+    private Layout getButtons() {
+        buttonsForm = new HLayout();
 
-        HeaderItem buttonsHeader = new HeaderItem();
-        buttonsHeader.setDefaultValue(MSG.common_title_operations());
-
-        SpacerItem spacerItem = new SpacerItem();
-        spacerItem.setStartRow(true);
-        spacerItem.setEndRow(false);
-
-        installButton = new ButtonItem("install", MSG.view_remoteAgentInstall_installAgent());
-        installButton.setStartRow(false);
-        installButton.setEndRow(false);
-        installButton.setRedrawOnChange(true);
+        installButton = new EnhancedIButton(MSG.view_remoteAgentInstall_installAgent());
+        installButton.setExtraSpace(10);
         installButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
@@ -203,14 +204,13 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        startButton = new ButtonItem("start", MSG.view_remoteAgentInstall_startAgent());
-        startButton.setStartRow(false);
-        startButton.setEndRow(false);
+        startButton = new EnhancedIButton(MSG.view_remoteAgentInstall_startAgent());
         // startButton.setShowIfCondition(new FormItemIfFunction() {
         //     public boolean execute(FormItem formItem, Object o, DynamicForm dynamicForm) {
         //         return form.getValue("agentStatus") != null && !"Agent Not Installed".equals(form.getValue("agentStatus"));
         //     }
         // });
+        startButton.setExtraSpace(10);
         startButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
@@ -219,9 +219,8 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        stopButton = new ButtonItem("stop", MSG.view_remoteAgentInstall_stopAgent());
-        stopButton.setStartRow(false);
-        stopButton.setEndRow(true);
+        stopButton = new EnhancedIButton(MSG.view_remoteAgentInstall_stopAgent());
+        stopButton.setExtraSpace(10);
         stopButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (connectionForm.validate()) {
@@ -230,7 +229,7 @@ public class RemoteAgentInstallView extends EnhancedVLayout {
             }
         });
 
-        buttonsForm.setFields(buttonsHeader, spacerItem, installButton, startButton, stopButton);
+        buttonsForm.setMembers(installButton, startButton, stopButton);
         return buttonsForm;
     }
 

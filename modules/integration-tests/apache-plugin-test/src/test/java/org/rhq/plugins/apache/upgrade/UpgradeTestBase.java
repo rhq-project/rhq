@@ -66,7 +66,7 @@ import org.rhq.plugins.apache.util.ApacheDeploymentUtil.DeploymentConfig;
 import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.plugins.apache.util.VHostSpec;
 import org.rhq.plugins.apache.util.VirtualHostLegacyResourceKeyUtil;
-import org.rhq.test.TokenReplacingReader;
+import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerTest;
 
 

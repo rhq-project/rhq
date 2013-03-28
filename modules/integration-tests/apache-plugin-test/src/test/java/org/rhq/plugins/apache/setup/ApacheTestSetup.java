@@ -60,7 +60,7 @@ import org.rhq.plugins.apache.util.HttpdAddressUtility;
 import org.rhq.plugins.apache.util.ResourceTypes;
 import org.rhq.plugins.apache.util.VHostSpec;
 import org.rhq.test.ObjectCollectionSerializer;
-import org.rhq.test.TokenReplacingReader;
+import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.test.pc.PluginContainerTest;
 
 public class ApacheTestSetup {

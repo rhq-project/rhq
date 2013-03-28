@@ -29,7 +29,10 @@ import java.util.TreeSet;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
+import com.smartgwt.client.widgets.layout.VLayout;
 
+import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -67,6 +70,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private boolean useSummaryData = false;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
+    private VLayout vLayout;
 
     public static D3GraphListView createMultipleGraphs(Resource resource, Set<Integer> definitionIds,
         boolean showAvailabilityGraph) {
@@ -108,7 +112,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     private void commonConstructorSettings() {
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
-        setOverflow(Overflow.AUTO);
+        setOverflow(Overflow.HIDDEN);
     }
 
     public void addSetButtonClickHandler(ClickHandler clickHandler) {
@@ -121,6 +125,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         super.onDraw();
         Log.debug("D3GraphListView.onDraw() for: " + resource.getName());
         destroyMembers();
+
         addMember(measurementRangeEditor);
 
         if (showAvailabilityGraph) {
@@ -132,14 +137,51 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
         }
 
+        vLayout = new VLayout();
+        vLayout.setOverflow(Overflow.AUTO);
+        vLayout.setWidth100();
+        vLayout.setHeight100();
+
         if (resource != null) {
             buildGraphs();
         }
+        addMember(vLayout);
     }
 
     public void redrawGraphs() {
         this.onDraw();
         availabilityGraph.drawJsniChart();
+    }
+
+    @Override
+    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime,
+        final CountDownLatch countDownLatch) {
+
+        final long timerStart = System.currentTimeMillis();
+
+        // now return the availability
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
+            endTime, new AsyncCallback<List<Availability>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+                    if (countDownLatch != null) {
+                        countDownLatch.countDown();
+                    }
+                }
+
+                @Override
+                public void onSuccess(List<Availability> availList) {
+                    if (Log.isDebugEnabled()) {
+                        Log.debug("\nSuccessfully queried availability in: "
+                            + (System.currentTimeMillis() - timerStart) + " ms.");
+                    }
+                    availabilityList = availList;
+                    if (countDownLatch != null) {
+                        countDownLatch.countDown();
+                    }
+                }
+            });
     }
 
     /**
@@ -148,11 +190,9 @@ public class D3GraphListView extends AbstractD3GraphListView {
      */
     private void buildGraphs() {
         final long startTimer = System.currentTimeMillis();
-        List<Long> startEndList = measurementRangeEditor.getBeginEndTimes();
-        final long startTime = startEndList.get(0);
-        final long endTime = startEndList.get(1);
 
-        queryAvailability(resource.getId(), null);
+        queryAvailability(EntityContext.forResource(resource.getId()), measurementRangeEditor.getStartTime(),
+            measurementRangeEditor.getEndTime(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -211,7 +251,6 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                 if (availabilityGraph != null) {
                                     // we only need the first metricData since we are only taking the
                                     // availability data set in there for the dropdowns already
-                                    availabilityGraph.setMetricData(metricsDataList.get(0));
                                     availabilityGraph.setAvailabilityList(availabilityList);
                                     availabilityGraph.drawJsniChart();
                                 }
@@ -228,7 +267,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
                 private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
                     GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
-                        startTime, endTime, 60,
+                        measurementRangeEditor.getStartTime(), measurementRangeEditor.getEndTime(), 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             @Override
                             public void onFailure(Throwable caught) {
@@ -265,7 +304,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                             Log.debug("OOB Data size: " + measurementOOBCompositeList.size());
                             if (null != measurementOOBCompositeList) {
                                 for (MeasurementOOBComposite measurementOOBComposite : measurementOOBComposites) {
-                                    Log.debug("measurementOOBComposite = " + measurementOOBComposite);
+                                    //Log.debug("measurementOOBComposite = " + measurementOOBComposite);
                                 }
                             }
                             countDownLatch.countDown();
@@ -345,7 +384,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         graphView.setWidth("95%");
         graphView.setHeight(height);
 
-        addMember(graphView);
+        vLayout.addMember(graphView);
     }
 
 }

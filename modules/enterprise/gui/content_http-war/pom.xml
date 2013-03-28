@@ -54,24 +54,15 @@
             <artifactId>hibernate-entitymanager</artifactId>
             <scope>provided</scope>
         </dependency>
-        
-        <!--
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>jstl</artifactId>
-            <version>1.1.2</version>
-        </dependency>
-        -->
 
       <!-- adding to pick up javax.servlet.http.HttpServlet -->
       <dependency>
          <groupId>javax.servlet</groupId>
          <artifactId>servlet-api</artifactId>
-         <version>2.4</version>
          <scope>provided</scope> <!-- by JBossAS -->
       </dependency>
 
-      <!-- adding so we can extend DefaultServlet 
+      <!-- adding so we can extend DefaultServlet
       Chose version 2.0.1 so it's compatible with info here for JBoss 4.2.3
       http://community.jboss.org/wiki/VersionOfTomcatInJBossAS-->
       <dependency>
@@ -84,19 +75,16 @@
         <dependency>
             <groupId>commons-codec</groupId>
             <artifactId>commons-codec</artifactId>
-            <version>1.4</version>
         </dependency>
-        
+
         <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
-            <version>1.2</version>
         </dependency>
 
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
-            <version>${commons-httpclient.version}</version>
             <scope>provided</scope> <!-- by JBossAS -->
         </dependency>
 
@@ -109,20 +97,17 @@
         <dependency>
             <groupId>commons-logging</groupId>
             <artifactId>commons-logging</artifactId>
-            <version>1.0.4</version>
             <scope>provided</scope> <!-- by JBossAS -->
         </dependency>
 
         <dependency>
             <groupId>commons-validator</groupId>
             <artifactId>commons-validator</artifactId>
-            <version>1.1.4</version>
         </dependency>
 
         <dependency>
             <groupId>commons-lang</groupId>
             <artifactId>commons-lang</artifactId>
-            <version>2.4</version>
         </dependency>
 
     </dependencies>
@@ -133,7 +118,6 @@
 
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
-                <version>2.1-alpha-1</version>
                 <configuration>
                     <archive>
                         <manifest>

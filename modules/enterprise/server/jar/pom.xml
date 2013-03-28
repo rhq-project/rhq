@@ -31,13 +31,16 @@
        (xnio e.g.) that require the up to date logging impl.  Since server jar depends on
        rhq-enterprise-comm to run, and arquillian to test, place the current version jboss-logging
        as a dependency before the rhq-comm dependency. This ensure the classpath is set up to use the
-       newer package impl.  -->
-  <dependency>
+       newer package impl.
+       NOTE 3/14/2013 - comm module has been upgraded to use jboss-common-core now so I commented below out -->
+<!--
+<dependency>
     <groupId>org.jboss.logging</groupId>
     <artifactId>jboss-logging</artifactId>
     <version>${jboss-logging.version}</version>
     <scope>test</scope>
   </dependency>
+-->
   <dependency>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-enterprise-comm</artifactId>
@@ -133,7 +136,6 @@
   <dependency>
     <groupId>org.jboss.spec</groupId>
     <artifactId>jboss-javaee-6.0</artifactId>
-    <version>${jboss.javaee6.spec.version}</version>
     <scope>provided</scope>
     <type>pom</type>
   </dependency>
@@ -179,7 +181,6 @@
     <dependency>
        <groupId>org.infinispan</groupId>
        <artifactId>infinispan-core</artifactId>
-       <version>${infinispan.version}</version>
        <scope>provided</scope>
     </dependency>
 
@@ -187,34 +188,25 @@
     <dependency>
       <groupId>commons-beanutils</groupId>
       <artifactId>commons-beanutils</artifactId>
-      <version>1.6.1</version>
     </dependency>
 
       <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
       <!-- also required by EJB3 Embedded (test scope) -->
-    <dependency>
-      <groupId>commons-collections</groupId>
-      <artifactId>commons-collections</artifactId>
-      <version>3.2</version>
-    </dependency>
 
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
-      <version>${commons-httpclient.version}</version>
     </dependency>
 
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
-      <version>2.4</version>
     </dependency>
 
       <!-- Required by a couple APL classes - TODO: Remove this once APL has been removed. -->
     <dependency>
       <groupId>commons-validator</groupId>
       <artifactId>commons-validator</artifactId>
-      <version>1.1.4</version>
     </dependency>
 
     <dependency>
@@ -289,7 +281,6 @@
     <dependency>
       <groupId>org.jboss.jbossts</groupId>
       <artifactId>jbossjts</artifactId>
-      <version>${jboss-jts.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -307,12 +298,10 @@
       <scope>provided</scope> <!-- by JBossAS itself, which the container build has packaged with 1.6.5 -->
     </dependency>
 
+    <!-- this is needed by quartz -->
     <dependency>
-      <groupId>org.easymock</groupId>
-      <artifactId>easymockclassextension</artifactId>
-      <version>2.2</version>
-      <scope>test</scope>
-         <!-- somehow this is needed otherwise the hibernate stuff doesn't initialize in our tests -->
+      <groupId>commons-collections</groupId>
+      <artifactId>commons-collections</artifactId>
     </dependency>
 
     <dependency>
@@ -325,7 +314,6 @@
     <dependency>
       <groupId>oswego-concurrent</groupId>
       <artifactId>concurrent</artifactId>
-      <version>1.3.4</version>
     </dependency>
 
     <dependency>
@@ -417,14 +405,12 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-module-testng</artifactId>
-      <version>${powermock.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
-      <version>${powermock.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -459,7 +445,6 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-ejb-plugin</artifactId>
-        <version>2.3</version>
         <configuration>
           <ejbVersion>3.0</ejbVersion>
           <generateClient>true</generateClient>
@@ -584,7 +569,6 @@
       <plugin>
         <groupId>org.antlr</groupId>
         <artifactId>antlr3-maven-plugin</artifactId>
-        <version>3.2</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -889,7 +873,6 @@
       <dependency>
         <groupId>org.jboss.logging</groupId>
         <artifactId>jboss-logging</artifactId>
-        <version>${jboss-logging.version}</version>
       </dependency>
 
     </dependencies>
@@ -1017,7 +1000,6 @@
         <plugin>
            <groupId>org.codehaus.mojo</groupId>
            <artifactId>clirr-maven-plugin</artifactId>
-           <version>${clirr.version}</version>
            <configuration>
               <includes>
                  <include>**/*Remote</include>

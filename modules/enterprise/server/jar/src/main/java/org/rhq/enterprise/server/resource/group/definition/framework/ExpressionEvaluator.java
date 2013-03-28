@@ -50,7 +50,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private final Log log = LogFactory.getLog(ExpressionEvaluator.class);
 
     private static final String INVALID_EXPRESSION_FORM_MSG = "Expression must be in one of the follow forms: " + //
-        "'groupBy condition', 'condition = value', 'empty condition', 'not empty condition";
+        "'groupby condition', 'memberof = groupname', 'condition = value', 'empty condition', 'not empty condition";
 
     private static final String PROP_SIMPLE_ALIAS = "simple";
     private static final String PROP_SIMPLE_DEF_ALIAS = "simpleDef";
@@ -81,9 +81,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private Map<String, Class<?>> whereReplacementTypes;
     private Set<String> whereStatics;
     private List<String> groupByElements;
+    private List<String> memberOfElements;
 
     private List<String> simpleSubExpressions;
     private List<String> groupedSubExpressions;
+    private List<String> memberSubExpressions;
 
     private int expressionCount;
     private boolean isInvalid;
@@ -112,9 +114,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         whereReplacementTypes = new HashMap<String, Class<?>>();
         whereStatics = new LinkedHashSet<String>();
         groupByElements = new ArrayList<String>();
+        memberOfElements = new ArrayList<String>();
 
         simpleSubExpressions = new ArrayList<String>();
         groupedSubExpressions = new ArrayList<String>();
+        memberSubExpressions = new ArrayList<String>();
 
         expressionCount = 0;
         isInvalid = false;
@@ -143,8 +147,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         resourceExpressions.put("res.parentResource.name", "resource name");
         resourceExpressions.put("res.parentResource.parentResource.name", "resource name");
         resourceExpressions.put("res.parentResource.parentResource.parentResource.name", "resource name");
-        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.name",
-            "resource name");
+        resourceExpressions
+            .put("res.parentResource.parentResource.parentResource.parentResource.name", "resource name");
 
         resourceExpressions.put("res.version", "resource version");
         resourceExpressions.put("child.version", "resource version");
@@ -162,8 +166,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         resourceExpressions.put("res.parentResource.resourceType.name", "resource type");
         resourceExpressions.put("res.parentResource.parentResource.resourceType.plugin", "resource type");
         resourceExpressions.put("res.parentResource.parentResource.resourceType.name", "resource type");
-        resourceExpressions.put("res.parentResource.parentResource.parentResource.resourceType.plugin",
-            "resource type");
+        resourceExpressions
+            .put("res.parentResource.parentResource.parentResource.resourceType.plugin", "resource type");
         resourceExpressions.put("res.parentResource.parentResource.parentResource.resourceType.name", "resource type");
         resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.resourceType.plugin",
             "resource type");
@@ -176,7 +180,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         resourceExpressions.put("res.parentResource.parentResource.resourceType.category", "resource category");
         resourceExpressions.put("res.parentResource.parentResource.parentResource.resourceType.category",
             "resource category");
-        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.resourceType.category",
+        resourceExpressions.put(
+            "res.parentResource.parentResource.parentResource.parentResource.resourceType.category",
             "resource category");
 
         resourceExpressions.put("avail.availabilityType", "availability");
@@ -185,8 +190,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         resourceExpressions.put("res.parentResource.parentResource.avail.availabilityType", "availability");
         resourceExpressions.put("res.parentResource.parentResource.parentResource.avail.availabilityType",
             "availability");
-        resourceExpressions.put("res.parentResource.parentResource.parentResource.parentResource.avail.availabilityType",
-            "availability");
+        resourceExpressions.put(
+            "res.parentResource.parentResource.parentResource.parentResource.avail.availabilityType", "availability");
 
         resourceExpressions.put("trait.value", "trait");
         resourceExpressions.put("child.trait.value", "trait");
@@ -299,8 +304,9 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         Availability(true), //
         Trait(true), //
         Configuration(true), // includes 'pluginConfiguration' and 'resourceConfiguration'
-        StringMatch(true), //
-        END(true);
+        StringMatch(true), //         
+        END(true), //
+        Membership(true);
 
         private boolean canTerminateExpression;
 
@@ -337,6 +343,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
     private ParseSubContext subcontext = null;
     private int parseIndex = 0;
     private boolean isGroupBy = false;
+    private boolean isMemberOf = false;
     private ComparisonType comparisonType = null;
     private Class<?> expressionType;
 
@@ -418,6 +425,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             // do not add modifiers to the normalized expression
             if (subExpressionToken.equals("groupby")) {
                 continue;
+            } else if (subExpressionToken.equals("memberof")) {
+                continue;
             } else if (subExpressionToken.equals("not")) {
                 continue;
             } else if (subExpressionToken.equals("empty")) {
@@ -440,6 +449,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         subcontext = null;
         parseIndex = 0;
         isGroupBy = false; // this needs to be reset each time a new expression is added
+        isMemberOf = false; // this needs to be reset each time a new expression is added
         comparisonType = ComparisonType.EQUALS; // assume equals, unless "(not) empty" found during the parse
 
         deepestResourceContext = null;
@@ -452,17 +462,34 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 if (nextToken.equals("resource")) {
                     context = ParseContext.Resource;
                     deepestResourceContext = context;
+
+                } else if (nextToken.equals("memberof")) {
+                    context = ParseContext.Membership; // ensure proper expression termination
+                    String groupName = value;
+
+                    if (null == groupName || groupName.isEmpty() || "=".equals(groupName)) {
+                        throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
+                    }
+
+                    validateSubExpressionAgainstPreviouslySeen(groupName, false, true);
+                    isMemberOf = true;
+                    populatePredicateCollections(null, groupName);
+
                 } else if (nextToken.equals("groupby")) {
                     context = ParseContext.Modifier;
                     subcontext = ParseSubContext.Pivot;
+
                 } else if (nextToken.equals("not")) {
+
                     context = ParseContext.Modifier;
                     subcontext = ParseSubContext.Negated;
                     // 'not' must be followed by 'empty' today, but we won't know until next parse iteration
                     // furthermore, we may support other forms of negated expressions in the future
+
                 } else if (nextToken.equals("empty")) {
                     context = ParseContext.Modifier;
                     subcontext = ParseSubContext.Empty;
+
                 } else {
                     throw new InvalidExpressionException(
                         "Expression must either start with 'resource', 'groupby', 'empty', or 'not empty' tokens");
@@ -488,7 +515,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                     // then perform individual processing based on current subcontext
                     if (subcontext == ParseSubContext.Pivot) {
                         // validates the uniqueness of the subexpression after checking for INVALID_EXPRESSION_FORM_MSG
-                        validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, true);
+                        validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, true, false);
                         isGroupBy = true;
                         comparisonType = ComparisonType.NONE;
                     } else if (subcontext == ParseSubContext.NotEmpty) {
@@ -514,7 +541,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         // EQUALS filter expressions must HAVE "= <value>" part
                         throw new InvalidExpressionException(INVALID_EXPRESSION_FORM_MSG);
                     }
-                    validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, false);
+                    validateSubExpressionAgainstPreviouslySeen(normalizedSubExpression, false, false);
                 }
 
                 if (nextToken.equals("parent")) {
@@ -578,7 +605,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 // (SELECT max(mdt.id.timestamp) FROM MeasurementDataTrait mdt WHERE sched.id = mdt.schedule.id)
                 String traitName = parseTraitName(originalTokens);
                 addJoinCondition(JoinCondition.SCHEDULES);
-                populatePredicateCollections(METRIC_DEF_ALIAS + ".name", "%" + traitName + "%", false);
+                populatePredicateCollections(METRIC_DEF_ALIAS + ".name", "%" + traitName + "%", false, false);
                 populatePredicateCollections(TRAIT_ALIAS + ".value", value);
                 whereStatics.add(TRAIT_ALIAS + ".schedule = " + JoinCondition.SCHEDULES.alias);
                 whereStatics.add(TRAIT_ALIAS
@@ -616,7 +643,7 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                 addJoinCondition(joinCondition);
                 addJoinCondition(definitionJoinCondition);
 
-                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", "%" + propertyName + "%", false);
+                populatePredicateCollections(PROP_SIMPLE_ALIAS + ".name", "%" + propertyName + "%", false, false);
                 populatePredicateCollections(PROP_SIMPLE_ALIAS + ".stringValue", value);
 
                 whereStatics.add(PROP_SIMPLE_ALIAS + ".configuration = " + joinCondition.alias);
@@ -757,13 +784,15 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
      * isGroupBy field or the explicitly overriding groupBy 3rd argument
      */
     private void populatePredicateCollections(String predicateName, Object value) throws InvalidExpressionException {
-        populatePredicateCollections(predicateName, value, isGroupBy);
+        populatePredicateCollections(predicateName, value, isGroupBy, isMemberOf);
     }
 
-    private void populatePredicateCollections(String predicateName, Object value, boolean groupBy)
+    private void populatePredicateCollections(String predicateName, Object value, boolean groupBy, boolean memberOf)
         throws InvalidExpressionException {
         if (groupBy) {
             groupByElements.add(predicateName);
+        } else if (memberOf) {
+            memberOfElements.add((String) value); // this is the group name in this situation
         } else {
             String argumentName = getNextArgumentName();
 
@@ -1089,6 +1118,11 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             }
         }
 
+        // finally, if we are narrowing by group membership, add the join on implicit groups
+        if (!memberOfElements.isEmpty()) {
+            result += " JOIN res.implicitGroups implicitGroup";
+        }
+
         return result;
     }
 
@@ -1152,6 +1186,17 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
             }
         }
 
+        // finally, if we are narrowing by group membership, add the implicit groups condition
+        if (!memberOfElements.isEmpty()) {
+            result += " AND implicitGroup.name IN (";
+            String separator = "";
+            for (String groupName : memberOfElements) {
+                result += (separator + "'" + groupName + "'");
+                separator = ", ";
+            }
+            result += ")";
+        }
+
         return result;
     }
 
@@ -1206,8 +1251,8 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
         return suffix.substring(1, suffix.length() - 1);
     }
 
-    private void validateSubExpressionAgainstPreviouslySeen(String normalizedSubExpression, boolean grouped)
-        throws InvalidExpressionException {
+    private void validateSubExpressionAgainstPreviouslySeen(String normalizedSubExpression, boolean grouped,
+        boolean membership) throws InvalidExpressionException {
         normalizedSubExpression = stripFunctionSuffix(normalizedSubExpression);
         if (grouped) {
             if (groupedSubExpressions.contains(normalizedSubExpression)) {
@@ -1220,6 +1265,13 @@ public class ExpressionEvaluator implements Iterable<ExpressionEvaluator.Result>
                         + "]");
             }
             groupedSubExpressions.add(normalizedSubExpression);
+
+        } else if (membership) {
+            if (memberSubExpressions.contains(normalizedSubExpression)) {
+                throw new InvalidExpressionException("Redundant 'memberof' expression[" + normalizedSubExpression
+                    + "] - these expressions must be unique");
+            }
+            memberSubExpressions.add(normalizedSubExpression);
         } else {
             if (groupedSubExpressions.contains(normalizedSubExpression)) {
                 throw new InvalidExpressionException(

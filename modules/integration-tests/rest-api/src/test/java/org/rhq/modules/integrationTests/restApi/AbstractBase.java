@@ -23,19 +23,15 @@ import java.util.Map;
 
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
-import com.jayway.restassured.mapper.factory.DefaultJackson1ObjectMapperFactory;
 import com.jayway.restassured.response.Header;
 
-import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.basic;
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.RestAssured.objectMapper;
 
 /**
  * Common setup for the tests

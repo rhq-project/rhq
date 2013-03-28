@@ -167,7 +167,7 @@ done
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_AGENT_JAVA_OPTS" ]; then
-   RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true"
+   RHQ_AGENT_JAVA_OPTS="-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file=${RHQ_AGENT_HOME}/conf/agent-prefs.properties"
 fi
 debug_msg "RHQ_AGENT_JAVA_OPTS: $RHQ_AGENT_JAVA_OPTS"
 
@@ -202,6 +202,11 @@ else
 fi
 
 debug_msg "RHQ_AGENT_ADDITIONAL_JAVA_OPTS: $RHQ_AGENT_ADDITIONAL_JAVA_OPTS"
+
+# ----------------------------------------------------------------------
+# Ensure the agent uses our custom JavaPreferences implementation 
+# ----------------------------------------------------------------------
+_JAVA_PREFERENCES_FACTORY_OPT="\"-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory\""
 
 # ----------------------------------------------------------------------
 # Prepare the command line arguments passed to the RHQ Agent
@@ -274,6 +279,8 @@ if [ -z "$RHQ_AGENT_MAINCLASS" ]; then
 fi
 
 # Build the command line that starts the VM
+# note - currently not using custom Java Prefs as the default, use commented command line to activate
+# CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JAVA_PREFERENCES_FACTORY_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
 CMD="\"${RHQ_AGENT_JAVA_EXE_FILE_PATH}\" ${_JAVA_ENDORSED_DIRS_OPT} ${_JAVA_LIBRARY_PATH_OPT} ${_JNA_LIBRARY_PATH} ${RHQ_AGENT_JAVA_OPTS} ${RHQ_AGENT_ADDITIONAL_JAVA_OPTS} ${_LOG_CONFIG} -cp \"${CLASSPATH}\" ${RHQ_AGENT_MAINCLASS} ${RHQ_AGENT_CMDLINE_OPTS}"
 
 debug_msg "Executing the agent with this command line:"

@@ -31,6 +31,8 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 
+@Deprecated
+// could use SingleResourceGroupSelectorItem seeded with addFilterBundleTargetableOnly(true); 
 public class SingleCompatibleResourceGroupSelector extends ComboBoxItem {
 
     public SingleCompatibleResourceGroupSelector(String name, String title) {

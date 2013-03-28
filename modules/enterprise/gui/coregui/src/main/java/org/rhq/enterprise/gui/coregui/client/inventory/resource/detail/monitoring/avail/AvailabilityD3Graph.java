@@ -23,8 +23,7 @@ import java.util.List;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -62,12 +61,12 @@ public class AvailabilityD3Graph extends EnhancedVLayout implements Availability
         drawJsniChart();
     }
 
-    public void setMetricData(List<MeasurementDataNumericHighLowComposite> metricData) {
-        availabilityGraphType.setMetricData(metricData);
+    public void setAvailabilityList(List<Availability> availabilityList) {
+        availabilityGraphType.setAvailabilityList(availabilityList);
     }
 
-    public void setAvailabilityList(PageList<Availability> availabilityList) {
-        availabilityGraphType.setAvailabilityList(availabilityList);
+    public void setGroupAvailabilityList(List<ResourceGroupAvailability> groupAvailabilityList) {
+        availabilityGraphType.setGroupAvailabilityList(groupAvailabilityList);
     }
 
     /**

@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
-import javax.persistence.EntityManager;
 import javax.persistence.Query;
 import javax.transaction.Status;
 
@@ -44,6 +43,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.GroupAvailabilityType;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityPoint;
@@ -51,6 +52,7 @@ import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TestServerPluginService;
+import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.SessionTestHelper;
@@ -270,6 +272,262 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
+    public void testGetResourceAvailabilities() throws Exception {
+
+        executeInTransaction(false, new TransactionCallback() {
+            public void execute() throws Exception {
+                setupResource();
+            }
+        });
+        // platform: UNKNOWN(0) -->        
+
+        Availability avail;
+        List<Availability> avails;
+        long now = System.currentTimeMillis();
+
+        AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 1, now);
+        assert avails.size() == 1 : "Should only be initial unknown avail data";
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(1L);
+        assert avails.get(0).getEndTime().equals(now);
+
+        Long startMillis = 60000L;
+        avail = new Availability(theResource, startMillis, UP);
+        report.addAvailability(avail);
+        availabilityManager.mergeAvailabilityReport(report);
+        // platform: UNKNOWN(0) --> UP(60000) -->            
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 30000L,
+            startMillis + 10000);
+        assertEquals("Range should cover both avails", 2, avails.size());
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(30000L);
+        assert avails.get(0).getEndTime().equals(60000L);
+        assert avails.get(1).getAvailabilityType() == UP;
+        assert avails.get(1).getStartTime().equals(60000L);
+        assert avails.get(1).getEndTime().equals(startMillis + 10000);
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), startMillis,
+            startMillis + 10000);
+        assertEquals("Range start on avail start border and extending to future", 1, avails.size());
+        assert avails.get(0).getAvailabilityType() == UP;
+        assert avails.get(0).getStartTime().equals(startMillis);
+        assert avails.get(0).getEndTime().equals(startMillis + 10000);
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 1000L,
+            startMillis - 10000);
+        assertEquals("Range completely in first avail", 1, avails.size());
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(1000L);
+        assert avails.get(0).getEndTime().equals(startMillis - 10000);
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), startMillis + 5000,
+            startMillis + 10000);
+        assertEquals("Range completely in last avail", 1, avails.size());
+        assert avails.get(0).getAvailabilityType() == UP;
+        assert avails.get(0).getStartTime().equals(startMillis + 5000);
+        assert avails.get(0).getEndTime().equals(startMillis + 10000);
+
+        report = new AvailabilityReport(false, theAgent.getName()); // 70000
+        report.setEnablementReport(true); // simulate a real disable
+        report.addAvailability(new Availability(theResource, (startMillis + 10000L), DISABLED));
+        availabilityManager.mergeAvailabilityReport(report);
+        // UNKNOWN(0) --> UP(60000) --> DISABLED(70000) -->            
+
+        // before setting other avails, must end disable with enablement report to unknown
+        report = new AvailabilityReport(false, theAgent.getName()); // 75000
+        report.setEnablementReport(true);
+        report.addAvailability(new Availability(theResource, (startMillis + 15000L), UNKNOWN));
+        availabilityManager.mergeAvailabilityReport(report);
+        // UNKNOWN(0) --> UP(60000) --> DISABLED(70000) --> UNKNOWN(75000) -->            
+
+        report = new AvailabilityReport(false, theAgent.getName()); // 80000
+        report.addAvailability(new Availability(theResource, (startMillis + 20000L), UP));
+        availabilityManager.mergeAvailabilityReport(report);
+        // UNKNOWN(0) --> UP(60000) --> DISABLED(70000) --> UNKNOWN(75000) --> UP(80000)            
+
+        report = new AvailabilityReport(false, theAgent.getName()); // 90000
+        report.addAvailability(new Availability(theResource, (startMillis + 30000L), DOWN));
+        availabilityManager.mergeAvailabilityReport(report);
+        // UNKNOWN(0) --> UP(60000) --> DISABLED(70000) --> UNKNOWN(75000) --> UP(80000) --> DOWN(90000) -->            
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), startMillis - 15000,
+            startMillis + 35000);
+        assertEquals("Range should cover 45000 - 95000", 6, avails.size());
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(45000L);
+        assert avails.get(0).getEndTime().equals(60000L);
+        assert avails.get(1).getAvailabilityType() == UP;
+        assert avails.get(1).getStartTime().equals(60000L);
+        assert avails.get(1).getEndTime().equals(70000L);
+        assert avails.get(2).getAvailabilityType() == DISABLED;
+        assert avails.get(2).getStartTime().equals(70000L);
+        assert avails.get(2).getEndTime().equals(75000L);
+        assert avails.get(3).getAvailabilityType() == UNKNOWN;
+        assert avails.get(3).getStartTime().equals(75000L);
+        assert avails.get(3).getEndTime().equals(80000L);
+        assert avails.get(4).getAvailabilityType() == UP;
+        assert avails.get(4).getStartTime().equals(80000L);
+        assert avails.get(4).getEndTime().equals(90000L);
+        assert avails.get(5).getAvailabilityType() == DOWN;
+        assert avails.get(5).getStartTime().equals(90000L);
+        assert avails.get(5).getEndTime().equals(95000L);
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testGetResourceAvailabilities_2() throws Exception {
+
+        executeInTransaction(false, new TransactionCallback() {
+            public void execute() throws Exception {
+                setupResource();
+            }
+        });
+        // platform: UNKNOWN(0) -->        
+
+        Availability avail;
+        List<Availability> avails;
+        long now = System.currentTimeMillis();
+
+        AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 1, now);
+        assert avails.size() == 1 : "Should only be initial unknown avail data";
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(1L);
+        assert avails.get(0).getEndTime().equals(now);
+
+        Long startMillis = 60000L;
+        avail = new Availability(theResource, startMillis, UP);
+        report.addAvailability(avail);
+        availabilityManager.mergeAvailabilityReport(report);
+        // platform: UNKNOWN(0) --> UP(60000) -->            
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 30000L,
+            startMillis + 10000);
+        assertEquals("Range should cover both avails", 2, avails.size());
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(30000L);
+        assert avails.get(0).getEndTime().equals(60000L);
+        assert avails.get(1).getAvailabilityType() == UP;
+        assert avails.get(1).getStartTime().equals(60000L);
+        assert avails.get(1).getEndTime().equals(startMillis + 10000);
+
+        // purge away all but the most recent avail
+        availabilityManager.purgeAvailabilities(System.currentTimeMillis());
+        // platform: UP(60000) -->        
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 10000L, 20000L);
+        assertEquals("all surrogate", 1, avails.size());
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(10000L);
+        assert avails.get(0).getEndTime().equals(20000L);
+
+        avails = availabilityManager.getAvailabilitiesForResource(overlord, theResource.getId(), 50000L, 70000L);
+        assertEquals("surrogate to start and then real avail", 2, avails.size());
+        assert avails.get(0).getAvailabilityType() == UNKNOWN;
+        assert avails.get(0).getStartTime().equals(50000L);
+        assert avails.get(0).getEndTime().equals(60000L);
+        assert avails.get(1).getAvailabilityType() == UP;
+        assert avails.get(1).getStartTime().equals(60000L);
+        assert avails.get(1).getEndTime().equals(70000L);
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    public void testGetResourceGroupAvailabilities() throws Exception {
+
+        executeInTransaction(false, new TransactionCallback() {
+            public void execute() throws Exception {
+                setupResource();
+                setupAnotherResource(1, theResource);
+                setupAnotherResource(2, theResource);
+            }
+        });
+
+        // Create some various group availability situations:
+        //  T:  0         10000     20000    30000    40000
+        // R1:  UNKNOWN   DOWN      UP         
+        // R2:  UNKNOWN   DOWN      UP      
+        // R3:  UNKNOWN   DOWN               UP       DISABLED  
+        // ----------------------------------------------------------
+        // AV:  WARN      DOWN      WARN     UP       DISABLED
+
+        final Resource r1 = theResource;
+        final Resource r2 = additionalResources.get(0);
+        final Resource r3 = additionalResources.get(1);
+
+        AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
+
+        report.addAvailability(new Availability(r1, 10000L, DOWN));
+        report.addAvailability(new Availability(r2, 10000L, DOWN));
+        report.addAvailability(new Availability(r3, 10000L, DOWN));
+        report.addAvailability(new Availability(r1, 20000L, UP));
+        report.addAvailability(new Availability(r2, 20000L, UP));
+        report.addAvailability(new Availability(r3, 30000L, UP));
+        report.addAvailability(new Availability(r3, 40000L, DISABLED));
+        availabilityManager.mergeAvailabilityReport(report);
+
+        executeInTransaction(new TransactionCallback() {
+            public void execute() throws Exception {
+                // Create the test group
+                final Subject subject = SessionTestHelper.createNewSubject(em, "testSubject");
+                final Role roleWithSubject = SessionTestHelper
+                    .createNewRoleForSubject(em, subject, "role with subject");
+                roleWithSubject.addPermission(Permission.VIEW_RESOURCE);
+                ResourceGroup group = SessionTestHelper.createNewCompatibleGroupForRole(em, roleWithSubject,
+                    "accessible group");
+
+                // before adding resources check for EMPTY
+                List<ResourceGroupAvailability> avails;
+                int groupId = group.getId();
+                avails = availabilityManager.getAvailabilitiesForResourceGroup(overlord, groupId, 0, 20000L);
+                assertEquals("Should have 1 EMPTY rgAvail", 1, avails.size());
+                assertEquals("Should have 1 EMPTY rgAvail", GroupAvailabilityType.EMPTY, avails.get(0)
+                    .getGroupAvailabilityType());
+                assertEquals("Should cover whole range", 0L, avails.get(0).getStartTime().longValue());
+                assertEquals("Should cover whole range", 20000L, avails.get(0).getEndTime().longValue());
+
+                // add the resources to the group
+                group.addExplicitResource(r1);
+                group.addExplicitResource(r2);
+                group.addExplicitResource(r3);
+                em.merge(group);
+                em.flush();
+
+                avails = availabilityManager.getAvailabilitiesForResourceGroup(overlord, groupId, 5000L, 50000);
+                assertEquals("Should have initial avail + 4 changes", 5, avails.size());
+                assertEquals("AV0 WARN  5000-10000", GroupAvailabilityType.WARN, avails.get(0)
+                    .getGroupAvailabilityType());
+                assertEquals("AV0 WARN  5000-10000", 5000L, avails.get(0).getStartTime().longValue());
+                assertEquals("AV0 WARN  5000-10000", 10000L, avails.get(0).getEndTime().longValue());
+
+                assertEquals("AV1 DOWN  10000-20000", GroupAvailabilityType.DOWN, avails.get(1)
+                    .getGroupAvailabilityType());
+                assertEquals("AV1 DOWN  10000-20000", 10000L, avails.get(1).getStartTime().longValue());
+                assertEquals("AV1 DOWN  10000-20000", 20000L, avails.get(1).getEndTime().longValue());
+
+                assertEquals("AV2 WARN  20000-30000", GroupAvailabilityType.WARN, avails.get(2)
+                    .getGroupAvailabilityType());
+                assertEquals("AV2 WARN  20000-30000", 20000L, avails.get(2).getStartTime().longValue());
+                assertEquals("AV2 WARN  20000-30000", 30000L, avails.get(2).getEndTime().longValue());
+
+                assertEquals("AV3 DISABLED 30000-40000", GroupAvailabilityType.UP, avails.get(3)
+                    .getGroupAvailabilityType());
+                assertEquals("AV3 DISABLED 30000-40000", 30000L, avails.get(3).getStartTime().longValue());
+                assertEquals("AV3 DISABLED 30000-40000", 40000L, avails.get(3).getEndTime().longValue());
+
+                assertEquals("AV4 DISABLED 40000-50000", GroupAvailabilityType.DISABLED, avails.get(4)
+                    .getGroupAvailabilityType());
+                assertEquals("AV4 DISABLED 40000-50000", 40000L, avails.get(4).getStartTime().longValue());
+                assertEquals("AV4 DISABLED 40000-50000", 50000L, avails.get(4).getEndTime().longValue());
+            }
+        });
+    }
+
+    @Test(enabled = ENABLE_TESTS)
+    @Deprecated
+    // tests deprecated method
     public void testGetAvailabilities() throws Exception {
         beginTx();
 
@@ -847,68 +1105,6 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
         }
     }
 
-    @Test(enabled = false)
-    public void testAgentCurrentGroupAvailability() throws Exception {
-        beginTx();
-
-        try {
-            setupResource(); // inserts initial UNKNOWN Availability at epoch
-            commitAndClose();
-
-            Availability avail;
-            long now = System.currentTimeMillis();
-
-            //initialize availabilty to up
-            avail = new Availability(theResource, UP);
-            AvailabilityReport report = new AvailabilityReport(false, theAgent.getName());
-            report.addAvailability(avail);
-            availabilityManager.mergeAvailabilityReport(report);
-
-            //verify resource's availabilty is up.
-            List<AvailabilityPoint> list = availabilityManager.findAvailabilitiesForResource(overlord,
-                theResource.getId(), 0, now, 1, true);
-            AvailabilityType returnedAvail = list.get(0).getAvailabilityType();
-            assert returnedAvail == UP : "Expected current avail to be '" + UP + "' but was '" + returnedAvail + "'.";
-
-            //add this resource to a group 
-            getTransactionManager().begin();
-            EntityManager entityMgr = getEntityManager();
-            final Subject subject = SessionTestHelper.createNewSubject(entityMgr, "testSubject");
-
-            Role roleWithSubject = SessionTestHelper.createNewRoleForSubject(entityMgr, subject, "role with subject");
-            roleWithSubject.addPermission(Permission.VIEW_RESOURCE);
-
-            ResourceGroup theGroup = SessionTestHelper.createNewCompatibleGroupForRole(entityMgr, roleWithSubject,
-                "accessible group");
-
-            //explicitly add resource to group
-            theGroup.addExplicitResource(theResource);
-            entityMgr.merge(theGroup);
-
-            //test that group member size is one
-            int groupSize = theGroup.getExplicitResources().size();
-            assert groupSize == 1 : "Group membership count incorrect. Expected '1' but was '" + groupSize + "'";
-            Resource theGroupMember = null;
-            for (Resource r : theGroup.getExplicitResources()) {
-                theGroupMember = r;
-            }
-
-            //test group avail
-            long rightNow = System.currentTimeMillis();
-            list = availabilityManager.findAvailabilitiesForResourceGroup(overlord, theGroup.getId(), 0, rightNow, 1,
-                true);
-            returnedAvail = list.get(0).getAvailabilityType();
-            assert returnedAvail == UP : "Expected current avail to be '" + UP + "' but was '" + returnedAvail + "'.";
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw e;
-        } finally {
-            if (Status.STATUS_ACTIVE == getTransactionManager().getStatus()) {
-                getTransactionManager().rollback();
-            }
-        }
-    }
-
     @Test(enabled = ENABLE_TESTS)
     public void testAgentOldReport2() throws Exception {
         beginTx();
@@ -968,6 +1164,8 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
     }
 
     @Test(enabled = ENABLE_TESTS)
+    @Deprecated
+    // tests deprecated method    
     public void testGetAvailabilities2() throws Exception {
         beginTx();
 
@@ -1573,7 +1771,10 @@ public class AvailabilityManagerTest extends AbstractEJB3Test {
             theResourceType);
         newResource.setUuid("" + new Random().nextInt());
         newResource.setAgent(theAgent);
-        parentResource.addChildResource(newResource);
+        newResource.setInventoryStatus(InventoryStatus.COMMITTED);
+        if (null != parentResource) {
+            parentResource.addChildResource(newResource);
+        }
         em.persist(newResource);
         additionalResources.add(newResource);
 

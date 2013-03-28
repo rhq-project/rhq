@@ -289,10 +289,8 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
             // submit
 
-            Configuration parameters = new Configuration();
-            for (Map.Entry<String,Object> entry : operation.getParams().entrySet()) {
-                parameters.put(new PropertySimple(entry.getKey(),entry.getValue())); // TODO honor more types
-            }
+            Configuration parameters = mapToConfiguration(operation.getParams());
+
             ResourceOperationSchedule sched = opsManager.scheduleResourceOperation(caller,operation.getResourceId(),operation.getName(),0,0,0,-1,
                     parameters,"Test");
             JobId jobId = new JobId(sched.getJobName(),sched.getJobGroup());

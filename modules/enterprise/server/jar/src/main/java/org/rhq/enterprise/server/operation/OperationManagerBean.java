@@ -1994,17 +1994,15 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
+    public PageList<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject,
         OperationDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-        CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner(criteria, generator,
+        CriteriaQueryRunner<OperationDefinition> queryRunner = new CriteriaQueryRunner<OperationDefinition>(criteria, generator,
             entityManager);
         return queryRunner.execute();
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2013,12 +2011,11 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 subject.getId());
         }
 
-        CriteriaQueryRunner<ResourceOperationHistory> queryRunner = new CriteriaQueryRunner(criteria, generator,
+        CriteriaQueryRunner<ResourceOperationHistory> queryRunner = new CriteriaQueryRunner<ResourceOperationHistory>(criteria, generator,
             entityManager);
         return queryRunner.execute();
     }
 
-    @SuppressWarnings("unchecked")
     public PageList<GroupOperationHistory> findGroupOperationHistoriesByCriteria(Subject subject,
         GroupOperationHistoryCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -2027,7 +2024,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 subject.getId());
         }
 
-        CriteriaQueryRunner<GroupOperationHistory> queryRunner = new CriteriaQueryRunner(criteria, generator,
+        CriteriaQueryRunner<GroupOperationHistory> queryRunner = new CriteriaQueryRunner<GroupOperationHistory>(criteria, generator,
             entityManager);
         return queryRunner.execute();
     }

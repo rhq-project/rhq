@@ -147,16 +147,14 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
 
             function createMinAvgPeakSidePanel( minLabel, minValue, avgLabel, avgValue, highLabel, highValue, uom ){
-                var fontSize = 12,
-                        fgColor = "#003168",
-                        xLabel = 772,
+                var     xLabel = 772,
                         xValue = 820,
                         yBase = 100,
                         yInc = 25,
-                        decimalPlaces = 0,
+                        decimalPlaces = 0;
 
                 // title/header
-                sidebar = chart.append("g").append("rect")
+                chart.append("g").append("rect")
                         .attr("class", "rightSidePanel")
                         .attr("x", xLabel -10)
                         .attr("y", margin.top + 60)
@@ -170,20 +168,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("class", "highLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase)
-                        .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
-                        .attr("text-anchor", "left")
-                        .text(highLabel + " - ")
-                        .attr("fill", fgColor);
+                        .text(highLabel + " - ");
 
                 chart.append("text")
                         .attr("class", "highText")
                         .attr("x", xValue)
                         .attr("y", yBase)
-                        .attr("font-size", fontSize)
-                        .attr("text-anchor", "left")
-                        .text(highValue.toFixed(decimalPlaces) + " "+ uom)
-                        .attr("fill", fgColor);
+                        .text(highValue.toFixed(decimalPlaces) + " "+ uom);
 
 
                 //avg
@@ -191,20 +182,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("class", "avgLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase + yInc)
-                        .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
-                        .attr("text-anchor", "left")
-                        .text(avgLabel + " - ")
-                        .attr("fill", fgColor);
+                        .text(avgLabel + " - ");
 
                 chart.append("text")
                         .attr("class", "avgText")
                         .attr("x", xValue)
                         .attr("y", yBase + yInc)
-                        .attr("font-size", fontSize)
-                        .attr("text-anchor", "left")
-                        .text(avgValue.toFixed(decimalPlaces) + " "+uom)
-                        .attr("fill", fgColor);
+                        .text(avgValue.toFixed(decimalPlaces) + " "+uom);
 
 
 
@@ -213,20 +197,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("class", "minLabel")
                         .attr("x", xLabel)
                         .attr("y", yBase + 2 * yInc)
-                        .attr("font-size", fontSize)
-                        .attr("font-weight", "bold")
-                        .attr("text-anchor", "left")
-                        .text(minLabel + " - ")
-                        .attr("fill", fgColor);
+                        .text(minLabel + " - ");
 
                 chart.append("text")
                         .attr("class", "minText")
                         .attr("x", xValue)
                         .attr("y", yBase + 2 * yInc)
-                        .attr("font-size", fontSize)
-                        .attr("text-anchor", "left")
-                        .text(minValue.toFixed(decimalPlaces)+ " "+uom)
-                        .attr("fill", fgColor);
+                        .text(minValue.toFixed(decimalPlaces)+ " "+uom);
 
 
             }
@@ -283,7 +260,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                 return height - yScale(d.low) - pixelsOffHeight;
                             }
                         })
-                        .attr("width", function (d) {
+                        .attr("width", function () {
                             return  (width / chartContext.data.length - barOffset  );
                         })
 
@@ -317,14 +294,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                 return  yScale(d.y) - yScale(d.high);
                             }
                         })
-                        .attr("width", function (d) {
+                        .attr("width", function () {
                             return  (width / chartContext.data.length - barOffset  );
                         })
                         .attr("data-rhq-value", function(d){
                             return d.y;
                         })
-                        .attr("opacity", 0.9)
-                        .attr("fill", "#1794bc");
+                        .attr("opacity", 0.9);
 
 
                 // lower portion representing avg to low
@@ -346,11 +322,10 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                 return  yScale(d.low) - yScale(d.y);
                             }
                         })
-                        .attr("width", function (d) {
+                        .attr("width", function () {
                             return  (width / chartContext.data.length - barOffset );
                         })
-                        .attr("opacity", 0.9)
-                        .attr("fill", "#70c4e2");
+                        .attr("opacity", 0.9);
 
                 // if high == low put a "cap" on the bar to show non-aggregated bar
                 svg.selectAll("rect.singleValue")
@@ -375,7 +350,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                 }
                             }
                         })
-                        .attr("width", function (d) {
+                        .attr("width", function () {
                             return  (width / chartContext.data.length - barOffset );
                         })
                         .attr("opacity", 0.9)
@@ -407,8 +382,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 svg.append("g")
                         .attr("class", "x axis")
                         .attr("transform", "translate(0," + height + ")")
-                        .attr("font-size", "10px")
-                        .attr("font-family", "Arial, Verdana, sans-serif")
                         .attr("letter-spacing", "3")
                         .style("text-anchor", "end")
                         .call(xAxis);
@@ -421,8 +394,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .append("text")
                         .attr("transform", "rotate(-90),translate( -60,0)")
                         .attr("y", -30)
-                        .attr("font-size", "10px")
-                        .attr("font-family", "Arial, Verdana, sans-serif")
                         .attr("letter-spacing", "3")
                         .style("text-anchor", "end")
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
@@ -430,7 +401,39 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             }
 
             function createAvgLines() {
-                console.time("drawLines");
+                console.time("drawAvgLine");
+                var showBarAvgTrendline =
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::showBarAvgTrendLine()(),
+                        barAvgLine = $wnd.d3.svg.line()
+                                .interpolate("linear")
+                                .defined(function(d){
+                                    return !d.nodata ;
+                                })
+                                .x(function (d) {
+                                    return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
+                                })
+                                .y(function (d) {
+                                    if(showBarAvgTrendline){
+                                        return yScale(d.y);
+                                    }else {
+                                        return yScale(0);
+                                    }
+                                });
+
+                // Bar avg line
+                svg.append("path")
+                        .datum(chartContext.data)
+                        .attr("class", "barAvgLine")
+                        .attr("fill", "none")
+                        .attr("stroke", "#2e376a")
+                        .attr("stroke-width", "1.5")
+                        .attr("stroke-opacity", ".7")
+                        .attr("d", barAvgLine);
+
+                console.timeEnd("drawAvgLine");
+            }
+
+            function createOOBLines(){
 
                var minBaselineLine = $wnd.d3.svg.line()
                         .interpolate(interpolation)
@@ -441,46 +444,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             return yScale(d.baselineMin);
                         }),
                 maxBaselineLine = $wnd.d3.svg.line()
-                                .interpolate(interpolation)
-                                .x(function (d) {
-                                    return timeScale(d.x);
-                                })
-                                .y(function (d) {
-                                    return yScale(d.baselineMax);
-                                }),
-                barAvgLine = $wnd.d3.svg.line()
-                                .interpolate("linear")
-                                .x(function (d) {
-                                    return timeScale(d.x)+ ((width / chartContext.data.length - barOffset)/ 2);
-                                })
-                                .y(function (d,i) {
-
-                                    var showBarAvgTrendline =
-                                            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::showBarAvgTrendLine()();
-
-                                    if(showBarAvgTrendline){
-                                    // on a bar avg line if the value is undefined then use the last defined value
-                                        if(d.y == undefined){
-                                            if(i >= 1){
-                                                // count backward until there is a defined value
-                                                for(var j=i; j>=1;j--){
-                                                   if(this.__data__[j].y != undefined){
-                                                       return yScale(this.__data__[j].y);
-                                                   }
-                                                }
-                                                return yScale(0);
-                                            }else {
-                                                return yScale(0);
-                                            }
-
-                                        }else {
-                                            return yScale(+d.y);
-                                        }
-                                    }else {
-                                        return yScale(0);
-                                    }
-                                });
-
+                        .interpolate(interpolation)
+                        .x(function (d) {
+                            return timeScale(d.x);
+                        })
+                        .y(function (d) {
+                            return yScale(d.baselineMax);
+                        });
 
                 // min baseline Line
                 svg.append("path")
@@ -504,17 +474,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("stroke-opacity", ".7")
                         .attr("d", maxBaselineLine);
 
-                // Bar avg line
-                svg.append("path")
-                        .datum(chartContext.data)
-                        .attr("class", "barAvgLine")
-                        .attr("fill", "none")
-                        .attr("stroke", "#2e376a")
-                        .attr("stroke-width", "1.5")
-                        .attr("stroke-opacity", ".7")
-                        .attr("d", barAvgLine);
-
-                console.timeEnd("drawLines");
             }
 
             function formatHovers(chartContext, d) {
@@ -522,8 +481,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         xValue = (d.x == undefined) ? 0 : +d.x,
                         date = new Date(+xValue),
                         barDuration = d.barDuration,
-                        timeFormatter = $wnd.d3.time.format("%I:%M:%S %p"),
-                        dateFormatter = $wnd.d3.time.format("%m/%d/%y"),
+                        timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
+                        dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                         highValue =  d.high.toFixed(2),
                         lowValue =  d.low.toFixed(2),
                         avgValue =  d.y.toFixed(2);
@@ -533,7 +492,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 if (d.y === 0 && d.high === 0 && d.low === 0 ) {
                     // no data
                     hoverString =
-                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) + '</div>' +
+                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
                                     '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
                                     '<hr class="chartHoverDivider" ></hr>' +
                                     '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">'+chartContext.noDataLabel+'</span></div>' +
@@ -544,7 +503,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 else {
                     // regular bar hover
                     hoverString =
-                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span></div>' +
+                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span>' +
                                     '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
                                     '<div class="chartHoverAlignLeft"><span class="chartHoverLabelSpan">'+chartContext.hoverBarLabel+": "+ barDuration + '</span></div>' +
                                     '<hr  class="chartHoverDivider"></hr>' +
@@ -559,7 +518,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
             function createHovers(chartContext) {
                 //console.log("Create Hovers");
-                $wnd.jQuery('svg rect.leaderBar, svg rect.high, svg rect.low').tipsy({
+                $wnd.jQuery('svg rect.leaderBar, svg rect.high, svg rect.low, svg rect.singleValue').tipsy({
                     gravity: 'w',
                     html: true,
                     trigger: 'hover',
@@ -582,12 +541,23 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     console.time("chart");
                     //console.log("Json Data:\n"+chartContext.data);
 
+                    var oobMax =  $wnd.d3.max(chartContext.data.map(function (d) {
+                                if(d.baselineMax == undefined){
+                                    return 0;
+                                } else {
+                                    return +d.baselineMax;
+                                }
+                            }));
                     createHeader(chartContext.chartTitle);
                     createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits );
                     createYAxisGridLines();
                     createStackedBars();
                     createXandYAxes();
                     createAvgLines();
+                    if(oobMax > 0){
+                        console.info("Has OOB Data!");
+                        createOOBLines();
+                    }
                     createHovers(chartContext);
                     console.timeEnd("chart");
                     console.groupEnd();

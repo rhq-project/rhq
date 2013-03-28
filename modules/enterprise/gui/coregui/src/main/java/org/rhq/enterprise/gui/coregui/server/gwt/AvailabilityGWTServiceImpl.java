@@ -18,8 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.List;
+
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AvailabilityGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -44,4 +47,29 @@ public class AvailabilityGWTServiceImpl extends AbstractGWTServiceImpl implement
             throw getExceptionToThrowToClient(t);
         }
     }
+
+    @Override
+    public List<Availability> getAvailabilitiesForResource(int resourceId, long startTime, long endTime)
+        throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                availabilityManager.getAvailabilitiesForResource(getSessionSubject(), resourceId, startTime, endTime),
+                "AvailabilityService.getAvailabilitiesForResource");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(int groupId, long startTime, long endTime)
+        throws RuntimeException {
+        try {
+            return SerialUtility
+                .prepare(availabilityManager.getAvailabilitiesForResourceGroup(getSessionSubject(), groupId, startTime,
+                    endTime), "AvailabilityService.getAvailabilitiesForResourceGroup");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
 }

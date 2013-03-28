@@ -71,13 +71,13 @@
         <dependency>
             <groupId>ant</groupId>
             <artifactId>ant-launcher</artifactId>
-            <version>${ant.version}</version>
+            <version>1.6.5</version>
         </dependency>
 
         <dependency>
             <groupId>ant</groupId>
             <artifactId>ant</artifactId>
-            <version>${ant.version}</version>
+            <version>1.6.5</version>
         </dependency>
 
         <dependency>
@@ -95,7 +95,6 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>1.9.0</version>
             <scope>test</scope>
         </dependency>
 

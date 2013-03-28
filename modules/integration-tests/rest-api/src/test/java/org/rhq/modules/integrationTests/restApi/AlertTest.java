@@ -34,7 +34,9 @@ import org.rhq.modules.integrationTests.restApi.d.Group;
 import static com.jayway.restassured.RestAssured.delete;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
@@ -1472,6 +1474,17 @@ public class AlertTest extends AbstractBase {
             .when()
                 .get("/alert/{id}/notifications");
 
+
+            // See if the resource has an alert recorded
+            given()
+                .header(acceptJson)
+                .pathParam("resourceId",_platformId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("",not(emptyIterable()))
+            .when()
+                .get("/resource/{resourceId}/alerts");
 
         }
 

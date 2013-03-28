@@ -37,14 +37,12 @@
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant</artifactId>
-      <version>${ant.version}</version>
       <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.apache.ant</groupId>
       <artifactId>ant-launcher</artifactId>
-      <version>${ant.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -135,7 +133,6 @@ rhq-agent.latest.build-number=${buildNumber}
 
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.6</version>
       </plugin>
 
     </plugins>
@@ -204,7 +201,6 @@ rhq-agent.latest.build-number=${buildNumber}
 
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.6</version>
       </plugin>
 
     </plugins>

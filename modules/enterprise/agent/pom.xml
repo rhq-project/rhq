@@ -63,7 +63,6 @@
    <dependency>
        <groupId>jline</groupId>
        <artifactId>jline</artifactId>
-       <version>${jline.version}</version>
     </dependency>
 
     <!-- 3rd Party Deps -->
@@ -80,14 +79,13 @@
     </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
+      <groupId>org.jboss.remoting</groupId>
       <artifactId>jboss-remoting</artifactId>
     </dependency>
 
     <dependency>
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging</artifactId>
-      <version>${jboss-logging.version}</version> <!-- just using the one that is also used by AS7 -->
     </dependency>
 
   </dependencies>
@@ -157,7 +155,7 @@ Build-Number=${buildNumber}
                    <property name="concurrent.version" value="${concurrent.version}" />
                    <property name="getopt.version" value="${getopt.version}" />
                    <property name="jboss-jmx.version" value="${jboss-jmx.version}" />
-                   <property name="jboss-common.version" value="${jboss-common.version}" />
+                   <property name="jboss-common-core.version" value="${jboss-common-core.version}" />
                    <property name="jboss-remoting.version" value="${jboss-remoting.version}" />
                    <property name="jboss-logging.version" value="${jboss-logging.version}" />
                    <property name="jboss-serialization.version" value="${jboss-serialization.version}" />
@@ -224,7 +222,6 @@ Build-Number=${buildNumber}
 
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.6</version>
       </plugin>
 
     </plugins>
@@ -243,7 +240,6 @@ Build-Number=${buildNumber}
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-            <version>1.5</version>
             <executions>
               <execution>
                 <id>attach-installed-file-for-deployment</id>
@@ -285,7 +281,6 @@ Build-Number=${buildNumber}
 
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.6</version>
       </plugin>
 
     </plugins>

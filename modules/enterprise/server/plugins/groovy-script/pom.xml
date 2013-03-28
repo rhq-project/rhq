@@ -4,14 +4,14 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
-        <version>4.5.0-SNAPSHOT</version>
+        <version>4.7.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq</groupId>
     <artifactId>groovy-script-server-plugin</artifactId>
-    <version>4.5.0-SNAPSHOT</version>
+    <version>4.7.0-SNAPSHOT</version>
 
     <name>RHQ Enterprise Server Groovy Script Plugin</name>
 
@@ -19,7 +19,6 @@
         <dependency>
             <groupId>org.codehaus.groovy</groupId>
             <artifactId>groovy-all</artifactId>
-            <version>1.7.3</version>
         </dependency>
         <dependency>
             <groupId>org.apache.ant</groupId>
@@ -27,9 +26,8 @@
             <version>1.7.1</version>
         </dependency>
         <dependency>
-            <groupId>quartz</groupId>
+            <groupId>org.opensymphony.quartz</groupId>
             <artifactId>quartz</artifactId>
-            <version>1.5.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -53,6 +51,10 @@
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
             <version>0.9.5-RC2</version>
+        </dependency>
+        <dependency>
+          <groupId>org.hibernate</groupId>
+          <artifactId>hibernate-core</artifactId>
         </dependency>
     </dependencies>
 
@@ -97,7 +99,6 @@
                                 <artifactItem>
                                     <groupId>org.javassist</groupId>
                                     <artifactId>javassist</artifactId>
-                                    <version>${javassist.version}</version>
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
@@ -109,7 +110,6 @@
             <plugin>
               <groupId>org.codehaus.groovy.maven</groupId>
               <artifactId>gmaven-plugin</artifactId>
-              <version>1.0</version>
               <executions>
                 <execution>
                   <goals>

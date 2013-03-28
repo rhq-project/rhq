@@ -18,18 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
-import com.google.gwt.user.client.rpc.AsyncCallback;
+import java.util.List;
+
 import com.smartgwt.client.widgets.Label;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -38,9 +35,10 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * and User Preferences pickers for the date range.
  */
 public abstract class AbstractD3GraphListView extends EnhancedVLayout {
-    protected PageList<Availability> availabilityList;
+    protected List<Availability> availabilityList;
+    protected List<ResourceGroupAvailability> groupAvailabilityList;
     protected AvailabilityD3Graph availabilityGraph;
-    protected static  Label loadingLabel = new Label(MSG.common_msg_loading());
+    protected static Label loadingLabel = new Label(MSG.common_msg_loading());
     protected UserPreferencesMeasurementRangeEditor measurementRangeEditor;
     protected boolean showAvailabilityGraph = false;
 
@@ -51,39 +49,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout {
 
     public abstract void redrawGraphs();
 
-    protected void queryAvailability(final int resourceId, final CountDownLatch countDownLatch) {
-
-        final long startTime = System.currentTimeMillis();
-
-        // now return the availability
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(resourceId);
-        c.addFilterInitialAvailability(false);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-                new AsyncCallback<PageList<Availability>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                        if (countDownLatch != null) {
-                            countDownLatch.countDown();
-                        }
-                    }
-
-                    @Override
-                    public void onSuccess(PageList<Availability> availList) {
-                        Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - startTime)
-                                + " ms.");
-                        availabilityList = new PageList<Availability>();
-                        for (Availability availability : availList) {
-                            availabilityList.add(availability);
-                        }
-                        if (countDownLatch != null) {
-                            countDownLatch.countDown();
-                        }
-                    }
-                });
-    }
-
+    protected abstract void queryAvailability(final EntityContext context, Long startTime, Long endTime,
+        final CountDownLatch countDownLatch);
 
 }

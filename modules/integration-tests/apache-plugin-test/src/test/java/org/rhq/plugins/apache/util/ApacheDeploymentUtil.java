@@ -44,8 +44,8 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.apache.util.HttpdAddressUtility.Address;
 import org.rhq.test.PortScout;
-import org.rhq.test.TokenReplacingProperties;
-import org.rhq.test.TokenReplacingReader;
+import org.rhq.core.util.TokenReplacingProperties;
+import org.rhq.core.util.TokenReplacingReader;
 
 /**
  * 

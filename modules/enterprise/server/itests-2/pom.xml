@@ -562,7 +562,6 @@
         <dependency>
           <groupId>org.jboss.spec</groupId>
           <artifactId>jboss-javaee-6.0</artifactId>
-          <version>${jboss.javaee6.spec.version}</version>
           <scope>provided</scope>
           <type>pom</type>
         </dependency>
@@ -570,7 +569,6 @@
         <dependency>
           <groupId>org.jboss.as</groupId>
           <artifactId>jboss-as-arquillian-container-managed</artifactId>
-          <version>${jboss.version}</version>
           <scope>test</scope>
         </dependency>
 
@@ -686,14 +684,12 @@
         <dependency>
           <groupId>org.powermock</groupId>
           <artifactId>powermock-module-testng</artifactId>
-          <version>${powermock.version}</version>
           <scope>test</scope>
         </dependency>
 
         <dependency>
           <groupId>org.powermock</groupId>
           <artifactId>powermock-api-mockito</artifactId>
-          <version>${powermock.version}</version>
           <scope>test</scope>
         </dependency>
 

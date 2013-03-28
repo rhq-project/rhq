@@ -128,8 +128,14 @@
          <fileset dir="${rhq.agent.update.update-agent-dir}/conf">
             <include name="*keystore*"/>
             <include name="*truststore*"/>
+            <include name="*prefs*"/>
          </fileset>
       </copy>
+
+      <!-- if necessary, migrate native prefs into our file prefs (since RHQ 4.7) -->
+      <!--
+      <migrate-agent-preferences todir="${_update.tmp.dir}/rhq-agent/conf" />
+      -->
 
       <!-- if there are any Windows wrapper environment or include files, copy them -->
       <echo>Copy existing Java Service Wrapper configuration files from the old agent to the new agent</echo>

@@ -101,9 +101,9 @@ import org.rhq.core.domain.resource.Resource;
         + "ORDER BY av.startTime ASC"), //
     @NamedQuery(name = Availability.FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL, query = "" //
         + "SELECT av FROM Availability av " //
-        + " WHERE av.resource.id IN ( SELECT ires.id " //
+        + " WHERE av.resource.id IN ( SELECT eres.id " //
         + "                             FROM ResourceGroup rg " //
-        + "                             JOIN rg.implicitResources ires " //
+        + "                             JOIN rg.explicitResources eres " //
         + "                            WHERE rg.id = :groupId ) " //
         + "   AND av.resource.inventoryStatus = 'COMMITTED' " //
         + "   AND ((av.startTime <= :start AND (av.endTime >= :start OR av.endTime IS NULL) ) " /* availability straddles :start */

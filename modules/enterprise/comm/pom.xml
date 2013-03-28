@@ -43,7 +43,6 @@
     <dependency>
       <groupId>dom4j</groupId>
       <artifactId>dom4j</artifactId>
-      <version>1.6</version>
       <exclusions>
          <exclusion>
             <groupId>xml-apis</groupId>
@@ -65,9 +64,8 @@
     </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
-      <artifactId>jboss-common</artifactId>
-      <version>${jboss-common.version}</version>
+      <groupId>org.jboss</groupId>
+      <artifactId>jboss-common-core</artifactId>
     </dependency>
 
     <dependency>
@@ -76,7 +74,7 @@
     </dependency>
 
     <dependency>
-      <groupId>jboss</groupId>
+      <groupId>org.jboss.remoting</groupId>
       <artifactId>jboss-remoting</artifactId>
     </dependency>
 
@@ -88,7 +86,6 @@
     <dependency>
       <groupId>oswego-concurrent</groupId>
       <artifactId>concurrent</artifactId>
-      <!-- NOTE: The version is defined in the root POM's dependencyManagement section. -->
     </dependency>
 
   </dependencies>
@@ -157,7 +154,6 @@
     <plugins>
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.6</version>
       </plugin>
     </plugins>
   </reporting>

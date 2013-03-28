@@ -116,9 +116,14 @@ rem Prepare the VM command line options to be passed in
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_AGENT_JAVA_OPTS (
-   set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
+   set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file="%RHQ_AGENT_HOME%\conf\agent-prefs.properties"
 )
 if defined RHQ_AGENT_DEBUG echo RHQ_AGENT_JAVA_OPTS: %RHQ_AGENT_JAVA_OPTS%
+
+rem ----------------------------------------------------------------------
+rem Ensure the agent uses our custom JavaPreferences implementation
+rem ----------------------------------------------------------------------
+set _JAVA_PREFERENCES_FACTORY_OPT="-Djava.util.prefs.PreferencesFactory=org.rhq.core.util.preferences.FilePreferencesFactory"
 
 if "%RHQ_AGENT_JAVA_ENDORSED_DIRS%" == "none" (
    if defined RHQ_AGENT_DEBUG echo Not explicitly setting java.endorsed.dirs
@@ -170,6 +175,8 @@ if not defined RHQ_AGENT_MAINCLASS (
    set RHQ_AGENT_MAINCLASS=org.rhq.enterprise.agent.AgentMain
 )
 
+rem note - currently not using custom Java Prefs as the default, use commented command line to activate
+rem set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %_JAVA_PREFERENCES_FACTORY_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
 set CMD="%RHQ_AGENT_JAVA_EXE_FILE_PATH%" %_JAVA_ENDORSED_DIRS_OPT% %_JAVA_LIBRARY_PATH_OPT% %RHQ_AGENT_JAVA_OPTS% %RHQ_AGENT_ADDITIONAL_JAVA_OPTS% %_LOG_CONFIG% -cp "%CLASSPATH%" %RHQ_AGENT_MAINCLASS% %RHQ_AGENT_CMDLINE_OPTS%
 
 if not defined _SETENV_ONLY (

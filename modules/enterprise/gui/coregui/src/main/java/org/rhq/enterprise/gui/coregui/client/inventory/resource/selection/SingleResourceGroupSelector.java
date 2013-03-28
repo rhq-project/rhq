@@ -24,7 +24,7 @@ import com.smartgwt.client.types.SelectionStyle;
 import org.rhq.core.domain.resource.group.GroupCategory;
 
 /**
- * This forces the user to only be able to select a single resource.
+ * This forces the user to only be able to select a single resource group.
  * 
  * @author Jay Shaughnessy
  */

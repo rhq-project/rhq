@@ -54,6 +54,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
+import org.rhq.enterprise.gui.coregui.client.components.selector.SingleResourceGroupSelectorItem;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.GroupDefinitionExpressionBuilderGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -78,6 +79,8 @@ public class GroupDefinitionExpressionBuilder extends Window {
     private SelectItem expressionTypeItem;
     private SelectItem resourceItem;
     private RadioGroupItem groupByItem;
+    private RadioGroupItem memberOfItem;
+    private SingleResourceGroupSelectorItem memberOfGroupItem;
     private TextAreaItem expressionItem;
 
     private ArrayList<String> plugins = new ArrayList<String>();
@@ -276,6 +279,33 @@ public class GroupDefinitionExpressionBuilder extends Window {
             }
         });
 
+        this.memberOfItem = new RadioGroupItem("memberOf", MSG.view_dynagroup_exprBuilder_memberOf());
+        this.memberOfItem.setTooltip(MSG.view_dynagroup_exprBuilder_memberOf_tooltip());
+        this.memberOfItem.setHoverWidth(250);
+        this.memberOfItem.setDefaultValue(MSG.common_val_no());
+        this.memberOfItem.setValueMap(MSG.common_val_yes(), MSG.common_val_no());
+        this.memberOfItem.setVertical(false);
+        this.memberOfItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                enableDisableComponents();
+                buildExpressionValue();
+            }
+        });
+
+        this.memberOfGroupItem = new SingleResourceGroupSelectorItem("memberOfGroup", MSG.common_title_group(), null);
+        this.memberOfGroupItem.setTooltip(MSG.view_dynagroup_exprBuilder_groupBy_tooltip());
+        this.memberOfGroupItem.setHoverWidth(250);
+        this.memberOfGroupItem.setRedrawOnChange(true);
+        this.memberOfGroupItem.setWidth("*");
+        this.memberOfGroupItem.setDefaultToFirstOption(true);
+        this.memberOfGroupItem.addChangedHandler(new ChangedHandler() {
+            @Override
+            public void onChanged(ChangedEvent event) {
+                buildExpressionValue();
+            }
+        });
+
         this.groupByItem = new RadioGroupItem("groupBy", MSG.view_dynagroup_exprBuilder_groupBy());
         this.groupByItem.setTooltip(MSG.view_dynagroup_exprBuilder_groupBy_tooltip());
         this.groupByItem.setHoverWidth(250);
@@ -332,9 +362,9 @@ public class GroupDefinitionExpressionBuilder extends Window {
         form.setAutoWidth();
         form.setAutoHeight();
         form.setCellPadding(5);
-        form.setFields(this.expressionItem, this.groupByItem, this.resourceItem, this.expressionTypeItem,
-            this.pluginItem, this.resourceTypeItem, this.propertyNameItem, this.unsetItem, this.compareTypeItem,
-            this.valueItem, addButton, closeButton);
+        form.setFields(this.expressionItem, this.memberOfItem, this.memberOfGroupItem, this.groupByItem,
+            this.resourceItem, this.expressionTypeItem, this.pluginItem, this.resourceTypeItem, this.propertyNameItem,
+            this.unsetItem, this.compareTypeItem, this.valueItem, addButton, closeButton);
 
         EnhancedVLayout layout = new EnhancedVLayout();
         layout.setLayoutMargin(5);
@@ -369,56 +399,87 @@ public class GroupDefinitionExpressionBuilder extends Window {
         public void addExpression(String newExpression);
     }
 
+    private boolean shouldMemberOfGroupBeDisabled() {
+        String expressionType = this.expressionTypeItem.getValueAsString();
+
+        if (MSG.common_val_no().equals(this.memberOfItem.getValueAsString())) {
+            return true;
+        }
+        return false; // they are enabled otherwise
+    }
+
+    private boolean shouldResourceAndExpressionTypeBeDisabled() {
+        String expressionType = this.expressionTypeItem.getValueAsString();
+
+        if (MSG.common_val_yes().equals(this.memberOfItem.getValueAsString())) {
+            return true;
+        }
+        return false; // they are enabled otherwise
+    }
+
     private boolean shouldPluginAndResourceTypeBeDisabled() {
         String expressionType = this.expressionTypeItem.getValueAsString();
 
+        if (MSG.common_val_yes().equals(this.memberOfItem.getValueAsString())) {
+            return true;
+        }
         if (MSG.view_dynagroup_exprBuilder_expressionType_resource().equals(expressionType)) {
             return true;
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceCategory().equals(expressionType)) {
+        }
+        if (MSG.view_dynagroup_exprBuilder_expressionType_resourceCategory().equals(expressionType)) {
             return true;
-        } else if ((MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(expressionType))
+        }
+        if ((MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(expressionType))
             && (MSG.common_val_yes().equals(groupByItem.getValueAsString()))) {
             return true;
         }
+
         return false; // they are enabled otherwise
     }
 
     private boolean shouldComparisonTypeAndValueBeDisabled() {
+        boolean memberOf = MSG.common_val_yes().equals(this.memberOfItem.getValueAsString());
         boolean groupBy = MSG.common_val_yes().equals(this.groupByItem.getValueAsString());
         boolean unset = MSG.common_val_yes().equals(this.unsetItem.getValueAsString());
         String expressionType = this.expressionTypeItem.getValueAsString();
 
-        if (groupBy) {
-            return true;
-        } else if (unset) {
-            return true;
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(expressionType)) {
+        if (groupBy || memberOf || unset) {
             return true;
         }
+        if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(expressionType)) {
+            return true;
+        }
+
         return false; // they are enabled otherwise
     }
 
     private boolean shouldGroupByBeDisabled() {
+        boolean memberOf = MSG.common_val_yes().equals(this.memberOfItem.getValueAsString());
         boolean unset = MSG.common_val_yes().equals(this.unsetItem.getValueAsString());
 
-        if (unset) {
+        if (memberOf || unset) {
             return true;
         }
         return false; // enabled otherwise
     }
 
     private boolean shouldUnsetBeDisabled() {
+        boolean memberOf = MSG.common_val_yes().equals(this.memberOfItem.getValueAsString());
         boolean groupBy = MSG.common_val_yes().equals(this.groupByItem.getValueAsString());
 
-        if (groupBy) {
+        if (groupBy || memberOf) {
             return true;
         }
         return false; // enabled otherwise
     }
 
     private boolean shouldPropertyNameBeDisabled() {
+        boolean memberOf = MSG.common_val_yes().equals(this.memberOfItem.getValueAsString());
         String expressionType = this.expressionTypeItem.getValueAsString();
 
+        if (memberOf) {
+            return true;
+        }
         if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(expressionType)) {
             return true;
         } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceCategory().equals(expressionType)) {
@@ -546,12 +607,17 @@ public class GroupDefinitionExpressionBuilder extends Window {
     }
 
     private void enableDisableComponents() {
+        boolean memberOfGroupDisabled = shouldMemberOfGroupBeDisabled();
+        boolean resourceAndExpressionTypeDisabled = shouldResourceAndExpressionTypeBeDisabled();
         boolean pluginAndResourceTypeDisabled = shouldPluginAndResourceTypeBeDisabled();
         boolean comparisonTypeAndValueDisabled = shouldComparisonTypeAndValueBeDisabled();
         boolean groupByDisabled = shouldGroupByBeDisabled();
         boolean unsetDisabled = shouldUnsetBeDisabled();
         boolean propertyNameDisabled = shouldPropertyNameBeDisabled();
 
+        this.memberOfGroupItem.setDisabled(memberOfGroupDisabled);
+        this.resourceItem.setDisabled(resourceAndExpressionTypeDisabled);
+        this.expressionTypeItem.setDisabled(resourceAndExpressionTypeDisabled);
         this.pluginItem.setDisabled(pluginAndResourceTypeDisabled);
         this.resourceTypeItem.setDisabled(pluginAndResourceTypeDisabled);
         this.compareTypeItem.setDisabled(comparisonTypeAndValueDisabled);
@@ -565,83 +631,90 @@ public class GroupDefinitionExpressionBuilder extends Window {
 
     private void buildExpressionValue() {
 
+        boolean memberOf = MSG.common_val_yes().equals(this.memberOfItem.getValueAsString());
         boolean groupBy = MSG.common_val_yes().equals(groupByItem.getValueAsString());
         boolean unset = MSG.common_val_yes().equals(unsetItem.getValueAsString());
 
         StringBuilder buf = new StringBuilder();
 
-        if (groupBy) {
-            buf.append("groupby ");
-        }
-        if (unset) {
-            buf.append("empty ");
-        }
+        if (memberOf) {
+            buf.append("memberof = " + memberOfGroupItem.getDisplayValue());
 
-        buf.append("resource.");
+        } else {
 
-        String resourceLevel = resourceItem.getValueAsString();
-        if (MSG.view_dynagroup_exprBuilder_resource_resource().equals(resourceLevel)) {
-            // do nothing
-        } else if (MSG.view_dynagroup_exprBuilder_resource_child().equals(resourceLevel)) {
-            buf.append("child.");
-        } else if (MSG.view_dynagroup_exprBuilder_resource_parent().equals(resourceLevel)) {
-            buf.append("parent.");
-        } else if (MSG.view_dynagroup_exprBuilder_resource_grandparent().equals(resourceLevel)) {
-            buf.append("grandParent.");
-        } else if (MSG.view_dynagroup_exprBuilder_resource_greatGrandparent().equals(resourceLevel)) {
-            buf.append("greatGrandParent.");
-        } else if (MSG.view_dynagroup_exprBuilder_resource_greatGreatGrandparent().equals(resourceLevel)) {
-            buf.append("greatGreatGrandParent.");
-        }
-
-        String eType = expressionTypeItem.getValueAsString();
-        if (MSG.view_dynagroup_exprBuilder_expressionType_resource().equals(eType)) {
-            buf.append(propertyNameItem.getValueAsString());
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(eType)) {
-            buf.append("type.plugin");
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceCategory().equals(eType)) {
-            buf.append("type.category");
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_trait().equals(eType)) {
-            buf.append("trait[" + propertyNameItem.getValueAsString() + "]");
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_pluginConfig().equals(eType)) {
-            buf.append("pluginConfiguration[" + propertyNameItem.getValueAsString() + "]");
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceConfig().equals(eType)) {
-            buf.append("resourceConfiguration[" + propertyNameItem.getValueAsString() + "]");
-        }
-
-        if (!groupBy && !unset) {
-
-            String selectedComparison = compareTypeItem.getValueAsString();
-            if (MSG.view_dynagroup_exprBuilder_comparisonType_equals().equals(selectedComparison)) {
-                // do nothing
-            } else if (MSG.view_dynagroup_exprBuilder_comparisonType_contains().equals(selectedComparison)) {
-                buf.append(".contains");
-            } else if (MSG.view_dynagroup_exprBuilder_comparisonType_startsWith().equals(selectedComparison)) {
-                buf.append(".startsWith");
-            } else if (MSG.view_dynagroup_exprBuilder_comparisonType_endsWith().equals(selectedComparison)) {
-                buf.append(".endsWith");
+            if (groupBy) {
+                buf.append("groupby ");
+            }
+            if (unset) {
+                buf.append("empty ");
             }
 
-            buf.append(" = ");
+            buf.append("resource.");
 
-            if (MSG.view_dynagroup_exprBuilder_expressionType_resource().equals(eType)
-                || MSG.view_dynagroup_exprBuilder_expressionType_resourceCategory().equals(eType)) {
-                buf.append(valueItem.getValueAsString());
+            String resourceLevel = resourceItem.getValueAsString();
+            if (MSG.view_dynagroup_exprBuilder_resource_resource().equals(resourceLevel)) {
+                // do nothing
+            } else if (MSG.view_dynagroup_exprBuilder_resource_child().equals(resourceLevel)) {
+                buf.append("child.");
+            } else if (MSG.view_dynagroup_exprBuilder_resource_parent().equals(resourceLevel)) {
+                buf.append("parent.");
+            } else if (MSG.view_dynagroup_exprBuilder_resource_grandparent().equals(resourceLevel)) {
+                buf.append("grandParent.");
+            } else if (MSG.view_dynagroup_exprBuilder_resource_greatGrandparent().equals(resourceLevel)) {
+                buf.append("greatGrandParent.");
+            } else if (MSG.view_dynagroup_exprBuilder_resource_greatGreatGrandparent().equals(resourceLevel)) {
+                buf.append("greatGreatGrandParent.");
+            }
+
+            String eType = expressionTypeItem.getValueAsString();
+            if (MSG.view_dynagroup_exprBuilder_expressionType_resource().equals(eType)) {
+                buf.append(propertyNameItem.getValueAsString());
+            } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(eType)) {
+                buf.append("type.plugin");
+            } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceCategory().equals(eType)) {
+                buf.append("type.category");
+            } else if (MSG.view_dynagroup_exprBuilder_expressionType_trait().equals(eType)) {
+                buf.append("trait[" + propertyNameItem.getValueAsString() + "]");
+            } else if (MSG.view_dynagroup_exprBuilder_expressionType_pluginConfig().equals(eType)) {
+                buf.append("pluginConfiguration[" + propertyNameItem.getValueAsString() + "]");
+            } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceConfig().equals(eType)) {
+                buf.append("resourceConfiguration[" + propertyNameItem.getValueAsString() + "]");
+            }
+
+            if (!groupBy && !unset) {
+
+                String selectedComparison = compareTypeItem.getValueAsString();
+                if (MSG.view_dynagroup_exprBuilder_comparisonType_equals().equals(selectedComparison)) {
+                    // do nothing
+                } else if (MSG.view_dynagroup_exprBuilder_comparisonType_contains().equals(selectedComparison)) {
+                    buf.append(".contains");
+                } else if (MSG.view_dynagroup_exprBuilder_comparisonType_startsWith().equals(selectedComparison)) {
+                    buf.append(".startsWith");
+                } else if (MSG.view_dynagroup_exprBuilder_comparisonType_endsWith().equals(selectedComparison)) {
+                    buf.append(".endsWith");
+                }
+
+                buf.append(" = ");
+
+                if (MSG.view_dynagroup_exprBuilder_expressionType_resource().equals(eType)
+                    || MSG.view_dynagroup_exprBuilder_expressionType_resourceCategory().equals(eType)) {
+                    buf.append(valueItem.getValueAsString());
+                } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(eType)) {
+                    String d = buf.toString();
+                    buf.append(pluginItem.getValueAsString());
+                    buf.append("\n");
+                    buf.append(d.replaceAll("plugin", "name"));
+                    buf.append(resourceTypeItem.getValueAsString());
+                } else if (MSG.view_dynagroup_exprBuilder_expressionType_trait().equals(eType)
+                    || MSG.view_dynagroup_exprBuilder_expressionType_pluginConfig().equals(eType)
+                    || MSG.view_dynagroup_exprBuilder_expressionType_resourceConfig().equals(eType)) {
+                    buf.append(valueItem.getValueAsString());
+                }
             } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(eType)) {
                 String d = buf.toString();
-                buf.append(pluginItem.getValueAsString());
                 buf.append("\n");
                 buf.append(d.replaceAll("plugin", "name"));
-                buf.append(resourceTypeItem.getValueAsString());
-            } else if (MSG.view_dynagroup_exprBuilder_expressionType_trait().equals(eType)
-                || MSG.view_dynagroup_exprBuilder_expressionType_pluginConfig().equals(eType)
-                || MSG.view_dynagroup_exprBuilder_expressionType_resourceConfig().equals(eType)) {
-                buf.append(valueItem.getValueAsString());
             }
-        } else if (MSG.view_dynagroup_exprBuilder_expressionType_resourceType().equals(eType)) {
-            String d = buf.toString();
-            buf.append("\n");
-            buf.append(d.replaceAll("plugin", "name"));
         }
 
         String expressionValueString = buf.toString();

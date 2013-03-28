@@ -69,7 +69,7 @@
     <!-- Start: JBoss AS Dependency Versions
          The dependency versions below are declared together as the versions of each are dependent on the
          overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
-         version is changed the versions of each of these should be validated and updated as needed. 
+         version is changed the versions of each of these should be validated and updated as needed.
     -->
     <jboss.version>7.1.1.Final</jboss.version>
     <jboss.javaee6.spec.version>3.0.0.Final</jboss.javaee6.spec.version>
@@ -78,7 +78,7 @@
     <antlr.version>2.7.7</antlr.version>
     <hibernate.version>4.0.1.Final</hibernate.version>
     <hibernate-annotations.version>3.5.6-Final</hibernate-annotations.version>
-    <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version>    
+    <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version>
     <infinispan.version>5.1.2.FINAL</infinispan.version>
     <javax.annotation.api.version>1.0.1.Final</javax.annotation.api.version>
     <javax.ejb.api.version>1.0.2.Final</javax.ejb.api.version>
@@ -95,23 +95,23 @@
     <jboss-remotingjmx.version>1.0.2.Final</jboss-remotingjmx.version>
     <jboss-transaction-api.version>1.0.0.Final</jboss-transaction-api.version>
     <picketbox.version>4.0.7.Final</picketbox.version>
-    <resteasy.version>2.3.4.Final</resteasy.version>    
+    <resteasy.version>2.3.4.Final</resteasy.version>
     <jboss-staxmapper.version>1.1.0.Final</jboss-staxmapper.version>
     <jboss-modules.version>1.1.1.GA</jboss-modules.version>
     <jboss-dmr.version>1.1.1.Final</jboss-dmr.version>
     <jboss-msc.version>1.0.2.GA</jboss-msc.version>
 
     <!-- Not Provided - some of these are needed by the agent -->
-    <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>    
+    <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>
     <jboss-cache.version>1.4.1.SP9</jboss-cache.version>
-    <jboss-jmx.version>4.2.3.GA</jboss-jmx.version>        
-    <jboss-common.version>1.2.1.GA</jboss-common.version> <!-- note this is the old commons we used, not the newer commons-core -->        
-    <jboss-remoting.version>2.2.2.SP8</jboss-remoting.version>
+    <jboss-jmx.version>4.2.3.GA</jboss-jmx.version>
+    <jboss-common.version>1.2.1.GA</jboss-common.version> <!-- note this is the old commons we used, not the newer commons-core -->
+    <jboss-remoting.version>2.5.4.SP4</jboss-remoting.version>
     <jboss-serialization.version>1.0.3.GA</jboss-serialization.version>
-    <jboss-system.version>4.2.3.GA</jboss-system.version>    
+    <jboss-system.version>4.2.3.GA</jboss-system.version>
     <jbosssx.version>4.2.3.GA</jbosssx.version>
-    
-        
+
+
     <!-- End: JBoss AS Dependency Versions -->
 
     <commons-logging.version>1.1.0.jboss</commons-logging.version>
@@ -121,7 +121,7 @@
     <i18nlog.version>1.0.10</i18nlog.version>
     <jsf-api.version>1.2_14</jsf-api.version>
     <jsf-impl.version>1.2_14</jsf-impl.version>
-    <log4j.version>1.2.16</log4j.version>
+    <log4j.version>1.2.14</log4j.version>
     <ojdbc6.version>11.2.0.3.0</ojdbc6.version>
     <ems.version>1.3</ems.version>
     <postgresql.version>9.2-1002.jdbc4</postgresql.version>
@@ -150,6 +150,20 @@
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>
     <commons-httpclient.version>3.0.1</commons-httpclient.version>
+    <commons-io.version>1.4</commons-io.version>
+    <commons-lang.version>2.4</commons-lang.version>
+    <commons-codec.version>1.4</commons-codec.version>
+    <commons-validator.version>1.1.4</commons-validator.version>
+    <commons-collections.version>3.2.1</commons-collections.version>
+    <commons-configuration.version>1.6</commons-configuration.version>
+
+    <junit.version>4.8.2</junit.version>
+    <liquibase-core.version>1.9.5</liquibase-core.version>
+    <jbpm.version>3.1.1</jbpm.version>
+    <servlet-api.version>2.4</servlet-api.version>
+
+    <mockito-core.version>1.9.0</mockito-core.version>
+    <el.version>1.0</el.version>
 
     <!-- cassandra dependency versions -->
     <cassandra.version>1.2.1</cassandra.version>
@@ -239,7 +253,7 @@
     <jacoco.version>0.6.0.201210061924</jacoco.version>
     <jacoco-arquillian-extension.version>1.0.0.Alpha5</jacoco-arquillian-extension.version>
   </properties>
- 
+
 
   <dependencyManagement>
 
@@ -249,7 +263,7 @@
            The dependencies below are declared together as the versions of each are dependent on the
            overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
            version is changed the versions of each of these should be validated and updated as needed. -->
-      
+
       <dependency>
         <groupId>org.jboss.as</groupId>
         <artifactId>jboss-as-dist</artifactId>
@@ -281,18 +295,18 @@
         <version>${javax.annotation.api.version}</version>
       </dependency>
 
-      <dependency>     
+      <dependency>
         <groupId>org.jboss.spec.javax.ejb</groupId>
         <artifactId>jboss-ejb-api_3.1_spec</artifactId>
         <version>${javax.ejb.api.version}</version>
       </dependency>
 
-      <dependency>     
+      <dependency>
         <groupId>org.jboss.spec.javax.jms</groupId>
         <artifactId>jboss-jms-api_1.1_spec</artifactId>
         <version>${javax.jms.api.version}</version>
       </dependency>
-       
+
       <dependency>
         <groupId>org.javassist</groupId>
         <artifactId>javassist</artifactId>
@@ -306,7 +320,7 @@
       </dependency>
 
       <dependency>
-        <groupId>jboss</groupId>
+        <groupId>org.jboss.remoting</groupId>
         <artifactId>jboss-remoting</artifactId>
         <version>${jboss-remoting.version}</version>
       </dependency>
@@ -377,6 +391,12 @@
         <version>${jboss-msc.version}</version>
       </dependency>
 
+      <dependency>
+         <groupId>jboss</groupId>
+         <artifactId>jbpm</artifactId>
+         <version>${jbpm.version}</version>
+      </dependency>
+
       <!-- see BZ-820629 and CVE-2009-2625 for why this is needed -->
       <dependency>
         <groupId>xerces</groupId>
@@ -390,6 +410,54 @@
         <groupId>commons-logging</groupId>
         <artifactId>commons-logging</artifactId>
         <version>${commons-logging.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-lang</groupId>
+         <artifactId>commons-lang</artifactId>
+         <version>${commons-lang.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-io</groupId>
+         <artifactId>commons-io</artifactId>
+         <version>${commons-io.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-codec</groupId>
+         <artifactId>commons-codec</artifactId>
+         <version>${commons-codec.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-validator</groupId>
+        <artifactId>commons-validator</artifactId>
+        <version>${commons-validator.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-collections</groupId>
+        <artifactId>commons-collections</artifactId>
+        <version>${commons-collections.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-configuration</groupId>
+        <artifactId>commons-configuration</artifactId>
+        <version>${commons-configuration.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-httpclient</groupId>
+        <artifactId>commons-httpclient</artifactId>
+        <version>${commons-httpclient.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-beanutils</groupId>
+        <artifactId>commons-beanutils</artifactId>
+        <version>1.8.2</version>
       </dependency>
 
       <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->
@@ -612,7 +680,6 @@
          <artifactId>jboss-javaee-6.0</artifactId>
          <version>${jboss.javaee6.spec.version}</version>
          <type>pom</type>
-         <scope>import</scope>
       </dependency>
 
       <!-- We want the shrinkwrap dependency resolver to be newer than that included in the Arquillian BOM.
@@ -623,7 +690,12 @@
           <version>${shrinkwrap-resolver.version}</version>
           <scope>import</scope>
           <type>pom</type>
-      </dependency>            
+      </dependency>
+      <dependency>
+          <groupId>org.jboss.shrinkwrap.resolver</groupId>
+          <artifactId>shrinkwrap-resolver-depchain</artifactId>
+          <version>${shrinkwrap-resolver.version}</version>
+      </dependency>
       <!-- This will pull in the compatible versions of shrinkwrap deps too. Note that we want to use an explicit
            version for the shrinkwrap resolver, which revs more often and has bugfixes. -->
       <dependency>
@@ -632,6 +704,12 @@
          <version>${arquillian.version}</version>
          <type>pom</type>
          <scope>import</scope>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.arquillian.testng</groupId>
+         <artifactId>arquillian-testng-container</artifactId>
+         <version>${arquillian.version}</version>
       </dependency>
 
       <dependency>
@@ -650,6 +728,150 @@
          <groupId>org.jacoco</groupId>
          <artifactId>org.jacoco.core</artifactId>
          <version>${jacoco.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.liquibase</groupId>
+         <artifactId>liquibase-core</artifactId>
+         <version>${liquibase-core.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.mockito</groupId>
+         <artifactId>mockito-core</artifactId>
+         <version>${mockito-core.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.powermock</groupId>
+         <artifactId>powermock-module-testng</artifactId>
+         <version>${powermock.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.powermock</groupId>
+         <artifactId>powermock-api-mockito</artifactId>
+         <version>${powermock.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>junit</groupId>
+         <artifactId>junit</artifactId>
+         <version>${junit.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>servlet-api</artifactId>
+         <version>${servlet-api.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.testng</groupId>
+        <artifactId>testng</artifactId>
+        <version>${testng.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>${log4j.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jacoco</groupId>
+        <artifactId>org.jacoco.ant</artifactId>
+        <version>${jacoco.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-jxpath</groupId>
+        <artifactId>commons-jxpath</artifactId>
+        <version>1.3</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.persistence</groupId>
+        <artifactId>persistence-api</artifactId>
+        <version>1.0</version>
+        <scope>provided</scope>
+      </dependency>
+
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>jsp-api</artifactId>
+        <version>2.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>commons-fileupload</groupId>
+        <artifactId>commons-fileupload</artifactId>
+        <version>1.2</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jline</groupId>
+        <artifactId>jline</artifactId>
+        <version>${jline.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>jboss.jboss-embeddable-ejb3</groupId>
+        <artifactId>jboss-ejb3-all</artifactId>
+        <version>1.0.0.Alpha9</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jboss.logging</groupId>
+        <artifactId>jboss-logging</artifactId>
+        <version>${jboss-logging.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.ant</groupId>
+        <artifactId>ant</artifactId>
+        <version>1.8.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.ant</groupId>
+        <artifactId>ant-launcher</artifactId>
+        <version>1.8.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.ant</groupId>
+        <artifactId>ant-nodeps</artifactId>
+        <version>1.8.0</version>
+      </dependency>
+
+      <dependency>
+        <groupId>dom4j</groupId>
+        <artifactId>dom4j</artifactId>
+        <version>1.6</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-dbcp</groupId>
+         <artifactId>commons-dbcp</artifactId>
+         <version>1.2.1</version>
+      </dependency>
+
+      <dependency>
+         <groupId>commons-el</groupId>
+         <artifactId>commons-el</artifactId>
+         <version>1.0</version>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.el</groupId>
+         <artifactId>el-api</artifactId>
+         <version>${el.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>javax.servlet</groupId>
+         <artifactId>javax.servlet-api</artifactId>
+         <version>3.0.1</version>
       </dependency>
   </dependencies>
 
@@ -711,10 +933,10 @@
              <dependency>
                <groupId>ant-contrib</groupId>
                <artifactId>ant-contrib</artifactId>
-               <version>1.0b3</version>
+               <version>${ant.contrib.version}</version>
                <exclusions>
                  <exclusion>
-                   <groupId>ant</groupId>
+                   <groupId>org.apache.ant</groupId>
                    <artifactId>ant</artifactId>
                  </exclusion>
                </exclusions>
@@ -748,7 +970,7 @@
          </plugin>
          <plugin>
            <artifactId>maven-compiler-plugin</artifactId>
-           <version>2.3.2</version>
+           <version>3.0</version>
          </plugin>
          <plugin>
            <artifactId>maven-dependency-plugin</artifactId>
@@ -825,9 +1047,18 @@
            </configuration>
          </plugin>
          <plugin>
+           <groupId>org.sonatype.plugins</groupId>
+           <artifactId>jarjar-maven-plugin</artifactId>
+           <version>1.5</version>
+         </plugin>
+         <plugin>
            <artifactId>maven-war-plugin</artifactId>
            <version>2.1</version>
-         </plugin>         
+         </plugin>
+         <plugin>
+            <artifactId>maven-surefire-report-plugin</artifactId>
+            <version>2.6</version>
+         </plugin>
 
          <!-- === Codehaus Mojo Plugins === -->
          <plugin>
@@ -845,7 +1076,7 @@
            <artifactId>exec-maven-plugin</artifactId>
            <!-- NOTE: Version 1.2 of this plugin appears to be broken, so do not
                       upgrade to that version. -->
-           <version>1.1</version>
+           <version>1.2.1</version>
          </plugin>
          <plugin>
            <groupId>org.codehaus.mojo</groupId>
@@ -873,11 +1104,17 @@
             <version>${clirr.version}</version>
          </plugin>
          <plugin>
-            <groupId>org.codehaus.mojo</groupId>         
+            <groupId>org.codehaus.mojo</groupId>
            <artifactId>xml-maven-plugin</artifactId>
            <version>1.0</version>
          </plugin>
-         
+
+         <plugin>
+           <groupId>org.codehaus.groovy.maven</groupId>
+           <artifactId>gmaven-plugin</artifactId>
+           <version>1.0</version>
+         </plugin>
+
       	 <plugin>
             <groupId>com.googlecode.maven-overview-plugin</groupId>
             <artifactId>maven-overview-plugin</artifactId>
@@ -904,7 +1141,19 @@
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>${jacoco.version}</version>
          </plugin>
-       </plugins>       
+
+         <plugin>
+           <groupId>com.sun.tools.xjc.maven2</groupId>
+           <artifactId>maven-jaxb-plugin</artifactId>
+           <version>1.1</version>
+         </plugin>
+
+         <plugin>
+           <groupId>org.antlr</groupId>
+           <artifactId>antlr3-maven-plugin</artifactId>
+           <version>3.2</version>
+         </plugin>
+       </plugins>
      </pluginManagement>
 
 
@@ -1058,10 +1307,10 @@
             <configuration>
               <rules>
                 <requireMavenVersion>
-                  <version>2.1.0</version>
+                  <version>3.0</version>
                 </requireMavenVersion>
                 <requireJavaVersion>
-                  <version>[1.6,1.8)</version> <!-- 1.6.x, 1.7.x -->
+                  <version>[1.7,1.8)</version> <!-- 1.7.x -->
                 </requireJavaVersion>
               </rules>
             </configuration>
@@ -1358,21 +1607,21 @@
              <name>code-coverage</name>
           </property>
        </activation>
-       
+
        <dependencies>
           <dependency>
              <groupId>org.jboss.arquillian.extension</groupId>
              <artifactId>arquillian-jacoco</artifactId>
              <scope>test</scope>
           </dependency>
- 
+
           <dependency>
              <groupId>org.jacoco</groupId>
              <artifactId>org.jacoco.core</artifactId>
              <scope>test</scope>
           </dependency>
        </dependencies>
-       
+
        <build>
           <plugins>
              <!-- This definition creates the 2 independent coverage reports -
@@ -1463,7 +1712,6 @@
                            <artifactItem>
                               <groupId>org.jacoco</groupId>
                               <artifactId>org.jacoco.ant</artifactId>
-                              <version>${jacoco.version}</version>
                            </artifactItem>
                         </artifactItems>
                         <stripVersion>true</stripVersion>
@@ -1523,7 +1771,6 @@
                   <dependency>
                      <groupId>org.jacoco</groupId>
                      <artifactId>org.jacoco.ant</artifactId>
-                     <version>${jacoco.version}</version>
                   </dependency>
                </dependencies>
             </plugin>
@@ -1791,8 +2038,19 @@
               <reportSets>
               <reportSet>
               </reportSet>
-           </reportSets>
-      </plugin>
+              </reportSets>
+           </plugin>
+
+           <plugin>
+             <artifactId>maven-surefire-report-plugin</artifactId>
+             <version>2.6</version>
+           </plugin>
+
+           <plugin>
+             <groupId>org.codehaus.mojo</groupId>
+             <artifactId>clirr-maven-plugin</artifactId>
+             <version>${clirr.version}</version>
+           </plugin>
 
 <!--
             <plugin>

@@ -36,6 +36,7 @@ import com.google.gwt.user.client.Window;
 import com.google.gwt.user.client.Window.Location;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.KeyIdentifier;
+import com.smartgwt.client.i18n.SmartGwtMessages;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.util.KeyCallback;
 import com.smartgwt.client.util.Page;
@@ -78,6 +79,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     // This must come first to ensure proper I18N class loading for dev mode
     private static final Messages MSG = GWT.create(Messages.class);
     private static final MessageConstants MSGCONST = GWT.create(MessageConstants.class);
+    private static final SmartGwtMessages SMART_GWT_MSG = GWT.create(SmartGwtMessages.class);
 
     private static final String DEFAULT_VIEW = DashboardsView.VIEW_ID.getName();
     private static final String LOGOUT_VIEW = "LogOut";
@@ -92,7 +94,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         + ResourceGroupDetailView.AUTO_GROUP_VIEW + "|" //
         + ResourceGroupDetailView.AUTO_CLUSTER_VIEW //
         + ResourceGroupTopView.VIEW_ID + "|" //
-        + ResourceTopView.VIEW_ID + "|" // 
+        + ResourceTopView.VIEW_ID + "|" //
         + ")/[^/]*";
 
     private static ErrorHandler errorHandler = new ErrorHandler();
@@ -109,7 +111,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
     // while also changing the main content. Typically we refresh only when the path is not changed.
     private static boolean pendingRefresh = false;
 
-    //spinder [BZ 731864] defining variable that can be set at build time to enable/disable TAG ui components. 
+    //spinder [BZ 731864] defining variable that can be set at build time to enable/disable TAG ui components.
     // This will be set to 'false' on the release branch.
     private static boolean enableTagsForUI = Boolean.valueOf(MSG.enable_tags());
 
@@ -160,11 +162,11 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
             }
         });
 
-        /* after having this enabled for a while, the majority opinion is that this is more annoying than helpful 
-         *  
+        /* after having this enabled for a while, the majority opinion is that this is more annoying than helpful
+         *
         Window.addWindowClosingHandler(new Window.ClosingHandler() {
             public void onWindowClosing(Window.ClosingEvent event) {
-                event.setMessage("Are you sure you want to leave RHQ?");                              
+                event.setMessage("Are you sure you want to leave RHQ?");
             }
         });
         */
@@ -431,7 +433,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         pendingMessage = message;
         pendingRefresh = refresh;
 
-        // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off 
+        // if path starts with "#" (e.g. if caller used LinkManager to obtain some of the path), strip it off
         if (view.charAt(0) == '#') {
             view = view.substring(1);
         }
@@ -454,10 +456,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                     // resource to an autogroup in the same tree. Try to keep the tab selection sticky as best as
                     // possible while moving from one view to another by grabbing the end portion of the previous
                     // history URL and append it to the new history URL.  The suffix is assumed to follow the
-                    // ID (numeric) portion of the currentViewPath. 
+                    // ID (numeric) portion of the currentViewPath.
                     String suffix = currentViewPath.replaceFirst("\\D*[^/]*", "");
                     // make sure we're not *too* sticky, stop no deeper than the subtab level. This prevents
-                    // trying to render non-applicable detail views.  We'll do this by chopping at the start 
+                    // trying to render non-applicable detail views.  We'll do this by chopping at the start
                     // of any other numeric in the path
                     suffix = suffix.replaceFirst("\\d.*", "");
                     view += suffix;
@@ -473,6 +475,10 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
     public static MessageConstants getMessageConstants() {
         return MSGCONST;
+    }
+
+    public static SmartGwtMessages getSmartGwtMessages() {
+        return SMART_GWT_MSG;
     }
 
     public void reset() {
@@ -511,7 +517,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
 
         public void initCanvas() {
-            // request a redraw of the MenuBarItem to ensure the correct session info is displayed 
+            // request a redraw of the MenuBarItem to ensure the correct session info is displayed
             getMember(0).markForRedraw();
 
             // remove any current viewId so the next requested view generates new content
@@ -520,7 +526,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
         @Override
         public void renderView(ViewPath viewPath) {
-            // If the session is logged out ensure that we only navigate to the log out view, otherwise keep 
+            // If the session is logged out ensure that we only navigate to the log out view, otherwise keep
             // our CoreGUI session alive by refreshing the session timer each time the user performs navigation
             if (UserSessionManager.isLoggedOut()) {
                 if (!LOGOUT_VIEW.equals(viewPath.getCurrent().getPath())) {

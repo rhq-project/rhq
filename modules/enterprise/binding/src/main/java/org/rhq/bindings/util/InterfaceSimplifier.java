@@ -22,7 +22,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
-import javassist.CannotCompileException;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
@@ -143,7 +142,7 @@ public class InterfaceSimplifier {
 
     public static Class<?> simplify(Class<?> intf) {
         try {
-            ClassPool classPool = ClassPoolFactory.get();
+            ClassPool classPool = ClassPoolFactory.newInstance();
 
             String simplifiedName = getSimplifiedName(intf);
             LOG.debug("Simplifying " + intf + " (simplified interface name: " + simplifiedName + ")...");

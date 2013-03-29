@@ -4,7 +4,6 @@ import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedExceptionAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -153,7 +152,7 @@ public class ResourceClientFactory {
     private Class<?> defineCustomInterface(ResourceClientProxy proxy) {
         try {
             // define the dynamic class - do not put it in any known rhq package in case our jars are signed (see BZ-794503)
-            ClassPool pool = ClassPoolFactory.get();
+            ClassPool pool = ClassPoolFactory.newInstance();
             CtClass customClass = pool.makeInterface("org.rhq.bindings.client.dynamic."
                 + ResourceClientProxy.class.getSimpleName() + proxy.fingerprint);
 
@@ -173,8 +172,8 @@ public class ResourceClientFactory {
                 } else if (prop instanceof ResourceClientProxy.Operation) {
                     ResourceClientProxy.Operation o = (ResourceClientProxy.Operation) prop;
 
-                    LinkedHashMap<String, CtClass> types = ConfigurationClassBuilder.translateParameters(o
-                            .getDefinition().getParametersConfigurationDefinition());
+                    LinkedHashMap<String, CtClass> types = ConfigurationClassBuilder.translateParameters(pool, o
+                        .getDefinition().getParametersConfigurationDefinition());
 
                     CtClass[] params = new CtClass[types.size()];
                     int x = 0;
@@ -182,8 +181,10 @@ public class ResourceClientFactory {
                         params[x++] = types.get(param);
                     }
 
-                    CtMethod method = CtNewMethod.abstractMethod(ConfigurationClassBuilder.translateConfiguration(o
-                            .getDefinition().getResultsConfigurationDefinition()), ResourceClientProxy.simpleName(key), params,
+                    CtMethod method = CtNewMethod
+                        .abstractMethod(ConfigurationClassBuilder.translateConfiguration(pool, o
+                            .getDefinition().getResultsConfigurationDefinition()), ResourceClientProxy.simpleName(key),
+                            params,
                             new javassist.CtClass[0], customClass);
 
                     // Setup @WebParam annotations so the signatures have the config prop names

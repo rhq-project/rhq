@@ -82,12 +82,14 @@ public class FakeServerInventory {
      * @author Lukas Krejci
      */
     public static class CompleteDiscoveryChecker {
-        private boolean depthReached;
+        private volatile boolean depthReached;
         private final int expectedDepth;
         private final Object sync = new Object();
+        private volatile boolean finished;
 
         public CompleteDiscoveryChecker(int expectedDepth) {
             this.expectedDepth = expectedDepth;
+            this.depthReached = expectedDepth == 0;
         }
 
         public void waitForDiscoveryComplete() throws InterruptedException {
@@ -106,6 +108,8 @@ public class FakeServerInventory {
                         LOG.debug("Discovery already complete... no need to wait on " + this);
                     }
                 }
+
+                finished = true;
             }
         }
 
@@ -132,11 +136,13 @@ public class FakeServerInventory {
                             } catch (InterruptedException e) {
                                 //well, we are going to finish in a few anyway
                             } finally {
-                                if (LOG.isDebugEnabled()) {
-                                    LOG.debug("Notifying about discovery complete on " + CompleteDiscoveryChecker.this);
-                                }
                                 synchronized (sync) {
-                                    sync.notifyAll();
+                                    if (!finished) {
+                                        if (LOG.isDebugEnabled()) {
+                                            LOG.debug("Notifying about discovery complete on " + CompleteDiscoveryChecker.this);
+                                        }
+                                        sync.notifyAll();
+                                    }
                                 }
                             }
                         }

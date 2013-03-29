@@ -143,7 +143,7 @@ public class InterfaceSimplifier {
 
     public static Class<?> simplify(Class<?> intf) {
         try {
-            ClassPool classPool = ClassPool.getDefault();
+            ClassPool classPool = ClassPoolFactory.get();
 
             String simplifiedName = getSimplifiedName(intf);
             LOG.debug("Simplifying " + intf + " (simplified interface name: " + simplifiedName + ")...");
@@ -275,12 +275,11 @@ public class InterfaceSimplifier {
 
             return newClass.toClass();
 
-        } catch (NotFoundException e) {
-            LOG.debug("Failed to simplify " + intf + " - cause: " + e);
-        } catch (CannotCompileException e) {
-            LOG.error("Failed to simplify " + intf + ".", e);
+        } catch (Exception e) {
+            String msg = "Failed to simplify " + intf + ".";
+            LOG.error(msg, e);
+            throw new IllegalStateException(msg, e);
         }
-        return intf;
     }
 
     private static String getSimplifiedName(Class<?> interfaceClass) {

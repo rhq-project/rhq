@@ -29,11 +29,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javassist.ClassPool;
 import javassist.util.proxy.MethodHandler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bindings.util.ClassPoolFactory;
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.LazyLoadScenario;
 import org.rhq.bindings.util.ResourceTypeFingerprint;
@@ -410,7 +412,9 @@ public class ResourceClientProxy {
             if (!LazyLoadScenario.isShouldLoad())
                 return null;
 
-            Configuration parameters = ConfigurationClassBuilder.translateParametersToConfig(definition
+            ClassPool pool = ClassPoolFactory.newInstance();
+
+            Configuration parameters = ConfigurationClassBuilder.translateParametersToConfig(pool, definition
                 .getParametersConfigurationDefinition(), args);
 
             OperationManagerRemote operationManager = remoteClient.getProxy(OperationManagerRemote.class);
@@ -441,7 +445,7 @@ public class ResourceClientProxy {
 
             Configuration result = (history != null ? history.getResults() : null);
 
-            Object returnResults = ConfigurationClassBuilder.translateResults(definition
+            Object returnResults = ConfigurationClassBuilder.translateResults(pool, definition
                 .getResultsConfigurationDefinition(), result);
 
             return returnResults;
@@ -525,7 +529,7 @@ public class ResourceClientProxy {
         /**
          * @deprecated Superseded by ({@link #updateBackingContent(String, String)}
          *
-         * @param fileName file name
+         * @param filename file name
          */
         @Deprecated
         public void updateBackingContent(String filename) {

@@ -84,7 +84,7 @@ public class ConfigurationClassBuilder {
             paramType = Double.TYPE;
             break;
         }
-        return ClassPool.getDefault().get(paramType.getName());
+        return ClassPoolFactory.get().get(paramType.getName());
     }
 
     public static CtClass translateConfiguration(ConfigurationDefinition def) throws NotFoundException {
@@ -96,7 +96,7 @@ public class ConfigurationClassBuilder {
         } else {
 
             // TODO GH: Build a custom type?
-            return ClassPool.getDefault().get(Configuration.class.getName());
+            return ClassPoolFactory.get().get(Configuration.class.getName());
         }
     }
 
@@ -127,7 +127,7 @@ public class ConfigurationClassBuilder {
 
         CtClass expectedReturn = translateConfiguration(resultsConfigurationDefinition);
 
-        if (expectedReturn.equals(ClassPool.getDefault().get(Configuration.class.getName()))) {
+        if (expectedReturn.equals(ClassPoolFactory.get().get(Configuration.class.getName()))) {
             return result;
         } else {
             //bail on translation if Configuration passed in is null

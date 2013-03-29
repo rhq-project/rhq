@@ -87,7 +87,8 @@ public class LocalClient implements RhqFacade {
 
                         managers.put(manager, proxy);
                     } catch (Throwable e) {
-                        LOG.error("Failed to load manager " + manager + " due to missing class.", e);
+                        LOG.error("Failed to load manager " + manager + ".", e);
+                        throw new IllegalStateException("Failed to load manager " + manager + ".", e);
                     }
                 }
             }

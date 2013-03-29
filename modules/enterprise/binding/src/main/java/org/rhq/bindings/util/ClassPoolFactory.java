@@ -28,23 +28,21 @@ import javassist.ClassPool;
 import javassist.LoaderClassPath;
 
 /**
- * This class is used to create Javassist's classpools usable in RHQ on both client and server side.
- * This only exists to centralize the initialization code for the pools.
- * <p>
- * This class is similar to how the <code>ClassPool.getDefault()</code> method operates (in that it only ever returns
- * a single instance of the pool) but uses a "wider" class path, looking for classes using the context class loader
- * and the using the default resource lookup of the <code>Class</code> class, in addition to just the system class path
- * as detected by Javassist (which is the only one used in the class pool returned by
- * <code>ClassPool.getDefault()</code>).
- * <p>
- * This is to ensure that Javassist can locate the classes in various classloading "schemes" - the traditional
+ * This class is used to create Javassist's classpools usable in RHQ on both client and server side. This only exists to
+ * centralize the initialization code for the pools.
+ *
+ * <p> Unlike the <code>ClassPool.getDefault()</code> method that only ever returns a single instance of the pool, this
+ * factory returns a <b>new instance</b> every time. This is because it uses a "wider" class path, looking for classes
+ * using the current thread context class loader but also using the default resource lookup of the <code>Class</code>
+ * class, in addition to just the system class path as detected by Javassist (which is the only one used in the class
+ * pool returned by <code>ClassPool.getDefault()</code>).
+ *
+ * <p> This is to ensure that Javassist can locate the classes in various classloading "schemes" - the traditional
  * application classloader used in the CLI client and the JBoss Modules classloading used on the server.
  *
  * @author Lukas Krejci
  */
 public class ClassPoolFactory {
-
-    private static ClassPool pool;
 
     private ClassPoolFactory() {
 
@@ -53,13 +51,11 @@ public class ClassPoolFactory {
     /**
      * @return the singleton class pool instance initialized according the {@link ClassPoolFactory rules}.
      */
-    public static synchronized ClassPool get() {
-        if (pool == null) {
-            pool = new ClassPool(null);
-            pool.appendClassPath(new LoaderClassPath(Thread.currentThread().getContextClassLoader()));
-            pool.appendClassPath(new ClassClassPath(ClassPoolFactory.class));
-            pool.appendSystemPath();
-        }
+    public static ClassPool newInstance() {
+        ClassPool pool = new ClassPool(null);
+        pool.appendClassPath(new LoaderClassPath(Thread.currentThread().getContextClassLoader()));
+        pool.appendClassPath(new ClassClassPath(ClassPoolFactory.class));
+        pool.appendSystemPath();
 
         return pool;
     }

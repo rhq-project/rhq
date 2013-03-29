@@ -19,6 +19,12 @@
 
 package org.rhq.test.arquillian;
 
+import java.io.File;
+import java.io.IOException;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -31,6 +37,10 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
  */
 public class TestResourceComponent implements ResourceComponent<ResourceComponent<?>> {
 
+    private static final Log LOG = LogFactory.getLog(TestResourceComponent.class);
+
+    private ResourceContext<?> context;
+
     @Override
     public AvailabilityType getAvailability() {
         return AvailabilityType.UP;
@@ -39,9 +49,23 @@ public class TestResourceComponent implements ResourceComponent<ResourceComponen
     @Override
     public void start(ResourceContext<ResourceComponent<?>> context) throws InvalidPluginConfigurationException,
         Exception {
+
+        this.context = context;
     }
 
     @Override
     public void stop() {
+        context.getDataDirectory().mkdirs();
+        try {
+            File f = new File(context.getDataDirectory(), "test-plugin.data");
+            if (!f.exists()) {
+                f.createNewFile();
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Create file " + f);
+                }
+            }
+        } catch (IOException e) {
+            throw new IllegalStateException("Could not touch a marker file.");
+        }
     }
 }

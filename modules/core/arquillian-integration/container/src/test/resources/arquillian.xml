@@ -25,6 +25,14 @@
             <property name="nativeSystemInfoEnabled">true</property>
         </configuration>
      </container>
+
+     <container qualifier="cleaned-up-pc">
+         <configuration>
+             <property name="startManagementBean">false</property>
+             <property name="insideAgent">true</property>
+             <property name="serverServicesImplementationClassName">org.rhq.test.arquillian.MockingServerServices</property>
+         </configuration>
+     </container>
  </group>
 
   <!-- We actually have to exclude all the classes from instrumentation by Arquillian Jacoco extension, because our

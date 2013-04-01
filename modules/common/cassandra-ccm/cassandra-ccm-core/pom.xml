@@ -20,18 +20,6 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-ant-bundle-common</artifactId>
-      <version>${project.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.liquibase</groupId>
-          <artifactId>liquibase-core</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-plugin-api</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -58,6 +46,13 @@
       <groupId>net.java.dev.jna</groupId>
       <artifactId>platform</artifactId>
       <version>${cassandra.jna.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.googlecode.java-diff-utils</groupId>
+      <artifactId>diffutils</artifactId>
+      <version>1.2.1</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -86,9 +81,9 @@
                 <exclude>src/main/resources/cassandra/conf/cassandra-env.sh</exclude>
               </excludes>
             </resource>
-            <resource>
-              <directory>src/main/cassandra/cql</directory>
-            </resource>
+            <!--<resource>-->
+              <!--<directory>src/main/cassandra/cql</directory>-->
+            <!--</resource>-->
           </resources>
           <delimiters>
             <delimiter>${*}</delimiter>
@@ -154,15 +149,49 @@
                 <copy file="${settings.localRepository}/net/java/dev/jna/jna/${cassandra.jna.version}/jna-${cassandra.jna.version}.jar"
                       todir="${cassandra.dir}/lib"/>
                 <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
+                <delete dir="${cassandra.dir}/javadoc"/>
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
                 <delete dir="${cassandra.dir}"/>
-                <zip basedir="${project.build.outputDirectory}"
-                     destfile="${project.build.outputDirectory}/cassandra-bundle.zip"
-                     includes="${cassandra.distro.filename},deploy.xml"/>
                 <delete file="${project.build.outputDirectory}/deploy.xml"/>
-                <delete file="${project.build.outputDirectory}/cassandra}"/>
-                <delete file="${cassandra.distro.zip}"/>
+                <!--<delete dir="${project.build.outputDirectory}/cassandra"/>-->
               </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*ITest.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.13</version>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>integration-test</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*ITest.java</include>
+              </includes>
+              <systemPropertyVariables>
+                <rhq.storage.deploy-dir>${project.build.directory}/rhq-storage</rhq.storage.deploy-dir>
+              </systemPropertyVariables>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <testFailureIgnore>false</testFailureIgnore>
             </configuration>
           </execution>
         </executions>

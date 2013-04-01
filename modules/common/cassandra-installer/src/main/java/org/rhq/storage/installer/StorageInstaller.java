@@ -51,8 +51,8 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.cassandra.Deployer;
 import org.rhq.cassandra.DeploymentOptions;
-import org.rhq.cassandra.UnmanagedDeployer;
 import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.OperatingSystemType;
@@ -206,7 +206,6 @@ public class StorageInstaller {
             deploymentOptions.setCommitLogDir(cmdLine.getOptionValue(commitLogDir));
             deploymentOptions.setDataDir(dataDir);
             deploymentOptions.setSavedCachesDir(savedCachesDir);
-            deploymentOptions.setLogDir(logDir.getAbsolutePath());
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
             deploymentOptions.setJmxPort(getPort(cmdLine, "jmx-port", jmxPort));
@@ -225,11 +224,12 @@ public class StorageInstaller {
                     "to which the storage node will need to store data.", errors);
             }
 
-            UnmanagedDeployer deployer = new UnmanagedDeployer();
-            deployer.unpackBundle();
-            deployer.deploy(deploymentOptions, 1);
-            log.info("Finished installing RHQ Storage Node. Performing post-install clean up...");
-            deployer.cleanUpBundle();
+            Deployer deployer = new Deployer();
+            deployer.setDeploymentOptions(deploymentOptions);
+            deployer.unzipDistro();
+            deployer.applyConfigChanges();
+            deployer.updateFilePerms();
+            log.info("Finished installing RHQ Storage Node.");
 
             log.info("Updating rhq-server.properties...");
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();

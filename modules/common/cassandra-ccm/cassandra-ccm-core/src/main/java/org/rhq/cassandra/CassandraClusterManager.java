@@ -32,7 +32,6 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringWriter;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -102,53 +101,45 @@ public class CassandraClusterManager {
         FileUtil.purge(clusterDir, false);
 
         List<CassandraNode> nodes = new ArrayList<CassandraNode>(deploymentOptions.getNumNodes());
-        UnmanagedDeployer deployer = new UnmanagedDeployer();
-        try {
+        String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
+
+        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
+            File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
+            String address = getLocalIPAddress(i + 1);
+
+            DeploymentOptions nodeOptions = new DeploymentOptions();
+            nodeOptions.setSeeds(seeds);
+            nodeOptions.setJmxPort(deploymentOptions.getJmxPort() + i);
+            nodeOptions.setBasedir(basedir.getAbsolutePath());
+            nodeOptions.setListenAddress(address);
+            nodeOptions.setRpcAddress(address);
+            nodeOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
+            nodeOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
+            nodeOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
+
+            nodeOptions.merge(deploymentOptions);
             try {
-                deployer.unpackBundle();
-            } catch (CassandraException e) {
-                log.error("Aborting cluster creation. Unable to unpack Cassandra bunlde.");
-                throw new RuntimeException("Aborting cluster creation. Unable to unpack Cassandra bunlde", e);
+                nodeOptions.load();
+                Deployer deployer = new Deployer();
+                deployer.setDeploymentOptions(nodeOptions);
+                deployer.unzipDistro();
+                deployer.applyConfigChanges();
+                deployer.updateFilePerms();
+
+                nodes.add(new CassandraNode(address, nodeOptions.getRpcPort(),
+                    nodeOptions.getNativeTransportPort()));
+                installedNodeDirs.add(basedir);
+            } catch (Exception e) {
+                log.error("Failed to install node at " + basedir);
+                throw new RuntimeException("Failed to install node at " + basedir, e);
             }
-
-            String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
-
-            for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-                File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
-                String address = getLocalIPAddress(i + 1);
-
-                DeploymentOptions nodeOptions = new DeploymentOptions();
-                nodeOptions.setSeeds(seeds);
-                nodeOptions.setJmxPort(deploymentOptions.getJmxPort() + i);
-                nodeOptions.setBasedir(basedir.getAbsolutePath());
-                nodeOptions.setListenAddress(address);
-                nodeOptions.setRpcAddress(address);
-                nodeOptions.setCommitLogDir(new File(basedir, "commit_log").getAbsolutePath());
-                nodeOptions.setDataDir(new File(basedir, "data").getAbsolutePath());
-                nodeOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
-                nodeOptions.setLogDir(new File(basedir, "logs").getAbsolutePath());
-
-                nodeOptions.merge(deploymentOptions);
-                try {
-                    nodeOptions.load();
-                    deployer.deploy(nodeOptions, i);
-                    nodes.add(new CassandraNode(address, nodeOptions.getRpcPort(),
-                        nodeOptions.getNativeTransportPort()));
-                    installedNodeDirs.add(basedir);
-                }  catch (Exception e) {
-                    log.error("Failed to install node at " + basedir);
-                    throw new RuntimeException("Failed to install node at " + basedir, e);
-                }
-            }
-            try {
-                FileUtil.writeFile(new ByteArrayInputStream(new byte[] {0}), installedMarker);
-            }  catch (IOException e) {
-                log.warn("Failed to write installed file marker to " + installedMarker, e);
-            }
-            return nodes;
-        } finally {
-            deployer.cleanUpBundle();
         }
+        try {
+            FileUtil.writeFile(new ByteArrayInputStream(new byte[]{0}), installedMarker);
+        } catch (IOException e) {
+            log.warn("Failed to write installed file marker to " + installedMarker, e);
+        }
+        return nodes;
     }
 
     private Set<String> calculateLocalIPAddresses(int numNodes) {
@@ -266,18 +257,6 @@ public class CassandraClusterManager {
         StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
 
         return Long.parseLong(writer.getBuffer().toString());
-    }
-
-    public List<String> getHostNames() {
-        List<String> hosts = new ArrayList<String>(deploymentOptions.getNumNodes());
-        for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-            hosts.add("127.0.0." + (i + 1));
-        }
-        return hosts;
-    }
-
-    public InputStream loadBundle() {
-        return null;
     }
 
 }

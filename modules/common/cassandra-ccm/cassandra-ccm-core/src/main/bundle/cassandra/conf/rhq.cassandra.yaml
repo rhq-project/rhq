@@ -7,7 +7,7 @@
 
 # The name of the cluster. This is mainly used to prevent machines in
 # one logical cluster from joining another.
-cluster_name: @@cluster.name@@
+cluster_name: ${cluster.name}
 
 # This defines the number of tokens randomly assigned to this node on the ring
 # The more tokens, relative to other nodes, the larger the proportion of data
@@ -21,7 +21,7 @@ cluster_name: @@cluster.name@@
 #
 # If you already have a cluster with 1 token per node, and wish to migrate to 
 # multiple tokens per node, see http://wiki.apache.org/cassandra/Operations
-num_tokens: @@rhq.cassandra.num_tokens@@
+num_tokens: ${rhq.cassandra.num_tokens}
 
 # If you haven't specified num_tokens, or have set it to the default of 1 then
 # you should always specify InitialToken when setting up a production
@@ -55,10 +55,10 @@ max_hints_delivery_threads: 2
 # populate_io_cache_on_flush: false
 
 # authentication backend, implementing IAuthenticator; used to identify users
-authenticator: @@rhq.cassandra.authenticator@@
+authenticator: ${rhq.cassandra.authenticator}
 
 # authorization backend, implementing IAUthorizer; used to limit access/provide permissions
-authorizer: @@rhq.cassandra.authorizer@@
+authorizer: ${rhq.cassandra.authorizer}
 
 # The partitioner is responsible for distributing rows (by key) across
 # nodes in the cluster.  Any IPartitioner may be used, including your
@@ -85,10 +85,10 @@ partitioner: org.apache.cassandra.dht.Murmur3Partitioner
 
 # directories where Cassandra should store data on disk.
 data_file_directories:
-    - @@data.dir@@
+    - ${rhq.cassandra.data.dir}
 
 # commit log
-commitlog_directory: @@commitlog.dir@@
+commitlog_directory: ${rhq.cassandra.commitlog.dir}
 
 # policy for data disk failures:
 # stop: shut down gossip and Thrift, leaving the node effectively dead, but
@@ -166,7 +166,7 @@ row_cache_save_period: 0
 row_cache_provider: SerializingCacheProvider
 
 # saved caches
-saved_caches_directory: @@saved.caches.dir@@
+saved_caches_directory: ${rhq.cassandra.saved.caches.dir}
 
 # commitlog_sync may be either "periodic" or "batch." 
 # When in batch mode, Cassandra won't ack writes until the commit log
@@ -205,7 +205,7 @@ seed_provider:
       parameters:
           # seeds is actually a comma-delimited list of addresses.
           # Ex: "<ip1>,<ip2>,<ip3>"
-          - seeds: "@@seeds@@"
+          - seeds: "${rhq.cassandra.seeds}"
 
 # emergency pressure valve: each time heap usage after a full (CMS)
 # garbage collection is above this fraction of the max, Cassandra will
@@ -280,11 +280,11 @@ trickle_fsync: false
 trickle_fsync_interval_in_kb: 10240
 
 # TCP port, for commands and data
-storage_port: @@rhq.cassandra.storage.port@@
+storage_port: ${rhq.cassandra.storage.port}
 
 # SSL port, for encrypted communication.  Unused unless enabled in
 # encryption_options
-ssl_storage_port: @@rhq.cassandra.ssl.storage.port@@
+ssl_storage_port: ${rhq.cassandra.ssl.storage.port}
 
 # Address to bind to and tell other Cassandra nodes to connect to. You
 # _must_ change this if you want multiple nodes to be able to
@@ -296,7 +296,7 @@ ssl_storage_port: @@rhq.cassandra.ssl.storage.port@@
 # address associated with the hostname (it might not be).
 #
 # Setting this to 0.0.0.0 is always wrong.
-listen_address: @@listen.address@@
+listen_address: ${rhq.cassandra.listen.address}
 
 # Address to broadcast to other Cassandra nodes
 # Leaving this blank will set it to the same value as listen_address
@@ -310,13 +310,13 @@ listen_address: @@listen.address@@
 # same as the rpc_address. The port however is different and specified below.
 start_native_transport: true
 # port for the CQL native transport to listen for clients on
-native_transport_port: @@rhq.cassandra.native_transport_port@@
+native_transport_port: ${rhq.cassandra.native_transport_port}
 # The minimum and maximum threads for handling requests when the native
 # transport is used. The meaning is those is similar to the one of
 # rpc_min_threads and rpc_max_threads, though the default differ slightly and
 # are the ones below:
 # native_transport_min_threads: 16
-native_transport_max_threads: @@rhq.casandra.native_transport_max_threads@@
+native_transport_max_threads: ${rhq.casandra.native_transport_max_threads}
 
 
 # Whether to start the thrift rpc server.
@@ -327,9 +327,9 @@ start_rpc: true
 # 
 # Leaving this blank has the same effect it does for ListenAddress,
 # (i.e. it will be based on the configured hostname of the node).
-rpc_address: @@rpc.address@@
+rpc_address: ${rpc.address}
 # port for Thrift to listen for clients on
-rpc_port: @@rhq.cassandra.rpc_port@@
+rpc_port: ${rhq.cassandra.rpc_port}
 
 # enable or disable keepalive on rpc connections
 rpc_keepalive: true

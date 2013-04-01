@@ -6,15 +6,10 @@
   <resources>
     <resource-root path="${project.build.finalName}.jar"/>
     <resource-root path="rhq-cassandra-ccm-core-${project.version}.jar"/>
-    <resource-root path="rhq-ant-bundle-common-${project.version}.jar"/>
     <resource-root path="rhq-core-util-${project.version}.jar"/>
     <resource-root path="jdom-1.0.jar"/>
     <resource-root path="i18nlog-1.0.10.jar"/>
     <resource-root path="rhq-core-native-system-${project.version}.jar"/>
-    <resource-root path="ant-1.8.0.jar"/>
-    <resource-root path="ant-launcher-1.8.0.jar"/>
-    <resource-root path="ant-nodeps-1.8.0.jar"/>
-    <resource-root path="ant-contrib-1.0b3.jar"/>
     <resource-root path="rhq-core-plugin-api-${project.version}.jar"/>
     <resource-root path="rhq-core-domain-${project.version}.jar"/>
     <resource-root path="commons-lang-2.4.jar"/>

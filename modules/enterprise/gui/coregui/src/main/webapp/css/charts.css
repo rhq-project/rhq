@@ -125,17 +125,17 @@ rect.low {
 #chartHoverPeakValue {
     width: 50px;
     font-weight: bold;
-    color: #ff8a9a;
+    color: #1794BC;
 }
 
 #chartHoverAvgValue {
     width: 50px;
     font-weight: bold;
-    color: #b0d9b0;
+    color: #2e376a;
 }
 
 #chartHoverLowValue {
     width: 50px;
     font-weight: bold;
-    color: #8ad6ff;
+    color: #70c4e2;
 }

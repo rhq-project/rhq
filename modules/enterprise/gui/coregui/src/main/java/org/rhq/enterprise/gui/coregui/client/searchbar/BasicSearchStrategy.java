@@ -23,20 +23,17 @@ import java.util.List;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.fields.DataSourceTextField;
-import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 
-import org.rhq.core.domain.criteria.SavedSearchCriteria;
-import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.search.SearchSuggestion;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * This is the general search strategy implementation used for most searches.
@@ -85,50 +82,24 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
     @Override
     public void onRecordClick(RecordClickEvent event) {
         Log.debug("BasicSearchStrategy click");
+
         String kind = event.getRecord().getAttribute(ATTR_KIND);
+        String pattern;
+
         if (kind.equals("SAVED") || kind.equals("GLOBAL")) {
             Log.debug("Saved or Global Search Click");
-            searchBar.switchToSavedSearchMode();
-            String savedSearchName = event.getRecord().getAttribute(ATTR_VALUE);
-            searchBar.getSaveSearchTextItem().setValue(savedSearchName);
-            assignSavedSearchExpression(savedSearchName, searchBar.getSearchTextItem());
+            pattern = event.getRecord().getAttribute(ATTR_PATTERN);
+
         } else {
             Log.debug("Regular Search Click");
-            String clickedExpression = event.getRecord().getAttribute(ATTR_NAME);
-            searchBar.getSearchTextItem().setValue(clickedExpression);
-            if (null != clickedExpression && clickedExpression.length() > 0) {
-                getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, clickedExpression, clickedExpression.length());
-            }
+            pattern = event.getRecord().getAttribute(ATTR_NAME);
         }
-    }
 
-    private void assignSavedSearchExpression(final String savedSearchName, final TextItem searchComboBoxItem) {
-        SavedSearchCriteria criteria = new SavedSearchCriteria();
-        criteria.addFilterSubjectId(subject.getId());
-        criteria.addFilterName(savedSearchName); // null OK
-        criteria.setStrict(true);
-
-        GWTServiceLookup.getSearchService().findSavedSearchesByCriteria(criteria,
-            new AsyncCallback<List<SavedSearch>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_savedSearch_failFind(savedSearchName),
-                        caught);
-                }
-
-                @Override
-                public void onSuccess(List<SavedSearch> results) {
-                    if (results.size() == 0) {
-                        CoreGUI.getMessageCenter().notify(
-                            new Message(MSG.view_searchBar_savedSearch_failFind(savedSearchName),
-                                Message.Severity.Error));
-                    } else {
-                        SavedSearch savedSearch = results.get(0);
-                        searchComboBoxItem.setValue(savedSearch.getPattern());
-                    }
-                }
-            });
-
+        searchBar.getSearchTextItem().focusInItem();
+        if (!(null == pattern || pattern.isEmpty())) {
+            searchBar.getSearchTextItem().setValue(pattern);
+            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, pattern, pattern.length());
+        }
     }
 
     @Override
@@ -143,7 +114,6 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
         Log.debug("Keyup in BasicSearchStrategy: " + keyUpEvent.getKeyName());
         String searchExpression = searchBar.getSearchTextItem().getValueAsString();
         doSearch(searchExpression);
-
     }
 
     @Override
@@ -152,13 +122,17 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
     }
 
     private void doSearch(String searchExpression) {
-        if (null != searchExpression && searchExpression.length() > 0) {
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, searchBar.getSearchTextItem().getValueAsString(),
-                searchBar.getSearchTextItem().getValueAsString().length());
-        } else {
+        if (null == searchExpression || searchExpression.isEmpty()) {
             Log.debug("Empty Search expression");
             getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, null, 0);
+        } else {
+            Log.debug("doSearch: " + searchExpression);
+            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, searchBar.getSearchTextItem().getValueAsString(),
+                searchBar.getSearchTextItem().getValueAsString().length());
         }
+
+        // don't obscure the results
+        searchBar.getPickListGrid().hide();
     }
 
     @Override
@@ -168,8 +142,6 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
     private void getTabAwareSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression,
         int caretPosition) {
-
-        searchBar.getPickListGrid().setData(new ListGridRecord[] {});
 
         final long suggestStart = System.currentTimeMillis();
 
@@ -189,19 +161,33 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                         DataSourceTextField idField = new DataSourceTextField(ATTR_ID, "Id");
                         idField.setPrimaryKey(true);
                         idField.setCanView(false);
+
                         DataSourceTextField valueField = new DataSourceTextField(ATTR_VALUE, "Value");
-                        DataSourceTextField kindField = new DataSourceTextField(ATTR_KIND, "Kind");
-                        kindField.setCanView(false);
-                        DataSourceTextField nameField = new DataSourceTextField(ATTR_NAME, "Name");
-                        nameField.setCanView(false);
-                        ds.setFields(idField, valueField, kindField, nameField);
+
+                        ds.setFields(idField, valueField);
 
                         searchBarPickListGrid.setDataSource(ds);
+                        ListGridField[] fields = searchBarPickListGrid.getAllFields();
+                        searchBarPickListGrid.getField(ATTR_VALUE).setShowHover(true);
+                        searchBarPickListGrid.getField(ATTR_VALUE).setHoverCustomizer(new HoverCustomizer() {
+
+                            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                                String kind = record.getAttribute(ATTR_KIND);
+                                if (kind.equals("SAVED") || kind.equals("GLOBAL")) {
+                                    String pattern = record.getAttribute(ATTR_PATTERN);
+
+                                    if (!(null == pattern || pattern.isEmpty())) {
+                                        return pattern;
+                                    }
+                                }
+
+                                return null;
+                            }
+                        });
 
                     } else {
                         ds.invalidateCache();
                     }
-                    searchBarPickListGrid.setData(new ListGridRecord[] {});
 
                     for (SearchSuggestion searchSuggestion : results) {
                         Log.debug("search tab aware Suggestions: " + searchSuggestion.getKind() + ", "
@@ -213,10 +199,13 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                         }
                         record.setAttribute(ATTR_NAME, searchSuggestion.getLabel());
                         record.setAttribute(ATTR_VALUE, searchSuggestion.getValue());
+                        String pattern = searchSuggestion.getOptional();
+                        record.setAttribute(ATTR_PATTERN, (null == pattern) ? "" : pattern);
                         ds.addData(record);
                     }
 
                     try {
+                        searchBarPickListGrid.setData(new ListGridRecord[] {});
                         searchBarPickListGrid.fetchData();
                     } catch (Exception e) {
                         Log.debug("Caught exception on fetchData: " + e);

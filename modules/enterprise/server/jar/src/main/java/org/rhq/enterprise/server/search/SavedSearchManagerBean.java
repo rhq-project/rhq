@@ -60,7 +60,7 @@ public class SavedSearchManagerBean implements SavedSearchManagerLocal /* local 
      * @see SavedSearchManagerRemote#updateSavedSearch(Subject, SavedSearch)
      */
     public boolean updateSavedSearch(Subject subject, SavedSearch savedSearch) {
-        // this needs to prevent certains types of updates, be more sophisticated, etc
+        // this needs to prevent certain types of updates, be more sophisticated, etc
         validateManipulatePermission(subject, savedSearch);
         SavedSearch oldSavedSearch = entityManager.find(SavedSearch.class, savedSearch.getId());
         if (null == oldSavedSearch || oldSavedSearch.equals(savedSearch)) {

@@ -32,6 +32,7 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
 
     private Kind kind;
     private String value;
+    private String optional; // optional data based on kind.
     private String label;
     private int startIndex;
     private int endIndex;
@@ -41,21 +42,22 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
     }
 
     public SearchSuggestion(Kind kind, String value) {
-        this(kind, value, 0, 0);
+        this(kind, value, value, null, 0, 0);
     }
 
     public SearchSuggestion(Kind kind, String value, int startIndex, int length) {
-        this.kind = kind;
-        this.label = value;
-        this.value = value;
-        this.startIndex = startIndex;
-        this.endIndex = startIndex + length;
+        this(kind, value, value, null, startIndex, length);
     }
 
     public SearchSuggestion(Kind kind, String label, String value, int startIndex, int length) {
+        this(kind, label, value, null, startIndex, length);
+    }
+
+    public SearchSuggestion(Kind kind, String label, String value, String optional, int startIndex, int length) {
         this.kind = kind;
         this.label = label;
         this.value = value;
+        this.optional = optional;
         this.startIndex = startIndex;
         this.endIndex = startIndex + length;
     }
@@ -74,6 +76,14 @@ public class SearchSuggestion implements Serializable, Comparable<SearchSuggesti
 
     public String getValue() {
         return value;
+    }
+
+    public String getOptional() {
+        return optional;
+    }
+
+    public void setOptional(String optional) {
+        this.optional = optional;
     }
 
     public int getStartIndex() {

@@ -439,8 +439,8 @@ public class SearchAssistManager {
                 + primarySimpleContext + "]");
         }
 
-        List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(primarySimpleContext, null,
-            parsedTerm));
+        List<String> valueSuggestions = padWithQuotes(beforeCaret,
+            completor.getValues(primarySimpleContext, null, parsedTerm));
         List<SearchSuggestion> suggestions = convert(valueSuggestions, parsed, parsedTerm, Kind.Simple);
         return suggestions;
     }
@@ -540,8 +540,8 @@ public class SearchAssistManager {
             LOG.debug("getAdvancedSuggestions: operator state");
             if (allComparisonOperators.contains(parsed.operator)) {
                 LOG.debug("search term is complete operator, suggesting values instead");
-                List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(parsed.context,
-                    parsed.param, ""));
+                List<String> valueSuggestions = padWithQuotes(beforeCaret,
+                    completor.getValues(parsed.context, parsed.param, ""));
                 if (completor.getSimpleContexts().contains(parsed.context)) {
                     LOG.debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                     return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""));
@@ -568,8 +568,8 @@ public class SearchAssistManager {
             }
         case VALUE:
             LOG.debug("getAdvancedSuggestions: value state");
-            List<String> valueSuggestions = padWithQuotes(beforeCaret, completor.getValues(parsed.context,
-                parsed.param, parsed.value));
+            List<String> valueSuggestions = padWithQuotes(beforeCaret,
+                completor.getValues(parsed.context, parsed.param, parsed.value));
             if (completor.getSimpleContexts().contains(parsed.context)) {
                 LOG.debug("getAdvancedSuggestions: suggesting value completions for a simple context");
                 return convert(pad(parsed.context + parsed.operator, valueSuggestions, ""), parsed, parsed.value);
@@ -629,8 +629,8 @@ public class SearchAssistManager {
             }
             String value = next.getName();
             int index = next.getName().toLowerCase().indexOf(expression);
-            SearchSuggestion suggestion = new SearchSuggestion(Kind.UserSavedSearch, label, value, index, expression
-                .length());
+            SearchSuggestion suggestion = new SearchSuggestion(Kind.UserSavedSearch, label, value, next.getPattern(),
+                index, expression.length());
             results.add(suggestion);
         }
         return results;
@@ -668,8 +668,8 @@ public class SearchAssistManager {
             }
             String value = next.getName();
             int index = next.getName().toLowerCase().indexOf(expression);
-            SearchSuggestion suggestion = new SearchSuggestion(Kind.GlobalSavedSearch, label, value, index, expression
-                .length());
+            SearchSuggestion suggestion = new SearchSuggestion(Kind.GlobalSavedSearch, label, value, next.getPattern(),
+                index, expression.length());
             results.add(suggestion);
         }
         return results;

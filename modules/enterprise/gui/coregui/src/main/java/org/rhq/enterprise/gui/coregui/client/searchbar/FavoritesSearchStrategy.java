@@ -24,6 +24,8 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DataSource;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -87,22 +89,33 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
 
     @Override
     public void onRecordDoubleClick(RecordDoubleClickEvent event) {
-        Record record = event.getRecord();
-        Integer id = record.getAttributeAsInt(ATTR_ID);
+        final Record record = event.getRecord();
         final String name = record.getAttribute(ATTR_NAME);
-        GWTServiceLookup.getSearchService().deleteSavedSearch(id, new AsyncCallback<Void>() {
 
-            @Override
-            public void onSuccess(Void result) {
-                Message message = new Message(MSG.search_successfully_deleted_search(name), Message.Severity.Info);
-                CoreGUI.getMessageCenter().notify(message);
-                populateSavedSearches();
-            }
+        SC.ask(MSG.view_searchBar_savedSearch_confirmDelete(name), new BooleanCallback() {
+            public void execute(Boolean confirmed) {
+                if (confirmed) {
+                    Integer id = record.getAttributeAsInt(ATTR_ID);
 
-            @Override
-            public void onFailure(Throwable caught) {
-                Message message = new Message(MSG.search_failed_to_save_search(name), Message.Severity.Error);
-                CoreGUI.getMessageCenter().notify(message);
+
+                    GWTServiceLookup.getSearchService().deleteSavedSearch(id, new AsyncCallback<Void>() {
+
+                        @Override
+                        public void onSuccess(Void result) {
+                            Message message = new Message(MSG.view_searchBar_savedSearch_delete(name),
+                                Message.Severity.Info);
+                            CoreGUI.getMessageCenter().notify(message);
+                            populateSavedSearches();
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            Message message = new Message(MSG.view_searchBar_savedSearch_failDelete(name),
+                                Message.Severity.Error);
+                            CoreGUI.getMessageCenter().notify(message);
+                        }
+                    });
+                }
             }
         });
     }
@@ -131,7 +144,7 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.search_failed_to_retrieve_saved_search(), caught);
+                CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_savedSearch_failFetch(), caught);
             }
 
             @Override

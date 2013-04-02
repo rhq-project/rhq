@@ -217,7 +217,7 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.search_failed_to_retrieve_search_suggestion(), caught);
+                    CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_suggest_failSuggest(), caught);
                 }
 
             });

@@ -190,6 +190,7 @@ public class EnhancedSearchBar extends ToolStrip {
 
         searchTextButton = new ToolStripButton();
         searchTextButton.setIcon(IconEnum.ARROW_GRAY.getIcon16x16Path());
+        searchTextButton.setTooltip(MSG.view_searchBar_buttonTooltip());
         searchTextButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -205,6 +206,7 @@ public class EnhancedSearchBar extends ToolStrip {
 
         saveSearchButton = new ToolStripButton();
         saveSearchButton.setIcon(IconEnum.STAR_OFF.getIcon16x16Path());
+        saveSearchButton.setTooltip(MSG.view_searchBar_savedSearch_buttonTooltip());
         saveSearchButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -265,7 +267,7 @@ public class EnhancedSearchBar extends ToolStrip {
 
             } else if (savedSearchName.equalsIgnoreCase(name)) {
                 Integer id = record.getAttributeAsInt(AbstractSearchStrategy.ATTR_ID);
-                updateSavedSearchPattern(id, savedSearchPattern);
+                updateSavedSearchPattern(id, name, savedSearchPattern);
                 updated = true;
 
             } else if (savedSearchPattern.equals(pattern)) {
@@ -339,7 +341,7 @@ public class EnhancedSearchBar extends ToolStrip {
         setSearchMode(SearchMode.SAVED_SEARCH_MODE);
 
         saveSearchButton.setIcon(IconEnum.STAR_ON.getIcon16x16Path());
-        saveSearchTextItem.setValue(MSG.search_name_your_search());
+        saveSearchTextItem.setValue(MSG.view_searchBar_savedSearch_namePrompt());
         saveSearchTextItem.selectValue();
         saveSearchTextItem.show();
 
@@ -357,13 +359,13 @@ public class EnhancedSearchBar extends ToolStrip {
         searchService.createSavedSearch(newSavedSearch, new AsyncCallback<Integer>() {
 
             public void onSuccess(Integer newSavedSearchId) {
-                Message message = new Message(MSG.search_successfully_saved_search(name), Message.Severity.Info);
+                Message message = new Message(MSG.view_searchBar_savedSearch_save(name), Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(message);
                 getSearchStrategy().searchFocusHandler();
             }
 
             public void onFailure(Throwable caught) {
-                Message message = new Message(MSG.search_failed_to_save_search(name), Message.Severity.Error);
+                Message message = new Message(MSG.view_searchBar_savedSearch_failSave(name), Message.Severity.Error);
                 CoreGUI.getMessageCenter().notify(message);
             }
         });
@@ -374,32 +376,32 @@ public class EnhancedSearchBar extends ToolStrip {
         searchService.updateSavedSearchName(id, name, new AsyncCallback<Boolean>() {
 
             public void onSuccess(Boolean result) {
-                Message message = new Message(MSG.search_successfully_saved_search(name), Message.Severity.Info);
+                Message message = new Message(MSG.view_searchBar_savedSearch_save(name), Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(message);
                 getSearchStrategy().searchFocusHandler();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                Message message = new Message(MSG.search_failed_to_save_search(name), Message.Severity.Error);
+                Message message = new Message(MSG.view_searchBar_savedSearch_failRename(name), Message.Severity.Error);
                 CoreGUI.getMessageCenter().notify(message);
             }
         });
     }
 
-    private void updateSavedSearchPattern(final int id, final String pattern) {
+    private void updateSavedSearchPattern(final int id, final String name, final String pattern) {
         Subject subject = UserSessionManager.getSessionSubject();
         searchService.updateSavedSearchPattern(id, pattern, new AsyncCallback<Boolean>() {
 
             public void onSuccess(Boolean result) {
-                Message message = new Message(MSG.search_successfully_saved_search(pattern), Message.Severity.Info);
+                Message message = new Message(MSG.view_searchBar_savedSearch_save(name), Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(message);
                 getSearchStrategy().searchFocusHandler();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                Message message = new Message(MSG.search_failed_to_save_search(pattern), Message.Severity.Error);
+                Message message = new Message(MSG.view_searchBar_savedSearch_failSave(name), Message.Severity.Error);
                 CoreGUI.getMessageCenter().notify(message);
             }
         });

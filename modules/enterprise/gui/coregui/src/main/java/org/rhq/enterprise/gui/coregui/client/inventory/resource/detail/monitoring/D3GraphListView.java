@@ -64,8 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 public class D3GraphListView extends AbstractD3GraphListView {
 
     private static int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
-    private static int SINGLE_CHART_HEIGHT = 225;
-    private static int MULTI_CHART_HEIGHT = 195;
 
     private Resource resource;
     private Set<Integer> definitionIds = null;
@@ -174,10 +172,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
                 @Override
                 public void onSuccess(List<Availability> availList) {
-                    if (Log.isDebugEnabled()) {
-                        Log.debug("\nSuccessfully queried availability in: "
+                    Log.debug("\nSuccessfully queried availability in: "
                             + (System.currentTimeMillis() - timerStart) + " ms.");
-                    }
                     availabilityList = availList;
                     if (countDownLatch != null) {
                         countDownLatch.countDown();
@@ -301,14 +297,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
                         public void onSuccess(PageList<MeasurementOOBComposite> measurementOOBComposites) {
 
                             measurementOOBCompositeList = measurementOOBComposites;
-                            Log.debug("\nSuccessfully queried OOB data in: " + (System.currentTimeMillis() - startTime)
+                            Log.debug("\nSuccessfully queried "+measurementOOBCompositeList.size() +" OOB records in: " + (System.currentTimeMillis() - startTime)
                                 + " ms.");
-                            Log.debug("OOB Data size: " + measurementOOBCompositeList.size());
-                            if (null != measurementOOBCompositeList) {
-                                for (MeasurementOOBComposite measurementOOBComposite : measurementOOBComposites) {
-                                    //Log.debug("measurementOOBComposite = " + measurementOOBComposite);
-                                }
-                            }
                             countDownLatch.countDown();
                         }
 

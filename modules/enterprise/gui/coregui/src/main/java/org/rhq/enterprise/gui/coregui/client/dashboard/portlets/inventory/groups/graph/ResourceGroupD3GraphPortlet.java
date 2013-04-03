@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
@@ -38,6 +39,8 @@ import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -47,27 +50,29 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricSt
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.ResourceGroupMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView implements CustomSettingsPortlet {
+public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView implements AutoRefreshPortlet, CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceGroupMetricD3";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = MSG.view_portlet_defaultName_groupMetric();
+    public static final String NAME = "d3-"+MSG.view_portlet_defaultName_groupMetric();
 
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
+    private Timer refreshTimer;
 
     public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
     public static final String CFG_DEFINITION_ID = "definitionId";
 
     public ResourceGroupD3GraphPortlet() {
-        super(new MetricStackedBarGraph(new MetricGraphData()));
+        super(new MetricStackedBarGraph(MetricGraphData.createForDashboard()));
         setOverflow(Overflow.HIDDEN);
     }
 
@@ -76,6 +81,7 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
         }
+        setMetricGraphData(MetricGraphData.createForDashboard());
 
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
@@ -122,11 +128,6 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
             GroupCategory.COMPATIBLE, false);
         resourceGroupSelector.setWidth(700);
         resourceGroupSelector.setHeight(300);
-        //TODO, would probaby be nice to find a way to seed assigned with the current group
-        //ListGridRecord rec = new ListGridRecord();
-        //rec.setAttribute("id", getEntityId());
-        //rec.setAttribute("name", "current");
-        //resourceGroupSelector.setAssigned(new ListGridRecord[] { rec });
 
         final SelectItem metric = new SortedSelectItem(CFG_DEFINITION_ID, MSG.common_title_metric()) {
             @Override
@@ -203,13 +204,35 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
             drawGraph();
         }
     }
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+    }
+
+    @Override
+    protected void onDestroy() {
+        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+
+        super.onDestroy();
+    }
+
+    public boolean isRefreshing() {
+        return false;
+    }
+
+    //Custom refresh operation as we are not directly extending Table
+    @Override
+    public void refresh() {
+        if (isVisible() && !isRefreshing()) {
+            redraw();
+        }
+    }
 
     public static final class Factory implements PortletViewFactory {
         public static PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(EntityContext context) {
 
-            return new ResourceGroupGraphPortlet();
+            return new ResourceGroupD3GraphPortlet();
         }
     }
 }

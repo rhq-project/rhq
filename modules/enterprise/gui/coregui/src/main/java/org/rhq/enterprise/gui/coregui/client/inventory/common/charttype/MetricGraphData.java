@@ -69,9 +69,19 @@ public class MetricGraphData implements JsonMetricProducer {
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
+    private Boolean isPortalGraph;
+    /**
+     * WindowWidth is used in determining what size graph to display in the dashboard portlets.
+     */
+    private Integer windowWidth;
 
-    public MetricGraphData() {
+    private MetricGraphData() {
+        isPortalGraph = true;
 
+    }
+
+    public static MetricGraphData createForDashboard(){
+        return new MetricGraphData();
     }
 
     /**
@@ -81,23 +91,45 @@ public class MetricGraphData implements JsonMetricProducer {
      * @param def
      * @param metricData
      */
-    public MetricGraphData(int entityId, String entityName, MeasurementDefinition def,
-        List<MeasurementDataNumericHighLowComposite> metricData) {
+    private MetricGraphData(int entityId, String entityName, MeasurementDefinition def,
+        List<MeasurementDataNumericHighLowComposite> metricData, Integer windowWidth) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(def.getId());
         this.definition = def;
         this.metricData = metricData;
+        this.windowWidth = windowWidth;
+        this.isPortalGraph = false;
     }
 
-    public MetricGraphData(int entityId, String entityName, MeasurementDefinition measurementDef,
-        List<MeasurementDataNumericHighLowComposite> metrics,  PageList<MeasurementOOBComposite> measurementOOBCompositeList) {
+    public static MetricGraphData createForResourceGroup(int groupId, String groupName, MeasurementDefinition def,
+                                      List<MeasurementDataNumericHighLowComposite> metricData,
+                                      Integer windowWidth){
+        return new MetricGraphData(groupId,groupName,def, metricData, windowWidth);
+    }
+
+    private MetricGraphData(int entityId, String entityName, MeasurementDefinition measurementDef,
+        List<MeasurementDataNumericHighLowComposite> metrics,
+        PageList<MeasurementOOBComposite> measurementOOBCompositeList, Integer windowWidth) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(measurementDef.getId());
         this.definition = measurementDef;
         this.metricData = metrics;
         this.measurementOOBCompositeList = measurementOOBCompositeList;
+        this.windowWidth = windowWidth;
+        this.isPortalGraph = false;
+    }
+
+    public static MetricGraphData createForResource(int resourceId, String resourceName, MeasurementDefinition measurementDef,
+                                                    List<MeasurementDataNumericHighLowComposite> metrics,
+                                                    PageList<MeasurementOOBComposite> measurementOOBCompositeList,
+                                                    Integer windowWidth){
+        return new MetricGraphData(resourceId, resourceName,measurementDef, metrics, measurementOOBCompositeList, windowWidth);
+    }
+
+    public Integer getWindowWidth() {
+        return windowWidth;
     }
 
     public int getEntityId() {
@@ -133,7 +165,7 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public String getChartId() {
-        return entityId + "-" + definitionId;
+            return entityId + "-" + definitionId;
     }
 
 
@@ -209,6 +241,10 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public void setChartHeight(Integer chartHeight) {
         this.chartHeight = chartHeight;
+    }
+
+    public Boolean isPortalGraph() {
+        return isPortalGraph;
     }
 
     public String getChartTitle() {
@@ -371,6 +407,8 @@ public class MetricGraphData implements JsonMetricProducer {
         return returnValue;
     }
 
+
+
     /**
      * If there is more than 2 days time window then return true so we can show day of week
      * in axis labels. Function to switch the timescale to whichever is more appropriate hours
@@ -400,12 +438,13 @@ public class MetricGraphData implements JsonMetricProducer {
         sb.append(", chartHoverEndLabel='").append(chartHoverEndLabel).append('\'');
         sb.append(", chartHoverPeriodLabel='").append(chartHoverPeriodLabel).append('\'');
         sb.append(", chartHoverBarLabel='").append(chartHoverBarLabel).append('\'');
+        sb.append(", chartHoverTimeFormat='").append(chartHoverTimeFormat).append('\'');
+        sb.append(", chartHoverDateFormat='").append(chartHoverDateFormat).append('\'');
         sb.append(", entityId=").append(entityId);
         sb.append(", entityName='").append(entityName).append('\'');
         sb.append(", definitionId=").append(definitionId);
-        sb.append(", adjustedMeasurementUnits=").append(adjustedMeasurementUnits);
-        sb.append(", definition=").append(definition);
-        sb.append(", chartHeight=").append(chartHeight);
+        sb.append(", isPortalGraph=").append(isPortalGraph);
+        sb.append(", windowWidth=").append(windowWidth);
         sb.append('}');
         return sb.toString();
     }

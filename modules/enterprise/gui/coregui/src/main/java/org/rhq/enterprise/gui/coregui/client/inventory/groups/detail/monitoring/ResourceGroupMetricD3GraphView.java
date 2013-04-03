@@ -126,9 +126,6 @@ public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
         graph.drawJsniChart();
     }
 
-    @Override
-    protected boolean supportsLiveGraphViewDialog() {
-        return false;
-    }
+
 
 }

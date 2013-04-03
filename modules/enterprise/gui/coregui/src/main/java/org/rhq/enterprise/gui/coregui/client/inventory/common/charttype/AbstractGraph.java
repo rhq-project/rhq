@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 
+import com.smartgwt.client.widgets.layout.VLayout;
+
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 
 /**
@@ -31,7 +33,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
  *
  * @author Mike Thompson
  */
-public abstract class AbstractGraph implements HasD3MetricJsniChart {
+public abstract class AbstractGraph extends VLayout implements HasD3MetricJsniChart {
 
     private MetricGraphData metricGraphData;
 
@@ -147,6 +149,10 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
     public String getChartTitle() {
         return metricGraphData != null ? metricGraphData.getChartTitle() : "";
     }
+    public boolean isPortalGraph(){
+        return metricGraphData.isPortalGraph();
+    }
+
 
     public String getYAxisUnits() {
         return metricGraphData.getYAxisUnits();
@@ -158,6 +164,10 @@ public abstract class AbstractGraph implements HasD3MetricJsniChart {
 
     public String getJsonMetrics() {
         return metricGraphData.getJsonMetrics();
+    }
+
+    public Integer getWindowWidth() {
+        return metricGraphData.getWindowWidth();
     }
 
 

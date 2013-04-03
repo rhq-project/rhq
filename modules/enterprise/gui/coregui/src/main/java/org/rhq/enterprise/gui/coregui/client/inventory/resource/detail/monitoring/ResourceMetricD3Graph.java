@@ -23,7 +23,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.Abstract
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3MetricJsniChart;
 
 /**
- * A D3 graph implementation for graphing metrics.
+ * A D3 graph implementation for graphing Resource metrics.
  */
 public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
 
@@ -40,10 +40,7 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
         super(graph);
     }
 
-    @Override
-    protected boolean supportsLiveGraphViewDialog() {
-        return true;
-    }
+
 
     @Override
     /**
@@ -58,8 +55,5 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView {
         return graph;
     }
 
-    @Override
-    protected void displayLiveGraphViewDialog() {
-        LiveGraphD3View.displayAsDialog(graph.getEntityId(), graph.getDefinition());
-    }
+
 }

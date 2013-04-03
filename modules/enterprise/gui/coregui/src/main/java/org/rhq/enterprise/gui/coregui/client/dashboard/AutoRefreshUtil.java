@@ -23,15 +23,16 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.Canvas;
 
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 
 /**
  * @author Jay Shaughnessy
  */
-public class AutoRefreshPortletUtil {
+public class AutoRefreshUtil {
 
-    public static Timer startRefreshCycle(final AutoRefreshPortlet autoRefreshPortlet,
-        final Canvas autoRefreshPortletCanvas, Timer refreshTimer) {
+    public static Timer startRefreshCycle(final AutoRefresh autoRefresh,
+        final Canvas autoRefreshCanvas, Timer refreshTimer) {
 
         final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
 
@@ -46,13 +47,13 @@ public class AutoRefreshPortletUtil {
             refreshTimer = new Timer() {
                 public void run() {
 
-                    // if the portlet is already refreshing or if the portlet is not currently on screen then
+                    // if the autoRefresh component is already refreshing or is not currently on screen then
                     // don't bother doing the work. this protects against unnecessary or unwanted db queries
                     // being performed in the background.
-                    if (!autoRefreshPortlet.isRefreshing() && autoRefreshPortletCanvas.isDrawn()
-                        && autoRefreshPortletCanvas.isVisible()) {
+                    if (!autoRefresh.isRefreshing() && autoRefreshCanvas.isDrawn()
+                        && autoRefreshCanvas.isVisible()) {
 
-                        autoRefreshPortlet.refresh();
+                        autoRefresh.refresh();
                     }
                 }
             };
@@ -63,7 +64,7 @@ public class AutoRefreshPortletUtil {
         return refreshTimer;
     }
 
-    public static void onDestroy(final Canvas portlet, Timer refreshTimer) {
+    public static void onDestroy(Timer refreshTimer) {
 
         if (refreshTimer != null) {
 

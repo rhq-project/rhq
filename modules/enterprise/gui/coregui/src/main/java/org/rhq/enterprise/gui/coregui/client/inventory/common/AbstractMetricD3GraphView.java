@@ -40,6 +40,7 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
     private int entityId;
     private int definitionId;
     private HTMLFlow graphDiv = null;
+    protected Timer refreshTimer;
 
     public AbstractMetricD3GraphView() {
         super();
@@ -73,7 +74,8 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
             + "               <pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
             + "                        width=\"6\" height=\"3\">"
             + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>"
-            + "               </pattern>" + "</defs>";
+            + "               </pattern>"
+            + "</defs>";
     }
 
     @Override

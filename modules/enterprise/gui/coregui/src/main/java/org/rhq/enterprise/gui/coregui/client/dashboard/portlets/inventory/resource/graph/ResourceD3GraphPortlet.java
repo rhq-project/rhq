@@ -61,6 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
@@ -84,16 +85,18 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
     public ResourceD3GraphPortlet() {
         super();
         setOverflow(Overflow.HIDDEN);
-        setGraph(new MetricStackedBarGraph(new MetricGraphData()));
     }
 
     @Override
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        Log.debug("\nResourceD3GraphPortlet Configure");
+        Log.debug("ResourceD3GraphPortlet Configure");
 
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
         }
+
+
+        setGraph(new MetricStackedBarGraph(MetricGraphData.createForDashboard()));
 
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
@@ -154,7 +157,7 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
                                     getJsniChart().setEntityName(resource.getName());
                                     getJsniChart().setDefinition(def);
                                     final long startTime = System.currentTimeMillis();
-                                    //
+
                                     GWTServiceLookup.getMeasurementDataService().findDataForResourceForLast(
                                         resource.getId(), new int[] { def.getId() }, 8, MeasurementUtils.UNIT_HOURS,
                                         60, new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {

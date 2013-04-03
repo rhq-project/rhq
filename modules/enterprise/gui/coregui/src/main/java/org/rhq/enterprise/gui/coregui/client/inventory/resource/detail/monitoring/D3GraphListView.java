@@ -64,6 +64,8 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 public class D3GraphListView extends AbstractD3GraphListView {
 
     private static int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
+    private static int SINGLE_CHART_HEIGHT = 225;
+    private static int MULTI_CHART_HEIGHT = 195;
 
     private Resource resource;
     private Set<Integer> definitionIds = null;
@@ -339,7 +341,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                     for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
                         if (summaryIds.contains(measurementDefinition.getId())) {
                             buildSingleGraph(measurementOOBCompositeList, measurementDefinition,
-                                measurementData.get(i), 225);
+                                measurementData.get(i), MULTI_CHART_HEIGHT);
                         }
                         i++;
                     }
@@ -358,11 +360,11 @@ public class D3GraphListView extends AbstractD3GraphListView {
                             if (null != selectedDefinitionId) {
                                 // single graph case
                                 if (measurementId == selectedDefinitionId) {
-                                    buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, 225);
+                                    buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, SINGLE_CHART_HEIGHT);
                                 }
                             } else {
                                 // multiple graph case
-                                buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, 225);
+                                buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, MULTI_CHART_HEIGHT);
                             }
                         }
                         i++;
@@ -375,8 +377,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private void buildSingleGraph(PageList<MeasurementOOBComposite> measurementOOBCompositeList,
         MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data, int height) {
 
-        MetricGraphData metricGraphData = new MetricGraphData(resource.getId(), resource.getName(),
-            measurementDefinition, data, measurementOOBCompositeList);
+        MetricGraphData metricGraphData = MetricGraphData.createForResource(resource.getId(), resource.getName(),
+            measurementDefinition, data, measurementOOBCompositeList, getWidth());
         MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
 
         ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(graph);

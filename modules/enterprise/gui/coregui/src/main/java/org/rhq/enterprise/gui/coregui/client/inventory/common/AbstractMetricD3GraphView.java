@@ -166,14 +166,6 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
         graph.setMetricGraphData(metricGraphData);
     }
 
-    protected boolean supportsLiveGraphViewDialog() {
-        return false;
-    }
-
-    protected void displayLiveGraphViewDialog() {
-        return;
-    }
-
     @Override
     public void destroy() {
         super.destroy();

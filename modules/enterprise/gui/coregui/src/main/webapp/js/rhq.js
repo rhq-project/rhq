@@ -9,7 +9,7 @@
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat)
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, windowWidth )
 {
     "use strict";
     if(!(this instanceof ChartContext)){
@@ -37,6 +37,8 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.hoverBarLabel = hoverBarLabel;
     this.chartHoverTimeFormat = chartHoverTimeFormat;
     this.chartHoverDateFormat = chartHoverDateFormat;
+    this.isPortalGraph = isPortalGraph;
+    this.windowWidth = windowWidth;
 
 },
 AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat) {

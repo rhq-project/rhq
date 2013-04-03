@@ -24,6 +24,7 @@ import java.util.List;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -65,6 +66,7 @@ public class AvailabilityLineGraphType {
             // loop through the avail intervals
             for (Availability availability : availabilityList) {
                 sb.append("{ \"availType\":\"" + availability.getAvailabilityType() + "\", ");
+                sb.append(" \"availTypeMessage\":\"" + availability.getAvailabilityType()+ "\", ");
                 sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
                 // last record will be null
                 long endTime = availability.getEndTime() != null ? availability.getEndTime() : (new Date()).getTime();
@@ -81,7 +83,12 @@ public class AvailabilityLineGraphType {
         } else if (null != groupAvailabilityList) {
             // loop through the group avail down intervals
             for (ResourceGroupAvailability groupAvailability : groupAvailabilityList) {
+                // allows substitution for situations like WARN=MIXED for easier terminology
+                String availabilityTypeMessage = (groupAvailability.getGroupAvailabilityType().equals(ResourceGroupComposite.GroupAvailabilityType.WARN))
+                        ? MSG.chart_hover_availability_type_warn() : groupAvailability.getGroupAvailabilityType().name();
+
                 sb.append("{ \"availType\":\"" + groupAvailability.getGroupAvailabilityType() + "\", ");
+                sb.append(" \"availTypeMessage\":\"" + availabilityTypeMessage + "\", ");
                 sb.append(" \"availStart\":" + groupAvailability.getStartTime() + ", ");
                 // last record will be null
                 long endTime = groupAvailability.getEndTime() != null ? groupAvailability.getEndTime() : (new Date())
@@ -224,19 +231,17 @@ public class AvailabilityLineGraphType {
                 var hoverString,
                         timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
                         dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
-                        availType = d.availType,
                         availStart = new Date(+d.availStart),
-                        availEnd = new Date(+d.availEnd),
-                        availDuration = d.availDuration;
+                        availEnd = new Date(+d.availEnd);
 
                 hoverString =
                         '<div class="chartHoverEnclosingDiv">' +
-                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + availType + '</span></div>' +
+                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + d.availTypeMessage + '</span></div>' +
                                 '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverStartLabel + ': </span><span style="width:50px;">' + timeFormatter(availStart) + '</span></div>' +
                                 '<div class="chartHoverAlignRight"><span >' + ' </span><span style="width:50px;">' + dateFormatter(availStart) + '</span></div>' +
                                 '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverEndLabel + ': </span><span style="width:50px;">' + timeFormatter(availEnd) + '</span></div>' +
                                 '<div class="chartHoverAlignRight"><span >' + ' </span><span style="width:50px;">' + dateFormatter(availEnd) + '</span></div>' +
-                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + availDuration + '</span></div>' +
+                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + d.availDuration + '</span></div>' +
                                 '</div>';
                 return hoverString;
 

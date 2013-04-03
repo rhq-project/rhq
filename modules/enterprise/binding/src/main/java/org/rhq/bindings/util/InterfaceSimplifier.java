@@ -142,7 +142,7 @@ public class InterfaceSimplifier {
 
     public static Class<?> simplify(Class<?> intf) {
         try {
-            ClassPool classPool = ClassPoolFactory.newInstance();
+            ClassPool classPool = ClassPoolFactory.getClassPoolForCurrentContextClassLoader();
 
             String simplifiedName = getSimplifiedName(intf);
             LOG.debug("Simplifying " + intf + " (simplified interface name: " + simplifiedName + ")...");

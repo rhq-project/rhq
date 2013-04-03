@@ -127,7 +127,7 @@ public class ConfigurationClassBuilder {
 
         CtClass expectedReturn = translateConfiguration(cp, resultsConfigurationDefinition);
 
-        if (expectedReturn.equals(ClassPoolFactory.newInstance().get(Configuration.class.getName()))) {
+        if (expectedReturn.equals(cp.get(Configuration.class.getName()))) {
             return result;
         } else {
             //bail on translation if Configuration passed in is null

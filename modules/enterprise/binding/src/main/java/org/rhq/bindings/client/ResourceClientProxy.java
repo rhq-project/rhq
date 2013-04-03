@@ -412,7 +412,7 @@ public class ResourceClientProxy {
             if (!LazyLoadScenario.isShouldLoad())
                 return null;
 
-            ClassPool pool = ClassPoolFactory.newInstance();
+            ClassPool pool = ClassPoolFactory.getClassPoolForCurrentContextClassLoader();
 
             Configuration parameters = ConfigurationClassBuilder.translateParametersToConfig(pool, definition
                 .getParametersConfigurationDefinition(), args);

@@ -66,17 +66,25 @@ public class SessionManagerBean {
             if (seedProp == null) {
                 throw new CQLException("The rhq.cassandra.seeds property is null. Cannot create session.");
             }
+            int port = -1;
             String[] seeds = seedProp.split(",");
             String[] hostNames = new String[seeds.length];
             for (int i = 0; i < seeds.length; ++i) {
                 CassandraNode node = CassandraNode.parseNode(seeds[i]);
+                port = node.getNativeTransportPort();
                 hostNames[i] = node.getHostName();
+            }
+
+            if (port == -1) {
+                throw new RuntimeException("Failed to initialize client port. Cannot create " +
+                    Session.class.getName() + " object.");
             }
 
             Cluster cluster = Cluster.builder()
                 .addContactPoints(hostNames)
                 .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
                 .withCompression(SNAPPY)
+                .withPort(port)
                 .build();
             session = cluster.connect("rhq");
         } catch (NoHostAvailableException e) {

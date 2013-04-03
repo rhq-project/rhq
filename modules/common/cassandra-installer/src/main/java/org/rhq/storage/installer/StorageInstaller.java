@@ -203,7 +203,7 @@ public class StorageInstaller {
             dataDir = cmdLine.getOptionValue("data", dataDir);
             savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
 
-            deploymentOptions.setCommitLogDir(cmdLine.getOptionValue(commitLogDir));
+            deploymentOptions.setCommitLogDir(commitLogDir);
             deploymentOptions.setDataDir(dataDir);
             deploymentOptions.setSavedCachesDir(savedCachesDir);
             deploymentOptions.setLoggingLevel("INFO");

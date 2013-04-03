@@ -97,6 +97,7 @@ public class SchemaManager {
             .addContactPoints(hostNames)
             .withAuthInfoProvider(authInfoProvider)
             .withCompression(SNAPPY)
+            .withPort(nodes.get(0).getNativeTransportPort())
             .build();
         session = cluster.connect("system");
     }

@@ -23,6 +23,8 @@ package org.rhq.enterprise.server.alert;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.alert.AlertDampening;
@@ -50,6 +52,8 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
  * @author Thomas Segismont
  */
 public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
+
+    private static final Log LOG = LogFactory.getLog(AlertDefinitionManagerBeanTest.class);
 
     private AlertDefinitionManagerLocal alertDefinitionManager;
 
@@ -106,26 +110,33 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
 
     private void deleteTestData() throws Exception {
         if (testData != null) {
-            final TestData testDataToDelete = testData;
+            for (Integer alertDefinitionId : testData.getAlertDefinitionIds()) {
+                removeEntity(AlertDefinition.class, alertDefinitionId);
+            }
+            removeEntity(ResourceGroup.class, testData.getResourceGroup().getId());
+            removeEntity(Resource.class, testData.getResource().getId());
+            removeEntity(ResourceType.class, testData.getResourceType().getId());
+            removeEntity(Subject.class, testData.getSubject().getId());
+            removeEntity(Role.class, testData.getRole().getId());
             testData = null;
+        }
+    }
+
+    private void removeEntity(final Class<?> entityClass, final Object entityId) {
+        try {
             executeInTransaction(false, new TransactionCallback() {
                 @Override
                 public void execute() throws Exception {
-                    for (Integer alertDefinitionId : testDataToDelete.getAlertDefinitionIds()) {
-                        em.remove(em.find(AlertDefinition.class, alertDefinitionId));
+                    Object object = em.find(entityClass, entityId);
+                    if (object instanceof Resource) {
+                        ResourceTreeHelper.deleteResource(em, (Resource) object);
+                    } else {
+                        em.remove(object);
                     }
-                    resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), testDataToDelete
-                        .getResourceGroup().getId());
-                    ResourceTreeHelper.deleteResource(em,
-                        em.find(Resource.class, testDataToDelete.getResource().getId()));
-                    em.remove(em.find(ResourceType.class, testDataToDelete.getResourceType().getId()));
-                    subjectManager.deleteSubjects(subjectManager.getOverlord(), new int[] { testDataToDelete
-                        .getSubject().getId() });
-                    roleManager.deleteRoles(subjectManager.getOverlord(), new int[] { testDataToDelete.getRole()
-                        .getId() });
-
                 }
             });
+        } catch (Exception e) {
+            LOG.error("Failed to delete object from database: " + entityClass + "[id=" + entityId + "]", e);
         }
     }
 

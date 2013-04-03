@@ -22,7 +22,7 @@
  */
 package org.rhq.core.domain.alert.notification;
 
-import java.io.Serializable;
+import org.rhq.core.domain.alert.Alert;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -42,8 +42,7 @@ import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlTransient;
-
-import org.rhq.core.domain.alert.Alert;
+import java.io.Serializable;
 
 /**
  * A log record for a triggered action and/or notification taken for a fired alert.
@@ -68,8 +67,7 @@ import org.rhq.core.domain.alert.Alert;
         + "                             FROM AlertDefinition ad " //
         + "                             JOIN ad.alerts alert " //
         + "                            WHERE ad.resource.id IN ( :resourceIds ) ))"),
-    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE,
-    query = "DELETE AlertNotificationLog log "
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE, query = "DELETE AlertNotificationLog log "
         + "  WHERE log.alert.id IN (SELECT alert.id "
         + "                         FROM   AlertDefinition alertDef "
         + "                         JOIN   alertDef.alerts alert "
@@ -100,8 +98,6 @@ public class AlertNotificationLog implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCE_TEMPLATE = "AlertNotificationLog.deleteByResourceType";
     public static final String QUERY_DELETE_BY_RESOURCE_GROUPS = "AlertNotificationLog.deleteByResourceGroups";
     public static final String QUERY_DELETE_BY_ALERT_CTIME = "AlertNotificationLog.deleteByAlertCtime";
-
-    public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT_NOTIF_LOG";
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ALERT_NOTIF_LOG_ID_SEQ")

@@ -22,11 +22,7 @@
  */
 package org.rhq.core.domain.alert;
 
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import org.rhq.core.domain.alert.notification.AlertNotificationLog;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
@@ -43,8 +39,11 @@ import javax.persistence.OneToMany;
 import javax.persistence.OrderBy;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-
-import org.rhq.core.domain.alert.notification.AlertNotificationLog;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * @author Joseph Marques
@@ -232,8 +231,6 @@ public class Alert implements Serializable {
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP = "Alert.findByMeasDefIdAndAutoGroup";
     public static final String QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE = "Alert.findByMeasDefIdAndResource";
     public static final String QUERY_GET_ALERT_COUNT_FOR_SCHEDULES = "Alert.QUERY_GET_ALERT_COUNT_FOR_SCHEDULES";
-
-    public static final String QUERY_NATIVE_TRUNCATE_SQL = "TRUNCATE TABLE RHQ_ALERT";
 
     // for subsystem view
     public static final String QUERY_FIND_ALL_COMPOSITES = "Alert.findAllComposites";

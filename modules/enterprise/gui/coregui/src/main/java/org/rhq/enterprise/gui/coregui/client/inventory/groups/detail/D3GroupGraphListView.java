@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
@@ -52,7 +53,7 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
  * Build the Group version of the View that shows the individual graph views.
  * @author Mike Thompson
  */
-public final class D3GroupGraphListView extends AbstractD3GraphListView {
+public final class D3GroupGraphListView extends AbstractD3GraphListView implements AutoRefresh{
 
     private ResourceGroup resourceGroup;
     private VLayout graphsVLayout;
@@ -83,15 +84,21 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
         graphsVLayout.setWidth100();
 
         if (resourceGroup != null) {
-            redrawGraphs();
+            buildGraphs();
         }
         addMember(graphsVLayout);
+    }
+
+
+    public void redrawGraphs() {
+        this.onDraw();
+        availabilityGraph.drawJsniChart();
     }
 
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
-    public void redrawGraphs() {
+    private void buildGraphs() {
 
         queryAvailability(EntityContext.forGroup(resourceGroup), measurementRangeEditor.getStartTime(),
             measurementRangeEditor.getEndTime(), null);
@@ -140,8 +147,11 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
                                     for (List<MeasurementDataNumericHighLowComposite> data : result) {
                                         buildIndividualGraph(measurementDefinitions.get(i++), data);
                                     }
-                                    availabilityGraph.setGroupAvailabilityList(groupAvailabilityList);
-                                    availabilityGraph.drawJsniChart();
+                                    // There is a weird timing case when availabilityGraph can be null
+                                    if (availabilityGraph != null) {
+                                        availabilityGraph.setGroupAvailabilityList(groupAvailabilityList);
+                                        availabilityGraph.drawJsniChart();
+                                    }
                                 }
                             }
                         });
@@ -188,10 +198,13 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
         ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(graph);
 
         graphView.setWidth("95%");
-        graphView.setHeight(225);
+        graphView.setHeight(MULTI_CHART_HEIGHT);
 
         if(graphsVLayout != null){
             graphsVLayout.addMember(graphView);
         }
     }
+
+
+
 }

@@ -49,7 +49,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -304,12 +304,12 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
     @Override
     protected void onDestroy() {
-        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+        AutoRefreshUtil.onDestroy(refreshTimer);
 
         super.onDestroy();
     }

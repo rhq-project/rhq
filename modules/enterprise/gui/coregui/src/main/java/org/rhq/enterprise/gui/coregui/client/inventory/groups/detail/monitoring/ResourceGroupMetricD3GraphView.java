@@ -42,6 +42,8 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 public class ResourceGroupMetricD3GraphView extends AbstractMetricD3GraphView {
 
+
+
     public ResourceGroupMetricD3GraphView(AbstractGraph graph) {
         super(graph);
     }

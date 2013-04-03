@@ -23,26 +23,16 @@
 package org.rhq.enterprise.gui.coregui.client.dashboard;
 
 
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
+
 /**
+ * An AutoRefreshPortlet has the capabilities of both a Portlet and AutoRefresh interface.
+ *
  * @author Simeon Pinder
  */
-public interface AutoRefreshPortlet extends Portlet {
+public interface AutoRefreshPortlet extends Portlet,AutoRefresh {
 
-    /**
-     * Each portlet implements to define the refresh cycle.  Note that once refresh is started it
-     * should be canceled when the portlet goes out of scope (typically in an onDestroy() override).
-     */
-    void startRefreshCycle();
+    // All method signatures come from extension of parent Interfaces.
 
-    /**     
-     * @return true if the portlet is currently responding to a refresh (i.e. reloading data). This can be used
-     * to ignore refresh requests until a prior request is completed. 
-     */
-    boolean isRefreshing();
-
-    /**
-     * Refresh this portlet, reload data, redraw widgets, whatever is needed to refresh the portlet
-     */
-    void refresh();
 
 }

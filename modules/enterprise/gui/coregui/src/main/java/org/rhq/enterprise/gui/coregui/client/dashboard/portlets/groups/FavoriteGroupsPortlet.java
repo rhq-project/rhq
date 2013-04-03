@@ -38,7 +38,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
@@ -127,12 +127,12 @@ public class FavoriteGroupsPortlet extends ResourceGroupListView implements Auto
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
     @Override
     protected void onDestroy() {
-        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+        AutoRefreshUtil.onDestroy( refreshTimer);
 
         super.onDestroy();
     }

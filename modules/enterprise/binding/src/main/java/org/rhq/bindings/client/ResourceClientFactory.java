@@ -152,7 +152,7 @@ public class ResourceClientFactory {
     private Class<?> defineCustomInterface(ResourceClientProxy proxy) {
         try {
             // define the dynamic class - do not put it in any known rhq package in case our jars are signed (see BZ-794503)
-            ClassPool pool = ClassPoolFactory.getClassPoolForCurrentContextClassLoader();
+            ClassPool pool = ClassPoolFactory.getClassPool(ResourceClientProxy.class.getClassLoader());
             CtClass customClass = pool.makeInterface("org.rhq.bindings.client.dynamic."
                 + ResourceClientProxy.class.getSimpleName() + proxy.fingerprint);
 
@@ -209,13 +209,7 @@ public class ResourceClientFactory {
                 }
             }
 
-            ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            try {
-                setContextClassLoader(ResourceClientProxy.class.getClassLoader());
-                return customClass.toClass();
-            } finally {
-                setContextClassLoader(cl);
-            }
+            return customClass.toClass();
         } catch (NotFoundException e) {
             LOG.error("Could not create custom interface for resource with id " + proxy.getId(), e);
             throw new IllegalStateException("Could not create custom interface for resource with id " + proxy.getId(), e);
@@ -225,20 +219,6 @@ public class ResourceClientFactory {
         } catch (Exception e) {
             LOG.error("Could not create custom interface for resource with id " + proxy.getId(), e);
             throw new IllegalStateException("Could not create custom interface for resource with id " + proxy.getId(), e);
-        }
-    }
-
-    private void setContextClassLoader(final ClassLoader cl) {
-        if (System.getSecurityManager() != null) {
-            AccessController.doPrivileged(new PrivilegedAction<Void>() {
-                @Override
-                public Void run() {
-                    Thread.currentThread().setContextClassLoader(cl);
-                    return null;
-                }
-            });
-        } else {
-            Thread.currentThread().setContextClassLoader(cl);
         }
     }
 }

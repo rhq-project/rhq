@@ -176,6 +176,7 @@ public class Simulator implements ShutdownManager {
         deploymentOptions.setNumNodes(clusterConfig.getNumNodes());
         deploymentOptions.setHeapSize(clusterConfig.getHeapSize());
         deploymentOptions.setHeapNewSize(clusterConfig.getHeapNewSize());
+        deploymentOptions.setStackSize(clusterConfig.getStackSize());
         deploymentOptions.setLoggingLevel("INFO");
         deploymentOptions.load();
 

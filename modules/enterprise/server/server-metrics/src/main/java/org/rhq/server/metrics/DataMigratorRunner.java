@@ -20,6 +20,11 @@
 
 package org.rhq.server.metrics;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -42,6 +47,10 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.hibernate.ejb.Ejb3Configuration;
 
 import org.rhq.cassandra.CassandraNode;
@@ -65,62 +74,58 @@ public class DataMigratorRunner {
     private final Log log = LogFactory.getLog(DataMigratorRunner.class);
 
     //Cassandra
-    private String cassandraUser;
-    private Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg().create();
-
-    private String cassandraPassword;
-    private Option cassandraPasswordOption = OptionBuilder.withLongOpt("cassandra-password").hasArg().create();
-
-    private String[] cassandraHosts;
-    private Option cassandraHostsOption = OptionBuilder.withLongOpt("cassandra-hosts").hasArg().create();
-
-    private boolean cassandraCompression;
-    private Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression").create();
+    private Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg()
+        .withType(String.class).create();
+    private Option cassandraPasswordOption = OptionBuilder.withLongOpt("cassandra-password").hasArg()
+        .withType(String.class).create();
+    private Option cassandraHostsOption = OptionBuilder.withLongOpt("cassandra-hosts").hasArg()
+        .withType(String.class).create();
+    private Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression")
+        .withType(String.class).create();
 
     //SQL
-    private String sqlUser;
-    private Option sqlUserOption = OptionBuilder.withLongOpt("sql-user").hasArg().create();
-
-    private String sqlPassword;
-    private Option sqlPasswordOption = OptionBuilder.withLongOpt("sql-password").hasArg().create();
-
-    private String sqlHost;
-    private Option sqlHostOption = OptionBuilder.withLongOpt("sql-host").hasArg().create();
-
-    private String sqlPort;
-    private Option sqlPortOption = OptionBuilder.withLongOpt("sql-port").hasArg().create();
-
-    private String sqlDB;
-    private Option sqlDBOption = OptionBuilder.withLongOpt("sql-db").hasArg().create();
+    private Option sqlUserOption = OptionBuilder.withLongOpt("sql-user").hasArg()
+        .withType(String.class).create();
+    private Option sqlPasswordOption = OptionBuilder.withLongOpt("sql-password").hasArg()
+        .withType(String.class).create();
+    private Option sqlHostOption = OptionBuilder.withLongOpt("sql-host").hasArg()
+        .withType(String.class).create();
+    private Option sqlPortOption = OptionBuilder.withLongOpt("sql-port").hasArg()
+        .withType(String.class).create();
+    private Option sqlDBOption = OptionBuilder.withLongOpt("sql-db").hasArg()
+        .withType(String.class).create();
 
     //Migration
-    private boolean disableRaw;
-    private Option disableRawOption = OptionBuilder.withLongOpt("disable-raw-migration").create();
+    private Option disableRawOption = OptionBuilder.withLongOpt("disable-raw-migration")
+        .withType(Boolean.class).create();
+    private Option disable1HOption = OptionBuilder.withLongOpt("disable-1h-migration")
+        .withType(Boolean.class).create();
+    private Option disable6HOption = OptionBuilder.withLongOpt("disable-6h-migration")
+        .withType(Boolean.class).create();
+    private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration")
+        .withType(Boolean.class).create();
+    private Option preserveDataOption = OptionBuilder.withLongOpt("preserve-data")
+        .withType(Boolean.class).create();
+    private Option deleteDataOption = OptionBuilder.withLongOpt("delete-data")
+        .withType(Boolean.class).create();
+    private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only")
+        .withType(Boolean.class).create();
 
-    private boolean disable1H;
-    private Option disable1HOption = OptionBuilder.withLongOpt("disable-1h-migration").create();
-
-    private boolean disable6H;
-    private Option disable6HOption = OptionBuilder.withLongOpt("disable-6h-migration").create();
-
-    private boolean disable1D;
-    private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").create();
-
-    private boolean preserveData;
-    private Option preserveDataOption = OptionBuilder.withLongOpt("preserve-data").create();
-    private Option deleteDataOption = OptionBuilder.withLongOpt("delete-data").create();
-
-    private boolean estimateOnly;
-    private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only").create();
-
-    //Help
+    //Misc
     private Option helpOption = OptionBuilder.withLongOpt("help").create("h");
+    private Option debugLogOption = OptionBuilder.withLongOpt("debugLog").create("X");
+    private Option configFileOption = OptionBuilder.withLongOpt("config-file").hasArg().create();
+
+
+    private Map<Object, Object> configuration = new HashMap<Object, Object>();
+    private Options options;
 
     /**
      * @param args
      * @throws ParseException
      */
     public static void main(String[] args) throws Exception {
+        initLogging();
         try{
             DataMigratorRunner runner = new DataMigratorRunner();
             runner.configure(args);
@@ -136,7 +141,8 @@ public class DataMigratorRunner {
     }
 
     private void configure(String args[]) throws Exception {
-        Options options = new Options();
+        options = new Options();
+
         options.addOption(cassandraUserOption);
         options.addOption(cassandraPasswordOption);
         options.addOption(cassandraHostsOption);
@@ -157,6 +163,8 @@ public class DataMigratorRunner {
         options.addOption(estimateOnlyOption);
 
         options.addOption(helpOption);
+        options.addOption(debugLogOption);
+        options.addOption(configFileOption);
 
         CommandLine commandLine;
         try {
@@ -174,9 +182,36 @@ public class DataMigratorRunner {
             throw new HelpRequestedException();
         }
 
+        if (commandLine.hasOption(debugLogOption.getLongOpt()) || commandLine.hasOption(debugLogOption.getOpt())) {
+            DataMigratorRunner.setLogLevel(Level.DEBUG);
+        }
+
+        loadDefaultConfiguration();
+        if (commandLine.hasOption(configFileOption.getLongOpt())) {
+            loadConfigFile(commandLine.getOptionValue(configFileOption.getLongOpt()));
+        }
+
         parseCassandraOptionsWithDefault(commandLine);
         parseSQLOptionsWithDefault(commandLine);
         parseMigrationOptionsWithDefault(commandLine);
+    }
+
+    private static void initLogging() {
+        Logger root = Logger.getRootLogger();
+        if (!root.getAllAppenders().hasMoreElements()) {
+            root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
+            setLogLevel(Level.ERROR);
+        }
+    }
+
+    private static void setLogLevel(Level level) {
+        Logger root = Logger.getRootLogger();
+
+        Logger cassandraLogging = root.getLoggerRepository().getLogger("log4j.logger.org.apache.cassandra.cql.jdbc");
+        cassandraLogging.setLevel(level);
+
+        Logger hibernateLogging = root.getLoggerRepository().getLogger("org.hibernate");
+        hibernateLogging.setLevel(level);
     }
 
     private void run() throws Exception {
@@ -190,38 +225,39 @@ public class DataMigratorRunner {
 
         DataMigrator migrator = new DataMigrator(entityManager, session);
 
-        if (preserveData) {
+        if ((Boolean) configuration.get(preserveDataOption)) {
             migrator.preserveData();
         } else {
             migrator.deleteAllDataAtEndOfMigration();
         }
 
-        migrator.runRawDataMigration(!disableRaw);
-        migrator.run1HAggregateDataMigration(!disable1H);
-        migrator.run6HAggregateDataMigration(!disable6H);
-        migrator.run1DAggregateDataMigration(!disable1D);
+        migrator.runRawDataMigration(!(Boolean) configuration.get(disableRawOption));
+        migrator.run1HAggregateDataMigration(!(Boolean) configuration.get(disable1HOption));
+        migrator.run6HAggregateDataMigration(!(Boolean) configuration.get(disable6HOption));
+        migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
 
         long estimate = migrator.estimate();
         log.info("The migration process will take approximately: " + TimeUnit.MILLISECONDS.toMinutes(estimate)
             + " minutes (or " + estimate + " milliseconds)");
-        if (!estimateOnly) {
+        if (!(Boolean) configuration.get(estimateOnlyOption)) {
             migrator.migrateData();
         }
     }
 
     private Session createCassandraSession() throws Exception {
         Compression selectedCompression = Compression.NONE;
-        if (cassandraCompression) {
+        if ((Boolean) configuration.get(cassandraCompressionOption)) {
             selectedCompression = Compression.SNAPPY;
         }
 
         Cluster cluster = Cluster
             .builder()
-            .addContactPoints(cassandraHosts)
+            .addContactPoints((String[]) configuration.get(cassandraHostsOption))
             .withCompression(selectedCompression)
             .withoutMetrics()
             .withAuthInfoProvider(
-                new SimpleAuthInfoProvider().add("username", cassandraUser).add("password", cassandraPassword)).build();
+                new SimpleAuthInfoProvider().add("username", (String) configuration.get(cassandraUserOption)).add(
+                    "password", (String) configuration.get(cassandraPasswordOption))).build();
 
         return cluster.connect("rhq");
     }
@@ -229,11 +265,13 @@ public class DataMigratorRunner {
     private EntityManager createEntityManager() throws Exception {
         Properties properties = new Properties();
         properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
+        properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
+        properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
+
         properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
         properties.put("hibernate.driver_class", "org.postgresql.Driver");
-        properties.put("hibernate.connection.username", sqlUser);
-        properties.put("hibernate.connection.password", sqlPassword);
-        properties.put("hibernate.connection.url", "jdbc:postgresql://" + sqlHost + ":" + sqlPort + "/" + sqlDB);
+        properties.put("hibernate.connection.url", "jdbc:postgresql://" + (String) configuration.get(sqlHostOption)
+            + ":" + (String) configuration.get(sqlPortOption) + "/" + (String) configuration.get(sqlDBOption));
 
         Ejb3Configuration configuration = new Ejb3Configuration();
         configuration.setProperties(properties);
@@ -243,105 +281,143 @@ public class DataMigratorRunner {
 
     private void parseCassandraOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
         if (commandLine.hasOption(cassandraUserOption.getLongOpt())) {
-            cassandraUser = commandLine.getOptionValue(cassandraUserOption.getLongOpt());
-        } else {
-            cassandraUser = "rhqadmin";
+            configuration.put(cassandraUserOption, commandLine.getOptionValue(cassandraUserOption.getLongOpt()));
         }
 
         if (commandLine.hasOption(cassandraPasswordOption.getLongOpt())) {
-            cassandraPassword = commandLine.getOptionValue(cassandraPasswordOption.getLongOpt());
-        } else {
-            cassandraPassword = "rhqadmin";
+            configuration.put(cassandraPasswordOption,
+                commandLine.getOptionValue(cassandraPasswordOption.getLongOpt()));
         }
 
         if (commandLine.hasOption(cassandraHostsOption.getLongOpt())) {
-            String[] seeds = commandLine.getOptionValue(cassandraHostsOption.getLongOpt()).split(",");
-            cassandraHosts = new String[seeds.length];
-            for (int i = 0; i < seeds.length; ++i) {
-                CassandraNode node = CassandraNode.parseNode(seeds[i]);
-                cassandraHosts[i] = node.getHostName();
-            }
-        } else {
-            cassandraHosts = new String[] { "127.0.0.1", "127.0.0.2" };
+            String[] cassandraHosts = parseCassandraHosts(commandLine.getOptionValue(cassandraHostsOption.getLongOpt()));
+            configuration.put(cassandraHostsOption, cassandraHosts);
         }
 
         if (commandLine.hasOption(cassandraCompressionOption.getLongOpt())) {
-            cassandraCompression = true;
-        } else {
-            cassandraCompression = false;
+            configuration.put(cassandraCompressionOption, true);
         }
+    }
+
+    private String[] parseCassandraHosts(String stringValue) {
+        String[] seeds = stringValue.split(",");
+        String[] cassandraHosts = new String[seeds.length];
+        for (int i = 0; i < seeds.length; ++i) {
+            CassandraNode node = CassandraNode.parseNode(seeds[i]);
+            cassandraHosts[i] = node.getHostName();
+        }
+        return cassandraHosts;
     }
 
     private void parseSQLOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
         if (commandLine.hasOption(sqlUserOption.getLongOpt())) {
-            sqlUser = commandLine.getOptionValue(sqlUserOption.getLongOpt());
-        } else {
-            sqlUser = "rhqadmin";
+            configuration.put(sqlUserOption, commandLine.getOptionValue(sqlUserOption.getLongOpt()));
         }
 
         if (commandLine.hasOption(sqlPasswordOption.getLongOpt())) {
-            sqlPassword = commandLine.getOptionValue(sqlPasswordOption.getLongOpt());
-        } else {
-            sqlPassword = "rhqadmin";
+            configuration.put(sqlPasswordOption, commandLine.getOptionValue(sqlPasswordOption.getLongOpt()));
         }
 
         if (commandLine.hasOption(sqlHostOption.getLongOpt())) {
-            sqlHost = commandLine.getOptionValue(sqlHostOption.getLongOpt());
-        } else {
-            sqlHost = "localhost";
+            configuration.put(sqlHostOption, commandLine.getOptionValue(sqlHostOption.getLongOpt()));
         }
 
         if (commandLine.hasOption(sqlPortOption.getLongOpt())) {
-            sqlPort = commandLine.getOptionValue(sqlPortOption.getLongOpt());
-        } else {
-            sqlPort = "5432";
+            configuration.put(sqlPortOption, commandLine.getOptionValue(sqlPortOption.getLongOpt()));
         }
 
         if (commandLine.hasOption(sqlDBOption.getLongOpt())) {
-            sqlDB = commandLine.getOptionValue(sqlDBOption.getLongOpt());
-        } else {
-            sqlDB = "rhq_db";
+            configuration.put(sqlDBOption, commandLine.getOptionValue(sqlDBOption.getLongOpt()));
         }
     }
 
     private void parseMigrationOptionsWithDefault(CommandLine commandLine) {
         if (commandLine.hasOption(disableRawOption.getLongOpt())) {
-            disableRaw = true;
-        } else {
-            disableRaw = false;
+            configuration.put(disableRawOption, true);
         }
 
         if (commandLine.hasOption(disable1HOption.getLongOpt())) {
-            disable1H = true;
-        } else {
-            disable1H = false;
+            configuration.put(disable1HOption, true);
         }
 
         if (commandLine.hasOption(disable6HOption.getLongOpt())) {
-            disable6H = true;
-        } else {
-            disable6H = false;
+            configuration.put(disable6HOption, true);
         }
 
         if (commandLine.hasOption(disable1DOption.getLongOpt())) {
-            disable1D = true;
-        } else {
-            disable1D = false;
+            configuration.put(disable1DOption, true);
         }
 
         if (commandLine.hasOption(preserveDataOption.getLongOpt())) {
-            preserveData = true;
+            configuration.put(preserveDataOption, true);
         } else if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
-            preserveData = false;
-        } else {
-            preserveData = true;
+            configuration.put(preserveDataOption, false);
         }
 
         if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
-            estimateOnly = true;
-        } else {
-            estimateOnly = false;
+            configuration.put(estimateOnlyOption, true);
         }
+    }
+
+    private void loadDefaultConfiguration() {
+        //default Cassandra configuration
+        configuration.put(cassandraUserOption, "rhqadmin");
+        configuration.put(cassandraPasswordOption, "rhqadmin");
+        configuration.put(cassandraHostsOption, new String[] { "127.0.0.1", "127.0.0.2" });
+        configuration.put(cassandraCompressionOption, false);
+
+        //default SQL configuration
+        configuration.put(sqlUserOption, "rhqadmin");
+        configuration.put(sqlPasswordOption, "rhqadmin");
+        configuration.put(sqlHostOption, "localhost");
+        configuration.put(sqlPortOption, "5432");
+        configuration.put(sqlDBOption, "rhq_db");
+
+        //default runner options
+        configuration.put(disableRawOption, false);
+        configuration.put(disable1HOption, false);
+        configuration.put(disable6HOption, false);
+        configuration.put(disable1DOption, false);
+        configuration.put(preserveDataOption, true);
+        configuration.put(estimateOnlyOption, false);
+    }
+
+    private void loadConfigFile(String file) {
+        try {
+            File configFile = new File(file);
+            if (!configFile.exists()){
+                throw new FileNotFoundException("Configuration file not found!");
+            }
+
+            Properties configProperties = new Properties();
+            FileInputStream stream = new FileInputStream(configFile);
+            configProperties.load(stream);
+            stream.close();
+
+            for (Object optionObject : options.getOptions()) {
+                Option option = (Option) optionObject;
+                Object optionValue;
+
+                if ((optionValue = configProperties.get(option.getLongOpt())) != null) {
+                    log.info("Configuration option loaded: " + option.getLongOpt() + " (" + option.getType() + ") -> "
+                        + optionValue);
+
+                    if (option.equals(cassandraHostsOption)) {
+                        String[] cassandraHosts = parseCassandraHosts(optionValue.toString());
+                        configuration.put(option, cassandraHosts);
+                    } else if (option.getType().equals(Boolean.class)) {
+                        configuration.put(option, Boolean.parseBoolean(optionValue.toString()));
+                    } else {
+                        configuration.put(option, optionValue.toString());
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.error("Unable to load or process the configuration file.", e);
+            System.exit(1);
+        }
+
+        log.error(configuration.toString());
     }
 
     @SuppressWarnings("serial")

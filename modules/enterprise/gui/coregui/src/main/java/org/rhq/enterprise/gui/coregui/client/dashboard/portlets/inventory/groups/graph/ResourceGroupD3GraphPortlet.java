@@ -70,8 +70,17 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
     public static final String CFG_DEFINITION_ID = "definitionId";
 
     public ResourceGroupD3GraphPortlet() {
-        super(new MetricStackedBarGraph(MetricGraphData.createForDashboard()));
+        super(new MetricStackedBarGraph(MetricGraphData.createForDashboard(0)));
         setOverflow(Overflow.HIDDEN);
+    }
+
+    @Override
+    /**
+     * Portlet Charts are defined by an additional portletId to enable a particular groupId/measurementId
+     * combination to be valid in multiple dashboards.
+     */
+    public String getFullChartId(){
+        return "rChart-"+ graph.getMetricGraphData().getChartId() +"-"+portletWindow.getStoredPortlet().getId();
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
@@ -79,7 +88,7 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
         }
-        setMetricGraphData(MetricGraphData.createForDashboard());
+        setMetricGraphData(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId()));
 
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;

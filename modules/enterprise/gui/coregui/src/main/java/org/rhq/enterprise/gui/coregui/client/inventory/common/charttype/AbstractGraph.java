@@ -138,7 +138,7 @@ public abstract class AbstractGraph extends VLayout implements HasD3MetricJsniCh
     }
 
 
-    public Integer getChartHeight() {
+    public int getChartHeight() {
         return metricGraphData.getChartHeight();
     }
 
@@ -166,8 +166,8 @@ public abstract class AbstractGraph extends VLayout implements HasD3MetricJsniCh
         return metricGraphData.getJsonMetrics();
     }
 
-    public Integer getWindowWidth() {
-        return metricGraphData.getWindowWidth();
+    public int getPortalId() {
+        return metricGraphData.getPortalId();
     }
 
 

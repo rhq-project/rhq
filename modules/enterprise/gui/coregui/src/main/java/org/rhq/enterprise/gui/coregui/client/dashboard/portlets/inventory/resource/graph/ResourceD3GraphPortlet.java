@@ -93,7 +93,7 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
         }
 
 
-        setGraph(new MetricStackedBarGraph(MetricGraphData.createForDashboard()));
+        setGraph(new MetricStackedBarGraph(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId())));
 
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
@@ -272,7 +272,6 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
 
     @Override
     public void redraw() {
-        Log.debug("Redraw Portlet Graph and set data, width: "+portletWindow.getWidth());
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
@@ -290,6 +289,15 @@ public class ResourceD3GraphPortlet extends ResourceMetricD3Graph implements Aut
         }
 
         super.redraw();
+    }
+
+    @Override
+    /**
+     * Portlet Charts are defined by an additional portletId to enable a particular resourceId/measurementId
+     * combination to be valid in multiple dashboards.
+     */
+    public String getFullChartId(){
+        return "rChart-"+ graph.getMetricGraphData().getChartId() +"-"+portletWindow.getStoredPortlet().getId();
     }
 
     public static final class Factory implements PortletViewFactory {

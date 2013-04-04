@@ -67,7 +67,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverTimeFormat()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverDateFormat()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::isPortalGraph()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getWindowWidth()()
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getPortalId()()
                 );
 
 
@@ -99,10 +99,11 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     svg;
 
             function getChartWidth() {
-                return $wnd.jQuery(chartContext.chartSelection).width();
+                return $wnd.jQuery("#"+chartContext.chartHandle).width();
             }
 
             function useSmallCharts() {
+                console.info("Chart Width for : "+chartContext.chartHandle+" is "+getChartWidth());
                 return  getChartWidth() <= smallChartThresholdInPixels;
             }
 
@@ -111,14 +112,14 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                 // if window is too small server up small chart
                 if (useSmallCharts()) {
-                    console.info("Using Small Charts Profile");
+                    console.log("Using Small Charts Profile");
                     width = 250;
                     xTicks = 3;
                     xTickSubDivide = 2;
                     chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length - 1);
                 }
                 else {
-                    console.info("Using Large Charts Profile");
+                    console.log("Using Large Charts Profile");
                     //  we use the width already defined above
                     xTicks = 12;
                     xTickSubDivide = 5;
@@ -194,7 +195,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .orient("bottom");
 
                 // create the actual chart group
-                chart = $wnd.d3.select(chartContext.chartSelection);
+                chart = $wnd.d3.select("#"+chartContext.chartSelection);
 
                 svg = chart.append("g")
                         .attr("width", width + margin.left + margin.right)

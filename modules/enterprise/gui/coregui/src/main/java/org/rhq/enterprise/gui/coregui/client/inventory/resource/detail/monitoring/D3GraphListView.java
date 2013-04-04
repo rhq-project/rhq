@@ -368,7 +368,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data, int height) {
 
         MetricGraphData metricGraphData = MetricGraphData.createForResource(resource.getId(), resource.getName(),
-            measurementDefinition, data, measurementOOBCompositeList, getWidth());
+            measurementDefinition, data, measurementOOBCompositeList );
         MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
 
         ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(graph);

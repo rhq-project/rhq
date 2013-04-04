@@ -18,8 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
-import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3MetricJsniChart;
@@ -40,7 +38,6 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView  {
     public ResourceMetricD3Graph(AbstractGraph graph) {
 
         super(graph);
-        //startRefreshCycle();
     }
 
 
@@ -58,30 +55,5 @@ public class ResourceMetricD3Graph extends AbstractMetricD3GraphView  {
         return graph;
     }
 
-
-//    @Override
-//    public void startRefreshCycle() {
-//        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
-//    }
-//
-//    @Override
-//    protected void onDestroy() {
-//        AutoRefreshUtil.onDestroy( refreshTimer);
-//
-//        super.onDestroy();
-//    }
-//
-//    @Override
-//    public boolean isRefreshing() {
-//        return false;
-//    }
-//
-//    //Custom refresh operation as we are not directly extending Table
-//    @Override
-//    public void refresh() {
-//        if (isVisible() && !isRefreshing()) {
-//            drawGraph();
-//        }
-//    }
 
 }

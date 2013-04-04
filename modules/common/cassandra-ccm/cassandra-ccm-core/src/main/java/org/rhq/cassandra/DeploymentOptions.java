@@ -93,6 +93,7 @@ public class DeploymentOptions {
     private String heapSize;
     private String heapNewSize;
     private String logFileName;
+    private String stackSize;
 
     public DeploymentOptions() {
     }
@@ -163,6 +164,7 @@ public class DeploymentOptions {
         setBasedir(loadProperty("rhq.cassandra.basedir", properties));
         setHeapSize(loadProperty("rhq.cassandra.max.heap.size", properties));
         setHeapNewSize(loadProperty("rhq.cassandra.heap.new.size", properties));
+        setStackSize(loadProperty("rhq.cassandra.stack.size", properties));
     }
 
     private String loadProperty(String key, Properties properties) {
@@ -201,6 +203,7 @@ public class DeploymentOptions {
         setBasedir(other.basedir);
         setHeapSize(other.heapSize);
         setHeapNewSize(other.heapNewSize);
+        setStackSize(other.stackSize);
     }
 
     public TokenReplacingProperties toMap()  {
@@ -698,6 +701,25 @@ public class DeploymentOptions {
     public void setHeapNewSize(String heapNewSize) {
         if (this.heapNewSize == null) {
             this.heapNewSize = heapNewSize;
+        }
+    }
+
+    /**
+     * @return The value to use for the JVM stack size. This is passed directly to the -Xss
+     * JVM start up option.
+     */
+    @DeploymentProperty(name = "rhq.cassandra.stack.size")
+    public String getStackSize() {
+        return stackSize;
+    }
+
+    /**
+     * @param size The value to use for the JVM stack size which is passed directly to the
+     * -Xss JVM start up option.
+     */
+    public void setStackSize(String size) {
+        if (stackSize == null) {
+            stackSize = size;
         }
     }
 

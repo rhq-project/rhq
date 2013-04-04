@@ -107,7 +107,10 @@ public class SimulationPlanner {
         ClusterConfig clusterConfig = new ClusterConfig();
         JsonNode clusterConfigNode = root.get("cluster");
         if (clusterConfigNode != null) {
-            clusterConfig.setEmbedded(clusterConfigNode.get("embedded").asBoolean(true));
+            JsonNode embeddedNode = clusterConfigNode.get("embedded");
+            if (embeddedNode != null) {
+                clusterConfig.setEmbedded(embeddedNode.asBoolean(true));
+            }
 
             JsonNode clusterDirNode = clusterConfigNode.get("clusterDir");
             if (clusterDirNode != null) {
@@ -122,6 +125,11 @@ public class SimulationPlanner {
             JsonNode heapNewSizeNode = clusterConfigNode.get("heapNewSize");
             if (heapNewSizeNode != null) {
                 clusterConfig.setHeapNewSize(heapNewSizeNode.asText());
+            }
+
+            JsonNode stackSizeNode = clusterConfigNode.get("stackSize");
+            if (stackSizeNode != null) {
+                clusterConfig.setStackSize(stackSizeNode.asText());
             }
 
             clusterConfig.setNumNodes(getInt(clusterConfigNode.get("numNodes"), 2));

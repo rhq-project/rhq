@@ -42,6 +42,8 @@ public class ClusterConfig {
 
     private String heapNewSize = "64M";
 
+    private String stackSize = "180k";
+
     public boolean isEmbedded() {
         return embedded;
     }
@@ -80,5 +82,13 @@ public class ClusterConfig {
 
     public void setHeapNewSize(String heapNewSize) {
         this.heapNewSize = heapNewSize;
+    }
+
+    public String getStackSize() {
+        return stackSize;
+    }
+
+    public void setStackSize(String stackSize) {
+        this.stackSize = stackSize;
     }
 }

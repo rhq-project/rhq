@@ -69,6 +69,8 @@ public class Simulator implements ShutdownManager {
 
     private boolean shutdown = false;
 
+    private CassandraClusterManager ccm;
+
     public void run(SimulationPlan plan) {
         List<CassandraNode> nodes = initCluster(plan);
         createSchema(nodes);
@@ -150,6 +152,7 @@ public class Simulator implements ShutdownManager {
             log.info("Forcing executor service shutdown.");
             executorService.shutdownNow();
         }
+        shutdownCluster();
         log.info("Shut down complete");
     }
 
@@ -176,11 +179,16 @@ public class Simulator implements ShutdownManager {
         deploymentOptions.setLoggingLevel("INFO");
         deploymentOptions.load();
 
-        CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
+        ccm = new CassandraClusterManager(deploymentOptions);
         List<CassandraNode> nodes = ccm.createCluster();
         ccm.startCluster();
 
         return nodes;
+    }
+
+    private void shutdownCluster() {
+        log.info("Shutting down cluster");
+        ccm.shutdownCluster();
     }
 
     private void waitForClusterToInitialize(List<CassandraNode> nodes) {

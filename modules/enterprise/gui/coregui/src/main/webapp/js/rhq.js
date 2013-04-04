@@ -9,15 +9,13 @@
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, windowWidth )
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId )
 {
     "use strict";
     if(!(this instanceof ChartContext)){
         throw new Error("ChartContext function cannot be called as a function.")
     }
     this.chartId = chartId;
-    this.chartHandle = "#rChart-" + this.chartId;
-    this.chartSelection = this.chartHandle + " svg";
     this.chartHeight = chartHeight;
     this.data = jQuery.parseJSON(metricsData); // make into json
     this.xAxisLabel = xAxisLabel;
@@ -38,7 +36,13 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.chartHoverTimeFormat = chartHoverTimeFormat;
     this.chartHoverDateFormat = chartHoverDateFormat;
     this.isPortalGraph = isPortalGraph;
-    this.windowWidth = windowWidth;
+    this.portalId = portalId;
+    if(isPortalGraph){
+        this.chartHandle =  "rChart-"+chartId+"-"+portalId;
+    }else {
+        this.chartHandle =  "rChart-"+chartId;
+    }
+    this.chartSelection = this.chartHandle + " svg";
 
 },
 AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat) {

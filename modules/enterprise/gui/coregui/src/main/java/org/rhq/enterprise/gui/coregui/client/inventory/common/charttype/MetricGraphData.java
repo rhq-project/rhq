@@ -63,73 +63,60 @@ public class MetricGraphData implements JsonMetricProducer {
     private int entityId = 0;
     private String entityName;
     private int definitionId;
+    private int portalId;
     private MeasurementUnits adjustedMeasurementUnits;
     private MeasurementDefinition definition;
     private List<MeasurementDataNumericHighLowComposite> metricData;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
-    private Boolean isPortalGraph;
+    private boolean isPortalGraph;
     /**
      * WindowWidth is used in determining what size graph to display in the dashboard portlets.
      */
-    private Integer windowWidth;
+    //private Integer windowWidth;
 
-    private MetricGraphData() {
+    private MetricGraphData(int portalId) {
         isPortalGraph = true;
-
+        this.portalId = portalId;
     }
 
-    public static MetricGraphData createForDashboard(){
-        return new MetricGraphData();
+    public static MetricGraphData createForDashboard(int portalId){
+        return new MetricGraphData(portalId);
     }
 
-    /**
-     *
-     * @param entityId
-     * @param entityName
-     * @param def
-     * @param metricData
-     */
+
     private MetricGraphData(int entityId, String entityName, MeasurementDefinition def,
-        List<MeasurementDataNumericHighLowComposite> metricData, Integer windowWidth) {
+        List<MeasurementDataNumericHighLowComposite> metricData ) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(def.getId());
         this.definition = def;
         this.metricData = metricData;
-        this.windowWidth = windowWidth;
         this.isPortalGraph = false;
     }
 
     public static MetricGraphData createForResourceGroup(int groupId, String groupName, MeasurementDefinition def,
-                                      List<MeasurementDataNumericHighLowComposite> metricData,
-                                      Integer windowWidth){
-        return new MetricGraphData(groupId,groupName,def, metricData, windowWidth);
+                                      List<MeasurementDataNumericHighLowComposite> metricData ){
+        return new MetricGraphData(groupId,groupName,def, metricData );
     }
 
     private MetricGraphData(int entityId, String entityName, MeasurementDefinition measurementDef,
         List<MeasurementDataNumericHighLowComposite> metrics,
-        PageList<MeasurementOOBComposite> measurementOOBCompositeList, Integer windowWidth) {
+        PageList<MeasurementOOBComposite> measurementOOBCompositeList ) {
         this.entityName = entityName;
         setEntityId(entityId);
         setDefinitionId(measurementDef.getId());
         this.definition = measurementDef;
         this.metricData = metrics;
         this.measurementOOBCompositeList = measurementOOBCompositeList;
-        this.windowWidth = windowWidth;
         this.isPortalGraph = false;
     }
 
     public static MetricGraphData createForResource(int resourceId, String resourceName, MeasurementDefinition measurementDef,
                                                     List<MeasurementDataNumericHighLowComposite> metrics,
-                                                    PageList<MeasurementOOBComposite> measurementOOBCompositeList,
-                                                    Integer windowWidth){
-        return new MetricGraphData(resourceId, resourceName,measurementDef, metrics, measurementOOBCompositeList, windowWidth);
-    }
-
-    public Integer getWindowWidth() {
-        return windowWidth;
+                                                    PageList<MeasurementOOBComposite> measurementOOBCompositeList ){
+        return new MetricGraphData(resourceId, resourceName,measurementDef, metrics, measurementOOBCompositeList);
     }
 
     public int getEntityId() {
@@ -165,7 +152,11 @@ public class MetricGraphData implements JsonMetricProducer {
     }
 
     public String getChartId() {
+        if(isPortalGraph){
+            return entityId + "-" + definition.getId();
+        }else {
             return entityId + "-" + definitionId;
+        }
     }
 
 
@@ -230,6 +221,10 @@ public class MetricGraphData implements JsonMetricProducer {
         return chartHoverDateFormat;
     }
 
+    public int getPortalId() {
+        return portalId;
+    }
+
     public Integer getChartHeight() {
         if (null != chartHeight) {
             return chartHeight;
@@ -243,7 +238,7 @@ public class MetricGraphData implements JsonMetricProducer {
         this.chartHeight = chartHeight;
     }
 
-    public Boolean isPortalGraph() {
+    public boolean isPortalGraph() {
         return isPortalGraph;
     }
 
@@ -444,7 +439,6 @@ public class MetricGraphData implements JsonMetricProducer {
         sb.append(", entityName='").append(entityName).append('\'');
         sb.append(", definitionId=").append(definitionId);
         sb.append(", isPortalGraph=").append(isPortalGraph);
-        sb.append(", windowWidth=").append(windowWidth);
         sb.append('}');
         return sb.toString();
     }

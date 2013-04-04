@@ -117,13 +117,13 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + graph.getMetricGraphData().getChartId() + " "
+        Log.debug("drawGraph marker in AbstractMetricD3GraphView for: " + getFullChartId() + " "
             + graph.getChartTitle());
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs
-            .append("<div id=\"rChart-"
-                + graph.getMetricGraphData().getChartId()
+            .append("<div id=\""
+                + getFullChartId()
                 + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
                 + getChartHeight() + "px;\">");
         divAndSvgDefs.append(getSvgDefs());
@@ -147,6 +147,10 @@ public abstract class AbstractMetricD3GraphView extends EnhancedVLayout {
         }.schedule(200);
     }
 
+    public String getFullChartId(){
+        return "rChart-"+ graph.getMetricGraphData().getChartId();
+
+    }
     public void setGraph(AbstractGraph graph) {
         this.graph = graph;
     }

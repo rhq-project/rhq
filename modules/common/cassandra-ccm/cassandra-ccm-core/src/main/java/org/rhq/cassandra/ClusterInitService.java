@@ -96,12 +96,12 @@ public class ClusterInitService {
     /**
      * This method attempts to establish a Thrift RPC connection to each host. If the
      * connection fails, the host is retried after going through the other, remaining
-     * hosts.
+     * hosts. A runtime exception will be thrown after 10 failed retries.
      *
      * @param hosts The cluster nodes to which a connection should be made
      */
     public void waitForClusterToStart(List<CassandraNode> hosts) {
-        waitForClusterToStart(hosts, hosts.size());
+        waitForClusterToStart(hosts, hosts.size(), 10);
     }
 
     /**
@@ -114,15 +114,22 @@ public class ClusterInitService {
      * @param hosts The cluster nodes to which a connection should be made
      * @param numHosts The number of hosts to which a successful connection has to be made
      *                 before returning.
+     * @param retries The number of times to retry connecting. A runtime exception will be
+     *                thrown when the number of failed connections exceeds this value.
      */
-    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts) {
+    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, int retries) {
         long sleep = 100;
         int timeout = 50;
         int connections = 0;
+        int failedConnections = 0;
         Queue<CassandraNode> queue = new LinkedList<CassandraNode>(hosts);
         CassandraNode host = queue.poll();
 
         while (host != null) {
+            if (failedConnections >= retries) {
+                throw new RuntimeException("Unable to verify that cluster nodes have started after " +
+                    failedConnections + " failed attempts");
+            }
             TSocket socket = new TSocket(host.getHostName(), host.getThriftPort(), timeout);
             try {
                 socket.open();
@@ -135,6 +142,7 @@ public class ClusterInitService {
                     return;
                 }
             } catch (TTransportException e) {
+                ++failedConnections;
                 queue.offer(host);
                 String msg = "Unable to open thrift connection to cassandra node [" + host + "]";
                 logException(msg, e);

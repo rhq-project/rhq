@@ -109,7 +109,11 @@ public class SimulatorCLI {
 
     public static void main(String[] args) {
         SimulatorCLI cli = new SimulatorCLI();
-        cli.exec(args);
+        try {
+            cli.exec(args);
+        } catch (Exception e) {
+            System.exit(1);
+        }
     }
 
 }

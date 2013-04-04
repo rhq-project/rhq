@@ -25,6 +25,7 @@
 
 package org.rhq.server.control;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +40,15 @@ import org.apache.commons.cli.PosixParser;
  * @author John Sanda
  */
 public abstract class ControlCommand {
+
+    protected File basedir;
+
+    protected File binDir;
+
+    public ControlCommand() {
+        basedir = new File(System.getProperty("rhq.server.basedir"));
+        binDir = new File(basedir, "bin");
+    }
 
     public abstract String getName();
 

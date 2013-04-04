@@ -28,7 +28,7 @@ package org.rhq.server.control;
 /**
  * @author John Sanda
  */
-public class RHQControlException extends Exception {
+public class RHQControlException extends RuntimeException {
 
     public RHQControlException() {
     }

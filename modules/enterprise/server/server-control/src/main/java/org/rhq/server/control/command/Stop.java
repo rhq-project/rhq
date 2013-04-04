@@ -25,10 +25,15 @@
 
 package org.rhq.server.control.command;
 
+import java.io.File;
+import java.io.FileReader;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControlException;
 
 /**
  * @author John Sanda
@@ -61,5 +66,67 @@ public class Stop extends ControlCommand {
 
     @Override
     protected void exec(CommandLine commandLine) {
+        boolean stopStorage;
+        boolean stopServer;
+        boolean stopAgent;
+
+        if (commandLine.getOptions().length == 0) {
+            stopStorage = true;
+            stopServer = true;
+            stopAgent = true;
+        } else {
+            stopStorage = commandLine.hasOption("storage");
+            stopServer = commandLine.hasOption("server");
+            stopAgent = commandLine.hasOption("agent");
+        }
+
+        try {
+            if (stopStorage) {
+                stopStorage();
+            }
+            if (stopServer) {
+                stopRHQServer();
+            }
+            if (stopAgent) {
+                stopAgent();
+            }
+        } catch (Exception e) {
+            throw new RHQControlException("Failed to stop services", e);
+        }
+    }
+
+    private void stopStorage() throws Exception {
+        File storageBasedir = new File(basedir, "storage");
+        File storageBinDir = new File(storageBasedir, "bin");
+
+        File pidFile = new File(storageBinDir, "cassandra.pid");
+        String pid = StreamUtil.slurp(new FileReader(pidFile));
+
+        new ProcessBuilder("kill", pid)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor();
+    }
+
+    private void stopRHQServer() throws Exception {
+        new ProcessBuilder("./rhq-server.sh", "stop")
+            .directory(binDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor();
+    }
+
+    private void stopAgent() throws Exception {
+        File agentHomeDir = new File(basedir, "rhq-agent");
+        File agentBinDir = new File(agentHomeDir, "bin");
+
+        new ProcessBuilder("./rhq-agent-wrapper.sh", "stop")
+            .directory(agentBinDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor();
     }
 }

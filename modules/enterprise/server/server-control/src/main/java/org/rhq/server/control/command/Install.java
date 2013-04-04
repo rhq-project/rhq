@@ -25,10 +25,26 @@
 
 package org.rhq.server.control.command;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileFilter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.InetAddress;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.prefs.Preferences;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import org.rhq.core.util.TokenReplacingReader;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControlException;
 
 /**
  * @author John Sanda
@@ -61,5 +77,155 @@ public class Install extends ControlCommand {
 
     @Override
     protected void exec(CommandLine commandLine) {
+        boolean installStorage;
+        boolean installServer;
+        boolean installAgent;
+
+        if (commandLine.getOptions().length == 0) {
+            installStorage = true;
+            installServer = true;
+            installAgent = true;
+        } else {
+            installStorage = commandLine.hasOption("storage");
+            installServer = commandLine.hasOption("server");
+            installAgent = commandLine.hasOption("agent") || installStorage;
+        }
+
+        try {
+            if (installStorage) {
+                // We always install an agent with the storage node even if the user does
+                // not ask for it.
+                installAgent = true;
+                installStorageNode();
+            }
+
+            if (installServer) {
+                startRHQServerForInstallation();
+                installRHQServer();
+                waitForRHQServerToInitialize();
+            }
+
+            if (installAgent) {
+                clearAgentPreferences();
+                installAgent();
+                configureAgent();
+                startAgent();
+            }
+        } catch (Exception e) {
+            throw new RHQControlException("Installation failed", e);
+        }
     }
+
+    private int installStorageNode() throws Exception {
+        return new ProcessBuilder("./rhq-storage-installer.sh", "--commitlog", "../storage/commit_log", "--data",
+            "../storage/data", "--saved-caches", "../storage/saved_caches")
+            .directory(binDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor();
+    }
+
+    private void startRHQServerForInstallation() throws Exception {
+        new ProcessBuilder("./rhq-server.sh", "start")
+            .directory(binDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start();
+
+        ProcessBuilder pb = new ProcessBuilder("./rhq-installer.sh", "--test")
+            .directory(binDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT);
+        Process process = pb.start();
+        while (process.waitFor() != 0) {
+            process = pb.start();
+        }
+    }
+
+    private void installRHQServer() throws Exception {
+        new ProcessBuilder("./rhq-installer.sh")
+            .directory(binDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start();
+    }
+
+    private void waitForRHQServerToInitialize() throws Exception {
+        while (!isRHQServerInitialized()) {
+            Thread.sleep(5000);
+        }
+    }
+
+    private boolean isRHQServerInitialized() throws Exception {
+        File logDir = new File(basedir, "logs");
+        BufferedReader reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
+        String line = reader.readLine();
+        while (line != null) {
+            if (line.contains("Server started")) {
+                return true;
+            }
+            line = reader.readLine();
+        }
+        return false;
+    }
+
+    private void installAgent() throws Exception {
+        File agentInstallerJar = getAgentInstaller();
+        new ProcessBuilder("java", "-jar", agentInstallerJar.getPath(), "--install")
+            .directory(basedir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor();
+
+        new File(basedir, "rhq-agent-update.log").delete();
+    }
+
+    private File getAgentInstaller() {
+        File agentDownloadDir = new File(basedir,
+            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
+        return agentDownloadDir.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File file) {
+                return file.getName().contains("rhq-enterprise-agent");
+            }
+        })[0];
+    }
+
+    private void configureAgent() throws Exception {
+        File agentHomeDir = new File(basedir, "rhq-agent");
+        File agentBinDir = new File(agentHomeDir, "bin");
+        File agentConfDir = new File(agentHomeDir, "conf");
+        File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
+        agentConfigFile.delete();
+
+        Map<String, String> tokens = new TreeMap<String, String>();
+        tokens.put("rhq.agent.server.bind-address", InetAddress.getLocalHost().getHostName());
+
+        InputStream inputStream = getClass().getResourceAsStream("/agent-configuration.xml");
+        TokenReplacingReader reader = new TokenReplacingReader(new InputStreamReader(inputStream), tokens);
+        BufferedWriter writer = new BufferedWriter(new FileWriter(agentConfigFile));
+
+        StreamUtil.copy(reader, writer);
+    }
+
+    private void clearAgentPreferences() throws Exception {
+        Preferences agentPrefs = Preferences.userRoot().node("/rhq-agent");
+        agentPrefs.removeNode();
+        agentPrefs.flush();
+        Preferences.userRoot().sync();
+    }
+
+    private void startAgent() throws Exception {
+        File agentHomeDir = new File(basedir, "rhq-agent");
+        File agentBinDir = new File(agentHomeDir, "bin");
+
+        new ProcessBuilder("./rhq-agent-wrapper.sh", "start")
+            .directory(agentBinDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start();
+    }
+
 }

@@ -127,6 +127,7 @@
                                     <!-- dependency versions -->
                                     <property name="rhq.version"                   value="${project.version}" />
                                     <property name="jboss.version"                 value="${jboss.version}" />
+                                    <property name="jboss.eap.version"             value="${jboss.eap.version}"/>
                                     <property name="jboss.zip"                     location="${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip" />
                                     <property name="ojdbc6.version"                value="${ojdbc6.version}" />
                                     <property name="postgresql.version"            value="${postgresql.version}" />
@@ -258,7 +259,7 @@
                                 <phase>package</phase>
                                 <configuration>
                                     <target>
-                                        <property name="deployment.dir" location="${rhq.containerDir}" />                                        
+                                        <property name="deployment.dir" location="${rhq.containerDir}" />
                                         <echo>*** Copying updated files
                                             from
                                             target${file.separator}${project.build.finalName}${file.separator}
@@ -267,7 +268,7 @@
                                         <copy todir="${deployment.dir}" verbose="${rhq.verbose}">
                                             <fileset dir="${basedir}/target/${project.build.finalName}" />
                                         </copy>
-                                        
+
                                         <!-- Make sure shell scripts are readable and executable. -->
                                         <chmod perm="ug+x" verbose="true">
                                             <fileset dir="${deployment.dir}/bin"         includes="*.sh" />

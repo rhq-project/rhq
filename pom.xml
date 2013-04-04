@@ -70,8 +70,14 @@
          The dependency versions below are declared together as the versions of each are dependent on the
          overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
          version is changed the versions of each of these should be validated and updated as needed.
+
+         the jboss.version is the version of the zip file
+         the jboss.eap.version is the version of the eap inside if the directory
+         inside the zip is not the same as the name of the zip
+         e.g. jboss-as-dist-7.2.0.Alpha1-redhat-4.zip unzips to jboss-eap-6.1
     -->
-    <jboss.version>7.1.1.Final</jboss.version>
+    <jboss.version>7.2.0.Alpha1-redhat-4</jboss.version>
+    <jboss.eap.version>jboss-eap-6.1</jboss.eap.version>
     <jboss.javaee6.spec.version>3.0.0.Final</jboss.javaee6.spec.version>
 
     <!-- Provided -->
@@ -1533,6 +1539,16 @@
           <snapshots>
               <enabled>false</enabled>
           </snapshots>
+      </repository>
+
+      <repository>
+        <id>redhat-maven-repository</id>
+        <name>Red Hat maven repository</name>
+        <url>http://maven.repository.redhat.com/earlyaccess/all</url>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+
       </repository>
 
   </repositories>

@@ -18,6 +18,12 @@
  */
 package org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph;
 
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.TitleOrientation;
@@ -33,8 +39,17 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
+import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedHandler;
@@ -44,19 +59,23 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.ResourceGroupMetricD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
  * @author Greg Hinkle
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView implements AutoRefreshPortlet, CustomSettingsPortlet {
+public class ResourceGroupD3GraphPortlet extends ResourceMetricD3Graph implements AutoRefreshPortlet, CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceGroupMetricD3";
@@ -71,7 +90,6 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
     public static final String CFG_DEFINITION_ID = "definitionId";
 
     public ResourceGroupD3GraphPortlet() {
-        super(new MetricStackedBarGraph(MetricGraphData.createForDashboard(0)));
         setOverflow(Overflow.HIDDEN);
     }
 
@@ -90,7 +108,6 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
-        Log.debug("ResourceGroupPortlet.configure");
 
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
@@ -104,15 +121,83 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
         }
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
-            Integer integerValue = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID).getIntegerValue();
-            if (integerValue != null)
-                setEntityId(integerValue);
+            PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
+            PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+            if (resourceIdProperty != null && measurementDefIdProperty != null) {
+                final Integer entityId = resourceIdProperty.getIntegerValue();
+                final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
+                if (entityId != null && measurementDefId != null) {
+                    queryResourceGroup(entityId, measurementDefId);
+                }
 
-            PropertySimple propertySimple = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            if (propertySimple != null && propertySimple.getIntegerValue() != null)
-                setDefinitionId(propertySimple.getIntegerValue());
+            }
         }
-        Log.debug("ResourceGroupPortlet.configure.done");
+    }
+
+
+    private void queryResourceGroup(Integer entityId, final Integer measurementDefId) {
+        ResourceGroupGWTServiceAsync resourceService = GWTServiceLookup.getResourceGroupService();
+
+        ResourceGroupCriteria resourceCriteria = new ResourceGroupCriteria();
+        resourceCriteria.addFilterId(entityId);
+        resourceService.findResourceGroupsByCriteria(resourceCriteria, new AsyncCallback<PageList<ResourceGroup>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_lookupFailed(), caught);
+            }
+
+            @Override
+            public void onSuccess(PageList<ResourceGroup> result) {
+                if (result.isEmpty()) {
+                    return;
+                }
+                // only concerned with first resource since this is a query by id
+                final ResourceGroup resource = result.get(0);
+                HashSet<Integer> typesSet = new HashSet<Integer>();
+                typesSet.add(resource.getResourceType().getId());
+
+                ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                        typesSet.toArray(new Integer[typesSet.size()]),
+                        EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                        new ResourceTypeRepository.TypesLoadedCallback() {
+
+                            @Override
+                            public void onTypesLoaded(Map<Integer, ResourceType> types) {
+                                ResourceType type = types.get(resource.getResourceType().getId());
+                                for (final MeasurementDefinition def : type.getMetricDefinitions()) {
+                                    if (def.getId() == measurementDefId) {
+                                        Log.debug("Found portlet measurement definition !" + def);
+
+                                        getJsniChart().setEntityId(resource.getId());
+                                        getJsniChart().setEntityName(resource.getName());
+                                        getJsniChart().setDefinition(def);
+                                        final long startTime = System.currentTimeMillis();
+
+                                        GWTServiceLookup.getMeasurementDataService().findDataForCompatibleGroupForLast(
+                                                resource.getId(), new int[]{def.getId()}, 8, MeasurementUtils.UNIT_HOURS,
+                                                60, new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                            @Override
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError(
+                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                            }
+
+                                            @Override
+                                            public void onSuccess(
+                                                    final List<List<MeasurementDataNumericHighLowComposite>> measurementData) {
+                                                Log.debug("Dashboard Metric data in: "
+                                                        + (System.currentTimeMillis() - startTime) + " ms.");
+                                                graph.getMetricGraphData().setMetricData(measurementData.get(0));
+                                                drawGraph();
+                                            }
+                                        });
+                                        break;
+                                    }
+                                }
+                            }
+                        });
+            }
+        });
     }
 
     public Canvas getHelpCanvas() {
@@ -215,7 +300,7 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
-        if (simple == null | simple.getIntegerValue() == null) {
+        if (simple == null || simple.getIntegerValue() == null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {
             drawGraph();

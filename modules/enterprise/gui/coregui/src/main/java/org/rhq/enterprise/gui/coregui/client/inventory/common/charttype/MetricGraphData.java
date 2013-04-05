@@ -267,7 +267,7 @@ public class MetricGraphData implements JsonMetricProducer {
      */
     public String getYAxisUnits() {
         if (adjustedMeasurementUnits == null) {
-            Log.warn("AbstractMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
+            Log.warn("ResourceMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
             return "";
         } else {
             return adjustedMeasurementUnits.toString();

@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 /**
  * A D3 graph implementation for graphing Resource metrics.
  */
-public class ResourceMetricD3Graph extends EnhancedVLayout {
+public class MetricD3Graph extends EnhancedVLayout {
 
     protected AbstractGraph graph;
     private HTMLFlow graphDiv = null;
@@ -39,11 +39,11 @@ public class ResourceMetricD3Graph extends EnhancedVLayout {
      * This constructor is for the use case in the Dashboard where we dont actually
      * have a entity or measurement yet.
      */
-    public ResourceMetricD3Graph() {
+    public MetricD3Graph() {
         super();
     }
 
-    public ResourceMetricD3Graph(AbstractGraph graph) {
+    public MetricD3Graph(AbstractGraph graph) {
         super();
         this.graph = graph;
         setHeight100();

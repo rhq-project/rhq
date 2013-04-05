@@ -22,6 +22,8 @@
     <json.version>${project.json.version}</json.version>
     <jackson.version>1.9.5</jackson.version>
     <jboss.sasl.version>1.0.0.Final</jboss.sasl.version>
+    <!-- If you change httpclient4.version make sure to update httpcore version below accordingly  -->
+    <httpclient4.version>4.2.3</httpclient4.version>
     <as7.version>7.1.2.Final-SNAPSHOT</as7.version>
     <as7.url>https://hudson.jboss.org/hudson/view/JBoss%20AS/job/JBoss-AS-7.0.x/lastSuccessfulBuild/artifact/build/target/jboss-7.0.x.zip</as7.url>
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
@@ -67,21 +69,30 @@
     </dependency>
 
     <!-- For communication with AS7 http management interface -->
-  
+
     <dependency>
-      <groupId>commons-httpclient</groupId>
-      <artifactId>commons-httpclient</artifactId>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>${httpclient4.version}</version>
       <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
         <exclusion>
           <groupId>commons-codec</groupId>
           <artifactId>commons-codec</artifactId>
         </exclusion>
       </exclusions>
     </dependency>
-  
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+      <version>${httpclient4.version}</version>
     </dependency>
 
     <!-- === Test Deps === -->
@@ -106,7 +117,7 @@
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
     </dependency>
-    
+
     <!-- For native subsystem -->
     <dependency>
         <groupId>org.hyperic</groupId>
@@ -131,6 +142,7 @@
             </goals>
             <configuration>
               <artifactItems>
+
                 <artifactItem>
                   <groupId>org.codehaus.jackson</groupId>
                   <artifactId>jackson-core-asl</artifactId>
@@ -147,15 +159,26 @@
                 </artifactItem>
 
                 <artifactItem>
-                  <groupId>commons-httpclient</groupId>
-                  <artifactId>commons-httpclient</artifactId>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpcore</artifactId>
+                  <version>4.2.2</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpclient</artifactId>
                 </artifactItem>
 
                 <artifactItem>
                   <groupId>commons-codec</groupId>
                   <artifactId>commons-codec</artifactId>
                 </artifactItem>
-                
+
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpmime</artifactId>
+                </artifactItem>
+
               </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
             </configuration>
@@ -209,7 +232,7 @@
                 </configuration>
                 <goals>
                     <goal>run</goal>
-                </goals>               
+                </goals>
             </execution>
         </executions>
       </plugin>
@@ -564,6 +587,9 @@
               <includes>
                 <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
                 <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>-->
               </includes>
               <properties>
                 <property>
@@ -575,6 +601,7 @@
                 <arquillian.xml>${project.build.testSourceDirectory}/../resources/itest/arquillian.xml</arquillian.xml>
                 <jboss7.home>${jboss7.home}</jboss7.home>
                 <as7.version>${as7.version}</as7.version>
+                <!--<as7plugin.verbose>true</as7plugin.verbose>-->
                 <jboss.standalone.bindAddress>${jboss.standalone.bindAddress}</jboss.standalone.bindAddress>
                 <jboss.standalone.portOffset>${jboss.standalone.portOffset}</jboss.standalone.portOffset>
                 <jboss.domain.bindAddress>${jboss.domain.bindAddress}</jboss.domain.bindAddress>

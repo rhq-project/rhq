@@ -13,35 +13,47 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
-import java.io.StringWriter;
-import java.net.Authenticator;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.SocketTimeoutException;
-import java.net.URL;
+import java.lang.ref.WeakReference;
 import java.util.StringTokenizer;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.StatusLine;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.PoolingClientConnectionManager;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.protocol.HttpContext;
+import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.map.SerializationConfig;
-import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.util.StringUtil;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -51,34 +63,65 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Heiko W. Rupp
  * @author Ian Springer
+ * @author Thomas Segismont
  */
 public class ASConnection {
 
-    public static final String MANAGEMENT = "/management";
-    private static final String FAILURE_DESCRIPTION = "\"failure-description\"";
+    public static final String HTTP_SCHEME = "http";
+
+    public static final String MANAGEMENT_URI = "/management";
 
     // This is a variable on purpose, so devs can switch it on in the debugger or in the agent
-    public static boolean verbose = false;
-    private static final int HTTP_TEMPORARY_REDIRECT = 307;
+    public static boolean verbose = Boolean.getBoolean("as7plugin.verbose");
 
-    private static final String POST_HTTP_METHOD = "POST";
+    /**
+     * @deprecated as of 4.7. Use {@link #MANAGEMENT_URI} constant instead
+     */
+    @Deprecated
+    public static final String MANAGEMENT = MANAGEMENT_URI;
 
-    private static final String CONTENT_LENGTH_HTTP_HEADER = "Content-Length";
+    private static final Log LOG = LogFactory.getLog(ASConnection.class);
+
+    private static final int MAX_POOLED_CONNECTIONS = 10;
+
+    private static final int DEFAULT_KEEPALIVE_DURATION = 30 * 1000; // 30sec
+
     private static final String ACCEPT_HTTP_HEADER = "Accept";
-    private static final String CONTENT_TYPE_HTTP_HEADER = "Content-Type";
 
-    private static final String JSON_MIME_TYPE = "application/json";
+    private static final String JSON_NODE_FAILURE_DESCRIPTION = "failure-description";
 
-    private final Log log = LogFactory.getLog(ASConnection.class);
+    // A shared scheduled executor service to free HttpClient resources
+    // One thread is enough as tasks will execute quickly
+    private static final ScheduledExecutorService cleanerExecutor = Executors.newScheduledThreadPool(1,
+        new ThreadFactory() {
 
-    private URL url;
-    private String urlString;
-    private ObjectMapper mapper;
-    private Authenticator passwordAuthenticator;
+            private ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
+
+            private AtomicInteger threadCounter = new AtomicInteger(0);
+
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = defaultThreadFactory.newThread(runnable);
+                thread.setName("ASConnection Cleaner-" + threadCounter.incrementAndGet());
+                // With daemon threads, there is no need to call #shutdown on the executor to let the JVM go down
+                thread.setDaemon(true);
+                return thread;
+            }
+        });
+
+    private String scheme = ASConnection.HTTP_SCHEME;
+
     private String host;
+
     private int port;
 
     private UsernamePasswordCredentials credentials;
+
+    private String managementUrl;
+
+    private DefaultHttpClient httpClient;
+
+    private ObjectMapper mapper;
 
     /**
      * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
@@ -89,6 +132,9 @@ public class ASConnection {
      * @param password password needed for authentication
      */
     public ASConnection(String host, int port, String user, String password) {
+
+        // Check and store the basic parameters
+
         if (host == null) {
             throw new IllegalArgumentException("Management host cannot be null.");
         }
@@ -97,26 +143,52 @@ public class ASConnection {
         }
         this.host = host;
         this.port = port;
-
-        try {
-            url = new URL("http", host, port, MANAGEMENT);
-            urlString = url.toString();
-        } catch (MalformedURLException e) {
-            throw new IllegalArgumentException(e.getMessage());
+        if (user != null && password != null) {
+            credentials = new UsernamePasswordCredentials(user, password);
         }
+        managementUrl = scheme + "://" + host + ":" + port + MANAGEMENT_URI;
 
-        passwordAuthenticator = new AS7Authenticator(user, password);
-        Authenticator.setDefault(passwordAuthenticator);
-
-        // This will hold a reference to user and password
-        // and will be used in the future when switching this class communication layer to httpclient
-        credentials = new UsernamePasswordCredentials(user, password);
-
-        // read system property "as7plugin.verbose"
-        verbose = Boolean.getBoolean("as7plugin.verbose");
+        // Each ASConnection instance will have its own HttpClient instance
+        // HttpClient will use a pooling connection manager to allow concurrent request processing
+        PoolingClientConnectionManager httpConnectionManager = new PoolingClientConnectionManager();
+        httpConnectionManager.setDefaultMaxPerRoute(MAX_POOLED_CONNECTIONS);
+        httpConnectionManager.setMaxTotal(MAX_POOLED_CONNECTIONS);
+        httpClient = new DefaultHttpClient(httpConnectionManager);
+        // Disable stale connection checking on connection lease to get better performance
+        HttpParams httpParams = httpClient.getParams();
+        // See http://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
+        HttpConnectionParams.setStaleCheckingEnabled(httpParams, false);
+        // The default keep-alive strategy does not expire connections if the 'Keep-Alive' header is not present
+        // in the response. This strategy will apply a default duration in this case.
+        httpClient.setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy() {
+            @Override
+            public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                long duration = super.getKeepAliveDuration(response, context);
+                if (duration < 0) {
+                    duration = DEFAULT_KEEPALIVE_DURATION;
+                }
+                return duration;
+            }
+        });
+        // Initial schedule of a cleaning task. Subsequent executions will be scheduled as needed.
+        // See ConnectionManagerCleaner implementation.
+        cleanerExecutor.schedule(new ConnectionManagerCleaner(this), DEFAULT_KEEPALIVE_DURATION / 2,
+            TimeUnit.MILLISECONDS);
+        HttpClientParams.setRedirecting(httpParams, false);
+        if (credentials != null) {
+            httpClient.getCredentialsProvider().setCredentials(new AuthScope(host, port), credentials);
+        }
 
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        // Defensive call to shutdown the HttpClient connection manager
+        // If an ASConnection instance is no longer used, its cleaning task should already
+        // have closed expired connections
+        httpClient.getConnectionManager().shutdown();
     }
 
     /**
@@ -152,90 +224,64 @@ public class ASConnection {
      * @see #executeComplex(org.rhq.modules.plugins.jbossas7.json.Operation)
      */
     public JsonNode executeRaw(Operation operation, int timeoutSec) {
+
         long requestStartTime = System.currentTimeMillis();
 
-        HttpURLConnection conn;
-        OutputStream out;
-        try {
-            conn = (HttpURLConnection) url.openConnection();
-            conn.setDoOutput(true);
-            conn.setRequestMethod(POST_HTTP_METHOD);
-            conn.addRequestProperty(CONTENT_TYPE_HTTP_HEADER, JSON_MIME_TYPE);
-            conn.addRequestProperty(ACCEPT_HTTP_HEADER, JSON_MIME_TYPE);
-            conn.setInstanceFollowRedirects(false);
-            int timeoutMillis = timeoutSec * 1000;
-            conn.setConnectTimeout(timeoutMillis);
-            conn.setReadTimeout(timeoutMillis);
-            if (conn.getReadTimeout() != timeoutMillis) {
-                log.warn("Read timeout did not get set on HTTP connection - the JRE uses a broken timeout mechanism - nothing we can do.");
+        // Check for spaces in the path, which the AS7 server will reject. Log verbose error and
+        // generate failure indicator.
+        if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
+            if (containsSpaces(operation.getAddress().getPath())) {
+                Result noResult = new Result();
+                String outcome = "- Path '" + operation.getAddress().getPath() + "' is invalid as it contains spaces -";
+                if (verbose) {
+                    LOG.error(outcome);
+                }
+                noResult.setFailureDescription(outcome);
+                noResult.setOutcome("failure");
+                JsonNode invalidPathResult = mapper.valueToTree(noResult);
+                return invalidPathResult;
             }
-
-            out = conn.getOutputStream();
-        } catch (IOException e) {
-            // This most likely just means the server is down.
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to open connection to [" + urlString + "] in order to invoke [" + operation + "]: "
-                    + e);
-            }
-            // TODO (ips): Would it make more sense to return null here, since we didn't even connect?
-            Result failure = new Result();
-            failure.setFailureDescription(e.toString());
-            failure.setOutcome("failure");
-            failure.setRhqThrowable(e);
-            JsonNode ret = mapper.valueToTree(failure);
-            return ret;
         }
 
+        HttpPost httpRequest = new HttpPost(managementUrl);
+        httpRequest.addHeader(ACCEPT_HTTP_HEADER, ContentType.APPLICATION_JSON.getMimeType());
+        HttpParams httpParams = httpClient.getParams();
+        int timeoutMillis = timeoutSec * 1000;
+        HttpConnectionParams.setConnectionTimeout(httpParams, timeoutMillis);
+        HttpConnectionParams.setSoTimeout(httpParams, timeoutMillis);
+
         try {
+
             String jsonToSend = mapper.writeValueAsString(operation);
-
-            // Check for spaces in the path, which the AS7 server will reject. Log verbose error and
-            // generate failure indicator.
-            if ((operation != null) && (operation.getAddress() != null) && operation.getAddress().getPath() != null) {
-                if (containsSpaces(operation.getAddress().getPath())) {
-                    Result noResult = new Result();
-                    String outcome = "- Path '" + operation.getAddress().getPath()
-                        + "' is invalid as it contains spaces -";
-                    if (verbose) {
-                        log.error(outcome);
-                    }
-                    noResult.setFailureDescription(outcome);
-                    noResult.setOutcome("failure");
-                    JsonNode invalidPathResult = mapper.valueToTree(noResult);
-                    return invalidPathResult;
-                }
-            }
-
             if (verbose) {
-                log.info("JSON to send: " + jsonToSend);
+                LOG.info("JSON to send: " + jsonToSend);
+            }
+            httpRequest.setEntity(new StringEntity(jsonToSend, ContentType.APPLICATION_JSON));
+
+            HttpResponse httpResponse = httpClient.execute(httpRequest);
+            StatusLine statusLine = httpResponse.getStatusLine();
+            if (isAuthorizationFailureResponse(statusLine)) {
+                handleAuthorizationFailureResponse(operation, statusLine);
             }
 
-            mapper.writeValue(out, operation);
-
-            out.flush();
-            out.close();
-
-            ResponseStatus responseStatus = new ResponseStatus(conn);
-            if (isAuthorizationFailureResponse(responseStatus.getResponseCode())) {
-                handleAuthorizationFailureResponse(operation, responseStatus);
-            }
-
-            String responseBody = getResponseBody(conn);
-            if (responseStatus.getResponseCode() >= 400) {
+            HttpEntity httpResponseEntity = httpResponse.getEntity();
+            String responseBody = httpResponseEntity == null ? StringUtil.EMPTY_STRING : EntityUtils
+                .toString(httpResponseEntity);
+            if (statusLine.getStatusCode() >= 400) {
                 if (verbose) {
-                    log.debug(operation + " failed with " + responseStatus + " - response body was [" + responseBody
-                        + "].");
+                    LOG.debug(operation + " failed with " + statusAsString(statusLine) + " - response body was ["
+                        + responseBody + "].");
                 }
 
                 if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850")
                     || responseBody.contains("JBAS014793")) {
                     // management resource not found or not readable or no known child-type
-                    if (log.isDebugEnabled()) {
-                        log.debug("Requested management resource not found: " + operation.getAddress().getPath());
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Requested management resource not found: " + operation.getAddress().getPath());
                     }
                 } else {
-                    log.warn("Received " + responseStatus + " response to " + operation + " - response body was ["
-                        + responseBody + "].");
+                    LOG.warn("Received " + statusAsString(statusLine) + " response to " + operation
+                        + " - response body was [" + responseBody + "].");
                 }
             }
 
@@ -244,13 +290,13 @@ public class ASConnection {
                 try {
                     operationResult = mapper.readTree(responseBody);
                 } catch (IOException ioe) {
-                    log.error("Failed to deserialize response to " + operation + " to JsonNode - response status was "
-                        + responseStatus + ", and body was [" + responseBody + "]: " + ioe);
+                    LOG.error("Failed to deserialize response to " + operation + " to JsonNode - response status was "
+                        + statusAsString(statusLine) + ", and body was [" + responseBody + "]: " + ioe);
                     Result result = new Result();
                     result.setOutcome("failure");
                     result.setFailureDescription("Failed to deserialize response to " + operation
-                        + " to JsonNode - response status was " + responseStatus + ", and body was [" + responseBody
-                        + "]: " + ioe);
+                        + " to JsonNode - response status was " + statusAsString(statusLine) + ", and body was ["
+                        + responseBody + "]: " + ioe);
                     result.setRolledBack(responseBody.contains("rolled-back=true"));
                     result.setRhqThrowable(ioe);
                     operationResult = mapper.valueToTree(result);
@@ -261,64 +307,56 @@ public class ASConnection {
                     om2.configure(SerializationConfig.Feature.INDENT_OUTPUT, true);
                     try {
                         String resultString = om2.writeValueAsString(operationResult);
-                        log.info(resultString);
+                        LOG.info(resultString);
                     } catch (IOException ioe) {
-                        log.error("Failed to convert result of " + operation + " to string.", ioe);
+                        LOG.error("Failed to convert result of " + operation + " to string.", ioe);
                     }
                 }
             } else {
                 Result noResult = new Result();
                 noResult.setOutcome("failure");
-                noResult.setFailureDescription("- empty response body with HTTP status code " + responseStatus + " -");
+                noResult.setFailureDescription("- empty response body with HTTP status code "
+                    + statusAsString(statusLine) + " -");
                 operationResult = mapper.valueToTree(noResult);
             }
 
             return operationResult;
-        } catch (IllegalArgumentException iae) {
-            log.error("Illegal argument for input " + operation + ": " + iae.getMessage());
-        } catch (SocketTimeoutException ste) {
-            log.error(operation + " timed out: " + ste.getMessage());
-            conn.disconnect();
+
+        } catch (IOException e) {
             Result failure = new Result();
-            failure.setFailureDescription(ste.getMessage());
+            failure.setFailureDescription(e.getMessage());
             failure.setOutcome("failure");
-            failure.setRhqThrowable(ste);
-            JsonNode ret = mapper.valueToTree(failure);
-            return ret;
-        } catch (IOException ioe) {
-            conn.disconnect();
-            Result failure = new Result();
-            failure.setFailureDescription(ioe.getMessage());
-            failure.setOutcome("failure");
-            failure.setRhqThrowable(ioe);
+            failure.setRhqThrowable(e);
             JsonNode ret = mapper.valueToTree(failure);
             return ret;
         } finally {
+            // Force release of httpclient resources
+            httpRequest.abort();
+            // Update statistics
             long requestEndTime = System.currentTimeMillis();
             PluginStats stats = PluginStats.getInstance();
             stats.incrementRequestCount();
             stats.addRequestTime(requestEndTime - requestStartTime);
         }
-
-        return null;
     }
 
     // When no management users have been configured, a 307 (Temporary Redirect) response will be returned, and
     // when authorization has failed due to an invalid username or password, a 401 (Unauthorized) response will be
     // returned.
-    private boolean isAuthorizationFailureResponse(int responseCode) {
-        return responseCode == HttpURLConnection.HTTP_UNAUTHORIZED || responseCode == HTTP_TEMPORARY_REDIRECT;
+    private boolean isAuthorizationFailureResponse(StatusLine statusLine) {
+        return statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED
+            || statusLine.getStatusCode() == HttpStatus.SC_TEMPORARY_REDIRECT;
     }
 
-    private void handleAuthorizationFailureResponse(Operation operation, ResponseStatus responseStatus) {
-        if (log.isDebugEnabled()) {
-            log.debug("Response to " + operation + " was " + responseStatus
+    private void handleAuthorizationFailureResponse(Operation operation, StatusLine statusLine) {
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Response to " + operation + " was " + statusAsString(statusLine)
                 + " - throwing InvalidPluginConfigurationException...");
         }
         // Throw a InvalidPluginConfigurationException, so the user will get a yellow plugin connection
         // warning message in the GUI.
         String message;
-        if (responseStatus.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
+        if (statusLine.getStatusCode() == HttpStatus.SC_UNAUTHORIZED) {
             message = "Credentials for plugin to connect to AS7 management interface are invalid - update Connection Settings with valid credentials.";
         } else {
             message = "Authorization to AS7 failed - did you install a management user?";
@@ -410,7 +448,7 @@ public class ASConnection {
         JsonNode node = executeRaw(op, timeoutSec);
 
         if (node == null) {
-            log.warn("Operation [" + op + "] returned null.");
+            LOG.warn("Operation [" + op + "] returned null.");
             Result failure = new Result();
             failure.setFailureDescription("Operation [" + op + "] returned null.");
             return failure;
@@ -421,9 +459,9 @@ public class ASConnection {
             // {"outcome":"failed","failure-description":"JBAS014792: Unknown attribute number-of-timed-out-transactions","rolled-back":true}
             String as7ResultSerialization = node.toString();
 
-            if (as7ResultSerialization.indexOf(FAILURE_DESCRIPTION) > -1) {
+            if (as7ResultSerialization.indexOf(JSON_NODE_FAILURE_DESCRIPTION) > -1) {
                 if (verbose) {
-                    log.warn("------ Detected 'failure-description' when communicating with server."
+                    LOG.warn("------ Detected 'failure-description' when communicating with server."
                         + as7ResultSerialization);
                 }
             }
@@ -435,9 +473,9 @@ public class ASConnection {
             }
             return res;
         } catch (IOException e) {
-            log.error(e.getMessage());
+            LOG.error(e.getMessage());
             if (verbose) {
-                log.error("----------- Operation execution unparsable. Request " + ":[" + op + "] Response:<" + node
+                LOG.error("----------- Operation execution unparsable. Request " + ":[" + op + "] Response:<" + node
                     + ">");
             }
             Result failure = new Result();
@@ -463,97 +501,44 @@ public class ASConnection {
         return credentials.getPassword();
     }
 
-    @NotNull
-    private String getResponseBody(HttpURLConnection connection) {
-        InputStream inputStream;
-        try {
-            inputStream = connection.getInputStream();
-        } catch (IOException e) {
-            // This means the server returned a 4xx (client error) or 5xx (server error) response, e.g.:
-            // "java.io.IOException: Server returned HTTP response code: 500 for URL: http://127.0.0.1:9990/management"
-            // Unfortunately, AS7 incorrectly returns 500 responses for client errors (e.g. invalid resource path,
-            // attribute name, etc.).
-            inputStream = null;
+    static String statusAsString(StatusLine statusLine) {
+        String reasonPhrase = statusLine.getReasonPhrase();
+        StringBuilder builder = new StringBuilder(3 + (reasonPhrase == null ? 0 : (1 + reasonPhrase.length())));
+        builder.append(statusLine.getStatusCode());
+        if (statusLine != null) {
+            builder.append(" ").append(statusLine.getReasonPhrase());
         }
-        if (inputStream == null) {
-            inputStream = connection.getErrorStream();
-        }
-        if (inputStream == null) {
-            return "";
-        }
-
-        int contentLength = connection.getHeaderFieldInt(CONTENT_LENGTH_HTTP_HEADER, -1);
-
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        StringWriter stringWriter = (contentLength != -1) ? new StringWriter(contentLength) : new StringWriter();
-        BufferedWriter writer = new BufferedWriter(stringWriter);
-        try {
-            long numCharsCopied = 0;
-            char[] buffer = new char[1024];
-
-            int cnt;
-            while (((contentLength == -1) || (numCharsCopied < contentLength)) && ((cnt = reader.read(buffer)) != -1)) {
-                numCharsCopied += cnt;
-                writer.write(buffer, 0, cnt);
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to read response.", e);
-        } finally {
-            try {
-                writer.close();
-            } catch (IOException ioe) {
-                log.debug("Failed to close writer.", ioe);
-            }
-
-            try {
-                reader.close();
-            } catch (IOException ioe) {
-                log.debug("Failed to close reader.", ioe);
-            }
-        }
-
-        return stringWriter.getBuffer().toString();
+        return builder.toString();
     }
 
-    private class ResponseStatus {
+    // As soon as an ASConnection instance is created, an instance of this class is scheduled for execution.
+    // Instances of this class are responsible for freeing HttpClient expired connections.
+    private static final class ConnectionManagerCleaner implements Runnable {
 
-        private Integer responseCode;
-        private String responseMessage;
+        // Keep a weak reference to the target ASConnection to let it be garbage collected
+        private WeakReference<ASConnection> asConnectionWeakReference;
 
-        ResponseStatus(HttpURLConnection connection) throws IOException {
-            try {
-                responseCode = connection.getResponseCode();
-            } catch (IOException e) {
-                // try one more time
-                responseCode = connection.getResponseCode();
-            }
-
-            try {
-                responseMessage = connection.getResponseMessage();
-            } catch (IOException e) {
-                // try one more time
-                responseMessage = connection.getResponseMessage();
-            }
-
-            if (responseMessage == null) {
-                responseMessage = (getResponseCode() == HTTP_TEMPORARY_REDIRECT) ? "Temporary Redirect" : "";
-            }
-        }
-
-        public int getResponseCode() {
-            return responseCode;
-        }
-
-        @NotNull
-        public String getResponseMessage() {
-            return responseMessage;
+        private ConnectionManagerCleaner(ASConnection asConnection) {
+            asConnectionWeakReference = new WeakReference<ASConnection>(asConnection);
         }
 
         @Override
-        public String toString() {
-            return getResponseCode() + " (" + getResponseMessage() + ")";
+        public void run() {
+            ASConnection asConnection = asConnectionWeakReference.get();
+            if (asConnection != null) {
+                // The target ASConnection instance has not been marked for collection yet
+                try {
+                    asConnection.httpClient.getConnectionManager().closeExpiredConnections();
+                    // Defensive call to close idle connections
+                    asConnection.httpClient.getConnectionManager().closeIdleConnections(DEFAULT_KEEPALIVE_DURATION,
+                        TimeUnit.MILLISECONDS);
+                } finally {
+                    // Keep cleaning the target ASConnection while it has not been marked for collection
+                    cleanerExecutor.schedule(new ConnectionManagerCleaner(asConnection), DEFAULT_KEEPALIVE_DURATION,
+                        TimeUnit.MILLISECONDS);
+                }
+            }
         }
-
     }
 
 }

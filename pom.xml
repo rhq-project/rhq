@@ -1198,7 +1198,6 @@
         <configuration>
           <source>1.6</source>
           <target>1.6</target>
-          <verbose>true</verbose>
           <proc>none</proc> <!-- disable annotation processing -->
           <showWarnings>true</showWarnings>
         </configuration>

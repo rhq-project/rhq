@@ -131,7 +131,6 @@ public class DataMigratorRunner {
                     "Command line arguments take precedence over default and configuration file options.")
         .create();
 
-
     private Map<Object, Object> configuration = new HashMap<Object, Object>();
     private Options options;
 
@@ -153,6 +152,35 @@ public class DataMigratorRunner {
         }
 
         System.exit(0);
+    }
+
+    private static void initLogging() {
+        Logger root = Logger.getRootLogger();
+        if (!root.getAllAppenders().hasMoreElements()) {
+            root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
+            setLogLevel(Level.ERROR);
+        }
+    }
+
+    private static void setLogLevel(Level level) {
+        Logger root = Logger.getRootLogger();
+        root.setLevel(level);
+
+        Logger cassandraLogging = root.getLoggerRepository().getLogger("log4j.logger.org.apache.cassandra.cql.jdbc");
+        cassandraLogging.setLevel(level);
+
+        Logger cassandraDriverLogging = root.getLoggerRepository().getLogger("com.datastax.driver");
+        cassandraDriverLogging.setLevel(level);
+
+        Logger hibernateLogging = root.getLoggerRepository().getLogger("org.hibernate");
+        hibernateLogging.setLevel(level);
+
+        Logger migratorLogging = root.getLoggerRepository().getLogger("org.rhq");
+        if (Level.DEBUG.equals(level)) {
+            migratorLogging.setLevel(Level.INFO);
+        } else {
+            migratorLogging.setLevel(level);
+        }
     }
 
     private void configure(String args[]) throws Exception {
@@ -215,211 +243,6 @@ public class DataMigratorRunner {
         parseMigrationOptionsWithDefault(commandLine);
     }
 
-    private static void initLogging() {
-        Logger root = Logger.getRootLogger();
-        if (!root.getAllAppenders().hasMoreElements()) {
-            root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.TTCC_CONVERSION_PATTERN)));
-            setLogLevel(Level.ERROR);
-        }
-    }
-
-    private static void setLogLevel(Level level) {
-        Logger root = Logger.getRootLogger();
-        root.setLevel(level);
-
-        Logger cassandraLogging = root.getLoggerRepository().getLogger("log4j.logger.org.apache.cassandra.cql.jdbc");
-        cassandraLogging.setLevel(level);
-
-        Logger cassandraDriverLogging = root.getLoggerRepository().getLogger("com.datastax.driver");
-        cassandraDriverLogging.setLevel(level);
-
-        Logger hibernateLogging = root.getLoggerRepository().getLogger("org.hibernate");
-        hibernateLogging.setLevel(level);
-
-        Logger migratorLogging = root.getLoggerRepository().getLogger("org.rhq");
-        if (Level.DEBUG.equals(level)) {
-            migratorLogging.setLevel(Level.INFO);
-        } else {
-            migratorLogging.setLevel(level);
-        }
-    }
-
-    private void run() throws Exception {
-        log.debug("Creating Entity Manager");
-        EntityManager entityManager = this.createEntityManager();
-        log.debug("Done creating Entity Manager");
-
-        log.debug("Creating Cassandra session");
-        Session session = this.createCassandraSession();
-        log.debug("Done creating Cassandra session");
-
-        DataMigrator migrator = new DataMigrator(entityManager, session);
-
-        if ((Boolean) configuration.get(preserveDataOption)) {
-            migrator.preserveData();
-        } else {
-            migrator.deleteAllDataAtEndOfMigration();
-        }
-
-        migrator.runRawDataMigration(!(Boolean) configuration.get(disableRawOption));
-        migrator.run1HAggregateDataMigration(!(Boolean) configuration.get(disable1HOption));
-        migrator.run6HAggregateDataMigration(!(Boolean) configuration.get(disable6HOption));
-        migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
-
-        long estimate = migrator.estimate();
-        System.out.println("The migration process will take approximately: "
-            + TimeUnit.MILLISECONDS.toMinutes(estimate)
-            + " minutes (or " + estimate + " milliseconds)");
-        if (!(Boolean) configuration.get(estimateOnlyOption)) {
-            migrator.migrateData();
-        }
-    }
-
-    private Session createCassandraSession() throws Exception {
-        Compression selectedCompression = Compression.NONE;
-        if ((Boolean) configuration.get(cassandraCompressionOption)) {
-            selectedCompression = Compression.SNAPPY;
-        }
-
-        Cluster cluster = Cluster
-            .builder()
-            .addContactPoints((String[]) configuration.get(cassandraHostsOption))
-            .withCompression(selectedCompression)
-            .withoutMetrics()
-            .withAuthInfoProvider(
-                new SimpleAuthInfoProvider().add("username", (String) configuration.get(cassandraUserOption)).add(
-                    "password", (String) configuration.get(cassandraPasswordOption))).build();
-
-        return cluster.connect("rhq");
-    }
-
-    private EntityManager createEntityManager() throws Exception {
-        Properties properties = new Properties();
-        properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
-        properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
-        properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
-
-        if ("oracle".equals(configuration.get(sqlServerType))) {
-            properties.put("hibernate.dialect", "org.hibernate.dialect.Oracle10gDialect");
-            properties.put("hibernate.driver_class", "oracle.jdbc.driver.OracleDriver");
-            properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
-                + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
-            properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
-        }else{
-            properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-            properties.put("hibernate.driver_class", "org.postgresql.Driver");
-            properties.put("hibernate.connection.url", "jdbc:postgresql://" + (String) configuration.get(sqlHostOption)
-                + ":" + (String) configuration.get(sqlPortOption) + "/" + (String) configuration.get(sqlDBOption));
-        }
-
-        Ejb3Configuration configuration = new Ejb3Configuration();
-        configuration.setProperties(properties);
-        EntityManagerFactory factory = configuration.buildEntityManagerFactory();
-        return factory.createEntityManager();
-     }
-
-    private void parseCassandraOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
-        if (commandLine.hasOption(cassandraUserOption.getLongOpt())) {
-            configuration.put(cassandraUserOption, commandLine.getOptionValue(cassandraUserOption.getLongOpt()));
-        }
-
-        if (commandLine.hasOption(cassandraPasswordOption.getLongOpt())) {
-            configuration.put(cassandraPasswordOption,
-                commandLine.getOptionValue(cassandraPasswordOption.getLongOpt()));
-        }
-
-        if (commandLine.hasOption(cassandraHostsOption.getLongOpt())) {
-            String[] cassandraHosts = parseCassandraHosts(commandLine.getOptionValue(cassandraHostsOption.getLongOpt()));
-            configuration.put(cassandraHostsOption, cassandraHosts);
-        }
-
-        if (commandLine.hasOption(cassandraCompressionOption.getLongOpt())) {
-            boolean value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
-            configuration.put(cassandraCompressionOption, value);
-        }
-    }
-
-    private String[] parseCassandraHosts(String stringValue) {
-        String[] seeds = stringValue.split(",");
-        String[] cassandraHosts = new String[seeds.length];
-        for (int i = 0; i < seeds.length; ++i) {
-            CassandraNode node = CassandraNode.parseNode(seeds[i]);
-            cassandraHosts[i] = node.getHostName();
-        }
-        return cassandraHosts;
-    }
-
-    private void parseSQLOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
-        if (commandLine.hasOption(sqlUserOption.getLongOpt())) {
-            configuration.put(sqlUserOption, commandLine.getOptionValue(sqlUserOption.getLongOpt()));
-        }
-
-        if (commandLine.hasOption(sqlPasswordOption.getLongOpt())) {
-            configuration.put(sqlPasswordOption, commandLine.getOptionValue(sqlPasswordOption.getLongOpt()));
-        }
-
-        if (commandLine.hasOption(sqlHostOption.getLongOpt())) {
-            configuration.put(sqlHostOption, commandLine.getOptionValue(sqlHostOption.getLongOpt()));
-        }
-
-        if (commandLine.hasOption(sqlPortOption.getLongOpt())) {
-            configuration.put(sqlPortOption, commandLine.getOptionValue(sqlPortOption.getLongOpt()));
-        }
-
-        if (commandLine.hasOption(sqlDBOption.getLongOpt())) {
-            configuration.put(sqlDBOption, commandLine.getOptionValue(sqlDBOption.getLongOpt()));
-        }
-
-        if (commandLine.hasOption(sqlServerType.getLongOpt())) {
-            if ("oracle".equals(commandLine.getOptionValue(sqlServerType.getLongOpt()))) {
-                configuration.put(sqlServerType, "oracle");
-            } else {
-                configuration.put(sqlServerType, "postgres");
-            }
-        } else if (commandLine.hasOption(sqlPostgresServer.getLongOpt())) {
-            configuration.put(sqlServerType, "postgres");
-        } else if (commandLine.hasOption(sqlOracleServer.getLongOpt())) {
-            configuration.put(sqlServerType, "oracle");
-        }
-    }
-
-    private void parseMigrationOptionsWithDefault(CommandLine commandLine) {
-        boolean value;
-
-        if (commandLine.hasOption(disableRawOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
-            configuration.put(disableRawOption, value);
-        }
-
-        if (commandLine.hasOption(disable1HOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disable1HOption.getLongOpt()), true);
-            configuration.put(disable1HOption, value);
-        }
-
-        if (commandLine.hasOption(disable6HOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disable6HOption.getLongOpt()), true);
-            configuration.put(disable6HOption, value);
-        }
-
-        if (commandLine.hasOption(disable1DOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disable1DOption.getLongOpt()), true);
-            configuration.put(disable1DOption, value);
-        }
-
-        if (commandLine.hasOption(preserveDataOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(preserveDataOption.getLongOpt()), true);
-            configuration.put(preserveDataOption, value);
-        } else if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(deleteDataOption.getLongOpt()), true);
-            configuration.put(preserveDataOption, value);
-        }
-
-        if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(estimateOnlyOption.getLongOpt()), true);
-            configuration.put(estimateOnlyOption, true);
-        }
-    }
-
     /**
      * Add default configuration options to the configuration store.
      */
@@ -456,7 +279,7 @@ public class DataMigratorRunner {
     private void loadConfigFile(String file) {
         try {
             File configFile = new File(file);
-            if (!configFile.exists()){
+            if (!configFile.exists()) {
                 throw new FileNotFoundException("Configuration file not found!");
             }
 
@@ -507,6 +330,223 @@ public class DataMigratorRunner {
         log.error(configuration.toString());
     }
 
+    /**
+     * Parse command line options for Cassandra.
+     *
+     * @param commandLine command line
+     * @throws NoHostAvailableException
+     */
+    private void parseCassandraOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
+        if (commandLine.hasOption(cassandraUserOption.getLongOpt())) {
+            configuration.put(cassandraUserOption, commandLine.getOptionValue(cassandraUserOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(cassandraPasswordOption.getLongOpt())) {
+            configuration
+                .put(cassandraPasswordOption, commandLine.getOptionValue(cassandraPasswordOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(cassandraHostsOption.getLongOpt())) {
+            String[] cassandraHosts = parseCassandraHosts(commandLine.getOptionValue(cassandraHostsOption.getLongOpt()));
+            configuration.put(cassandraHostsOption, cassandraHosts);
+        }
+
+        if (commandLine.hasOption(cassandraCompressionOption.getLongOpt())) {
+            boolean value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
+            configuration.put(cassandraCompressionOption, value);
+        }
+    }
+
+    /**
+     * Parse command line options for SQL.
+     *
+     * @param commandLine command line
+     * @throws NoHostAvailableException
+     */
+    private void parseSQLOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
+        if (commandLine.hasOption(sqlUserOption.getLongOpt())) {
+            configuration.put(sqlUserOption, commandLine.getOptionValue(sqlUserOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(sqlPasswordOption.getLongOpt())) {
+            configuration.put(sqlPasswordOption, commandLine.getOptionValue(sqlPasswordOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(sqlHostOption.getLongOpt())) {
+            configuration.put(sqlHostOption, commandLine.getOptionValue(sqlHostOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(sqlPortOption.getLongOpt())) {
+            configuration.put(sqlPortOption, commandLine.getOptionValue(sqlPortOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(sqlDBOption.getLongOpt())) {
+            configuration.put(sqlDBOption, commandLine.getOptionValue(sqlDBOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(sqlServerType.getLongOpt())) {
+            if ("oracle".equals(commandLine.getOptionValue(sqlServerType.getLongOpt()))) {
+                configuration.put(sqlServerType, "oracle");
+            } else {
+                configuration.put(sqlServerType, "postgres");
+            }
+        } else if (commandLine.hasOption(sqlPostgresServer.getLongOpt())) {
+            configuration.put(sqlServerType, "postgres");
+        } else if (commandLine.hasOption(sqlOracleServer.getLongOpt())) {
+            configuration.put(sqlServerType, "oracle");
+        }
+    }
+
+    /**
+     * Parse command line options for the actual migration progress.
+     *
+     * @param commandLine
+     */
+    private void parseMigrationOptionsWithDefault(CommandLine commandLine) {
+        boolean value;
+
+        if (commandLine.hasOption(disableRawOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
+            configuration.put(disableRawOption, value);
+        }
+
+        if (commandLine.hasOption(disable1HOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(disable1HOption.getLongOpt()), true);
+            configuration.put(disable1HOption, value);
+        }
+
+        if (commandLine.hasOption(disable6HOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(disable6HOption.getLongOpt()), true);
+            configuration.put(disable6HOption, value);
+        }
+
+        if (commandLine.hasOption(disable1DOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(disable1DOption.getLongOpt()), true);
+            configuration.put(disable1DOption, value);
+        }
+
+        if (commandLine.hasOption(preserveDataOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(preserveDataOption.getLongOpt()), true);
+            configuration.put(preserveDataOption, value);
+        } else if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(deleteDataOption.getLongOpt()), true);
+            configuration.put(preserveDataOption, value);
+        }
+
+        if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(estimateOnlyOption.getLongOpt()), true);
+            configuration.put(estimateOnlyOption, true);
+        }
+    }
+
+    private void run() throws Exception {
+        log.debug("Creating Entity Manager");
+        EntityManager entityManager = this.createEntityManager();
+        log.debug("Done creating Entity Manager");
+
+        log.debug("Creating Cassandra session");
+        Session session = this.createCassandraSession();
+        log.debug("Done creating Cassandra session");
+
+        DataMigrator migrator = new DataMigrator(entityManager, session);
+
+        if ((Boolean) configuration.get(preserveDataOption)) {
+            migrator.preserveData();
+        } else {
+            migrator.deleteAllDataAtEndOfMigration();
+        }
+
+        migrator.runRawDataMigration(!(Boolean) configuration.get(disableRawOption));
+        migrator.run1HAggregateDataMigration(!(Boolean) configuration.get(disable1HOption));
+        migrator.run6HAggregateDataMigration(!(Boolean) configuration.get(disable6HOption));
+        migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
+
+        long estimate = migrator.estimate();
+        System.out.println("The migration process will take approximately: "
+            + TimeUnit.MILLISECONDS.toMinutes(estimate)
+            + " minutes (or " + estimate + " milliseconds)");
+        if (!(Boolean) configuration.get(estimateOnlyOption)) {
+            migrator.migrateData();
+        }
+    }
+
+    /**
+     * Create a Cassandra session based on configuration options.
+     *
+     * @return Cassandra session
+     * @throws Exception
+     */
+    private Session createCassandraSession() throws Exception {
+        Compression selectedCompression = Compression.NONE;
+        if ((Boolean) configuration.get(cassandraCompressionOption)) {
+            selectedCompression = Compression.SNAPPY;
+        }
+
+        Cluster cluster = Cluster
+            .builder()
+            .addContactPoints((String[]) configuration.get(cassandraHostsOption))
+            .withCompression(selectedCompression)
+            .withoutMetrics()
+            .withAuthInfoProvider(
+                new SimpleAuthInfoProvider().add("username", (String) configuration.get(cassandraUserOption)).add(
+                    "password", (String) configuration.get(cassandraPasswordOption))).build();
+
+        return cluster.connect("rhq");
+    }
+
+    /**
+     * Create a hibernate session to the SQL server.
+     *
+     * @return
+     * @throws Exception
+     */
+    private EntityManager createEntityManager() throws Exception {
+        Properties properties = new Properties();
+        properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
+        properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
+        properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
+
+        if ("oracle".equals(configuration.get(sqlServerType))) {
+            properties.put("hibernate.dialect", "org.hibernate.dialect.Oracle10gDialect");
+            properties.put("hibernate.driver_class", "oracle.jdbc.driver.OracleDriver");
+            properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
+                + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
+            properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
+        } else {
+            properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+            properties.put("hibernate.driver_class", "org.postgresql.Driver");
+            properties.put("hibernate.connection.url", "jdbc:postgresql://" + (String) configuration.get(sqlHostOption)
+                + ":" + (String) configuration.get(sqlPortOption) + "/" + (String) configuration.get(sqlDBOption));
+        }
+
+        Ejb3Configuration configuration = new Ejb3Configuration();
+        configuration.setProperties(properties);
+        EntityManagerFactory factory = configuration.buildEntityManagerFactory();
+        return factory.createEntityManager();
+    }
+
+    /**
+     * Parse Cassandra host information submitted in the form:
+     * host_addres,thrift_port,native_port|host_address_2,thrift_port,native_port
+     *
+     * @param stringValue
+     * @return
+     */
+    private String[] parseCassandraHosts(String stringValue) {
+        String[] seeds = stringValue.split(",");
+        String[] cassandraHosts = new String[seeds.length];
+        for (int i = 0; i < seeds.length; ++i) {
+            CassandraNode node = CassandraNode.parseNode(seeds[i]);
+            cassandraHosts[i] = node.getHostName();
+        }
+        return cassandraHosts;
+    }
+
+    /**
+     * @param value object value to parse
+     * @param defaultValue default value
+     * @return
+     */
     private boolean parseBooleanOption(Object value, boolean defaultValue) {
         try {
             return Boolean.parseBoolean(value.toString());
@@ -522,4 +562,3 @@ public class DataMigratorRunner {
         }
     }
 }
-

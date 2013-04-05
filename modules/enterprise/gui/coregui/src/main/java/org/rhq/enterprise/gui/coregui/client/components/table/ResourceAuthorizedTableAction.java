@@ -48,11 +48,23 @@ public abstract class ResourceAuthorizedTableAction extends AbstractTableAction 
 
     private Boolean isAuthorized;
 
+    /**
+     * @param table
+     * @param enablement
+     * @param requiredPermission if null no check is performed and authorization always passes
+     * @param extractor
+     */
     protected ResourceAuthorizedTableAction(Table<?> table, Permission requiredPermission,
         RecordExtractor<Integer> extractor) {
         this(table, TableActionEnablement.ALWAYS, requiredPermission, extractor);
     }
 
+    /**
+     * @param table
+     * @param enablement
+     * @param requiredPermission if null no check is performed and authorization always passes
+     * @param extractor
+     */
     protected ResourceAuthorizedTableAction(Table<?> table, TableActionEnablement enablement,
         Permission requiredPermission, RecordExtractor<Integer> extractor) {
         super(enablement);
@@ -61,7 +73,7 @@ public abstract class ResourceAuthorizedTableAction extends AbstractTableAction 
         this.requiredPermission = requiredPermission;
         this.extractor = extractor;
 
-        if (Target.RESOURCE != this.requiredPermission.getTarget()) {
+        if (null != this.requiredPermission && Target.RESOURCE != this.requiredPermission.getTarget()) {
             throw new IllegalArgumentException("Does not support Global permission");
         }
     }
@@ -71,6 +83,11 @@ public abstract class ResourceAuthorizedTableAction extends AbstractTableAction 
         // first make sure row selection enablement passes
         if (!super.isEnabled(selection)) {
             return false;
+        }
+
+        // if there is no required permission then no check is performed
+        if (null == requiredPermission) {
+            return true;
         }
 
         final Collection<Integer> selectedResourceIds = extractor.extract(selection);

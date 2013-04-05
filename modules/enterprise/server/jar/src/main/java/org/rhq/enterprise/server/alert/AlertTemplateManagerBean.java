@@ -123,7 +123,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
         int alertTemplateId = 0;
         try {
-            alertTemplateId = alertDefinitionManager.createAlertDefinition(user, alertTemplate, null, true);
+            alertTemplateId = alertDefinitionManager.createAlertDefinitionInNewTransaction(user, alertTemplate, null, true);
         } catch (Throwable t) {
             throw new AlertDefinitionCreationException("Could not create alertTemplate for " + type + " with data "
                 + alertTemplate.toSimpleString(), t);
@@ -191,7 +191,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
 
             // persist the child, user is known to be overlord at this point for this system side-effect
             try {
-                alertDefinitionManager.createAlertDefinition(user, childAlertDefinition, resourceId, false);
+                alertDefinitionManager.createAlertDefinitionInNewTransaction(user, childAlertDefinition, resourceId, false);
             } catch (Throwable t) {
                 throw new AlertDefinitionCreationException("Failed to create child AlertDefinition for Resource[id="
                     + resourceId + "] with template " + template.toSimpleString());
@@ -287,7 +287,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                 childAlertDefinition.setParentId(alertTemplate.getId());
 
                 // persist the child
-                alertDefinitionManager.createAlertDefinition(overlord, childAlertDefinition, resourceId, false);
+                alertDefinitionManager.createAlertDefinitionInNewTransaction(overlord, childAlertDefinition, resourceId, false);
             } catch (Throwable t) {
                 // continue on error, update as many as possible
                 if (firstThrowable == null) {

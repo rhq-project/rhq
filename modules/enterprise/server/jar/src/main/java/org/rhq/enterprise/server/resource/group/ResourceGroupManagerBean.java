@@ -482,7 +482,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             return;
         }
         int[] resourceIdsToAdd = ArrayUtils.unwrapCollection(nonMemberResources);
-        groupAlertDefinitionManager.addGroupAlertDefinitions(subject, groupId, resourceIdsToAdd);
+        groupAlertDefinitionManager.addGroupMemberAlertDefinitions(subject, groupId, resourceIdsToAdd);
 
         Connection conn = null;
         PreparedStatement insertExplicitStatement = null;
@@ -627,14 +627,14 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                 + "] which are not part of the group[id=" + groupId + "]");
         }
 
-        int[] resourceIdsToRemove = ArrayUtils.unwrapArray(resourceIds);
-        groupAlertDefinitionManager.removeGroupAlertDefinitions(subject, groupId, resourceIdsToRemove);
+        groupAlertDefinitionManager.removeGroupMemberAlertDefinitions(subject, groupId, resourceIds);
 
         Connection conn = null;
         PreparedStatement deleteExplicitStatement = null;
         PreparedStatement deleteImplicitStatement = null;
         try {
             conn = rhqDs.getConnection();
+            int[] resourceIdsArray = ArrayUtils.unwrapArray(resourceIds);
 
             // insert implicit resources, must occur before deleting explicit
             if (isRecursive) {
@@ -642,7 +642,7 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
                     .prepareStatement(ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT_RECURSIVE);
                 deleteImplicitStatement.setInt(1, groupId);
                 deleteImplicitStatement.setInt(9, groupId);
-                for (int resourceId : resourceIdsToRemove) {
+                for (Integer resourceId : resourceIds) {
                     // no-op if this resource's ancestor is also in the explicit list
                     List<Integer> lineage = resourceManager.getResourceIdLineage(resourceId);
                     List<Integer> nonMembers = getNonMemberExplicitResources(groupId, lineage);
@@ -663,20 +663,20 @@ public class ResourceGroupManagerBean implements ResourceGroupManagerLocal, Reso
             } else {
                 String deleteImplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
                     ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_IMPLICIT, "@@RESOURCE_IDS@@",
-                    resourceIdsToRemove.length);
+                    resourceIds.length);
                 deleteImplicitStatement = conn.prepareStatement(deleteImplicitQueryString);
                 deleteImplicitStatement.setInt(1, groupId);
-                JDBCUtil.bindNTimes(deleteImplicitStatement, resourceIdsToRemove, 2);
+                JDBCUtil.bindNTimes(deleteImplicitStatement, resourceIdsArray, 2);
                 deleteImplicitStatement.executeUpdate();
             }
 
             // delete explicit resources
             String deleteExplicitQueryString = JDBCUtil.transformQueryForMultipleInParameters(
                 ResourceGroup.QUERY_NATIVE_REMOVE_RESOURCES_FROM_GROUP_EXPLICIT, "@@RESOURCE_IDS@@",
-                resourceIdsToRemove.length);
+ resourceIds.length);
             deleteExplicitStatement = conn.prepareStatement(deleteExplicitQueryString);
             deleteExplicitStatement.setInt(1, groupId);
-            JDBCUtil.bindNTimes(deleteExplicitStatement, resourceIdsToRemove, 2);
+            JDBCUtil.bindNTimes(deleteExplicitStatement, resourceIdsArray, 2);
             deleteExplicitStatement.executeUpdate();
         } catch (SQLException sqle) {
             log.error("Error removing resources from group[id=" + groupId + "]: ", sqle);

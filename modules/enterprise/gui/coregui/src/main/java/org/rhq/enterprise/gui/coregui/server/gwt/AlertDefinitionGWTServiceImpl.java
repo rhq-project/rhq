@@ -66,7 +66,7 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     @Override
     public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException {
         try {
-            int results = alertDefManager.createAlertDefinition(getSessionSubject(), alertDefinition, resourceId, true);
+            int results = alertDefManager.createAlertDefinitionInNewTransaction(getSessionSubject(), alertDefinition, resourceId, true);
             return results;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

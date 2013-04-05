@@ -522,7 +522,7 @@ public class ResourceGroup extends Group {
     private boolean visible = true;
 
     // bulk delete @OneToMany(mappedBy = "resource", cascade = { CascadeType.ALL })
-    @OneToMany(mappedBy = "resourceGroup", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
+    @OneToMany(mappedBy = "group", cascade = { CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH })
     private Set<AlertDefinition> alertDefinitions = new LinkedHashSet<AlertDefinition>();
 
     @ManyToMany(mappedBy = "resourceGroups", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)

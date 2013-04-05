@@ -103,7 +103,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = AlertDefinition.QUERY_FIND_OPTION_ITEMS_BY_GROUP, query = "" //
         + "  SELECT new org.rhq.core.domain.common.composite.IntegerOptionItem(ad.id, ad.name) " //
         + "    FROM AlertDefinition ad " //
-        + "   WHERE ad.resourceGroup.id = :groupId " //
+        + "   WHERE ad.group.id = :groupId " //
         + "     AND ad.deleted = false"), //
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE, query = "" //
         + "SELECT a " //
@@ -118,7 +118,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
     @NamedQuery(name = AlertDefinition.QUERY_FIND_BY_RESOURCE_GROUP, query = "" //
         + "SELECT a " //
         + "  FROM AlertDefinition a " //
-        + " WHERE a.resourceGroup.id = :groupId " //
+        + " WHERE a.group.id = :groupId " //
         + "   AND a.deleted = false"),
     @NamedQuery(name = AlertDefinition.QUERY_DELETE_BY_RESOURCES, query = "" //
         + "DELETE FROM AlertDefinition ad " //
@@ -195,7 +195,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
         + " WHERE ad.id = :alertDefinitionId " //
-        + "   AND ad.resourceGroup IS NOT NULL "), //
+        + "   AND ad.group IS NOT NULL "), //
     @NamedQuery(name = AlertDefinition.QUERY_IS_RESOURCE_ALERT_DEFINITION, query = "" //
         + "SELECT ad.id " //
         + "  FROM AlertDefinition ad " //
@@ -317,7 +317,7 @@ public class AlertDefinition implements Serializable {
     @JoinColumn(name = "RESOURCE_GROUP_ID", nullable = true)
     @ManyToOne
     @XmlTransient
-    private ResourceGroup resourceGroup;
+    private ResourceGroup group;
 
     @Column(name = "ENABLED", nullable = false)
     private boolean enabled;
@@ -533,17 +533,26 @@ public class AlertDefinition implements Serializable {
         }
     }
 
+    /**
+     * @deprecated use getGroup()
+     */
     public ResourceGroup getResourceGroup() {
-        return resourceGroup;
+        return group;
     }
 
+    /**
+     * @deprecated use setGroup(ResourceGroup)
+     */
     public void setResourceGroup(ResourceGroup resourceGroup) {
-        this.resourceGroup = resourceGroup;
-        /*
-        if (this.resourceGroup != null) {
-            this.resourceGroup.getAlertDefinitions().add(this);
-        }
-        */
+        this.group = resourceGroup;
+    }
+
+    public ResourceGroup getGroup() {
+        return group;
+    }
+
+    public void setGroup(ResourceGroup group) {
+        this.group = group;
     }
 
     public ResourceType getResourceType() {

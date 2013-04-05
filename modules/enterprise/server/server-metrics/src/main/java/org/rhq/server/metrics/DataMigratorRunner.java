@@ -74,47 +74,62 @@ public class DataMigratorRunner {
     private final Log log = LogFactory.getLog(DataMigratorRunner.class);
 
     //Cassandra
-    private Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg()
-        .withType(String.class).create();
+    private Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg().withType(String.class)
+        .withDescription("Cassandra user (default: rhqadmin)").create();
     private Option cassandraPasswordOption = OptionBuilder.withLongOpt("cassandra-password").hasArg()
-        .withType(String.class).create();
-    private Option cassandraHostsOption = OptionBuilder.withLongOpt("cassandra-hosts").hasArg()
-        .withType(String.class).create();
-    private Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression")
-        .withType(String.class).create();
+        .withDescription("Cassandra password (default: rhqadmin)").withType(String.class).create();
+    private Option cassandraHostsOption = OptionBuilder.withLongOpt("cassandra-hosts").hasArg().withType(String.class)
+        .withDescription("Cassandra hosts, format host_ip,thrift_port,native_port|host_ip,... (default: 127.0.0.1|123|123)")
+        .create();
+    private Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression").hasOptionalArg()
+        .withType(String.class).withDescription("Enable compression for communication with Cassandra (default: true)")
+        .create();
 
     //SQL
-    private Option sqlUserOption = OptionBuilder.withLongOpt("sql-user").hasArg()
-        .withType(String.class).create();
-    private Option sqlPasswordOption = OptionBuilder.withLongOpt("sql-password").hasArg()
-        .withType(String.class).create();
-    private Option sqlHostOption = OptionBuilder.withLongOpt("sql-host").hasArg()
-        .withType(String.class).create();
-    private Option sqlPortOption = OptionBuilder.withLongOpt("sql-port").hasArg()
-        .withType(String.class).create();
-    private Option sqlDBOption = OptionBuilder.withLongOpt("sql-db").hasArg()
-        .withType(String.class).create();
+    private Option sqlUserOption = OptionBuilder.withLongOpt("sql-user").hasArg().withType(String.class)
+        .withDescription("SQL server user (default: rhqadmin)").create();
+    private Option sqlPasswordOption = OptionBuilder.withLongOpt("sql-password").hasArg().withType(String.class)
+        .withDescription("SQL server password (default: rhqadmin)").create();
+    private Option sqlHostOption = OptionBuilder.withLongOpt("sql-host").hasArg().withType(String.class)
+        .withDescription("SQL server host address (default: localhost)").create();
+    private Option sqlPortOption = OptionBuilder.withLongOpt("sql-port").hasArg().withType(String.class)
+        .withDescription("SQL server port (default: 5432)").create();
+    private Option sqlDBOption = OptionBuilder.withLongOpt("sql-db").hasArg().withType(String.class)
+        .withDescription("SQL database (default: rhq_db)").create();
+
+    private Option sqlServerType = OptionBuilder.withLongOpt("sql-server-type").hasArg().withType(String.class)
+        .withDescription("SQL server type, only postgres and oracle are supported (default: postgres)").create();
+    private Option sqlPostgresServer = OptionBuilder.withLongOpt("sql-server-postgres").hasOptionalArg()
+        .withType(Boolean.class).withDescription("Postgres SQL server.").create();
+    private Option sqlOracleServer = OptionBuilder.withLongOpt("sql-server-oracle").hasOptionalArg()
+        .withType(Boolean.class)
+        .withDescription("Oracle SQL server.").create();
 
     //Migration
-    private Option disableRawOption = OptionBuilder.withLongOpt("disable-raw-migration")
-        .withType(Boolean.class).create();
-    private Option disable1HOption = OptionBuilder.withLongOpt("disable-1h-migration")
-        .withType(Boolean.class).create();
-    private Option disable6HOption = OptionBuilder.withLongOpt("disable-6h-migration")
-        .withType(Boolean.class).create();
-    private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration")
-        .withType(Boolean.class).create();
-    private Option preserveDataOption = OptionBuilder.withLongOpt("preserve-data")
-        .withType(Boolean.class).create();
-    private Option deleteDataOption = OptionBuilder.withLongOpt("delete-data")
-        .withType(Boolean.class).create();
-    private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only")
-        .withType(Boolean.class).create();
+    private Option disableRawOption = OptionBuilder.withLongOpt("disable-raw-migration").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Disable raw table migration (default: false)").create();
+    private Option disable1HOption = OptionBuilder.withLongOpt("disable-1h-migration").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Disable 1 hour aggregates table migration (default: false)").create();
+    private Option disable6HOption = OptionBuilder.withLongOpt("disable-6h-migration").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Disable 6 hours aggregates table migration (default: false)").create();
+    private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Disable 24 hours aggregates table migration (default: false)").create();
+    private Option preserveDataOption = OptionBuilder.withLongOpt("preserve-data").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Preserve SQL data post migration (default: true)").create();
+    private Option deleteDataOption = OptionBuilder.withLongOpt("delete-data").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Delete SQL data at the end of migration (default: false)").create();
+    private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Only estimate how long the migration will take (default: false)").create();
 
-    //Misc
+    //Runner
     private Option helpOption = OptionBuilder.withLongOpt("help").create("h");
-    private Option debugLogOption = OptionBuilder.withLongOpt("debugLog").create("X");
-    private Option configFileOption = OptionBuilder.withLongOpt("config-file").hasArg().create();
+    private Option debugLogOption = OptionBuilder.withLongOpt("debugLog")
+        .withDescription("Enable debug level logs for the communication with Cassandra and SQL Server (default: false)")
+        .create("X");
+    private Option configFileOption = OptionBuilder.withLongOpt("config-file").hasArg()
+        .withDescription("Configuration file. All the command line options can be set in a typical properties file. " +
+                    "Command line arguments take precedence over default and configuration file options.")
+        .create();
 
 
     private Map<Object, Object> configuration = new HashMap<Object, Object>();
@@ -133,8 +148,8 @@ public class DataMigratorRunner {
         } catch (HelpRequestedException h) {
             //do nothing
         } catch (Exception e) {
-            System.out.println(e);
             e.printStackTrace();
+            System.exit(1);
         }
 
         System.exit(0);
@@ -153,6 +168,9 @@ public class DataMigratorRunner {
         options.addOption(sqlHostOption);
         options.addOption(sqlPortOption);
         options.addOption(sqlDBOption);
+        options.addOption(sqlServerType);
+        options.addOption(sqlPostgresServer);
+        options.addOption(sqlOracleServer);
 
         options.addOption(disableRawOption);
         options.addOption(disable1HOption);
@@ -172,6 +190,7 @@ public class DataMigratorRunner {
             commandLine = parser.parse(options, args);
         } catch (Exception e) {
             HelpFormatter formatter = new HelpFormatter();
+            formatter.setWidth(120);
             formatter.printHelp("DataMigrationRunner", options);
             throw new Exception("Error parsing command line arguments");
         }
@@ -206,22 +225,33 @@ public class DataMigratorRunner {
 
     private static void setLogLevel(Level level) {
         Logger root = Logger.getRootLogger();
+        root.setLevel(level);
 
         Logger cassandraLogging = root.getLoggerRepository().getLogger("log4j.logger.org.apache.cassandra.cql.jdbc");
         cassandraLogging.setLevel(level);
 
+        Logger cassandraDriverLogging = root.getLoggerRepository().getLogger("com.datastax.driver");
+        cassandraDriverLogging.setLevel(level);
+
         Logger hibernateLogging = root.getLoggerRepository().getLogger("org.hibernate");
         hibernateLogging.setLevel(level);
+
+        Logger migratorLogging = root.getLoggerRepository().getLogger("org.rhq");
+        if (Level.DEBUG.equals(level)) {
+            migratorLogging.setLevel(Level.INFO);
+        } else {
+            migratorLogging.setLevel(level);
+        }
     }
 
     private void run() throws Exception {
-        log.info("Creating Entity Manager");
+        log.debug("Creating Entity Manager");
         EntityManager entityManager = this.createEntityManager();
-        log.info("Done creating Entity Manager");
+        log.debug("Done creating Entity Manager");
 
-        log.info("Creating Cassandra session");
+        log.debug("Creating Cassandra session");
         Session session = this.createCassandraSession();
-        log.info("Done creating Cassandra session");
+        log.debug("Done creating Cassandra session");
 
         DataMigrator migrator = new DataMigrator(entityManager, session);
 
@@ -237,7 +267,8 @@ public class DataMigratorRunner {
         migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
 
         long estimate = migrator.estimate();
-        log.info("The migration process will take approximately: " + TimeUnit.MILLISECONDS.toMinutes(estimate)
+        System.out.println("The migration process will take approximately: "
+            + TimeUnit.MILLISECONDS.toMinutes(estimate)
             + " minutes (or " + estimate + " milliseconds)");
         if (!(Boolean) configuration.get(estimateOnlyOption)) {
             migrator.migrateData();
@@ -268,10 +299,18 @@ public class DataMigratorRunner {
         properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
         properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
 
-        properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-        properties.put("hibernate.driver_class", "org.postgresql.Driver");
-        properties.put("hibernate.connection.url", "jdbc:postgresql://" + (String) configuration.get(sqlHostOption)
-            + ":" + (String) configuration.get(sqlPortOption) + "/" + (String) configuration.get(sqlDBOption));
+        if ("oracle".equals(configuration.get(sqlServerType))) {
+            properties.put("hibernate.dialect", "org.hibernate.dialect.Oracle10gDialect");
+            properties.put("hibernate.driver_class", "oracle.jdbc.driver.OracleDriver");
+            properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
+                + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
+            properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
+        }else{
+            properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
+            properties.put("hibernate.driver_class", "org.postgresql.Driver");
+            properties.put("hibernate.connection.url", "jdbc:postgresql://" + (String) configuration.get(sqlHostOption)
+                + ":" + (String) configuration.get(sqlPortOption) + "/" + (String) configuration.get(sqlDBOption));
+        }
 
         Ejb3Configuration configuration = new Ejb3Configuration();
         configuration.setProperties(properties);
@@ -295,7 +334,8 @@ public class DataMigratorRunner {
         }
 
         if (commandLine.hasOption(cassandraCompressionOption.getLongOpt())) {
-            configuration.put(cassandraCompressionOption, true);
+            boolean value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
+            configuration.put(cassandraCompressionOption, value);
         }
     }
 
@@ -329,41 +369,65 @@ public class DataMigratorRunner {
         if (commandLine.hasOption(sqlDBOption.getLongOpt())) {
             configuration.put(sqlDBOption, commandLine.getOptionValue(sqlDBOption.getLongOpt()));
         }
+
+        if (commandLine.hasOption(sqlServerType.getLongOpt())) {
+            if ("oracle".equals(commandLine.getOptionValue(sqlServerType.getLongOpt()))) {
+                configuration.put(sqlServerType, "oracle");
+            } else {
+                configuration.put(sqlServerType, "postgres");
+            }
+        } else if (commandLine.hasOption(sqlPostgresServer.getLongOpt())) {
+            configuration.put(sqlServerType, "postgres");
+        } else if (commandLine.hasOption(sqlOracleServer.getLongOpt())) {
+            configuration.put(sqlServerType, "oracle");
+        }
     }
 
     private void parseMigrationOptionsWithDefault(CommandLine commandLine) {
+        boolean value;
+
         if (commandLine.hasOption(disableRawOption.getLongOpt())) {
-            configuration.put(disableRawOption, true);
+            value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
+            configuration.put(disableRawOption, value);
         }
 
         if (commandLine.hasOption(disable1HOption.getLongOpt())) {
-            configuration.put(disable1HOption, true);
+            value = parseBooleanOption(commandLine.getOptionValue(disable1HOption.getLongOpt()), true);
+            configuration.put(disable1HOption, value);
         }
 
         if (commandLine.hasOption(disable6HOption.getLongOpt())) {
-            configuration.put(disable6HOption, true);
+            value = parseBooleanOption(commandLine.getOptionValue(disable6HOption.getLongOpt()), true);
+            configuration.put(disable6HOption, value);
         }
 
         if (commandLine.hasOption(disable1DOption.getLongOpt())) {
-            configuration.put(disable1DOption, true);
+            value = parseBooleanOption(commandLine.getOptionValue(disable1DOption.getLongOpt()), true);
+            configuration.put(disable1DOption, value);
         }
 
         if (commandLine.hasOption(preserveDataOption.getLongOpt())) {
-            configuration.put(preserveDataOption, true);
+            value = parseBooleanOption(commandLine.getOptionValue(preserveDataOption.getLongOpt()), true);
+            configuration.put(preserveDataOption, value);
         } else if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
-            configuration.put(preserveDataOption, false);
+            value = parseBooleanOption(commandLine.getOptionValue(deleteDataOption.getLongOpt()), true);
+            configuration.put(preserveDataOption, value);
         }
 
         if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
+            value = parseBooleanOption(commandLine.getOptionValue(estimateOnlyOption.getLongOpt()), true);
             configuration.put(estimateOnlyOption, true);
         }
     }
 
+    /**
+     * Add default configuration options to the configuration store.
+     */
     private void loadDefaultConfiguration() {
         //default Cassandra configuration
         configuration.put(cassandraUserOption, "rhqadmin");
         configuration.put(cassandraPasswordOption, "rhqadmin");
-        configuration.put(cassandraHostsOption, new String[] { "127.0.0.1", "127.0.0.2" });
+        configuration.put(cassandraHostsOption, new String[] { "127.0.0.1" });
         configuration.put(cassandraCompressionOption, false);
 
         //default SQL configuration
@@ -372,6 +436,7 @@ public class DataMigratorRunner {
         configuration.put(sqlHostOption, "localhost");
         configuration.put(sqlPortOption, "5432");
         configuration.put(sqlDBOption, "rhq_db");
+        configuration.put(sqlServerType, "postgres");
 
         //default runner options
         configuration.put(disableRawOption, false);
@@ -382,6 +447,12 @@ public class DataMigratorRunner {
         configuration.put(estimateOnlyOption, false);
     }
 
+    /**
+     * Load the configuration options from file and overlay them on top of the default
+     * options.
+     *
+     * @param file config file
+     */
     private void loadConfigFile(String file) {
         try {
             File configFile = new File(file);
@@ -399,14 +470,30 @@ public class DataMigratorRunner {
                 Object optionValue;
 
                 if ((optionValue = configProperties.get(option.getLongOpt())) != null) {
-                    log.info("Configuration option loaded: " + option.getLongOpt() + " (" + option.getType() + ") -> "
+                    log.debug("Configuration option loaded: " + option.getLongOpt() + " (" + option.getType() + ") -> "
                         + optionValue);
 
                     if (option.equals(cassandraHostsOption)) {
                         String[] cassandraHosts = parseCassandraHosts(optionValue.toString());
                         configuration.put(option, cassandraHosts);
+                    } else if (option.equals(sqlServerType)) {
+                        if ("oracle".equals(optionValue)) {
+                            configuration.put(option, "oracle");
+                        } else {
+                            configuration.put(option, "postgres");
+                        }
+                    } else if (option.equals(sqlPostgresServer)) {
+                        boolean value = parseBooleanOption(optionValue.toString(), true);
+                        if (value == true) {
+                            configuration.put(sqlServerType, "postgres");
+                        }
+                    } else if (option.equals(sqlOracleServer)) {
+                        boolean value = parseBooleanOption(optionValue.toString(), true);
+                        if (value == true) {
+                            configuration.put(sqlServerType, "oracle");
+                        }
                     } else if (option.getType().equals(Boolean.class)) {
-                        configuration.put(option, Boolean.parseBoolean(optionValue.toString()));
+                        configuration.put(option, parseBooleanOption(optionValue.toString(), true));
                     } else {
                         configuration.put(option, optionValue.toString());
                     }
@@ -418,6 +505,14 @@ public class DataMigratorRunner {
         }
 
         log.error(configuration.toString());
+    }
+
+    private boolean parseBooleanOption(Object value, boolean defaultValue) {
+        try {
+            return Boolean.parseBoolean(value.toString());
+        } catch (Exception e) {
+            return defaultValue;
+        }
     }
 
     @SuppressWarnings("serial")

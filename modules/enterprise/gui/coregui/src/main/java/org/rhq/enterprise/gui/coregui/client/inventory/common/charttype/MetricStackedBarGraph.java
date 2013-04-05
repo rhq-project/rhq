@@ -75,7 +75,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
         var metricStackedBarGraph = function () {
             "use strict";
             // privates
-
             var margin = {top: 10, right: 5, bottom: 5, left: 40},
                     width = 750 - margin.left - margin.right,
                     adjustedChartHeight = chartContext.chartHeight - 50,
@@ -99,111 +98,113 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     svg;
 
             function getChartWidth() {
-                return $wnd.jQuery("#"+chartContext.chartHandle).width();
+                return $wnd.jQuery("#" + chartContext.chartHandle).width();
             }
 
             function useSmallCharts() {
-                console.info("Chart Width for : "+chartContext.chartHandle+" is "+getChartWidth());
+                console.info("Chart Width for : " + chartContext.chartHandle + " is " + getChartWidth());
                 return  getChartWidth() <= smallChartThresholdInPixels;
             }
 
             function determineScale() {
                 var xTicks, xTickSubDivide, numberOfBarsForSmallGraph = 20;
+                if (chartContext.data.length > 0) {
 
-                // if window is too small server up small chart
-                if (useSmallCharts()) {
-                    console.log("Using Small Charts Profile");
-                    width = 250;
-                    xTicks = 3;
-                    xTickSubDivide = 2;
-                    chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length - 1);
-                }
-                else {
-                    console.log("Using Large Charts Profile");
-                    //  we use the width already defined above
-                    xTicks = 12;
-                    xTickSubDivide = 5;
-                    chartData = chartContext.data;
-                }
-
-                avg = $wnd.d3.mean(chartContext.data.map(function (d) {
-                    return d.y;
-                }));
-                peak = $wnd.d3.max(chartContext.data.map(function (d) {
-                    if (d.high != undefined) {
-                        return d.high;
+                    // if window is too small server up small chart
+                    if (useSmallCharts()) {
+                        console.log("Using Small Charts Profile");
+                        width = 250;
+                        xTicks = 3;
+                        xTickSubDivide = 2;
+                        chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length - 1);
                     }
                     else {
-                        return 0;
+                        console.log("Using Large Charts Profile");
+                        //  we use the width already defined above
+                        xTicks = 12;
+                        xTickSubDivide = 5;
+                        chartData = chartContext.data;
                     }
-                }));
-                min = $wnd.d3.min(chartContext.data.map(function (d) {
-                    if (d.low != undefined) {
-                        return d.low;
+
+                    avg = $wnd.d3.mean(chartContext.data.map(function (d) {
+                        return d.y;
+                    }));
+                    peak = $wnd.d3.max(chartContext.data.map(function (d) {
+                        if (d.high != undefined) {
+                            return d.high;
+                        }
+                        else {
+                            return 0;
+                        }
+                    }));
+                    min = $wnd.d3.min(chartContext.data.map(function (d) {
+                        if (d.low != undefined) {
+                            return d.low;
+                        }
+                        else {
+                            return Number.MAX_VALUE;
+                        }
+                    }));
+                    // adjust the min scale so blue low line is not in axis
+                    determineLowBound = function (min, peak) {
+                        var newLow = min - ((peak - min) * 0.1);
+                        if (newLow < 0) {
+                            return 0;
+                        }
+                        else {
+                            return newLow;
+                        }
+                    };
+                    lowBound = determineLowBound(min, peak);
+                    highBound = peak + ((peak - min) * 0.1);
+                    oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
+                        if (d.baselineMax == undefined) {
+                            return 0;
+                        }
+                        else {
+                            return +d.baselineMax;
+                        }
+                    }));
+                    calcBarWidth = function () {
+                        return (width / chartData.length - barOffset  )
+                    };
+
+                    yScale = $wnd.d3.scale.linear()
+                            .clamp(true)
+                            .rangeRound([height, 0])
+                            .domain([lowBound, highBound]);
+                    yAxis = $wnd.d3.svg.axis()
+                            .scale(yScale)
+                            .tickSubdivide(1)
+                            .ticks(5)
+                            .tickSize(4, 4, 0)
+                            .orient("left");
+
+
+                    timeScale = $wnd.d3.time.scale()
+                            .range([0, width])
+                            .domain($wnd.d3.extent(chartData, function (d) {
+                                return d.x;
+                            }));
+
+                    xAxis = $wnd.d3.svg.axis()
+                            .scale(timeScale)
+                            .ticks(xTicks)
+                            .tickSubdivide(xTickSubDivide)
+                            .tickSize(4, 4, 0)
+                            .orient("bottom");
+
+                    // create the actual chart group
+                    chart = $wnd.d3.select("#" + chartContext.chartSelection);
+
+                    svg = chart.append("g")
+                            .attr("width", width + margin.left + margin.right)
+                            .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
+                            .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
+
+                    if (!useSmallCharts()) {
+                        createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                     }
-                    else {
-                        return Number.MAX_VALUE;
-                    }
-                }));
-                // adjust the min scale so blue low line is not in axis
-                determineLowBound = function (min, peak) {
-                    var newLow = min - ((peak - min) * 0.1);
-                    if (newLow < 0) {
-                        return 0;
-                    }
-                    else {
-                        return newLow;
-                    }
-                };
-                lowBound = determineLowBound(min, peak);
-                highBound = peak + ((peak - min) * 0.1);
-                oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
-                    if (d.baselineMax == undefined) {
-                        return 0;
-                    }
-                    else {
-                        return +d.baselineMax;
-                    }
-                }));
-                calcBarWidth = function () {
-                    return (width / chartData.length - barOffset  )
-                };
-
-                yScale = $wnd.d3.scale.linear()
-                        .clamp(true)
-                        .rangeRound([height, 0])
-                        .domain([lowBound, highBound]);
-                yAxis = $wnd.d3.svg.axis()
-                        .scale(yScale)
-                        .tickSubdivide(1)
-                        .ticks(5)
-                        .tickSize(4, 4, 0)
-                        .orient("left");
-
-
-                timeScale = $wnd.d3.time.scale()
-                        .range([0, width])
-                        .domain($wnd.d3.extent(chartData, function (d) {
-                            return d.x;
-                        }));
-
-                xAxis = $wnd.d3.svg.axis()
-                        .scale(timeScale)
-                        .ticks(xTicks)
-                        .tickSubdivide(xTickSubDivide)
-                        .tickSize(4, 4, 0)
-                        .orient("bottom");
-
-                // create the actual chart group
-                chart = $wnd.d3.select("#"+chartContext.chartSelection);
-
-                svg = chart.append("g")
-                        .attr("width", width + margin.left + margin.right)
-                        .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
-                        .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
-
-                if (!useSmallCharts()) {
-                    createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                 }
 
             }
@@ -252,7 +253,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("x", xValue)
                         .attr("y", yBase + yInc)
                         .text(avgValue.toFixed(decimalPlaces) + " " + uom);
-
 
                 // min
                 chart.append("text")
@@ -600,23 +600,27 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                 // Public API
                 draw: function (chartContext) {
                     "use strict";
-                    console.group("Creating Chart: %s --> %s", chartContext.chartSelection, chartContext.chartTitle);
-                    console.time("chart");
+                    // Guard condition that can occur when a portlet has not been configured yet
+                    if (chartContext.data.length > 0) {
+                        console.group("Creating Chart: %s --> %s", chartContext.chartSelection, chartContext.chartTitle);
+                        console.time("chart");
 
-                    determineScale();
-                    createHeader(chartContext.chartTitle);
 
-                    createYAxisGridLines();
-                    createStackedBars();
-                    createXandYAxes();
-                    createAvgLines();
-                    if (oobMax > 0) {
-                        console.info("OOB Data Exists!");
-                        createOOBLines();
+                        determineScale();
+                        createHeader(chartContext.chartTitle);
+
+                        createYAxisGridLines();
+                        createStackedBars();
+                        createXandYAxes();
+                        createAvgLines();
+                        if (oobMax > 0) {
+                            console.info("OOB Data Exists!");
+                            createOOBLines();
+                        }
+                        createHovers(chartContext);
+                        console.timeEnd("chart");
+                        console.groupEnd();
                     }
-                    createHovers(chartContext);
-                    console.timeEnd("chart");
-                    console.groupEnd();
                 }
             }; // end public closure
         }();

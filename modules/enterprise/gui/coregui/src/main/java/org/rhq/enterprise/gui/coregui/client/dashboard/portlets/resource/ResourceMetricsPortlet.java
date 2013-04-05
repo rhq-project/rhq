@@ -78,6 +78,9 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
     private int resourceId = -1;
 
+    private ChartViewWindow window;
+    private D3GraphListView graphView;
+
     public ResourceMetricsPortlet(int resourceId) {
         super(EntityContext.forResource(-1));
         this.resourceId = resourceId;
@@ -273,9 +276,9 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     link.addClickHandler(new ClickHandler() {
                                                         @Override
                                                         public void onClick(ClickEvent event) {
-                                                            ChartViewWindow window = new ChartViewWindow(title);
+                                                            window = new ChartViewWindow(title);
 
-                                                            final D3GraphListView graphView = D3GraphListView
+                                                            graphView = D3GraphListView
                                                                 .createSingleGraph(resourceComposite.getResource(),
                                                                     md.getId(), true);
                                                             graphView.addSetButtonClickHandler(new ClickHandler() {

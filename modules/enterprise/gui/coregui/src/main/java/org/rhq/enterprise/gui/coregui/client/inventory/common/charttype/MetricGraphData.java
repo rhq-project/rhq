@@ -153,7 +153,12 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartId() {
         if(isPortalGraph){
-            return entityId + "-" + definition.getId();
+            if(definition != null){
+                return entityId + "-" + definition.getId();
+            }else {
+                // case when portlet has not been configured yet
+                return "";
+            }
         }else {
             return entityId + "-" + definitionId;
         }
@@ -244,7 +249,13 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartTitle() {
 
-        return (entityName == null) ? definition.getDisplayName() : entityName + " - "+definition.getDisplayName();
+        if(definition != null){
+            return (entityName == null) ? definition.getDisplayName() : entityName + " - "+definition.getDisplayName();
+        }else {
+            // handle case when dashboard portlet has not been configured yet.
+            return "";
+
+        }
 
     }
 

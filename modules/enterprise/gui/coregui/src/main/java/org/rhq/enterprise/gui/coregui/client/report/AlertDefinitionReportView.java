@@ -247,9 +247,8 @@ public class AlertDefinitionReportView extends Table<AlertDefinitionReportView.D
                         CoreGUI.goToView(LinkManager.getSubsystemAlertDefinitionLink(resourceId, alertDefId));
                     } else if (alertDef.getGroupAlertDefinition() != null) {
                         AlertDefinition groupAlertDef = alertDef.getGroupAlertDefinition();
-                        CoreGUI.goToView(LinkManager.getEntityTabLink(
-                            EntityContext.forGroup(groupAlertDef.getResourceGroup()), "Alert", "Definitions")
-                            + "/" + groupAlertDef.getId());
+                        CoreGUI.goToView(LinkManager.getEntityTabLink(EntityContext.forGroup(groupAlertDef.getGroup()),
+                            "Alert", "Definitions") + "/" + groupAlertDef.getId());
                     }
 
                 }

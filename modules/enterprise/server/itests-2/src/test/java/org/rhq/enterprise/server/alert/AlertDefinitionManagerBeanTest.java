@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.alert;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,6 +35,7 @@ import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -54,6 +56,12 @@ import org.rhq.enterprise.server.util.SessionTestHelper;
 public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
 
     private static final Log LOG = LogFactory.getLog(AlertDefinitionManagerBeanTest.class);
+
+    final private String prefix = this.getClass().getSimpleName() + "_";
+    final private String subjectName = prefix + "subject";
+    final private String roleName = prefix + "role";
+    final private String groupName = prefix + "group";
+    final private String resourceName = prefix + "resource";
 
     private AlertDefinitionManagerLocal alertDefinitionManager;
 
@@ -79,20 +87,20 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         testData = executeInTransaction(false, new TransactionCallbackReturnable<TestData>() {
             @Override
             public TestData execute() throws Exception {
+
                 TestData newTestData = new TestData();
-                Subject subject = SessionTestHelper.createNewSubject(em, "fake subject");
+                Subject subject = SessionTestHelper.createNewSubject(em, subjectName);
                 newTestData.setSubject(subject);
-                Role role = SessionTestHelper.createNewRoleForSubject(em, subject, "fake role",
-                    Permission.MANAGE_ALERTS);
+                Role role = SessionTestHelper.createNewRoleForSubject(em, subject, roleName, Permission.MANAGE_ALERTS);
                 newTestData.setRole(role);
                 ResourceType resourceType = SessionTestHelper.createNewResourceType(em);
                 newTestData.setResourceType(resourceType);
-                ResourceGroup resourceGroup = new ResourceGroup("fake group", resourceType);
+                ResourceGroup resourceGroup = new ResourceGroup(groupName, resourceType);
                 resourceGroup = resourceGroupManager.createPrivateResourceGroup(subject, resourceGroup);
                 newTestData.setResourceGroup(resourceGroup);
                 roleManager.setAssignedResourceGroups(subjectManager.getOverlord(), role.getId(),
                     new int[] { resourceGroup.getId() });
-                Resource resource = SessionTestHelper.createNewResourceForGroup(em, resourceGroup, "fake resource");
+                Resource resource = SessionTestHelper.createNewResourceForGroup(em, resourceGroup, resourceName);
                 newTestData.setResource(resource);
                 return newTestData;
             }
@@ -110,14 +118,19 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
 
     private void deleteTestData() throws Exception {
         if (testData != null) {
+            // use the SLSB here, not just EM
+            resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), testData.getResourceGroup().getId());
+
             for (Integer alertDefinitionId : testData.getAlertDefinitionIds()) {
                 removeEntity(AlertDefinition.class, alertDefinitionId);
             }
-            removeEntity(ResourceGroup.class, testData.getResourceGroup().getId());
+
             removeEntity(Resource.class, testData.getResource().getId());
             removeEntity(ResourceType.class, testData.getResourceType().getId());
-            removeEntity(Subject.class, testData.getSubject().getId());
-            removeEntity(Role.class, testData.getRole().getId());
+
+            subjectManager.deleteSubjects(subjectManager.getOverlord(), new int[] { testData.getSubject().getId() });
+            roleManager.deleteRoles(subjectManager.getOverlord(), new int[] { testData.getRole().getId() });
+
             testData = null;
         }
     }
@@ -132,6 +145,7 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
                         ResourceTreeHelper.deleteResource(em, (Resource) object);
                     } else {
                         em.remove(object);
+                        em.flush();
                     }
                 }
             });
@@ -147,7 +161,8 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
             public void execute() throws Exception {
                 List<Integer> alertDefinitionIds = new LinkedList<Integer>();
                 for (int i = 0; i < 50; i++) {
-                    alertDefinitionIds.add(createAlertDefinitionAndGetId("fake alertdef-" + String.valueOf(i), false));
+                    alertDefinitionIds.add(createAlertDefinitionAndGetId(prefix + "alertdef_" + String.valueOf(i),
+                        false));
                 }
                 List<Integer> alertDefinitionToEnableIds = alertDefinitionIds.subList(12, 37);
                 int enabledCount = alertDefinitionManager.enableAlertDefinitions(testData.getSubject(),
@@ -164,7 +179,8 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
             public void execute() throws Exception {
                 List<Integer> alertDefinitionIds = new LinkedList<Integer>();
                 for (int i = 0; i < 50; i++) {
-                    alertDefinitionIds.add(createAlertDefinitionAndGetId("fake alertdef-" + String.valueOf(i), true));
+                    alertDefinitionIds
+                        .add(createAlertDefinitionAndGetId(prefix + "alertdef_" + String.valueOf(i), true));
                 }
                 List<Integer> alertDefinitionToDisableIds = alertDefinitionIds.subList(17, 48);
                 int disabledCount = alertDefinitionManager.disableAlertDefinitions(testData.getSubject(),
@@ -179,8 +195,8 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         executeInTransaction(new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                int resourceAlertDefinitionId = createAlertDefinitionAndGetId("fake resource alertdef", true);
-                int groupAlertDefinitionId = createGroupAlertDefinitionAndGetId("fake group alertdef");
+                int resourceAlertDefinitionId = createAlertDefinitionAndGetId(prefix + "resource_Alertdef", true);
+                int groupAlertDefinitionId = createGroupAlertDefinitionAndGetId(prefix + "group_Alertdef");
                 assertTrue("Failed to detect a group alert definition",
                     alertDefinitionManager.isGroupAlertDefinition(groupAlertDefinitionId));
                 assertFalse("Should not have detected a group alert definition",
@@ -193,6 +209,98 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         });
     }
 
+    @Test
+    void testBug846451() {
+        executeInTransaction(new TransactionCallback() {
+            @Override
+            public void execute() throws Exception {
+                String name = prefix + "group_Alertdef";
+                int groupAlertDefinitionId = createGroupAlertDefinitionAndGetId(name);
+
+                AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+                criteria.addFilterResourceGroupIds(testData.getResourceGroup().getId());
+
+                // tests the reported bug
+                List<AlertDefinition> result = alertDefinitionManager.findAlertDefinitionsByCriteria(
+                    testData.getSubject(), criteria);
+                assertNotNull(result);
+                assertEquals(1, result.size());
+                assertEquals(name, result.get(0).getName());
+            }
+        });
+    }
+
+    @Test
+    void testAddRemoveGroupMembers() throws Exception {
+
+        Resource resource2 = null;
+        Resource resource3 = null;
+
+        try {
+
+            // creating alert definitions is performed in a new transaction. So, any involved entities must already be
+            // committed.  Commit the additional test entities here. This stuff will get cleaned up in afterMethod            
+            startTransaction();
+
+            String name = prefix + "group_Alertdef";
+            int groupAlertDefinitionId = createGroupAlertDefinitionAndGetId(name);
+
+            String resource2Name = resourceName + "_2";
+            String resource3Name = resourceName + "_3";
+            resource2 = SessionTestHelper.createNewResource(em, resource2Name, testData.getResourceType());
+            resource3 = SessionTestHelper.createNewResource(em, resource3Name, testData.getResourceType());
+
+            commitTransaction();
+
+            // add new members and ensure the resource-level alert defs gets applied. Make sure to use the SLSB to add it
+            LookupUtil.getResourceGroupManager().addResourcesToGroup(subjectManager.getOverlord(),
+                testData.getResourceGroup().getId(), new int[] { resource2.getId() });
+            LookupUtil.getResourceGroupManager().addResourcesToGroup(subjectManager.getOverlord(),
+                testData.getResourceGroup().getId(), new int[] { resource3.getId() });
+
+            int[] ids = new int[] { resource2.getId(), resource3.getId() };
+            AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+            criteria.addFilterResourceIds(ids[0], ids[1]);
+
+            List<AlertDefinition> result = alertDefinitionManager.findAlertDefinitionsByCriteria(testData.getSubject(),
+                criteria);
+            assertNotNull(result);
+            assertEquals(2, result.size());
+            assertEquals(name, result.get(0).getName());
+            assertEquals(name, result.get(1).getName());
+            assertTrue(result.get(0).getId() != result.get(1).getId());
+
+            // remove member and ensure the alert def gets removed
+            LookupUtil.getResourceGroupManager().removeResourcesFromGroup(subjectManager.getOverlord(),
+                testData.getResourceGroup().getId(), ids);
+
+            result = alertDefinitionManager.findAlertDefinitionsByCriteria(testData.getSubject(), criteria);
+            assertNotNull(result);
+            assertEquals(0, result.size());
+
+        } finally {
+            Resource[] resources = new Resource[] { resource2, resource3 };
+            try {
+                startTransaction();
+                for (Resource r : resources) {
+                    if (null != r) {
+
+                        r = em.find(Resource.class, r.getId());
+                        Set<AlertDefinition> ads = r.getAlertDefinitions();
+                        for (AlertDefinition ad : ads) {
+                            em.remove(ad);
+                        }
+                        ResourceTreeHelper.deleteResource(em, r);
+                    }
+                }
+                commitTransaction();
+
+            } catch (Exception e) {
+                rollbackTransaction();
+            }
+        }
+    }
+
     private int createAlertDefinitionAndGetId(String name, boolean enabled) {
         AlertDefinition alertDefinition = new AlertDefinition();
         alertDefinition.setName(name);
@@ -201,8 +309,8 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         alertDefinition.setConditionExpression(BooleanExpression.ANY);
         alertDefinition.setRecoveryId(0);
         alertDefinition.setEnabled(enabled);
-        int alertDefinitionId = alertDefinitionManager.createAlertDefinition(testData.getSubject(), alertDefinition,
-            testData.getResource().getId(), true);
+        int alertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(),
+            alertDefinition, testData.getResource().getId(), true);
         testData.getAlertDefinitionIds().add(alertDefinitionId);
         return alertDefinitionId;
     }
@@ -214,10 +322,10 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         alertDefinition.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
         alertDefinition.setConditionExpression(BooleanExpression.ANY);
         alertDefinition.setRecoveryId(0);
-        alertDefinition.setResourceGroup(testData.getResourceGroup());
+        alertDefinition.setGroup(testData.getResourceGroup());
         alertDefinition.setEnabled(true);
-        int alertDefinitionId = alertDefinitionManager.createAlertDefinition(testData.getSubject(), alertDefinition,
-            null, true);
+        int alertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(),
+            alertDefinition, null, true);
         testData.getAlertDefinitionIds().add(alertDefinitionId);
         return alertDefinitionId;
     }

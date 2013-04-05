@@ -205,7 +205,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                 templateAlertDefinition.setResourceType(resourceType);
 
                 groupAlertDefinition = createDefinitionForTest(universalName + " group", true);
-                groupAlertDefinition.setResourceGroup(resourceGroup);
+                groupAlertDefinition.setGroup(resourceGroup);
 
                 resourceAlertDefinition = createDefinitionForTest(universalName + " resource", true);
                 resourceAlertDefinition.setResource(resources.iterator().next());
@@ -413,7 +413,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             false);
         def.setResource(resources.iterator().next());
 
-        int id = adm.createAlertDefinition(subject, def, res.getId(), true);
+        int id = adm.createAlertDefinitionInNewTransaction(subject, def, res.getId(), true);
         def.setId(id);
 
         resourceLevelAlertDefinitionId = id;
@@ -432,7 +432,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
         AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnGroupLevelAlertDefinitionCreation",
             false);
-        def.setResourceGroup(resourceGroup);
+        def.setGroup(resourceGroup);
 
         int id = gadm.createGroupAlertDefinitions(subject, def, resourceGroup.getId());
         def.setId(id);
@@ -456,7 +456,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
         AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnTemplateLevelAlertDefinitionCreation",
             false);
-        def.setResourceGroup(resourceGroup);
+        def.setGroup(resourceGroup);
 
         int id = atm.createAlertTemplate(subject, def, resourceType.getId());
         def.setId(id);

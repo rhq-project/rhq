@@ -97,7 +97,7 @@ public class GroupAlertDefinitionsView extends AbstractAlertDefinitionsView {
         SingleAlertDefinitionView view = super.getDetailsView(id);
         if (id == 0) {
             // when creating a new alert def, make sure to set this in the new alert def
-            view.getAlertDefinition().setResourceGroup(group);
+            view.getAlertDefinition().setGroup(group);
         }
         return view;
     }

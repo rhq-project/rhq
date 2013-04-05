@@ -94,8 +94,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private boolean checkViewPermission(Subject subject, AlertDefinition alertDefinition) {
         if (alertDefinition.getResourceType() != null) { // an alert template
             return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
-        } else if (alertDefinition.getResourceGroup() != null) { // a groupAlertDefinition
-            return authorizationManager.canViewGroup(subject, alertDefinition.getResourceGroup().getId());
+        } else if (alertDefinition.getGroup() != null) { // a groupAlertDefinition
+            return authorizationManager.canViewGroup(subject, alertDefinition.getGroup().getId());
         } else { // an alert definition
             return authorizationManager.canViewResource(subject, alertDefinition.getResource().getId());
         }
@@ -112,9 +112,9 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
         if (alertDefinition.getResourceType() != null) { // an alert template
             return authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_SETTINGS);
-        } else if (alertDefinition.getResourceGroup() != null) { // a groupAlertDefinition
+        } else if (alertDefinition.getGroup() != null) { // a groupAlertDefinition
             return authorizationManager.hasGroupPermission(subject, Permission.MANAGE_ALERTS, alertDefinition
-                .getResourceGroup().getId());
+                .getGroup().getId());
         } else { // an alert definition
             return authorizationManager.hasResourcePermission(subject, Permission.MANAGE_ALERTS, alertDefinition
                 .getResource().getId());
@@ -207,7 +207,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean validateNotificationConfiguration)
+    public int createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean validateNotificationConfiguration)
         throws InvalidAlertDefinitionException {
 
         return createAlertDefinitionInternal(subject, alertDefinition, resourceId, true, validateNotificationConfiguration);
@@ -216,13 +216,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     private int createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean checkPerms, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
         checkAlertDefinition(subject, null, alertDefinition, resourceId, validateNotificationConfiguration);
 
-        // if this is an alert definition, set up the link to a resource
+        // if this is an resource alert definition, set up the link to a resource
         if (resourceId != null) {
             // don't attach an alertTemplate or groupAlertDefinition to any particular resource
             // they should have already been attached to the resourceType or resourceGroup by the caller
 
-            //Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
             // use proxy trick to subvert having to load the entire resource into memory
+            // Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);            
             alertDefinition.setResource(new Resource(resourceId));
         }
 
@@ -232,10 +232,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to create alert templates for type ["
                     + alertDefinition.getResourceType() + "]");
-            } else if (alertDefinition.getResourceGroup() != null) {
+            } else if (alertDefinition.getGroup() != null) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to create alert definitions for group ["
-                    + alertDefinition.getResourceGroup() + "]");
+ + alertDefinition.getGroup()
+                    + "]");
             } else {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to create alert definitions for resource ["
@@ -333,8 +334,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                     notifyAlertConditionCacheManager(subject, "removeAlertDefinitions", alertDefinition,
                         AlertDefinitionEvent.DELETED);
                 }
-                if (alertDefinition.getResourceGroup() != null) {
-                    alertDefinition.setResourceGroup(null); // break bonds so corresponding ResourceGroup can be purged
+                if (alertDefinition.getGroup() != null) {
+                    alertDefinition.setGroup(null); // break bonds so corresponding ResourceGroup can be purged
                 }
             }
         }
@@ -439,7 +440,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 newAlertDefinition.setParentId(alertDefinition.getParentId());
                 newAlertDefinition.setResource(alertDefinition.getResource());
                 newAlertDefinition.setResourceType(alertDefinition.getResourceType());
-                newAlertDefinition.setResourceGroup(alertDefinition.getResourceGroup());
+                newAlertDefinition.setGroup(alertDefinition.getGroup());
                 newAlertDefinition.setGroupAlertDefinition(alertDefinition.getGroupAlertDefinition());
 
                 entityManager.persist(newAlertDefinition);
@@ -498,10 +499,10 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to modify alert templates for type ["
                     + oldAlertDefinition.getResourceType() + "]");
-            } else if (oldAlertDefinition.getResourceGroup() != null) {
+            } else if (oldAlertDefinition.getGroup() != null) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to modify alert definitions for group ["
-                    + oldAlertDefinition.getResourceGroup() + "]");
+                    + oldAlertDefinition.getGroup() + "]");
             } else {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to modify alert definitions for resource ["

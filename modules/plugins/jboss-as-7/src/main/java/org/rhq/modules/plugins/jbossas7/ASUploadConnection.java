@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.BufferedOutputStream;
@@ -26,18 +27,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpStatus;
-import org.apache.commons.httpclient.SimpleHttpConnectionManager;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.apache.commons.httpclient.methods.multipart.FilePart;
-import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
-import org.apache.commons.httpclient.methods.multipart.Part;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.entity.mime.MultipartEntity;
+import org.apache.http.entity.mime.content.FileBody;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.params.HttpConnectionParams;
+import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.map.ObjectMapper;
 
@@ -65,19 +70,17 @@ import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
  */
 public class ASUploadConnection {
 
-    private static final String HTTP_SCHEME = "http";
+    private static final Log LOG = LogFactory.getLog(ASUploadConnection.class);
 
-    private static final int SOCKET_CONNECTION_TIMEOUT = 30 * 1000; // 60sec
+    private static final int SOCKET_CONNECTION_TIMEOUT = 30 * 1000; // 30sec
 
-    private static final int SOCKET_READ_TIMEOUT = 60 * 1000; // 30sec
+    private static final int SOCKET_READ_TIMEOUT = 60 * 1000; // 60sec
 
-    private static final String TRIGGER_AUTH_URL_PATH = ASConnection.MANAGEMENT;
+    private static final String TRIGGER_AUTH_URI = ASConnection.MANAGEMENT_URI;
 
-    private static final String UPLOAD_URL_PATH = ASConnection.MANAGEMENT + "/add-content";
+    private static final String UPLOAD_URI = ASConnection.MANAGEMENT_URI + "/add-content";
 
     private static final int FILE_POST_MAX_LOGGABLE_RESPONSE_LENGTH = 1024 * 2; // 2k max 
-
-    private static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
 
     private static final String EMPTY_JSON_TREE = "{}";
 
@@ -89,9 +92,9 @@ public class ASUploadConnection {
 
     private static final String JSON_NODE_OUTCOME_VALUE_FAILED = "failed";
 
-    private static final Log log = LogFactory.getLog(ASUploadConnection.class);
+    private static final String SYSTEM_LINE_SEPARATOR = System.getProperty("line.separator");
 
-    private String scheme = HTTP_SCHEME;
+    private String scheme = ASConnection.HTTP_SCHEME;
 
     private String host;
 
@@ -209,7 +212,7 @@ public class ASUploadConnection {
             cacheOutputStream = new BufferedOutputStream(new FileOutputStream(cacheFile));
             return cacheOutputStream;
         } catch (IOException e) {
-            log.error("Could not create outputstream for " + fileName, e);
+            LOG.error("Could not create outputstream for " + fileName, e);
         }
         return null;
     }
@@ -253,56 +256,58 @@ public class ASUploadConnection {
         // A better way to avoid uploading a big file multiple times would be to use header Expect: Continue
         // Unfortunately AS7 responds 100 Continue even if the authentication headers are not yet present
 
-        SimpleHttpConnectionManager httpConnectionManager = new SimpleHttpConnectionManager();
-        HttpClient client = new HttpClient(httpConnectionManager);
-        if (credentialsProvided()) {
-            client.getState().setCredentials(new AuthScope(host, port, AuthScope.ANY_REALM), credentials);
+        ClientConnectionManager httpConnectionManager = new BasicClientConnectionManager();
+        DefaultHttpClient httpClient = new DefaultHttpClient(httpConnectionManager);
+        HttpParams httpParams = httpClient.getParams();
+        HttpConnectionParams.setConnectionTimeout(httpParams, SOCKET_CONNECTION_TIMEOUT);
+        HttpConnectionParams.setSoTimeout(httpParams, timeout);
+        if (credentials != null) {
+            httpClient.getCredentialsProvider().setCredentials(new AuthScope(host, port), credentials);
         }
-        client.getHttpConnectionManager().getParams().setConnectionTimeout(SOCKET_CONNECTION_TIMEOUT);
-        client.getHttpConnectionManager().getParams().setSoTimeout(timeout);
 
-        String triggerAuthURL = scheme + "://" + host + ":" + port + TRIGGER_AUTH_URL_PATH;
-        GetMethod triggerAuthGET = new GetMethod(triggerAuthURL);
+        String triggerAuthUrl = scheme + "://" + host + ":" + port + TRIGGER_AUTH_URI;
+        HttpGet triggerAuthRequest = new HttpGet(triggerAuthUrl);
         try {
             // Send GET request in order to trigger authentication
             // We don't check response code because we're not already uploading the file
-            client.executeMethod(triggerAuthGET);
+            httpClient.execute(triggerAuthRequest);
         } catch (Exception ignore) {
-            // We don't stop trying upload if triggerAuthGET raises exception
+            // We don't stop trying upload if triggerAuthRequest raises exception
             // See comment above
         } finally {
-            triggerAuthGET.releaseConnection();
+            triggerAuthRequest.abort();
         }
 
-        String uploadURL = scheme + "://" + host + ":" + port + UPLOAD_URL_PATH;
-        PostMethod filePOST = new PostMethod(uploadURL);
+        String uploadURL = scheme + "://" + host + ":" + port + UPLOAD_URI;
+        HttpPost uploadRequest = new HttpPost(uploadURL);
         try {
 
             // Now upload file with multipart POST request
-            Part[] parts = { new FilePart(fileName, cacheFile) };
-            filePOST.setRequestEntity(new MultipartRequestEntity(parts, filePOST.getParams()));
-            int responseCode = client.executeMethod(filePOST);
-            if (responseCode != HttpStatus.SC_OK) {
-                logUploadDoesNotEndWithHttpOkStatus(filePOST, responseCode);
+            MultipartEntity multipartEntity = new MultipartEntity();
+            multipartEntity.addPart(fileName, new FileBody(cacheFile));
+            uploadRequest.setEntity(multipartEntity);
+            HttpResponse uploadResponse = httpClient.execute(uploadRequest);
+            if (uploadResponse.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+                logUploadDoesNotEndWithHttpOkStatus(uploadResponse);
                 return null;
             }
 
             ObjectMapper objectMapper = new ObjectMapper();
-            InputStream responseBodyAsStream = filePOST.getResponseBodyAsStream();
+            InputStream responseBodyAsStream = uploadResponse.getEntity().getContent();
             if (responseBodyAsStream == null) {
-                log.warn("POST request has no response body");
+                LOG.warn("POST request has no response body");
                 return objectMapper.readTree(EMPTY_JSON_TREE);
             }
             return objectMapper.readTree(responseBodyAsStream);
 
         } catch (Exception e) {
-            log.error(e);
+            LOG.error(e);
             return null;
         } finally {
-            // First release connection
-            filePOST.releaseConnection();
-            // Then force close
-            httpConnectionManager.closeIdleConnections(0);
+            // Release httpclient resources
+            uploadRequest.abort();
+            httpConnectionManager.shutdown();
+            // Delete cache file
             deleteCacheFile();
         }
     }
@@ -344,7 +349,7 @@ public class ASUploadConnection {
                     return true;
                 }
             } catch (Exception e) {
-                log.error(e);
+                LOG.error(e);
                 return true;
             }
         }
@@ -357,21 +362,21 @@ public class ASUploadConnection {
         return credentials != null;
     }
 
-    private void logUploadDoesNotEndWithHttpOkStatus(PostMethod filePOST, int responseCode) {
-        StringBuilder logMessageBuilder = new StringBuilder("File upload failed: ").append(HttpStatus
-            .getStatusText(responseCode));
+    private void logUploadDoesNotEndWithHttpOkStatus(HttpResponse uploadResponse) {
+        StringBuilder logMessageBuilder = new StringBuilder("File upload failed: ").append(ASConnection
+            .statusAsString(uploadResponse.getStatusLine()));
         // If it's sure there is a response body and it's not too long 
-        if (filePOST.getResponseContentLength() > 0
-            && filePOST.getResponseContentLength() < FILE_POST_MAX_LOGGABLE_RESPONSE_LENGTH) {
+        if (uploadResponse.getEntity().getContentLength() > 0
+            && uploadResponse.getEntity().getContentLength() < FILE_POST_MAX_LOGGABLE_RESPONSE_LENGTH) {
             try {
-                // It is safe to call getResponseBodyAsString as we know the body is not too long
-                String responseBodyAsString = filePOST.getResponseBodyAsString();
+                // It is safe to get response body as String as we know the body is not too long
+                String responseBodyAsString = EntityUtils.toString(uploadResponse.getEntity());
                 logMessageBuilder.append(SYSTEM_LINE_SEPARATOR).append(responseBodyAsString);
             } catch (IOException ignore) {
                 // If we can't get the response body, we'll just not log it
             }
         }
-        log.warn(logMessageBuilder.toString());
+        LOG.warn(logMessageBuilder.toString());
     }
 
     private void closeQuietly(final Closeable closeable) {

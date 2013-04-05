@@ -8,7 +8,7 @@
 #
 # This script is customizable by setting the following environment variables:
 #
-#    RHQ_STORAGE_DEBUG - If this is defined, the script will emit debug
+#    RHQ_CONTROL_DEBUG - If this is defined, the script will emit debug
 #                       messages. If this is not defined or set to "false"
 #                       debug messages are not emitted.
 #
@@ -38,16 +38,16 @@
 #                                    RHQ_SERVER_JAVA_HOME are not set, the
 #                                    Server's embedded JRE will be used.
 #
-#    RHQ_STORAGE_INSTALLER_JAVA_OPTS - Java VM command line options to be
+#    RHQ_CONTROL_JAVA_OPTS - Java VM command line options to be
 #                        passed into the Java VM. If this is not defined
 #                        this script will pass in a default set of options.
 #                        If you only want to add options to the defaults,
 #                        then you will want to use
-#                        RHQ_STORAGE_ADDITIONAL_JAVA_OPTS instead.
+#                        RHQ_CONTROL_ADDITIONAL_JAVA_OPTS instead.
 #
-#    RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS - additional Java VM command
+#    RHQ_CONTROL_ADDITIONAL_JAVA_OPTS - additional Java VM command
 #                                   line options to be passed into the VM.
-#                                   This is added to RHQ_STORAGE_JAVA_OPTS; it
+#                                   This is added to RHQ_CONTROL_JAVA_OPTS; it
 #                                   is mainly used to augment the
 #                                   default set of options. This can be
 #                                   left unset if it is not needed.
@@ -59,7 +59,7 @@
 debug_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_STORAGE_DEBUG" ] && [ "$RHQ_STORAGE_DEBUG" != "false" ]; then
+   if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
       echo $1
    fi
 }
@@ -202,25 +202,25 @@ fi
 # Prepare the VM command line options to be passed in
 # ----------------------------------------------------------------------
 
-if [ -z "$RHQ_STORAGE_INSTALLER_JAVA_OPTS" ]; then
-   RHQ_STORAGE_INSTALLER_JAVA_OPTS="-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
+if [ -z "$RHQ_CONTROL_JAVA_OPTS" ]; then
+   RHQ_CONTROL_JAVA_OPTS="-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
 fi
 
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_CCM_JAVA_OPTS.
-if [ -n "$RHQ_STORAGE_DEBUG" ] && [ "$RHQ_STORAGE_DEBUG" != "false" ]; then
+if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
    _RHQ_LOGLEVEL="DEBUG"
 else
    _RHQ_LOGLEVEL="INFO"
 fi
 
 # debugging the logging level now for development/testing
-RHQ_STORAGE_INSTALLER_JAVA_OPTS="${RHQ_STORAGE_INSTALLER_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME}"
+RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME}"
 
 # Sample JPDA settings for remote socket debugging
-#RHQ_STORAGE_INSTALLER_JAVA_OPTS="${RHQ_STORAGE_INSTALLER_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y"
+#RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y"
 
-debug_msg "RHQ_STORAGE_INSTALLER_JAVA_OPTS: $RHQ_STORAGE_INSTALLER_JAVA_OPTS"
-debug_msg "RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS: $RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS"
+debug_msg "RHQ_CONTROL_JAVA_OPTS: $RHQ_CONTROL_JAVA_OPTS"
+debug_msg "RHQ_CONTROL_ADDITIONAL_JAVA_OPTS: $RHQ_CONTROL_ADDITIONAL_JAVA_OPTS"
 
 # ----------------------------------------------------------------------
 # We need to add our own modules to the core set of JBossAS modules.
@@ -237,7 +237,7 @@ debug_msg "_JBOSS_MODULEPATH: $_JBOSS_MODULEPATH"
 echo "Starting RHQ Control..."
 
 # start the AS instance with our main installer module
-"$RHQ_SERVER_JAVA_EXE_FILE_PATH" ${RHQ_STORAGE_INSTALLER_JAVA_OPTS} ${RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-server-control "$@"
+"$RHQ_SERVER_JAVA_EXE_FILE_PATH" ${RHQ_CONTROL_JAVA_OPTS} ${RHQ_CONTROL_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-server-control "$@"
 
 _EXIT_STATUS=$?
 exit $_EXIT_STATUS

@@ -35,11 +35,15 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 /**
  * @author John Sanda
  */
 public abstract class ControlCommand {
+
+    protected final Log log = LogFactory.getLog(getClass().getName());
 
     protected File basedir;
 

@@ -25,10 +25,13 @@
 
 package org.rhq.server.control.command;
 
+import java.io.File;
+
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControlException;
 
 /**
  * @author John Sanda
@@ -61,5 +64,70 @@ public class Start extends ControlCommand {
 
     @Override
     protected void exec(CommandLine commandLine) {
+        boolean startStorage;
+        boolean startServer;
+        boolean startAgent;
+
+        if (commandLine.getOptions().length == 0) {
+            startStorage = true;
+            startServer = true;
+            startAgent = true;
+        } else {
+            startStorage = commandLine.hasOption("storage");
+            startServer = commandLine.hasOption("server");
+            startAgent = commandLine.hasOption("agent");
+        }
+
+        try {
+            if (startStorage) {
+                startStorage();
+            }
+            if (startServer) {
+                startRHQServer();
+            }
+            if (startAgent) {
+                startAgent();
+            }
+        } catch (Exception e) {
+            throw new RHQControlException("Failed to stop services", e);
+        }
     }
+
+    private void startStorage() throws Exception {
+        log.info("Starting RHQ storage node");
+
+        File storageBasedir = new File(basedir, "storage");
+        File storageBinDir = new File(storageBasedir, "bin");
+
+        new ProcessBuilder("./cassandra", "-p", "cassandra.pid")
+            .directory(storageBinDir)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start();
+    }
+
+    private void startRHQServer() throws Exception {
+        log.info("Starting RHQ server");
+
+        new ProcessBuilder("./rhq-server.sh", "start")
+            .directory(binDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor();
+    }
+
+    private void startAgent() throws Exception {
+        log.info("Starting RHQ agent");
+
+        File agentHomeDir = new File(basedir, "rhq-agent");
+        File agentBinDir = new File(agentHomeDir, "bin");
+
+        new ProcessBuilder("./rhq-agent-wrapper.sh", "start")
+            .directory(agentBinDir)
+            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start()
+            .waitFor();
+    }
+
 }

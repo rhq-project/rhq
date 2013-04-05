@@ -5,12 +5,10 @@
 
   <resources>
     <resource-root path="${project.build.finalName}.jar"/>
-    <resource-root path="rhq-cassandra-ccm-core-${project.version}.jar"/>
+    <resource-root path="rhq-core-util-${project.version}.jar"/>
   </resources>
 
   <dependencies>
-    <module name="org.rhq.rhq-cassandra-installer"/>
-    <module name="org.rhq.rhq-installer-util"/>
     <module name="com.sun.xml.bind"/>
     <module name="javax.api"/>
     <module name="org.apache.commons.logging"/>

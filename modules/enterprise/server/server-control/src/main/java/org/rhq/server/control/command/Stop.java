@@ -96,6 +96,8 @@ public class Stop extends ControlCommand {
     }
 
     private void stopStorage() throws Exception {
+        log.info("Stopping RHQ storage node");
+
         File storageBasedir = new File(basedir, "storage");
         File storageBinDir = new File(storageBasedir, "bin");
 
@@ -110,6 +112,8 @@ public class Stop extends ControlCommand {
     }
 
     private void stopRHQServer() throws Exception {
+        log.info("Stopping RHQ server");
+
         new ProcessBuilder("./rhq-server.sh", "stop")
             .directory(binDir)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -119,6 +123,8 @@ public class Stop extends ControlCommand {
     }
 
     private void stopAgent() throws Exception {
+        log.info("Stopping RHQ agent");
+
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
 

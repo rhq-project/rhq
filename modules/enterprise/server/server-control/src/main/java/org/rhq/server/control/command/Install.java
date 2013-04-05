@@ -117,6 +117,8 @@ public class Install extends ControlCommand {
     }
 
     private int installStorageNode() throws Exception {
+        log.info("Installing RHQ storage node");
+
         return new ProcessBuilder("./rhq-storage-installer.sh", "--commitlog", "../storage/commit_log", "--data",
             "../storage/data", "--saved-caches", "../storage/saved_caches")
             .directory(binDir)
@@ -144,6 +146,8 @@ public class Install extends ControlCommand {
     }
 
     private void installRHQServer() throws Exception {
+        log.info("Installing RHQ server");
+
         new ProcessBuilder("./rhq-installer.sh")
             .directory(binDir)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
@@ -171,6 +175,8 @@ public class Install extends ControlCommand {
     }
 
     private void installAgent() throws Exception {
+        log.info("Installing RHQ agent");
+
         File agentInstallerJar = getAgentInstaller();
         new ProcessBuilder("java", "-jar", agentInstallerJar.getPath(), "--install")
             .directory(basedir)

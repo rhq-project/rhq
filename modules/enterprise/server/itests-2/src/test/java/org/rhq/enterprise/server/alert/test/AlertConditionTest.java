@@ -470,7 +470,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -504,7 +504,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -537,7 +537,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -570,7 +570,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -604,7 +604,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;

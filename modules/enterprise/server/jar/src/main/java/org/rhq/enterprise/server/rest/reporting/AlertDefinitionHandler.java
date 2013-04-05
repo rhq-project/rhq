@@ -112,8 +112,8 @@ public class AlertDefinitionHandler extends AbstractRestBean implements AlertDef
                         return getBaseURL() + "/#Administration/Configuration/AlertDefTemplates/" +
                             alertDef.getResource().getResourceType().getId() + "/" + templateId;
                     } else if (alertDef.getGroupAlertDefinition() != null) {
-                        return getBaseURL() + "/#ResourceGroup/" +
-                            alertDef.getGroupAlertDefinition().getResourceGroup().getId() + "/Alerts/Definitions/" +
+                        return getBaseURL() + "/#ResourceGroup/" + alertDef.getGroupAlertDefinition().getGroup().getId()
+                        + "/Alerts/Definitions/" +
                             alertDef.getGroupAlertDefinition().getId();
                     } else {
                         return "";

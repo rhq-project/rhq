@@ -30,6 +30,8 @@ import org.rhq.core.domain.util.PageList;
  */
 @Local
 public interface GroupAlertDefinitionManagerLocal {
+    @Deprecated
+    // remove along with portal war
     PageList<AlertDefinition> findGroupAlertDefinitions(Subject subject, int resourceGroupId, PageControl pageControl);
 
     int createGroupAlertDefinitions(Subject subject, AlertDefinition alertDefinition, Integer resourceGroupId)
@@ -55,10 +57,10 @@ public interface GroupAlertDefinitionManagerLocal {
         boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException;
 
     // required to implement system side-effects as a result of modifying group membership or deleting groups
-    void addGroupAlertDefinitions(Subject subject, int groupId, int[] resourcesIdsToAdd)
+    void addGroupMemberAlertDefinitions(Subject subject, int groupId, int[] resourcesIdsToAdd)
         throws AlertDefinitionCreationException;
 
-    void removeGroupAlertDefinitions(Subject subject, int groupId, int[] resourceIdsToRemove);
+    void removeGroupMemberAlertDefinitions(Subject subject, int groupId, Integer[] resourceIdsToRemove);
 
     void purgeAllGroupAlertDefinitions(Subject subject, int groupId);
 }

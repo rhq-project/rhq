@@ -63,11 +63,11 @@ public interface AlertDefinitionManagerLocal {
      * @return the id of the newly persisted alert definition
      * @throws InvalidAlertDefinitionException
      */
-    int createAlertDefinition(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean finalizeNotificationConfiguration)
+    int createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean finalizeNotificationConfiguration)
         throws InvalidAlertDefinitionException;
 
     /**
-     * This is exactly the same as {@link #createAlertDefinition(Subject, AlertDefinition, Integer, boolean)} but
+     * This is exactly the same as {@link #createAlertDefinitionInNewTransaction(Subject, AlertDefinition, Integer, boolean)} but
      * assumes the resource is part of a group (or has given resource type for templates) for which
      * a group or template alert definition is being created.
      * <p>

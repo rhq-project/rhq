@@ -252,8 +252,8 @@ public class NewNotificationEditor extends DynamicForm {
             Resource res = null;
             if (alertDefinition.getResourceType() != null) {
                 rt = alertDefinition.getResourceType();
-            } else if (alertDefinition.getResourceGroup() != null) {
-                rt = alertDefinition.getResourceGroup().getResourceType();
+            } else if (alertDefinition.getGroup() != null) {
+                rt = alertDefinition.getGroup().getResourceType();
             } else {
                 res = alertDefinition.getResource();
                 rt = res.getResourceType();

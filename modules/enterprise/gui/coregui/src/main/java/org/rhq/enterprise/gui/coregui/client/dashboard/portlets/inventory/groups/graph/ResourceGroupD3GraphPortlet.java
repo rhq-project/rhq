@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricSt
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.ResourceGroupMetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
  * @author Greg Hinkle
@@ -80,15 +81,23 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
      * combination to be valid in multiple dashboards.
      */
     public String getFullChartId(){
-        return "rChart-"+ graph.getMetricGraphData().getChartId() +"-"+portletWindow.getStoredPortlet().getId();
+        if(portletWindow != null && graph != null && graph.getMetricGraphData() != null){
+            return "rChart-"+ graph.getMetricGraphData().getChartId() +"-"+portletWindow.getStoredPortlet().getId();
+        } else {
+            // handle the case where the portlet has not been configured yet
+            return "";
+        }
     }
 
     public void configure(PortletWindow portletWindow, DashboardPortlet storedPortlet) {
+        Log.debug("ResourceGroupPortlet.configure");
 
         if (null == this.portletWindow && null != portletWindow) {
             this.portletWindow = portletWindow;
         }
-        setMetricGraphData(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId()));
+        destroyMembers();
+
+        setGraph(new MetricStackedBarGraph(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId())));
 
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
@@ -103,6 +112,7 @@ public class ResourceGroupD3GraphPortlet extends ResourceGroupMetricD3GraphView 
             if (propertySimple != null && propertySimple.getIntegerValue() != null)
                 setDefinitionId(propertySimple.getIntegerValue());
         }
+        Log.debug("ResourceGroupPortlet.configure.done");
     }
 
     public Canvas getHelpCanvas() {

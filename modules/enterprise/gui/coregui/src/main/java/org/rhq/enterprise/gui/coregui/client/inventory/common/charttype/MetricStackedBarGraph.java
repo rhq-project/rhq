@@ -102,7 +102,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             }
 
             function useSmallCharts() {
-                console.info("Chart Width for : " + chartContext.chartHandle + " is " + getChartWidth());
                 return  getChartWidth() <= smallChartThresholdInPixels;
             }
 
@@ -112,7 +111,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                     // if window is too small server up small chart
                     if (useSmallCharts()) {
-                        console.log("Using Small Charts Profile");
+                        console.log("Using Small Charts Profile for width: "+getChartWidth());
                         width = 250;
                         xTicks = 3;
                         xTickSubDivide = 2;

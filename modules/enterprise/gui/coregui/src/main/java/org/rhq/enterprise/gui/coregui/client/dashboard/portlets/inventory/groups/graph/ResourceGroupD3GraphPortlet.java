@@ -39,12 +39,10 @@ import com.smartgwt.client.widgets.form.fields.SpacerItem;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -63,7 +61,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -75,7 +73,7 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public class ResourceGroupD3GraphPortlet extends ResourceMetricD3Graph implements AutoRefreshPortlet, CustomSettingsPortlet {
+public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRefreshPortlet, CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceGroupMetricD3";

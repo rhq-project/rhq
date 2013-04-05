@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphLis
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -195,7 +195,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         MetricGraphData metricGraphData = MetricGraphData.createForResourceGroup(resourceGroup.getId(),
                 resourceGroup.getName(), measurementDefinition, data );
         MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
-        ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(graph);
+        MetricD3Graph graphView = new MetricD3Graph(graph);
 
         graphView.setWidth("95%");
         graphView.setHeight(MULTI_CHART_HEIGHT);

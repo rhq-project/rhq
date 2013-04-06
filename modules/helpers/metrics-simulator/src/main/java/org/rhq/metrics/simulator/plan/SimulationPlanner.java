@@ -55,6 +55,11 @@ public class SimulationPlanner {
         simulation.setNumMeasurementCollectors(getInt(root.get("numMeasurementCollectors"), 5));
         simulation.setSimulationTime(getInt(root.get("simulationTime"), 10));
 
+        JsonNode clientCompressionNode = root.get("clientCompression");
+        if (clientCompressionNode != null) {
+            simulation.setClientCompression(clientCompressionNode.asText());
+        }
+
         JsonNode schedules = root.get("schedules");
         if (schedules == null) {
             simulation.addScheduleSet(new ScheduleGroup(2500, 500L));

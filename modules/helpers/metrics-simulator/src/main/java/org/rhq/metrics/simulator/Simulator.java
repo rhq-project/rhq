@@ -25,8 +25,6 @@
 
 package org.rhq.metrics.simulator;
 
-import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
-
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
@@ -40,6 +38,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
+import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -73,8 +72,10 @@ public class Simulator implements ShutdownManager {
 
     public void run(SimulationPlan plan) {
         List<CassandraNode> nodes = initCluster(plan);
-        createSchema(nodes);
-        Session session = createSession(nodes);
+        ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
+            plan.getClientCompression().toUpperCase());
+        createSchema(nodes, compression);
+        Session session = createSession(nodes, compression);
 
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(session);
@@ -198,10 +199,10 @@ public class Simulator implements ShutdownManager {
         clusterInitService.waitForClusterToStart(nodes);
     }
 
-    private void createSchema(List<CassandraNode> nodes) {
+    private void createSchema(List<CassandraNode> nodes, ProtocolOptions.Compression compression) {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes, compression);
             schemaManager.createSchema();
             schemaManager.updateSchema();
         } catch (Exception e) {
@@ -209,7 +210,8 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private Session createSession(List<CassandraNode> nodes) throws NoHostAvailableException {
+    private Session createSession(List<CassandraNode> nodes, ProtocolOptions.Compression compression)
+        throws NoHostAvailableException {
         try {
             SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
             authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
@@ -217,7 +219,7 @@ public class Simulator implements ShutdownManager {
             Cluster cluster = Cluster.builder()
                 .addContactPoints(getHostNames(nodes))
                 .withAuthInfoProvider(authInfoProvider)
-                .withCompression(SNAPPY)
+                .withCompression(compression)
                 .build();
 
             NodeFailureListener listener = new NodeFailureListener();

@@ -51,6 +51,8 @@ public class SimulationPlan {
 
     private ClusterConfig clusterConfig;
 
+    private String clientCompression = "none";
+
     public List<ScheduleGroup> getScheduleSets() {
         return scheduleSets;
     }
@@ -117,5 +119,13 @@ public class SimulationPlan {
 
     public void setClusterConfig(ClusterConfig clusterConfig) {
         this.clusterConfig = clusterConfig;
+    }
+
+    public String getClientCompression() {
+        return clientCompression;
+    }
+
+    public void setClientCompression(String clientCompression) {
+        this.clientCompression = clientCompression;
     }
 }

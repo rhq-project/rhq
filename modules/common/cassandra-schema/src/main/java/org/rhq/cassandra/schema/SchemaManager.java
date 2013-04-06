@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
@@ -55,6 +56,8 @@ public class SchemaManager {
     private String password;
 
     private List<CassandraNode> nodes = new ArrayList<CassandraNode>();
+
+    private ProtocolOptions.Compression compression = SNAPPY;
 
     public SchemaManager(String username, String password, String... nodes) {
         try {
@@ -84,6 +87,20 @@ public class SchemaManager {
         }
     }
 
+    public SchemaManager(String username, String password, List<CassandraNode> nodes,
+        ProtocolOptions.Compression compression) {
+        try {
+            this.username = username;
+            this.password = password;
+            this.nodes = nodes;
+            this.compression = compression;
+
+            initCluster();
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException("Unable create session.", e);
+        }
+    }
+
     private void initCluster() throws NoHostAvailableException {
         String[] hostNames = new String[nodes.size()];
         for (int i = 0; i < hostNames.length; ++i) {
@@ -96,7 +113,7 @@ public class SchemaManager {
         Cluster cluster = Cluster.builder()
             .addContactPoints(hostNames)
             .withAuthInfoProvider(authInfoProvider)
-            .withCompression(SNAPPY)
+            .withCompression(compression)
             .withPort(nodes.get(0).getNativeTransportPort())
             .build();
         session = cluster.connect("system");

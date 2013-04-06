@@ -149,6 +149,8 @@ public class ClusterInitService {
                 socket.close();
                 if (connections == numHosts) {
                     try {
+                        log.debug("Successdully connected to all nodes. Sleeping for 10 seconds to allow for the " +
+                            "cassandra superuser set up to complete.");
                         Thread.sleep(10000);
                     } catch (InterruptedException e) {
                     }

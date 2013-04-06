@@ -41,11 +41,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.CassandraNode;
+import org.rhq.core.util.StringUtil;
 
 /**
  * @author John Sanda
  */
 public class SchemaManager {
+
+    private static final String RHQ_KEYSPACE = "rhq";
 
     private final Log log = LogFactory.getLog(SchemaManager.class);
 
@@ -107,6 +110,12 @@ public class SchemaManager {
             hostNames[i] = nodes.get(i).getHostName();
         }
 
+        if (log.isDebugEnabled()) {
+            log.debug("Initializing session to connect to " + StringUtil.arrayToString(hostNames));
+        } else {
+            log.debug("Initializing session");
+        }
+
         SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
         authInfoProvider.add("username", "cassandra").add("password", "cassandra");
 
@@ -121,7 +130,10 @@ public class SchemaManager {
 
     public void createSchema() {
         try {
+            log.info("Preparing to create schema");
+            log.debug("Creating user [rhqadmin]");
             session.execute("CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER");
+            log.debug("Creating keyspace [" + RHQ_KEYSPACE + "]");
             session.execute(
                 "CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
         } catch (NoHostAvailableException e) {
@@ -131,6 +143,7 @@ public class SchemaManager {
 
     public void dropSchema() {
         try {
+            log.info("Dropping keyspace [" + RHQ_KEYSPACE + "]");
             session.execute("DROP KEYSPACE rhq");
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
@@ -148,7 +161,9 @@ public class SchemaManager {
     }
 
     public void updateSchema() {
+        log.info("Applying schema updates");
         try {
+            log.debug("Creating table raw_metrics");
             session.execute(
                 "CREATE TABLE rhq.raw_metrics (" +
                     "schedule_id int, " +
@@ -157,6 +172,7 @@ public class SchemaManager {
                     "PRIMARY KEY (schedule_id, time) " +
                     ") WITH COMPACT STORAGE"
             );
+            log.debug("Creating table one_hour_metrics");
             session.execute(
                 "CREATE TABLE rhq.one_hour_metrics (" +
                     "schedule_id int, " +
@@ -166,6 +182,7 @@ public class SchemaManager {
                     "PRIMARY KEY (schedule_id, time, type) " +
                 ") WITH COMPACT STORAGE"
             );
+            log.debug("Creating table six_hour_metrics");
             session.execute(
                 "CREATE TABLE rhq.six_hour_metrics (" +
                     "schedule_id int, " +
@@ -175,6 +192,7 @@ public class SchemaManager {
                     "PRIMARY KEY (schedule_id, time, type) " +
                 ") WITH COMPACT STORAGE;"
             );
+            log.debug("Creating table twenty_four_hour_metrics");
             session.execute(
                 "CREATE TABLE rhq.twenty_four_hour_metrics (" +
                     "schedule_id int, " +
@@ -184,6 +202,7 @@ public class SchemaManager {
                     "PRIMARY KEY (schedule_id, time, type) " +
                 ") WITH COMPACT STORAGE;"
             );
+            log.debug("Creating table metrics_index");
             session.execute(
                 "CREATE TABLE rhq.metrics_index (" +
                     "bucket varchar, " +
@@ -199,6 +218,7 @@ public class SchemaManager {
     }
 
     public void shutdown() {
+        log.info("Shutting down connections");
         session.getCluster().shutdown();
     }
 

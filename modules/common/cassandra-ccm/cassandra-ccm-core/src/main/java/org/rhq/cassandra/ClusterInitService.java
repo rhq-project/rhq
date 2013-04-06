@@ -97,6 +97,9 @@ public class ClusterInitService {
      * This method attempts to establish a Thrift RPC connection to each host. If the
      * connection fails, the host is retried after going through the other, remaining
      * hosts. A runtime exception will be thrown after 10 failed retries.
+     * <br/><br/>
+     * After connecting to all nodes, this method will then sleep for a fixed delay.
+     * See {@link #waitForClusterToStart(java.util.List, int, int)} for details.
      *
      * @param hosts The cluster nodes to which a connection should be made
      */
@@ -110,6 +113,12 @@ public class ClusterInitService {
      * is 2, this method will block only until it can connect to two of the hosts. If the
      * connection fails, the host is retried after going through the other, remaining
      * hosts.
+     * <br/><br/>
+     * After connecting to all cluster nodes, this method will sleep for 10 seconds
+     * before returning. This is to give the cluster a chance to create the system auth
+     * schema and to create the cassandra super user. Cassandra has a hard-coded delay of
+     * 10 sceonds before it creates the super user, which means the rhq schema cannot be
+     * created before that.
      *
      * @param hosts The cluster nodes to which a connection should be made
      * @param numHosts The number of hosts to which a successful connection has to be made
@@ -139,6 +148,10 @@ public class ClusterInitService {
                 ++connections;
                 socket.close();
                 if (connections == numHosts) {
+                    try {
+                        Thread.sleep(10000);
+                    } catch (InterruptedException e) {
+                    }
                     return;
                 }
             } catch (TTransportException e) {

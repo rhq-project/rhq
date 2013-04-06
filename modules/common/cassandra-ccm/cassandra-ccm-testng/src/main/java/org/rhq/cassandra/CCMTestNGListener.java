@@ -111,6 +111,13 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             clusterInitService.waitForClusterToStart(nodes);
         }
 
+        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
+        if (!schemaManager.schemaExists()) {
+            schemaManager.createSchema();
+            schemaManager.updateSchema();
+        }
+        schemaManager.shutdown();
+
         if (annotation.waitForSchemaAgreement()) {
             // TODO do not hard code cluster name
             // I am ok with hard coding the cluster name for now as it is only required
@@ -121,13 +128,6 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             // jsanda
             clusterInitService.waitForSchemaAgreement("rhq", nodes);
         }
-
-        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
-        if (!schemaManager.schemaExists()) {
-            schemaManager.createSchema();
-            schemaManager.updateSchema();
-        }
-        schemaManager.shutdown();
     }
 
     private void shutdownCluster() throws Exception {

@@ -281,7 +281,7 @@
               <dependency>
                 <groupId>org.xerial.snappy</groupId>
                 <artifactId>snappy-java</artifactId>
-                <version>1.0.5-M3</version>
+                <version>1.1.0-M3</version>
               </dependency>
             </dependencies>
             <executions>
@@ -298,7 +298,7 @@
                     <property name="cassandra.lib.dir" value="${cassandra.dir}/lib"/>
                     <property name="snappy.jar.original" value="${cassandra.lib.dir}/snappy-java-1.0.4.1.jar"/>
                     <property name="snappy.jar.updated"
-                              value="${local.repo}/org/xerial/snappy/snappy-java/1.0.5-M3/snappy-java-1.0.5-M3.jar"/>
+                              value="${local.repo}/org/xerial/snappy/snappy-java/${cassandra.driver.snappy.version}/snappy-java-${cassandra.driver.snappy.version}.jar"/>
                     <delete file="${snappy.jar.original}"/>
                     <copy file="${snappy.jar.updated}" todir="${cassandra.lib.dir}"/>
                   </target>

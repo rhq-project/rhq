@@ -104,7 +104,7 @@ public class SchemaManager {
 
     public void createSchema() {
         try {
-            session.execute("CREATE USER rhqadmin SUPERUSER");
+            session.execute("CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER");
             session.execute(
                 "CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
         } catch (NoHostAvailableException e) {

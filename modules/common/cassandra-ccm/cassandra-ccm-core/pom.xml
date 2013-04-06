@@ -142,8 +142,6 @@
                 <property name="cassandra.distro.filename" value="cassandra.zip"/>
                 <property name="cassandra.distro.zip"
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
-                <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"
-                      todir="${cassandra.dir}/lib"/>
                 <copy file="${settings.localRepository}/net/java/dev/jna/platform/${cassandra.jna.version}/platform-${cassandra.jna.version}.jar"
                       todir="${cassandra.dir}/lib"/>
                 <copy file="${settings.localRepository}/net/java/dev/jna/jna/${cassandra.jna.version}/jna-${cassandra.jna.version}.jar"

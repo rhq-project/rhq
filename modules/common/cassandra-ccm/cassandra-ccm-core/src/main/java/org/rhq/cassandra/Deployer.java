@@ -84,7 +84,6 @@ public class Deployer {
         applyConfigChanges(confDir, "cassandra.yaml", tokens);
         applyConfigChanges(confDir, "log4j-server.properties", tokens);
         applyConfigChanges(confDir, "cassandra-env.sh", tokens);
-        applyConfigChanges(confDir, "passwd.properties", tokens);
     }
 
     private void applyConfigChanges(File confDir, String fileName, Map<String, String> tokens) throws DeploymentException {

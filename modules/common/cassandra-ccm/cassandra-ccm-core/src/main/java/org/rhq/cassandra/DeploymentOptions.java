@@ -84,8 +84,6 @@ public class DeploymentOptions {
     private String savedCachesDir;
     private String listenAddress;
     private String rpcAddress;
-    private String passwordPropertiesFile;
-    private String accessPropertiesFile;
     private Integer jmxPort;
     private Integer storagePort;
     private Integer sslStoragePort;
@@ -155,8 +153,6 @@ public class DeploymentOptions {
         setLogFileName(loadProperty("rhq.cassandra.log.file", properties));
         setListenAddress(loadProperty("rhq.cassandra.listen.address", properties));
         setRpcAddress(loadProperty("rhq.cassandra.rpc.address", properties));
-        setPasswordPropertiesFile(loadProperty("rhq.cassandra.password.properties.file", properties));
-        setAccessPropertiesFile(loadProperty("rhq.cassandra.access.properties.file", properties));
         setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
         setStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.storage.port", properties)));
         setSslStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.ssl.storage.port", properties)));
@@ -187,8 +183,6 @@ public class DeploymentOptions {
         setPassword(other.password);
         setAuthenticator(other.authenticator);
         setAuthorizer(other.authorizer);
-        setPasswordPropertiesFile(other.passwordPropertiesFile);
-        setAccessPropertiesFile(other.accessPropertiesFile);
         setDataDir(other.dataDir);
         setCommitLogDir(other.commitLogDir);
         setSavedCachesDir(other.savedCachesDir);
@@ -556,40 +550,6 @@ public class DeploymentOptions {
     public void setRpcAddress(String address) {
         if (rpcAddress == null) {
             rpcAddress = address;
-        }
-    }
-
-    /**
-     * @return The location of the password properties file used by SimpleAuthenticator
-     */
-    @DeploymentProperty(name = "rhq.cassandra.password.properties.file")
-    public String getPasswordPropertiesFile() {
-        return passwordPropertiesFile;
-    }
-
-    /**
-     * @param file The location of the password properties file used
-     */
-    public void setPasswordPropertiesFile(String file) {
-        if (passwordPropertiesFile == null) {
-            passwordPropertiesFile = file;
-        }
-    }
-
-    /**
-     * @return The location of the authorization properties file used by SimpleAuthorizer
-     */
-    @DeploymentProperty(name = "rhq.cassandra.access.properties.file")
-    public String getAccessPropertiesFile() {
-        return accessPropertiesFile;
-    }
-
-    /**
-     * @param file The location of the authorization properties file used by SimpleAuthorizer
-     */
-    public void setAccessPropertiesFile(String file) {
-        if (accessPropertiesFile == null) {
-            accessPropertiesFile = file;
         }
     }
 

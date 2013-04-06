@@ -149,9 +149,6 @@ JMX_PORT="${rhq.cassandra.jmx.port}"
 # Here we create the arguments that will get passed to the jvm when
 # starting cassandra.
 
-JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Dpasswd.properties=${rhq.cassandra.password.properties.file}"
-JVM_EXTRA_OPTS="$JVM_EXTRA_OPTS -Daccess.properties=${rhq.cassandra.access.properties.file}"
-
 # enable assertions.  disabling this in production will give a modest
 # performance benefit (around 5%).
 JVM_OPTS="$JVM_OPTS -ea"

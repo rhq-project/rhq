@@ -64,8 +64,6 @@ public class DeployerITest {
         deploymentOptions.setDataDir("/var/lib/rhq/storage/data");
         deploymentOptions.setSavedCachesDir("/var/lib/rhq/storage/saved_caches");
         deploymentOptions.setLogFileName("/var/lib/rhq/storage/logs/rhq-storage.log");
-        deploymentOptions.setPasswordPropertiesFile("conf/passwd.properties");
-        deploymentOptions.setAccessPropertiesFile("conf/access.properties");
         deploymentOptions.load();
 
         deployer = new Deployer();

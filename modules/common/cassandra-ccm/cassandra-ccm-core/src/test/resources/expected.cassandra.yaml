@@ -62,7 +62,7 @@ max_hints_delivery_threads: 2
 # - PasswordAuthenticator relies on username/password pairs to authenticate
 # users. It keeps usernames and hashed passwords in system_auth.credentials table.
 # Please increase system_auth keyspace replication factor if you use this authenticator.
-authenticator: org.rhq.cassandra.auth.SimpleAuthenticator
+authenticator: org.apache.cassandra.auth.PasswordAuthenticator
 
 # Authorization backend, implementing IAuthorizer; used to limit access/provide permissions
 # Out of the box, Cassandra provides org.apache.cassandra.auth.{AllowAllAuthorizer,
@@ -71,7 +71,7 @@ authenticator: org.rhq.cassandra.auth.SimpleAuthenticator
 # - AllowAllAuthorizer allows any action to any user - set it to disable authorization.
 # - CassandraAuthorizer stores permissions in system_auth.permissions table. Please
 # increase system_auth keyspace replication factor if you use this authorizer.
-authorizer: org.rhq.cassandra.auth.SimpleAuthorizer
+authorizer: org.apache.cassandra.auth.CassandraAuthorizer
 
 # Validity period for permissions cache (fetching permissions can be an
 # expensive operation depending on the authorizer, CassandraAuthorizer is

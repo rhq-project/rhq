@@ -71,6 +71,16 @@ public class Simulator implements ShutdownManager {
     private CassandraClusterManager ccm;
 
     public void run(SimulationPlan plan) {
+        final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize(),
+            new SimulatorThreadFactory());
+
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                shutdown(executorService);
+            }
+        });
+
         List<CassandraNode> nodes = initCluster(plan);
         ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
             plan.getClientCompression().toUpperCase());
@@ -96,14 +106,6 @@ public class Simulator implements ShutdownManager {
         Stats stats = new Stats();
         StatsCollector statsCollector = new StatsCollector(stats);
 
-        final ScheduledExecutorService executorService = Executors.newScheduledThreadPool(plan.getThreadPoolSize(),
-            new SimulatorThreadFactory());
-        Runtime.getRuntime().addShutdownHook(new Thread() {
-            @Override
-            public void run() {
-                shutdown(executorService);
-            }
-        });
         log.info("Starting executor service");
         executorService.scheduleAtFixedRate(statsCollector, 0, 1, TimeUnit.MINUTES);
 

@@ -19,7 +19,9 @@
 package org.rhq.enterprise.server.installer;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,6 +42,7 @@ import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseType;
 
@@ -304,7 +307,13 @@ public class InstallerServiceImpl implements InstallerService {
         // deploy the main EAR app subsystem - this is the thing that contains and actually deploys the EAR
         deployAppSubsystem();
 
-        return;
+        // write a file marker so that rhqctl can easily determine that the server has been
+        // installed.
+        try {
+            writeInstalledFileMarker();
+        } catch (IOException e) {
+            log.warn("An error occurred while creating the installed file marker", e);
+        }
     }
 
     @Override
@@ -1214,5 +1223,15 @@ public class InstallerServiceImpl implements InstallerService {
         String password = serverProps.get("rhq.cassandra.password");
 
         return new SchemaManager(username, password, hosts);
+    }
+
+    private void writeInstalledFileMarker() throws IOException {
+        File basedir = new File(System.getProperty("rhq.server.basedir"));
+        File modulesDir = new File(basedir, "modules");
+        File metaInfDir = new File(modulesDir,
+            "org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/META-INF/");
+        File markerFile = new File(metaInfDir, ".installed");
+
+        StreamUtil.copy(new StringReader(""), new FileWriter(markerFile));
     }
 }

@@ -43,6 +43,12 @@ import org.apache.commons.logging.LogFactory;
  */
 public abstract class ControlCommand {
 
+    public static final String SERVER_OPTION = "server";
+
+    public static final String STORAGE_OPTION = "storage";
+
+    public static final String AGENT_OPTION = "agent";
+
     protected final Log log = LogFactory.getLog(getClass().getName());
 
     protected File basedir;
@@ -97,6 +103,23 @@ public abstract class ControlCommand {
         }
 
         return list;
+    }
+
+    protected boolean isServerInstalled() {
+        File modulesDir = new File(basedir, "modules");
+        File metaInfDir = new File(modulesDir,
+            "org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/META-INF/");
+        File markerFile = new File(metaInfDir, ".installed");
+
+        return markerFile.exists();
+    }
+
+    protected boolean isAgentInstalled() {
+        return new File(basedir, "rhq-agent").exists();
+    }
+
+    protected  boolean isStorageInstalled() {
+        return new File(basedir, "storage").exists();
     }
 
 }

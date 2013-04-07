@@ -42,9 +42,9 @@ public class Start extends ControlCommand {
 
     public Start() {
         options = new Options()
-            .addOption(null, "storage", false, "Start RHQ storage node")
-            .addOption(null, "server", false, "Start RHQ server")
-            .addOption(null, "agent", false, "Start RHQ agent");
+            .addOption(null, STORAGE_OPTION, false, "Start RHQ storage node")
+            .addOption(null, SERVER_OPTION, false, "Start RHQ server")
+            .addOption(null, AGENT_OPTION, false, "Start RHQ agent");
     }
 
     @Override
@@ -73,20 +73,36 @@ public class Start extends ControlCommand {
             startServer = true;
             startAgent = true;
         } else {
-            startStorage = commandLine.hasOption("storage");
-            startServer = commandLine.hasOption("server");
-            startAgent = commandLine.hasOption("agent");
+            startStorage = commandLine.hasOption(STORAGE_OPTION);
+            startServer = commandLine.hasOption(SERVER_OPTION);
+            startAgent = commandLine.hasOption(AGENT_OPTION);
         }
 
         try {
             if (startStorage) {
+                if (commandLine.hasOption(STORAGE_OPTION) && !isStorageInstalled()) {
+                    log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
+                        " option will be ignored.");
+                } else {
+                    startStorage();
+                }
                 startStorage();
             }
             if (startServer) {
-                startRHQServer();
+                if (commandLine.hasOption(SERVER_OPTION) && !isServerInstalled()) {
+                    log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
+                        " option will be ignored.");
+                } else {
+                    startRHQServer();
+                }
             }
             if (startAgent) {
-                startAgent();
+                if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled()) {
+                    log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
+                        " option will be ignored.");
+                } else {
+                    startAgent();
+                }
             }
         } catch (Exception e) {
             throw new RHQControlException("Failed to stop services", e);
@@ -129,5 +145,6 @@ public class Start extends ControlCommand {
             .start()
             .waitFor();
     }
+
 
 }

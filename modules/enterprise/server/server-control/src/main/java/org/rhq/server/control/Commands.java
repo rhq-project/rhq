@@ -34,6 +34,7 @@ import org.apache.commons.cli.Options;
 
 import org.rhq.server.control.command.Install;
 import org.rhq.server.control.command.Start;
+import org.rhq.server.control.command.Status;
 import org.rhq.server.control.command.Stop;
 
 /**
@@ -52,6 +53,7 @@ public class Commands {
         registerCommand(new Install());
         registerCommand(new Start());
         registerCommand(new Stop());
+        registerCommand(new Status());
     }
 
     private void registerCommand(ControlCommand command) {

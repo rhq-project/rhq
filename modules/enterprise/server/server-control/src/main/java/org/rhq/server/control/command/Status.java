@@ -38,25 +38,25 @@ import org.rhq.server.control.RHQControlException;
 /**
  * @author John Sanda
  */
-public class Stop extends ControlCommand {
+public class Status extends ControlCommand {
 
     private Options options;
 
-    public Stop() {
+    public Status() {
         options = new Options()
-            .addOption(null, "storage", false, "Stop RHQ storage node")
-            .addOption(null, "server", false, "Stop RHQ server")
-            .addOption(null, "agent", false, "Stop RHQ agent");
+            .addOption(null, STORAGE_OPTION, false, "Check status of RHQ storage node")
+            .addOption(null, SERVER_OPTION, false, "Check status of RHQ server")
+            .addOption(null, AGENT_OPTION, false, "Check status of RHQ agent");
     }
 
     @Override
     public String getName() {
-        return "stop";
+        return "status";
     }
 
     @Override
     public String getDescription() {
-        return "Stops RHQ services";
+        return "Check status of RHQ services";
     }
 
     @Override
@@ -66,70 +66,71 @@ public class Stop extends ControlCommand {
 
     @Override
     protected void exec(CommandLine commandLine) {
-        boolean stopStorage;
-        boolean stopServer;
-        boolean stopAgent;
+        boolean checkStorage;
+        boolean checkServer;
+        boolean checkAgent;
 
         if (commandLine.getOptions().length == 0) {
-            stopStorage = true;
-            stopServer = true;
-            stopAgent = true;
+            checkStorage = true;
+            checkServer = true;
+            checkAgent = true;
         } else {
-            stopStorage = commandLine.hasOption("storage");
-            stopServer = commandLine.hasOption("server");
-            stopAgent = commandLine.hasOption("agent");
+            checkStorage = commandLine.hasOption(STORAGE_OPTION);
+            checkServer = commandLine.hasOption(SERVER_OPTION);
+            checkAgent = commandLine.hasOption(AGENT_OPTION);
         }
 
         try {
-            if (stopStorage) {
+            if (checkStorage) {
                 if (commandLine.hasOption(STORAGE_OPTION) && !isStorageInstalled()) {
                     log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
                         " option will be ignored.");
                 } else {
-                    stopStorage();
+                    checkStorageStatus();
                 }
             }
-            if (stopServer) {
+
+            if (checkServer) {
                 if (commandLine.hasOption(SERVER_OPTION) && !isServerInstalled()) {
                     log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
                         " option will be ignored.");
                 } else {
-                    stopRHQServer();
+                    checkServerStatus();
                 }
             }
-            if (stopAgent) {
+
+            if (checkAgent) {
                 if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled()) {
                     log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
                         " option will be ignored.");
                 } else {
-                    stopAgent();
+                    checkAgentStatus();
                 }
             }
         } catch (Exception e) {
-            throw new RHQControlException("Failed to stop services", e);
+            throw new RHQControlException("Failed to check statuses", e);
         }
     }
 
-    private void stopStorage() throws Exception {
-        log.info("Stopping RHQ storage node");
+    private void checkStorageStatus() throws Exception {
+        log.debug("Checking RHQ storage node status");
 
         File storageBasedir = new File(basedir, "storage");
         File storageBinDir = new File(storageBasedir, "bin");
-
         File pidFile = new File(storageBinDir, "cassandra.pid");
-        String pid = StreamUtil.slurp(new FileReader(pidFile));
 
-        new ProcessBuilder("kill", pid)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        if (pidFile.exists()) {
+            String pid = StreamUtil.slurp(new FileReader(pidFile));
+            System.out.println("RHQ storage node (pid " + pid + ") is running");
+        } else {
+            System.out.println("RHQ storage node (no pid file) is NOT running");
+        }
     }
 
-    private void stopRHQServer() throws Exception {
-        log.info("Stopping RHQ server");
+    private void checkServerStatus() throws Exception {
+        log.debug("Checking RHQ server status");
 
-        new ProcessBuilder("./rhq-server.sh", "stop")
+        new ProcessBuilder("./rhq-server.sh", "status")
             .directory(binDir)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)
@@ -137,13 +138,13 @@ public class Stop extends ControlCommand {
             .waitFor();
     }
 
-    private void stopAgent() throws Exception {
-        log.info("Stopping RHQ agent");
+    private void checkAgentStatus() throws Exception {
+        log.debug("Checking RHQ agent status");
 
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
 
-        new ProcessBuilder("./rhq-agent-wrapper.sh", "stop")
+        new ProcessBuilder("./rhq-agent-wrapper.sh", "status")
             .directory(agentBinDir)
             .redirectOutput(ProcessBuilder.Redirect.INHERIT)
             .redirectError(ProcessBuilder.Redirect.INHERIT)

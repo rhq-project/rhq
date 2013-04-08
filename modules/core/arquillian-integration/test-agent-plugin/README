@@ -1,0 +1,6 @@
+This is a test plugin that is only used by the tests for the RHQ's Arquillian 
+container.
+
+The purpose of this plugin is only to serve as a dependency for the plugins 
+under test in the container that is being picked up from the maven classpath
+as opposed to the tests themselves.

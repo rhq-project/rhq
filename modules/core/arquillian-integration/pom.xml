@@ -20,6 +20,7 @@
    <description>parent POM for integration modules with Arquillian</description>
 
    <modules>
+      <module>test-agent-plugin</module>
       <module>container</module>
       <module>archive</module>
       <module>suite-extension</module>

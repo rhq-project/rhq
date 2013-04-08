@@ -9,7 +9,7 @@
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
 
-   <depends plugin="JMX" />
+   <depends plugin="ArquillianTestPlugin" />
    
    <server name="TestServer"
            discovery="TestDiscoveryComponent"

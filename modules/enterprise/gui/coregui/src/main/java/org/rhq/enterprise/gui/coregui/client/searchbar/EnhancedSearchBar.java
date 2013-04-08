@@ -88,7 +88,6 @@ public class EnhancedSearchBar extends ToolStrip {
         IGNORED_KEYS.add("Arrow_Up");
         IGNORED_KEYS.add("Arrow_Left");
         IGNORED_KEYS.add("Arrow_Right");
-        IGNORED_KEYS.add("Backspace");
     }
 
     enum SearchMode {

@@ -50,6 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  */
 public class FavoritesSearchStrategy extends AbstractSearchStrategy {
 
+    private boolean isSearchInProgress = false;
+
     public FavoritesSearchStrategy(EnhancedSearchBar searchBar) {
         super(searchBar);
     }
@@ -97,7 +99,6 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
                 if (confirmed) {
                     Integer id = record.getAttributeAsInt(ATTR_ID);
 
-
                     GWTServiceLookup.getSearchService().deleteSavedSearch(id, new AsyncCallback<Void>() {
 
                         @Override
@@ -132,6 +133,11 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
 
     private void populateSavedSearches() {
 
+        // avoid concurrent searches
+        if (isSearchInProgress) {
+            return;
+        }
+
         Log.debug("Search Saved Searches");
         SavedSearchCriteria savedSearchCriteria = new SavedSearchCriteria();
         Subject subject = UserSessionManager.getSessionSubject();
@@ -140,51 +146,58 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
         final long startTime = System.currentTimeMillis();
         searchBar.getPickListGrid().setData(new ListGridRecord[] {});
 
+        isSearchInProgress = true;
+
         searchService.findSavedSearchesByCriteria(savedSearchCriteria, new AsyncCallback<List<SavedSearch>>() {
 
             @Override
             public void onFailure(Throwable caught) {
+                isSearchInProgress = false;
                 CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_savedSearch_failFetch(), caught);
             }
 
             @Override
             public void onSuccess(List<SavedSearch> result) {
-                long fetchTime = System.currentTimeMillis() - startTime;
-                Log.debug(result.size() + " saved searches fetched in: " + fetchTime + "ms");
-
-                ListGrid searchBarPickListGrid = searchBar.getPickListGrid();
-                DataSource ds = searchBarPickListGrid.getDataSource();
-
-                if (null == ds) {
-                    ds = new DataSource();
-                    ds.setClientOnly(true);
-                    DataSourceTextField valueField = new DataSourceTextField(ATTR_ID, "Id");
-                    valueField.setPrimaryKey(true);
-                    ds.setFields(valueField);
-                    searchBarPickListGrid.setDataSource(ds);
-
-                } else {
-                    ds.invalidateCache();
-                }
-
-                for (SavedSearch savedSearch : result) {
-                    Log.debug("savedSearch: " + savedSearch.getName());
-                    ListGridRecord record = new ListGridRecord();
-                    record.setAttribute(ATTR_ID, savedSearch.getId());
-                    record.setAttribute(ATTR_KIND, "Saved");
-                    record.setAttribute(ATTR_NAME, savedSearch.getName());
-                    record.setAttribute(ATTR_DESCRIPTION, savedSearch.getDescription());
-                    record.setAttribute(ATTR_PATTERN, savedSearch.getPattern());
-                    if (savedSearch.getResultCount() != null)
-                        record.setAttribute(ATTR_RESULT_COUNT, savedSearch.getResultCount());
-                    ds.addData(record);
-                }
-
                 try {
-                    searchBarPickListGrid.setData(new ListGridRecord[] {});
-                    searchBarPickListGrid.fetchData();
-                } catch (Exception e) {
-                    Log.debug("Caught exception on fetchData: " + e);
+                    long fetchTime = System.currentTimeMillis() - startTime;
+                    Log.debug(result.size() + " saved searches fetched in: " + fetchTime + "ms");
+
+                    ListGrid searchBarPickListGrid = searchBar.getPickListGrid();
+                    DataSource ds = searchBarPickListGrid.getDataSource();
+
+                    if (null == ds) {
+                        ds = new DataSource();
+                        ds.setClientOnly(true);
+                        DataSourceTextField valueField = new DataSourceTextField(ATTR_ID, "Id");
+                        valueField.setPrimaryKey(true);
+                        ds.setFields(valueField);
+                        searchBarPickListGrid.setDataSource(ds);
+
+                    } else {
+                        ds.invalidateCache();
+                    }
+
+                    for (SavedSearch savedSearch : result) {
+                        Log.debug("savedSearch: " + savedSearch.getName());
+                        ListGridRecord record = new ListGridRecord();
+                        record.setAttribute(ATTR_ID, savedSearch.getId());
+                        record.setAttribute(ATTR_KIND, "Saved");
+                        record.setAttribute(ATTR_NAME, savedSearch.getName());
+                        record.setAttribute(ATTR_DESCRIPTION, savedSearch.getDescription());
+                        record.setAttribute(ATTR_PATTERN, savedSearch.getPattern());
+                        if (savedSearch.getResultCount() != null)
+                            record.setAttribute(ATTR_RESULT_COUNT, savedSearch.getResultCount());
+                        ds.addData(record);
+                    }
+
+                    try {
+                        searchBarPickListGrid.setData(new ListGridRecord[] {});
+                        searchBarPickListGrid.fetchData();
+                    } catch (Exception e) {
+                        Log.debug("Caught exception on fetchData: " + e);
+                    }
+                } finally {
+                    isSearchInProgress = false;
                 }
             }
         });

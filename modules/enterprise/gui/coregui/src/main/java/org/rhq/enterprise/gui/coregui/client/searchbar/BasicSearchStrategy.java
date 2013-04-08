@@ -45,6 +45,9 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
  */
 public class BasicSearchStrategy extends AbstractSearchStrategy {
 
+    private boolean isSearchInProgress = false;
+    private String pendingSearchExpression = null;
+
     public BasicSearchStrategy(EnhancedSearchBar searchBar) {
         super(searchBar);
     }
@@ -71,6 +74,11 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
         return sb.toString();
     }
 
+    @Override
+    public int getCellHeight() {
+        return 20;
+    }
+
     /**
      * Executed when this field is clicked on.  Note that if {@link
      * com.smartgwt.client.widgets.grid.ListGrid#addRecordClickHandler ListGrid.recordClick} is also defined, it will be fired
@@ -84,21 +92,21 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
         Log.debug("BasicSearchStrategy click");
 
         String kind = event.getRecord().getAttribute(ATTR_KIND);
-        String pattern;
+        String searchExpression;
 
         if (kind.equals("SAVED") || kind.equals("GLOBAL")) {
             Log.debug("Saved or Global Search Click");
-            pattern = event.getRecord().getAttribute(ATTR_PATTERN);
+            searchExpression = event.getRecord().getAttribute(ATTR_PATTERN);
 
         } else {
             Log.debug("Regular Search Click");
-            pattern = event.getRecord().getAttribute(ATTR_NAME);
+            searchExpression = event.getRecord().getAttribute(ATTR_NAME);
         }
 
         searchBar.getSearchTextItem().focusInItem();
-        if (!(null == pattern || pattern.isEmpty())) {
-            searchBar.getSearchTextItem().setValue(pattern);
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, pattern, pattern.length());
+        if (!(null == searchExpression || searchExpression.isEmpty())) {
+            searchBar.getSearchTextItem().setValue(searchExpression);
+            doSearch(searchExpression);
         }
     }
 
@@ -118,109 +126,135 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
     @Override
     public void searchReturnKeyHandler(KeyUpEvent keyUpEvent) {
-        doSearch((String) keyUpEvent.getItem().getValue());
-    }
-
-    private void doSearch(String searchExpression) {
-        if (null == searchExpression || searchExpression.isEmpty()) {
-            Log.debug("Empty Search expression");
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, null, 0);
-        } else {
-            Log.debug("doSearch: " + searchExpression);
-            getTabAwareSearchSuggestions(SearchSubsystem.RESOURCE, searchBar.getSearchTextItem().getValueAsString(),
-                searchBar.getSearchTextItem().getValueAsString().length());
-        }
-
-        // don't obscure the results
         searchBar.getPickListGrid().hide();
     }
 
-    @Override
-    public int getCellHeight() {
-        return 20;
+    private void doSearch(String searchExpression) {
+        if (isSearchInProgress) {
+            Log.debug("Adding pending search [" + searchExpression + "]");
+            pendingSearchExpression = (null == searchExpression) ? "" : searchExpression;
+            return;
+        }
+
+        Log.debug("Search Start");
+        isSearchInProgress = true;
+
+        if (null == searchExpression || searchExpression.isEmpty()) {
+            Log.debug("Empty Search expression");
+            getSearchSuggestions(SearchSubsystem.RESOURCE, null, 0);
+
+        } else {
+            Log.debug("doSearch: " + searchExpression);
+            getSearchSuggestions(SearchSubsystem.RESOURCE, searchBar.getSearchTextItem().getValueAsString(), searchBar
+                .getSearchTextItem().getValueAsString().length());
+        }
     }
 
-    private void getTabAwareSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression,
-        int caretPosition) {
+    private void getSearchSuggestions(final SearchSubsystem searchSubsystem, final String expression, int caretPosition) {
 
         final long suggestStart = System.currentTimeMillis();
 
         Log.debug("Searching for: " + expression);
+
         searchService.getTabAwareSuggestions(searchSubsystem, expression, caretPosition, null,
             new AsyncCallback<List<SearchSuggestion>>() {
 
                 @Override
                 public void onSuccess(List<SearchSuggestion> results) {
-                    ListGrid searchBarPickListGrid = searchBar.getPickListGrid();
-                    DataSource ds = searchBarPickListGrid.getDataSource();
-
-                    // create the datasource if needed
-                    if (null == ds) {
-                        ds = new DataSource();
-                        ds.setClientOnly(true);
-                        DataSourceTextField idField = new DataSourceTextField(ATTR_ID, "Id");
-                        idField.setPrimaryKey(true);
-                        idField.setCanView(false);
-
-                        DataSourceTextField valueField = new DataSourceTextField(ATTR_VALUE, "Value");
-
-                        ds.setFields(idField, valueField);
-
-                        searchBarPickListGrid.setDataSource(ds);
-                        ListGridField[] fields = searchBarPickListGrid.getAllFields();
-                        searchBarPickListGrid.getField(ATTR_VALUE).setShowHover(true);
-                        searchBarPickListGrid.getField(ATTR_VALUE).setHoverCustomizer(new HoverCustomizer() {
-
-                            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                                String kind = record.getAttribute(ATTR_KIND);
-                                if (kind.equals("SAVED") || kind.equals("GLOBAL")) {
-                                    String pattern = record.getAttribute(ATTR_PATTERN);
-
-                                    if (!(null == pattern || pattern.isEmpty())) {
-                                        return pattern;
-                                    }
-                                }
-
-                                return null;
-                            }
-                        });
-
-                    } else {
-                        ds.invalidateCache();
-                    }
-
-                    for (SearchSuggestion searchSuggestion : results) {
-                        Log.debug("search tab aware Suggestions: " + searchSuggestion.getKind() + ", "
-                            + searchSuggestion.getValue() + ", " + searchSuggestion.getLabel());
-                        ListGridRecord record = new ListGridRecord();
-                        record.setAttribute(ATTR_ID, searchSuggestion.getValue());
-                        if (null != searchSuggestion.getKind()) {
-                            record.setAttribute(ATTR_KIND, searchSuggestion.getKind().getDisplayName());
-                        }
-                        record.setAttribute(ATTR_NAME, searchSuggestion.getLabel());
-                        record.setAttribute(ATTR_VALUE, searchSuggestion.getValue());
-                        String pattern = searchSuggestion.getOptional();
-                        record.setAttribute(ATTR_PATTERN, (null == pattern) ? "" : pattern);
-                        ds.addData(record);
-                    }
 
                     try {
-                        searchBarPickListGrid.setData(new ListGridRecord[] {});
-                        searchBarPickListGrid.fetchData();
-                    } catch (Exception e) {
-                        Log.debug("Caught exception on fetchData: " + e);
-                    }
+                        ListGrid searchBarPickListGrid = searchBar.getPickListGrid();
+                        DataSource ds = searchBarPickListGrid.getDataSource();
 
-                    long suggestFetchTime = System.currentTimeMillis() - suggestStart;
-                    Log.debug(results.size() + " suggestions searches fetched in: " + suggestFetchTime + "ms");
+                        // create the datasource if needed
+                        if (null == ds) {
+                            ds = new DataSource();
+                            ds.setClientOnly(true);
+                            DataSourceTextField idField = new DataSourceTextField(ATTR_ID, "Id");
+                            idField.setPrimaryKey(true);
+                            idField.setCanView(false);
+
+                            DataSourceTextField valueField = new DataSourceTextField(ATTR_VALUE, "Value");
+
+                            ds.setFields(idField, valueField);
+
+                            searchBarPickListGrid.setDataSource(ds);
+                            ListGridField[] fields = searchBarPickListGrid.getAllFields();
+                            searchBarPickListGrid.getField(ATTR_VALUE).setShowHover(true);
+                            searchBarPickListGrid.getField(ATTR_VALUE).setHoverCustomizer(new HoverCustomizer() {
+
+                                public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                                    if (null == record) {
+                                        return "";
+                                    }
+                                    String kind = record.getAttribute(ATTR_KIND);
+                                    if (kind.equals("SAVED") || kind.equals("GLOBAL")) {
+                                        String pattern = record.getAttribute(ATTR_PATTERN);
+
+                                        if (!(null == pattern || pattern.isEmpty())) {
+                                            return pattern;
+                                        }
+                                    }
+
+                                    return "";
+                                }
+                            });
+
+                        } else {
+                            ds.invalidateCache();
+                        }
+
+                        for (SearchSuggestion searchSuggestion : results) {
+                            Log.debug("search tab aware Suggestions: " + searchSuggestion.getKind() + ", "
+                                + searchSuggestion.getValue() + ", " + searchSuggestion.getLabel());
+                            ListGridRecord record = new ListGridRecord();
+                            record.setAttribute(ATTR_ID, searchSuggestion.getValue());
+                            if (null != searchSuggestion.getKind()) {
+                                record.setAttribute(ATTR_KIND, searchSuggestion.getKind().getDisplayName());
+                            }
+                            record.setAttribute(ATTR_NAME, searchSuggestion.getLabel());
+                            record.setAttribute(ATTR_VALUE, searchSuggestion.getValue());
+                            String pattern = searchSuggestion.getOptional();
+                            record.setAttribute(ATTR_PATTERN, (null == pattern) ? "" : pattern);
+                            ds.addData(record);
+                        }
+
+                        try {
+                            searchBarPickListGrid.setData(new ListGridRecord[] {});
+                            searchBarPickListGrid.fetchData();
+                        } catch (Exception e) {
+                            Log.debug("Caught exception on fetchData: " + e);
+                        }
+
+                        long suggestFetchTime = System.currentTimeMillis() - suggestStart;
+                        Log.debug(results.size() + " suggestions searches fetched in: " + suggestFetchTime + "ms");
+
+                    } finally {
+                        // By the time we're done it's possible the results are already obsolete. If so, kick
+                        // off another search.
+                        Log.debug("Search End");
+
+                        if (null == pendingSearchExpression) {
+                            isSearchInProgress = false;
+
+                        } else {
+                            Log.debug("Performing pending search [" + pendingSearchExpression + "]");
+
+                            String searchExpression = pendingSearchExpression;
+                            pendingSearchExpression = null;
+                            isSearchInProgress = false;
+                            doSearch(searchExpression);
+                        }
+                    }
                 }
 
                 @Override
                 public void onFailure(Throwable caught) {
+                    Log.debug("Search End");
+                    isSearchInProgress = false;
+                    pendingSearchExpression = null;
                     CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_suggest_failSuggest(), caught);
                 }
-
             });
     }
-
 }

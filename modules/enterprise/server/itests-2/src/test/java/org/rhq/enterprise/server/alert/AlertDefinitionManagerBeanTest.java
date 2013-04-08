@@ -20,6 +20,9 @@
 
 package org.rhq.enterprise.server.alert;
 
+import static org.rhq.core.domain.measurement.DataType.MEASUREMENT;
+import static org.rhq.core.domain.measurement.NumericType.DYNAMIC;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
@@ -28,6 +31,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.Test;
 
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
@@ -36,6 +41,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -62,6 +68,7 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
     final private String roleName = prefix + "role";
     final private String groupName = prefix + "group";
     final private String resourceName = prefix + "resource";
+    final private String measurementDefName = prefix + "measurement";
 
     private AlertDefinitionManagerLocal alertDefinitionManager;
 
@@ -94,6 +101,14 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
                 Role role = SessionTestHelper.createNewRoleForSubject(em, subject, roleName, Permission.MANAGE_ALERTS);
                 newTestData.setRole(role);
                 ResourceType resourceType = SessionTestHelper.createNewResourceType(em);
+
+                // To test bug 949048 we need a metric on the type
+                MeasurementDefinition dynamicMeasuremenDef = new MeasurementDefinition(resourceType, measurementDefName);
+                dynamicMeasuremenDef.setDefaultOn(true);
+                dynamicMeasuremenDef.setDataType(MEASUREMENT);
+                dynamicMeasuremenDef.setMeasurementType(DYNAMIC);
+                em.persist(dynamicMeasuremenDef);
+
                 newTestData.setResourceType(resourceType);
                 ResourceGroup resourceGroup = new ResourceGroup(groupName, resourceType);
                 resourceGroup = resourceGroupManager.createPrivateResourceGroup(subject, resourceGroup);
@@ -260,6 +275,7 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
 
             int[] ids = new int[] { resource2.getId(), resource3.getId() };
             AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+            criteria.fetchConditions(true);
             criteria.addFilterResourceIds(ids[0], ids[1]);
 
             List<AlertDefinition> result = alertDefinitionManager.findAlertDefinitionsByCriteria(testData.getSubject(),
@@ -269,11 +285,20 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
             assertEquals(name, result.get(0).getName());
             assertEquals(name, result.get(1).getName());
             assertTrue(result.get(0).getId() != result.get(1).getId());
+            assertEquals(1, result.get(0).getConditions().size());
+            assertEquals(1, result.get(1).getConditions().size());
 
-            // remove member and ensure the alert def gets removed
+            // remove one member and ensure the alert def gets removed and no other members are affected (bug 949062)
             LookupUtil.getResourceGroupManager().removeResourcesFromGroup(subjectManager.getOverlord(),
-                testData.getResourceGroup().getId(), ids);
+                testData.getResourceGroup().getId(), new int[] { resource2.getId() });
 
+            result = alertDefinitionManager.findAlertDefinitionsByCriteria(testData.getSubject(), criteria);
+            assertNotNull(result);
+            assertEquals(1, result.size());
+
+            // now the other one
+            LookupUtil.getResourceGroupManager().removeResourcesFromGroup(subjectManager.getOverlord(),
+                testData.getResourceGroup().getId(), new int[] { resource3.getId() });
             result = alertDefinitionManager.findAlertDefinitionsByCriteria(testData.getSubject(), criteria);
             assertNotNull(result);
             assertEquals(0, result.size());
@@ -324,6 +349,15 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         alertDefinition.setRecoveryId(0);
         alertDefinition.setGroup(testData.getResourceGroup());
         alertDefinition.setEnabled(true);
+        
+        // We need a threshold alert condition to recreate the issue in bug 949048 
+        AlertCondition ac = new AlertCondition();
+        ac.setCategory(AlertConditionCategory.THRESHOLD);
+        ac.setMeasurementDefinition(testData.getMeasurementDef());
+        ac.setComparator("<");
+        ac.setThreshold(0.5);
+        alertDefinition.addCondition(ac);
+        
         int alertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(),
             alertDefinition, null, true);
         testData.getAlertDefinitionIds().add(alertDefinitionId);
@@ -337,6 +371,8 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         private Role role;
 
         private ResourceType resourceType;
+
+        private MeasurementDefinition measurementDef;
 
         private ResourceGroup resourceGroup;
 
@@ -366,6 +402,14 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
 
         public void setResourceType(ResourceType resourceType) {
             this.resourceType = resourceType;
+        }
+
+        public MeasurementDefinition getMeasurementDef() {
+            return measurementDef;
+        }
+
+        public void setMeasurementDef(MeasurementDefinition measurementDef) {
+            this.measurementDef = measurementDef;
         }
 
         public ResourceGroup getResourceGroup() {

@@ -293,7 +293,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             }
 
             function createStackedBars() {
-                console.time("stackedBars");
 
                 var pixelsOffHeight = 0;
 
@@ -424,7 +423,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                                 return  "#70c4e2";
                             }
                         });
-                console.timeEnd("stackedBars");
             }
 
             function createYAxisGridLines() {
@@ -464,7 +462,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
             }
 
             function createAvgLines() {
-                console.time("drawAvgLine");
                 var showBarAvgTrendline =
                                 global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::showBarAvgTrendLine()(),
                         barAvgLine = $wnd.d3.svg.line()
@@ -494,7 +491,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         .attr("stroke-opacity", ".7")
                         .attr("d", barAvgLine);
 
-                console.timeEnd("drawAvgLine");
             }
 
             function createOOBLines() {
@@ -601,9 +597,8 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
-                        console.group("Creating Chart: %s --> %s", chartContext.chartSelection, chartContext.chartTitle);
-                        console.time("chart");
-
+                        console.info("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
+                        //console.time("chart");
 
                         determineScale();
                         createHeader(chartContext.chartTitle);
@@ -617,8 +612,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                             createOOBLines();
                         }
                         createHovers(chartContext);
-                        console.timeEnd("chart");
-                        console.groupEnd();
+                        //console.timeEnd("chart");
                     }
                 }
             }; // end public closure

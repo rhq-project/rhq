@@ -251,13 +251,12 @@ public class AvailabilityLineGraphType {
                 // Public API
                 draw: function (chartContext) {
                     "use strict";
-                    console.groupCollapsed("AvailabilityChart");
-                    console.time("availabilityChart");
+                    console.info("AvailabilityChart");
+                    //console.time("availabilityChart");
 
                     drawBars(availChartContext);
                     createHovers();
-                    console.timeEnd("availabilityChart");
-                    console.groupEnd("AvailabilityChart");
+                    //console.timeEnd("availabilityChart");
                 }
             }; // end public closure
 

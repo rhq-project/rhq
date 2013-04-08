@@ -26,12 +26,10 @@
 package org.rhq.server.control.command;
 
 import java.io.File;
-import java.io.FileReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -75,34 +73,34 @@ public class Stop extends ControlCommand {
             stopServer = true;
             stopAgent = true;
         } else {
-            stopStorage = commandLine.hasOption("storage");
-            stopServer = commandLine.hasOption("server");
-            stopAgent = commandLine.hasOption("agent");
+            stopStorage = commandLine.hasOption(STORAGE_OPTION);
+            stopServer = commandLine.hasOption(SERVER_OPTION);
+            stopAgent = commandLine.hasOption(AGENT_OPTION);
         }
 
         try {
             if (stopStorage) {
-                if (commandLine.hasOption(STORAGE_OPTION) && !isStorageInstalled()) {
+                if (isStorageInstalled()) {
+                    stopStorage();
+                } else {
                     log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
                         " option will be ignored.");
-                } else {
-                    stopStorage();
                 }
             }
             if (stopServer) {
-                if (commandLine.hasOption(SERVER_OPTION) && !isServerInstalled()) {
+                if (isServerInstalled()) {
+                    stopRHQServer();
+                } else {
                     log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
                         " option will be ignored.");
-                } else {
-                    stopRHQServer();
                 }
             }
             if (stopAgent) {
-                if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled()) {
+                if (isAgentInstalled()) {
+                    stopAgent();
+                } else {
                     log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
                         " option will be ignored.");
-                } else {
-                    stopAgent();
                 }
             }
         } catch (Exception e) {
@@ -111,43 +109,49 @@ public class Stop extends ControlCommand {
     }
 
     private void stopStorage() throws Exception {
-        log.info("Stopping RHQ storage node");
+        log.debug("Stopping RHQ storage node");
 
         File storageBasedir = new File(basedir, "storage");
         File storageBinDir = new File(storageBasedir, "bin");
 
-        File pidFile = new File(storageBinDir, "cassandra.pid");
-        String pid = StreamUtil.slurp(new FileReader(pidFile));
-
-        new ProcessBuilder("kill", pid)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        String pid = getStoragePid();
+        if (pid != null) {
+            new ProcessBuilder("kill", pid)
+                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                .start()
+                .waitFor();
+        }
     }
 
     private void stopRHQServer() throws Exception {
-        log.info("Stopping RHQ server");
+        log.debug("Stopping RHQ server");
 
-        new ProcessBuilder("./rhq-server.sh", "stop")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        String pid = getServerPid();
+        if (pid != null) {
+            new ProcessBuilder("./rhq-server.sh", "stop")
+                .directory(binDir)
+                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                .start()
+                .waitFor();
+        }
     }
 
     private void stopAgent() throws Exception {
-        log.info("Stopping RHQ agent");
+        log.debug("Stopping RHQ agent");
 
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
+        String pid = getAgentPid();
 
-        new ProcessBuilder("./rhq-agent-wrapper.sh", "stop")
-            .directory(agentBinDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        if (pid != null) {
+            new ProcessBuilder("./rhq-agent-wrapper.sh", "stop")
+                .directory(agentBinDir)
+                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                .start()
+                .waitFor();
+        }
     }
 }

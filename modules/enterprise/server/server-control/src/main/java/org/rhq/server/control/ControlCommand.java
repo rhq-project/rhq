@@ -26,6 +26,8 @@
 package org.rhq.server.control;
 
 import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,6 +39,8 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
@@ -120,6 +124,36 @@ public abstract class ControlCommand {
 
     protected  boolean isStorageInstalled() {
         return new File(basedir, "storage").exists();
+    }
+
+    protected String getStoragePid() throws IOException {
+        File storageBasedir = new File(basedir, "storage");
+        File storageBinDir = new File(storageBasedir, "bin");
+        File pidFile = new File(storageBinDir, "cassandra.pid");
+
+        if (pidFile.exists()) {
+            return StreamUtil.slurp(new FileReader(pidFile));
+        }
+        return null;
+    }
+
+    protected String getServerPid() throws IOException {
+        File pidFile = new File(binDir, "rhq-server.pid");
+        if (pidFile.exists()) {
+            return StreamUtil.slurp(new FileReader(pidFile));
+        }
+        return null;
+    }
+
+    protected String getAgentPid() throws IOException {
+        File agentBasedir = new File(basedir, "rhq-agent");
+        File agentBinDir = new File(agentBasedir, "bin");
+        File pidFile = new File(agentBinDir, "rhq-agent.pid");
+
+        if (pidFile.exists()) {
+            return StreamUtil.slurp(new FileReader(pidFile));
+        }
+        return null;
     }
 
 }

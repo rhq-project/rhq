@@ -32,6 +32,7 @@ import java.util.TreeMap;
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 
+import org.rhq.server.control.command.Console;
 import org.rhq.server.control.command.Install;
 import org.rhq.server.control.command.Start;
 import org.rhq.server.control.command.Status;
@@ -54,6 +55,7 @@ public class Commands {
         registerCommand(new Start());
         registerCommand(new Stop());
         registerCommand(new Status());
+        registerCommand(new Console());
     }
 
     private void registerCommand(ControlCommand command) {

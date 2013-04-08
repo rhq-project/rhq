@@ -70,8 +70,8 @@
             <module>server/ear</module>
             <module>server/startup-subsystem</module>
             <module>server/installer</module>
-            <module>server/appserver</module>
             <module>server/server-control</module>
+            <module>server/appserver</module>
             <module>server/client-api</module>
             <module>server/itests-2</module>
          </modules>

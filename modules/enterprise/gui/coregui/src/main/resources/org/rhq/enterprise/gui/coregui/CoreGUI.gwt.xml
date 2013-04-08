@@ -28,9 +28,6 @@
     <set-property name="gwt.logging.systemHandler" value="ENABLED" />
     <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
 
-
-
-
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
@@ -56,7 +53,6 @@
     <script src="/coregui/js/d3.v3.js"/>
     <script src="/coregui/js/nv.d3.js"/>
     <script src="/coregui/js/jquery.tipsy.js"/>
-    <script src="/coregui/js/rhq.js"/>
 
 
     <!--

@@ -123,8 +123,9 @@
         
         <dependency>
             <groupId>org.rhq</groupId>
-            <artifactId>rhq-jmx-plugin</artifactId>
+            <artifactId>rhq-arquillian-container-test-plugin</artifactId>
             <version>${project.version}</version>
+            <type>test-jar</type>
             <scope>test</scope>
         </dependency>
 

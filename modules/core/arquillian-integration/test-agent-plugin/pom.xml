@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+   <modelVersion>4.0.0</modelVersion>
+
+   <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-arquillian-parent</artifactId>
+      <version>4.7.0-SNAPSHOT</version>
+   </parent>
+
+   <groupId>org.rhq</groupId>
+   <artifactId>rhq-arquillian-container-test-plugin</artifactId>
+   <packaging>jar</packaging>
+
+   <name>Test Plugin for RHQ's Arquillian container</name>
+
+   <description>
+       This is a test plugin that is only used by the tests for the RHQ's Arquillian
+       container.
+
+       The purpose of this plugin is only to serve as a dependency for the plugins
+       under test in the container that is being picked up from the maven classpath
+       as opposed to the tests themselves.
+   </description>
+
+   <dependencies>
+       <dependency>
+           <groupId>org.rhq</groupId>
+           <artifactId>rhq-core-domain</artifactId>
+           <version>${project.version}</version>
+           <scope>test</scope>
+       </dependency>
+
+       <dependency>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-core-plugin-api</artifactId>
+          <version>${project.version}</version>
+          <scope>test</scope>
+       </dependency>
+   </dependencies>
+
+   <build>
+       <plugins>
+           <plugin>
+               <artifactId>maven-jar-plugin</artifactId>
+               <executions>
+                   <execution>
+                       <goals>
+                           <goal>test-jar</goal>
+                       </goals>
+                   </execution>
+               </executions>
+           </plugin>
+       </plugins>
+   </build>
+</project>

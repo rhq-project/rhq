@@ -115,6 +115,14 @@ public interface ResourceManagerRemote {
     void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent);
 
     /**
+     * Given a specific resource type, this will uninventory all resources of that type.
+     *
+     * @param subject the logged in user
+     * @param resourceTypeId identifies the type whose resources are to be uninventoried
+     */
+    void uninventoryResourcesOfResourceType(Subject subject, int resourceTypeId);
+
+    /**
      * Removes these resources from inventory.  The resources may subsequently be rediscovered.  Note that for
      * each specified resource all children will also be removed, it it not necessary or recommended to
      * specify more than one resource in the same ancestry line.

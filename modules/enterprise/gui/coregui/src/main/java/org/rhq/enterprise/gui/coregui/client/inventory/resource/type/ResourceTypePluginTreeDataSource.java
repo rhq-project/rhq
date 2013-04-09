@@ -18,6 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -26,6 +31,7 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.types.DSDataFormat;
 import com.smartgwt.client.types.DSProtocol;
 import com.smartgwt.client.widgets.tree.TreeNode;
+
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -36,11 +42,6 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceTypeGWTServiceAsync;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-
 /**
  * @author Greg Hinkle
  */
@@ -50,7 +51,11 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
-    public ResourceTypePluginTreeDataSource() {
+    private final boolean showIgnoredResourceTypes;
+
+    public ResourceTypePluginTreeDataSource(boolean showIgnoredResourceTypes) {
+
+        this.showIgnoredResourceTypes = showIgnoredResourceTypes;
 
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
@@ -94,6 +99,7 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             processResponse(request.getRequestId(), response);
         } else {
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.addFilterIgnored((showIgnoredResourceTypes ? (Boolean) null : Boolean.FALSE));
             criteria.fetchParentResourceTypes(true);
             criteria.setPageControl(PageControl.getUnlimitedInstance());
 

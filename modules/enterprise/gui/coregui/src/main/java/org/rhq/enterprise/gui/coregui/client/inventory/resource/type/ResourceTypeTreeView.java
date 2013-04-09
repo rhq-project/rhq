@@ -41,8 +41,12 @@ public class ResourceTypeTreeView extends EnhancedVLayout {
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
-    public ResourceTypeTreeView() {
+    private final boolean showIgnoredResourceTypes;
+
+    public ResourceTypeTreeView(boolean showIgnoredResourceTypes) {
         super();
+
+        this.showIgnoredResourceTypes = showIgnoredResourceTypes;
 
         setWidth100();
         setHeight100();
@@ -70,6 +74,7 @@ public class ResourceTypeTreeView extends EnhancedVLayout {
         addMember(treeGrid);
 
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterIgnored((showIgnoredResourceTypes ? (Boolean) null : Boolean.FALSE));
         criteria.fetchParentResourceTypes(true);
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 

@@ -4,5 +4,8 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
         xmlns:c="urn:xmlns:rhq-configuration">
+
     <server name="TestServer1"/>
+    <server name="TestServer1Ignored"/> <!-- to be ignored in tests -->
+
 </plugin>

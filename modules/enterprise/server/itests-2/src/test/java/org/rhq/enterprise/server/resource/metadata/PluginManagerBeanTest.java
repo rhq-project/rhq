@@ -43,6 +43,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test(groups = { "plugin.metadata", "PluginManagerBean" }, priority = 100000)
 public class PluginManagerBeanTest extends MetadataBeanTest {
 
+    private static final String PLUGIN_1 = "PluginManagerBeanTestPlugin1";
+    private static final String PLUGIN_2 = "PluginManagerBeanTestPlugin2";
+    private static final String PLUGIN_3 = "PluginManagerBeanTestPlugin3";
+    private static final String PLUGIN_3_1 = "PluginManagerBeanTestPlugin3.1";
+
     private SubjectManagerLocal subjectMgr;
     private PluginManagerLocal pluginMgr;
 
@@ -87,34 +92,42 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         createPluginJarFile("test-plugin3.1.jar", "plugin_3.1.xml");
 
         getPluginScannerService().scanAndRegister();
+
+        // ignore some types to make sure the plugin manager can still work with ignored types
+        ignoreType("TestServer1Ignored", PLUGIN_1);
+        ignoreType("TestServer2Ignored", PLUGIN_2);
+        ignoreType("TestServer3Ignored", PLUGIN_3);
+        ignoreType("TestServer3.1Ignored", PLUGIN_3_1);
+
+        return;
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })
     public void scanAndRegisterTest() throws Exception {
-        Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        Plugin plugin = getPlugin(PLUGIN_1);
         assertNotNull(plugin);
-        pluginDeployed("PluginManagerBeanTestPlugin1");
+        pluginDeployed(PLUGIN_1);
 
-        plugin = getPlugin("PluginManagerBeanTestPlugin2");
+        plugin = getPlugin(PLUGIN_2);
         assertNotNull(plugin);
-        pluginDeployed("PluginManagerBeanTestPlugin2");
+        pluginDeployed(PLUGIN_2);
 
-        plugin = getPlugin("PluginManagerBeanTestPlugin3");
+        plugin = getPlugin(PLUGIN_3);
         assertNotNull(plugin);
-        pluginDeployed("PluginManagerBeanTestPlugin3");
+        pluginDeployed(PLUGIN_3);
 
-        plugin = getPlugin("PluginManagerBeanTestPlugin3.1");
+        plugin = getPlugin(PLUGIN_3_1);
         assertNotNull(plugin);
-        pluginDeployed("PluginManagerBeanTestPlugin3.1");
+        pluginDeployed(PLUGIN_3_1);
     }
 
     @Test(dependsOnMethods = { "registerPlugins" })
     public void disablePlugin() throws Exception {
-        Plugin plugin = getPlugin("PluginManagerBeanTestPlugin3");
+        Plugin plugin = getPlugin(PLUGIN_3);
         assertTrue("Plugin should not already be disabled", plugin.isEnabled());
 
         pluginMgr.disablePlugins(subjectMgr.getOverlord(), asList(plugin.getId()));
-        plugin = pluginMgr.getPlugin("PluginManagerBeanTestPlugin3");
+        plugin = pluginMgr.getPlugin(PLUGIN_3);
 
         assertNotNull(plugin);
         assertFalse("Failed to disable plugin", plugin.isEnabled());
@@ -122,9 +135,9 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "registerPlugins" })
     public void doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled() throws Exception {
-        Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        Plugin plugin = getPlugin(PLUGIN_1);
         assertTrue("Plugin should not already be disabled", plugin.isEnabled());
-        Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
+        Plugin plugin2 = getPlugin(PLUGIN_2);
         assertTrue("Plugin should not already be disabled", plugin.isEnabled());
 
         Exception exception = null;
@@ -135,7 +148,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
             exception = e;
         }
 
-        plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        plugin = getPlugin(PLUGIN_1);
         assertTrue("Plugin should not have been disabled", plugin.isEnabled());
 
         assertNotNull("Expected exception to be thrown when trying to disable a plugin that has dependent plugins",
@@ -146,13 +159,13 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "doNotDisablePluginIfDependentPluginsAreNotAlsoDisabled" })
     public void disablePluginAndDependentPlugins() throws Exception {
-        Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1");
-        Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
+        Plugin plugin1 = getPlugin(PLUGIN_1);
+        Plugin plugin2 = getPlugin(PLUGIN_2);
 
         pluginMgr.disablePlugins(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
 
-        plugin1 = getPlugin("PluginManagerBeanTestPlugin1");
-        plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
+        plugin1 = getPlugin(PLUGIN_1);
+        plugin2 = getPlugin(PLUGIN_2);
 
         assertFalse("Failed to disable plugin", plugin1.isEnabled());
         assertFalse("Failed to disable plugin", plugin2.isEnabled());
@@ -160,13 +173,13 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     @Test(groups = { "plugin.metadata", "PluginManagerBean" }, dependsOnMethods = { "disablePluginAndDependentPlugins" })
     public void enablePlugins() throws Exception {
-        Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1");
-        Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
+        Plugin plugin1 = getPlugin(PLUGIN_1);
+        Plugin plugin2 = getPlugin(PLUGIN_2);
 
         pluginMgr.enablePlugins(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
 
-        plugin1 = getPlugin("PluginManagerBeanTestPlugin1");
-        plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
+        plugin1 = getPlugin(PLUGIN_1);
+        plugin2 = getPlugin(PLUGIN_2);
 
         assertTrue("Failed to enable plugin", plugin1.isEnabled());
         assertTrue("Failed to enable plugin", plugin2.isEnabled());
@@ -174,7 +187,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "enablePlugins" })
     public void doNotDeletePluginIfDependentPluginIsNotAlsoDeleted() throws Exception {
-        Plugin plugin = getPlugin("PluginManagerBeanTestPlugin1");
+        Plugin plugin = getPlugin(PLUGIN_1);
         Exception exception = null;
 
         try {
@@ -191,13 +204,13 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     @Test(dependsOnMethods = { "doNotDeletePluginIfDependentPluginIsNotAlsoDeleted" })
     public void deletePlugins() throws Exception {
-        Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1");
-        Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2");
+        Plugin plugin1 = getPlugin(PLUGIN_1);
+        Plugin plugin2 = getPlugin(PLUGIN_2);
 
         pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));
 
-        plugin1 = getPlugin("PluginManagerBeanTestPlugin1", "Deleting a plugin should not remove it from the database");
-        plugin2 = getPlugin("PluginManagerBeanTestPlugin2", "Deleting a plugin should not remove it from the database");
+        plugin1 = getPlugin(PLUGIN_1, "Deleting a plugin should not remove it from the database");
+        plugin2 = getPlugin(PLUGIN_2, "Deleting a plugin should not remove it from the database");
 
         assertTrue("Expected plugin status to be set to DELETED", plugin1.getStatus() == PluginStatusType.DELETED);
         assertTrue("Expected plugin status to be set to DELETED", plugin2.getStatus() == PluginStatusType.DELETED);
@@ -208,7 +221,7 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
         InventoryManagerLocal inventoryManager = LookupUtil.getInventoryManager();
 
-        Plugin plugin = getDeletedPlugin("PluginManagerBeanTestPlugin1");
+        Plugin plugin = getDeletedPlugin(PLUGIN_1);
         List<ResourceType> resourceTypes = resourceTypeManager.getResourceTypesByPlugin(plugin.getName());
         List<ResourceType> deletedTypes = inventoryManager.getDeletedTypes();
 
@@ -236,15 +249,20 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
         InventoryManagerLocal inventoryManager = LookupUtil.getInventoryManager();
         ResourceTypeManagerLocal resourceTypeManager = LookupUtil.getResourceTypeManager();
 
-        Plugin plugin3 = getPlugin("PluginManagerBeanTestPlugin3");
+        Plugin plugin3 = getPlugin(PLUGIN_3);
         ResourceType resourceType = resourceTypeManager
             .getResourceTypeByNameAndPlugin("TestServer3", plugin3.getName());
+        ResourceType resourceTypeIgnored = resourceTypeManager.getResourceTypeByNameAndPlugin("TestServer3Ignored",
+            plugin3.getName());
 
         assertNotNull("Failed to find resource type. Did the resource type name in the plugin descriptor change?",
             resourceType);
+        assertNotNull("Failed to find ignored resource type. Did the type name in the plugin descriptor change?",
+            resourceTypeIgnored);
 
         pluginMgr.deletePlugins(subjectMgr.getOverlord(), asList(plugin3.getId()));
         inventoryManager.purgeDeletedResourceType(resourceType);
+        inventoryManager.purgeDeletedResourceType(resourceTypeIgnored);
         pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin3.getId()));
 
         assertTrue("Expected " + plugin3 + " to be ready for purge since all its resource types have been purged "
@@ -253,9 +271,9 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
     @Test(enabled = false, dependsOnMethods = { "deletePlugins" })
     public void purgePlugins() throws Exception {
-        Plugin plugin1 = getPlugin("PluginManagerBeanTestPlugin1",
+        Plugin plugin1 = getPlugin(PLUGIN_1,
             "Deleting a plugin should not remove it from the database");
-        Plugin plugin2 = getPlugin("PluginManagerBeanTestPlugin2",
+        Plugin plugin2 = getPlugin(PLUGIN_2,
             "Deleting a plugin should not remove it from the database");
 
         pluginMgr.markPluginsForPurge(subjectMgr.getOverlord(), asList(plugin1.getId(), plugin2.getId()));

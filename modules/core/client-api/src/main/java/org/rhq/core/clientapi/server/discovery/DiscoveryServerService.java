@@ -32,8 +32,8 @@ import org.rhq.core.communications.command.annotation.Asynchronous;
 import org.rhq.core.communications.command.annotation.LimitedConcurrency;
 import org.rhq.core.communications.command.annotation.Timeout;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
-import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -57,15 +57,17 @@ public interface DiscoveryServerService {
      * @param  inventoryReport a report containing updated inventory data
      *
      * @return response that contains information the plugin container will need in order to sync itself up with new
-     *         data that the server had to create in order to merge the report into its inventory
+     *         data that the server had to create in order to merge the report into its inventory.
+     *         This can return null in one specific case - if this is a brand new agent and it is currently initializing
+     *         for the very first time.
      *
      * @throws InvalidInventoryReportException if the inventory report contains invalid data
      */
     @LimitedConcurrency(CONCURRENCY_LIMIT_INVENTORY_REPORT)
     @Timeout(0L)
     // should be something like 1000L * 60 * 30 but until we can be assured we never take longer, disable timeout
-    ResourceSyncInfo mergeInventoryReport(InventoryReport inventoryReport) throws InvalidInventoryReportException,
-        StaleTypeException;
+    MergeInventoryReportResults mergeInventoryReport(InventoryReport inventoryReport)
+        throws InvalidInventoryReportException, StaleTypeException;
 
     /**
      * Merges a new availability report from the agent into the server. This updates the availability statuses of known

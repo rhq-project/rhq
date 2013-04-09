@@ -318,4 +318,29 @@ public class MetadataBeanTest extends AbstractEJB3Test {
             this.pluginIds.add(plugin.getId());
         }
     }
+
+    /**
+     * Use this to ignore a plugin's resource type. Useful for making sure metadata
+     * updates work even for types that are ignored.
+     *
+     * @param typeName type to ignore
+     * @param pluginName the plugin where the type is defined
+     */
+    protected void ignoreType(String typeName, String pluginName) {
+        SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+        ResourceTypeManagerLocal typeMgr = LookupUtil.getResourceTypeManager();
+        ResourceType rt = typeMgr.getResourceTypeByNameAndPlugin(typeName, pluginName);
+        if (rt == null) {
+            fail("Should have had a resource type named [" + typeName + "] from plugin [" + pluginName + "]");
+        }
+        typeMgr.setResourceTypeIgnoreFlagAndUninventoryResources(subjectMgr.getOverlord(), rt.getId(), true);
+
+        // sanity check - make sure the type really got ignored
+        rt = typeMgr.getResourceTypeByNameAndPlugin(typeName, pluginName);
+        if (!rt.isIgnored()) {
+            fail("Should have ignored resource type [" + rt + "]");
+        }
+
+        return;
+    }
 }

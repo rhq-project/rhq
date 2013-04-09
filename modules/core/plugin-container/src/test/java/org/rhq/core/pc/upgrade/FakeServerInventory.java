@@ -44,6 +44,7 @@ import org.jmock.lib.action.CustomAction;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -123,7 +124,7 @@ public class FakeServerInventory {
                             platform = persisted;
                         }
                     }
-                    return getSyncInfo();
+                    return new MergeInventoryReportResults(getSyncInfo(), null);
                 }
             }
         };
@@ -137,7 +138,7 @@ public class FakeServerInventory {
 
                     platform = null;
 
-                    return getSyncInfo();
+                    return new MergeInventoryReportResults(getSyncInfo(), null);
                 }
             }
         };

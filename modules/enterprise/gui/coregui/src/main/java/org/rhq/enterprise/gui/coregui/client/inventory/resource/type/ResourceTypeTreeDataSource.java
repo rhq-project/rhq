@@ -48,7 +48,11 @@ public class ResourceTypeTreeDataSource extends DataSource {
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
 
-    public ResourceTypeTreeDataSource() {
+    private final boolean showIgnoredResourceTypes;
+
+    public ResourceTypeTreeDataSource(boolean showIgnoredResourceTypes) {
+
+        this.showIgnoredResourceTypes = showIgnoredResourceTypes;
 
         setClientOnly(false);
         setDataProtocol(DSProtocol.CLIENTCUSTOM);
@@ -93,6 +97,7 @@ public class ResourceTypeTreeDataSource extends DataSource {
         } else {
 
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.addFilterIgnored((showIgnoredResourceTypes ? (Boolean) null : Boolean.FALSE));
             criteria.fetchParentResourceTypes(true);
             criteria.setPageControl(PageControl.getUnlimitedInstance());
 

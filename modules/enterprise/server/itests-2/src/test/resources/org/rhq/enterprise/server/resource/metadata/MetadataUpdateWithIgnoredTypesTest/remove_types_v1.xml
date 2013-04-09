@@ -1,0 +1,22 @@
+<plugin name="RemoveIgnoredTypesPlugin" displayName="Remove Ignored Types Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="ServerA">
+        <service name="ServerA.Child1" />
+    </server>
+
+    <server name="ServerB">
+        <service name="ServerB.Child1">
+            <service name="ServerB.GrandChild1"/>
+        </service>
+    </server>
+
+    <server name="ServerC">
+        <service name="ServerC.Child1" />
+    </server>
+
+    <server name="ServerD" />
+
+</plugin>

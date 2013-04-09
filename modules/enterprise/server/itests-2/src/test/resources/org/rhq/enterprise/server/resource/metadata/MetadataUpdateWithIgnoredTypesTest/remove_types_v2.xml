@@ -1,0 +1,19 @@
+<plugin name="RemoveIgnoredTypesPlugin" displayName="Remove Ignored Types Plugin" package="org.rhq.plugins.test"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <server name="ServerA" description="v2">
+        <service name="ServerA.Child1" description="v2" />
+    </server>
+
+    <server name="ServerB" description="v2">
+        <service name="ServerB.GrandChild1" description="v2" /> <!-- moved up a level from v1 of the plugin .xml -->
+    </server>
+
+    <server name="ServerC" description="v2">
+        <!-- <service name="ServerC.Child1" /> --> <!-- removed from v1 of plugin .xml -->
+    </server>
+
+    <!-- <server name="ServerD" /> --> <!-- removed from v1 of plugin .xml -->
+</plugin>

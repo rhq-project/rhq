@@ -24,7 +24,6 @@ package org.rhq.core.domain.criteria;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -56,9 +55,8 @@ public class ResourceTypeCriteria extends Criteria {
     private Boolean filterSupportsManualAdd;
     private String filterPluginName; // needs overrides
     private Integer filterBundleTypeId; // needs overrides
-    // by default, we don't want to fetch resource types that
-    // are marked deleted
-    private Boolean filterDeleted = false;
+    private Boolean filterDeleted = false; // by default, we don't want to fetch resource types that are marked deleted
+    private Boolean filterIgnored = false; // by default, we don't want to fetch types the user requested to be ignored
     private Set<ResourceCategory> filterCategories; // needs overrides
     private Boolean filterParentResourceTypesEmpty; // needs overrides
 
@@ -148,6 +146,14 @@ public class ResourceTypeCriteria extends Criteria {
 
     public void addFilterDeleted(Boolean deleted) {
         this.filterDeleted = deleted;
+    }
+
+    public void addFilterIgnored(boolean ignored) {
+        this.filterIgnored = ignored;
+    }
+
+    public void addFilterIgnored(Boolean ignored) {
+        this.filterIgnored = ignored;
     }
 
     public void addFilterCategories(ResourceCategory... filterCategories) {

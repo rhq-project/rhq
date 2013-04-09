@@ -29,6 +29,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -258,8 +259,14 @@ public class ResourceUpgradeDelegate {
 
         Resource resource = resourceContainer.getResource();
 
-        ResourceDiscoveryComponent<ResourceComponent<T>> discoveryComponent = PluginContainer.getInstance()
-            .getPluginComponentFactory().getDiscoveryComponent(resource.getResourceType(), parentResourceContainer);
+        ResourceDiscoveryComponent<ResourceComponent<T>> discoveryComponent;
+        try {
+            discoveryComponent = PluginContainer.getInstance().getPluginComponentFactory()
+                .getDiscoveryComponent(resource.getResourceType(), parentResourceContainer);
+        } catch (ResourceTypeNotEnabledException rtne) {
+            // no point in continuing if the resource is unmanageable because its type has been disabled
+            return true;
+        }
 
         if (!(discoveryComponent instanceof ResourceUpgradeFacet)) {
             //well, there's no point in continuing if the resource doesn't support the facet

@@ -50,8 +50,8 @@ import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
 import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A tree view of all known ResourceTypes, which includes summaries of metric schedule and alert definition templates
@@ -83,7 +83,36 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
     abstract protected ResourceTypeTreeNodeBuilder getNodeBuilderInstance(ListGrid platformsList,
         ListGrid platformServicesList, TreeGrid serversTreeGrid);
 
-    abstract protected void editTemplates(ResourceType type, ViewPath viewPath);
+    /**
+     * If the subclass can support editing templates but need to utilize subcanvases to do it,
+     * they should override this method. This superclass implementation is a no-op.
+     *
+     * @param type the ResourceType being edited
+     * @param viewPath the path that is accessing the subcanvas.
+     */
+    protected void editTemplates(ResourceType type, ViewPath viewPath) {
+        return; // by default, assume subclasses do not support this and simply return as a no-op
+    }
+
+    /**
+     * If the subclass can support editing templates without needing to utilize subcanvases,
+     * they should override this method. This superclass implementation is a no-op.
+     *
+     * @param type the ResourceType being edited
+     * @param event indicates the specific record in the specific list grid that contained the type being edited
+     */
+    protected void editTemplates(ResourceType type, RecordClickEvent event) {
+        return; // by default, assume subclasses do not support this and simply return as a no-op
+    }
+
+    /**
+     * The default column title name for the edit column.
+     * 
+     * @return title for edit column
+     */
+    protected String getEditColumnTitle() {
+        return MSG.common_title_edit();
+    }
 
     @Override
     public void renderView(final ViewPath viewPath) {
@@ -161,7 +190,7 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
      * the canvasToShow as the only member to the parent.
      * 
      * @param parentCanvas parent to show the given canvas
-     * @param canvasToShow the canvas to show in the parent
+     * @param canvasToShow the canvas to show in the parent, if null, show the main grid canvas (not a sub-canvas)
      */
     protected void switchToCanvas(Layout parentCanvas, Canvas canvasToShow) {
         EnhancedUtility.destroyMembers(parentCanvas);
@@ -207,19 +236,29 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
 
             fields.addAll(getAdditionalListGridFields(false));
 
-            ListGridField editField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT,
-                MSG.common_title_edit());
+            ListGridField editField = new ListGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT, getEditColumnTitle());
             editField.setType(ListGridFieldType.IMAGE);
             editField.setAlign(Alignment.CENTER);
             editField.setCanGroupBy(false);
             editField.addRecordClickHandler(new RecordClickHandler() {
 
-                public void onRecordClick(RecordClickEvent event) {
+                public void onRecordClick(final RecordClickEvent event) {
                     Record record = event.getRecord();
                     String editAttr = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT);
                     if (ImageManager.getEditIcon().equals(editAttr)) {
                         String type = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID);
-                        CoreGUI.goToView(getEditLink(type));
+                        String editLink = getEditLink(type);
+                        if (editLink != null) {
+                            CoreGUI.goToView(editLink);
+                        } else {
+                            // there is no subcanvas to go to - the subclass can do it without changing canvas
+                            ResourceTypeRepository.Cache.getInstance().getResourceTypes(Integer.parseInt(type),
+                                getTypeMetadataTypes(), new ResourceTypeRepository.TypeLoadedCallback() {
+                                    public void onTypesLoaded(ResourceType type) {
+                                        editTemplates(type, event);
+                                    }
+                                });
+                        }
                     }
                 }
             });
@@ -267,18 +306,28 @@ public abstract class ResourceTypeTreeView extends EnhancedVLayout implements Bo
 
             fields.addAll(getAdditionalListGridFields(true));
 
-            ListGridField editField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT,
-                MSG.common_title_edit());
+            ListGridField editField = new TreeGridField(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT, getEditColumnTitle());
             editField.setType(ListGridFieldType.IMAGE);
             editField.setAlign(Alignment.CENTER);
             editField.addRecordClickHandler(new RecordClickHandler() {
 
-                public void onRecordClick(RecordClickEvent event) {
+                public void onRecordClick(final RecordClickEvent event) {
                     Record record = event.getRecord();
                     String editAttr = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_EDIT);
                     if (ImageManager.getEditIcon().equals(editAttr)) {
                         String type = record.getAttribute(ResourceTypeTreeNodeBuilder.ATTRIB_ID);
-                        CoreGUI.goToView(getEditLink(type));
+                        String editLink = getEditLink(type);
+                        if (editLink != null) {
+                            CoreGUI.goToView(editLink);
+                        } else {
+                            // there is no subcanvas to go to - the subclass can do it without changing canvas
+                            ResourceTypeRepository.Cache.getInstance().getResourceTypes(Integer.parseInt(type),
+                                getTypeMetadataTypes(), new ResourceTypeRepository.TypeLoadedCallback() {
+                                    public void onTypesLoaded(ResourceType type) {
+                                        editTemplates(type, event);
+                                    }
+                                });
+                        }
                     }
                 }
             });

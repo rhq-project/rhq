@@ -6,4 +6,6 @@
         xmlns:c="urn:xmlns:rhq-configuration">
 
     <server name="TestServer3"/>
+    <server name="TestServer3Ignored"/> <!-- to be ignored in tests -->
+
 </plugin>

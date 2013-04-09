@@ -75,6 +75,7 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
     @Override
     public PageList<PlatformMetricsSummary> loadPlatformMetrics(final Subject subject) {
         final ResourceTypeCriteria typeCriteria = new ResourceTypeCriteria();
+        typeCriteria.addFilterIgnored(false); // don't load metrics for ignored types
         typeCriteria.addFilterCategory(PLATFORM);
         typeCriteria.fetchMetricDefinitions(true);
 

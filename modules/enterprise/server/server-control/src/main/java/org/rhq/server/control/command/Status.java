@@ -66,45 +66,42 @@ public class Status extends ControlCommand {
 
     @Override
     protected void exec(CommandLine commandLine) {
-        boolean checkStorage;
-        boolean checkServer;
-        boolean checkAgent;
-
-        if (commandLine.getOptions().length == 0) {
-            checkStorage = true;
-            checkServer = true;
-            checkAgent = true;
-        } else {
-            checkStorage = commandLine.hasOption(STORAGE_OPTION);
-            checkServer = commandLine.hasOption(SERVER_OPTION);
-            checkAgent = commandLine.hasOption(AGENT_OPTION);
-        }
-
         try {
-            if (checkStorage) {
-                if (commandLine.hasOption(STORAGE_OPTION) && !isStorageInstalled()) {
-                    log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
-                        " option will be ignored.");
-                } else {
+            // if no options specified, then check the status of whatever is installed
+            if (commandLine.getOptions().length == 0) {
+                if (isStorageInstalled()) {
                     checkStorageStatus();
                 }
-            }
-
-            if (checkServer) {
-                if (commandLine.hasOption(SERVER_OPTION) && !isServerInstalled()) {
-                    log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
-                        " option will be ignored.");
-                } else {
+                if (isServerInstalled()) {
                     checkServerStatus();
                 }
-            }
-
-            if (checkAgent) {
-                if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled()) {
-                    log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
-                        " option will be ignored.");
-                } else {
+                if (isAgentInstalled()) {
                     checkAgentStatus();
+                }
+            } else {
+                if (commandLine.hasOption(STORAGE_OPTION)) {
+                    if (isStorageInstalled()) {
+                        checkStorageStatus();
+                    } else {
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
+                            " option will be ignored.");
+                    }
+                }
+                if (commandLine.hasOption(SERVER_OPTION)) {
+                    if (isServerInstalled()) {
+                        checkServerStatus();
+                    } else {
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
+                            " option will be ignored.");
+                    }
+                }
+                if (commandLine.hasOption(AGENT_OPTION)) {
+                    if (isAgentInstalled()) {
+                        checkAgentStatus();
+                    } else {
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
+                            " option will be ignored.");
+                    }
                 }
             }
         } catch (Exception e) {

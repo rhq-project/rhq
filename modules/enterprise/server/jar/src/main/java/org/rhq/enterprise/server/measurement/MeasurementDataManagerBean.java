@@ -48,6 +48,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
 import org.jboss.ejb3.annotation.TransactionTimeout;
+import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
@@ -765,15 +766,28 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             requests.add(new MeasurementScheduleRequest(schedule));
         }
 
-        AgentClient ac = agentClientManager.getAgentClient(agent);
-        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, requests);
-        //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
-        //            Global UI Exceptions when attempting to serialize null responses.
-        if (values == null) {
-            values = Collections.emptySet();
+        Set<MeasurementData> result = null;
+        try {
+            AgentClient ac = agentClientManager.getAgentClient(agent);
+            result = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, requests);
+
+        } catch (RuntimeException e) {
+            if (e instanceof CannotConnectException || e.getMessage().contains("connect")
+                || (null != e.getCause() && e.getCause().getMessage().contains("connect"))) {
+
+                // suppress exception to keep the logs clean
+            } else {
+                throw e;
+            }
         }
 
-        return values;
+        //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
+        //            Global UI Exceptions when attempting to serialize null responses.
+        if (null == result) {
+            result = Collections.emptySet();
+        }
+
+        return result;
     }
 
     @Override

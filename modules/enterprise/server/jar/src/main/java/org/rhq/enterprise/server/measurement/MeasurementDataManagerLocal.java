@@ -177,10 +177,11 @@ public interface MeasurementDataManagerLocal {
      * @param resourceId the id of the resource
      * @param definitionIds the array of ids of schedule definitions
      *
-     * @return MeasurementData for this Schedule
+     * @return MeasurementData for this Schedule. Not null. Returns empty set if agent connection can not be established or
+     * component fails to report live data.
      */
     Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds);
-    
+
     /**
      * Get live metrics for a given MeasurementSchedule
      *

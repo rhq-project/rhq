@@ -40,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.ReportExporter;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.IconField;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
@@ -88,14 +89,18 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
             }
         });
 
+        IconField availabilityField = new IconField(ResourceDataSourceField.AVAILABILITY.propertyName(),
+            MSG.common_title_availability(), 70);
+
         ListGridField versionField = new ListGridField(ResourceDataSourceField.VERSION.propertyName(),
             MSG.common_title_version());
 
-        ListGridField cpuField = new ListGridField("cpu", MSG.dataSource_platforms_field_cpu());
-        ListGridField memoryField = new ListGridField("memory", MSG.dataSource_platforms_field_memory());
-        ListGridField swapField = new ListGridField("swap", MSG.dataSource_platforms_field_swap());
+        ListGridField cpuField = new ListGridField(FIELD_CPU, MSG.dataSource_platforms_field_cpu());
+        ListGridField memoryField = new ListGridField(FIELD_MEMORY, MSG.dataSource_platforms_field_memory());
+        ListGridField swapField = new ListGridField(FIELD_SWAP, MSG.dataSource_platforms_field_swap());
 
         nameField.setWidth("20%");
+        availabilityField.setWidth(70);
         versionField.setWidth("20%");
         cpuField.setWidth("20%");
         memoryField.setWidth("20%");
@@ -106,13 +111,11 @@ public class PlatformSummaryPortlet extends Table<PlatformMetricDataSource> impl
         memoryField.setCanSort(false);
         swapField.setCanSort(false);
 
-        setListGridFields(nameField, versionField, cpuField, memoryField, swapField);
+        setListGridFields(nameField, availabilityField, versionField, cpuField, memoryField, swapField);
 
         if (exportable) {
             addExportAction();
         }
-
-        getListGrid().fetchData();
     }
 
     private void addExportAction() {

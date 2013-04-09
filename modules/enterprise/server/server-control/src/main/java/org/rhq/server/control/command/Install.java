@@ -96,20 +96,35 @@ public class Install extends ControlCommand {
                 // We always install an agent with the storage node even if the user does
                 // not ask for it.
                 installAgent = true;
-                installStorageNode();
+                if (isStorageInstalled()) {
+                    log.warn("The RHQ storage node is already installed in " + new File(basedir, "storage"));
+                    log.warn("Skipping storage node installation.");
+                } else {
+                    installStorageNode();
+                }
             }
 
             if (installServer) {
-                startRHQServerForInstallation();
-                installRHQServer();
-                waitForRHQServerToInitialize();
+                if (isServerInstalled()) {
+                    log.warn("The RHQ server is already installed.");
+                    log.warn("Skipping server installation.");
+                } else {
+                    startRHQServerForInstallation();
+                    installRHQServer();
+                    waitForRHQServerToInitialize();
+                }
             }
 
             if (installAgent) {
-                clearAgentPreferences();
-                installAgent();
-                configureAgent();
-                startAgent();
+                if (isAgentInstalled()) {
+                    log.warn("The RHQ agent is already installed in " + new File(basedir, "rhq-agent"));
+                    log.warn("Skipping agent installation");
+                } else {
+                    clearAgentPreferences();
+                    installAgent();
+                    configureAgent();
+                    startAgent();
+                }
             }
         } catch (Exception e) {
             throw new RHQControlException("Installation failed", e);
@@ -117,7 +132,7 @@ public class Install extends ControlCommand {
     }
 
     private int installStorageNode() throws Exception {
-        log.info("Installing RHQ storage node");
+        log.debug("Installing RHQ storage node");
 
         return new ProcessBuilder("./rhq-storage-installer.sh", "--commitlog", "../storage/commit_log", "--data",
             "../storage/data", "--saved-caches", "../storage/saved_caches")
@@ -146,7 +161,7 @@ public class Install extends ControlCommand {
     }
 
     private void installRHQServer() throws Exception {
-        log.info("Installing RHQ server");
+        log.debug("Installing RHQ server");
 
         new ProcessBuilder("./rhq-installer.sh")
             .directory(binDir)
@@ -175,7 +190,7 @@ public class Install extends ControlCommand {
     }
 
     private void installAgent() throws Exception {
-        log.info("Installing RHQ agent");
+        log.debug("Installing RHQ agent");
 
         File agentInstallerJar = getAgentInstaller();
         new ProcessBuilder("java", "-jar", agentInstallerJar.getPath(), "--install")

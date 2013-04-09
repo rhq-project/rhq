@@ -115,11 +115,14 @@ public class Stop extends ControlCommand {
 
         String pid = getStoragePid();
         if (pid != null) {
+            System.out.println("Stopping RHQ storage node...");
+            System.out.println("RHQ storage node (pid=" + pid + ") is stopping...");
             new ProcessBuilder("kill", pid)
                 .redirectOutput(ProcessBuilder.Redirect.INHERIT)
                 .redirectError(ProcessBuilder.Redirect.INHERIT)
                 .start()
                 .waitFor();
+            System.out.println("RHQ storage node has stopped");
         }
     }
 

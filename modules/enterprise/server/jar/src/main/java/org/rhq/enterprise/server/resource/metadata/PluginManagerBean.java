@@ -129,10 +129,12 @@ public class PluginManagerBean implements PluginManagerLocal {
     }
 
     private int getResourceTypeCount(Plugin plugin) {
+        // this will get all types, even those deleted and ignored
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterPluginName(plugin.getName());
         criteria.setRestriction(Criteria.Restriction.COUNT_ONLY);
         criteria.addFilterDeleted(null);
+        criteria.addFilterIgnored(null);
         criteria.setStrict(true);
 
         PageList<ResourceType> types = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
@@ -328,7 +330,8 @@ public class PluginManagerBean implements PluginManagerLocal {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.setStrict(true);
         criteria.addFilterPluginName(plugin.getName());
-        criteria.addFilterDeleted(true);
+        criteria.addFilterDeleted(true); // get all deleted types ...
+        criteria.addFilterIgnored(null); // ... whether they are ignored or not
         criteria.addFilterParentResourceTypesEmpty(true);
         criteria.clearPaging();
 
@@ -342,7 +345,7 @@ public class PluginManagerBean implements PluginManagerLocal {
 
     private void deleteResourcesForType(Subject subject, ResourceType type) throws Exception {
 
-        List<Integer> typeIds = new ArrayList(1);
+        List<Integer> typeIds = new ArrayList<Integer>(1);
         typeIds.add(type.getId());
 
         List<Integer> resourceIds = resourceMgr.findIdsByTypeIds(typeIds);

@@ -217,6 +217,10 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_types_v1.xml");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/resource/metadata/ResourceMetadataManagerBeanTest/remove_types_v2.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MetadataUpdateWithIgnoredTypesTest/remove_types_v1.xml");
+        testClassesJar
+            .addAsResource("org/rhq/enterprise/server/resource/metadata/MetadataUpdateWithIgnoredTypesTest/remove_types_v2.xml");
 
         testClassesJar.addAsResource("perftest/AvailabilityInsertPurgeTest-testOne-data.xml.zip");
         testClassesJar.addAsResource("serverplugins/simple-generic-serverplugin.xml");

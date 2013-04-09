@@ -77,7 +77,8 @@ public class InventoryManagerBean implements InventoryManagerLocal {
     @Override
     public List<ResourceType> getDeletedTypes() {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterDeleted(true);
+        criteria.addFilterDeleted(true); // we'll get all deleted types ...
+        criteria.addFilterIgnored(null); // ... whether they are ignored or not
         criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         return resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);

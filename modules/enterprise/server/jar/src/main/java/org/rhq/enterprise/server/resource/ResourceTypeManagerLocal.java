@@ -46,8 +46,34 @@ import org.rhq.core.domain.util.PageList;
 public interface ResourceTypeManagerLocal {
     // TODO: Add a getResourceTypeByResourceId method.
 
+    /**
+     * Given a specific resource type ID, this will indicate if that type (and resources of that type)
+     * are to be ignored or not. If the type is to be ignored (ignoreFlag == true), then all resources
+     * that are already in inventory of that type will be uninventoried.
+     * 
+     * @param subject user making the request
+     * @param resourceTypeId the type to change
+     * @param ignoreFlag true if the type (and resources of that type) are to be ignored.
+     */
+    void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag);
+
+    /**
+     * All this does is set the resource type's ignore flag to the given boolean value.
+     *
+     * DO NOT USE THIS - THIS IS FOR INTERNAL USE ONLY.
+     * You must use {@link #setResourceTypeIgnoreFlagAndUninventoryResources(Subject, int, boolean)}.
+     *
+     * @param subject
+     * @param resourceTypeId
+     * @param ignoreFlag
+     */
+    void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag);
+
     ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException;
 
+    /**
+     * @return the resource type by name and plugin or null if the type is not found
+     */
     ResourceType getResourceTypeByNameAndPlugin(String name, String plugin);
 
     /**

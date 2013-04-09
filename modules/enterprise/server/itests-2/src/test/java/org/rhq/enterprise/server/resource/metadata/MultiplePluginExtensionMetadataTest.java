@@ -45,15 +45,23 @@ public class MultiplePluginExtensionMetadataTest extends MetadataBeanTest {
     private ResourceTypeManagerLocal resourceTypeMgr;
 
     public void testRegisterPlugins() throws Exception {
+        doTheTest(false);
+    }
+
+    public void testRegisterPluginsWithIgnoredTypes() throws Exception {
+        doTheTest(true);
+    }
+
+    public void doTheTest(boolean ignoreTypes) throws Exception {
         subjectMgr = LookupUtil.getSubjectManager();
         resourceTypeMgr = LookupUtil.getResourceTypeManager();
 
-        registerParentPluginV1(); // create an initial type (called the parent)
-        registerChild1PluginV1(); // using plugin extension mechanism, create child #1 type that extends that parent type
-        registerChild2PluginV1(); // using plugin extension mechanism, create child #2 type that extends that parent type
-        registerParentPluginV2(); // update the parent type
-        checkChild1Plugin(); // check that the changes to the parent type propogated to the child #1
-        checkChild2Plugin(); // check that the changes to the parent type propogated to the child #2
+        registerParentPluginV1(ignoreTypes); // create an initial type (called the parent)
+        registerChild1PluginV1(ignoreTypes); // using plugin extension mechanism, create child #1 type that extends that parent type
+        registerChild2PluginV1(ignoreTypes); // using plugin extension mechanism, create child #2 type that extends that parent type
+        registerParentPluginV2(ignoreTypes); // update the parent type
+        checkChild1Plugin(ignoreTypes); // check that the changes to the parent type propogated to the child #1
+        checkChild2Plugin(ignoreTypes); // check that the changes to the parent type propogated to the child #2
     }
 
     // this needs to be the last test executed in the class, it does cleanup
@@ -62,21 +70,31 @@ public class MultiplePluginExtensionMetadataTest extends MetadataBeanTest {
         afterClassWork();
     }
 
-    private void registerParentPluginV1() throws Exception {
+    private void registerParentPluginV1(boolean ignoreTypes) throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createPlugin("parent-plugin.jar", "1.0", "parent_plugin_v1.xml");
+        if (ignoreTypes) {
+            ignoreType(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
+        }
+
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
         assert resourceType.getName().equals(TYPE_NAME_PARENT);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_PARENT);
+        assert resourceType.isIgnored() == ignoreTypes;
         assertVersion1(resourceType);
     }
 
-    private void registerChild1PluginV1() throws Exception {
+    private void registerChild1PluginV1(boolean ignoreTypes) throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createPlugin("child1-plugin.jar", "1.0", "child1_plugin_v1.xml");
+        if (ignoreTypes) {
+            ignoreType(TYPE_NAME_CHILD1, PLUGIN_NAME_CHILD1);
+        }
+
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD1, PLUGIN_NAME_CHILD1);
         assert resourceType.getName().equals(TYPE_NAME_CHILD1);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD1);
+        assert resourceType.isIgnored() == ignoreTypes;
         assertVersion1(resourceType);
 
         // in our child #1 plugin, our extended type is actually a child of child #1 plugin's root type
@@ -87,29 +105,37 @@ public class MultiplePluginExtensionMetadataTest extends MetadataBeanTest {
         assert resourceType.getParentResourceTypes().iterator().next().getName().equals("OuterServerA");
     }
 
-    private void registerChild2PluginV1() throws Exception {
+    private void registerChild2PluginV1(boolean ignoreTypes) throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createPlugin("child2-plugin.jar", "1.0", "child2_plugin_v1.xml");
+        if (ignoreTypes) {
+            ignoreType(TYPE_NAME_CHILD2, PLUGIN_NAME_CHILD2);
+        }
+
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD2, PLUGIN_NAME_CHILD2);
         assert resourceType.getName().equals(TYPE_NAME_CHILD2);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD2);
+        assert resourceType.isIgnored() == ignoreTypes;
         assertVersion1(resourceType);
     }
 
-    private void registerParentPluginV2() throws Exception {
+    private void registerParentPluginV2(boolean ignoreTypes) throws Exception {
         // register the plugin, load the new type and test to make sure its what we expect
         createPlugin("parent-plugin.jar", "2.0", "parent_plugin_v2.xml");
+
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_PARENT, PLUGIN_NAME_PARENT);
         assert resourceType.getName().equals(TYPE_NAME_PARENT);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_PARENT);
+        assert resourceType.isIgnored() == ignoreTypes;
         assertVersion2(resourceType);
     }
 
-    private void checkChild1Plugin() throws Exception {
+    private void checkChild1Plugin(boolean ignoreTypes) throws Exception {
         // load the child #1 type and test to make sure it has been updated to what we expect
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD1, PLUGIN_NAME_CHILD1);
         assert resourceType.getName().equals(TYPE_NAME_CHILD1);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD1);
+        assert resourceType.isIgnored() == ignoreTypes;
         assertVersion2(resourceType);
 
         // in our child #1 plugin, our extended type is actually a child of child #1 plugin's root type
@@ -120,11 +146,12 @@ public class MultiplePluginExtensionMetadataTest extends MetadataBeanTest {
         assert resourceType.getParentResourceTypes().iterator().next().getName().equals("OuterServerA");
     }
 
-    private void checkChild2Plugin() throws Exception {
+    private void checkChild2Plugin(boolean ignoreTypes) throws Exception {
         // load the child #2 type and test to make sure it has been updated to what we expect
         ResourceType resourceType = loadResourceTypeFully(TYPE_NAME_CHILD2, PLUGIN_NAME_CHILD2);
         assert resourceType.getName().equals(TYPE_NAME_CHILD2);
         assert resourceType.getPlugin().equals(PLUGIN_NAME_CHILD2);
+        assert resourceType.isIgnored() == ignoreTypes;
         assertVersion2(resourceType);
     }
 
@@ -148,6 +175,7 @@ public class MultiplePluginExtensionMetadataTest extends MetadataBeanTest {
         ResourceTypeCriteria c = new ResourceTypeCriteria();
         c.addFilterName(typeName);
         c.addFilterPluginName(typePlugin);
+        c.addFilterIgnored(null);
         c.setStrict(true);
         c.fetchParentResourceTypes(true);
         c.fetchOperationDefinitions(true);

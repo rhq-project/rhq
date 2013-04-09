@@ -35,6 +35,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -51,8 +52,6 @@ public class MetadataManagerDisabledTypesTest {
     private static final String DESCRIPTOR_FILENAME_TEST3 = "metadata-manager-test-3.xml";
 
     private PluginMetadataManager metadataManager;
-    private final String disabledDiscoveryClazz = "org.rhq.test.DisabledDiscoveryClazzName";
-    private final String disabledComponentClazz = "org.rhq.test.DisabledResourceClazzName";
 
     @BeforeClass
     public void beforeClass() {
@@ -66,8 +65,7 @@ public class MetadataManagerDisabledTypesTest {
             disabledTypes.add("Test2>Extension Server B>Service D"); // from DESCRIPTOR_FILENAME_TEST2
             disabledTypes.add("Test1>Server A>Injection D To Server A"); // from DESCRIPTOR_FILENAME_TEST3
             disabledTypes.add("Test2>Extension Server B>Injection C To Server A"); // from DESCRIPTOR_FILENAME_TEST3
-            this.metadataManager
-                .setDisabledResourceTypes(disabledTypes, disabledDiscoveryClazz, disabledComponentClazz);
+            this.metadataManager.setDisabledResourceTypes(disabledTypes);
 
         } catch (Throwable t) {
             // Catch RuntimeExceptions and Errors and dump their stack trace, because Surefire will completely swallow them
@@ -191,13 +189,31 @@ public class MetadataManagerDisabledTypesTest {
     }
 
     private void assertIsDisabledType(ResourceType type) {
-        assert metadataManager.getDiscoveryClass(type).equals(this.disabledDiscoveryClazz);
-        assert metadataManager.getComponentClass(type).equals(this.disabledComponentClazz);
+        try {
+            metadataManager.getDiscoveryClass(type);
+            assert false : "Discovery: should have been disabled: " + type;
+        } catch (ResourceTypeNotEnabledException ok) {
+        }
+
+        try {
+            metadataManager.getComponentClass(type);
+            assert false : "Component: should have been disabled: " + type;
+        } catch (ResourceTypeNotEnabledException ok) {
+        }
     }
 
     private void assertIsNOTDisabledType(ResourceType type) {
-        assert !metadataManager.getDiscoveryClass(type).equals(this.disabledDiscoveryClazz);
-        assert !metadataManager.getComponentClass(type).equals(this.disabledComponentClazz);
+        try {
+            metadataManager.getDiscoveryClass(type);
+        } catch (ResourceTypeNotEnabledException ok) {
+            assert false : "Discovery: should not have been disabled: " + type;
+        }
+
+        try {
+            metadataManager.getComponentClass(type);
+        } catch (ResourceTypeNotEnabledException ok) {
+            assert false : "Component: should not have been disabled: " + type;
+        }
     }
 
     private ResourceType getResourceType(ResourceType typeToGet) {

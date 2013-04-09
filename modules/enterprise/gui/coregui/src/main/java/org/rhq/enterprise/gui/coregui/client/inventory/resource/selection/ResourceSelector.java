@@ -73,7 +73,7 @@ public class ResourceSelector extends AbstractSelector<Resource, ResourceCriteri
             final SelectItem categorySelect;
 
             typeSelectItem = new IPickTreeItem("type", MSG.common_title_type());
-            typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource());
+            typeSelectItem.setDataSource(new ResourceTypePluginTreeDataSource(false));
             typeSelectItem.setValueField("id");
             typeSelectItem.setCanSelectParentItems(true);
             typeSelectItem.setLoadDataOnDemand(false);

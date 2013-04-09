@@ -41,7 +41,8 @@ public class DeletedResourceTypeFilter {
 
     private void loadDeletedTypes() {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterDeleted(true);
+        criteria.addFilterDeleted(true); // we'll filter on all deleted types ...
+        criteria.addFilterIgnored(null); // ... whether they are ignored or not
 
         //Use CriteriaQuery to automatically chunk/page through criteria query results
         CriteriaQueryExecutor<ResourceType, ResourceTypeCriteria> queryExecutor = new CriteriaQueryExecutor<ResourceType, ResourceTypeCriteria>() {

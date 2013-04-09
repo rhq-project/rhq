@@ -32,6 +32,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainerConfiguration;
 import org.rhq.core.pluginapi.bundle.BundleFacet;
@@ -153,7 +154,16 @@ public class PluginValidator {
     private static boolean validateResourceComponentClass(PluginMetadataManager metadataManager,
         ResourceType resourceType, PluginEnvironment pluginEnvironment) {
         boolean success = true;
-        String componentClass = metadataManager.getComponentClass(resourceType);
+
+        String componentClass;
+        try {
+            componentClass = metadataManager.getComponentClass(resourceType);
+        } catch (ResourceTypeNotEnabledException rtne) {
+            componentClass = null;
+            success = false;
+            errorLog(rtne.toString());
+        }
+
         if (componentClass == null) {
             success = false;
             errorLog("Missing component class in resource type [" + resourceType.getName() + "] from plugin ["
@@ -231,7 +241,16 @@ public class PluginValidator {
     private static boolean validateResourceDiscoveryComponentClass(PluginMetadataManager metadataManager,
         ResourceType resourceType, PluginEnvironment pluginEnvironment) {
         boolean success = true;
-        String discoveryClass = metadataManager.getDiscoveryClass(resourceType);
+
+        String discoveryClass;
+        try {
+            discoveryClass = metadataManager.getDiscoveryClass(resourceType);
+        } catch (ResourceTypeNotEnabledException rtne) {
+            discoveryClass = null;
+            success = false;
+            errorLog(rtne.toString());
+        }
+
         if (discoveryClass != null) {
             try {
                 Class discoveryClazz = Class.forName(discoveryClass, false, pluginEnvironment.getPluginClassLoader());

@@ -41,7 +41,8 @@ public interface DiscoveryBossRemote {
     void importResources(Subject subject, int[] resourceIds);
 
     /**
-     * Analogous to the GUI feature Ignore Resources in the auto discovery queue.
+     * Analogous to the GUI feature Ignore Resources in the auto discovery queue. This can also
+     * ignore committed resources as well.
      * Note, to query for Resources with a specific InventoryStatus, see
      * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
      * 
@@ -59,6 +60,19 @@ public interface DiscoveryBossRemote {
      * @param resourceIds
      */
     void unignoreResources(Subject subject, int[] resourceIds);
+
+    /**
+     * This is used to specifically unignore previously ignored resources. This has the added feature
+     * of immediately importing those newly unignored resources. This should only be used for unignoring
+     * those resources that were previously committed but ignored.
+     * 
+     * Note, to query for Resources with a specific InventoryStatus, see
+     * {@link org.rhq.enterprise.server.resource.ResourceManagerRemote#findResourcesByCriteria}.
+     * 
+     * @param subject
+     * @param resourceIds
+     */
+    void unignoreAndImportResources(Subject subject, int[] resourceIds);
 
     /**
      * Manually Add the resource of the specified type to inventory using the specified plugin configuration (i.e.

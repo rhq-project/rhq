@@ -31,6 +31,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -71,9 +72,10 @@ public class PluginComponentFactory implements ContainerService {
      *         type
      *
      * @throws PluginContainerException if failed to create the discovery component instance
+     * @throws ResourceTypeNotEnabledException if the resource type has been disabled or ignored - no management of the resource is allowed 
      */
     public ResourceDiscoveryComponent getDiscoveryComponent(ResourceType resourceType,
-        ResourceContainer parentResourceContainer) throws PluginContainerException {
+        ResourceContainer parentResourceContainer) throws PluginContainerException, ResourceTypeNotEnabledException {
 
         // This is an exception for PC unit tests which use a fake platform type.
         if (resourceType.equals(PluginMetadataManager.TEST_PLATFORM_TYPE)) {
@@ -136,8 +138,11 @@ public class PluginComponentFactory implements ContainerService {
      * @return a new resource component loaded in the proper plugin classloader
      *
      * @throws PluginContainerException if failed to create the component instance
+     * @throws ResourceTypeNotEnabledException if the resource type has been disabled or ignored - no management of the resource is allowed 
      */
-    public ResourceComponent buildResourceComponent(Resource resource) throws PluginContainerException {
+    public ResourceComponent buildResourceComponent(Resource resource) throws PluginContainerException,
+        ResourceTypeNotEnabledException {
+
         ResourceType resourceType = resource.getResourceType();
         if (PluginMetadataManager.TEST_PLATFORM_TYPE.equals(resourceType)) {
             return new ResourceComponent() {

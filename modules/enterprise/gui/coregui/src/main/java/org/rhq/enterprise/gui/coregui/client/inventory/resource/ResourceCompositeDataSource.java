@@ -26,12 +26,14 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PARENT_INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
@@ -52,6 +54,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -189,6 +192,21 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         criteria.addFilterVersion(getFilter(request, "version", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
 
+        // we never want to filter on null status - that would return resources for every status (committed, new, deleted, etc).
+        // we want to rely on whatever the default setting is for the criteria and only override that if we explicitly have a status to filter.
+        InventoryStatus invStatusFilter = getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class);
+        if (invStatusFilter != null) {
+            criteria.addFilterInventoryStatus(invStatusFilter);
+        }
+
+        InventoryStatus parentInvStatusFilter = getFilter(request, PARENT_INVENTORY_STATUS.propertyName(),
+            InventoryStatus.class);
+        if (parentInvStatusFilter != null) {
+            List<InventoryStatus> statuses = new ArrayList<InventoryStatus>(1);
+            statuses.add(parentInvStatusFilter);
+            criteria.addFilterParentInventoryStatuses(statuses);
+        }
+
         return criteria;
     }
 
@@ -221,6 +239,7 @@ public class ResourceCompositeDataSource extends RPCDataSource<ResourceComposite
         record.setAttribute(ITIME.propertyName(), res.getItime());
         record.setAttribute(MTIME.propertyName(), res.getMtime());
         record.setAttribute(MODIFIER.propertyName(), res.getModifiedBy());
+        record.setAttribute(INVENTORY_STATUS.propertyName(), res.getInventoryStatus());
 
         record.setAttribute("resourcePermission", from.getResourcePermission());
 

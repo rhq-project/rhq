@@ -87,6 +87,7 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
         "modifiedBy", //
         "location", //
         "resourceType", //
+        "inventoryStatus", //
         "childResources", //
         "parentResource", //
         //                    "resourceConfiguration           \n" +
@@ -417,6 +418,14 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
     public void unignoreResources(int[] resourceIds) throws RuntimeException {
         try {
             discoveryBoss.unignoreResources(getSessionSubject(), resourceIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    public void unignoreAndImportResources(int[] resourceIds) throws RuntimeException {
+        try {
+            discoveryBoss.unignoreAndImportResources(getSessionSubject(), resourceIds);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

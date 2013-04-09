@@ -28,15 +28,10 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface ResourceTypeManagerRemote {
 
+    void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag);
+
     ResourceType getResourceTypeById(Subject subject, int resourceTypeId) throws ResourceTypeNotFoundException;
 
-    /**
-     * @param  subject
-     * @param  name
-     * @param  plugin
-     *
-     * @return the resource type by name and plugin or null if the type is not found
-     */
     ResourceType getResourceTypeByNameAndPlugin(Subject subject, String name, String plugin);
 
     PageList<ResourceType> findResourceTypesByCriteria(Subject subject, ResourceTypeCriteria criteria);

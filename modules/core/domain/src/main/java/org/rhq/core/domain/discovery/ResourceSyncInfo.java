@@ -24,6 +24,7 @@ package org.rhq.core.domain.discovery;
 
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.HashSet;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -39,6 +40,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.rhq.core.domain.resource.InventoryStatus;
+import org.rhq.core.domain.resource.Resource;
 
 /**
  * @author Ian Springer
@@ -103,4 +105,30 @@ public class ResourceSyncInfo implements Serializable {
         return childSyncInfos;
     }
 
+    public static ResourceSyncInfo buildResourceSyncInfo(Resource resource) {
+        Collection<ResourceSyncInfo> children;
+
+        if (resource.getChildResources() != null) {
+            children = new HashSet<ResourceSyncInfo>(resource.getChildResources().size());
+            for (Resource child : resource.getChildResources()) {
+                children.add(buildResourceSyncInfo(child));
+            }
+        } else {
+            children = new HashSet<ResourceSyncInfo>(0);
+        }
+
+        ResourceSyncInfo syncInfo = new ResourceSyncInfo(resource.getId(), resource.getUuid(), resource.getMtime(),
+            resource.getInventoryStatus(), children);
+
+        return syncInfo;
+    }
+
+    private ResourceSyncInfo(int id, String uuid, long mtime, InventoryStatus istatus,
+        Collection<ResourceSyncInfo> children) {
+        this.id = id;
+        this.uuid = uuid;
+        this.mtime = mtime;
+        this.inventoryStatus = istatus;
+        this.childSyncInfos = children;
+    }
 }

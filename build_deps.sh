@@ -32,45 +32,8 @@ build_datastax_driver()
     #clone_repo "git://github.com/datastax/java-driver.git"
     clone_repo git://github.com/jsanda/java-driver.git
     pushd java-driver
-    git checkout -b master-1.2.1 origin/master-1.2.1
+    git checkout -b master-1.2.2 origin/master-1.2.2
     run_mvn install -DskipTests
-    popd
-}
-
-build_cassandra_jdbc()
-{
-    echo "Building cassandra-jdbc..."
-    #clone_repo "https://code.google.com/a/apache-extras.org/p/cassandra-jdbc/"
-    clone_repo git://github.com/jsanda/cassandra-jdbc.git
-    pushd cassandra-jdbc
-    git fetch origin
-    #git checkout -b trunk origin/trunk
-    git checkout -b trunk-1.2.0-rc1 origin/trunk-1.2.0-rc1
-    run_mvn install -DskipTests
-    popd
-}
-
-build_liquibase()
-{
-    echo "Building Liquibase..."
-    clone_repo git://github.com/jsanda/liquibase.git
-    pushd liquibase
-    git remote add upstream git://github.com/liquibase/liquibase.git
-    git fetch origin
-    git fetch upstream
-    git branch upstream-master upstream/master
-    git checkout -b extensible-lock-service origin/extensible-lock-service
-    git rebase upstream-master
-    run_mvn install -DskipTests
-    popd
-}
-
-build_cassandra_liquibase_ext()
-{
-    echo "Building cassandra-liquibase-ext..."
-    git clone git://github.com/jsanda/cassandra-liquibase-ext.git
-    pushd cassandra-liquibase-ext
-    mvn install -DskipTests
     popd
 }
 

@@ -33,7 +33,8 @@ import javax.ejb.Singleton;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
+
+import org.xerial.snappy.SnappyBundleActivator;
 
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.server.metrics.CQLException;
@@ -52,6 +53,7 @@ public class SessionManagerBean {
     @PostConstruct
     private void createSession() {
         try {
+            initSnappy();
             String username = System.getProperty("rhq.cassandra.username");
             if (username == null) {
                 throw new CQLException("The rhq.cassandra.username property is null. Cannot create session.");
@@ -87,9 +89,14 @@ public class SessionManagerBean {
                 .withPort(port)
                 .build();
             session = cluster.connect("rhq");
-        } catch (NoHostAvailableException e) {
+        } catch (Exception  e) {
             throw new CQLException("Unable to create session", e);
         }
+    }
+
+    private void initSnappy() throws Exception {
+        SnappyBundleActivator activator = new SnappyBundleActivator();
+        activator.start(null);
     }
 
     public Session getSession() {

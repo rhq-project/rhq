@@ -26,10 +26,12 @@
 package org.rhq.server.control.command;
 
 import java.io.File;
+import java.io.FileReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -108,19 +110,27 @@ public class Start extends ControlCommand {
     }
 
     private void startStorage() throws Exception {
-        log.info("Starting RHQ storage node");
+        log.debug("Starting RHQ storage node");
 
         File storageBasedir = new File(basedir, "storage");
         File storageBinDir = new File(storageBasedir, "bin");
+        File pidFile = new File(storageBinDir, "cassandra.pid");
 
-        new ProcessBuilder("./cassandra", "-p", "cassandra.pid")
-            .directory(storageBinDir)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start();
+        // For now we are duplicating logic in the status command. This code will be
+        // replaced when we implement a rhq-storage.sh script.
+        if (pidFile.exists()) {
+            String pid = StreamUtil.slurp(new FileReader(pidFile));
+            System.out.println("RHQ storage node (pid " + pid + ") is running");
+        } else {
+            new ProcessBuilder("./cassandra", "-p", "cassandra.pid")
+                .directory(storageBinDir)
+                .redirectError(ProcessBuilder.Redirect.INHERIT)
+                .start();
+        }
     }
 
     private void startRHQServer() throws Exception {
-        log.info("Starting RHQ server");
+        log.debug("Starting RHQ server");
 
         new ProcessBuilder("./rhq-server.sh", "start")
             .directory(binDir)
@@ -131,7 +141,7 @@ public class Start extends ControlCommand {
     }
 
     private void startAgent() throws Exception {
-        log.info("Starting RHQ agent");
+        log.debug("Starting RHQ agent");
 
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
@@ -143,6 +153,5 @@ public class Start extends ControlCommand {
             .start()
             .waitFor();
     }
-
 
 }

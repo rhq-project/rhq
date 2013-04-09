@@ -37,8 +37,8 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
-import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -70,16 +70,16 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
      * @see DiscoveryServerService#mergeInventoryReport(InventoryReport)
      */
     @Override
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException,
-        StaleTypeException {
+    public MergeInventoryReportResults mergeInventoryReport(InventoryReport report)
+        throws InvalidInventoryReportException, StaleTypeException {
 
         InventoryReportSerializer.getSingleton().lock(report.getAgent().getName());
         try {
             long start = System.currentTimeMillis();
             DiscoveryBossLocal discoveryBoss = LookupUtil.getDiscoveryBoss();
-            ResourceSyncInfo syncInfo;
+            MergeInventoryReportResults results;
             try {
-                syncInfo = discoveryBoss.mergeInventoryReport(report);
+                results = discoveryBoss.mergeInventoryReport(report);
             } catch (StaleTypeException e) {
                 // There is no need to log this exception as it is part of a normal work flow
                 // that occurs as a result of a user deleting a plugin. DiscoveryBossBean
@@ -113,7 +113,7 @@ public class DiscoveryServerServiceImpl implements DiscoveryServerService {
                 }
             }
 
-            return syncInfo;
+            return results;
         } finally {
             InventoryReportSerializer.getSingleton().unlock(report.getAgent().getName());
         }

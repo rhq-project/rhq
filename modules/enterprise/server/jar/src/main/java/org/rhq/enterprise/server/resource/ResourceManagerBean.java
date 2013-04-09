@@ -250,6 +250,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(persistedResource);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void uninventoryResourcesOfResourceType(Subject subject, int resourceTypeId) {
+        List<Integer> typeIds = new ArrayList<Integer>(1);
+        typeIds.add(resourceTypeId);
+
+        List<Integer> resourceIds = resourceManager.findIdsByTypeIds(typeIds);
+
+        if (resourceIds != null && !resourceIds.isEmpty()) {
+            log.info("Uninventorying all [" + resourceIds.size() + "] resources with resource type ID of ["
+                + resourceTypeId + "]");
+
+            for (Integer resourceId : resourceIds) {
+                resourceManager.uninventoryResourceInNewTransaction(resourceId);
+            }
+        }
+
+        return;
+    }
+
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent) {
         Resource platform = resourceManager.getPlatform(doomedAgent);
@@ -668,12 +688,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendents) {
-        if ((resource.getParentResource() != null)
-            && (resource.getParentResource().getInventoryStatus() != InventoryStatus.COMMITTED)) {
-            throw new IllegalStateException("Cannot commit resource [" + resource
-                + "] to inventory, because its parent resource [" + resource.getParentResource()
-                + "] has not yet been committed.");
+        // do special processing if we are being asked to commit the resource to inventory
+        if (newStatus == InventoryStatus.COMMITTED) {
+            if ((resource.getParentResource() != null)
+                && (resource.getParentResource().getInventoryStatus() != InventoryStatus.COMMITTED)) {
+                throw new IllegalStateException("Cannot commit resource [" + resource
+                    + "] to inventory, because its parent resource [" + resource.getParentResource()
+                    + "] has not yet been committed.");
+            }
+
+            if ((resource.getResourceType() == null) || (resource.getResourceType().isIgnored())) {
+                log.debug("Not commiting resource [" + resource + "] to inventory because its type is ignored");
+                return resource;
+            }
         }
+
 
         long now = System.currentTimeMillis();
         updateInventoryStatus(resource, newStatus, now);
@@ -942,6 +971,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
         resourceTypeCriteria.addFilterIds(typesSet.toArray(new Integer[typesSet.size()]));
+        resourceTypeCriteria.addFilterIgnored(null); // don't worry if they are ignored or not, get the ancestry anyway
         List<ResourceType> types = typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
 
         for (Resource resource : resources) {

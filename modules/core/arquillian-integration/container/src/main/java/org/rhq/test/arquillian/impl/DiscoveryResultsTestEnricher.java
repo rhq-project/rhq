@@ -11,6 +11,7 @@ import org.jboss.arquillian.core.api.annotation.Inject;
 import org.jboss.arquillian.test.spi.annotation.TestScoped;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pc.PluginContainer;
@@ -183,7 +184,13 @@ public class DiscoveryResultsTestEnricher implements PostPrepareEnricher {
     private Class<?> getResourceComponentClass(ResourceType resourceType) {
         PluginMetadataManager pmm = getPluginContainer().getPluginManager().getMetadataManager();
                 
-        String componentClassName = pmm.getComponentClass(resourceType);
+        String componentClassName;
+        try {
+            componentClassName = pmm.getComponentClass(resourceType);
+        } catch (ResourceTypeNotEnabledException rtne) {
+            throw new RuntimeException(rtne);
+        }
+
         try {
             return Class.forName(componentClassName);
         } catch (ClassNotFoundException e) {

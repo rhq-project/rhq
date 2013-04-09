@@ -35,6 +35,7 @@ import org.rhq.core.clientapi.server.discovery.InvalidInventoryReportException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.resource.Agent;
@@ -56,11 +57,12 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      *
      * @param  report the inventory report to be merged
      *
-     * @return the server's response, which will include the true IDs for new resources that were found
-     *
+     * @return the server's response, which will include the true IDs for new resources that were found.
+     *         This can return null in one specific case - if this is a brand new agent and it is currently initializing
+     *         for the very first time.
      * @throws InvalidInventoryReportException if the inventory report is invalid
      */
-    ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
+    MergeInventoryReportResults mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException;
 
     /**
      * <p>Exists for transactional boundary reasons only.</p>
@@ -147,11 +149,12 @@ public interface DiscoveryBossLocal extends DiscoveryBossRemote {
      * {@link #updateInventoryStatus(Subject, List, List, InventoryStatus)} for the "public" version.
      *
      * @param user      the user that wants to change the status
-     * @param status    the new status the given resources will have
      * @param platforms identifies the platforms that are to be updated
      * @param servers   identifies the servers that are to be updated
+     * @param status    the new status the given resources will have
      */
-    void updateInventoryStatus(Subject user, InventoryStatus status, List<Resource> platforms, List<Resource> servers);
+    void updateInventoryStatusInNewTransaction(Subject user, List<Resource> platforms, List<Resource> servers,
+        InventoryStatus status);
 
     /**
      * Manually add the resource of the specified type to inventory using the specified plugin configuration (i.e.

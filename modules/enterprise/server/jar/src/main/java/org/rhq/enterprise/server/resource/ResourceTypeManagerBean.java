@@ -33,6 +33,8 @@ import java.util.TreeSet;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
@@ -42,6 +44,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -55,6 +58,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -79,8 +83,40 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
     private AuthorizationManagerLocal authorizationManager;
 
     @EJB
-    //@IgnoreDependency
     private ResourceManagerLocal resourceManager;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager; // self-reference
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void setResourceTypeIgnoreFlagAndUninventoryResources(Subject subject, int resourceTypeId, boolean ignoreFlag) {
+        // if we are to ignore the type, we first must successfully uninventory all resources of that type
+        if (ignoreFlag == true) {
+            resourceManager.uninventoryResourcesOfResourceType(subject, resourceTypeId);
+        }
+
+        // now we simply flip the ignore setting on the type
+        resourceTypeManager.setResourceTypeIgnoreFlag(subject, resourceTypeId, ignoreFlag);
+
+        return;
+    }
+
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    public void setResourceTypeIgnoreFlag(Subject subject, int resourceTypeId, boolean ignoreFlag) {
+        ResourceType resourceType = getResourceTypeById(subject, resourceTypeId);
+
+        // don't bother to do anything if the type's ignore flag is already set to the value the caller wants
+        if (resourceType.isIgnored() == ignoreFlag) {
+            return;
+        }
+
+        log.info("Changing ignore flag to [" + ignoreFlag + "] for resource type [" + resourceType.getName()
+            + "] with id=[" + resourceTypeId + "]");
+
+        resourceType.setIgnored(ignoreFlag);
+        return;
+    }
 
     public ResourceType getResourceTypeById(Subject subject, int id) throws ResourceTypeNotFoundException {
         // this operation does not need to be secured; types are data side-effects of authorized resources
@@ -523,7 +559,9 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         List<ResourceType> results = new ArrayList<ResourceType>(uniqueTypes);
 
         if (sawTopLevelServer) {
+            // get all platform types, whether or not they are ignored
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.addFilterIgnored(null);
             criteria.addFilterCategory(ResourceCategory.PLATFORM);
             criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
@@ -540,7 +578,9 @@ public class ResourceTypeManagerBean implements ResourceTypeManagerLocal, Resour
         ResourceType first = entityManager.find(ResourceType.class, resourceTypeId);
 
         if (first.getCategory() == ResourceCategory.PLATFORM) {
+            // get all platform types, whether or not they are ignored
             ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+            criteria.addFilterIgnored(null);
             criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
             List<ResourceType> allResourceTypes = findResourceTypesByCriteria(subject, criteria);

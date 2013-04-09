@@ -15,6 +15,8 @@ import org.rhq.core.domain.util.PageList;
 @RemoteServiceRelativePath("ResourceTypeGWTService")
 public interface ResourceTypeGWTService extends RemoteService {
 
+    void setResourceTypeIgnoreFlag(int resourceTypeId, boolean ignoreFlag) throws RuntimeException;
+
     PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria) throws RuntimeException;
 
     ArrayList<ResourceType> getResourceTypesForResourceAncestors(int resourceId) throws RuntimeException;

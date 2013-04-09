@@ -60,6 +60,7 @@ public class ResourceCriteria extends TaggedCriteria {
     private String filterParentResourceName; // needs overrides
     private Integer filterParentResourceTypeId; // needs overrides
     private ResourceCategory filterParentResourceCategory; // needs overrides    
+    private List<InventoryStatus> filterParentInventoryStatuses; // needs overrides
     private String filterAgentName; // needs overrides
     private Integer filterAgentId; // needs overrides
     private AvailabilityType filterCurrentAvailability; // needs overrides
@@ -140,6 +141,7 @@ public class ResourceCriteria extends TaggedCriteria {
         filterOverrides.put("rootResourceId", "agent.id = (SELECT r2.agent.id FROM Resource r2 where r2.id = ?)");
         filterOverrides.put("resourceTypeIds", "resourceType.id IN (?)");
         filterOverrides.put("inventoryStatuses", "inventoryStatus IN ( ? )");
+        filterOverrides.put("parentInventoryStatuses", "parentResource.inventoryStatus IN ( ? )");
 
         sortOverrides.put("resourceTypeName", "resourceType.name");
         sortOverrides.put("resourceCategory", "resourceType.category");
@@ -225,6 +227,10 @@ public class ResourceCriteria extends TaggedCriteria {
 
     public void addFilterParentResourceCategory(ResourceCategory filterParentResourceCategory) {
         this.filterParentResourceCategory = filterParentResourceCategory;
+    }
+
+    public void addFilterParentInventoryStatuses(List<InventoryStatus> filterParentInventoryStatuses) {
+        this.filterParentInventoryStatuses = filterParentInventoryStatuses;
     }
 
     public void addFilterAgentName(String filterAgentName) {

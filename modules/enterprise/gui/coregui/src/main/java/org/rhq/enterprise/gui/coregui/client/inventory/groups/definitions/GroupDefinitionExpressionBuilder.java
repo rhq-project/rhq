@@ -490,6 +490,7 @@ public class GroupDefinitionExpressionBuilder extends Window {
 
     private void loadResourceTypeDropDown(final String newPlugin) {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterIgnored(false); // make sure we don't let users pick a type that is ignored
         criteria.addFilterPluginName(newPlugin);
         criteria.setPageControl(PageControl.getUnlimitedInstance());
         criteria.setRestriction(Restriction.COLLECTION_ONLY);

@@ -126,7 +126,7 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem typeTreeItem = new NavigationItem(PAGE_TYPE_TREE, null, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceTypeTreeView();
+                return new ResourceTypeTreeView(true);
             }
         });
 

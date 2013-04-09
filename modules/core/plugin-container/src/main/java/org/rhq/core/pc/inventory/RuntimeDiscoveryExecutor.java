@@ -35,6 +35,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -259,6 +260,11 @@ public class RuntimeDiscoveryExecutor implements Runnable, Callable<InventoryRep
                 ResourceDiscoveryComponent discoveryComponent = null;
                 try {
                     discoveryComponent = factory.getDiscoveryComponent(childResourceType, parentContainer);
+                } catch (ResourceTypeNotEnabledException rtne) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("Resource not discoverable, type is disabled: " + childResourceType);
+                    }
+                    continue; // do not discovery anything for this component
                 } catch (PluginContainerException pce) {
                     log.error("Unable to obtain discovery component for [" + childResourceType + "]", pce);
                 }

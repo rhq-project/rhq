@@ -23,6 +23,7 @@
 package org.rhq.core.clientapi.agent.metadata;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -74,10 +75,12 @@ public class PluginMetadataManager {
 
     private Map<String, PluginDescriptor> descriptorsByPlugin = new HashMap<String, PluginDescriptor>();
 
+    // "disabled" types are disabled entirely at initialization time and will be disable for the lifetime of this manager.
+    // "ignored" types are ignored but can be unignored at a later time.
     private List<String> disabledResourceTypesAsStrings = null;
     private Map<ResourceType, String> disabledResourceTypes = null;
-    private String disabledDiscoveryComponentClassName = null;
-    private String disabledResourceComponentClassName = null;
+    private Set<ResourceType> ignoredResourceTypes = null;
+    private Object disabledIgnoredTypesLock = new Object(); // used when accessing disabled and ignored collections
 
     public PluginMetadataManager() {
     }
@@ -143,17 +146,19 @@ public class PluginMetadataManager {
         return (parser != null) ? parser.getPluginLifecycleListenerClass() : null;
     }
 
-    public String getDiscoveryClass(ResourceType resourceType) {
-        if (isDisabledResourceType(resourceType)) {
-            return this.disabledDiscoveryComponentClassName;
+    public String getDiscoveryClass(ResourceType resourceType) throws ResourceTypeNotEnabledException {
+        if (isDisabledOrIgnoredResourceType(resourceType)) {
+            log.debug("resource type is disabled - rejecting request for discovery class name: " + resourceType);
+            throw new ResourceTypeNotEnabledException(resourceType);
         }
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
         return (parser != null) ? parser.getDiscoveryComponentClass(resourceType) : null;
     }
 
-    public String getComponentClass(ResourceType resourceType) {
-        if (isDisabledResourceType(resourceType)) {
-            return this.disabledResourceComponentClassName;
+    public String getComponentClass(ResourceType resourceType) throws ResourceTypeNotEnabledException {
+        if (isDisabledOrIgnoredResourceType(resourceType)) {
+            log.debug("resource type is disabled - rejecting request for component class name: " + resourceType);
+            throw new ResourceTypeNotEnabledException(resourceType);
         }
         PluginMetadataParser parser = this.parsersByPlugin.get(resourceType.getPlugin());
         return (parser != null) ? parser.getComponentClass(resourceType) : null;
@@ -194,7 +199,9 @@ public class PluginMetadataManager {
                 }
             }
 
-            findDisabledResourceTypesInAllPlugins();
+            synchronized (disabledIgnoredTypesLock) {
+                findDisabledResourceTypesInAllPlugins();
+            }
 
             Set<ResourceType> rootTypes = parser.getRootResourceTypes();
             return rootTypes;
@@ -365,42 +372,81 @@ public class PluginMetadataManager {
     }
 
     /**
-     * This will define resource types that will be disabled - and by that it means
-     * the discovery and resource components will not do anything (it is assumed
-     * the classnames for the component classes will not do anything).
+     * This will set the given resource types to be the set of types that are to be ignored.
+     *
+     * @param ignoredTypes all the types to now ignore - overrides any set of types that previously were ignored
+     */
+    public void setIgnoredResourceTypes(Collection<ResourceType> ignoredTypes) {
+        synchronized (disabledIgnoredTypesLock) {
+            if (ignoredTypes == null || ignoredTypes.isEmpty()) {
+                this.ignoredResourceTypes = null;
+            } else {
+                if (this.ignoredResourceTypes == null) {
+                    this.ignoredResourceTypes = new HashSet<ResourceType>(ignoredTypes);
+                } else {
+                    this.ignoredResourceTypes.clear();
+                    this.ignoredResourceTypes.addAll(ignoredTypes);
+                }
+            }
+        }
+    }
+
+    /**
+     * This will define resource types that will be disabled.
      *
      * Owners of this metadata manager need to set this during initialization prior to
-     * loading any plugins.
+     * loading any plugins. Calling this after this manager has been initialized will have no effect.
      *
      * @param disabledTypesAsStrings list of types, in the form "pluginName>parentType>childType"
-     * @param disabledDiscoveryComponentClassName the name of the discovery component class of all disable types
-     * @param disabledResourceComponentClassName the name of the resource component class of all disable types
      */
-    public void setDisabledResourceTypes(List<String> disabledTypesAsStrings,
-        String disabledDiscoveryComponentClassName, String disabledResourceComponentClassName) {
+    public void setDisabledResourceTypes(List<String> disabledTypesAsStrings) {
 
-        if (disabledTypesAsStrings != null && !disabledTypesAsStrings.isEmpty()) {
-            this.disabledDiscoveryComponentClassName = disabledDiscoveryComponentClassName;
-            this.disabledResourceComponentClassName = disabledResourceComponentClassName;
-            this.disabledResourceTypesAsStrings = new ArrayList<String>(disabledTypesAsStrings);
-            log.info("Will disable the following resource types: " + this.disabledResourceTypesAsStrings);
-        } else {
-            this.disabledDiscoveryComponentClassName = null;
-            this.disabledResourceComponentClassName = null;
-            this.disabledResourceTypesAsStrings = null;
+        synchronized (disabledIgnoredTypesLock) {
+            if (disabledTypesAsStrings != null && !disabledTypesAsStrings.isEmpty()) {
+                this.disabledResourceTypesAsStrings = new ArrayList<String>(disabledTypesAsStrings);
+                log.info("Will disable the following resource types: " + this.disabledResourceTypesAsStrings);
+            } else {
+                this.disabledResourceTypesAsStrings = null;
+            }
         }
         return;
     }
 
-    private boolean isDisabledResourceType(ResourceType resourceType) {
-        if (this.disabledResourceTypes == null) {
+    /**
+     * Returns true if the given resource type was either disabled at initialization time
+     * or subsequently ignored. Both have the same effect, a disabled or ignored resource type
+     * means there should not be resources of that type in inventory.
+     *
+     * @param resourceType the type to check
+     * @return true if no resources of this type should be in inventory; if resourceType is null
+     *         then false is returned
+     */
+    public boolean isDisabledOrIgnoredResourceType(ResourceType resourceType) {
+        if (resourceType == null) {
             return false;
         }
-        return this.disabledResourceTypes.containsKey(resourceType);
+
+        synchronized (disabledIgnoredTypesLock) {
+            // is it ignored?
+            if (this.ignoredResourceTypes != null) {
+                if (this.ignoredResourceTypes.contains(resourceType)) {
+                    return true;
+                }
+            }
+            // is it disabled?
+            if (this.disabledResourceTypes != null) {
+                if (this.disabledResourceTypes.containsKey(resourceType)) {
+                    return true;
+                }
+            }
+        }
+        // its neither disabled nor ignored
+        return false;
     }
 
     // finds if type or its children are disabled and if so adds them to the map with their string representation
     private void findDisabledResourceTypes(String parentHierarchy, ResourceType type,
+    // NOTE: we don't synchronize on disabledTypesLock because we ensured our calling context already has the lock
         HashMap<ResourceType, String> disabledTypes) {
         // this is the current level we are at in the type hierarchy, as written in string form ("plugin>type>type...")
         String typeHierarchy = parentHierarchy + '>' + type.getName();
@@ -423,6 +469,7 @@ public class PluginMetadataManager {
     }
 
     private void findDisabledResourceTypesInAllPlugins() {
+        // NOTE: we don't synchronize on disabledTypesLock because we ensured our calling context already has the lock
         if (this.disabledResourceTypesAsStrings != null) {
             int totalToBeDisabled = this.disabledResourceTypesAsStrings.size();
             // we have to do it all over again over all plugins because we need to support the injection extension model

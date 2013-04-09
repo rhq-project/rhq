@@ -210,6 +210,7 @@ public class ResourceTypeRepository {
         List<Integer> typesNeeded = new ArrayList<Integer>();
         EnumSet<MetadataType> metadataTypesNeeded = EnumSet.noneOf(MetadataType.class);
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterIgnored(null); // we will cache both unignored and ignored types
 
         if (resourceTypeIds == null) {
             //preload all
@@ -322,6 +323,7 @@ public class ResourceTypeRepository {
         final EnumSet<MetadataType> metadataTypes, final ResourceTypeCriteria criteria,
         final Map<Integer, ResourceType> cachedTypes) {
         ResourceTypeCriteria topLevelCriteria = new ResourceTypeCriteria();
+        topLevelCriteria.addFilterIgnored(null); // we will cache both unignored and ignored types
         topLevelCriteria.addFilterCategories(ResourceCategory.SERVER, ResourceCategory.SERVICE);
         topLevelCriteria.addFilterParentResourceTypesEmpty(true);
         topLevelCriteria.addSortCategory(PageOrdering.DESC);

@@ -22,17 +22,20 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MODIFIER;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.MTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.NAME;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PARENT_INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.PLUGIN;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.TYPE_ID;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.VERSION;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -147,6 +151,11 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         availabilityDataField.setCanEdit(false);
         fields.add(availabilityDataField);
 
+        DataSourceTextField inventoryStatusDataField = new DataSourceTextField(INVENTORY_STATUS.propertyName(),
+            INVENTORY_STATUS.title());
+        inventoryStatusDataField.setDetail(true);
+        fields.add(inventoryStatusDataField);
+        
         DataSourceTextField ctimeDataField = new DataSourceTextField(CTIME.propertyName(), CTIME.title());
         ctimeDataField.setDetail(true);
         fields.add(ctimeDataField);
@@ -255,6 +264,22 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         criteria.addFilterTagName(getFilter(request, "tagName", String.class));
         criteria.addFilterVersion(getFilter(request, "version", String.class));
         criteria.addFilterParentResourceCategory(getFilter(request, FILTER_PARENT_CATEGORY, ResourceCategory.class));
+
+        // we never want to filter on null status - that would return resources for every status (committed, new, deleted, etc).
+        // we want to rely on whatever the default setting is for the criteria and only override that if we explicitly have a status to filter.
+        InventoryStatus invStatusFilter = getFilter(request, INVENTORY_STATUS.propertyName(), InventoryStatus.class);
+        if (invStatusFilter != null) {
+            criteria.addFilterInventoryStatus(invStatusFilter);
+        }
+
+        InventoryStatus parentInvStatusFilter = getFilter(request, PARENT_INVENTORY_STATUS.propertyName(),
+            InventoryStatus.class);
+        if (parentInvStatusFilter != null) {
+            List<InventoryStatus> statuses = new ArrayList<InventoryStatus>(1);
+            statuses.add(parentInvStatusFilter);
+            criteria.addFilterParentInventoryStatuses(statuses);
+        }
+
         //@todo: Remove me when finished debugging search expression
         Log.debug(" *** ResourceCriteria Search String: " + getFilter(request, "search", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
@@ -300,6 +325,7 @@ public class ResourceDatasource extends RPCDataSource<Resource, ResourceCriteria
         record.setAttribute(ITIME.propertyName(), from.getItime());
         record.setAttribute(MTIME.propertyName(), from.getMtime());
         record.setAttribute(MODIFIER.propertyName(), from.getModifiedBy());
+        record.setAttribute(INVENTORY_STATUS.propertyName(), from.getInventoryStatus().name());
 
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, from.getAncestry());
         record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, from.getResourceType().getId());

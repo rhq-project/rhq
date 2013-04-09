@@ -21,6 +21,18 @@ public class ResourceTypeGWTServiceImpl extends AbstractGWTServiceImpl implement
     private static final long serialVersionUID = 1L;
 
     @Override
+    public void setResourceTypeIgnoreFlag(int resourceTypeId, boolean ignoreFlag) throws RuntimeException {
+        try {
+            ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
+            typeManager.setResourceTypeIgnoreFlagAndUninventoryResources(getSessionSubject(), resourceTypeId,
+                ignoreFlag);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+
+    }
+
+    @Override
     public PageList<ResourceType> findResourceTypesByCriteria(ResourceTypeCriteria criteria) throws RuntimeException {
         try {
             ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();

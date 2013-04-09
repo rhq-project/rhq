@@ -37,6 +37,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.server.discovery.AutoDiscoveryRequest;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -204,6 +205,8 @@ public class AutoDiscoveryExecutor implements Runnable, Callable<InventoryReport
                         }
                     }
                 }
+            } catch (ResourceTypeNotEnabledException rtne) {
+                // skipping all ignored resources
             } catch (Throwable e) {
                 report.getErrors().add(new ExceptionPackage(Severity.Severe, e));
                 log.error("Error in auto discovery", e);

@@ -238,7 +238,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
         //Have thread sleep longer to discover deeper resource types.
         //spinder 6/29/12: up this number if the resources are not being discovered.
-        Thread.sleep(200 * 1000L); // delay so that PC gets a chance to scan for resources
+        Thread.sleep(240 * 1000L); // delay so that PC gets a chance to scan for resources
     }
 
     /** This test method exercises a number of things:

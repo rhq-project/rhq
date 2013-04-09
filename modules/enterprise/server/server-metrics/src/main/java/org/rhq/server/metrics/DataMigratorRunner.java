@@ -173,7 +173,7 @@ public class DataMigratorRunner {
         cassandraDriverLogging.setLevel(level);
 
         Logger hibernateLogging = root.getLoggerRepository().getLogger("org.hibernate");
-        hibernateLogging.setLevel(level);
+        hibernateLogging.setLevel(Level.ERROR);
 
         Logger migratorLogging = root.getLoggerRepository().getLogger("org.rhq");
         if (Level.DEBUG.equals(level)) {
@@ -251,7 +251,7 @@ public class DataMigratorRunner {
         configuration.put(cassandraUserOption, "rhqadmin");
         configuration.put(cassandraPasswordOption, "rhqadmin");
         configuration.put(cassandraHostsOption, new String[] { "127.0.0.1" });
-        configuration.put(cassandraCompressionOption, false);
+        configuration.put(cassandraCompressionOption, true);
 
         //default SQL configuration
         configuration.put(sqlUserOption, "rhqadmin");
@@ -461,12 +461,17 @@ public class DataMigratorRunner {
         migrator.run6HAggregateDataMigration(!(Boolean) configuration.get(disable6HOption));
         migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
 
+        System.out.println("Estimation process - starting\n");
         long estimate = migrator.estimate();
         System.out.println("The migration process will take approximately: "
             + TimeUnit.MILLISECONDS.toMinutes(estimate)
-            + " minutes (or " + estimate + " milliseconds)");
+            + " minutes (or " + estimate + " milliseconds)\n");
+        System.out.println("Estimation process - ended\n\n");
+
         if (!(Boolean) configuration.get(estimateOnlyOption)) {
+            System.out.println("Migration process - starting\n");
             migrator.migrateData();
+            System.out.println("Migration process - ended\n");
         }
     }
 

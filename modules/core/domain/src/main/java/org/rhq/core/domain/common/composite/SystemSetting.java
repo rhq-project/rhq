@@ -62,7 +62,7 @@ public enum SystemSetting {
     /** Whether or not to reindex nightly */
     DATA_REINDEX_NIGHTLY("DATA_REINDEX_NIGHTLY", PropertySimpleType.BOOLEAN, false, true),
 
-    /** 
+    /**
      * Baseline config options
      * The frequency to run auto-baselines, if 0, never auto-calculate baselines
      */
@@ -87,7 +87,7 @@ public enum SystemSetting {
 
     ACTIVE_DRIFT_PLUGIN("ACTIVE_DRIFT_PLUGIN", PropertySimpleType.STRING, false, true),
 
-    /** 
+    /**
      * allow plugin initiated resource name & description upgrades (resource key is always upgradable)
      * making this readonly because it is not currently supported by UI code
      */
@@ -104,6 +104,9 @@ public enum SystemSetting {
 
     /** How long do we keep data compressed in 1 day intervals? This is not configurable through "normal" means but direct DB update. */
     DATA_PURGE_1D_PERIOD("CAM_DATA_PURGE_1D", PropertySimpleType.LONG, true, true),
+
+    /** The length of CoreGUI inactivity (no call to UserSessionManager.refresh()) before a CoreGUI session timeout, Default: 1 hour */
+    RHQ_SESSION_TIMEOUT("RHQ_SESSION_TIMEOUT", PropertySimpleType.LONG, false, true),
 
     //these seem to be unused yet still present in the database...
     @Deprecated
@@ -123,7 +126,7 @@ public enum SystemSetting {
     private PropertySimpleType type;
     private boolean readOnly;
     private boolean requiringValue;
-    
+
     private SystemSetting(String name, PropertySimpleType type, boolean readOnly, boolean valueRequired) {
         this.internalName = name;
         this.type = type;
@@ -142,13 +145,13 @@ public enum SystemSetting {
     public boolean isRequiringValue() {
         return requiringValue;
     }
-    
+
     public boolean validateValue(String value) {
         if (value == null) {
             //null values are not allowed
             return false;
         }
-        
+
         switch (type) {
         case STRING:
         case PASSWORD:

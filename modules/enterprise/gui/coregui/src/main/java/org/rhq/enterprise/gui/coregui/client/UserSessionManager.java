@@ -33,6 +33,9 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -41,16 +44,16 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
  * Upon application load, if already loggedIn on the server-side, local loggedIn bit will be set to true.
- * 
+ *
  * If login successful, the local loggedIn bit will be set to true.
  * If user clicks logout explicitly, LoginView will be shown, which sets local loggedIn bit to false.
  * If count down timer expires, LoginView will be shown, which sets local loggedIn bit to false.
- * 
+ *
  * If error during GWT RPC Service, check local loggedIn status
  *    If loggedIn bit false, display LoginView
  *    Else check server-side logged in state
  *       If logged out on server-side, LoginView will be shown, which sets local loggedIn bit to false.
- * 
+ *
  * Additionally, all login checks go through checkLoginStatus where the following happens
  *
  *  1)HTTP POST request sent to portal.war SessionAccessServlet, which, when logged in:
@@ -74,10 +77,10 @@ public class UserSessionManager {
 
     // The length of CoreGUI inactivity (no call to refresh()) before a CoreGUI session timeout
     // Currently: 1 hour
-    private static int SESSION_TIMEOUT = 60 * 60 * 1000;
+    private static int sessionTimeout = 60 * 60 * 1000;
 
     // After CoreGUI logout, the delay before the server-side logout. This is the period in which we allow in-flight
-    // async requests to complete. 
+    // async requests to complete.
     // Currently: 5 seconds
     private static int LOGOUT_DELAY = 5 * 1000; // 5 seconds
 
@@ -90,7 +93,7 @@ public class UserSessionManager {
     // The web session
     public static final String SESSION_NAME = "RHQ_Session";
 
-    // The web session scheduled to be logged out on the server side 
+    // The web session scheduled to be logged out on the server side
     private static final String DOOMED_SESSION_NAME = "RHQ_DoomedSession";
 
     // HTTP Header indicating to SessionAccessServlet to update the portal war webUser
@@ -136,7 +139,7 @@ public class UserSessionManager {
     private static State sessionState = State.IS_UNKNOWN;
 
     private UserSessionManager() {
-        // static access only        
+        // static access only
     }
 
     public static void checkLoginStatus(final String user, final String password, final AsyncCallback<Subject> callback) {
@@ -179,7 +182,7 @@ public class UserSessionManager {
                             return;
                         }
 
-                        String previousSessionId = getPreviousSessionId(); // may be null  
+                        String previousSessionId = getPreviousSessionId(); // may be null
                         Log.info("sessionAccess-previousSessionId: " + previousSessionId);
 
                         if (previousSessionId == null || previousSessionId.equals(sessionId) == false) {
@@ -189,19 +192,19 @@ public class UserSessionManager {
                             saveSessionId(sessionId);
 
                             // new sessions get the full SESSION_TIMEOUT period prior to expire
-                            Log.info("sessionAccess-schedulingSessionTimeout: " + SESSION_TIMEOUT);
-                            coreGuiSessionTimer.schedule(SESSION_TIMEOUT);
+                            Log.info("sessionAccess-schedulingSessionTimeout: " + sessionTimeout);
+                            coreGuiSessionTimer.schedule(sessionTimeout);
                         } else {
 
                             // existing sessions should expire SESSION_TIMEOUT minutes from the previous access time
-                            long expiryTime = lastAccess + SESSION_TIMEOUT;
+                            long expiryTime = lastAccess + sessionTimeout;
                             long expiryMillis = expiryTime - System.currentTimeMillis();
 
                             // can not schedule a time with millis less than or equal to 0
                             if (expiryMillis < 1) {
                                 expiryMillis = 1; // expire VERY quickly
-                            } else if (expiryMillis > SESSION_TIMEOUT) {
-                                expiryMillis = SESSION_TIMEOUT; // guarantees maximum
+                            } else if (expiryMillis > sessionTimeout) {
+                                expiryMillis = sessionTimeout; // guarantees maximum
                             }
 
                             Log.info("sessionAccess-reschedulingSessionTimeout: " + expiryMillis);
@@ -217,7 +220,7 @@ public class UserSessionManager {
 
                             if (null != sessionSubject && sessionSubject.getId() != subjectId) {
 
-                                // on user change register the logout                                
+                                // on user change register the logout
                                 History.newItem("LogOut", false);
 
                             }
@@ -290,7 +293,7 @@ public class UserSessionManager {
                                     }
 
                                 });//end processSubjectForLdap call
-                        } else {//else send through regular session check 
+                        } else {//else send through regular session check
                             SubjectCriteria criteria = new SubjectCriteria();
                             criteria.fetchConfiguration(true);
                             criteria.addFilterId(subjectId);
@@ -391,7 +394,7 @@ public class UserSessionManager {
     }
 
     /**Same as login, but passes in credentials optionally needed during ldap[i)new user registration or ii)case insensitive] logins.
-     * 
+     *
      * @param user
      * @param password
      */
@@ -412,7 +415,26 @@ public class UserSessionManager {
                 sessionState = State.IS_LOGGED_IN;
                 userPreferences = new UserPreferences(loggedInSubject);
                 userPreferences.setAutomaticPersistence(true);
-                refresh();
+
+                GWTServiceLookup.getSystemService().getSystemSettings(new AsyncCallback<SystemSettings>() {
+                    @Override
+                    public void onSuccess(SystemSettings result) {
+                        Configuration config = result.toConfiguration();
+                        final long millis = Long.parseLong(config.getSimpleValue(SystemSetting.RHQ_SESSION_TIMEOUT.getInternalName()));
+                        sessionTimeout = (int) millis;
+                        // let's be safe here
+                        if (millis != (long) sessionTimeout) {
+                            sessionTimeout = Integer.MAX_VALUE;
+                        }
+                        refresh();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_admin_systemSettings_cannotLoadSettings(), caught);
+                    }
+                });
+
                 httpSessionTimer.schedule(SESSION_ACCESS_REFRESH);
 
                 //conditionally update session information and server side WebUser when updated.
@@ -459,7 +481,7 @@ public class UserSessionManager {
     }
 
     public static void refresh() {
-        refresh(SESSION_TIMEOUT);
+        refresh(sessionTimeout);
     }
 
     private static void refresh(int millis) {
@@ -508,7 +530,7 @@ public class UserSessionManager {
         logoutTimer.schedule(LOGOUT_DELAY);
     }
 
-    // only call this from the logoutTimer, all logout requests should be scheduled via logoutTimer(String)  
+    // only call this from the logoutTimer, all logout requests should be scheduled via logoutTimer(String)
     private static void logoutServerSide() {
         final Integer doomedSessionId = Integer.valueOf(getDoomedSessionId());
         removeDoomedSessionId();
@@ -527,7 +549,7 @@ public class UserSessionManager {
         try {
             // The logout() method should be called against the dying session. This makes sense and
             // also protects against the fact that sessionSubject may be null at the time of this call.
-            // The sessionSubject is used to build the server request, so it must be valid. 
+            // The sessionSubject is used to build the server request, so it must be valid.
             Subject tempSubject = sessionSubject;
             sessionSubject = new Subject();
             sessionSubject.setSessionId(doomedSessionId);
@@ -588,7 +610,7 @@ public class UserSessionManager {
      * You can optionally wrap the returned object with a
      * {@link org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences}
      * object to work with measurement preferences.
-     * 
+     *
      * @return user preferences object
      */
     public static UserPreferences getUserPreferences() {

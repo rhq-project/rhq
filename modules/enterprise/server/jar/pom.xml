@@ -102,6 +102,12 @@
       </exclusions>
     </dependency>
 
+    <dependency>
+      <groupId>org.osgi</groupId>
+      <artifactId>core</artifactId>
+      <version>4.3.0</version>
+    </dependency>
+
    
     <dependency>
       <groupId>com.googlecode.java-diff-utils</groupId>

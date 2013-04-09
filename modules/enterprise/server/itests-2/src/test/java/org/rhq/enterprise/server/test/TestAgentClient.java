@@ -24,6 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.jetbrains.annotations.NotNull;
+
 import org.rhq.common.drift.Headers;
 import org.rhq.core.clientapi.agent.PluginContainerException;
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
@@ -93,8 +94,18 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
+    public BundleAgentService getBundleAgentService(long timeout) {
+        return getBundleAgentService();
+    }
+
+    @Override
     public ContentAgentService getContentAgentService() {
         return (commService.contentService != null) ? commService.contentService : this;
+    }
+
+    @Override
+    public ContentAgentService getContentAgentService(long timeout) {
+        return getContentAgentService();
     }
 
     @Override
@@ -103,8 +114,18 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
+    public ResourceFactoryAgentService getResourceFactoryAgentService(long timeout) {
+        return getResourceFactoryAgentService();
+    }
+
+    @Override
     public ConfigurationAgentService getConfigurationAgentService() {
         return (commService.configurationService != null) ? commService.configurationService : this;
+    }
+
+    @Override
+    public ConfigurationAgentService getConfigurationAgentService(long timeout) {
+        return getConfigurationAgentService();
     }
 
     @Override
@@ -113,8 +134,18 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
+    public DiscoveryAgentService getDiscoveryAgentService(long timeout) {
+        return getDiscoveryAgentService();
+    }
+
+    @Override
     public MeasurementAgentService getMeasurementAgentService() {
         return (commService.measurementService != null) ? commService.measurementService : this;
+    }
+
+    @Override
+    public MeasurementAgentService getMeasurementAgentService(long timeout) {
+        return getMeasurementAgentService();
     }
 
     @Override
@@ -123,8 +154,28 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
+    public OperationAgentService getOperationAgentService(long timeout) {
+        return getOperationAgentService();
+    }
+
+    @Override
     public SupportAgentService getSupportAgentService() {
         return (commService.supportService != null) ? commService.supportService : this;
+    }
+
+    @Override
+    public SupportAgentService getSupportAgentService(long timeout) {
+        return getSupportAgentService();
+    }
+
+    @Override
+    public DriftAgentService getDriftAgentService() {
+        return (commService.driftService != null) ? commService.driftService : this;
+    }
+
+    @Override
+    public DriftAgentService getDriftAgentService(long timeout) {
+        return getDriftAgentService();
     }
 
     @Override
@@ -327,11 +378,6 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     @Override
     public BundlePurgeResponse purge(BundlePurgeRequest request) {
         return new BundlePurgeResponse();
-    }
-
-    @Override
-    public DriftAgentService getDriftAgentService() {
-        return (commService.driftService != null) ? commService.driftService : this;
     }
 
     @Override

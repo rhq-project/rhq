@@ -52,10 +52,10 @@ import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyVa
 import org.rhq.enterprise.gui.coregui.client.components.configuration.PropertyValueChangeListener;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * A simple form to view and edit the server system settings.
@@ -101,6 +101,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 //convert stuff for the display purposes
                 PropertySimple prop = config.getSimple(SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName());
                 prop.setStringValue(convertMillisToMinutes(prop.getStringValue()));
+
+                prop = config.getSimple(SystemSetting.RHQ_SESSION_TIMEOUT.getInternalName());
+                prop.setStringValue(convertMillisToHours(prop.getStringValue()));
 
                 prop = config.getSimple(SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName());
                 prop.setStringValue(convertMillisToHours(prop.getStringValue()));
@@ -191,7 +194,8 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 // -- some other numerical values need to be converted to milliseconds
                 if (SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED.getInternalName().equals(simple.getName())) {
                     value = convertMinutesToMillis(value);
-                } else if (SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())) {
+                } else if (SystemSetting.DATA_MAINTENANCE_PERIOD.getInternalName().equals(simple.getName())
+                    || SystemSetting.RHQ_SESSION_TIMEOUT.getInternalName().equals(simple.getName())) {
                     value = convertHoursToMillis(value);
                 } else if (SystemSetting.AVAILABILITY_PURGE_PERIOD.getInternalName().equals(simple.getName())
                     || SystemSetting.ALERT_PURGE_PERIOD.getInternalName().equals(simple.getName())
@@ -336,6 +340,13 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 // don't allow less than 3m which is 3 * the ping interval, anything less risks unwanted backfill
                 pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(3), null));
                 pd.setDefaultValue("5");
+                break;
+            case RHQ_SESSION_TIMEOUT:
+                pd.setDescription(MSG.view_admin_systemSettings_RHQSessionTimeout_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_RHQSessionTimeout_name());
+                pd.setPropertyGroupDefinition(generalGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("1");
                 break;
             case AGENT_AUTO_UPDATE_ENABLED:
                 pd.setDescription(MSG.view_admin_systemSettings_EnableAgentAutoUpdate_desc());

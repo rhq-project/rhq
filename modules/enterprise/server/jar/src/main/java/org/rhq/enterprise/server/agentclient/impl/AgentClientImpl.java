@@ -137,8 +137,18 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
+    public BundleAgentService getBundleAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(BundleAgentService.class, timeout);
+    }
+
+    @Override
     public ContentAgentService getContentAgentService() {
         return clientRemotePojoFactory.getRemotePojo(ContentAgentService.class);
+    }
+
+    @Override
+    public ContentAgentService getContentAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(ContentAgentService.class, timeout);
     }
 
     @Override
@@ -147,8 +157,18 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
+    public ResourceFactoryAgentService getResourceFactoryAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(ResourceFactoryAgentService.class, timeout);
+    }
+
+    @Override
     public DiscoveryAgentService getDiscoveryAgentService() {
         return clientRemotePojoFactory.getRemotePojo(DiscoveryAgentService.class);
+    }
+
+    @Override
+    public DiscoveryAgentService getDiscoveryAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(DiscoveryAgentService.class, timeout);
     }
 
     @Override
@@ -157,8 +177,18 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
+    public MeasurementAgentService getMeasurementAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(MeasurementAgentService.class, timeout);
+    }
+
+    @Override
     public OperationAgentService getOperationAgentService() {
         return clientRemotePojoFactory.getRemotePojo(OperationAgentService.class);
+    }
+
+    @Override
+    public OperationAgentService getOperationAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(OperationAgentService.class, timeout);
     }
 
     @Override
@@ -167,13 +197,28 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
+    public ConfigurationAgentService getConfigurationAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(ConfigurationAgentService.class, timeout);
+    }
+
+    @Override
     public SupportAgentService getSupportAgentService() {
         return clientRemotePojoFactory.getRemotePojo(SupportAgentService.class);
     }
 
     @Override
+    public SupportAgentService getSupportAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(SupportAgentService.class, timeout);
+    }
+
+    @Override
     public DriftAgentService getDriftAgentService() {
         return clientRemotePojoFactory.getRemotePojo(DriftAgentService.class);
+    }
+
+    @Override
+    public DriftAgentService getDriftAgentService(long timeout) {
+        return clientRemotePojoFactory.getRemotePojo(DriftAgentService.class, timeout);
     }
 
     /**

@@ -30,8 +30,8 @@ import org.rhq.core.clientapi.agent.support.SupportAgentService;
 import org.rhq.core.domain.resource.Agent;
 
 /**
- * The client interface to a JON agent - used by the JON server to send commands to the various agent subsystems. If you
- * want to know all the things the JON Server can command the JON agent to do, study this interface and the Agent
+ * The client interface to an RHQ agent - used by the RHQ server to send commands to the various agent subsystems. If you
+ * want to know all the things the RHQ Server can command the RHQ agent to do, study this interface and the Agent
  * Services it provides.
  */
 public interface AgentClient {
@@ -68,21 +68,41 @@ public interface AgentClient {
      */
     boolean ping(long timeoutMillis);
 
+    // each agent subsystem has two getters for it below - one allows you to override the timeout, one uses the default timeout
+
     BundleAgentService getBundleAgentService();
+
+    BundleAgentService getBundleAgentService(long timeout);
 
     ContentAgentService getContentAgentService();
 
+    ContentAgentService getContentAgentService(long timeout);
+
     ResourceFactoryAgentService getResourceFactoryAgentService();
+
+    ResourceFactoryAgentService getResourceFactoryAgentService(long timeout);
 
     DiscoveryAgentService getDiscoveryAgentService();
 
+    DiscoveryAgentService getDiscoveryAgentService(long timeout);
+
     MeasurementAgentService getMeasurementAgentService();
+
+    MeasurementAgentService getMeasurementAgentService(long timeout);
 
     OperationAgentService getOperationAgentService();
 
+    OperationAgentService getOperationAgentService(long timeout);
+
     ConfigurationAgentService getConfigurationAgentService();
+
+    ConfigurationAgentService getConfigurationAgentService(long timeout);
 
     SupportAgentService getSupportAgentService();
 
+    SupportAgentService getSupportAgentService(long timeout);
+
     DriftAgentService getDriftAgentService();
+
+    DriftAgentService getDriftAgentService(long timeout);
 }

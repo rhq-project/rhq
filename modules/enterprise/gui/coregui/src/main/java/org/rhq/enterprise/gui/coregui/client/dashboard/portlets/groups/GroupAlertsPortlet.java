@@ -22,6 +22,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.recent.alerts.AbstractRecentAlertsPortlet;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 
 /**
  * @author Jay Shaughnessy
@@ -35,19 +36,22 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
     public static final String NAME = MSG.view_portlet_defaultName_group_alerts();
 
     private int groupId;
+    private boolean isAutogroup;
 
-    public GroupAlertsPortlet(int groupId) {
-
-        // Since the group id is only used for filtering I don't think it matters whether this is a
-        // standard group, autogroup, or autocluster, but if so, we'll have to provide more specific
-        // contexts and more specific context handling.
-        super(EntityContext.forGroup(groupId));
-
-        this.groupId = groupId;
+    public GroupAlertsPortlet(EntityContext context) {
+        super(context);
+        this.groupId = context.getGroupId();
+        this.isAutogroup = context.isAutoGroup();
     }
 
     public int getResourceId() {
         return groupId;
+    }
+
+    @Override
+    protected String getBasePath() {
+        return (isAutogroup ? ResourceGroupDetailView.AUTO_GROUP_VIEW + '/' : "ResourceGroup/") + groupId + "/Alerts/History";
+
     }
 
     public static final class Factory implements PortletViewFactory {
@@ -59,7 +63,7 @@ public class GroupAlertsPortlet extends AbstractRecentAlertsPortlet {
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupAlertsPortlet(context.getGroupId());
+            return new GroupAlertsPortlet(context);
         }
     }
 

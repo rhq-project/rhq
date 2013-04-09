@@ -128,18 +128,29 @@ public class ClientRemotePojoFactory {
     }
 
     /**
+     * Called {@link #getRemotePojo(Class, Long)} with a null timeout. See javadoc of that method for more info.
+     *
+     * @param targetInterface
+     * @return the proxy to the remote POJO
+     */
+    public <T> T getRemotePojo(Class<T> targetInterface) {
+        return getRemotePojo(targetInterface, null);
+    }
+
+    /**
      * This method returns a proxy to the remote POJO. The returned object can be used to make RPC calls to the remote
      * POJO as if the POJO was a local object. The returned proxy will have its async mode set
      * {@link #isAsynch() accordingly}. If asynchronous mode is to be enabled in this proxy, its callback will be set to
      * the object that was passed to {@link #setAsynch(boolean, CommandResponseCallback)} (which may or may not be a
      * <code>null</code> callback).
      *
-     * @param  targetInterface
+     * @param targetInterface
+     * @param timeoutOverride overrides the default timeout that this factory would have used
      *
      * @return the proxy to the remote POJO
      */
-    @SuppressWarnings("unchecked")
-    public <T> T getRemotePojo(Class<T> targetInterface) {
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public <T> T getRemotePojo(Class<T> targetInterface, Long timeoutOverride) {
         // lets quickly get in and out of a synchronous block - store our current async mode and timeout in local variables
         boolean async_mode;
         CommandResponseCallback async_callback;
@@ -152,7 +163,7 @@ public class ClientRemotePojoFactory {
             ignore_annotations = m_ignoreAnnotations;
             async_mode = m_asyncModeEnabled;
             async_callback = m_asyncCallback;
-            timeout_millis = m_timeoutMillis;
+            timeout_millis = (timeoutOverride != null) ? timeoutOverride : m_timeoutMillis;
             guaranteed_delivery = m_deliveryGuaranteed;
             send_throttled = m_sendThrottled;
         }

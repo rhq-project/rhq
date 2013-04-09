@@ -1645,6 +1645,7 @@
   </build>
 
   <repositories>
+
 <!--
     <repository>
        <id>jboss-deprecated-repository</id>

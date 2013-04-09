@@ -64,43 +64,42 @@ public class Stop extends ControlCommand {
 
     @Override
     protected void exec(CommandLine commandLine) {
-        boolean stopStorage;
-        boolean stopServer;
-        boolean stopAgent;
-
-        if (commandLine.getOptions().length == 0) {
-            stopStorage = true;
-            stopServer = true;
-            stopAgent = true;
-        } else {
-            stopStorage = commandLine.hasOption(STORAGE_OPTION);
-            stopServer = commandLine.hasOption(SERVER_OPTION);
-            stopAgent = commandLine.hasOption(AGENT_OPTION);
-        }
-
         try {
-            if (stopStorage) {
+            // if no options specified, then stop whatever is installed
+            if (commandLine.getOptions().length == 0) {
                 if (isStorageInstalled()) {
                     stopStorage();
-                } else {
-                    log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
-                        " option will be ignored.");
                 }
-            }
-            if (stopServer) {
                 if (isServerInstalled()) {
                     stopRHQServer();
-                } else {
-                    log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
-                        " option will be ignored.");
                 }
-            }
-            if (stopAgent) {
                 if (isAgentInstalled()) {
                     stopAgent();
-                } else {
-                    log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
-                        " option will be ignored.");
+                }
+            } else {
+                if (commandLine.hasOption(STORAGE_OPTION)) {
+                    if (isStorageInstalled()) {
+                        stopStorage();
+                    } else {
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
+                            " option will be ignored.");
+                    }
+                }
+                if (commandLine.hasOption(SERVER_OPTION)) {
+                    if (isServerInstalled()) {
+                        stopRHQServer();
+                    } else {
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
+                            " option will be ignored.");
+                    }
+                }
+                if (commandLine.hasOption(AGENT_OPTION)) {
+                    if (isAgentInstalled()) {
+                        stopAgent();
+                    } else {
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
+                            " option will be ignored.");
+                    }
                 }
             }
         } catch (Exception e) {

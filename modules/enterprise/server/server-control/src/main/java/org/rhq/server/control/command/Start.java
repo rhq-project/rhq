@@ -64,44 +64,42 @@ public class Start extends ControlCommand {
 
     @Override
     protected void exec(CommandLine commandLine) {
-        boolean startStorage;
-        boolean startServer;
-        boolean startAgent;
-
-        if (commandLine.getOptions().length == 0) {
-            startStorage = true;
-            startServer = true;
-            startAgent = true;
-        } else {
-            startStorage = commandLine.hasOption(STORAGE_OPTION);
-            startServer = commandLine.hasOption(SERVER_OPTION);
-            startAgent = commandLine.hasOption(AGENT_OPTION);
-        }
-
         try {
-            if (startStorage) {
-                if (commandLine.hasOption(STORAGE_OPTION) && !isStorageInstalled()) {
-                    log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
-                        " option will be ignored.");
-                } else {
+            // if no options specified, then start whatever is installed
+            if (commandLine.getOptions().length == 0) {
+                if (isStorageInstalled()) {
                     startStorage();
                 }
-                startStorage();
-            }
-            if (startServer) {
-                if (commandLine.hasOption(SERVER_OPTION) && !isServerInstalled()) {
-                    log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
-                        " option will be ignored.");
-                } else {
+                if (isServerInstalled()) {
                     startRHQServer();
                 }
-            }
-            if (startAgent) {
-                if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled()) {
-                    log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
-                        " option will be ignored.");
-                } else {
+                if (isAgentInstalled()) {
                     startAgent();
+                }
+            } else {
+                if (commandLine.hasOption(STORAGE_OPTION)) {
+                    if (isStorageInstalled()) {
+                        startStorage();
+                    } else {
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
+                            " option will be ignored.");
+                    }
+                }
+                if (commandLine.hasOption(SERVER_OPTION)) {
+                    if (isServerInstalled()) {
+                        startRHQServer();
+                    } else {
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
+                            " option will be ignored.");
+                    }
+                }
+                if (commandLine.hasOption(AGENT_OPTION)) {
+                    if (isAgentInstalled()) {
+                        startAgent();
+                    } else {
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
+                            " option will be ignored.");
+                    }
                 }
             }
         } catch (Exception e) {

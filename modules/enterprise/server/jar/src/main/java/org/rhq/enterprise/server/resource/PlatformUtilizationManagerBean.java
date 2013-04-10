@@ -119,8 +119,9 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
                 // don't try to contact platforms that are down or questionable. In that case, just return the
                 // platform marked with no metrics available
                 if (AvailabilityType.UP == platform.getCurrentAvailability().getAvailabilityType()) {
+                    // Don't wait for more than 10s for any one agent, even that may be too long.
                     Set<MeasurementData> measurementDataSet = platformUtilizationMgr
-                        .loadLiveMetricsForPlatformInNewTransaction(subject, platform, metricDefIds);
+                        .loadLiveMetricsForPlatformInNewTransaction(subject, platform, metricDefIds, 10000L);
                     summaries.add(createSummary(platform, measurementDataSet));
                 } else {
                     summaries.add(createSummary(platform, null));
@@ -139,9 +140,9 @@ public class PlatformUtilizationManagerBean implements PlatformUtilizationManage
     @Override
     @TransactionAttribute(REQUIRES_NEW)
     public Set<MeasurementData> loadLiveMetricsForPlatformInNewTransaction(Subject subject, Resource platform,
-        Set<Integer> metricDefinitionIds) {
+        Set<Integer> metricDefinitionIds, Long timeout) {
         return measurementDataMgr.findLiveData(subject, platform.getId(),
-            ArrayUtils.unwrapArray(metricDefinitionIds.toArray(new Integer[metricDefinitionIds.size()])));
+            ArrayUtils.unwrapArray(metricDefinitionIds.toArray(new Integer[metricDefinitionIds.size()])), timeout);
     }
 
     private Set<Integer> getPlatformMetricDefIds(ResourceType resourceType) {

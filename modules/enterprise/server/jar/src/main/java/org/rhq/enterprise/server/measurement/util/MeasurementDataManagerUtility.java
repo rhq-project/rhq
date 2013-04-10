@@ -41,6 +41,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.measurement.MeasurementAggregate;
@@ -226,7 +227,10 @@ public class MeasurementDataManagerUtility {
                 + "  FROM rhq_measurement_sched innerSchedule \n" //
                 + "  JOIN rhq_resource_group_res_exp_map groupMap \n" //
                 + "       ON innerSchedule.resource_id = groupMap.resource_id \n" //
+                + "  JOIN rhq_resource innerRes \n"//
+                + "       ON innerSchedule.resource_id = innerRes.id \n"//
                 + " WHERE innerSchedule.definition = ? \n" //
+                + "   AND innerRes.inventory_status = '" + InventoryStatus.COMMITTED.name() + "' \n"//
                 + "   AND groupMap.resource_group_id = ? \n";
 
         } else if (context.type == EntityContext.Type.AutoGroup) {
@@ -237,6 +241,7 @@ public class MeasurementDataManagerUtility {
                 + "       ON innerSchedule.resource_id = innerRes.id \n"//
                 + " WHERE innerSchedule.definition = ? \n" //
                 + "   AND innerRes.parent_resource_id = ? \n"//
+                + "   AND innerRes.inventory_status = '" + InventoryStatus.COMMITTED.name() + "' \n"//
                 + "   AND innerRes.resource_type_id = ? \n";
 
         }

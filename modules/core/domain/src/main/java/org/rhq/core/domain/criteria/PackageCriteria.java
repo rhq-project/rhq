@@ -34,7 +34,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @SuppressWarnings("unused")
 public class PackageCriteria extends Criteria {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private String filterName;
     private String filterClassification;

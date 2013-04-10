@@ -22,13 +22,10 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.authz.Role;
-import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -38,7 +35,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @SuppressWarnings("unused")
 public class RoleCriteria extends Criteria {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private String filterDescription;
     private String filterName;

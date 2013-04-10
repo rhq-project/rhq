@@ -9,7 +9,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class PackageVersionCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Integer filterPackageId; // requires override    
     private Integer filterRepoId; // requires overrides

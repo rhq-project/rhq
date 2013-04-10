@@ -75,9 +75,10 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 public class UserSessionManager {
     private static final Messages MSG = CoreGUI.getMessages();
 
-    // The length of CoreGUI inactivity (no call to refresh()) before a CoreGUI session timeout
-    // Currently: 1 hour
-    private static int sessionTimeout = 60 * 60 * 1000;
+    // The length of CoreGUI inactivity (no call to refresh()) before a CoreGUI session timeout    
+    // Initially: 1 hour
+    private static int SESSION_TIMEOUT_MINIMUM = 60 * 60 * 1000;
+    private static int sessionTimeout = SESSION_TIMEOUT_MINIMUM;
 
     // After CoreGUI logout, the delay before the server-side logout. This is the period in which we allow in-flight
     // async requests to complete.
@@ -420,18 +421,27 @@ public class UserSessionManager {
                     @Override
                     public void onSuccess(SystemSettings result) {
                         Configuration config = result.toConfiguration();
-                        final long millis = Long.parseLong(config.getSimpleValue(SystemSetting.RHQ_SESSION_TIMEOUT.getInternalName()));
-                        sessionTimeout = (int) millis;
-                        // let's be safe here
-                        if (millis != (long) sessionTimeout) {
-                            sessionTimeout = Integer.MAX_VALUE;
+                        try {
+                            final long millis = Long.parseLong(config.getSimpleValue(SystemSetting.RHQ_SESSION_TIMEOUT
+                                .getInternalName()));
+
+                            // let's be safe here
+                            sessionTimeout = (int) millis;
+                            sessionTimeout = (millis != (long) sessionTimeout) ? Integer.MAX_VALUE : sessionTimeout;
+                            sessionTimeout = (sessionTimeout < SESSION_TIMEOUT_MINIMUM) ? SESSION_TIMEOUT_MINIMUM
+                                : sessionTimeout;
+
+                        } catch (NumberFormatException e) {
+                            sessionTimeout = SESSION_TIMEOUT_MINIMUM;
                         }
+
                         refresh();
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(MSG.view_admin_systemSettings_cannotLoadSettings(), caught);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_admin_systemSettings_cannotLoadSettings(),
+                            caught);
                     }
                 });
 

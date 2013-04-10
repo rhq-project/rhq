@@ -31,6 +31,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -50,6 +51,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.remoting.CannotConnectException;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
@@ -87,6 +91,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
+import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -746,8 +751,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @Override
     @SuppressWarnings("unchecked")
-    public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
-        if (!authorizationManager.canViewResource(subject, resourceId)) {
+    public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds, Long timeout) {
+        if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view live measurement data for resource[id=" + resourceId + "]");
         }
@@ -769,13 +774,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         Set<MeasurementData> result = null;
         try {
             AgentClient ac = agentClientManager.getAgentClient(agent);
-            result = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, requests);
+            result = ac.getMeasurementAgentService(timeout).getRealTimeMeasurementValue(resourceId, requests);
 
         } catch (RuntimeException e) {
-            if (e instanceof CannotConnectException || e.getMessage().contains("connect")
-                || (null != e.getCause() && e.getCause().getMessage().contains("connect"))) {
+            if (e instanceof CannotConnectException //
+                || (null != e.getCause() && (e.getCause() instanceof TimeoutException))) {
 
-                // suppress exception to keep the logs clean
+                // ignore timeouts and connect issue,  just return an empty result and keep the logs clean
             } else {
                 throw e;
             }
@@ -831,6 +836,36 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             }
         }
         return values;
+    }
+
+    @Override
+    public List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime) {
+
+        List<MeasurementDataNumeric> result = new ArrayList<MeasurementDataNumeric>();
+        String table = MeasurementDataManagerUtility.getCurrentRawTable();
+        Connection connection = null;
+        PreparedStatement ps = null;
+        ResultSet rs = null;
+        try {
+            connection = rhqDs.getConnection();
+            ps = connection.prepareStatement( // TODO supply real impl that spans multiple tables
+                "SELECT time_stamp,value FROM " + table + " WHERE schedule_id= ? AND time_stamp BETWEEN ? AND ?");
+            ps.setLong(1, scheduleId);
+            ps.setLong(2, startTime);
+            ps.setLong(3, endTime);
+            rs = ps.executeQuery();
+
+            while (rs.next()) {
+                MeasurementDataNumeric point = new MeasurementDataNumeric(rs.getLong(1), scheduleId, rs.getDouble(2));
+                result.add(point);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace(); // TODO: Customise this generated block
+        } finally {
+            JDBCUtil.safeClose(connection, ps, rs);
+        }
+
+        return result;
     }
 
     /**
@@ -893,4 +928,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return results;
     }
 
+    private MeasurementDataManagerUtility getConnectedUtilityInstance() {
+        return MeasurementDataManagerUtility.getInstance(rhqDs);
+    }
 }

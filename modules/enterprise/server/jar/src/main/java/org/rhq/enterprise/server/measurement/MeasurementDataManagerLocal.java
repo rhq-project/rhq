@@ -27,26 +27,21 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
-import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
-import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.ui.MetricDisplaySummary;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
 
 /**
  * A manager for {@link MeasurementData}s.
  */
 @Local
-public interface MeasurementDataManagerLocal {
+public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemote {
 
     int purgeTraits(long oldest);
 
@@ -124,93 +119,25 @@ public interface MeasurementDataManagerLocal {
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForContext(Subject subject,
         EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints);
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
     /**
-     * Get the aggregate values of the numerical values for a given schedule.  This can only provide aggregates for data
-     * in the "live" table
-     *
-     * @param subject    the user requesting the aggregate
-     * @param scheduleId the id of the {@link MeasurementSchedule} for which this aggregate is being requested
-     * @param start      the start time
-     * @param end        the end time
-     *
-     * @return MeasurementAggregate bean with the data
-     *
-     * @throws FetchException if the schedule does not reference numerical data or if the user is not allowed to view
-     *                        the {@link Resource} corresponding to this scheduleId
+     * @deprecated portal-war (it is not used at all)
      */
-    MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime);
-
-    MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime);
+    List<MeasurementDataNumeric> findRawData(Subject subject, int scheduleId, long startTime, long endTime);
 
     /**
-     * Return all known trait data for the passed schedule, defined by resourceId and definitionId
-     *
-     * @param  resourceId   PK of a {@link Resource}
-     * @param  definitionId PK of a {@link MeasurementDefinition}
-     *
-     * @return a List of {@link MeasurementDataTrait} objects.
-     */
-    List<MeasurementDataTrait> findTraits(Subject subject, int resourceId, int definitionId);
-
-    List<MeasurementDataTrait> findCurrentTraitsForResource(Subject subject, int resourceId, DisplayType displayType);
-
-    /**
-     * Finds traits that match the specified {@link MeasurementDataTraitCriteria criteria}.
-     *
-     * @param subject the user that is requesting the traits
-     * @param criteria the criteria by which to filter the traits
-     *
-     * @return the traits that match the specified {@link MeasurementDataTraitCriteria criteria}; never null
-     */
-    PageList<MeasurementDataTrait> findTraitsByCriteria(Subject subject, MeasurementDataTraitCriteria criteria);
-
-    /**
-     * Get live metrics for a given MeasurementSchedule
+     * Get live metrics from the agent for a given MeasurementSchedule
      *
      * @param subject the user that is requesting the data
      * @param resourceId the id of the resource
      * @param definitionIds the array of ids of schedule definitions
+     * @param timeout the amount of time in milliseconds before timing out the request. Should be > 0. If null then default
+     * is applied. Default agent connection failures can be long.  
      *
      * @return MeasurementData for this Schedule. Not null. Returns empty set if agent connection can not be established or
      * component fails to report live data.
      */
-    Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds);
+    Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds, Long timeout);
 
-    /**
-     * Get live metrics for a given MeasurementSchedule
-     *
-     * @param subject the user that is requesting the data
-     * @param resourceId the array of ids of the resources
-     * @param definitionIds the array of ids of schedule definitions
-     *
-     * @return MeasurementData for this Schedule
-     */
-    Set<MeasurementData> findLiveDataForGroup(Subject subject, int groupId, int[] resourceIds, int[] definitionIds);
-
-    /**
-     * Returns a list of numeric data point lists for the given compatible group - one per specified measurement
-     * definition. The data points represent the average min/avg/max values of the members of the group.
-     *
-     * @param  subject
-     * @param  compatibleGroupId
-     * @param  measurementDefinitionId measurement definition id for numeric metric associated with the given compatible
-     *                                 group
-     * @param  beginTime
-     * @param  endTime
-     * @param  numberOfDataPoints
-     *
-     * @return
-     */
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
-        int definitionId, long beginTime, long endTime, int numPoints);
-
-    List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
-        int[] definitionIds, long beginTime, long endTime, int numPoints);
+    MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime);
 
 }

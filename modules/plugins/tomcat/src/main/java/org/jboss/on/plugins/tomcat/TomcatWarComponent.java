@@ -370,23 +370,7 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         mbeanOperation.invoke(paramValues);
 
         if (!WarOperation.DESTROY.equals(operation)) {
-            String state = null;
-            try {
-                // check to see if the mbean is truly active
-                state = (String) this.webModuleMBean.getAttribute("stateName").refresh();
-            } catch (Exception e) {
-                // if not active an exception may be thrown
-                state = WarMBeanState.STOPPED;
-                // try "state" for Tomcat 5.5
-                try {
-                    int stateInt = (Integer) this.webModuleMBean.getAttribute("state").refresh();
-                    if (stateInt == 1) {
-                        state = WarMBeanState.STARTED;
-                    }
-                } catch (Exception ex) {
-                    // Ignore
-                }
-            }
+            String state = (String) this.webModuleMBean.getAttribute("stateName").refresh();
             String expectedState = getExpectedPostExecutionState(operation);
             if (!state.equals(expectedState)) {
                 throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"

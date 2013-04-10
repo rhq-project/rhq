@@ -12,7 +12,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class InstalledPackageHistoryCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Long filterInstallationTimeMinimum; // requires overrides
     private Long filterInstallationTimeMaximum; // requires overrides

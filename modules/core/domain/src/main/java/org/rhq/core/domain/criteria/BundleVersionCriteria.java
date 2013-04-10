@@ -32,7 +32,7 @@ import org.rhq.core.domain.bundle.BundleVersion;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class BundleVersionCriteria extends TaggedCriteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private String filterDescription;
     private String filterName;

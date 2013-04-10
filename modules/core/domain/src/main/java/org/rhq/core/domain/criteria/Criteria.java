@@ -99,7 +99,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
         COLLECTION_ONLY;
     }
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Integer pageNumber;
     private Integer pageSize;

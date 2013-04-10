@@ -37,7 +37,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class DashboardCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private DashboardCategory filterCategory = DashboardCategory.INVENTORY;
     private Integer filterGroupId; // needs overrides

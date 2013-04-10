@@ -71,9 +71,9 @@ public abstract class AbstractIntegrationTest {
     protected static final String MAVEN_REPO_LOCAL = System.getProperty("settings.localRepository");
 
     String uploadToAs(String deploymentPath) throws IOException {
-        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS);
         String fileName = new File(deploymentPath).getName();
-        OutputStream os = conn.getOutputStream(fileName);
+        ASUploadConnection conn = new ASUploadConnection(DC_HOST, DC_HTTP_PORT, DC_USER, DC_PASS, fileName);
+        OutputStream os = conn.getOutputStream();
 
 //        URL url = getClass().getClassLoader().getResource(".");
 //        System.out.println(url);

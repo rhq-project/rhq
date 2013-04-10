@@ -252,7 +252,7 @@ import org.rhq.core.domain.util.Summary;
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Serializable, Comparable<ResourceType> {
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 
     public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
 

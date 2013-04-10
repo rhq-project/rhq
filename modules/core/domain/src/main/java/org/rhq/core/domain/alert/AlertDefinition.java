@@ -236,7 +236,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 @Table(name = "RHQ_ALERT_DEFINITION")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class AlertDefinition implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public static final String QUERY_FIND_ALL = "AlertDefinition.findAll";
     public static final String QUERY_FIND_ALL_BY_RECOVERY_DEFINITION_ID = "AlertDefinition.findAllByRecoveryDefinitionId";

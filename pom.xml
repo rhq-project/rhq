@@ -1494,7 +1494,7 @@
                   </configuration>
                   <phase>process-classes</phase>
                   <goals>
-                      <goal>check</goal>
+                      <goal>verify</goal>
                   </goals>
               </execution>
           </executions>

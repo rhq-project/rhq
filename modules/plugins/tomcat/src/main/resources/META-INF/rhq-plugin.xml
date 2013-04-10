@@ -4,7 +4,7 @@
    name="Tomcat"
    displayName="Tomcat Server"
    package="org.jboss.on.plugins.tomcat"
-   description="Supports management and monitoring of JBoss EWS or Apache Tomcat5, Tomcat6"
+   description="Supports management and monitoring of JBoss EWS or Apache Tomcat5, Tomcat6, Tomcat7"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xmlns="urn:xmlns:rhq-plugin"
    xmlns:c="urn:xmlns:rhq-configuration">
@@ -154,13 +154,13 @@
          query="process|basename|match=^java.*,arg|org.apache.catalina.startup.Bootstrap|match=.*" />
 
       <!--
-         On windows EWS uses the tomcat5.exe and tomcat6.exe executables for starting tomcat. Unlike the normal
+         On windows EWS uses the tomcat5.exe, tomcat6.exe and tomcat7.exe executables for starting tomcat. Unlike the normal
          start up scripts, these do specify the command line args for determining catalina.home. See
          https://bugzilla.redhat.com/show_bug.cgi?id=580931 for more details.
       -->
       <process-scan
          name="WindowsEWSTomcat"
-         query="process|basename|match=^tomcat(5|6)\.exe"/>
+         query="process|basename|match=^(T|t)omcat(5|6|7)\.exe"/>
 
       <operation
          name="start"
@@ -744,6 +744,10 @@
                   readOnly="true"
                   default="Catalina:type=Connector,port=%port%" />
                <c:simple-property
+                  name="name"
+                  type="string"
+                  readOnly="true" />
+               <c:simple-property
                   name="port"
                   type="string"
                   description="Port on which this connector is configured to listen."
@@ -752,7 +756,12 @@
                   name="handler"
                   type="string"
                   description="Connector protocol handler."
-                  readOnly="true" />                  
+                  readOnly="true" />    
+               <c:simple-property
+                  name="connector"
+                  type="string"
+                  description="Connector protocol connector."
+                  readOnly="true" />
                <c:simple-property
                   name="address"
                   type="string"
@@ -772,7 +781,7 @@
                hiddenByDefault="true">
                <c:simple-property
                   name="nameTemplate"
-                  default="{handler}-{port}" />
+                  default="{name}" />
                <c:simple-property
                   name="descriptionTemplate"
                   default="A Tomcat connector" />
@@ -800,42 +809,42 @@
             description="Resumes this connector" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:maxTime"
+            property="Catalina:type=GlobalRequestProcessor,name=%name%:maxTime"
             displayName="Maximum Request Time"
             description="Maximum time it took to process a request."
             units="milliseconds"
             category="performance" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:requestCount"
+            property="Catalina:type=GlobalRequestProcessor,name=%name%:requestCount"
             displayName="Request count"
             description="Total number of requests processed since last restart."
             category="utilization"
             measurementType="trendsup" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:errorCount"
+            property="Catalina:type=GlobalRequestProcessor,name=%name%:errorCount"
             displayName="Error count"
             description="Number of errors while processing since last restart."
             category="utilization"
             measurementType="trendsup" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy"
+            property="Catalina:type=ThreadPool,name=%name%:currentThreadsBusy"
             displayName="Threadpool Threads Active"
             description="Number of current busy threads."
             category="utilization"
             displayType="summary" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount"
+            property="Catalina:type=ThreadPool,name=%name%:currentThreadCount"
             displayName="Threadpool Threads Allocated"
             description="Number of current threads."
             category="utilization"
             displayType="summary" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads"
+            property="Catalina:type=ThreadPool,name=%name%:maxThreads"
             displayName="Threadpool Max Threads"
             description="Maximum number of threads that can be allocated for the ThreadPool."
             category="utilization"

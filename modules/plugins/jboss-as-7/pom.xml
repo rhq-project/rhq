@@ -22,6 +22,8 @@
     <json.version>${project.json.version}</json.version>
     <jackson.version>1.9.5</jackson.version>
     <jboss.sasl.version>1.0.0.Final</jboss.sasl.version>
+    <!-- If you change httpclient4.version make sure to update httpcore version below accordingly  -->
+    <httpclient4.version>4.2.3</httpclient4.version>
     <as7.version>7.1.2.Final-SNAPSHOT</as7.version>
     <as7.url>https://hudson.jboss.org/hudson/view/JBoss%20AS/job/JBoss-AS-7.0.x/lastSuccessfulBuild/artifact/build/target/jboss-7.0.x.zip</as7.url>
     <jboss-as-arquillian-container-managed.version>7.1.1.Final</jboss-as-arquillian-container-managed.version>
@@ -66,6 +68,35 @@
       <version>${jboss.sasl.version}</version>
     </dependency>
     
+    <!-- For communication with AS7 http management interface -->
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+      <version>${httpclient4.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>commons-logging</groupId>
+          <artifactId>commons-logging</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>commons-codec</groupId>
+          <artifactId>commons-codec</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <!-- Use commons-codec version suitable for httpclient -->
+      <version>1.6</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+      <version>${httpclient4.version}</version>
+    </dependency>
+
     <!-- === Test Deps === -->
 
     <dependency>
@@ -106,6 +137,7 @@
             </goals>
             <configuration>
               <artifactItems>
+
                 <artifactItem>
                   <groupId>org.codehaus.jackson</groupId>
                   <artifactId>jackson-core-asl</artifactId>
@@ -121,6 +153,27 @@
                   <artifactId>jboss-sasl</artifactId>
                 </artifactItem>
                 
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpcore</artifactId>
+                  <version>4.2.2</version>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpclient</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>commons-codec</groupId>
+                  <artifactId>commons-codec</artifactId>
+                </artifactItem>
+
+                <artifactItem>
+                  <groupId>org.apache.httpcomponents</groupId>
+                  <artifactId>httpmime</artifactId>
+                </artifactItem>
+
               </artifactItems>
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
             </configuration>

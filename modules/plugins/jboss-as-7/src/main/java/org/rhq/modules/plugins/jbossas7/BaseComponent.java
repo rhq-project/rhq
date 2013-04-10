@@ -63,7 +63,6 @@ import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.StartScriptConfiguration;
-import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -387,11 +386,23 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
         ContentServices contentServices = cctx.getContentServices();
         String resourceTypeName = report.getResourceType().getName();
 
-        ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
-        ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
-                serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
-        OutputStream out = uploadConnection.getOutputStream(details.getKey().getName());
+        ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
+            getServerComponent().getServerPluginConfiguration(), details.getKey().getName());
+
+        OutputStream out = uploadConnection.getOutputStream();
+        if (out == null) {
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("An error occured while the agent was preparing for content download");
+            return report;
+        }
+        try {
         contentServices.downloadPackageBitsForChildResource(cctx, resourceTypeName, details.getKey(), out);
+        } catch (Exception e) {
+            uploadConnection.cancelUpload();
+            report.setStatus(CreateResourceStatus.FAILURE);
+            report.setErrorMessage("An error occured while the agent was downloading the content");
+            return report;
+        }
 
         JsonNode uploadResult = uploadConnection.finishUpload();
         if (verbose)

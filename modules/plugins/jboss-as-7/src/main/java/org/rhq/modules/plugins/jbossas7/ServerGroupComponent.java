@@ -44,7 +44,6 @@ import org.rhq.core.pluginapi.content.ContentServices;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.Address;
 import org.rhq.modules.plugins.jbossas7.json.CompositeOperation;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
@@ -98,12 +97,26 @@ public class ServerGroupComponent extends BaseComponent implements ContentFacet,
 
         for (ResourcePackageDetails details : packages) {
 
-            ServerPluginConfiguration serverPluginConfig = getServerComponent().getServerPluginConfiguration();
-            ASUploadConnection uploadConnection = new ASUploadConnection(serverPluginConfig.getHostname(),
-                    serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword());
             String packageName = details.getName();
-            OutputStream out = uploadConnection.getOutputStream(packageName);
-            contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
+
+            ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
+                getServerComponent().getServerPluginConfiguration(), packageName);
+            OutputStream out = uploadConnection.getOutputStream();
+            if (out == null) {
+                response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),
+                    ContentResponseResult.FAILURE));
+                continue;
+            }
+
+            try {
+                contentServices.downloadPackageBits(cctx, details.getKey(), out, false);
+            } catch (Exception e) {
+                uploadConnection.cancelUpload();
+                response.addPackageResponse(new DeployIndividualPackageResponse(details.getKey(),
+                    ContentResponseResult.FAILURE));
+                continue;
+            }
+
             JsonNode uploadResult = uploadConnection.finishUpload();
             if (uploadResult.has(OUTCOME)) {
                 String outcome = uploadResult.get(OUTCOME).getTextValue();

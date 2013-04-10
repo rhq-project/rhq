@@ -136,14 +136,27 @@ public class DeploymentComponent extends BaseComponent<ResourceComponent<?>> imp
 
         ResourcePackageDetails detail = packages.iterator().next();
 
-        ASUploadConnection uploadConnection = new ASUploadConnection(getASConnection());
-        OutputStream out = uploadConnection.getOutputStream(detail.getKey().getName());
+        ASUploadConnection uploadConnection = ASUploadConnection.newInstanceForServerPluginConfiguration(
+            getServerComponent().getServerPluginConfiguration(), detail.getKey().getName());
+        OutputStream out = uploadConnection.getOutputStream();
+        if (out == null) {
+            response.setOverallRequestResult(ContentResponseResult.FAILURE);
+            response
+                .setOverallRequestErrorMessage("An error occured while the agent was preparing for content download");
+            return response;
+        }
         ResourceType resourceType = context.getResourceType();
 
         log.info("trying deployment of" + resourceType.getName() + ", key=" + detail.getKey() );
 
-        contentServices.downloadPackageBits(context.getContentContext(),
-                detail.getKey(), out, true);
+        try {
+            contentServices.downloadPackageBits(context.getContentContext(), detail.getKey(), out, true);
+        } catch (Exception e) {
+            uploadConnection.cancelUpload();
+            response.setOverallRequestResult(ContentResponseResult.FAILURE);
+            response.setOverallRequestErrorMessage("An error occured while the agent was downloading the content");
+            return response;
+        }
 
         JsonNode uploadResult = uploadConnection.finishUpload();
         if (verbose)

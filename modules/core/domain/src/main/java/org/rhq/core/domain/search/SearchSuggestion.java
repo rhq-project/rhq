@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 public class SearchSuggestion implements Serializable, Comparable<SearchSuggestion> {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public enum Kind {
         Unknown(""), //

@@ -748,7 +748,8 @@
                <c:simple-property
                   name="connector"
                   type="string"
-                  description="Connector protocol connector."
+                  description="Connector protocol connector. Note: Only available on Tomcat 7."
+                  required="false"
                   readOnly="true" />
                <c:simple-property
                   name="address"

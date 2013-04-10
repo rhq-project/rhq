@@ -23,7 +23,7 @@ import org.rhq.core.domain.drift.DriftDefinitionTemplate;
 
 @SuppressWarnings("unused")
 public class DriftDefinitionTemplateCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private String filterName;
     private Integer filterResourceTypeId;

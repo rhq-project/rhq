@@ -41,7 +41,7 @@ import org.rhq.core.domain.util.PageOrdering;
  */
 public class GenericDriftChangeSetCriteria implements Serializable, DriftChangeSetCriteria {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private String filterId;
 

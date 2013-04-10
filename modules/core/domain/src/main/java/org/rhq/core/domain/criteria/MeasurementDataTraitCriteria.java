@@ -36,7 +36,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class MeasurementDataTraitCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     // sort field names
     public static final String SORT_FIELD_SCHEDULE_ID = "scheduleId";

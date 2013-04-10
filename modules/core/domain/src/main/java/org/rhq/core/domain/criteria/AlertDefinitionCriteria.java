@@ -40,7 +40,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class AlertDefinitionCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public static final String SORT_FIELD_RESOURCE_ID = "resourceId";
     public static final String SORT_FIELD_RESOURCE_NAME = "resourceName";

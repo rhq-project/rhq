@@ -40,7 +40,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class AvailabilityCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     // this is used to perform an interval check, see below for more, or to filter out the initial avail record
     private Long filterStartTime;

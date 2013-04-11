@@ -1172,7 +1172,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         public TableFilter(Table<?> table) {
             super();
-            setWidth100();
+            setOverflow(Overflow.VISIBLE);
+            setAutoWidth();
             setPadding(5);
             this.table = table;
         }

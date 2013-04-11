@@ -1492,7 +1492,7 @@
                          <version>${animal.sniffer.java.signature.version}</version>
                       </signature>
                   </configuration>
-                  <phase>process-classes</phase>
+                  <phase>verify</phase>
                   <goals>
                       <goal>check</goal>
                   </goals>

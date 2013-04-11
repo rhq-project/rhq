@@ -84,8 +84,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     private int groupId = -1;
-    private boolean isAutoCluster;
-    private boolean isAutoGroup;
+    private EntityContext context;
     protected Canvas recentMeasurementsContent = new Canvas();
     protected boolean currentlyLoading = false;
     protected long start = -1;
@@ -118,8 +117,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     public GroupMetricsPortlet(EntityContext context) {
         super();
         this.groupId = context.getGroupId();
-        this.isAutoGroup = context.isAutoGroup();
-        this.isAutoCluster = context.isAutoCluster();
+        this.context = context;
     }
 
     @Override
@@ -465,9 +463,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                     } else {
                                                         //insert see more link
                                                         DynamicForm row = new DynamicForm();
-                                                        String link = LinkManager
-                                                            .getGroupMonitoringGraphsLink(EntityContext
-                                                                .forGroup(groupId));
+                                                        String link = LinkManager.getGroupMonitoringGraphsLink(context);
                                                         AbstractActivityView.addSeeMoreLink(row, link, column);
                                                     }
                                                     //call out to 3rd party javascript lib
@@ -544,11 +540,11 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     }
 
     private boolean isAutoGroup() {
-        return this.isAutoGroup;
+        return this.context.isAutoGroup();
     }
 
     private boolean isAutoCluster() {
-        return this.isAutoCluster;
+        return this.context.isAutoCluster();
     }
 
     protected void setRefreshing(boolean currentlyRefreshing) {

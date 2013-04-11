@@ -83,13 +83,15 @@ public class GroupEventsPortlet extends EnhancedVLayout implements CustomSetting
         CONFIG_INCLUDE.add(Constant.METRIC_RANGE_UNIT);
     }
 
+    private EntityContext context;
     private int groupId = -1;
     protected Canvas recentEventsContent = new Canvas();
     protected boolean currentlyLoading = false;
 
-    public GroupEventsPortlet(int groupId) {
+    public GroupEventsPortlet(EntityContext context) {
         super();
-        this.groupId = groupId;
+        this.context = context;
+        this.groupId = context == null ? -1 : context.getGroupId();
     }
 
     @Override
@@ -144,7 +146,7 @@ public class GroupEventsPortlet extends EnhancedVLayout implements CustomSetting
                 throw new IllegalArgumentException("Context [" + context + "] not supported by portlet");
             }
 
-            return new GroupEventsPortlet(context.getGroupId());
+            return new GroupEventsPortlet(context);
         }
     }
 
@@ -268,7 +270,7 @@ public class GroupEventsPortlet extends EnhancedVLayout implements CustomSetting
                         column.markForRedraw();
                         //insert see more link
                         DynamicForm row = new DynamicForm();
-                        String link = LinkManager.getGroupEventHistoryListLink(EntityContext.forGroup(groupId));
+                        String link = LinkManager.getGroupEventHistoryListLink(context);
                         AbstractActivityView.addSeeMoreLink(row, link, column);
                     } else {
                         DynamicForm row = AbstractActivityView

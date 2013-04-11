@@ -25,14 +25,15 @@ import java.util.List;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.core.Rectangle;
+import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import com.smartgwt.client.widgets.toolbar.ToolStripButton;
 
 import org.rhq.core.domain.auth.Subject;
@@ -45,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -57,9 +59,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author  Mike Thompson
  */
-public class EnhancedSearchBar extends ToolStrip {
+public class EnhancedSearchBar extends EnhancedToolStrip {
     private static final Messages MSG = CoreGUI.getMessages();
-    private static final int SEARCH_WIDTH = 600;
+    private static final int SEARCH_WIDTH = 500;
+    private static final int SAVED_SEARCH_WIDTH = 150;
     private static final int PICKLIST_HEIGHT = 500;
     private SearchSubsystem searchSubsystem;
     private ToolStripButton searchTextButton;
@@ -109,21 +112,29 @@ public class EnhancedSearchBar extends ToolStrip {
         } else {
             this.searchSubsystem = searchSubsystem;
         }
+
+        setOverflow(Overflow.VISIBLE);
         setAutoHeight();
         setWidth100();
-        addSpacer(40);
 
-        searchTextItem = new TextItem("search", MSG.common_button_search());
         favoritesSearchStrategy = new FavoritesSearchStrategy(this);
         basicSearchStrategy = new BasicSearchStrategy(this);
         // now we can fill our enumMap
         searchStrategies.put(SearchMode.BASIC_SEARCH_MODE, basicSearchStrategy);
         searchStrategies.put(SearchMode.SAVED_SEARCH_MODE, favoritesSearchStrategy);
 
-        searchTextItem.setWidth(SEARCH_WIDTH);
-        searchTextItem.setBrowserSpellCheck(false);
+        // set the default search provider
+        setSearchMode(SearchMode.BASIC_SEARCH_MODE);
 
         pickListGrid = new ListGrid();
+        configurePickListGrid();
+
+        DynamicForm searchTextForm = new DynamicForm();
+        searchTextForm.setWidth100();
+
+        searchTextItem = new TextItem("search", MSG.common_button_search());
+        searchTextItem.setWidth(SEARCH_WIDTH);
+        searchTextItem.setBrowserSpellCheck(false);
 
         searchTextItem.addKeyUpHandler(new KeyUpHandler() {
 
@@ -149,6 +160,10 @@ public class EnhancedSearchBar extends ToolStrip {
                         getSearchStrategy().searchReturnKeyHandler(keyUpEvent);
                         searchTextItem.focusInItem();
                         lastSearchTerm = currentSearchTerm;
+                    } else {
+                        if (pickListGrid.isVisible()) {
+                            pickListGrid.hide();
+                        }
                     }
                 } else if (keyUpEvent.getKeyName().equals("Escape")) {
                     if (pickListGrid.isVisible()) {
@@ -183,9 +198,8 @@ public class EnhancedSearchBar extends ToolStrip {
             }
         });
 
-        configurePickListGrid();
-
-        addFormItem(searchTextItem);
+        searchTextForm.setFields(searchTextItem);
+        addMember(searchTextForm);
 
         searchTextButton = new ToolStripButton();
         searchTextButton.setIcon(IconEnum.ARROW_GRAY.getIcon16x16Path());
@@ -214,10 +228,16 @@ public class EnhancedSearchBar extends ToolStrip {
         });
         addButton(saveSearchButton);
 
+        DynamicForm saveSearchTextForm = new DynamicForm();
+        saveSearchTextForm.setWidth100();
+
         saveSearchTextItem = new TextItem("savedSearchName");
         saveSearchTextItem.setShowTitle(false);
-        saveSearchTextItem.setWidth(150);
-        addFormItem(saveSearchTextItem);
+        saveSearchTextItem.setWidth(SAVED_SEARCH_WIDTH);
+
+        saveSearchTextForm.setFields(saveSearchTextItem);
+        addMember(saveSearchTextForm);
+
         saveSearchTextItem.hide();
 
         saveSearchTextItem.addKeyUpHandler(new KeyUpHandler() {
@@ -228,9 +248,6 @@ public class EnhancedSearchBar extends ToolStrip {
                 }
             }
         });
-
-        // set the default search provider
-        setSearchMode(SearchMode.BASIC_SEARCH_MODE);
 
         this.draw();
     }

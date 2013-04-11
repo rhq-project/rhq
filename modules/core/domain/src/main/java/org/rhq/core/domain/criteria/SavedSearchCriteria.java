@@ -35,7 +35,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class SavedSearchCriteria extends Criteria {
-    public static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 2L;
 
     private SearchSubsystem filterSearchSubsystem;
     private String filterName;

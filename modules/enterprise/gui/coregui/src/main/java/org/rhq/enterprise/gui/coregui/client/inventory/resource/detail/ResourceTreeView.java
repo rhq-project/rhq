@@ -100,10 +100,10 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.Resource
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * @author Jay Shaughnessy
@@ -206,6 +206,8 @@ public class ResourceTreeView extends EnhancedVLayout {
                                 public void onSuccess(ResourceGroup result) {
                                     loadingLabel.hide();
                                     renderAutoGroup(result);
+                                    // Make sure to re-enable ourselves.
+                                    enable();
                                 }
 
                                 public void onFailure(Throwable caught) {
@@ -962,12 +964,12 @@ public class ResourceTreeView extends EnhancedVLayout {
             updateSelection(isRefresh);
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
-            loadTree(selectedResourceId, true, null);
+            loadTree(selectedResourceId, true, false, null);
         }
 
     }
 
-    private void loadTree(final int selectedResourceId, final boolean updateSelection,
+    private void loadTree(final int selectedResourceId, final boolean updateSelection, final boolean autogroup,
         final AsyncCallback<Void> callback) {
 
         if (updateSelection) {
@@ -1054,6 +1056,10 @@ public class ResourceTreeView extends EnhancedVLayout {
                             updateSelection();
                         }
 
+                    } else if (autogroup) {
+                        if (null != callback) {
+                            callback.onSuccess(null);
+                        }
                     } else {
                         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage,
                             EnumSet.of(ResourceTypeRepository.MetadataType.subCategory),
@@ -1110,10 +1116,12 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                 public void onSuccess(PageList<ResourceGroup> result) {
                     final ResourceGroup backingGroup = result.get(0);
+                    boolean updateSelection = selectedNodeId != null && selectedNodeId != ResourceTreeNode.idOf(selectedAutoGroupId);
+                    
                     // load the tree up to the autogroup's parent resource. Don't select the resource node
                     // to avoid an unnecessary navigation to the resource, we just need the tree in place so
                     // we can navigate to the autogroup node.
-                    loadTree(backingGroup.getAutoGroupParentResource().getId(), false, new AsyncCallback<Void>() {
+                    loadTree(backingGroup.getAutoGroupParentResource().getId(), updateSelection, true, new AsyncCallback<Void>() {
 
                         public void onFailure(Throwable caught) {
                             loadingLabel.hide();
@@ -1137,7 +1145,7 @@ public class ResourceTreeView extends EnhancedVLayout {
     }
 
     public void renderView(ViewPath viewPath) {
-        ViewId currentViewId = viewPath.getCurrent();
+         ViewId currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
         if ("AutoGroup".equals(currentViewIdPath)) {
             // Move the currentViewId to the ID portion to play better with other code

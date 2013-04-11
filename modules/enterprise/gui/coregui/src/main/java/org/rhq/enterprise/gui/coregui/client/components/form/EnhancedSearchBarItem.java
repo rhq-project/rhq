@@ -18,9 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.components.form;
 
-import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+
 import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.enterprise.gui.coregui.client.searchbar.EnhancedSearchBar;
 
@@ -29,7 +29,7 @@ import org.rhq.enterprise.gui.coregui.client.searchbar.EnhancedSearchBar;
  * @author Mike Thompson
  */
 public class EnhancedSearchBarItem extends CanvasItem {
-    private Canvas canvas = new Canvas();
+
     private EnhancedSearchBar searchBar;
 
     public EnhancedSearchBarItem(String name, SearchSubsystem subsystem, String initialSearchText) {
@@ -37,26 +37,15 @@ public class EnhancedSearchBarItem extends CanvasItem {
         setShowTitle(false);
 
         searchBar = new EnhancedSearchBar(subsystem, initialSearchText);
-
-        searchBar.setHeight("30px");
-        searchBar.setWidth100();
-        canvas.addChild(searchBar);
-        canvas.setWidth100();
-
-        setCanvas(canvas);
-        setHeight(30);
-        setWidth("100%");
-        setTitleVAlign(VerticalAlignment.TOP);
+        setCanvas(searchBar);
     }
 
     @Override
     public Canvas getCanvas() {
-        return canvas;
+        return searchBar;
     }
 
     public EnhancedSearchBar getSearchBar() {
         return searchBar;
     }
-
-
 }

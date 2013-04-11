@@ -166,8 +166,9 @@ public class CassandraClusterManager {
     public void startCluster() {
         startCluster(getNodeIds());
 
+        List<CassandraNode> nodes = calculateNodes();
         ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(calculateNodes());
+        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 20);
     }
 
     public void startCluster(List<Integer> nodeIds) {

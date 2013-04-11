@@ -127,7 +127,7 @@ public class ClusterInitService {
      *                thrown when the number of failed connections exceeds this value.
      */
     public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, int retries) {
-        long sleep = 100;
+        long sleep = 250;
         int timeout = 50;
         int connections = 0;
         int failedConnections = 0;

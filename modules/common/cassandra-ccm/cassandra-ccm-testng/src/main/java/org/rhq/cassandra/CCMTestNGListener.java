@@ -105,12 +105,6 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         }
         ccm.startCluster();
 
-        ClusterInitService clusterInitService = new ClusterInitService();
-
-        if (annotation.waitForClusterToStart()) {
-            clusterInitService.waitForClusterToStart(nodes);
-        }
-
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         if (!schemaManager.schemaExists()) {
             schemaManager.createSchema();
@@ -126,6 +120,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             // is no cluster name argument.
             //
             // jsanda
+            ClusterInitService clusterInitService = new ClusterInitService();
             clusterInitService.waitForSchemaAgreement("rhq", nodes);
         }
     }

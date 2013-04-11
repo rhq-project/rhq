@@ -70,11 +70,26 @@ public class Console extends ControlCommand {
             String option = commandLine.getOptions()[0].getLongOpt();
             try {
                 if (option.equals(STORAGE_OPTION)) {
-                    startStorageInForeground();
+                    if (isStorageInstalled()) {
+                        startStorageInForeground();
+                    } else {
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
+                            " option will be ignored.");
+                    }
                 } else if (option.equals(SERVER_OPTION)) {
-                    startServerInForeground();
+                    if (isServerInstalled()) {
+                        startServerInForeground();
+                    } else {
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
+                            " option will be ignored.");
+                    }
                 } else if (option.equals(AGENT_OPTION)) {
-                    startAgentInForeground();
+                    if (isAgentInstalled()) {
+                        startAgentInForeground();
+                    } else {
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
+                            " option will be ignored.");
+                    }
                 } else {
                     throw new IllegalArgumentException(option + " is not a supported option");
                 }

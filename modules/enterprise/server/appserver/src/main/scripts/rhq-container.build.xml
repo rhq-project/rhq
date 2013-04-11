@@ -534,7 +534,7 @@ rhq.server.socket.binding.port.txn-status-manager=3713
 #                                          determined at auto-install time.
 #############################################################################
 
-rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
+rhq.autoinstall.enabled=true
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
 

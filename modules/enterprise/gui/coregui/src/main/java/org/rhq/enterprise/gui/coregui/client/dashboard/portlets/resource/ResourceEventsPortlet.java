@@ -59,7 +59,7 @@ public class ResourceEventsPortlet extends GroupEventsPortlet {
     private int resourceId = -1;
 
     public ResourceEventsPortlet(int resourceId) {
-        super(-1);
+        super(null);
         this.resourceId = resourceId;
     }
 

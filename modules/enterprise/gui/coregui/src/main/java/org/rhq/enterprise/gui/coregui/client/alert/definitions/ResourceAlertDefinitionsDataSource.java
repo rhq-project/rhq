@@ -99,8 +99,9 @@ public class ResourceAlertDefinitionsDataSource extends AbstractAlertDefinitions
                         this.resource.getResourceType().getId()) + "/" + parentId);
                 record.setLinkText(MSG.view_alert_definition_for_type());
             } else {
-                record.setAttribute(FIELD_PARENT, "#ResourceGroup/" + groupAlertDefinition.getGroup().getId()
-                    + "/Alerts/Definitions/" + groupAlertDefinition.getId());
+                boolean isAutogroup = groupAlertDefinition.getGroup().getAutoGroupParentResource() != null;
+                record.setAttribute(FIELD_PARENT, (isAutogroup ? "#Resource/AutoGroup/" : "#ResourceGroup/")
+                    + groupAlertDefinition.getGroup().getId() + "/Alerts/Definitions/" + groupAlertDefinition.getId());
                 record.setLinkText(MSG.view_alert_definition_for_group());
             }
             record.setAttribute(FIELD_READONLY, (readOnly) ? MSG.common_val_yes() : MSG.common_val_no());

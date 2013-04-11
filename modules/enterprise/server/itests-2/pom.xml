@@ -303,6 +303,57 @@
     </dependencies>
 </module>
 ]]></echo>
+
+                <echo>Adding DataStax Java Cassandra Driver module to ${jboss.modules.dir}</echo>
+                <copy file="${settings.localRepository}/com/datastax/cassandra/cassandra-driver-core/${cassandra.driver.version}/cassandra-driver-core-${cassandra.driver.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/io/netty/netty/${cassandra.driver.netty.version}/netty-${cassandra.driver.netty.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-all/${cassandra.version}/cassandra-all-${cassandra.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-thrift/${cassandra.version}/cassandra-thrift-${cassandra.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/cassandra/deps/avro/1.4.0-cassandra-1/avro-1.4.0-cassandra-1.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/thrift/libthrift/${cassandra.thrift.version}/libthrift-${cassandra.thrift.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/com/google/guava/guava/14.0.1/guava-14.0.1.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/com/yammer/metrics/metrics-core/2.2.0/metrics-core-2.2.0.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/slf4j/slf4j-log4j12/1.7.2/slf4j-log4j12-1.7.2.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/1.0.5-M3-p1/snappy-java-1.0.5-M3-p1.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/log4j/log4j/1.2.17/log4j-1.2.17.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+
+                <echo file="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="com.datastax.cassandra.cassandra-driver-core">
+    <resources>
+        <resource-root path="cassandra-driver-core-${cassandra.driver.version}.jar"/>
+        <resource-root path="netty-${cassandra.driver.netty.version}.jar"/>
+        <resource-root path="cassandra-all-${cassandra.version}.jar"/>
+        <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
+        <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
+        <resource-root path="guava-14.0.1.jar"/>
+        <resource-root path="metrics-core-2.2.0.jar"/>
+        <resource-root path="slf4j-api-1.7.2.jar"/>
+        <resource-root path="slf4j-log4j12-1.7.2.jar"/>
+        <resource-root path="snappy-java-1.0.5-M3-p1.jar"/>
+        <resource-root path="log4j-1.2.17.jar"/>
+        <resource-root path="avro-1.4.0-cassandra-1.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="org.codehaus.jackson.jackson-core-asl"/>
+        <module name="org.codehaus.jackson.jackson-mapper-asl"/>
+        <module name="javax.api"/>
+    </dependencies>
+</module>
+]]></echo>
               </tasks>
             </configuration>
             <goals>

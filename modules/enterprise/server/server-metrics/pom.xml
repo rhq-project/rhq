@@ -93,25 +93,25 @@
       <version>${cassandra.driver.version}</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-all</artifactId>
-      <version>${cassandra.version}</version>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-log4j12</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-api</artifactId>
-        </exclusion>
-        <exclusion>
-          <groupId>log4j</groupId>
-          <artifactId>log4j</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
+    <!--<dependency>-->
+      <!--<groupId>org.apache.cassandra</groupId>-->
+      <!--<artifactId>cassandra-all</artifactId>-->
+      <!--<version>${cassandra.version}</version>-->
+      <!--<exclusions>-->
+        <!--<exclusion>-->
+          <!--<groupId>org.slf4j</groupId>-->
+          <!--<artifactId>slf4j-log4j12</artifactId>-->
+        <!--</exclusion>-->
+        <!--<exclusion>-->
+          <!--<groupId>org.slf4j</groupId>-->
+          <!--<artifactId>slf4j-api</artifactId>-->
+        <!--</exclusion>-->
+        <!--<exclusion>-->
+          <!--<groupId>log4j</groupId>-->
+          <!--<artifactId>log4j</artifactId>-->
+        <!--</exclusion>-->
+      <!--</exclusions>-->
+    <!--</dependency>-->
 
     <dependency>
       <groupId>joda-time</groupId>
@@ -183,82 +183,87 @@
   </build>
 
   <profiles>
-    <profile>
-      <id>dev</id>
-      <properties>
-        <rhq.rootDir>../../..</rhq.rootDir>
-        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-        <rhq.deploymentDir>${rhq.containerDir}/${rhq.earLibDir}</rhq.deploymentDir>
-      </properties>
+    <!--
+      Temporarily commenting out dev profile. The data migrator self-executing JAR was
+      getting deployed to the EAR and causing the EAR deployment to fail. I think the
+      assembly might need to be moved outside of the dev profile.
+    -->
+    <!--<profile>-->
+      <!--<id>dev</id>-->
+      <!--<properties>-->
+        <!--<rhq.rootDir>../../..</rhq.rootDir>-->
+        <!--<rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>-->
+        <!--<rhq.deploymentDir>${rhq.containerDir}/${rhq.earLibDir}</rhq.deploymentDir>-->
+      <!--</properties>-->
 
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <executions>
-              <execution>
-                <id>deploy</id>
-                <phase>package</phase>
-                <configuration>
-                  <target>
-                    <mkdir dir="${rhq.deploymentDir}"/>
-                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
-                    <echo>*** Updating ${deployment.file}...</echo>
-                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
+      <!--<build>-->
+        <!--<plugins>-->
+          <!--<plugin>-->
+            <!--<artifactId>maven-antrun-plugin</artifactId>-->
+            <!--<executions>-->
+              <!--<execution>-->
+                <!--<id>deploy</id>-->
+                <!--<phase>package</phase>-->
+                <!--<configuration>-->
+                  <!--<target>-->
+                    <!--<mkdir dir="${rhq.deploymentDir}"/>-->
+                    <!--<property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>-->
+                    <!--<echo>*** Updating ${deployment.file}...</echo>-->
+                    <!--<jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>-->
+                  <!--</target>-->
+                <!--</configuration>-->
+                <!--<goals>-->
+                  <!--<goal>run</goal>-->
+                <!--</goals>-->
+              <!--</execution>-->
 
-              <execution>
-                <id>undeploy</id>
-                <phase>clean</phase>
-                <configuration>
-                  <target>
-                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
-                    <echo>*** Deleting ${deployment.file}...</echo>
-                    <delete file="${deployment.file}"/>
-                  </target>
-                </configuration>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-              </execution>
+              <!--<execution>-->
+                <!--<id>undeploy</id>-->
+                <!--<phase>clean</phase>-->
+                <!--<configuration>-->
+                  <!--<target>-->
+                    <!--<property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>-->
+                    <!--<echo>*** Deleting ${deployment.file}...</echo>-->
+                    <!--<delete file="${deployment.file}"/>-->
+                  <!--</target>-->
+                <!--</configuration>-->
+                <!--<goals>-->
+                  <!--<goal>run</goal>-->
+                <!--</goals>-->
+              <!--</execution>-->
 
-            </executions>
-          </plugin>
+            <!--</executions>-->
+          <!--</plugin>-->
 
-          <plugin>
-              <artifactId>maven-assembly-plugin</artifactId>
-              <configuration>
-                  <descriptorRefs>
-                      <descriptorRef>jar-with-dependencies</descriptorRef>
-                  </descriptorRefs>
-                  <archive>
-                      <manifest>
-                          <mainClass>org.rhq.server.metrics.DataMigratorRunner</mainClass>
-                          <addClasspath>true</addClasspath>
-                      </manifest>
-                  </archive>
-              </configuration>
-              <executions>
-                <execution>
-                    <id>package-jar-with-dependencies</id>
-                    <phase>package</phase>
-                    <goals>
-                        <goal>single</goal>
-                    </goals>
-                    <configuration>
-                      <finalName>data-migrator-${project.version}</finalName>
-                    </configuration>
-              </execution>
-              </executions>
-          </plugin>
-        </plugins>
+          <!--<plugin>-->
+              <!--<artifactId>maven-assembly-plugin</artifactId>-->
+              <!--<configuration>-->
+                  <!--<descriptorRefs>-->
+                      <!--<descriptorRef>jar-with-dependencies</descriptorRef>-->
+                  <!--</descriptorRefs>-->
+                  <!--<archive>-->
+                      <!--<manifest>-->
+                          <!--<mainClass>org.rhq.server.metrics.DataMigratorRunner</mainClass>-->
+                          <!--<addClasspath>true</addClasspath>-->
+                      <!--</manifest>-->
+                  <!--</archive>-->
+              <!--</configuration>-->
+              <!--<executions>-->
+                <!--<execution>-->
+                    <!--<id>package-jar-with-dependencies</id>-->
+                    <!--<phase>package</phase>-->
+                    <!--<goals>-->
+                        <!--<goal>single</goal>-->
+                    <!--</goals>-->
+                    <!--<configuration>-->
+                      <!--<finalName>data-migrator-${project.version}</finalName>-->
+                    <!--</configuration>-->
+              <!--</execution>-->
+              <!--</executions>-->
+          <!--</plugin>-->
+        <!--</plugins>-->
 
-      </build>
-    </profile>
+      <!--</build>-->
+    <!--</profile>-->
   </profiles>
 </project>

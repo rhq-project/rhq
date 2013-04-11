@@ -165,6 +165,9 @@ public class CassandraClusterManager {
 
     public void startCluster() {
         startCluster(getNodeIds());
+
+        ClusterInitService clusterInitService = new ClusterInitService();
+        clusterInitService.waitForClusterToStart(calculateNodes());
     }
 
     public void startCluster(List<Integer> nodeIds) {
@@ -202,6 +205,7 @@ public class CassandraClusterManager {
 
         ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
         startScriptExe.setArguments(asList("-p", "cassandra.pid"));
+        startScriptExe.setWaitForCompletion(0);
 
         ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
         if (log.isDebugEnabled()) {

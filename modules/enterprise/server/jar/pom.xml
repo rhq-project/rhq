@@ -99,16 +99,20 @@
           <groupId>org.hyperic</groupId>
           <artifactId>sigar-dist</artifactId>
         </exclusion>
+        <exclusion>
+          <groupId>com.datastax.cassandra</groupId>
+          <artifactId>cassandra-driver-core</artifactId>
+        </exclusion>
       </exclusions>
     </dependency>
 
     <dependency>
-      <groupId>org.osgi</groupId>
-      <artifactId>core</artifactId>
-      <version>4.3.0</version>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>${cassandra.driver.version}</version>
+      <scope>provided</scope>
     </dependency>
 
-   
     <dependency>
       <groupId>com.googlecode.java-diff-utils</groupId>
       <artifactId>diffutils</artifactId>

@@ -15,27 +15,6 @@
         <resource-root path="i18nlog-${i18nlog.version}.jar"/>
         <resource-root path="rhq-cassandra-ccm-core-${project.version}.jar"/>
         <resource-root path="rhq-cassandra-schema-${project.version}.jar"/>
-        <!-- begin rhq-cassandra-schema dependencies -->
-        <!--
-          cassandra-driver-core declares a lot of dependencies, many of which
-          are very likely not needed. For now I am only declaring those
-          dependencies that are known to be needed. They are known to be needed
-          because excluding them results in a ClassNotFoundException.
-        -->
-        <resource-root path="cassandra-driver-core-${cassandra.driver.version}.jar"/>
-        <resource-root path="slf4j-api-1.7.2.jar"/>
-        <resource-root path="slf4j-log4j12-1.6.6.jar"/>
-        <resource-root path="netty-3.5.9.Final.jar"/>
-        <resource-root path="cassandra-all-${cassandra.version}.jar"/>
-        <resource-root path="metrics-core-2.2.0.jar"/>
-        <resource-root path="guava-13.0.1.jar"/>
-        <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
-        <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
-        <resource-root path="jackson-mapper-asl-1.4.0.jar"/>
-        <resource-root path="jackson-core-asl-1.4.0.jar"/>
-        <resource-root path="snappy-java-${cassandra.driver.snappy.version}.jar"/>
-      <!-- end rhq-cassandra-schema dependencies -->
-      <resource-root path="commons-codec-1.2.jar"/>
     </resources>
 
     <dependencies>
@@ -52,6 +31,7 @@
         <module name="org.picketbox"/>
         <module name="org.rhq.postgres"/>
         <module name="org.rhq.oracle" optional="true" />
+        <module name="com.datastax.cassandra.cassandra-driver-core"/>
         <module name="javax.api"/>
     </dependencies>
 

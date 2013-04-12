@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+      <className>org/rhq/core/pluginapi/inventory/DisabledResourceDiscoveryComponent</className>
+      <differenceType>8001</differenceType><!-- Class Removed -->
+      <justification>This class was used as a hot fix (13cb988bb4835289393c8e3f736918651d6e2bae) to some a issue on Jan 25 2013. Now it is not used anymore, because the resource type ignoring solves the issue.</justification>
+  </difference>
+
+  <difference>
+      <className>org/rhq/core/pluginapi/inventory/DisabledResourceComponent</className>
+      <differenceType>8001</differenceType><!-- Class Removed -->
+      <justification>This class was used as a hot fix (13cb988bb4835289393c8e3f736918651d6e2bae) to some a issue on Jan 25 2013. Now it is not used anymore, because the resource type ignoring solves the issue.</justification>
+  </difference>
+
+</differences>

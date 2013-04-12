@@ -40,6 +40,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.ResourceMeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.calltime.CallTimeDataKey;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
@@ -313,9 +314,6 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
 
     /**
      * Just set up two resources plus measurement definitions
-     *
-     * @param  em The EntityManager to use
-     *
      */
     private void setupResources() {
         theAgent = new Agent("testagent", "localhost", 1234, "", "randomToken");
@@ -332,6 +330,7 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
         resource1 = new Resource("test-platform-key1", "test-platform-name", theResourceType);
         resource1.setUuid("" + new Random().nextInt());
         resource1.setAgent(theAgent);
+        resource1.setInventoryStatus(InventoryStatus.COMMITTED);
         em.persist(resource1);
     }
 

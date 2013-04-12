@@ -68,6 +68,7 @@ import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -82,6 +83,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -89,6 +91,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
@@ -147,9 +150,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private ProductVersionManagerLocal productVersionManager;
     @EJB
     private SystemManagerLocal systemManager;
-
     @EJB
     private PluginManagerLocal pluginManager;
+    @EJB
+    private AvailabilityManagerLocal availabilityManager;
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
     @TransactionAttribute(TransactionAttributeType.NEVER)
@@ -1218,8 +1222,19 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (resourceIds == null || resourceIds.length == 0) {
             return;
         }
+
         checkStatus(subject, resourceIds, InventoryStatus.IGNORED,
             EnumSet.of(InventoryStatus.NEW, InventoryStatus.COMMITTED));
+
+        // We want to set all availabilities for the ignored resources to "unknown" since we won't be tracking them anymore.
+        // This is more of a convienence; if it fails for any reason, just log an error but don't roll back ignoring the resources.
+        try {
+            this.availabilityManager.setResourceAvailabilities(resourceIds, AvailabilityType.UNKNOWN);
+        } catch (Exception e) {
+            log.error("Failed to reset availabilities for resources being ignored: " + ThrowableUtil.getAllMessages(e));
+        }
+
+        return;
     }
 
     public void unignoreResources(Subject subject, int[] resourceIds) {

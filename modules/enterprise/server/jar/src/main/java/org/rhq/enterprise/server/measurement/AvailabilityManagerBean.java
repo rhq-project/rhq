@@ -43,6 +43,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
@@ -660,7 +661,18 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setResourceAvailabilities(int[] resourceIds, AvailabilityType avail) {
+        long now = System.currentTimeMillis();
+        AvailabilityReport report = new AvailabilityReport(true, null);
+        report.setServerSideReport(true);
+        for (int resourceId : resourceIds) {
+            report.addAvailability(new Datum(resourceId, avail, now));
+        }
+        this.availabilityManager.mergeAvailabilityReport(report);
+        return;
+    }
+
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean mergeAvailabilityReport(AvailabilityReport report) {
         int reportSize = report.getResourceAvailability().size();
@@ -688,7 +700,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
 
         // if this report is from an agent update the lastAvailReport time        
-        if (!report.isEnablementReport() && agentToUpdate != null) {
+        if (!report.isServerSideReport() && agentToUpdate != null) {
             availabilityManager.updateLastAvailabilityReportInNewTransaction(agentToUpdate.intValue());
         }
 
@@ -698,7 +710,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // then we need to skip this report so as not to waste our time. Then, immediately request and process
         // a full report because, obviously, the agent is no longer down but the server thinks
         // it still is down - we need to know the availabilities for all the resources on that agent
-        if (!report.isEnablementReport() && report.isChangesOnlyReport()
+        if (!report.isServerSideReport() && report.isChangesOnlyReport()
             && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
 
             mergeInfo.setAskForFullReport(true);
@@ -724,7 +736,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             watch.reset();
         }
 
-        if (!report.isEnablementReport()) {
+        if (!report.isServerSideReport()) {
             if (agentToUpdate != null) {
                 // don't bother asking for a full report if the one we are currently processing is already full
                 if (mergeInfo.isAskForFullReport() && report.isChangesOnlyReport()) {
@@ -770,6 +782,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         public boolean isEnablementReport() {
             return report.isEnablementReport();
+        }
+
+        public boolean isServerSideReport() {
+            return report.isServerSideReport();
         }
 
         public String toString(boolean includeAll) {

@@ -138,6 +138,15 @@ public interface AvailabilityManagerLocal extends AvailabilityManagerRemote {
         long begin, long end, int points, boolean withCurrentAvailability);
 
     /**
+     * Allows for resources to have their availabilities explicit set to the given avail type.
+     * This circumvents the last availability the resources' agents reported for them.
+     *
+     * @param resourceIds identifies the resources whose availabilities should be explicitly set
+     * @param avail the new availability for the resources
+     */
+    void setResourceAvailabilities(int[] resourceIds, AvailabilityType avail);
+
+    /**
      * Merge an {@link AvailabilityReport} that has been received from an agent. A report will only contain those
      * availabilities that have changed since the agent's last sent report. Note that if an agent has been restarted, it
      * will always send a full report as its first. An agent is obliged to sent at least one availability record in the

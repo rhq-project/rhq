@@ -21,7 +21,6 @@ package org.rhq.enterprise.agent;
 import java.io.IOException;
 import java.io.NotSerializableException;
 import java.lang.reflect.UndeclaredThrowableException;
-import java.rmi.MarshalException;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -30,6 +29,7 @@ import java.util.concurrent.TimeoutException;
 import org.testng.annotations.Test;
 
 import org.jboss.remoting.CannotConnectException;
+import org.jboss.remoting.InvocationFailureException;
 import org.jboss.remoting.InvokerLocator;
 
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -221,8 +221,8 @@ public class AgentComm3Test extends AgentCommTestBase {
         try {
             pojo.returnNonSerializableObject(new Thread()); // opps, Thread is not serializable, never even gets sent over the wire
         } catch (UndeclaredThrowableException expected) {
-            assert expected.getCause().getClass().getName().equals(MarshalException.class.getName());
-            assert expected.getCause().getCause().getClass().getName().equals(NotSerializableException.class.getName());
+            assert expected.getCause().getClass().equals(InvocationFailureException.class);
+            assert expected.getCause().getCause().getClass().equals(NotSerializableException.class);
         } catch (Throwable t) {
             assert false : "Unexpected exception: " + ThrowableUtil.getAllMessages(t); // this is here so I can put a breakpoint and see what exceptions are thrown
         }

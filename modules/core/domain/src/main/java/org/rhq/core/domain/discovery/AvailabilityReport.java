@@ -89,6 +89,9 @@ public class AvailabilityReport implements Serializable {
     // true if this is a server-generated report for enabling or disabling resources
     private boolean enablementReport = false;
 
+    // true if this is report was generated on the server side - it did not come from an actual agent
+    private boolean serverSideReport = false;
+
     /**
      * Constructor for {@link AvailabilityReport} that assumes this report will represent a full inventory (same as if
      * constructing with {@link #AvailabilityReport(boolean, String)} with the first argument being <code>false</code>).
@@ -149,6 +152,19 @@ public class AvailabilityReport implements Serializable {
 
     public void setEnablementReport(boolean enablementReport) {
         this.enablementReport = enablementReport;
+
+        // all enablement reports are generated server side
+        if (enablementReport) {
+            setServerSideReport(true);
+        }
+    }
+
+    public boolean isServerSideReport() {
+        return serverSideReport;
+    }
+
+    public void setServerSideReport(boolean serverSideReport) {
+        this.serverSideReport = serverSideReport;
     }
 
     @Override

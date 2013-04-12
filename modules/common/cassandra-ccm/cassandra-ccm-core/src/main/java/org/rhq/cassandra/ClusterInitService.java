@@ -127,7 +127,30 @@ public class ClusterInitService {
      *                thrown when the number of failed connections exceeds this value.
      */
     public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, int retries) {
-        long sleep = 250;
+        waitForClusterToStart(hosts, numHosts, 250, retries);
+    }
+
+    /**
+     * This method attempts to establish a Thrift RPC connection to each host for the
+     * number specified. In other words, if there are four hosts and <code>numHosts</code>
+     * is 2, this method will block only until it can connect to two of the hosts. If the
+     * connection fails, the host is retried after going through the other, remaining
+     * hosts.
+     * <br/><br/>
+     * After connecting to all cluster nodes, this method will sleep for 10 seconds
+     * before returning. This is to give the cluster a chance to create the system auth
+     * schema and to create the cassandra super user. Cassandra has a hard-coded delay of
+     * 10 sceonds before it creates the super user, which means the rhq schema cannot be
+     * created before that.
+     *
+     * @param hosts The cluster nodes to which a connection should be made
+     * @param numHosts The number of hosts to which a successful connection has to be made
+     *                 before returning.
+     * @param delay The amount of time wait between attempts to make a connection
+     * @param retries The number of times to retry connecting. A runtime exception will be
+     *                thrown when the number of failed connections exceeds this value.
+     */
+    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, long delay, int retries) {
         int timeout = 50;
         int connections = 0;
         int failedConnections = 0;
@@ -163,7 +186,7 @@ public class ClusterInitService {
                 logException(msg, e);
             }
             try {
-                Thread.sleep(sleep);
+                Thread.sleep(delay);
             } catch (InterruptedException e) {
             }
             host = queue.poll();

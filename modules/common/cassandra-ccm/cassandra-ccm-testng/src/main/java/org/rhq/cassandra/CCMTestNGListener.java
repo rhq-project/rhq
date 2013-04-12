@@ -103,7 +103,10 @@ public class CCMTestNGListener implements IInvokedMethodListener {
                 }
             }
         }
-        ccm.startCluster();
+        ccm.startCluster(false);
+
+        ClusterInitService clusterInitService = new ClusterInitService();
+        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1000, 20);
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         if (!schemaManager.schemaExists()) {
@@ -120,7 +123,6 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             // is no cluster name argument.
             //
             // jsanda
-            ClusterInitService clusterInitService = new ClusterInitService();
             clusterInitService.waitForSchemaAgreement("rhq", nodes);
         }
     }

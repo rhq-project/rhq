@@ -164,11 +164,17 @@ public class CassandraClusterManager {
     }
 
     public void startCluster() {
+        startCluster(true);
+    }
+
+    public void startCluster(boolean waitForClusterToStart) {
         startCluster(getNodeIds());
 
-        List<CassandraNode> nodes = calculateNodes();
-        ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 20);
+        if (waitForClusterToStart) {
+            List<CassandraNode> nodes = calculateNodes();
+            ClusterInitService clusterInitService = new ClusterInitService();
+            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 20);
+        }
     }
 
     public void startCluster(List<Integer> nodeIds) {

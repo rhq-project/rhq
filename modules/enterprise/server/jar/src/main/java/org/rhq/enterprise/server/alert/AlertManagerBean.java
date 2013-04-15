@@ -955,10 +955,23 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
         case TRAIT: {
             String metricName = condition.getName();
-            if (isShort) {
-                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
+            String expression = condition.getOption();
+
+            if (expression != null && !expression.isEmpty()) {
+                if (isShort) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR_SHORT,
+                        metricName, expression));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR,
+                        metricName, expression));
+                }
             } else {
-                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, metricName));
+                if (isShort) {
+                    str.append(AlertI18NFactory
+                        .getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, metricName));
+                }
             }
             break;
         }

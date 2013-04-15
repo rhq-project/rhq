@@ -211,6 +211,12 @@ public class DataMigrator {
         }
     }
 
+    public void deleteOldData() throws Exception {
+        if (deleteAllDataAtEndOfMigration) {
+            retryOnFailure(new DeleteAllData(), Task.Migrate);
+        }
+    }
+
     /**
      * Retries the migration {@link #MAX_NUMBER_OF_FAILURES} times before
      * failing the migration operation.

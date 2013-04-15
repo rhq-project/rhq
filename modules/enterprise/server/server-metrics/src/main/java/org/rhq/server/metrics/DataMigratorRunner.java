@@ -120,6 +120,9 @@ public class DataMigratorRunner {
         .withDescription("Delete SQL data at the end of migration (default: false)").create();
     private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only").hasOptionalArg().withType(Boolean.class)
         .withDescription("Only estimate how long the migration will take (default: false)").create();
+    private Option deleteOnlyOption = OptionBuilder.withLongOpt("delete-only").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Only delete data from the old SQL server, no migration will be performed (default: false)")
+        .create();
 
     //Runner
     private Option helpOption = OptionBuilder.withLongOpt("help").create("h");
@@ -207,6 +210,7 @@ public class DataMigratorRunner {
         options.addOption(preserveDataOption);
         options.addOption(deleteDataOption);
         options.addOption(estimateOnlyOption);
+        options.addOption(deleteOnlyOption);
 
         options.addOption(helpOption);
         options.addOption(debugLogOption);
@@ -268,6 +272,7 @@ public class DataMigratorRunner {
         configuration.put(disable1DOption, false);
         configuration.put(preserveDataOption, true);
         configuration.put(estimateOnlyOption, false);
+        configuration.put(deleteOnlyOption, false);
     }
 
     /**
@@ -450,28 +455,55 @@ public class DataMigratorRunner {
 
         DataMigrator migrator = new DataMigrator(entityManager, session);
 
-        if ((Boolean) configuration.get(preserveDataOption)) {
-            migrator.preserveData();
+        if (!(Boolean) configuration.get(deleteOnlyOption)) {
+            if ((Boolean) configuration.get(preserveDataOption)) {
+                migrator.preserveData();
+            } else {
+                migrator.deleteAllDataAtEndOfMigration();
+            }
+
+            migrator.runRawDataMigration(!(Boolean) configuration.get(disableRawOption));
+            migrator.run1HAggregateDataMigration(!(Boolean) configuration.get(disable1HOption));
+            migrator.run6HAggregateDataMigration(!(Boolean) configuration.get(disable6HOption));
+            migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
+
+            System.out.println("Estimation process - starting\n");
+            long estimate = migrator.estimate();
+            System.out.println("The migration process will take approximately: "
+                + TimeUnit.MILLISECONDS.toMinutes(estimate) + " minutes (or " + estimate + " milliseconds)\n");
+            System.out.println("Estimation process - ended\n\n");
+
+            if (!(Boolean) configuration.get(estimateOnlyOption)) {
+                System.out.println("Migration process - starting\n");
+                long startTime = System.currentTimeMillis();
+                migrator.migrateData();
+                long duration = System.currentTimeMillis() - startTime;
+                System.out.println("The migration process took: " + TimeUnit.MILLISECONDS.toMinutes(duration)
+                    + " minutes (or " + duration + " milliseconds)\n");
+                System.out.println("Migration process - ended\n");
+            }
         } else {
             migrator.deleteAllDataAtEndOfMigration();
-        }
+            migrator.runRawDataMigration(true);
+            migrator.run1HAggregateDataMigration(true);
+            migrator.run6HAggregateDataMigration(true);
+            migrator.run1DAggregateDataMigration(true);
 
-        migrator.runRawDataMigration(!(Boolean) configuration.get(disableRawOption));
-        migrator.run1HAggregateDataMigration(!(Boolean) configuration.get(disable1HOption));
-        migrator.run6HAggregateDataMigration(!(Boolean) configuration.get(disable6HOption));
-        migrator.run1DAggregateDataMigration(!(Boolean) configuration.get(disable1DOption));
+            System.out.println("Estimation process - starting\n");
+            long estimate = migrator.estimate();
+            System.out.println("The deletion of old data will take approximately: "
+                + TimeUnit.MILLISECONDS.toMinutes(estimate) + " minutes (or " + estimate + " milliseconds)\n");
+            System.out.println("Estimation process - ended\n\n");
 
-        System.out.println("Estimation process - starting\n");
-        long estimate = migrator.estimate();
-        System.out.println("The migration process will take approximately: "
-            + TimeUnit.MILLISECONDS.toMinutes(estimate)
-            + " minutes (or " + estimate + " milliseconds)\n");
-        System.out.println("Estimation process - ended\n\n");
-
-        if (!(Boolean) configuration.get(estimateOnlyOption)) {
-            System.out.println("Migration process - starting\n");
-            migrator.migrateData();
-            System.out.println("Migration process - ended\n");
+            if (!(Boolean) configuration.get(estimateOnlyOption)) {
+                System.out.println("Old data deletion process - starting\n");
+                long startTime = System.currentTimeMillis();
+                migrator.deleteOldData();
+                long duration = System.currentTimeMillis() - startTime;
+                System.out.println("The deletion process took: " + TimeUnit.MILLISECONDS.toMinutes(duration)
+                    + " minutes (or " + duration + " milliseconds)\n");
+                System.out.println("Old data deletion process - ended\n");
+            }
         }
     }
 

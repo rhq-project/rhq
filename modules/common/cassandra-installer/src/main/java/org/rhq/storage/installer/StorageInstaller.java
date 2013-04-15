@@ -358,7 +358,7 @@ public class StorageInstaller {
 
         org.apache.commons.exec.CommandLine cmdLine = new org.apache.commons.exec.CommandLine(startScript)
             .addArgument("-p")
-            .addArgument("cassandra.pid");
+            .addArgument(new File(binDir, "cassandra.pid").getAbsolutePath());
 
         Executor executor = new DefaultExecutor();
         org.apache.commons.io.output.ByteArrayOutputStream buffer =
@@ -379,7 +379,8 @@ public class StorageInstaller {
     }
 
     private boolean isRunning() {
-        return new File(defaultDir, "cassandra.pid").exists();
+        File binDir = new File(defaultDir, "bin");
+        return new File(binDir, "cassandra.pid").exists();
     }
 
     private boolean verifyNodeIsUp(int jmxPort, int retries, long timeout) throws Exception {

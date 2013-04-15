@@ -40,10 +40,12 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
 public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSource> {
 
     private final int groupId;
+    private final boolean isAutogroup;
 
     public GroupMeasurementTableView(ResourceGroupComposite groupComposite, int groupId) {
         super();
         this.groupId = groupId;
+        this.isAutogroup = groupComposite.getResourceGroup().getAutoGroupParentResource() != null;
         setDataSource(new GroupMeasurementTableDataSource(groupComposite, groupId));
         //disable fields used when is full screen
         setShowFooterRefresh(true);
@@ -63,7 +65,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
                 ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
                 int defId = record.getAttributeAsInt(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
 
-                CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(groupId, defId);
+                CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(groupId, defId, isAutogroup);
                 window.addItem(graph);
                 graph.populateData();
                 window.show();

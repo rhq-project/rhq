@@ -10,6 +10,7 @@ import org.apache.commons.cli.Options;
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraNode;
+import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
@@ -55,7 +56,10 @@ public class Deploy extends CCMCommand {
 
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
             List<CassandraNode> nodes = ccm.createCluster();
-            ccm.startCluster();
+            ccm.startCluster(false);
+
+            ClusterInitService clusterInitService = new ClusterInitService();
+            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20);
 
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
             try {

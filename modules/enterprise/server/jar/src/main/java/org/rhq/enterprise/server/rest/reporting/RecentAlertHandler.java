@@ -322,6 +322,11 @@ public class RecentAlertHandler extends AbstractRestBean implements RecentAlertL
                         builder.append("Trait Change [")
                             .append(condition.getName())
                             .append("]");
+                        if (condition.getOption() != null && condition.getOption().length() > 0) {
+                            builder.append(" with trait value matching '")
+                                .append(condition.getOption())
+                                .append("'");
+                        }                        
                         break;
                     case CONTROL:
                         builder.append("Operation Execution [")

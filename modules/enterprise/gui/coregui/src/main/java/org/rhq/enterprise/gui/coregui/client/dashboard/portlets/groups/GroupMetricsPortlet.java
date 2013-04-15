@@ -406,7 +406,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                             public void onClick(ClickEvent event) {
                                                                 ChartViewWindow window = new ChartViewWindow(title);
                                                                 CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(
-                                                                    groupId, md.getId());
+                                                                    groupId, md.getId(), isAutoGroup);
                                                                 window.addItem(graph);
                                                                 graph.populateData();
                                                                 window.show();

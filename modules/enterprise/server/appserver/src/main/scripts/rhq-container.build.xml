@@ -269,8 +269,16 @@
 </module>
 ]]></echo>
 
-
-
+      <echo>Adding Apache Commons Exec module to ${jboss.home}/modules</echo>
+      <copy file="${settings.localRepository}/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar"
+            toDir="${jboss.modules.dir}/org/apache/commons/exec/main" verbose="true"/>
+      <echo file="${jboss.modules.dir}/org/apache/commons/exec/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.apache.commons.exec">
+    <resources>
+        <resource-root path="commons-exec-1.1.jar"/>
+    </resources>
+</module>
+]]></echo>
 
         <echo>Generate SSL key for RHQ server - 128-bit key that expires in 20 years</echo>
         <property name="jboss.conf.dir" location="${jboss.home}/standalone/configuration" />

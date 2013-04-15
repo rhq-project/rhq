@@ -135,59 +135,6 @@ public class Install extends ControlCommand {
         } catch (Exception e) {
             throw new RHQControlException("Failed to install services", e);
         }
-
-//        boolean installStorage;
-//        boolean installServer;
-//        boolean installAgent;
-//
-//        if (commandLine.getOptions().length == 0) {
-//            installStorage = true;
-//            installServer = true;
-//            installAgent = true;
-//        } else {
-//            installStorage = commandLine.hasOption("storage");
-//            installServer = commandLine.hasOption("server");
-//            installAgent = commandLine.hasOption("agent") || installStorage;
-//        }
-//
-//        try {
-//            if (installStorage) {
-//                // We always install an agent with the storage node even if the user does
-//                // not ask for it.
-//                installAgent = true;
-//                if (isStorageInstalled()) {
-//                    log.warn("The RHQ storage node is already installed in " + new File(basedir, "storage"));
-//                    log.warn("Skipping storage node installation.");
-//                } else {
-//                    installStorageNode();
-//                }
-//            }
-//
-//            if (installServer) {
-//                if (isServerInstalled()) {
-//                    log.warn("The RHQ server is already installed.");
-//                    log.warn("Skipping server installation.");
-//                } else {
-//                    startRHQServerForInstallation();
-//                    installRHQServer();
-//                    waitForRHQServerToInitialize();
-//                }
-//            }
-//
-//            if (installAgent) {
-//                if (isAgentInstalled()) {
-//                    log.warn("The RHQ agent is already installed in " + new File(basedir, "rhq-agent"));
-//                    log.warn("Skipping agent installation");
-//                } else {
-//                    clearAgentPreferences();
-//                    installAgent();
-//                    configureAgent();
-//                    startAgent();
-//                }
-//            }
-//        } catch (Exception e) {
-//            throw new RHQControlException("Installation failed", e);
-//        }
     }
 
     private int installStorageNode() throws Exception {

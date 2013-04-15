@@ -24,6 +24,7 @@ build_snappy_java()
     git checkout -b 1.0.5-M3 origin/1.0.5-M3
     run_mvn compile
     make
+    run_mvn install -DskipTests
 }
 
 build_datastax_driver()

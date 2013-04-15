@@ -30,6 +30,9 @@ import java.io.FileReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
@@ -127,12 +130,12 @@ public class Status extends ControlCommand {
     private void checkServerStatus() throws Exception {
         log.debug("Checking RHQ server status");
 
-        new ProcessBuilder("./rhq-server.sh", "status")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
+            .addArgument("status");
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(binDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        executor.execute(commandLine);
     }
 
     private void checkAgentStatus() throws Exception {
@@ -141,11 +144,11 @@ public class Status extends ControlCommand {
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
 
-        new ProcessBuilder("./rhq-agent-wrapper.sh", "status")
-            .directory(agentBinDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-agent-wrapper.sh").addArgument("status");
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(agentBinDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        executor.execute(commandLine);
     }
 }

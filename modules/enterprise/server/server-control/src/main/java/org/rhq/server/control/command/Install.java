@@ -40,6 +40,10 @@ import java.util.prefs.Preferences;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.exec.DefaultExecuteResultHandler;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.core.util.stream.StreamUtil;
@@ -140,40 +144,51 @@ public class Install extends ControlCommand {
     private int installStorageNode() throws Exception {
         log.debug("Installing RHQ storage node");
 
-        return new ProcessBuilder("./rhq-storage-installer.sh", "--commitlog", "../storage/commit_log", "--data",
-            "../storage/data", "--saved-caches", "../storage/saved_caches")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-storage-installer.sh")
+            .addArgument("--commitlog")
+            .addArgument("./storage/commit_log")
+            .addArgument("--data")
+            .addArgument("./storage/data")
+            .addArgument("--saved-caches")
+            .addArgument("./storage/saved_caches");
+
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(binDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+
+        return executor.execute(commandLine);
     }
 
     private void startRHQServerForInstallation() throws Exception {
-        new ProcessBuilder("./rhq-server.sh", "start")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
+            .addArgument("start");
 
-        ProcessBuilder pb = new ProcessBuilder("./rhq-installer.sh", "--test")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT);
-        Process process = pb.start();
-        while (process.waitFor() != 0) {
-            process = pb.start();
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(binDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+
+        executor.execute(commandLine, new DefaultExecuteResultHandler());
+
+        commandLine = new org.apache.commons.exec.CommandLine("./rhq-installer.sh").addArgument("--test");
+        executor = new DefaultExecutor();
+        executor.setWorkingDirectory(binDir);
+
+        int exitCode = executor.execute(commandLine);
+        while (exitCode != 0) {
+            exitCode = executor.execute(commandLine);
         }
     }
 
     private void installRHQServer() throws Exception {
         log.debug("Installing RHQ server");
 
-        new ProcessBuilder("./rhq-installer.sh")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-installer.sh");
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(binDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+
+        executor.execute(commandLine, new DefaultExecuteResultHandler());
     }
 
     private void waitForRHQServerToInitialize() throws Exception {
@@ -199,12 +214,17 @@ public class Install extends ControlCommand {
         log.debug("Installing RHQ agent");
 
         File agentInstallerJar = getAgentInstaller();
-        new ProcessBuilder("java", "-jar", agentInstallerJar.getPath(), "--install")
-            .directory(basedir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
+            .addArgument("-jar")
+            .addArgument(agentInstallerJar.getAbsolutePath())
+            .addArgument("--install");
+
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(basedir);
+        executor.setStreamHandler(new PumpStreamHandler());
+
+        executor.execute(commandLine);
 
         new File(basedir, "rhq-agent-update.log").delete();
     }
@@ -248,11 +268,13 @@ public class Install extends ControlCommand {
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
 
-        new ProcessBuilder("./rhq-agent-wrapper.sh", "start")
-            .directory(agentBinDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-agent-wrapper.sh").addArgument("start");
+
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(agentBinDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        executor.execute(commandLine);
     }
 
 }

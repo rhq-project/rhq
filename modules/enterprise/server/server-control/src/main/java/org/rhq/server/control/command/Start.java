@@ -30,6 +30,9 @@ import java.io.FileReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
@@ -122,22 +125,25 @@ public class Start extends ControlCommand {
             String pid = StreamUtil.slurp(new FileReader(pidFile));
             System.out.println("RHQ storage node (pid " + pid + ") is running");
         } else {
-            new ProcessBuilder("./cassandra", "-p", "cassandra.pid")
-                .directory(storageBinDir)
-                .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .start();
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./cassandra")
+                .addArgument("-p").addArgument(pidFile.getAbsolutePath());
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(storageBinDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+
+            executor.execute(commandLine);
         }
     }
 
     private void startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
 
-        new ProcessBuilder("./rhq-server.sh", "start")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
+            .addArgument("start");
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(binDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        executor.execute(commandLine);
     }
 
     private void startAgent() throws Exception {
@@ -146,12 +152,12 @@ public class Start extends ControlCommand {
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
 
-        new ProcessBuilder("./rhq-agent-wrapper.sh", "start")
-            .directory(agentBinDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-agent-wrapper.sh").addArgument("start");
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(agentBinDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        executor.execute(commandLine);
     }
 
 }

@@ -80,9 +80,7 @@ commands named "config", "setconfig" and "setup" and the command line options
                startup setup mechanism to finish its configuration - in this
                case, you'll want to leave this as false.
                -->
-               <!--
-               <entry key="rhq.agent.configuration-setup-flag" value="false" />
-               -->
+               <entry key="rhq.agent.configuration-setup-flag" value="true" />
 
                <!--
                _______________________________________________________________

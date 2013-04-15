@@ -25,10 +25,17 @@
 
 package org.rhq.server.control.command;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
@@ -105,23 +112,23 @@ public class Console extends ControlCommand {
         File storageBasedir = new File(basedir, "storage");
         File storageBinDir = new File(storageBasedir, "bin");
 
-        new ProcessBuilder("./cassandra", "-f")
-            .directory(storageBinDir)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./cassandra")
+            .addArgument("-f");
+        Executor exeuctor = new DefaultExecutor();
+        exeuctor.setWorkingDirectory(storageBinDir);
+        exeuctor.setStreamHandler(new PumpStreamHandler());
+        exeuctor.execute(commandLine);
     }
 
     private void startServerInForeground() throws Exception {
         log.debug("Starting RHQ server in foreground");
 
-        new ProcessBuilder("./rhq-server.sh", "console")
-            .directory(binDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
+            .addArgument("console");
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(binDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        executor.execute(commandLine);
     }
 
     private void startAgentInForeground() throws Exception {
@@ -129,12 +136,59 @@ public class Console extends ControlCommand {
 
         File agentHomeDir = new File(basedir, "rhq-agent");
         File agentBinDir = new File(agentHomeDir, "bin");
+        File confDir = new File(agentHomeDir, "conf");
+        File agentConfigFile = new File(confDir, "agent-configuration.xml");
 
-        new ProcessBuilder("./rhq-agent.sh")
+        Process process = new ProcessBuilder("./rhq-agent.sh", "-c", agentConfigFile.getPath())
             .directory(agentBinDir)
-            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-            .redirectError(ProcessBuilder.Redirect.INHERIT)
-            .start()
-            .waitFor();
+//            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+//            .redirectInput(ProcessBuilder.Redirect.INHERIT)
+//            .redirectError(ProcessBuilder.Redirect.INHERIT)
+            .start();
+//            .waitFor();
+
+        AgentInputStreamPipe pipe = new AgentInputStreamPipe(process.getInputStream());
+        pipe.start();
+        pipe.join();
+//        final InputStream inputStream = process.getInputStream();
+//        final CountDownLatch doneSignal = new CountDownLatch(1);
+//        Thread agentThread = new Thread(new Runnable() {
+//            @Override
+//            public void run() {
+//                InputStreamReader reader = new InputStreamReader(inputStream);
+//                Scanner scanner = new Scanner(reader);
+//                while (scanner.hasNextLine()) {
+//                    System.out.println(scanner.nextLine());
+//                }
+//                doneSignal.countDown();
+//            }
+//        });
+//        agentThread.start();
+//        doneSignal.await();
+//        agentThread.join();
+    }
+
+    private class AgentInputStreamPipe extends Thread {
+
+        private InputStream inputStream;
+
+        public AgentInputStreamPipe(InputStream inputStream) {
+            this.inputStream = inputStream;
+        }
+
+        @Override
+        public void run() {
+            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+            try {
+                boolean running = true;
+                while (running) {
+                    String line = reader.readLine();
+                    System.out.println(line);
+                    running = line == null || !line.equals("quit");
+                }
+            } catch (IOException e) {
+                log.error("An error occurred processing input from the agent prompt", e);
+            }
+        }
     }
 }

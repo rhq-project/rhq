@@ -29,6 +29,9 @@ import java.io.File;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
@@ -117,11 +120,13 @@ public class Stop extends ControlCommand {
         if (pid != null) {
             System.out.println("Stopping RHQ storage node...");
             System.out.println("RHQ storage node (pid=" + pid + ") is stopping...");
-            new ProcessBuilder("kill", pid)
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-                .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .start()
-                .waitFor();
+
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("kill")
+                .addArgument(pid);
+            Executor executor = new DefaultExecutor();
+            executor.setStreamHandler(new PumpStreamHandler());
+            executor.execute(commandLine);
+
             System.out.println("RHQ storage node has stopped");
         }
     }
@@ -131,12 +136,12 @@ public class Stop extends ControlCommand {
 
         String pid = getServerPid();
         if (pid != null) {
-            new ProcessBuilder("./rhq-server.sh", "stop")
-                .directory(binDir)
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-                .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .start()
-                .waitFor();
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+                "./rhq-server.sh").addArgument("stop");
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(binDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+            executor.execute(commandLine);
         }
     }
 
@@ -148,12 +153,12 @@ public class Stop extends ControlCommand {
         String pid = getAgentPid();
 
         if (pid != null) {
-            new ProcessBuilder("./rhq-agent-wrapper.sh", "stop")
-                .directory(agentBinDir)
-                .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-                .redirectError(ProcessBuilder.Redirect.INHERIT)
-                .start()
-                .waitFor();
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+                "./rhq-agent-wrapper.sh").addArgument("stop");
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(agentBinDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+            executor.execute(commandLine);
         }
     }
 }

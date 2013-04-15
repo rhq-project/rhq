@@ -38,10 +38,9 @@
                          description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
       <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
                          description="The type used to establish the EMS connection to the Cassandra node."/>
-      <c:simple-property name="thriftPort" displayName="Thrift Port" default="9160" required="true" readOnly="false" type="string" description="Thrift interface port"/>
       <c:simple-property name="installURI" required="false" type="string" description="The installation path for the selected server type which will be used to find client libraries (if appropriate)"/>
-      <c:simple-property name="principal" required="false" description="The login principal/username"/>
-      <c:simple-property name="credentials" required="false" type="password" description="The login credentials/password"/>
+      <c:simple-property name="username" default="cassandra" required="true" description="The login username"/>
+      <c:simple-property name="password" default="cassandra" required="true" type="password" description="The login password"/>
       <c:simple-property name="additionalClassPathEntries" required="false" type="string" description="Comma-separated list of directories and filenames that contain resources and classes needed to communicate with the JMX Server and its MBeans. If you specify 'some/directory/*.jar', all jars found in the given directory will be added."/>
       <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
@@ -109,7 +108,11 @@
         <c:simple-property name="HintedHandoffEnabled" type="boolean" required="true" description="Hinted Handoff Enabled"/>
         <c:simple-property name="MaxHintsInProgress" type="integer" required="true" description="Max Hints in Progress"/>
         <c:simple-property name="MaxHintWindow" type="integer" required="true" description="Max Hint Window"/>
+        <c:simple-property name="RangeRpcTimeout" type="long" required="true" displayName="Range RPC Timeout" description="Range RPC Timeout"/>
+        <c:simple-property name="ReadRpcTimeout" type="long" required="true" displayName="Read RPC Timeout" description="Read RPC Timeout"/>
         <c:simple-property name="RPCTimeout" type="long" required="true" displayName="RPC Timeout" description="RPC Timeout"/>
+        <c:simple-property name="WriteRpcTimeout" type="long" required="true" displayName="Write RPC Timeout" description="Write RPC Timeout"/>
+        <c:simple-property name="TruncateRpcTimeout" type="long" required="true" displayName="Truncate RPC Timeout" description="Truncate RPC Timeout"/>
       </resource-configuration>
     </service>
 
@@ -124,8 +127,16 @@
         <c:simple-property name="nameTemplate" type="string" readOnly="true" default="Storage Service"/>
       </plugin-configuration>
 
+      <operation name="startGossiping" description="Start gossip service"/>
+      <operation name="stopGossiping" description="Stop gossip service"/>
+      <operation name="startNativeTransport" description="Start native transport"/>
+      <operation name="stopNativeTransport" description="Stop native transport"/>
       <operation name="startRPCServer" description="Start the Thrift server"/>
       <operation name="stopRPCServer" description="Stop the Thrift server"/>
+      <operation name="decommision" description="Decomission node. WARNING! This will decomission current node!
+                                    This will stop streams to other nodes and will initiate the process to remove the node from cluster!"/>
+
+
       <operation name="takeSnapshot"
                  description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
                   link of each SSTable file for each keyspace. Note that a column family can have multiple
@@ -160,8 +171,10 @@
       <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
       <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
       <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>
+      <metric property="LocalHostId" dataType="trait" displayType="summary" description="Local Host Id"/>
       <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="Amount of load in disk usage on the node being queried"/>
       <metric property="OperationMode" dataType="trait" displayType="summary" description="Current operation mode"/>
+      <metric property="NativeTransportRunning" dataType="trait" displayType="summary" description="Native Transport Running"/>
       <metric property="ReleaseVersion" dataType="trait" displayType="summary" description="Cassandra version"/>
       <metric property="RPCServerRunning" dataType="trait" displayType="summary" displayName="RPC Service Running" description="RPC Service Running"/>
       <metric property="SchemaVersion" dataType="trait" displayType="summary"
@@ -169,7 +182,7 @@
                in the system.schema_* column families. This value is used in an algorithm to compare schema versions
                between nodes and apply updates as necessary. This value should be the same for all fully initialized
                nodes in the cluster."/>
-      <metric property="Token" dataType="trait" displayType="summary" description="A string representation of this node's token" defaultOn="true"/>
+      <metric property="Tokens" dataType="trait" displayType="summary" description="A string representation of this node's token" defaultOn="true"/>
 
       <resource-configuration>
         <c:group name="DataStorage">
@@ -322,6 +335,10 @@
       </operation>
 
       <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed compactions since server [re]start"/>
+      <metric property="CoreCompactorThreads" measurementType="dynamic" displayType="summary" description="Number of core compactor threads."/>
+      <metric property="CoreValidationThreads" measurementType="dynamic" displayType="summary" description="Number of core validator threads."/>
+      <metric property="MaximumCompactorThreads" measurementType="dynamic" displayType="summary" description="Maximum number of core compactor threads."/>
+      <metric property="MaximumValidatorThreads" measurementType="dynamic" displayType="summary" description="Maximum number of core validator threads."/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
       <metric property="TotalBytesCompacted" measurementType="trendsup" displayType="detail" description="Total number of bytes compacted since server [re]start"/>
       <metric property="TotalCompactionsCompleted" measurementType="trendsup" displayType="detail" description="Total number of compactions since server [re]start"/>
@@ -342,6 +359,9 @@
       <operation name="saveCaches" description="Save row and key caches."/>
       <operation name="invalidateKeyCache" description="Invalidate the key cache."/>
       <operation name="invalidateRowCache" description="Invalidate the row cache."/>
+
+      <metric property="KeyCacheEntries" measurementType="dynamic" displayType="summary" description="Number of key cache entries"/>
+      <metric property="RowCacheEntries" measurementType="dynamic" displayType="summary" description="Number of row cache entries"/>
 
       <metric property="KeyCacheHits" measurementType="dynamic" displayType="summary" description="Number of key cache hits"/>
       <metric property="RowCacheHits" measurementType="dynamic" displayType="summary" description="Number of row cache hits"/>
@@ -381,8 +401,11 @@
       </plugin-configuration>
 
       <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
       <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="CorePoolSize" measurementType="dynamic" displayType="summary" description="Core Pool Size"/>
+      <metric property="CoreThreads" measurementType="dynamic" displayType="summary" description="Core Threads"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="MaximumThreads" measurementType="dynamic" displayType="summary" description="Maximum Number of Threads"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
       <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
 
@@ -404,8 +427,10 @@
       </plugin-configuration>
 
       <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
       <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="CoreThreads" measurementType="dynamic" displayType="summary" description="Core Threads"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="MaximumThreads" measurementType="dynamic" displayType="summary" description="Maximum Number of Threads"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
       <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
     </service>
@@ -423,8 +448,10 @@
       </plugin-configuration>
 
       <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="CoreThreads" measurementType="dynamic" displayType="summary" description="Core Threads"/>
       <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="MaximumThreads" measurementType="dynamic" displayType="summary" description="Maximum Number of Threads"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
       <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
 
@@ -446,8 +473,10 @@
       </plugin-configuration>
 
       <metric property="ActiveCount" measurementType="dynamic" displayType="summary" description="Active Count"/>
-      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
       <metric property="CompletedTasks" measurementType="dynamic" displayType="summary" description="Completed Tasks"/>
+      <metric property="CoreThreads" measurementType="dynamic" displayType="summary" description="Core Threads"/>
+      <metric property="CurrentlyBlockedTasks" measurementType="dynamic" displayType="summary" description="Currently Blocked Tasks"/>
+      <metric property="MaximumThreads" measurementType="dynamic" displayType="summary" description="Maximum Number of Threads"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Pending Tasks"/>
       <metric property="TotalBlockedTasks" measurementType="dynamic" displayType="summary" description="Total Blocked Tasks"/>
     </service>
@@ -465,7 +494,7 @@
       </plugin-configuration>
 
       <resource-configuration>
-          <c:simple-property name="PhiConvictThreshold" type="integer" required="true" description="Phi-convict threshold sets the sensitivity of the failure detector. Lower values increase the likelihood that an unresponsive node will be marked as down, while higher values decrease the likelihood."/>
+          <c:simple-property name="PhiConvictThreshold" type="double" required="true" description="Phi-convict threshold sets the sensitivity of the failure detector. Lower values increase the likelihood that an unresponsive node will be marked as down, while higher values decrease the likelihood."/>
           <c:simple-property name="AllEndpointStates" type="integer" required="false" readOnly="true" description="States of all the end-points."/>
           <c:list-property name="SimpleStates" readOnly="true">
             <c:map-property name="SimpleState" readOnly="true">
@@ -488,14 +517,6 @@
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Gossiper" />
       </plugin-configuration>
 
-      <operation name="getVersion" description="Get version">
-          <parameters>
-            <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
-          </parameters>
-          <results>
-            <c:simple-property name="operationResult" description="Version"/>
-          </results>
-      </operation>
       <operation name="getCurrentGenerationNumber" description="Get current generation number">
           <parameters>
             <c:simple-property name="p1" displayName="Address" required="true" type="string" description="Address"/>
@@ -641,7 +662,6 @@
 
       <resource-configuration>
         <c:simple-property name="name" type="string" description="The keyspace name" readOnly="true"/>
-        <c:simple-property name="replicationFactor" type="integer" readOnly="true"/>
         <c:simple-property name="strategyClass" type="string" readOnly="true"/>
         <c:simple-property name="durableWrites" type="boolean" readOnly="true"/>
         <c:list-property name="strategyOptions" readOnly="true">
@@ -660,7 +680,7 @@
                class="org.rhq.plugins.cassandra.ColumnFamilyComponent">
 
         <plugin-configuration>
-          <c:simple-property name="objectName" readOnly="true" type="string"/>
+          <c:simple-property name="objectName" readOnly="true" default="org.apache.cassandra.db:type=ColumnFamilies,*"/>
           <c:simple-property name="name" type="string" description="The column family name"/>
         </plugin-configuration>
 
@@ -713,7 +733,11 @@
           </results>
         </operation>
 
+        <metric property="BloomFilterDiskSpaceUsed" measurementType="dynamic" displayType="summary" description="Bloom Filter Disk Space Used"/>
+        <metric property="BloomFilterFalsePositives" measurementType="dynamic" displayType="summary" description="Bloom Filter False Positives"/>
+        <metric property="BloomFilterFalseRatio" measurementType="dynamic" displayType="summary" description="Bloom Filter False Ratio"/>
         <metric property="CompressionRatio" measurementType="dynamic" displayType="summary" description="Compression Ratio"/>
+        <metric property="DroppableTombstoneRatio" measurementType="dynamic" displayType="summary" description="Compression Ratio"/>
         <metric property="LiveDiskSpaceUsed" displayName="Live Disk Space Used" measurementType="dynamic" displayType="summary" description="Disk space used by SSTables belonging to this CF"/>
         <metric property="LiveSSTableCount" displayName="Live SS Table Count" measurementType="dynamic" displayType="summary" description="Number of SSTables on disk for this CF"/>
         <metric property="MaxRowSize" measurementType="dynamic" displayType="summary" description="Size of the largest compacted row"/>
@@ -724,6 +748,8 @@
         <metric property="MinRowSize" measurementType="dynamic" displayType="summary" description="Size of the smallest compacted row"/>
         <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Estimated number of tasks pending for this column family"/>
         <metric property="ReadCount" displayName="Read Count"  measurementType="trendsup" displayType="summary" description="Number of read operations since execution start"/>
+        <metric property="RecentBloomFilterFalsePositives" measurementType="dynamic" displayType="summary" description="Recent Bloom Filter False Positives"/>
+        <metric property="RecentBloomFilterFalseRatio" measurementType="dynamic" displayType="summary" description="Recent Bloom Filter False Ratio"/>
         <metric property="RecentReadLatencyMicros" displayName="Recent Read Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of read operations since this metric was last sampled"/>
         <metric property="RecentWriteLatencyMicros" displayName="Recent Write Latency (in micro seconds)" measurementType="trendsup" displayType="detail" description="Latency of write operations since this metric was last sampled"/>
         <metric property="TotalDiskSpaceUsed" measurementType="dynamic" displayType="detail" description="Total disk space used by SSTables belonging to this CF, including obsolete ones waiting to be GC'd"/>

@@ -364,7 +364,7 @@
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.2.0-beta2/cassandra-thrift-1.2.0-beta2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hectorclient/hector-core/1.1-1/hector-core-1.1-1.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.0-beta2/cassandra-all-1.2.0-beta2.jar"/>
-	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/0.1.0-SNAPSHOT/cassandra-driver-core-0.1.0-SNAPSHOT.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.0-beta2-rhq-1.2.2-2/cassandra-driver-core-1.0.0-beta2-rhq-1.2.2-2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/google/guava/guava/12.0/guava-12.0.jar"/>

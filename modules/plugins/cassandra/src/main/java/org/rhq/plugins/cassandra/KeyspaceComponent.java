@@ -25,11 +25,16 @@
 
 package org.rhq.plugins.cassandra;
 
-import java.io.File;
-import java.util.Map;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
 
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
+import java.io.File;
+import java.util.HashMap;
+
+import com.datastax.driver.core.Query;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -85,25 +90,34 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        KeyspaceDefinition keyspaceDef = getKeyspaceDefinition();
+        Session session = getCassandraSession();
+        Query q = QueryBuilder.select().from("system", "schema_keyspaces")
+            .where(eq("keyspace_name", context.getResourceKey()));
+        ResultSet resultSet = session.execute(q);
+
+        if (resultSet.isExhausted()) {
+            return null;
+        }
+
+        Row result = resultSet.one();
 
         Configuration config = new Configuration();
-        config.put(new PropertySimple("name", keyspaceDef.getName()));
-        config.put(new PropertySimple("replicationFactor", keyspaceDef.getReplicationFactor()));
-        config.put(new PropertySimple("strategyClass", keyspaceDef.getStrategyClass()));
-        config.put(new PropertySimple("durableWrites", keyspaceDef.isDurableWrites()));
+        config.put(new PropertySimple("name", result.getString("keyspace_name")));
+        config.put(new PropertySimple("strategyClass", result.getString("strategy_class")));
+        config.put(new PropertySimple("durableWrites", result.getBool("durable_writes")));
 
+        //TODO: Enable back if needed but it needs JSON parsing added to the plugin
         PropertyList list = new PropertyList("strategyOptions");
-        Map<String, String> strategyOptions = keyspaceDef.getStrategyOptions();
-        for (String optionName : strategyOptions.keySet()) {
+        //Map<String, String> strategyOptions = result.getMap("strategy_options", String.class, String.class);
+        for (String optionName : (new HashMap<String, String>()).keySet()) {
             PropertyMap map = new PropertyMap("strategyOptionsMap");
             map.put(new PropertySimple("strategyOptionName", optionName));
-            map.put(new PropertySimple("strategyOptionValue", strategyOptions.get(optionName)));
+            //map.put(new PropertySimple("strategyOptionValue", strategyOptions.get(optionName)));
+            map.put(new PropertySimple("strategyOptionValue", ""));
             list.add(map);
         }
         config.put(list);
         config.put(this.getKeySpaceDataFileLocations());
-
         return config;
     }
 
@@ -130,13 +144,14 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
 
     public OperationResult repairKeyspace(String... columnFamilies) {
         EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
-        EmsOperation operation = emsBean.getOperation(REPAIR_OPERATION, String.class, boolean.class, String[].class);
+        EmsOperation operation = emsBean.getOperation(REPAIR_OPERATION, String.class, boolean.class, boolean.class,
+            String[].class);
 
         String keyspace = context.getResourceKey();
         if (columnFamilies == null) {
             columnFamilies = new String[] {};
         }
-        operation.invoke(keyspace, true, columnFamilies);
+        operation.invoke(keyspace, true, true, columnFamilies);
 
         return new OperationResult();
     }
@@ -152,10 +167,6 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         operation.invoke(keyspace, new String[] {});
 
         return new OperationResult();
-    }
-
-    public KeyspaceDefinition getKeyspaceDefinition() {
-        return this.getThriftConnection().describeKeyspace(context.getResourceKey());
     }
 
     public OperationResult takeSnapshot(Configuration parameters, String... columnFamilies) {
@@ -251,12 +262,19 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
     }
 
     /**
+     * @return keyspace name
+     */
+    public String getKeyspaceName() {
+        return this.context.getResourceKey();
+    }
+
+    /**
      * Retrieves a cluster connection from the parent resource.
      *
      * @return the cluster connection.
      */
-    public Cluster getThriftConnection() {
+    public Session getCassandraSession() {
         CassandraNodeComponent parent = (CassandraNodeComponent) context.getParentResourceComponent();
-        return parent.getThriftConnection();
+        return parent.getCassandraSession();
     }
 }

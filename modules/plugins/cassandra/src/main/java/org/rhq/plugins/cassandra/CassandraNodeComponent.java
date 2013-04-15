@@ -30,8 +30,12 @@ import static org.rhq.core.system.OperatingSystemType.WINDOWS;
 import java.io.File;
 import java.util.Set;
 
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.factory.HFactory;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Query;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleAuthInfoProvider;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,6 +70,21 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     OperationFacet {
 
     private Log log = LogFactory.getLog(CassandraNodeComponent.class);
+
+    private Session cassandraSession;
+
+    @SuppressWarnings("rawtypes")
+    @Override
+    public void start(ResourceContext context) throws Exception {
+        super.start(context);
+        Cluster cluster = Cluster.builder().addContactPoints(new String[] { "localhost" }).withoutMetrics()
+            .withAuthInfoProvider(
+                new SimpleAuthInfoProvider().add("username",
+                    this.getResourceContext().getPluginConfiguration().getSimpleValue("username")).add("password",
+                    this.getResourceContext().getPluginConfiguration().getSimpleValue("password")))
+            .build();
+        this.cassandraSession = cluster.connect("rhq");
+    };
 
     @Override
     public AvailabilityType getAvailability() {
@@ -183,26 +202,21 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
-    @Override
+    //@Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        MeasurementScheduleRequest scheduleRequest = null;
-        for (MeasurementScheduleRequest r : metrics) {
-            if (r.getName().equals("cluster")) {
-                scheduleRequest = r;
-                break;
+        for (MeasurementScheduleRequest scheduleRequest : metrics) {
+            if (scheduleRequest.getName().equals("cluster")) {
+                Query q = QueryBuilder.select().from("system", "local");
+                ResultSet resultSet = this.getCassandraSession().execute(q);
+                if (!resultSet.isExhausted()) {
+                    report
+                        .addData(new MeasurementDataTrait(scheduleRequest, resultSet.one().getString("cluster_name")));
+                }
             }
         }
-
-        if (scheduleRequest == null) {
-            return;
-        }
-
-        Cluster cluster = this.getThriftConnection();
-        report.addData(new MeasurementDataTrait(scheduleRequest, cluster.describeClusterName()));
     }
 
-    public Cluster getThriftConnection() {
-        String thriftPort = this.getResourceContext().getPluginConfiguration().getSimpleValue("thriftPort");
-        return HFactory.getOrCreateCluster("rhq", "localhost:" + thriftPort);
+    public Session getCassandraSession() {
+        return this.cassandraSession;
     }
 }

@@ -87,7 +87,8 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         String path = processInfo.getExecutable().getCwd();
         pluginConfig.put(new PropertySimple("baseDir", new File(path).getParentFile().getAbsolutePath()));
 
-        pluginConfig.put(new PropertySimple("thriftPort", "9160"));
+        pluginConfig.put(new PropertySimple("username", "cassandra"));
+        pluginConfig.put(new PropertySimple("password", "cassandra"));
 
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);

@@ -58,7 +58,7 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Stefan Negrea
  *
  */
-@Test(groups = { "integration" }, singleThreaded = true, enabled = false)
+@Test(groups = { "integration" }, singleThreaded = true, enabled = true)
 public class DiscoveryAndConfigurationTest {
 
     private static final int TYPE_HIERARCHY_DEPTH = 6;
@@ -106,7 +106,7 @@ public class DiscoveryAndConfigurationTest {
         PluginContainer.getInstance().shutdown();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void pluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
@@ -114,13 +114,13 @@ public class DiscoveryAndConfigurationTest {
         assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
-    @Test(dependsOnMethods = "pluginLoad", enabled = false)
+    @Test(dependsOnMethods = "pluginLoad", enabled = true)
     public void discoverResources() throws Exception {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
         Assert.assertNotNull(report);
         log.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
-        Thread.sleep(1000);
+        Thread.sleep(4000);
 
         report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         Assert.assertNotNull(report);
@@ -187,10 +187,15 @@ public class DiscoveryAndConfigurationTest {
                 ((MeasurementFacet) resourceComponent).getValues(report, metricList);
 
                 if (def.getDataType().equals(DataType.TRAIT)) {
+                    Assert.assertTrue(report.getTraitData().iterator().hasNext(),
+                        "Unable to collect trait [" + def.getName()
+                        + "] on " + resource);
                     MeasurementData data = report.getTraitData().iterator().next();
                     Assert.assertNotNull(data, "Unable to collect trait [" + def.getName() + "] on " + resource);
                     log.info("Measurement: " + def.getName() + "=" + data.getValue());
                 } else if (def.getDataType().equals(DataType.MEASUREMENT)) {
+                    Assert.assertTrue(report.getNumericData().iterator().hasNext(),
+                        "Unable to collect measurement [" + def.getName() + "] on " + resource);
                     MeasurementData data = report.getNumericData().iterator().next();
                     Assert.assertNotNull(data, "Unable to collect measurement [" + def.getName() + "] on " + resource);
                     log.info("Measurement: " + def.getName() + "=" + data.getValue());

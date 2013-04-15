@@ -28,43 +28,39 @@ package org.rhq.plugins.cassandra;
 import java.util.HashSet;
 import java.util.Set;
 
-import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
-import me.prettyprint.hector.api.ddl.KeyspaceDefinition;
-
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.plugins.jmx.JMXComponent;
+import org.rhq.plugins.jmx.MBeanResourceDiscoveryComponent;
 
 /**
  * @author John Sanda
  */
-public class ColumnFamilyDiscoveryComponent implements ResourceDiscoveryComponent<ResourceComponent<?>> {
+public class ColumnFamilyDiscoveryComponent extends MBeanResourceDiscoveryComponent<JMXComponent<?>> {
+
+    private static final String COLUMN_FAMILY_MARKER = "columnfamily=";
 
     @Override
-    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<ResourceComponent<?>> context)
-        throws Exception {
-        Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
-
+    public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext<JMXComponent<?>> context) {
+        Set<DiscoveredResourceDetails> discoveredResources = super.discoverResources(context, false);
         String keyspace = context.getParentResourceContext().getResourceKey();
+        Set<DiscoveredResourceDetails> selectedResources = new HashSet<DiscoveredResourceDetails>();
+        for (DiscoveredResourceDetails columnFamilyMBean : discoveredResources) {
+            if (columnFamilyMBean.getResourceKey().contains("keyspace=" + keyspace)) {
+                String resourceKey = columnFamilyMBean.getResourceKey();
+                resourceKey = resourceKey.substring(resourceKey.indexOf(COLUMN_FAMILY_MARKER)
+                    + COLUMN_FAMILY_MARKER.length());
+                if (resourceKey.indexOf(',') > -1) {
+                    resourceKey = resourceKey.substring(0, resourceKey.indexOf(','));
+                }
 
-        KeyspaceComponent parent = (KeyspaceComponent) context.getParentResourceComponent();
+                columnFamilyMBean.setResourceKey(resourceKey);
+                columnFamilyMBean.setResourceName(resourceKey);
 
-        KeyspaceDefinition keyspaceDef = parent.getKeyspaceDefinition();
-
-        for (ColumnFamilyDefinition columnFamilyDef : keyspaceDef.getCfDefs()) {
-            String resourceKey = keyspace + "." + columnFamilyDef.getName();
-            Configuration pluginConfig = new Configuration();
-            pluginConfig.put(new PropertySimple("objectName",
-                "org.apache.cassandra.db:type=ColumnFamilies,keyspace=" + keyspaceDef.getName() +
-                    ",columnfamily=" + columnFamilyDef.getName()));
-            pluginConfig.put(new PropertySimple("name", columnFamilyDef.getName()));
-            details.add(new DiscoveredResourceDetails(context.getResourceType(), resourceKey,
-                columnFamilyDef.getName(), null, null, pluginConfig, null));
+                selectedResources.add(columnFamilyMBean);
+            }
         }
 
-        return details;
+        return selectedResources;
     }
 }

@@ -106,6 +106,7 @@ public class ConditionEditor extends EnhancedVLayout {
     private static final String CALLTIME_CHANGE_PERCENTAGE_ITEMNAME = "calltimeChangePercentageValue";
     private static final String CALLTIME_CHANGE_REGEX_ITEMNAME = "calltimeChangeRegex";
     private static final String TRAIT_METRIC_ITEMNAME = "trait";
+    private static final String TRAIT_REGEX_ITEMNAME = "traitRegex";
     private static final String OPERATION_NAME_ITEMNAME = "operation";
     private static final String OPERATION_RESULTS_ITEMNAME = "operationResults";
     private static final String EVENT_SEVERITY_ITEMNAME = "eventSeverity";
@@ -124,7 +125,7 @@ public class ConditionEditor extends EnhancedVLayout {
     private HashSet<AlertCondition> conditions;
 
     // the new conditions that already exist in db and are modified
-    private Map<Integer, AlertCondition> modifiedConditions; 
+    private Map<Integer, AlertCondition> modifiedConditions;
     private final SelectItem conditionExpression; // this is the GWT menu where the user selects ALL or ANY conjunction
     private boolean supportsMetrics = false;
     private boolean supportsCalltimeMetrics = false;
@@ -180,7 +181,7 @@ public class ConditionEditor extends EnhancedVLayout {
         if (operationDefinitions != null && operationDefinitions.size() > 0) {
             this.supportsOperations = true;
         }
-        
+
         // initialize the form
         form = new DynamicForm() {
             @Override
@@ -206,17 +207,28 @@ public class ConditionEditor extends EnhancedVLayout {
             MSG.view_alert_definition_condition_editor_option_label());
         LinkedHashMap<String, String> condTypes = new LinkedHashMap<String, String>(7);
         Map<String, String> allMessages = new HashMap<String, String>(13);
-        allMessages.put(AlertConditionCategory.AVAILABILITY.name(), MSG.view_alert_definition_condition_editor_option_availability());
-        allMessages.put(AlertConditionCategory.AVAIL_DURATION.name(), MSG.view_alert_definition_condition_editor_availabilityDuration());
-        allMessages.put(AlertConditionCategory.THRESHOLD.name(), MSG.view_alert_definition_condition_editor_option_metric_threshold());
-        allMessages.put(AlertConditionCategory.BASELINE.name(), MSG.view_alert_definition_condition_editor_option_metric_baseline());
-        allMessages.put(AlertConditionCategory.CHANGE.name(), MSG.view_alert_definition_condition_editor_option_metric_change());
-        allMessages.put(AlertConditionCategory.RANGE.name(), MSG.view_alert_definition_condition_editor_option_metric_range());
-        allMessages.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD, MSG.view_alert_definition_condition_editor_option_metric_calltime_threshold());
-        allMessages.put(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE, MSG.view_alert_definition_condition_editor_option_metric_calltime_change());
-        allMessages.put(AlertConditionCategory.TRAIT.name(), MSG.view_alert_definition_condition_editor_option_metric_trait_change());
-        allMessages.put(AlertConditionCategory.CONTROL.name(), MSG.view_alert_definition_condition_editor_option_operation());
-        allMessages.put(AlertConditionCategory.RESOURCE_CONFIG.name(), MSG.view_alert_definition_condition_editor_option_resource_configuration());
+        allMessages.put(AlertConditionCategory.AVAILABILITY.name(),
+            MSG.view_alert_definition_condition_editor_option_availability());
+        allMessages.put(AlertConditionCategory.AVAIL_DURATION.name(),
+            MSG.view_alert_definition_condition_editor_availabilityDuration());
+        allMessages.put(AlertConditionCategory.THRESHOLD.name(),
+            MSG.view_alert_definition_condition_editor_option_metric_threshold());
+        allMessages.put(AlertConditionCategory.BASELINE.name(),
+            MSG.view_alert_definition_condition_editor_option_metric_baseline());
+        allMessages.put(AlertConditionCategory.CHANGE.name(),
+            MSG.view_alert_definition_condition_editor_option_metric_change());
+        allMessages.put(AlertConditionCategory.RANGE.name(),
+            MSG.view_alert_definition_condition_editor_option_metric_range());
+        allMessages.put(ALERT_CONDITION_CATEGORY_CALLTIME_THRESHOLD,
+            MSG.view_alert_definition_condition_editor_option_metric_calltime_threshold());
+        allMessages.put(ALERT_CONDITION_CATEGORY_CALLTIME_CHANGE,
+            MSG.view_alert_definition_condition_editor_option_metric_calltime_change());
+        allMessages.put(AlertConditionCategory.TRAIT.name(),
+            MSG.view_alert_definition_condition_editor_option_metric_trait_change());
+        allMessages.put(AlertConditionCategory.CONTROL.name(),
+            MSG.view_alert_definition_condition_editor_option_operation());
+        allMessages.put(AlertConditionCategory.RESOURCE_CONFIG.name(),
+            MSG.view_alert_definition_condition_editor_option_resource_configuration());
         allMessages.put(AlertConditionCategory.EVENT.name(), MSG.view_alert_definition_condition_editor_option_event());
         allMessages.put(AlertConditionCategory.DRIFT.name(), MSG.view_alert_definition_condition_editor_option_drift());
 
@@ -287,7 +299,7 @@ public class ConditionEditor extends EnhancedVLayout {
                 && AlertConditionCategory.DRIFT == existingCondition.getCategory()));
         }
         conditionTypeSelectItem.setValueMap(condTypes);
-        
+
         conditionTypeSelectItem.setWrapTitle(false);
         conditionTypeSelectItem.setRedrawOnChange(true);
         conditionTypeSelectItem.setWidth("*");
@@ -308,10 +320,10 @@ public class ConditionEditor extends EnhancedVLayout {
         formItems.add(0, spacer1);
         formItems.add(0, conditionTypeSelectItem);
         formItems.add(spacer2);
-        
+
         form.setFields(formItems.toArray(new FormItem[formItems.size()]));
     }
-    
+
     private ToolStrip buildToolStrip() {
         IButton ok = new IButton(MSG.common_button_ok());
         ok.addClickHandler(new ClickHandler() {
@@ -330,7 +342,7 @@ public class ConditionEditor extends EnhancedVLayout {
                 closeFunction.run();
             }
         });
-        
+
         ToolStrip footer = new ToolStrip();
         footer.setPadding(5);
         footer.setWidth100();
@@ -408,7 +420,8 @@ public class ConditionEditor extends EnhancedVLayout {
 
             case THRESHOLD: {
                 if (!calltimeCategory) {
-                    MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(THRESHOLD_METRIC_ITEMNAME));
+                    MeasurementDefinition measDef = getMeasurementDefinition(form
+                        .getValueAsString(THRESHOLD_METRIC_ITEMNAME));
                     newCondition.setName(measDef.getDisplayName());
                     newCondition.setThreshold(getMeasurementValue(measDef,
                         form.getValueAsString(THRESHOLD_ABSVALUE_ITEMNAME)));
@@ -416,7 +429,8 @@ public class ConditionEditor extends EnhancedVLayout {
                     newCondition.setOption(null);
                     newCondition.setMeasurementDefinition(measDef);
                 } else {
-                    MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(CALLTIME_THRESHOLD_METRIC_ITEMNAME));
+                    MeasurementDefinition measDef = getMeasurementDefinition(form
+                        .getValueAsString(CALLTIME_THRESHOLD_METRIC_ITEMNAME));
                     newCondition.setName(form.getValueAsString(CALLTIME_THRESHOLD_REGEX_ITEMNAME));
                     newCondition.setThreshold(getMeasurementValue(measDef,
                         form.getValueAsString(CALLTIME_THRESHOLD_ABSVALUE_ITEMNAME)));
@@ -428,7 +442,8 @@ public class ConditionEditor extends EnhancedVLayout {
             }
 
             case BASELINE: {
-                MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(BASELINE_METRIC_ITEMNAME));
+                MeasurementDefinition measDef = getMeasurementDefinition(form
+                    .getValueAsString(BASELINE_METRIC_ITEMNAME));
                 newCondition.setName(measDef.getDisplayName());
                 newCondition.setThreshold(getMeasurementValueByUnits(MeasurementUnits.PERCENTAGE,
                     form.getValueAsString(BASELINE_PERCENTAGE_ITEMNAME)));
@@ -440,14 +455,16 @@ public class ConditionEditor extends EnhancedVLayout {
 
             case CHANGE: {
                 if (!calltimeCategory) {
-                    MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(CHANGE_METRIC_ITEMNAME));
+                    MeasurementDefinition measDef = getMeasurementDefinition(form
+                        .getValueAsString(CHANGE_METRIC_ITEMNAME));
                     newCondition.setName(measDef.getDisplayName());
                     newCondition.setComparator(null);
                     newCondition.setThreshold(null);
                     newCondition.setOption(null);
                     newCondition.setMeasurementDefinition(measDef);
                 } else {
-                    MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(CALLTIME_CHANGE_METRIC_ITEMNAME));
+                    MeasurementDefinition measDef = getMeasurementDefinition(form
+                        .getValueAsString(CALLTIME_CHANGE_METRIC_ITEMNAME));
                     newCondition.setName(form.getValueAsString(CALLTIME_CHANGE_REGEX_ITEMNAME));
                     newCondition.setThreshold(getMeasurementValueByUnits(MeasurementUnits.PERCENTAGE,
                         form.getValueAsString(CALLTIME_CHANGE_PERCENTAGE_ITEMNAME)));
@@ -463,7 +480,7 @@ public class ConditionEditor extends EnhancedVLayout {
                 newCondition.setName(measDef.getDisplayName());
                 newCondition.setComparator(null);
                 newCondition.setThreshold(null);
-                newCondition.setOption(null);
+                newCondition.setOption(form.getValueAsString(TRAIT_REGEX_ITEMNAME));
                 newCondition.setMeasurementDefinition(measDef);
                 break;
             }
@@ -507,7 +524,8 @@ public class ConditionEditor extends EnhancedVLayout {
             case RANGE: {
                 MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(RANGE_METRIC_ITEMNAME));
                 newCondition.setName(measDef.getDisplayName());
-                newCondition.setThreshold(getMeasurementValue(measDef, form.getValueAsString(RANGE_LO_ABSVALUE_ITEMNAME)));
+                newCondition.setThreshold(getMeasurementValue(measDef,
+                    form.getValueAsString(RANGE_LO_ABSVALUE_ITEMNAME)));
                 newCondition.setComparator(form.getValueAsString(RANGE_COMPARATOR_ITEMNAME));
                 newCondition.setOption(getMeasurementValue(measDef, form.getValueAsString(RANGE_HI_ABSVALUE_ITEMNAME))
                     .toString());
@@ -633,7 +651,7 @@ public class ConditionEditor extends EnhancedVLayout {
                 absoluteLowValue.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
                 absoluteHighValue.setDefaultValue(String.valueOf(existingCondition.getOption()));
             }
-            
+
             formItems.add(absoluteLowValue);
             formItems.add(absoluteHighValue);
         } else {
@@ -761,9 +779,9 @@ public class ConditionEditor extends EnhancedVLayout {
             metricDropDownMenu));
 
         TextItem regex = new TextItem(CALLTIME_THRESHOLD_REGEX_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_metric_calltime_common_regex());
+            MSG.view_alert_definition_condition_editor_common_regex());
         regex.setRequired(false);
-        regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
+        regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_regexTooltip());
         regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
@@ -771,7 +789,7 @@ public class ConditionEditor extends EnhancedVLayout {
             absoluteValue.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
             regex.setDefaultValue(existingCondition.getName());
         }
-        
+
         formItems.add(absoluteValue);
         formItems.add(regex);
         return formItems;
@@ -816,12 +834,11 @@ public class ConditionEditor extends EnhancedVLayout {
         percentage.setShowIfCondition(ifFunc);
         percentage.setValidateOnChange(true);
         percentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
-        
 
         TextItem regex = new TextItem(CALLTIME_CHANGE_REGEX_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_metric_calltime_common_regex());
+            MSG.view_alert_definition_condition_editor_common_regex());
         regex.setRequired(false);
-        regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_common_regex_tooltip());
+        regex.setTooltip(MSG.view_alert_definition_condition_editor_metric_calltime_regexTooltip());
         regex.setHoverWidth(200);
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
@@ -829,7 +846,7 @@ public class ConditionEditor extends EnhancedVLayout {
             percentage.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
             regex.setDefaultValue(existingCondition.getName());
         }
-        
+
         formItems.add(percentage);
         formItems.add(regex);
         return formItems;
@@ -860,6 +877,18 @@ public class ConditionEditor extends EnhancedVLayout {
         traitSelection.setRedrawOnChange(true);
         traitSelection.setShowIfCondition(ifFunc);
         formItems.add(traitSelection);
+
+        TextItem eventRegex = new TextItem(TRAIT_REGEX_ITEMNAME,
+            MSG.view_alert_definition_condition_editor_common_regex());
+        eventRegex.setRequired(false);
+        eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_metric_trait_regexTooltip());
+        eventRegex.setHoverWidth(200);
+        eventRegex.setWrapTitle(false);
+        eventRegex.setShowIfCondition(ifFunc);
+        if (editMode) {
+            eventRegex.setDefaultValue(existingCondition.getOption());
+        }
+        formItems.add(eventRegex);
 
         return formItems;
     }
@@ -915,7 +944,8 @@ public class ConditionEditor extends EnhancedVLayout {
         avails.put(AlertConditionOperator.AVAIL_DURATION_NOT_UP.name(),
             MSG.view_alert_definition_condition_editor_operator_availability_durationNotUp());
         selection.setValueMap(avails);
-        selection.setDefaultValue(editMode ? existingCondition.getName() : AlertConditionOperator.AVAIL_DURATION_DOWN.name());
+        selection.setDefaultValue(editMode ? existingCondition.getName() : AlertConditionOperator.AVAIL_DURATION_DOWN
+            .name());
         selection.setShowIfCondition(ifFunc);
         formItems.add(selection);
 
@@ -955,7 +985,7 @@ public class ConditionEditor extends EnhancedVLayout {
         opSelection.setValueMap(ops);
         opSelection.setDefaultValue(editMode ? existingCondition.getName() : ops.keySet().iterator().next());
         // just use the first one if it is not in edit mode
-        
+
         opSelection.setWidth("*");
         opSelection.setRedrawOnChange(true);
         opSelection.setShowIfCondition(ifFunc);
@@ -1001,9 +1031,9 @@ public class ConditionEditor extends EnhancedVLayout {
         formItems.add(eventSeveritySelection);
 
         TextItem eventRegex = new TextItem(EVENT_REGEX_ITEMNAME,
-            MSG.view_alert_definition_condition_editor_event_regex());
+            MSG.view_alert_definition_condition_editor_common_regex());
         eventRegex.setRequired(false);
-        eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regex_tooltip());
+        eventRegex.setTooltip(MSG.view_alert_definition_condition_editor_event_regexTooltip());
         eventRegex.setHoverWidth(200);
         eventRegex.setWrapTitle(false);
         eventRegex.setShowIfCondition(ifFunc);
@@ -1043,7 +1073,6 @@ public class ConditionEditor extends EnhancedVLayout {
         driftDefNameRegex.setHoverWidth(200);
         driftDefNameRegex.setWrapTitle(false);
         driftDefNameRegex.setShowIfCondition(ifFunc);
-        
 
         TextItem driftPathNameRegex = new TextItem(DRIFT_PATHNAME_REGEX_ITEMNAME,
             MSG.view_alert_definition_condition_editor_drift_pathname_regex());
@@ -1056,13 +1085,14 @@ public class ConditionEditor extends EnhancedVLayout {
             driftDefNameRegex.setDefaultValue(existingCondition.getName());
             driftPathNameRegex.setDefaultValue(existingCondition.getOption());
         }
-        
+
         formItems.add(driftDefNameRegex);
         formItems.add(driftPathNameRegex);
         return formItems;
     }
 
-    private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc, boolean editMode) {
+    private SelectItem buildMetricDropDownMenu(String itemName, boolean dynamicOnly, FormItemIfFunction ifFunc,
+        boolean editMode) {
 
         // find out if this is the ALL - if it is, we can't have more than one conditional use the same metric (BZ 737565)
         Set<String> metricIdsToHide = new HashSet<String>();

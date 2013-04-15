@@ -57,7 +57,7 @@ public class EventCacheElement extends AbstractEnumCacheElement<EventSeverity> {
         if (matches && eventDetailsPattern != null) {
             Object firstParam = extraParams[0];
             if (!(firstParam instanceof String)) {
-                log.error(getClass().getSimpleName() + " expected a String, but recieved a "
+                log.error(getClass().getSimpleName() + " expected a String, but received a "
                     + extraParams.getClass().getSimpleName());
             } else {
                 matches = matches && eventDetailsPattern.matcher((String) firstParam).matches();

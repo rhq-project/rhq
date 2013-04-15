@@ -51,6 +51,7 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
             if (TomcatGroupComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
                 name = report.getResourceConfiguration().getSimple("groupname").getStringValue();
                 newRoles = report.getResourceConfiguration().getSimple(TomcatGroupComponent.CONFIG_ROLES);
+                report.getResourceConfiguration().remove(TomcatGroupComponent.CONFIG_ROLES);
                 objectName = String.format("Users:type=Group,groupname=\"%s\",database=UserDatabase", name);
                 operation = "createGroup";
             } else if (TomcatRoleComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {

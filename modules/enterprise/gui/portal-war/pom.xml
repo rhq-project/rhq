@@ -464,25 +464,12 @@
                   <configuration>
                      <keepSources>false</keepSources>
                      <validateXml>false</validateXml>
-                     <generatedClasses>${project.build.outputDirectory}</generatedClasses>
+                     <generatedClasses>${project.build.directory}/jspc-output</generatedClasses>
                   </configuration>
                   <executions>
                      <execution><goals><goal>jspc</goal></goals></execution>
                   </executions>
                </plugin>
-
-               <plugin>
-                  <!--
-                  Skip when Jetty's jspc plugin is activated
-                  When JSPs are precompiled, animal sniffer fails the build because of missing
-                  org/apache/jasper/runtime/* classes.
-                  -->
-                  <groupId>org.codehaus.mojo</groupId>
-                  <artifactId>animal-sniffer-maven-plugin</artifactId>
-                  <configuration>
-                     <skip>true</skip>
-                  </configuration>
-                </plugin>
 
             </plugins>
          </build>

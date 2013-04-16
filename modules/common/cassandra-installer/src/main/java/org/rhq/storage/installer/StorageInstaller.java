@@ -76,13 +76,15 @@ public class StorageInstaller {
 
     public static final int STATUS_SHOW_USAGE = 4;
 
+    private final String STORAGE_BASEDIR = "rhq-storage";
+
     private final Log log = LogFactory.getLog(StorageInstaller.class);
 
     private Options options;
 
-    private File rhqBaseDir;
+    private File serverBasedir;
 
-    private File defaultDir;
+    private File storageBasedir;
 
     private int jmxPort = 7299;
 
@@ -104,9 +106,9 @@ public class StorageInstaller {
 
     public StorageInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");
-        rhqBaseDir = new File(basedir);
-        defaultDir = new File(basedir, "storage");
-        logDir = new File(rhqBaseDir, "logs");
+        serverBasedir = new File(basedir);
+        storageBasedir = new File(basedir, "rhq-storage");
+        logDir = new File(serverBasedir, "logs");
 
         Option hostname = new Option("n", "hostname", true, "The hostname or IP address on which the node will listen for " +
             "requests. If not specified, defaults to the hostname for localhost.");
@@ -153,6 +155,9 @@ public class StorageInstaller {
             "keeps saved cache files. Defaults to " + savedCachesDir + ".");
         savedCachesDirOption.setArgName("DIR");
 
+        Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed " +
+            "The default directory will be " + storageBasedir);
+
         options = new Options()
             .addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
@@ -165,7 +170,8 @@ public class StorageInstaller {
             .addOption(savedCachesDirOption)
             .addOption(nativeTransportPortOption)
             .addOption(storagePortOption)
-            .addOption(sslStoragePortOption);
+            .addOption(sslStoragePortOption)
+            .addOption(basedirOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -176,10 +182,10 @@ public class StorageInstaller {
             DeploymentOptions deploymentOptions = new DeploymentOptions();
 
             File basedir;
-            if (cmdLine.hasOption("d")) {
-                basedir = new File(cmdLine.getOptionValue("d"));
+            if (cmdLine.hasOption("dir")) {
+                basedir = new File(cmdLine.getOptionValue("dir"));
             } else {
-                basedir = defaultDir;
+                basedir = storageBasedir;
             }
             deploymentOptions.setBasedir(basedir.getAbsolutePath());
 
@@ -204,6 +210,7 @@ public class StorageInstaller {
             savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
             File logFile = new File(logDir, "rhq-storage.log");
 
+            deploymentOptions.setBasedir(basedir.getAbsolutePath());
             deploymentOptions.setCommitLogDir(commitLogDir);
             deploymentOptions.setDataDir(dataDir);
             deploymentOptions.setSavedCachesDir(savedCachesDir);
@@ -233,6 +240,7 @@ public class StorageInstaller {
 
             Deployer deployer = new Deployer();
             deployer.setDeploymentOptions(deploymentOptions);
+            storageBasedir.mkdirs();
             deployer.unzipDistro();
             deployer.applyConfigChanges();
             deployer.updateFilePerms();
@@ -379,7 +387,7 @@ public class StorageInstaller {
     }
 
     private boolean isRunning() {
-        File binDir = new File(defaultDir, "bin");
+        File binDir = new File(storageBasedir, "bin");
         return new File(binDir, "cassandra.pid").exists();
     }
 

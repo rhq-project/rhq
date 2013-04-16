@@ -55,13 +55,25 @@ import org.rhq.server.control.RHQControlException;
  */
 public class Install extends ControlCommand {
 
+    private final String STORAGE_BASEDIR_NAME = "rhq-storage";
+
+    private final String AGENT_BASEDIR_NAME = "rhq-agent";
+
+    private final File DEFAULT_STORAGE_BASEDIR = new File(basedir, STORAGE_BASEDIR_NAME);
+
+    private final File DEFAULT_AGENT_BASEDIR = new File(basedir, AGENT_BASEDIR_NAME);
+
     private Options options;
 
     public Install() {
         options = new Options()
-            .addOption(null, "storage", false, "Install RHQ storage node")
+            .addOption(null, "storage", false, "Install RHQ storage node. The default install directory will be " +
+                DEFAULT_STORAGE_BASEDIR + ". Use the --storage-dir option to choose an alternate directory.")
             .addOption(null, "server", false, "Install RHQ server")
-            .addOption(null, "agent", false, "Install RHQ agent");
+            .addOption(null, "agent", false, "Install RHQ agent. The default install directory will be " +
+                DEFAULT_AGENT_BASEDIR + ". Use the --agent-dir option to choose an alternate directory.")
+            .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
+            .addOption(null, "agent-dir", true, "The directory where the agent will be installed.");
     }
 
     @Override
@@ -83,9 +95,10 @@ public class Install extends ControlCommand {
     protected void exec(CommandLine commandLine) {
         try {
             // if no options specified, then stop whatever is installed
-            if (commandLine.getOptions().length == 0) {
+            if (!(commandLine.hasOption("storage") || commandLine.hasOption("server") ||
+                commandLine.hasOption("agent"))) {
                 if (!isStorageInstalled()) {
-                    installStorageNode();
+                    installStorageNode(getStorageBasedir(commandLine));
                 }
                 if (!isServerInstalled()) {
                     startRHQServerForInstallation();
@@ -94,9 +107,10 @@ public class Install extends ControlCommand {
                 }
                 if (!isAgentInstalled()) {
                     clearAgentPreferences();
-                    installAgent();
-                    configureAgent();
-                    startAgent();
+                    File agentBasedir = getAgentBasedir(commandLine);
+                    installAgent(agentBasedir);
+                    configureAgent(agentBasedir);
+                    startAgent(agentBasedir);
                 }
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
@@ -104,14 +118,15 @@ public class Install extends ControlCommand {
                         log.warn("The RHQ storage node is already installed in " + new File(basedir, "storage"));
                         log.warn("Skipping storage node installation.");
                     } else {
-                        installStorageNode();
+                        installStorageNode(getStorageBasedir(commandLine));
                     }
 
                     if (!isAgentInstalled()) {
+                        File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
-                        installAgent();
-                        configureAgent();
-                        startAgent();
+                        installAgent(agentBasedir);
+                        configureAgent(agentBasedir);
+                        startAgent(agentBasedir);
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
@@ -129,10 +144,11 @@ public class Install extends ControlCommand {
                         log.warn("The RHQ agent is already installed in " + new File(basedir, "rhq-agent"));
                         log.warn("Skipping agent installation");
                     } else {
+                        File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
-                        installAgent();
-                        configureAgent();
-                        startAgent();
+                        installAgent(agentBasedir);
+                        configureAgent(agentBasedir);
+                        startAgent(agentBasedir);
                     }
                 }
             }
@@ -141,11 +157,29 @@ public class Install extends ControlCommand {
         }
     }
 
-    private int installStorageNode() throws Exception {
+    private File getStorageBasedir(CommandLine cmdLine) {
+        if (cmdLine.hasOption("storage-dir")) {
+            File installDir = new File(cmdLine.getOptionValue("storage-dir"));
+            return new File(installDir, STORAGE_BASEDIR_NAME);
+        }
+        return DEFAULT_STORAGE_BASEDIR;
+    }
+
+    private File getAgentBasedir(CommandLine cmdLine) {
+        if (cmdLine.hasOption("agent-dir")) {
+            File installDir = new File(cmdLine.getOptionValue("agent-dir"));
+            return new File(installDir, AGENT_BASEDIR_NAME);
+        }
+        return DEFAULT_AGENT_BASEDIR;
+    }
+
+    private int installStorageNode(File storageBasedir) throws Exception {
         log.debug("Installing RHQ storage node");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
             "./rhq-storage-installer.sh")
+            .addArgument("--dir")
+            .addArgument(storageBasedir.getAbsolutePath())
             .addArgument("--commitlog")
             .addArgument("./storage/commit_log")
             .addArgument("--data")
@@ -210,7 +244,7 @@ public class Install extends ControlCommand {
         return false;
     }
 
-    private void installAgent() throws Exception {
+    private void installAgent(File agentBasedir) throws Exception {
         log.debug("Installing RHQ agent");
 
         File agentInstallerJar = getAgentInstaller();
@@ -218,7 +252,7 @@ public class Install extends ControlCommand {
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
             .addArgument("-jar")
             .addArgument(agentInstallerJar.getAbsolutePath())
-            .addArgument("--install");
+            .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath());
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(basedir);
@@ -240,10 +274,9 @@ public class Install extends ControlCommand {
         })[0];
     }
 
-    private void configureAgent() throws Exception {
-        File agentHomeDir = new File(basedir, "rhq-agent");
-        File agentBinDir = new File(agentHomeDir, "bin");
-        File agentConfDir = new File(agentHomeDir, "conf");
+    private void configureAgent(File agentBasedir) throws Exception {
+        File agentBinDir = new File(agentBasedir, "bin");
+        File agentConfDir = new File(agentBasedir, "conf");
         File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
         agentConfigFile.delete();
 
@@ -264,9 +297,8 @@ public class Install extends ControlCommand {
         Preferences.userRoot().sync();
     }
 
-    private void startAgent() throws Exception {
-        File agentHomeDir = new File(basedir, "rhq-agent");
-        File agentBinDir = new File(agentHomeDir, "bin");
+    private void startAgent(File agentBasedir) throws Exception {
+        File agentBinDir = new File(agentBasedir, "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
             "./rhq-agent-wrapper.sh").addArgument("start");

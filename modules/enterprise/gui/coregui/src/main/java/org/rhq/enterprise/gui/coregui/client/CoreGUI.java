@@ -22,6 +22,7 @@ import java.util.List;
 
 import com.google.gwt.core.client.EntryPoint;
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.core.client.RunAsyncCallback;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.EventTarget;
 import com.google.gwt.dom.client.NativeEvent;
@@ -525,7 +526,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
         }
 
         @Override
-        public void renderView(ViewPath viewPath) {
+        public void renderView(final ViewPath viewPath) {
             // If the session is logged out ensure that we only navigate to the log out view, otherwise keep
             // our CoreGUI session alive by refreshing the session timer each time the user performs navigation
             if (UserSessionManager.isLoggedOut()) {
@@ -564,7 +565,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                     // conflicts if the old and new content share (logical) widgets.  A call to destroy (e.g. certain
                     // IFrames/FullHTMLPane) can actually remove multiple children of the contentCanvas. As such, we
                     // need to query for the children after each destroy to ensure only valid children are in the array.
-                    Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
+                    final Canvas contentCanvas = Canvas.getById(CONTENT_CANVAS_ID);
                     Canvas[] children;
                     while ((children = contentCanvas.getChildren()).length > 0) {
                         children[0].destroy();
@@ -572,45 +573,60 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
 
                     // Set the new content and redraw
                     this.currentViewId = topLevelViewId;
-                    this.currentCanvas = createContent(this.currentViewId.getPath());
+                    
+                    // Using GWT Code Splitting feature to decrease the size of generated JS code using lazy
+                    // fetching. Each view built in createContent method has its Java Script code in a separate
+                    // file.
+                    GWT.runAsync(new RunAsyncCallback() {
+                        public void onFailure(Throwable caught) {
+                          Window.alert("Code download failed");
+                        }
 
-                    if (null != this.currentCanvas) {
-                        contentCanvas.addChild(this.currentCanvas);
-                    }
-
-                    contentCanvas.markForRedraw();
+                        public void onSuccess() {
+                            RootCanvas.this.currentCanvas = createContent(RootCanvas.this.currentViewId.getPath());
+                            if (null != RootCanvas.this.currentCanvas) {
+                                contentCanvas.addChild(RootCanvas.this.currentCanvas);
+                            }
+                            contentCanvas.markForRedraw();
+                            render(viewPath);
+                        }
+                      });
+                } else {
+                    render(viewPath);
                 }
+            }
+        }
+        
+        private void render(ViewPath viewPath) {
+            if (this.currentCanvas instanceof InitializableView) {
+                final InitializableView initializableView = (InitializableView) this.currentCanvas;
+                final ViewPath initializableViewPath = viewPath;
+                new Timer() {
+                    final long startTime = System.currentTimeMillis();
 
-                if (this.currentCanvas instanceof InitializableView) {
-                    final InitializableView initializableView = (InitializableView) this.currentCanvas;
-                    final ViewPath initializableViewPath = viewPath;
-                    new Timer() {
-                        final long startTime = System.currentTimeMillis();
-
-                        @Override
-                        public void run() {
-                            if (initializableView.isInitialized()) {
-                                if (RootCanvas.this.currentCanvas instanceof BookmarkableView) {
-                                    ((BookmarkableView) RootCanvas.this.currentCanvas).renderView(initializableViewPath
-                                        .next());
-                                } else {
-                                    RootCanvas.this.currentCanvas.markForRedraw();
-                                }
+                    @Override
+                    public void run() {
+                        if (initializableView.isInitialized()) {
+                            if (RootCanvas.this.currentCanvas instanceof BookmarkableView) {
+                                ((BookmarkableView) RootCanvas.this.currentCanvas).renderView(initializableViewPath
+                                    .next());
                             } else {
-                                long elapsedMillis = System.currentTimeMillis() - startTime;
-                                if (elapsedMillis < 10000) {
-                                    schedule(100); // Reschedule the timer.
-                                }
+                                RootCanvas.this.currentCanvas.markForRedraw();
+                            }
+                        } else {
+                            long elapsedMillis = System.currentTimeMillis() - startTime;
+                            if (elapsedMillis < 10000) {
+                                schedule(100); // Reschedule the timer.
                             }
                         }
-                    }.run(); // fire the timer immediately
-                } else {
-                    if (this.currentCanvas != null) {
-                        if (this.currentCanvas instanceof BookmarkableView) {
-                            ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
-                        } else {
-                            this.currentCanvas.markForRedraw();
-                        }
+                    }
+                }.run(); // fire the timer immediately
+            } else {
+                if (this.currentCanvas != null) {
+                    if (this.currentCanvas instanceof BookmarkableView) {
+                        ((BookmarkableView) this.currentCanvas).renderView(viewPath.next());
+                    } else {
+                        this.currentCanvas.markForRedraw();
                     }
                 }
             }

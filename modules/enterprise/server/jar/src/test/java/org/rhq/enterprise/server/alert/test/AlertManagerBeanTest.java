@@ -251,9 +251,9 @@ public class AlertManagerBeanTest {
 
         condition = createCondition(AlertConditionCategory.TRAIT, md.getDisplayName(), null, null, "RegexPattern", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR, "Blah Trait with Expression");
+        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR, "Blah Trait", "RegexPattern");
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR_SHORT, "Blah Trait with Expression");
+        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR_SHORT, "Blah Trait", "RegexPattern");
     }
 
     public void testPrettyPrintCONTROL() {

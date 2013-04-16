@@ -255,11 +255,12 @@
                 </drivers>]]></replacevalue>
                   </replacefilter>
 
+<!--
                   <replacefilter>
                     <replacetoken>&lt;/cache-container></replacetoken>
                     <replacevalue><![CDATA[
             </cache-container>
-            <!-- FOR RHQ TESTING -->
+            &lt;!&ndash; FOR RHQ TESTING &ndash;&gt;
             <cache-container name="rhq" jndi-name="java:jboss/infinispan/rhq">
                 <local-cache name="rhqCache">
                     <transaction mode="NONE"/>
@@ -268,6 +269,7 @@
                 </local-cache>
             </cache-container>]]></replacevalue>
                   </replacefilter>
+-->
 
                 </replace>
 

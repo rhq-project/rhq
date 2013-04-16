@@ -580,6 +580,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                     GWT.runAsync(new RunAsyncCallback() {
                         public void onFailure(Throwable caught) {
                           Window.alert("Code download failed");
+                          Log.error("Code download failed");
                         }
 
                         public void onSuccess() {

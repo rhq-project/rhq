@@ -106,7 +106,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         ccm.startCluster(false);
 
         ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1000, 20);
+        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 3000, 20);
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         if (!schemaManager.schemaExists()) {

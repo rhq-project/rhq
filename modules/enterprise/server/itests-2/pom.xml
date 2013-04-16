@@ -140,10 +140,10 @@
                   </replacefilter>
 
                   <replacefilter>
-                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.1"/></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:naming:1.2"></replacetoken>
                     <replacevalue><![CDATA[
         <!-- FOR RHQ TESTING -->
-        <subsystem xmlns="urn:jboss:domain:messaging:1.1">
+        <subsystem xmlns="urn:jboss:domain:messaging:1.3">
             <hornetq-server>
                 <persistence-enabled>true</persistence-enabled>
                 <journal-file-size>102400</journal-file-size>
@@ -239,7 +239,7 @@
                 </jms-destinations>
             </hornetq-server>
         </subsystem>
-        <subsystem xmlns="urn:jboss:domain:naming:1.1"/>]]></replacevalue>
+        <subsystem xmlns="urn:jboss:domain:naming:1.2">]]></replacevalue>
                   </replacefilter>
 
                   <replacefilter>
@@ -255,11 +255,11 @@
                 </drivers>]]></replacevalue>
                   </replacefilter>
 
-<!--
+
                   <replacefilter>
-                    <replacetoken>&lt;/cache-container></replacetoken>
+                    <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:infinispan:1.4"></replacetoken>
                     <replacevalue><![CDATA[
-            </cache-container>
+        <subsystem xmlns="urn:jboss:domain:infinispan:1.4">
             &lt;!&ndash; FOR RHQ TESTING &ndash;&gt;
             <cache-container name="rhq" jndi-name="java:jboss/infinispan/rhq">
                 <local-cache name="rhqCache">
@@ -269,7 +269,6 @@
                 </local-cache>
             </cache-container>]]></replacevalue>
                   </replacefilter>
--->
 
                 </replace>
 

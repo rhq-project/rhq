@@ -260,7 +260,7 @@
                     <replacetoken>&lt;subsystem xmlns="urn:jboss:domain:infinispan:1.4"></replacetoken>
                     <replacevalue><![CDATA[
         <subsystem xmlns="urn:jboss:domain:infinispan:1.4">
-            &lt;!&ndash; FOR RHQ TESTING &ndash;&gt;
+            <!-- FOR RHQ TESTING -->
             <cache-container name="rhq" jndi-name="java:jboss/infinispan/rhq">
                 <local-cache name="rhqCache">
                     <transaction mode="NONE"/>

@@ -46,8 +46,7 @@
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
     </plugin-configuration>
 
-    <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.thrift.CassandraDaemon|match=.*"/>
-    <process-scan name="CassandraDaemon1.2" query="process|basename|match=^java.*,arg|org.apache.cassandra.service.CassandraDaemon|match=.*"/>
+    <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.service.CassandraDaemon|match=.*"/>
 
     <operation name="shutdown" description="Shuts down the Cassandra daemon">
       <results>

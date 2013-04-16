@@ -58,8 +58,10 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Stefan Negrea
  *
  */
-@Test(groups = { "integration" }, singleThreaded = true, enabled = true)
+@Test(groups = { "integration" }, singleThreaded = true, enabled = DiscoveryAndConfigurationTest.ENABLED)
 public class DiscoveryAndConfigurationTest {
+
+    public static final boolean ENABLED = false;
 
     private static final int TYPE_HIERARCHY_DEPTH = 6;
     protected static final String PLUGIN_NAME = "Cassandra";
@@ -76,7 +78,7 @@ public class DiscoveryAndConfigurationTest {
         return PLUGIN_NAME;
     }
 
-    @BeforeSuite
+    @BeforeSuite(enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void setupTestResources() {
         try {
             File pluginDir = new File("target/testsetup/plugins");
@@ -101,12 +103,12 @@ public class DiscoveryAndConfigurationTest {
         }
     }
 
-    @AfterSuite
+    @AfterSuite(enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void stopTestResources() {
         PluginContainer.getInstance().shutdown();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void pluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
@@ -114,7 +116,7 @@ public class DiscoveryAndConfigurationTest {
         assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
-    @Test(dependsOnMethods = "pluginLoad", enabled = true)
+    @Test(dependsOnMethods = "pluginLoad", enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void discoverResources() throws Exception {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
         Assert.assertNotNull(report);

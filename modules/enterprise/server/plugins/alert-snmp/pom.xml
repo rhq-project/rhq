@@ -13,12 +13,32 @@
 
     <name>RHQ Enterprise Server SNMP Alert Plugin</name>
 
+    <properties>
+      <alert.snmp.test.port>35162</alert.snmp.test.port>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.snmp4j</groupId>
             <artifactId>snmp4j</artifactId>
             <version>1.8.2</version>
         </dependency>
+
+      <!-- Test dependencies  -->
+
+      <dependency>
+        <groupId>org.rhq</groupId>
+        <artifactId>test-utils</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <scope>test</scope>
+        <version>1.9.5</version>
+      </dependency>
+
     </dependencies>
 
     <build>
@@ -27,10 +47,14 @@
             <plugin>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <configuration>
-                    <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
-                    <!--
-                       <argLine>${jacoco.unit-test.args} -Xdebug -Xnoagent -Djava.compiler=NONE -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y</argLine>
-                    -->
+                  <properties>
+                    <property>
+                      <name>listener</name>
+                      <value>org.rhq.test.testng.StdoutReporter</value>
+                    </property>
+                  </properties>
+                  <useSystemClassLoader>false</useSystemClassLoader>
+                  <argLine>${jacoco.unit-test.args}</argLine>
                 </configuration>
             </plugin>
 

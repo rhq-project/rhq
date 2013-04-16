@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.plugins.alertSnmp;
 
@@ -38,7 +38,23 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 public class SnmpSender extends AlertSender {
 
-    private final Log log = LogFactory.getLog(SnmpSender.class);
+    private static final Log LOG = LogFactory.getLog(SnmpSender.class);
+
+    private ResourceManagerLocal resourceManager;
+
+    private AlertManagerLocal alertManager;
+
+    /**
+     * Default constructor needed for instanciation by server plugin container
+     */
+    public SnmpSender() {
+        this(LookupUtil.getResourceManager(), LookupUtil.getAlertManager());
+    }
+
+    public SnmpSender(ResourceManagerLocal resourceManager, AlertManagerLocal alertManager) {
+        this.resourceManager = resourceManager;
+        this.alertManager = alertManager;
+    }
 
     @Override
     public SenderResult send(Alert alert) {
@@ -47,12 +63,11 @@ public class SnmpSender extends AlertSender {
         if (info.error != null) {
             return SenderResult.getSimpleFailure(info.error);
         }
-        log.debug("Sending SNMP trap to: " + info);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Sending SNMP trap to: " + info);
+        }
 
         try {
-            AlertManagerLocal alertManager = LookupUtil.getAlertManager();
-            ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
-
             SnmpTrapSender snmpTrapSender = new SnmpTrapSender(preferences);
 
             List<Resource> lineage = resourceManager.getResourceLineage(alert.getAlertDefinition().getResource()
@@ -69,6 +84,7 @@ public class SnmpSender extends AlertSender {
                 alertUrl, hierarchy);
             return SenderResult.getSimpleSuccess(result);
         } catch (Throwable t) {
+            LOG.error("Could not send SNMP trap to " + info, t);
             return SenderResult.getSimpleFailure("failed - cause: " + t);
         }
     }

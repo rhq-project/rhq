@@ -5,6 +5,7 @@ logs/
 antlr-generated/
 gwt-tmp/
 ./cassandra/
+/cassandra/
 dev-container/
 dev-agent/
 dev-cli/

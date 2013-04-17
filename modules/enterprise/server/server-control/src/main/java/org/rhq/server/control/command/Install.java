@@ -76,7 +76,9 @@ public class Install extends ControlCommand {
             .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
             .addOption(null, "agent-dir", true, "The directory where the agent will be installed.")
             .addOption(null, "server-config", true, "An alternate properties file to use in place of the default " +
-                "rhq-server.properties");
+                "rhq-server.properties")
+            .addOption(null, "agent-config", true, "An alternate XML file to use in place of the default " +
+                "agent-configuration.xml");
     }
 
     @Override
@@ -115,7 +117,7 @@ public class Install extends ControlCommand {
                     clearAgentPreferences();
                     File agentBasedir = getAgentBasedir(commandLine);
                     installAgent(agentBasedir);
-                    configureAgent(agentBasedir);
+                    configureAgent(agentBasedir, commandLine);
                     startAgent(agentBasedir);
                 }
             } else {
@@ -132,7 +134,8 @@ public class Install extends ControlCommand {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        configureAgent(agentBasedir);
+                        replaceAgentConfig(commandLine);
+                        configureAgent(agentBasedir, commandLine);
                         startAgent(agentBasedir);
                     }
                 }
@@ -155,7 +158,8 @@ public class Install extends ControlCommand {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        configureAgent(agentBasedir);
+                        replaceAgentConfig(commandLine);
+                        configureAgent(agentBasedir, commandLine);
                         startAgent(agentBasedir);
                     }
                 }
@@ -288,20 +292,23 @@ public class Install extends ControlCommand {
         })[0];
     }
 
-    private void configureAgent(File agentBasedir) throws Exception {
-        File agentBinDir = new File(agentBasedir, "bin");
-        File agentConfDir = new File(agentBasedir, "conf");
-        File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
-        agentConfigFile.delete();
+    private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
+        if (commandLine.hasOption("agent-config")) {
+            replaceAgentConfig(commandLine);
+        } else {
+            File agentConfDir = new File(agentBasedir, "conf");
+            File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
+            agentConfigFile.delete();
 
-        Map<String, String> tokens = new TreeMap<String, String>();
-        tokens.put("rhq.agent.server.bind-address", InetAddress.getLocalHost().getHostName());
+            Map<String, String> tokens = new TreeMap<String, String>();
+            tokens.put("rhq.agent.server.bind-address", InetAddress.getLocalHost().getHostName());
 
-        InputStream inputStream = getClass().getResourceAsStream("/agent-configuration.xml");
-        TokenReplacingReader reader = new TokenReplacingReader(new InputStreamReader(inputStream), tokens);
-        BufferedWriter writer = new BufferedWriter(new FileWriter(agentConfigFile));
+            InputStream inputStream = getClass().getResourceAsStream("/agent-configuration.xml");
+            TokenReplacingReader reader = new TokenReplacingReader(new InputStreamReader(inputStream), tokens);
+            BufferedWriter writer = new BufferedWriter(new FileWriter(agentConfigFile));
 
-        StreamUtil.copy(reader, writer);
+            StreamUtil.copy(reader, writer);
+        }
     }
 
     private void clearAgentPreferences() throws Exception {
@@ -337,6 +344,19 @@ public class Install extends ControlCommand {
         } catch (IOException e) {
             throw new RHQControlException("Failed to replace " + defaultServerProps + " with " + newServerProperties,
                 e);
+        }
+    }
+
+    private void replaceAgentConfig(CommandLine commandLine) {
+        File newConfigFile = new File(commandLine.getOptionValue("agent-config"));
+
+        File confDir = new File(getAgentBasedir(), "conf");
+        File defaultConfigFile = new File(confDir, "agent-configuration.xml");
+        defaultConfigFile.delete();
+        try {
+            StreamUtil.copy(new FileReader(newConfigFile), new FileWriter(defaultConfigFile));
+        } catch (IOException e) {
+            throw new RHQControlException(("Failed to replace " + defaultConfigFile + " with " + newConfigFile));
         }
     }
 

@@ -84,7 +84,7 @@ public class ASConnection {
 
     private static final int MAX_POOLED_CONNECTIONS = 10;
 
-    private static final int DEFAULT_KEEPALIVE_DURATION = 30 * 1000; // 30sec
+    private static final int DEFAULT_KEEPALIVE_DURATION = 5 * 1000; // 5sec
 
     private static final String ACCEPT_HTTP_HEADER = "Accept";
 

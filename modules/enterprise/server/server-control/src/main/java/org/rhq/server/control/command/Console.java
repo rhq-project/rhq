@@ -111,7 +111,14 @@ public class Console extends ControlCommand {
 
         File storageBinDir = new File(getStorageBasedir(), "bin");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./cassandra")
+        String startScript;
+        if (isWindows()) {
+            startScript = "./cassandra.bat";
+        } else {
+            startScript = "./cassandra";
+        }
+
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(startScript)
             .addArgument("-f");
         Executor exeuctor = new DefaultExecutor();
         exeuctor.setWorkingDirectory(storageBinDir);
@@ -122,8 +129,8 @@ public class Console extends ControlCommand {
     private void startServerInForeground() throws Exception {
         log.debug("Starting RHQ server in foreground");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
-            .addArgument("console");
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-server." + getExtension()).addArgument("console");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -138,7 +145,7 @@ public class Console extends ControlCommand {
         File confDir = new File(agentHomeDir, "conf");
         File agentConfigFile = new File(confDir, "agent-configuration.xml");
 
-        Process process = new ProcessBuilder("./rhq-agent.sh", "-c", agentConfigFile.getPath())
+        Process process = new ProcessBuilder("./rhq-agent." + getExtension(), "-c", agentConfigFile.getPath())
             .directory(agentBinDir)
 //            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
 //            .redirectInput(ProcessBuilder.Redirect.INHERIT)

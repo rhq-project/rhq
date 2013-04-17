@@ -30,6 +30,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
@@ -217,5 +218,17 @@ public abstract class ControlCommand {
         }
 
         return file;
+    }
+
+    protected String getExtension() {
+        if (isWindows()) {
+            return "bat";
+        }
+        return "sh";
+    }
+
+    protected boolean isWindows() {
+        String operatingSystem = System.getProperty("os.name").toLowerCase(Locale.US);
+        return operatingSystem.contains("windows");
     }
 }

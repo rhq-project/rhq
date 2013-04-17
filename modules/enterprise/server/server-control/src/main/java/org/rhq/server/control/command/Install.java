@@ -74,6 +74,8 @@ public class Install extends ControlCommand {
                 DEFAULT_AGENT_BASEDIR + ". Use the --agent-dir option to choose an alternate directory.")
             .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
             .addOption(null, "agent-dir", true, "The directory where the agent will be installed.");
+//            .addOption(null, "server-config", true, "An alternate properties file to use in place of the default " +
+//                "rhq-server.properties");
     }
 
     @Override
@@ -179,7 +181,7 @@ public class Install extends ControlCommand {
         putProperty("rhq.storage.basedir", storageBasedir.getAbsolutePath());
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-storage-installer.sh")
+            "./rhq-storage-installer." + getExtension())
             .addArgument("--dir")
             .addArgument(storageBasedir.getAbsolutePath())
             .addArgument("--commitlog")
@@ -197,8 +199,8 @@ public class Install extends ControlCommand {
     }
 
     private void startRHQServerForInstallation() throws Exception {
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
-            .addArgument("start");
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-server." + getExtension()).addArgument("start");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
@@ -206,7 +208,8 @@ public class Install extends ControlCommand {
 
         executor.execute(commandLine, new DefaultExecuteResultHandler());
 
-        commandLine = new org.apache.commons.exec.CommandLine("./rhq-installer.sh").addArgument("--test");
+        commandLine = new org.apache.commons.exec.CommandLine("./rhq-installer." + getExtension())
+            .addArgument("--test");
         executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
 
@@ -219,7 +222,8 @@ public class Install extends ControlCommand {
     private void installRHQServer() throws Exception {
         log.debug("Installing RHQ server");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-installer.sh");
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-installer." + getExtension());
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -305,7 +309,7 @@ public class Install extends ControlCommand {
         File agentBinDir = new File(agentBasedir, "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-agent-wrapper.sh").addArgument("start");
+            "./rhq-agent-wrapper." + getExtension()).addArgument("start");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);

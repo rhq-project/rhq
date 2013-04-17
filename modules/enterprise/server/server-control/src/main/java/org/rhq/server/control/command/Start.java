@@ -124,7 +124,13 @@ public class Start extends ControlCommand {
             String pid = StreamUtil.slurp(new FileReader(pidFile));
             System.out.println("RHQ storage node (pid " + pid + ") is running");
         } else {
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./cassandra")
+            String startScript;
+            if (isWindows()) {
+                startScript = "./cassandra.bat";
+            } else {
+                startScript = "./cassandra";
+            }
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(startScript)
                 .addArgument("-p").addArgument(pidFile.getAbsolutePath());
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(storageBinDir);
@@ -137,8 +143,8 @@ public class Start extends ControlCommand {
     private void startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
-            .addArgument("start");
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-server." + getExtension()).addArgument("start");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -151,7 +157,7 @@ public class Start extends ControlCommand {
         File agentBinDir = new File(getAgentBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-agent-wrapper.sh").addArgument("start");
+            "./rhq-agent-wrapper." + getExtension()).addArgument("start");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());

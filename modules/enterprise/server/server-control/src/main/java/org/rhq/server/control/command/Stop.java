@@ -134,7 +134,7 @@ public class Stop extends ControlCommand {
         String pid = getServerPid();
         if (pid != null) {
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-                "./rhq-server.sh").addArgument("stop");
+                "./rhq-server." + getExtension()).addArgument("stop");
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(binDir);
             executor.setStreamHandler(new PumpStreamHandler());
@@ -150,7 +150,7 @@ public class Stop extends ControlCommand {
 
         if (pid != null) {
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-                "./rhq-agent-wrapper.sh").addArgument("stop");
+                "./rhq-agent-wrapper." + getExtension()).addArgument("stop");
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(agentBinDir);
             executor.setStreamHandler(new PumpStreamHandler());

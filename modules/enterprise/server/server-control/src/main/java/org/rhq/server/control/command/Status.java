@@ -129,8 +129,8 @@ public class Status extends ControlCommand {
     private void checkServerStatus() throws Exception {
         log.debug("Checking RHQ server status");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./rhq-server.sh")
-            .addArgument("status");
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
+            "./rhq-server." + getExtension()).addArgument("status");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -143,7 +143,7 @@ public class Status extends ControlCommand {
         File agentBinDir = new File(getAgentBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-agent-wrapper.sh").addArgument("status");
+            "./rhq-agent-wrapper." + getExtension()).addArgument("status");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());

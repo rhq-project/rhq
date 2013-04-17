@@ -65,6 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
@@ -112,11 +113,14 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
         }
         destroyMembers();
 
-        setGraph(new MetricStackedBarGraph(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId())));
 
         if ((null == storedPortlet) || (null == storedPortlet.getConfiguration())) {
             return;
+        }else  if (BrowserUtility.isBrowserPreIE9()){
+            addMember(new Label("<i>" + MSG.chart_ie_not_supported() + "</i>"));
+            return;
         }
+        setGraph(new MetricStackedBarGraph(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId())));
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
             PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
@@ -298,7 +302,9 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
 
         DashboardPortlet storedPortlet = portletWindow.getStoredPortlet();
         PropertySimple simple = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
-        if (simple == null || simple.getIntegerValue() == null) {
+        if (BrowserUtility.isBrowserPreIE9()){
+            addMember(new Label("<i>" + MSG.chart_ie_not_supported() + "</i>"));
+        } else if (simple == null || simple.getIntegerValue() == null) {
             addMember(new Label("<i>" + MSG.view_portlet_configure_needed() + "</i>"));
         } else {
             drawGraph();

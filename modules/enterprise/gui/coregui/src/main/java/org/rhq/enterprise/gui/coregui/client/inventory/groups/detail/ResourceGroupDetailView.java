@@ -225,15 +225,6 @@ public class ResourceGroupDetailView extends
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
 
-        //        driftTab = new TwoLevelTab(getTabSet(), new ViewName(Tab.DRIFT, MSG
-        //            .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
-        //        this.driftHistory = new SubTab(driftTab, new ViewName(DriftSubTab.HISTORY,
-        //            MSG.view_tabs_common_history()), null);
-        //        this.driftDefinition = new SubTab(driftTab, new ViewName(
-        //            DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        //        driftTab.registerSubTabs(driftHistory, driftDefinition);
-        //        tabs.add(driftTab);
-
         return tabs;
     }
 
@@ -258,7 +249,6 @@ public class ResourceGroupDetailView extends
             updateEventsTab(groupCategory, facets);
             updateOperationsTab(groupCategory, facets);
             updateConfigurationTab(groupCategory, facets);
-            // updateDriftTab(groupCategory, facets);
 
             this.show();
             markForRedraw();
@@ -275,13 +265,10 @@ public class ResourceGroupDetailView extends
                 return new ActivityView(groupComposite, isAutoCluster(), isAutoGroup());
             }
         });
-        // TODO (ips): Add Timeline subtab?
     }
 
     private void updateMonitoringTab(Set<ResourceTypeFacet> facets) {
         ViewFactory viewFactory;
-        // TODO: Once we add an Availability subtab, the Monitoring tab will always be visible, even for groups with
-        //       no metrics.
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
             final EntityContext groupContext = EntityContext.forGroup(groupComposite.getResourceGroup());
@@ -302,7 +289,7 @@ public class ResourceGroupDetailView extends
             };
             updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
-            boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
+            boolean visibleToIE8 = BrowserUtility.isBrowserPreIE9();
 
             viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
                 @Override
@@ -349,7 +336,6 @@ public class ResourceGroupDetailView extends
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorCallTime, visible, true, viewFactory);
-            // TODO (ips): Add Availability subtab.
         }
     }
 
@@ -454,28 +440,6 @@ public class ResourceGroupDetailView extends
         }
     }
 
-    //
-    //    private void updateDriftTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
-    //        boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.DRIFT));
-    //        Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
-    //
-    //        if (updateTab(this.driftTab, visible, visible && groupPermissions.contains(Permission.MANAGE_DRIFT))) {
-    //
-    //            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
-    //                @Override
-    //                public Canvas createView() {
-    //                    return ResourceDriftHistoryView.get(null);
-    //                }
-    //            });
-    //
-    //            updateSubTab(this.driftTab, this.driftDefinition, true, true, new ViewFactory() {
-    //                @Override
-    //                public Canvas createView() {
-    //                    return ResourceDriftDefinitionsView.get(null);
-    //                }
-    //            });
-    //        }
-    //    }
 
     @Override
     protected ResourceGroupComposite getSelectedItem() {

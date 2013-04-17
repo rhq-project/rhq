@@ -273,25 +273,29 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     link.setWrap(true);
                                                     link.setHeight(26);
                                                     link.setWidth("100%");
-                                                    link.addClickHandler(new ClickHandler() {
-                                                        @Override
-                                                        public void onClick(ClickEvent event) {
-                                                            window = new ChartViewWindow(title);
+                                                    if(!BrowserUtility.isBrowserPreIE9()){
+                                                        link.addClickHandler(new ClickHandler() {
+                                                            @Override
+                                                            public void onClick(ClickEvent event) {
+                                                                window = new ChartViewWindow(title);
 
-                                                            graphView = D3GraphListView
-                                                                .createSingleGraph(resourceComposite.getResource(),
-                                                                    md.getId(), true);
-                                                            graphView.addSetButtonClickHandler(new ClickHandler() {
-                                                                @Override
-                                                                public void onClick(ClickEvent event) {
-                                                                    graphView.redrawGraphs();
-                                                                }
-                                                            });
+                                                                graphView = D3GraphListView
+                                                                    .createSingleGraph(resourceComposite.getResource(),
+                                                                        md.getId(), true);
+                                                                graphView.addSetButtonClickHandler(new ClickHandler() {
+                                                                    @Override
+                                                                    public void onClick(ClickEvent event) {
+                                                                        graphView.redrawGraphs();
+                                                                    }
+                                                                });
 
-                                                            window.addItem(graphView);
-                                                            window.show();
-                                                        }
-                                                    });
+                                                                window.addItem(graphView);
+                                                                window.show();
+                                                            }
+                                                        });
+                                                    }else{
+                                                        link.disable();
+                                                    }
 
                                                     //@todo: this goes away once we have validated charts
                                                     final String chartTitle = md.getDisplayName();

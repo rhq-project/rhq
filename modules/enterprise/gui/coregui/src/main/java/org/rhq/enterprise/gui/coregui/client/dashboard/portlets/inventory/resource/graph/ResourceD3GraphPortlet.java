@@ -60,6 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
@@ -92,7 +93,6 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
             this.portletWindow = portletWindow;
         }
         destroyMembers();
-
 
         setGraph(new MetricStackedBarGraph(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId())));
 
@@ -171,7 +171,9 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
                                                 Log.debug("Dashboard Metric data in: "
                                                     + (System.currentTimeMillis() - startTime) + " ms.");
                                                 graph.getMetricGraphData().setMetricData(measurementData.get(0));
+                                                if(!BrowserUtility.isBrowserPreIE9()){
                                                     drawGraph();
+                                                }
                                             }
                                         });
                                     break;
@@ -287,7 +289,9 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
             Log.debug("Redraw Portlet for entityId: " + simple.getIntegerValue() + "-"
                 + simpleDefId.getIntegerValue());
 
-            drawGraph();
+            if(!BrowserUtility.isBrowserPreIE9()){
+                drawGraph();
+            }
         }
 
         super.redraw();

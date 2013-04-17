@@ -39,8 +39,9 @@ public final class MetricStackedBarGraph extends AbstractGraph {
      */
     @Override
     public native void drawJsniChart() /*-{
+        if($wnd.d3 !== 'undefined'){
 
-        console.log("Draw Stacked Bar jsni chart");
+        //console.log("Draw Stacked Bar jsni chart");
         var global = this,
 
         // create a chartContext object (from rhq.js) with the data required to render to a chart
@@ -122,14 +123,14 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
                     // if window is too small server up small chart
                     if (useSmallCharts()) {
-                        console.log("Using Small Charts Profile for width: "+getChartWidth());
+                        //console.log("Using Small Charts Profile for width: "+getChartWidth());
                         width = 250;
                         xTicks = 3;
                         xTickSubDivide = 2;
                         chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length - 1);
                     }
                     else {
-                        console.log("Using Large Charts Profile");
+                        //console.log("Using Large Charts Profile");
                         //  we use the width already defined above
                         if(isIEBrowserGreaterThanOrEqualTo(9)){
                             xTicks = 8;
@@ -613,7 +614,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
-                        console.info("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
+                        //console.info("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
                         //console.time("chart");
 
                         determineScale();
@@ -624,7 +625,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                         createXandYAxes();
                         createAvgLines();
                         if (oobMax > 0) {
-                            console.info("OOB Data Exists!");
+                            //console.info("OOB Data Exists!");
                             createOOBLines();
                         }
                         createHovers(chartContext);
@@ -636,6 +637,7 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
         metricStackedBarGraph.draw(chartContext);
 
+        }
     }-*/;
 
 }

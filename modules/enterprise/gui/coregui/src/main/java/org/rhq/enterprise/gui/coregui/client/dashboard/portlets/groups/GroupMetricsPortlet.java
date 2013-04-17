@@ -401,6 +401,8 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                         link.setClipValue(true);
                                                         link.setWrap(true);
                                                         link.setHeight(26);
+                                                        if(!BrowserUtility.isBrowserPreIE9()){
+
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
@@ -412,6 +414,9 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                                 window.show();
                                                             }
                                                         });
+                                                        }else {
+                                                            link.disable();
+                                                        }
 
                                                         //@todo: this goes away once we have validated the new d3 charts
                                                         final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="

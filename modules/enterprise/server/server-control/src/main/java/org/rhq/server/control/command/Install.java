@@ -58,6 +58,12 @@ import org.rhq.server.control.RHQControlException;
  */
 public class Install extends ControlCommand {
 
+    private final String STORAGE_CONFIG_OPTION = "storage-config";
+
+    private final String AGENT_CONFIG_OPTION = "agent-config";
+
+    private final String SERVER_CONFIG_OPTION = "server-config";
+
     private final String STORAGE_BASEDIR_NAME = "rhq-storage";
 
     private final String AGENT_BASEDIR_NAME = "rhq-agent";
@@ -77,11 +83,11 @@ public class Install extends ControlCommand {
                 DEFAULT_AGENT_BASEDIR + ". Use the --agent-dir option to choose an alternate directory.")
             .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
             .addOption(null, "agent-dir", true, "The directory where the agent will be installed.")
-            .addOption(null, "server-config", true, "An alternate properties file to use in place of the default " +
+            .addOption(null, SERVER_CONFIG_OPTION, true, "An alternate properties file to use in place of the default " +
                 "rhq-server.properties")
-            .addOption(null, "agent-config", true, "An alternate XML file to use in place of the default " +
+            .addOption(null, AGENT_CONFIG_OPTION, true, "An alternate XML file to use in place of the default " +
                 "agent-configuration.xml")
-            .addOption(null, "storage-config", true, "A properties file with keys that correspond to option names " +
+            .addOption(null, STORAGE_CONFIG_OPTION, true, "A properties file with keys that correspond to option names " +
                 "of the storage installer. Note that each SHOULD have a prefix of rhq.storage. Each property will " +
                 "be translated into an option that is passed to the storage installer. See " +
                 "example.storage.properties for examples.");
@@ -189,42 +195,42 @@ public class Install extends ControlCommand {
 
         if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) ||
             commandLine.hasOption(AGENT_OPTION))) {
-            if (commandLine.hasOption("server-config") && !isServerInstalled()) {
-                File serverConfig = new File(commandLine.getOptionValue("server-config"));
+            if (commandLine.hasOption(SERVER_CONFIG_OPTION) && !isServerInstalled()) {
+                File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
                 validateServerConfigOption(serverConfig, errors);
             }
 
-            if (commandLine.hasOption("agent-config") && !isAgentInstalled()) {
-                File agentConfig = new File(commandLine.getOptionValue("agent-config"));
+            if (commandLine.hasOption(AGENT_CONFIG_OPTION) && !isAgentInstalled()) {
+                File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                 validateAgentConfigOption(agentConfig, errors);
             }
 
-            if (commandLine.hasOption("storage-config") && !isStorageInstalled()) {
-                File storageConfig = new File(commandLine.getOptionValue("storage-config"));
+            if (commandLine.hasOption(STORAGE_CONFIG_OPTION) && !isStorageInstalled()) {
+                File storageConfig = new File(commandLine.getOptionValue(STORAGE_CONFIG_OPTION));
                 validateStorageConfigOption(storageConfig, errors);
             }
         } else {
             if (commandLine.hasOption(STORAGE_OPTION)) {
-                if (!isStorageInstalled() && commandLine.hasOption("storage-config")) {
-                    File storageConfig = new File(commandLine.getOptionValue("storage-config"));
+                if (!isStorageInstalled() && commandLine.hasOption(STORAGE_CONFIG_OPTION)) {
+                    File storageConfig = new File(commandLine.getOptionValue(STORAGE_CONFIG_OPTION));
                     validateStorageConfigOption(storageConfig, errors);
                 }
 
-                if (!isAgentInstalled() && commandLine.hasOption("agent-config")) {
-                    File agentConfig = new File(commandLine.getOptionValue("agent-config"));
+                if (!isAgentInstalled() && commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+                    File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                     validateAgentConfigOption(agentConfig, errors);
                 }
             }
 
             if (commandLine.hasOption(SERVER_OPTION) && !isStorageInstalled() &&
-                commandLine.hasOption("server-config")) {
-                File serverConfig = new File(commandLine.getOptionValue("server-config"));
+                commandLine.hasOption(SERVER_CONFIG_OPTION)) {
+                File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
                 validateServerConfigOption(serverConfig, errors);
             }
 
             if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled() &&
-                commandLine.hasOption("agent-config")) {
-                File agentConfig = new File(commandLine.getOptionValue("agent-config"));
+                commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+                File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                 validateAgentConfigOption(agentConfig, errors);
             }
         }
@@ -389,7 +395,7 @@ public class Install extends ControlCommand {
     }
 
     private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
-        if (commandLine.hasOption("agent-config")) {
+        if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
             replaceAgentConfig(commandLine);
         } else {
             File agentConfDir = new File(agentBasedir, "conf");
@@ -427,8 +433,8 @@ public class Install extends ControlCommand {
     }
 
     private void replaceServerPropertiesIfNecessary(CommandLine commandLine) {
-        if (commandLine.hasOption("server-config") && !isServerInstalled()) {
-            replaceServerProperties(new File(commandLine.getOptionValue("server-config")));
+        if (commandLine.hasOption(SERVER_CONFIG_OPTION) && !isServerInstalled()) {
+            replaceServerProperties(new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION)));
         }
     }
 
@@ -444,7 +450,7 @@ public class Install extends ControlCommand {
     }
 
     private void replaceAgentConfig(CommandLine commandLine) {
-        File newConfigFile = new File(commandLine.getOptionValue("agent-config"));
+        File newConfigFile = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
 
         File confDir = new File(getAgentBasedir(), "conf");
         File defaultConfigFile = new File(confDir, "agent-configuration.xml");

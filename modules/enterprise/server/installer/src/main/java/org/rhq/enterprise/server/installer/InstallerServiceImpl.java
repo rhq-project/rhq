@@ -504,7 +504,9 @@ public class InstallerServiceImpl implements InstallerService {
             log.error(msg, e);
             throw new Exception(msg, e);
         } finally {
-            cassandraSchemaManager.shutdown();
+            if (cassandraSchemaManager != null) {
+                cassandraSchemaManager.shutdown();
+            }
         }
 
         // ensure the server info is up to date and stored in the DB

@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileFilter;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
@@ -73,9 +74,9 @@ public class Install extends ControlCommand {
             .addOption(null, "agent", false, "Install RHQ agent. The default install directory will be " +
                 DEFAULT_AGENT_BASEDIR + ". Use the --agent-dir option to choose an alternate directory.")
             .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
-            .addOption(null, "agent-dir", true, "The directory where the agent will be installed.");
-//            .addOption(null, "server-config", true, "An alternate properties file to use in place of the default " +
-//                "rhq-server.properties");
+            .addOption(null, "agent-dir", true, "The directory where the agent will be installed.")
+            .addOption(null, "server-config", true, "An alternate properties file to use in place of the default " +
+                "rhq-server.properties");
     }
 
     @Override
@@ -96,9 +97,12 @@ public class Install extends ControlCommand {
     @Override
     protected void exec(CommandLine commandLine) {
         try {
-            // if no options specified, then stop whatever is installed
+            // if no options specified, then install whatever is installed
             if (!(commandLine.hasOption("storage") || commandLine.hasOption("server") ||
                 commandLine.hasOption("agent"))) {
+
+                replaceServerPropertiesIfNecessary(commandLine);
+
                 if (!isStorageInstalled()) {
                     installStorageNode(getStorageBasedir(commandLine));
                 }
@@ -120,6 +124,7 @@ public class Install extends ControlCommand {
                         log.warn("The RHQ storage node is already installed in " + new File(basedir, "storage"));
                         log.warn("Skipping storage node installation.");
                     } else {
+                        replaceServerPropertiesIfNecessary(commandLine);
                         installStorageNode(getStorageBasedir(commandLine));
                     }
 
@@ -136,6 +141,7 @@ public class Install extends ControlCommand {
                         log.warn("The RHQ server is already installed.");
                         log.warn("Skipping server installation.");
                     } else {
+                        replaceServerPropertiesIfNecessary(commandLine);
                         startRHQServerForInstallation();
                         installRHQServer();
                         waitForRHQServerToInitialize();
@@ -315,6 +321,23 @@ public class Install extends ControlCommand {
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
         executor.execute(commandLine);
+    }
+
+    private void replaceServerPropertiesIfNecessary(CommandLine commandLine) {
+        if (commandLine.hasOption("server-config") && !isServerInstalled()) {
+            replaceServerProperties(new File(commandLine.getOptionValue("server-config")));
+        }
+    }
+
+    private void replaceServerProperties(File newServerProperties) {
+        File defaultServerProps = new File(System.getProperty("rhq.server.properties-file"));
+        defaultServerProps.delete();
+        try {
+            StreamUtil.copy(new FileReader(newServerProperties), new FileWriter(defaultServerProps));
+        } catch (IOException e) {
+            throw new RHQControlException("Failed to replace " + defaultServerProps + " with " + newServerProperties,
+                e);
+        }
     }
 
 }

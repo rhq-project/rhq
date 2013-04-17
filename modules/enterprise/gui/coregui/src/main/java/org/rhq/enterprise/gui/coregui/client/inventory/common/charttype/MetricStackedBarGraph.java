@@ -97,6 +97,17 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     chart,
                     svg;
 
+            function isIEBrowserGreaterThanOrEqualTo(targetIEVersion){
+                var myUserAgent = $wnd.navigator.userAgent;
+                if (/MSIE (\d+\.\d+);/.test(myUserAgent)){ //test for MSIE x.x;
+                    var ieVersion=new Number(RegExp.$1); // capture x.x portion and store as a number
+                    if (ieVersion>=targetIEVersion){
+                        return true;
+                    }
+                }
+                return false;
+            }
+
             function getChartWidth() {
                 return $wnd.jQuery("#" + chartContext.chartHandle).width();
             }
@@ -120,8 +131,13 @@ public final class MetricStackedBarGraph extends AbstractGraph {
                     else {
                         console.log("Using Large Charts Profile");
                         //  we use the width already defined above
-                        xTicks = 12;
-                        xTickSubDivide = 5;
+                        if(isIEBrowserGreaterThanOrEqualTo(9)){
+                            xTicks = 8;
+                            xTickSubDivide = 5;
+                        }else {
+                            xTicks = 12;
+                            xTickSubDivide = 5;
+                        }
                         chartData = chartContext.data;
                     }
 

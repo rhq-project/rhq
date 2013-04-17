@@ -109,8 +109,7 @@ public class Console extends ControlCommand {
     private void startStorageInForeground() throws Exception {
         log.debug("Starting RHQ storage node in foreground");
 
-        File storageBasedir = new File(basedir, "storage");
-        File storageBinDir = new File(storageBasedir, "bin");
+        File storageBinDir = new File(getStorageBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("./cassandra")
             .addArgument("-f");

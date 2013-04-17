@@ -176,6 +176,8 @@ public class Install extends ControlCommand {
     private int installStorageNode(File storageBasedir) throws Exception {
         log.debug("Installing RHQ storage node");
 
+        putProperty("rhq.storage.basedir", storageBasedir.getAbsolutePath());
+
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
             "./rhq-storage-installer.sh")
             .addArgument("--dir")

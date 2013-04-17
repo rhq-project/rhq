@@ -30,6 +30,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -40,6 +41,7 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -53,11 +55,19 @@ public abstract class ControlCommand {
 
     public static final String AGENT_OPTION = "agent";
 
+    public static final String RHQ_STORAGE_BASEDIR_PROP = "rhq.storage.basedir";
+
+    public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
+
     protected final Log log = LogFactory.getLog(getClass().getName());
 
     protected File basedir;
 
     protected File binDir;
+
+    private PropertiesFileUpdate rhqctlPropertiesUpdater;
+
+    private Properties rhqctlProperties;
 
     public ControlCommand() {
         basedir = new File(System.getProperty("rhq.server.basedir"));
@@ -78,8 +88,11 @@ public abstract class ControlCommand {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(options, args);
             exec(cmdLine);
+            rhqctlPropertiesUpdater.update(rhqctlProperties);
         } catch (ParseException e) {
             printUsage();
+        } catch (IOException e) {
+            throw new RHQControlException("Failed to update " + getRhqCtlProperties());
         }
     }
 
@@ -109,6 +122,10 @@ public abstract class ControlCommand {
         return list;
     }
 
+    protected File getStorageBasedir() {
+        return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP));
+    }
+
     protected boolean isServerInstalled() {
         File modulesDir = new File(basedir, "modules");
         File metaInfDir = new File(modulesDir,
@@ -123,11 +140,11 @@ public abstract class ControlCommand {
     }
 
     protected  boolean isStorageInstalled() {
-        return new File(basedir, "storage").exists();
+        return getStorageBasedir().exists();
     }
 
     protected String getStoragePid() throws IOException {
-        File storageBasedir = new File(basedir, "storage");
+        File storageBasedir = getStorageBasedir();
         File storageBinDir = new File(storageBasedir, "bin");
         File pidFile = new File(storageBinDir, "cassandra.pid");
 
@@ -156,4 +173,46 @@ public abstract class ControlCommand {
         return null;
     }
 
+    protected String getProperty(String key) {
+        if (rhqctlProperties == null) {
+            loadRhqctlProperties();
+        }
+        return rhqctlProperties.getProperty(key);
+    }
+
+    protected void putProperty(String key, String value) {
+        if (rhqctlProperties == null) {
+            loadRhqctlProperties();
+        }
+        rhqctlProperties.put(key, value);
+    }
+
+    private void loadRhqctlProperties() {
+        if (rhqctlPropertiesUpdater == null) {
+            initRhqctlPropertiesUpdater();
+        }
+        try {
+            rhqctlProperties = rhqctlPropertiesUpdater.loadExistingProperties();
+        } catch (IOException e) {
+            throw new RHQControlException("Failed to load rhqctl properties", e);
+        }
+    }
+
+    private void initRhqctlPropertiesUpdater() {
+        rhqctlPropertiesUpdater = new PropertiesFileUpdate(getRhqCtlProperties().getAbsolutePath());
+    }
+
+    protected File getRhqCtlProperties() {
+        String sysprop = System.getProperty("rhqctl.properties-file");
+        if (sysprop == null) {
+            throw new RuntimeException("The required system property [rhqctl.properties-file] is not defined.");
+        }
+
+        File file = new File(sysprop);
+        if (!(file.exists() && file.isFile())) {
+            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
+        }
+
+        return file;
+    }
 }

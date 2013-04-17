@@ -115,8 +115,7 @@ public class Status extends ControlCommand {
     private void checkStorageStatus() throws Exception {
         log.debug("Checking RHQ storage node status");
 
-        File storageBasedir = new File(basedir, "storage");
-        File storageBinDir = new File(storageBasedir, "bin");
+        File storageBinDir = new File(getStorageBasedir(), "bin");
         File pidFile = new File(storageBinDir, "cassandra.pid");
 
         if (pidFile.exists()) {

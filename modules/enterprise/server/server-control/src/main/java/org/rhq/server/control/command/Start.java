@@ -115,8 +115,7 @@ public class Start extends ControlCommand {
     private void startStorage() throws Exception {
         log.debug("Starting RHQ storage node");
 
-        File storageBasedir = new File(basedir, "storage");
-        File storageBinDir = new File(storageBasedir, "bin");
+        File storageBinDir = new File(getStorageBasedir(), "bin");
         File pidFile = new File(storageBinDir, "cassandra.pid");
 
         // For now we are duplicating logic in the status command. This code will be

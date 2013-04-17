@@ -113,9 +113,6 @@ public class Stop extends ControlCommand {
     private void stopStorage() throws Exception {
         log.debug("Stopping RHQ storage node");
 
-        File storageBasedir = new File(basedir, "storage");
-        File storageBinDir = new File(storageBasedir, "bin");
-
         String pid = getStoragePid();
         if (pid != null) {
             System.out.println("Stopping RHQ storage node...");

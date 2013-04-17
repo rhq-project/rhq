@@ -214,7 +214,7 @@ else
 fi
 
 # debugging the logging level now for development/testing
-RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME}"
+RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME} -Drhqctl.properties-file=$RHQ_SERVER_HOME/bin/rhqctl.properties"
 
 # Sample JPDA settings for remote socket debugging
 #RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y"

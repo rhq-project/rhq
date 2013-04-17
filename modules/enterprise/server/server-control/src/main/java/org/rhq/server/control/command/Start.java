@@ -148,8 +148,7 @@ public class Start extends ControlCommand {
     private void startAgent() throws Exception {
         log.debug("Starting RHQ agent");
 
-        File agentHomeDir = new File(basedir, "rhq-agent");
-        File agentBinDir = new File(agentHomeDir, "bin");
+        File agentBinDir = new File(getAgentBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
             "./rhq-agent-wrapper.sh").addArgument("start");

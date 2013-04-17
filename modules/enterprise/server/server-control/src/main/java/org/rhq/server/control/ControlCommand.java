@@ -126,6 +126,10 @@ public abstract class ControlCommand {
         return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP));
     }
 
+    protected File getAgentBasedir() {
+        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP));
+    }
+
     protected boolean isServerInstalled() {
         File modulesDir = new File(basedir, "modules");
         File metaInfDir = new File(modulesDir,
@@ -136,7 +140,7 @@ public abstract class ControlCommand {
     }
 
     protected boolean isAgentInstalled() {
-        return new File(basedir, "rhq-agent").exists();
+        return getAgentBasedir().exists();
     }
 
     protected  boolean isStorageInstalled() {
@@ -163,8 +167,7 @@ public abstract class ControlCommand {
     }
 
     protected String getAgentPid() throws IOException {
-        File agentBasedir = new File(basedir, "rhq-agent");
-        File agentBinDir = new File(agentBasedir, "bin");
+        File agentBinDir = new File(getAgentBasedir(), "bin");
         File pidFile = new File(agentBinDir, "rhq-agent.pid");
 
         if (pidFile.exists()) {

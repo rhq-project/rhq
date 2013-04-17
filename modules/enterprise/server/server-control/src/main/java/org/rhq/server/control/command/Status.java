@@ -140,8 +140,7 @@ public class Status extends ControlCommand {
     private void checkAgentStatus() throws Exception {
         log.debug("Checking RHQ agent status");
 
-        File agentHomeDir = new File(basedir, "rhq-agent");
-        File agentBinDir = new File(agentHomeDir, "bin");
+        File agentBinDir = new File(getAgentBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
             "./rhq-agent-wrapper.sh").addArgument("status");

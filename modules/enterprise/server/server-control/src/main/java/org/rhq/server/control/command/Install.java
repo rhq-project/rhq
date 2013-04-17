@@ -251,6 +251,8 @@ public class Install extends ControlCommand {
 
         File agentInstallerJar = getAgentInstaller();
 
+        putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
+
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
             .addArgument("-jar")
             .addArgument(agentInstallerJar.getAbsolutePath())

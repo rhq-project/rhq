@@ -145,8 +145,7 @@ public class Stop extends ControlCommand {
     private void stopAgent() throws Exception {
         log.debug("Stopping RHQ agent");
 
-        File agentHomeDir = new File(basedir, "rhq-agent");
-        File agentBinDir = new File(agentHomeDir, "bin");
+        File agentBinDir = new File(getAgentBasedir(), "bin");
         String pid = getAgentPid();
 
         if (pid != null) {

@@ -180,7 +180,7 @@ public class DataMigratorRunner {
 
         Logger migratorLogging = root.getLoggerRepository().getLogger("org.rhq");
         if (Level.DEBUG.equals(level)) {
-            migratorLogging.setLevel(Level.INFO);
+            migratorLogging.setLevel(Level.ALL);
         } else {
             migratorLogging.setLevel(level);
         }
@@ -544,17 +544,42 @@ public class DataMigratorRunner {
         properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
 
         if ("oracle".equals(configuration.get(sqlServerType))) {
+            String driverClassName = "oracle.jdbc.driver.OracleDriver";
+
+            try {
+                //Required to preload the driver manually.
+                //Without this the driver load will fail due to the packaging.
+                Class.forName(driverClassName);
+            } catch (ClassNotFoundException e) {
+                log.debug(e);
+                throw new Exception("Oracle SQL Driver class could not be loaded. Missing class: " + driverClassName);
+            }
+
             properties.put("hibernate.dialect", "org.hibernate.dialect.Oracle10gDialect");
-            properties.put("hibernate.driver_class", "oracle.jdbc.driver.OracleDriver");
+            properties.put("hibernate.driver_class", driverClassName);
             properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
                 + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
             properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
         } else {
+            String driverClassName = "org.postgresql.Driver";
+
+            try {
+                //Required to preload the driver manually.
+                //Without this the driver load will fail due to the packaging.
+                Class.forName(driverClassName);
+            } catch (ClassNotFoundException e) {
+                log.debug(e);
+                throw new Exception("Postgres SQL Driver class could not be loaded. Missing class: " + driverClassName);
+            }
+
             properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
-            properties.put("hibernate.driver_class", "org.postgresql.Driver");
+            properties.put("hibernate.driver_class", driverClassName);
             properties.put("hibernate.connection.url", "jdbc:postgresql://" + (String) configuration.get(sqlHostOption)
                 + ":" + (String) configuration.get(sqlPortOption) + "/" + (String) configuration.get(sqlDBOption));
         }
+
+        log.debug("Creating entity manager with the following configuration:");
+        log.debug(properties);
 
         Ejb3Configuration configuration = new Ejb3Configuration();
         configuration.setProperties(properties);

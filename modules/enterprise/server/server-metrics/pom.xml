@@ -263,5 +263,55 @@
          </plugins>
       </build>
     </profile>
-  </profiles>
+
+    <profile>
+      <id>oracle</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+
+     <dependencies>
+          <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
+               Add a top level dependency if this profile is active to allow for db-required tests in any module.
+               The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
+               this profile should not be active by default. -->
+          <dependency>
+              <groupId>com.oracle</groupId>
+              <artifactId>ojdbc6</artifactId>
+              <version>${ojdbc6.version}</version>
+          </dependency>
+      </dependencies>
+
+      <build>
+        <plugins>
+       <plugin>
+          <artifactId>maven-assembly-plugin</artifactId>
+          <configuration>
+              <descriptorRefs>
+                  <descriptorRef>jar-with-dependencies</descriptorRef>
+              </descriptorRefs>
+              <archive>
+                  <manifest>
+                      <mainClass>org.rhq.server.metrics.DataMigratorRunner</mainClass>
+                      <addClasspath>true</addClasspath>
+                  </manifest>
+              </archive>
+          </configuration>
+          <executions>
+            <execution>
+                <id>package-jar-with-dependencies</id>
+                <phase>package</phase>
+                <goals>
+                    <goal>single</goal>
+                </goals>
+                <configuration>
+                  <finalName>data-migrator-oracle-${project.version}</finalName>
+                </configuration>
+          </execution>
+          </executions>
+      </plugin>
+    </plugins>
+      </build>
+    </profile>
+   </profiles>
 </project>

@@ -413,6 +413,7 @@ public class DataMigrator {
                     } catch (Exception e) {
                         log.error("Failed to insert " + metricsTable.toString()
                             + " data. Attempting to insert the current batch of data one more time");
+                        log.error(e);
 
                         failureCount++;
                         if (failureCount == MAX_NUMBER_OF_FAILURES) {
@@ -453,24 +454,24 @@ public class DataMigrator {
 
                 if(itemTTLSeconds > 0 ){
                     batch.add(QueryBuilder.insertInto(metricsTable.toString())
-                        .value("schedule_id", rawMeasurement[MigrationQuery.SCHEDULE_INDEX])
+                        .value("schedule_id",Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString()))
                         .value("time", new Date(creationTimeMillis))
                         .value("type", AggregateType.AVG.ordinal())
-                        .value("value", rawMeasurement[MigrationQuery.VALUE_INDEX])
+                        .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
 
                     batch.add(QueryBuilder.insertInto(metricsTable.toString())
-                        .value("schedule_id", rawMeasurement[MigrationQuery.SCHEDULE_INDEX])
+                        .value("schedule_id", Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString()))
                         .value("time", new Date(creationTimeMillis))
                         .value("type", AggregateType.MIN.ordinal())
-                        .value("value", rawMeasurement[MigrationQuery.MIN_VALUE_INDEX])
+                        .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.MIN_VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
 
                     batch.add(QueryBuilder.insertInto(metricsTable.toString())
-                        .value("schedule_id", rawMeasurement[MigrationQuery.SCHEDULE_INDEX])
+                        .value("schedule_id", Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString()))
                         .value("time", new Date(creationTimeMillis))
                         .value("type", AggregateType.MAX.ordinal())
-                        .value("value", rawMeasurement[MigrationQuery.MAX_VALUE_INDEX])
+                        .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.MAX_VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
 
                     batchSize += 3;
@@ -553,6 +554,8 @@ public class DataMigrator {
                         } catch (Exception e) {
                             log.error("Failed to insert " + MetricsTable.RAW.toString()
                                 + " data. Attempting to insert the current batch of data one more time");
+                            log.error(e);
+
 
                             failureCount++;
                             if (failureCount == MAX_AGGREGATE_BATCH_TO_CASSANDRA) {
@@ -626,9 +629,9 @@ public class DataMigrator {
 
                 if (itemTTLSeconds > 0) {
                     batch.add(QueryBuilder.insertInto(MetricsTable.RAW.toString())
-                        .value("schedule_id", rawDataPoint[MigrationQuery.SCHEDULE_INDEX])
+                        .value("schedule_id", Integer.parseInt(rawDataPoint[MigrationQuery.SCHEDULE_INDEX].toString()))
                         .value("time", new Date(creationTimeMillis))
-                        .value("value", rawDataPoint[MigrationQuery.VALUE_INDEX])
+                        .value("value", Double.parseDouble(rawDataPoint[MigrationQuery.VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
                     batchSize++;
                 }

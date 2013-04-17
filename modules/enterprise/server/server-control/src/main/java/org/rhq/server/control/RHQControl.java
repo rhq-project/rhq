@@ -94,8 +94,13 @@ public class RHQControl {
 
     public static void main(String[] args) throws Exception {
         RHQControl control = new RHQControl();
-        control.exec(args);
-        System.exit(0);
+        try {
+            control.exec(args);
+            System.exit(0);
+        } catch (RHQControlException e) {
+            control.log.error("There was an unxpected error", e);
+            System.exit(1);
+        }
     }
 
 }

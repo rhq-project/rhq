@@ -35,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
@@ -78,7 +80,11 @@ public class Install extends ControlCommand {
             .addOption(null, "server-config", true, "An alternate properties file to use in place of the default " +
                 "rhq-server.properties")
             .addOption(null, "agent-config", true, "An alternate XML file to use in place of the default " +
-                "agent-configuration.xml");
+                "agent-configuration.xml")
+            .addOption(null, "storage-config", true, "A properties file with keys that correspond to option names " +
+                "of the storage installer. Note that each SHOULD have a prefix of rhq.storage. Each property will " +
+                "be translated into an option that is passed to the storage installer. See " +
+                "example.storage.properties for examples.");
     }
 
     @Override
@@ -99,9 +105,18 @@ public class Install extends ControlCommand {
     @Override
     protected void exec(CommandLine commandLine) {
         try {
+            List<String> errors = validateOptions(commandLine);
+            if (!errors.isEmpty()) {
+                for (String error : errors) {
+                    log.error(error);
+                }
+                log.error("Exiting due to the previous errors");
+                return;
+            }
+
             // if no options specified, then install whatever is installed
-            if (!(commandLine.hasOption("storage") || commandLine.hasOption("server") ||
-                commandLine.hasOption("agent"))) {
+            if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) ||
+                commandLine.hasOption(AGENT_OPTION))) {
 
                 replaceServerPropertiesIfNecessary(commandLine);
 
@@ -166,6 +181,87 @@ public class Install extends ControlCommand {
             }
         } catch (Exception e) {
             throw new RHQControlException("Failed to install services", e);
+        }
+    }
+
+    private List<String> validateOptions(CommandLine commandLine) {
+        List<String> errors = new LinkedList<String>();
+
+        if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) ||
+            commandLine.hasOption(AGENT_OPTION))) {
+            if (commandLine.hasOption("server-config") && !isServerInstalled()) {
+                File serverConfig = new File(commandLine.getOptionValue("server-config"));
+                validateServerConfigOption(serverConfig, errors);
+            }
+
+            if (commandLine.hasOption("agent-config") && !isAgentInstalled()) {
+                File agentConfig = new File(commandLine.getOptionValue("agent-config"));
+                validateAgentConfigOption(agentConfig, errors);
+            }
+
+            if (commandLine.hasOption("storage-config") && !isStorageInstalled()) {
+                File storageConfig = new File(commandLine.getOptionValue("storage-config"));
+                validateStorageConfigOption(storageConfig, errors);
+            }
+        } else {
+            if (commandLine.hasOption(STORAGE_OPTION)) {
+                if (!isStorageInstalled() && commandLine.hasOption("storage-config")) {
+                    File storageConfig = new File(commandLine.getOptionValue("storage-config"));
+                    validateStorageConfigOption(storageConfig, errors);
+                }
+
+                if (!isAgentInstalled() && commandLine.hasOption("agent-config")) {
+                    File agentConfig = new File(commandLine.getOptionValue("agent-config"));
+                    validateAgentConfigOption(agentConfig, errors);
+                }
+            }
+
+            if (commandLine.hasOption(SERVER_OPTION) && !isStorageInstalled() &&
+                commandLine.hasOption("server-config")) {
+                File serverConfig = new File(commandLine.getOptionValue("server-config"));
+                validateServerConfigOption(serverConfig, errors);
+            }
+
+            if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled() &&
+                commandLine.hasOption("agent-config")) {
+                File agentConfig = new File(commandLine.getOptionValue("agent-config"));
+                validateAgentConfigOption(agentConfig, errors);
+            }
+        }
+
+        return errors;
+    }
+
+    private void validateServerConfigOption(File serverConfig, List<String> errors) {
+        if (!serverConfig.exists()) {
+            errors.add("The --server-config option has as its value a file that does not exist [" +
+                serverConfig.getAbsolutePath() + "]");
+        } else if (serverConfig.isDirectory()) {
+            errors.add("The --server-config option has as its value a path that is a directory [" +
+                serverConfig.getAbsolutePath() + "]. It should be a properties file that replaces the " +
+                "default rhq-server.properties");
+        }
+    }
+
+    private void validateAgentConfigOption(File agentConfig, List<String> errors) {
+        if (!agentConfig.exists()) {
+            errors.add("The --agent-config option has as its value a file that does not exist [" +
+                agentConfig.getAbsolutePath() + "]");
+        } else if (agentConfig.isDirectory()) {
+            errors.add("The --agent-config option has as its value a path that is a directory [" +
+                agentConfig.getAbsolutePath() + "]. It should be an XML file that replaces the default " +
+                "agent-configuration.xml");
+        }
+    }
+
+    private void validateStorageConfigOption(File storageConfig, List<String> errors) {
+        if (!storageConfig.exists()) {
+            errors.add("The --storage-config option has as its value a file that does not exist [" +
+                storageConfig.getAbsolutePath() + "]");
+        } else if (storageConfig.isDirectory()) {
+            errors.add("The --storage-config option has as its value a path that is a directory [" +
+                storageConfig.getAbsolutePath() + "]. It should be a properties file with keys that " +
+                "correspond to options for the storage installer.");
         }
     }
 

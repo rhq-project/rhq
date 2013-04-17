@@ -95,7 +95,7 @@ public class DataMigratorRunner {
     private Option sqlPortOption = OptionBuilder.withLongOpt("sql-port").hasArg().withType(String.class)
         .withDescription("SQL server port (default: 5432)").create();
     private Option sqlDBOption = OptionBuilder.withLongOpt("sql-db").hasArg().withType(String.class)
-        .withDescription("SQL database (default: rhq_db)").create();
+        .withDescription("SQL database (default: rhq)").create();
 
     private Option sqlServerType = OptionBuilder.withLongOpt("sql-server-type").hasArg().withType(String.class)
         .withDescription("SQL server type, only postgres and oracle are supported (default: postgres)").create();
@@ -332,7 +332,7 @@ public class DataMigratorRunner {
             System.exit(1);
         }
 
-        log.error(configuration.toString());
+        log.debug(configuration.toString());
     }
 
     /**

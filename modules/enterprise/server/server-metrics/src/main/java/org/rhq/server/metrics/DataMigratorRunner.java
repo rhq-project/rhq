@@ -53,8 +53,6 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.hibernate.ejb.Ejb3Configuration;
 
-import org.rhq.cassandra.CassandraNode;
-
 
 /**
  * @author Stefan Negrea
@@ -79,8 +77,10 @@ public class DataMigratorRunner {
     private Option cassandraPasswordOption = OptionBuilder.withLongOpt("cassandra-password").hasArg()
         .withDescription("Cassandra password (default: rhqadmin)").withType(String.class).create();
     private Option cassandraHostsOption = OptionBuilder.withLongOpt("cassandra-hosts").hasArg().withType(String.class)
-        .withDescription("Cassandra hosts, format host_ip,thrift_port,native_port|host_ip,... (default: 127.0.0.1|123|123)")
+        .withDescription("Cassandra hosts, format host_ip_1,host_ip_2,... (default: 127.0.0.1")
         .create();
+    private Option cassandraPortOption = OptionBuilder.withLongOpt("cassandra-port").hasArg().withType(Integer.class)
+        .withDescription("Cassandra native binary protocol port (default: 9142)").create();
     private Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression").hasOptionalArg()
         .withType(String.class).withDescription("Enable compression for communication with Cassandra (default: true)")
         .create();
@@ -192,6 +192,7 @@ public class DataMigratorRunner {
         options.addOption(cassandraUserOption);
         options.addOption(cassandraPasswordOption);
         options.addOption(cassandraHostsOption);
+        options.addOption(cassandraPortOption);
         options.addOption(cassandraCompressionOption);
 
         options.addOption(sqlUserOption);
@@ -242,9 +243,9 @@ public class DataMigratorRunner {
             loadConfigFile(commandLine.getOptionValue(configFileOption.getLongOpt()));
         }
 
-        parseCassandraOptionsWithDefault(commandLine);
-        parseSQLOptionsWithDefault(commandLine);
-        parseMigrationOptionsWithDefault(commandLine);
+        parseCassandraOptions(commandLine);
+        parseSQLOptions(commandLine);
+        parseMigrationOptions(commandLine);
     }
 
     /**
@@ -255,6 +256,7 @@ public class DataMigratorRunner {
         configuration.put(cassandraUserOption, "rhqadmin");
         configuration.put(cassandraPasswordOption, "rhqadmin");
         configuration.put(cassandraHostsOption, new String[] { "127.0.0.1" });
+        configuration.put(cassandraPortOption, 9042);
         configuration.put(cassandraCompressionOption, true);
 
         //default SQL configuration
@@ -262,7 +264,7 @@ public class DataMigratorRunner {
         configuration.put(sqlPasswordOption, "rhqadmin");
         configuration.put(sqlHostOption, "localhost");
         configuration.put(sqlPortOption, "5432");
-        configuration.put(sqlDBOption, "rhq_db");
+        configuration.put(sqlDBOption, "rhq");
         configuration.put(sqlServerType, "postgres");
 
         //default runner options
@@ -311,17 +313,19 @@ public class DataMigratorRunner {
                             configuration.put(option, "postgres");
                         }
                     } else if (option.equals(sqlPostgresServer)) {
-                        boolean value = parseBooleanOption(optionValue.toString(), true);
+                        boolean value = tryParseBoolean(optionValue.toString(), true);
                         if (value == true) {
                             configuration.put(sqlServerType, "postgres");
                         }
                     } else if (option.equals(sqlOracleServer)) {
-                        boolean value = parseBooleanOption(optionValue.toString(), true);
+                        boolean value = tryParseBoolean(optionValue.toString(), true);
                         if (value == true) {
                             configuration.put(sqlServerType, "oracle");
                         }
                     } else if (option.getType().equals(Boolean.class)) {
-                        configuration.put(option, parseBooleanOption(optionValue.toString(), true));
+                        configuration.put(option, tryParseBoolean(optionValue.toString(), true));
+                    } else if (option.getType().equals(Integer.class)) {
+                        configuration.put(option, tryParseInteger(optionValue.toString(), 0));
                     } else {
                         configuration.put(option, optionValue.toString());
                     }
@@ -341,7 +345,7 @@ public class DataMigratorRunner {
      * @param commandLine command line
      * @throws NoHostAvailableException
      */
-    private void parseCassandraOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
+    private void parseCassandraOptions(CommandLine commandLine) throws Exception {
         if (commandLine.hasOption(cassandraUserOption.getLongOpt())) {
             configuration.put(cassandraUserOption, commandLine.getOptionValue(cassandraUserOption.getLongOpt()));
         }
@@ -356,8 +360,13 @@ public class DataMigratorRunner {
             configuration.put(cassandraHostsOption, cassandraHosts);
         }
 
+        if (commandLine.hasOption(cassandraPortOption.getLongOpt())) {
+            Integer cassandraPort = tryParseInteger(commandLine.getOptionValue(cassandraPortOption.getLongOpt()), 9142);
+            configuration.put(cassandraPortOption, cassandraPort);
+        }
+
         if (commandLine.hasOption(cassandraCompressionOption.getLongOpt())) {
-            boolean value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
+            boolean value = tryParseBoolean(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
             configuration.put(cassandraCompressionOption, value);
         }
     }
@@ -368,7 +377,7 @@ public class DataMigratorRunner {
      * @param commandLine command line
      * @throws NoHostAvailableException
      */
-    private void parseSQLOptionsWithDefault(CommandLine commandLine) throws NoHostAvailableException {
+    private void parseSQLOptions(CommandLine commandLine) throws NoHostAvailableException {
         if (commandLine.hasOption(sqlUserOption.getLongOpt())) {
             configuration.put(sqlUserOption, commandLine.getOptionValue(sqlUserOption.getLongOpt()));
         }
@@ -407,39 +416,39 @@ public class DataMigratorRunner {
      *
      * @param commandLine
      */
-    private void parseMigrationOptionsWithDefault(CommandLine commandLine) {
+    private void parseMigrationOptions(CommandLine commandLine) {
         boolean value;
 
         if (commandLine.hasOption(disableRawOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
+            value = tryParseBoolean(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
             configuration.put(disableRawOption, value);
         }
 
         if (commandLine.hasOption(disable1HOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disable1HOption.getLongOpt()), true);
+            value = tryParseBoolean(commandLine.getOptionValue(disable1HOption.getLongOpt()), true);
             configuration.put(disable1HOption, value);
         }
 
         if (commandLine.hasOption(disable6HOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disable6HOption.getLongOpt()), true);
+            value = tryParseBoolean(commandLine.getOptionValue(disable6HOption.getLongOpt()), true);
             configuration.put(disable6HOption, value);
         }
 
         if (commandLine.hasOption(disable1DOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(disable1DOption.getLongOpt()), true);
+            value = tryParseBoolean(commandLine.getOptionValue(disable1DOption.getLongOpt()), true);
             configuration.put(disable1DOption, value);
         }
 
         if (commandLine.hasOption(preserveDataOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(preserveDataOption.getLongOpt()), true);
+            value = tryParseBoolean(commandLine.getOptionValue(preserveDataOption.getLongOpt()), true);
             configuration.put(preserveDataOption, value);
         } else if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(deleteDataOption.getLongOpt()), true);
+            value = tryParseBoolean(commandLine.getOptionValue(deleteDataOption.getLongOpt()), true);
             configuration.put(preserveDataOption, value);
         }
 
         if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
-            value = parseBooleanOption(commandLine.getOptionValue(estimateOnlyOption.getLongOpt()), true);
+            value = tryParseBoolean(commandLine.getOptionValue(estimateOnlyOption.getLongOpt()), true);
             configuration.put(estimateOnlyOption, true);
         }
     }
@@ -522,6 +531,7 @@ public class DataMigratorRunner {
         Cluster cluster = Cluster
             .builder()
             .addContactPoints((String[]) configuration.get(cassandraHostsOption))
+            .withPort((Integer) configuration.get(cassandraPortOption))
             .withCompression(selectedCompression)
             .withoutMetrics()
             .withAuthInfoProvider(
@@ -596,12 +606,7 @@ public class DataMigratorRunner {
      */
     private String[] parseCassandraHosts(String stringValue) {
         String[] seeds = stringValue.split(",");
-        String[] cassandraHosts = new String[seeds.length];
-        for (int i = 0; i < seeds.length; ++i) {
-            CassandraNode node = CassandraNode.parseNode(seeds[i]);
-            cassandraHosts[i] = node.getHostName();
-        }
-        return cassandraHosts;
+        return seeds;
     }
 
     /**
@@ -609,9 +614,22 @@ public class DataMigratorRunner {
      * @param defaultValue default value
      * @return
      */
-    private boolean parseBooleanOption(Object value, boolean defaultValue) {
+    private boolean tryParseBoolean(Object value, boolean defaultValue) {
         try {
             return Boolean.parseBoolean(value.toString());
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    /**
+     * @param value object value to parse
+     * @param defaultValue default value
+     * @return
+     */
+    private Integer tryParseInteger(Object value, int defaultValue) {
+        try {
+            return Integer.parseInt(value.toString());
         } catch (Exception e) {
             return defaultValue;
         }

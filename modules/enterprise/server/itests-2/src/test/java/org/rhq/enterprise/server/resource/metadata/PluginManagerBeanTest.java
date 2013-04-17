@@ -24,6 +24,8 @@ import static java.util.Arrays.asList;
 import java.io.File;
 import java.util.List;
 
+import javax.ejb.EJBException;
+
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.plugin.Plugin;
@@ -196,6 +198,12 @@ public class PluginManagerBeanTest extends MetadataBeanTest {
 
         } catch (IllegalArgumentException e) {
             // expected
+        } catch (EJBException ee) {
+            if (ee.getCause() == null || !(ee.getCause() instanceof IllegalArgumentException)) {
+                fail("Expected an IllegalArgumentException when trying to delete a plugin with dependent plugins, got: "
+                                + ee);
+            }
+
         } catch (Throwable t) {
             fail("Expected an IllegalArgumentException when trying to delete a plugin with dependent plugins, got: "
                 + t);

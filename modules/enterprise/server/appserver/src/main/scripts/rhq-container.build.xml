@@ -746,6 +746,16 @@ rhq.cassandra.cluster.is-embedded=${rhq.cassandra.cluster.is-embedded}
 # The directory in which cluster nodes will be installed.
 rhq.cassandra.cluster.dir=${rhq.cassandra.cluster.dir}
 
+# Used for both the min and max heap sizes for the Cassandra JVM. Defaults to 512 MB. When
+# you change this property you should also change the rhq.cassandra.heap.new.size property
+# accordingly.
+# rhq.cassandra.max.heap.size=
+
+# Heap new size refers to the size of the young generation. Defaults to 128 MB. When
+# you change this property you should also change the rhq.cassandra.max.heap.size property
+# accordingly. Note that this value must be smaller than rhq.cassandra.max.heap.size.
+# rhq.cassandra.heap.new.size=
+
 # The number of nodes in the cluster. This specifies how many nodes to install
 # and configure. The top level or base directory for each node will be nodeN
 # where N is the node number.

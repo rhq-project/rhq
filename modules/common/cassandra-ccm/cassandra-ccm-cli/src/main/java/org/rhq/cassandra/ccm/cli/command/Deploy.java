@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -54,6 +55,17 @@ public class Deploy extends CCMCommand {
                 deploymentOptions.setNumNodes(numNodes);
             }
 
+            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+            Properties serverProperties = null;
+            try {
+                serverProperties = serverPropertiesUpdater.loadExistingProperties();
+            } catch (IOException e) {
+                throw new RuntimeException("An error occurred while trying to load rhq-server.properties", e);
+            }
+            // set the heap params
+            deploymentOptions.setHeapSize(serverProperties.getProperty("rhq.cassandra.max.heap.size", "512M"));
+            deploymentOptions.setHeapNewSize(serverProperties.getProperty("rhq.cassandra.heap.new.size", "128M"));
+
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
             List<CassandraNode> nodes = ccm.createCluster();
             ccm.startCluster(false);
@@ -61,7 +73,6 @@ public class Deploy extends CCMCommand {
             ClusterInitService clusterInitService = new ClusterInitService();
             clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20);
 
-            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
             try {
                 serverPropertiesUpdater.update("rhq.cassandra.seeds", StringUtil.collectionToString(
                     toDelimitedString(nodes)));

@@ -288,6 +288,8 @@
                                         <property name="deployment.dir" location="${rhq.containerDir}" />
                                         <echo>*** Deleting ${deployment.dir}${file.separator}...</echo>
                                         <delete dir="${deployment.dir}" />
+                                        <echo>*** Deleting ${deployment.dir}/../cassandra...</echo>
+                                        <delete dir="${deployment.dir}/../cassandra"/>
                                     </target>
                                 </configuration>
                                 <goals>

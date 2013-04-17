@@ -81,8 +81,9 @@ public class ClusterInitService {
                     return true;
                 }
             } catch (TTransportException e) {
-                String msg = "Unable to open thrift connection to cassandra node [" + host + "]";
-                logException(msg, e);
+                if (log.isDebugEnabled()) {
+                    log.debug("Unable to open thrift connection to cassandra node [" + host + "]");
+                }
             }
             try {
                 Thread.sleep(sleep);
@@ -182,8 +183,7 @@ public class ClusterInitService {
             } catch (TTransportException e) {
                 ++failedConnections;
                 queue.offer(host);
-                String msg = "Unable to open thrift connection to cassandra node [" + host + "]";
-                logException(msg, e);
+                log.debug("Unable to open thrift connection to cassandra node [" + host + "]");
             }
             try {
                 Thread.sleep(delay);

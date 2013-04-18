@@ -267,7 +267,7 @@
     <profile>
       <id>oracle</id>
       <activation>
-        <activeByDefault>true</activeByDefault>
+        <activeByDefault>false</activeByDefault>
       </activation>
 
      <dependencies>

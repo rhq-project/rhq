@@ -35,7 +35,10 @@
     <!-- Special case for IE8 where upload onsubmit handlers need special registration code from other browsers -->
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE8">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
-        <when-property-is name="user.agent" value="ie8"/>
+        <any>
+            <when-property-is name="user.agent" value="ie8"/>
+            <when-property-is name="user.agent" value="ie9"/>
+        </any>
     </replace-with>
 
 

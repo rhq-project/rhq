@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.measurement;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,9 +52,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.remoting.CannotConnectException;
 
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
@@ -747,6 +745,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         }
 
         return results;
+    }
+
+    @Override
+    public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
+        return findLiveData(subject, resourceId, definitionIds, null);
     }
 
     @Override

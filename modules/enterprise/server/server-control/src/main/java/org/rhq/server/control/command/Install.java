@@ -29,6 +29,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -38,6 +39,7 @@ import java.net.InetAddress;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.TreeMap;
 import java.util.prefs.Preferences;
 
@@ -88,9 +90,8 @@ public class Install extends ControlCommand {
             .addOption(null, AGENT_CONFIG_OPTION, true, "An alternate XML file to use in place of the default " +
                 "agent-configuration.xml")
             .addOption(null, STORAGE_CONFIG_OPTION, true, "A properties file with keys that correspond to option names " +
-                "of the storage installer. Note that each SHOULD have a prefix of rhq.storage. Each property will " +
-                "be translated into an option that is passed to the storage installer. See " +
-                "example.storage.properties for examples.");
+                "of the storage installer. Each property will be translated into an option that is passed to the " +
+                " storage installer. See example.storage.properties for examples.");
     }
 
     @Override
@@ -127,7 +128,7 @@ public class Install extends ControlCommand {
                 replaceServerPropertiesIfNecessary(commandLine);
 
                 if (!isStorageInstalled()) {
-                    installStorageNode(getStorageBasedir(commandLine));
+                    installStorageNode(getStorageBasedir(commandLine), commandLine);
                 }
                 if (!isServerInstalled()) {
                     startRHQServerForInstallation();
@@ -148,14 +149,14 @@ public class Install extends ControlCommand {
                         log.warn("Skipping storage node installation.");
                     } else {
                         replaceServerPropertiesIfNecessary(commandLine);
-                        installStorageNode(getStorageBasedir(commandLine));
+                        installStorageNode(getStorageBasedir(commandLine), commandLine);
                     }
 
                     if (!isAgentInstalled()) {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        replaceAgentConfig(commandLine);
+                        replaceAgentConfigIfNecessary(commandLine);
                         configureAgent(agentBasedir, commandLine);
                         startAgent(agentBasedir);
                     }
@@ -179,7 +180,7 @@ public class Install extends ControlCommand {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        replaceAgentConfig(commandLine);
+                        replaceAgentConfigIfNecessary(commandLine);
                         configureAgent(agentBasedir, commandLine);
                         startAgent(agentBasedir);
                     }
@@ -287,27 +288,51 @@ public class Install extends ControlCommand {
         return DEFAULT_AGENT_BASEDIR;
     }
 
-    private int installStorageNode(File storageBasedir) throws Exception {
+    private int installStorageNode(File storageBasedir, CommandLine rhqctlCommandLine) throws Exception {
         log.debug("Installing RHQ storage node");
 
         putProperty("rhq.storage.basedir", storageBasedir.getAbsolutePath());
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-storage-installer." + getExtension())
-            .addArgument("--dir")
-            .addArgument(storageBasedir.getAbsolutePath())
-            .addArgument("--commitlog")
-            .addArgument("./storage/commit_log")
-            .addArgument("--data")
-            .addArgument("./storage/data")
-            .addArgument("--saved-caches")
-            .addArgument("./storage/saved_caches");
+            "./rhq-storage-installer." + getExtension());
+
+        if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
+            String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
+            commandLine.addArguments(args);
+        }
+
+
+//            .addArgument("--dir")
+//            .addArgument(storageBasedir.getAbsolutePath())
+//            .addArgument("--commitlog")
+//            .addArgument("./storage/commit_log")
+//            .addArgument("--data")
+//            .addArgument("./storage/data")
+//            .addArgument("--saved-caches")
+//            .addArgument("./storage/saved_caches");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
 
         return executor.execute(commandLine);
+    }
+
+    private Properties loadStorageProperties(String path) throws IOException {
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(new File(path)));
+
+        return properties;
+    }
+
+    private String[] toArray(Properties properties) {
+        String[] array = new String[properties.size() * 2];
+        int i = 0;
+        for (Object key : properties.keySet()) {
+            array[i++] = "--" + (String) key;
+            array[i++] = properties.getProperty((String) key);
+        }
+        return array;
     }
 
     private void startRHQServerForInstallation() throws Exception {
@@ -396,7 +421,7 @@ public class Install extends ControlCommand {
 
     private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
         if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
-            replaceAgentConfig(commandLine);
+            replaceAgentConfigIfNecessary(commandLine);
         } else {
             File agentConfDir = new File(agentBasedir, "conf");
             File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
@@ -449,7 +474,10 @@ public class Install extends ControlCommand {
         }
     }
 
-    private void replaceAgentConfig(CommandLine commandLine) {
+    private void replaceAgentConfigIfNecessary(CommandLine commandLine) {
+        if (!commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+            return;
+        }
         File newConfigFile = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
 
         File confDir = new File(getAgentBasedir(), "conf");

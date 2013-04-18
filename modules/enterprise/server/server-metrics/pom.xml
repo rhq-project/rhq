@@ -201,7 +201,8 @@
                     <goal>single</goal>
                 </goals>
                 <configuration>
-                  <finalName>data-migrator-${project.version}</finalName>
+                  <attach>false</attach>
+                  <finalName>migrator-executable/data-migrator-${project.version}</finalName>
                 </configuration>
           </execution>
           </executions>
@@ -305,7 +306,8 @@
                     <goal>single</goal>
                 </goals>
                 <configuration>
-                  <finalName>data-migrator-oracle-${project.version}</finalName>
+                  <attach>false</attach>
+                  <finalName>migrator-executable/data-migrator-oracle-${project.version}</finalName>
                 </configuration>
           </execution>
           </executions>

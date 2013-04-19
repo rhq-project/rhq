@@ -66,10 +66,6 @@ public class Install extends ControlCommand {
 
     private final String SERVER_CONFIG_OPTION = "server-config";
 
-    private final String STORAGE_BASEDIR_NAME = "rhq-storage";
-
-    private final String AGENT_BASEDIR_NAME = "rhq-agent";
-
     private final File DEFAULT_STORAGE_BASEDIR = new File(basedir, STORAGE_BASEDIR_NAME);
 
     private final File DEFAULT_AGENT_BASEDIR = new File(basedir, AGENT_BASEDIR_NAME);
@@ -291,25 +287,16 @@ public class Install extends ControlCommand {
     private int installStorageNode(File storageBasedir, CommandLine rhqctlCommandLine) throws Exception {
         log.debug("Installing RHQ storage node");
 
-        putProperty("rhq.storage.basedir", storageBasedir.getAbsolutePath());
+        putProperty(RHQ_STORAGE_BASEDIR_PROP, storageBasedir.getAbsolutePath());
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-storage-installer." + getExtension());
+            "./rhq-storage-installer." + getExtension()).addArgument("--dir")
+            .addArgument(storageBasedir.getAbsolutePath());
 
         if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
             String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
             commandLine.addArguments(args);
         }
-
-
-//            .addArgument("--dir")
-//            .addArgument(storageBasedir.getAbsolutePath())
-//            .addArgument("--commitlog")
-//            .addArgument("./storage/commit_log")
-//            .addArgument("--data")
-//            .addArgument("./storage/data")
-//            .addArgument("--saved-caches")
-//            .addArgument("./storage/saved_caches");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);

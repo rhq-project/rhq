@@ -13,6 +13,7 @@
     <module name="org.apache.commons.logging"/>
     <module name="org.apache.commons.cli"/>
     <module name="org.apache.commons.exec"/>
+    <module name="org.apache.commons.configuration"/>
     <module name="org.apache.log4j"/>
     <module name="sun.jdk"/>
     <module name="org.jboss.logmanager" services="import"/>

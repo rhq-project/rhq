@@ -26,6 +26,7 @@
 package org.rhq.server.control;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,6 +40,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -60,19 +63,28 @@ public abstract class ControlCommand {
 
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
+    protected final String STORAGE_BASEDIR_NAME = "rhq-storage";
+
+    protected final String AGENT_BASEDIR_NAME = "rhq-agent";
+
     protected final Log log = LogFactory.getLog(getClass().getName());
 
     protected File basedir;
 
     protected File binDir;
 
-    private PropertiesFileUpdate rhqctlPropertiesUpdater;
-
-    private Properties rhqctlProperties;
+    private PropertiesConfiguration rhqctlConfig;
 
     public ControlCommand() {
         basedir = new File(System.getProperty("rhq.server.basedir"));
         binDir = new File(basedir, "bin");
+
+        File rhqctlPropertiesFile = getRhqCtlProperties();
+        try {
+            rhqctlConfig = new PropertiesConfiguration(rhqctlPropertiesFile);
+        } catch (ConfigurationException e) {
+            throw new RHQControlException("Failed to load configuration", e);
+        }
     }
 
     public abstract String getName();
@@ -89,11 +101,11 @@ public abstract class ControlCommand {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(options, args);
             exec(cmdLine);
-            rhqctlPropertiesUpdater.update(rhqctlProperties);
+            rhqctlConfig.save();
         } catch (ParseException e) {
             printUsage();
-        } catch (IOException e) {
-            throw new RHQControlException("Failed to update " + getRhqCtlProperties());
+        } catch (ConfigurationException e) {
+            throw new RHQControlException("Failed to update " + getRhqCtlProperties(), e);
         }
     }
 
@@ -124,11 +136,13 @@ public abstract class ControlCommand {
     }
 
     protected File getStorageBasedir() {
-        return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP));
+        return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP, new File(basedir,
+            STORAGE_BASEDIR_NAME).getAbsolutePath()));
     }
 
     protected File getAgentBasedir() {
-        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP));
+        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP, new File(basedir,
+            AGENT_BASEDIR_NAME).getAbsolutePath()));
     }
 
     protected boolean isServerInstalled() {
@@ -178,32 +192,15 @@ public abstract class ControlCommand {
     }
 
     protected String getProperty(String key) {
-        if (rhqctlProperties == null) {
-            loadRhqctlProperties();
-        }
-        return rhqctlProperties.getProperty(key);
+        return rhqctlConfig.getString(key);
+    }
+
+    private String getProperty(String key, String defaultValue)  {
+        return rhqctlConfig.getString(key, defaultValue);
     }
 
     protected void putProperty(String key, String value) {
-        if (rhqctlProperties == null) {
-            loadRhqctlProperties();
-        }
-        rhqctlProperties.put(key, value);
-    }
-
-    private void loadRhqctlProperties() {
-        if (rhqctlPropertiesUpdater == null) {
-            initRhqctlPropertiesUpdater();
-        }
-        try {
-            rhqctlProperties = rhqctlPropertiesUpdater.loadExistingProperties();
-        } catch (IOException e) {
-            throw new RHQControlException("Failed to load rhqctl properties", e);
-        }
-    }
-
-    private void initRhqctlPropertiesUpdater() {
-        rhqctlPropertiesUpdater = new PropertiesFileUpdate(getRhqCtlProperties().getAbsolutePath());
+        rhqctlConfig.setProperty(key, value);
     }
 
     protected File getRhqCtlProperties() {
@@ -213,10 +210,10 @@ public abstract class ControlCommand {
         }
 
         File file = new File(sysprop);
-        if (!(file.exists() && file.isFile())) {
-            throw new RuntimeException("System property [" + sysprop + "] points to in invalid file.");
+        if (!file.isFile()) {
+            throw new RHQControlException("rhqctl.properties-file has as its values [" + file + "] which is not " +
+                "a file.");
         }
-
         return file;
     }
 

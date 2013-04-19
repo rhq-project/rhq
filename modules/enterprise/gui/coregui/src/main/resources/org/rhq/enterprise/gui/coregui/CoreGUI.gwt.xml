@@ -41,6 +41,11 @@
         </any>
     </replace-with>
 
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphIE8Impl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+            <when-property-is name="user.agent" value="ie8"/>
+    </replace-with>
+
 
     <generate-with class="org.rhq.enterprise.gui.coregui.user.rebind.rpc.TrackingServiceInterfaceProxyGenerator">
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>

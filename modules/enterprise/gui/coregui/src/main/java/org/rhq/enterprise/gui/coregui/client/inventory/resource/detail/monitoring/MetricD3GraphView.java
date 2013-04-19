@@ -21,17 +21,16 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.HasD3MetricJsniChart;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A D3 graph implementation for graphing Resource metrics.
  */
-public class MetricD3Graph extends EnhancedVLayout {
+public class MetricD3GraphView extends EnhancedVLayout {
 
-    protected AbstractGraph graph;
+    protected StackedBarMetricGraphImpl graph;
     private HTMLFlow graphDiv = null;
     protected Timer refreshTimer;
 
@@ -39,11 +38,11 @@ public class MetricD3Graph extends EnhancedVLayout {
      * This constructor is for the use case in the Dashboard where we dont actually
      * have a entity or measurement yet.
      */
-    public MetricD3Graph() {
+    public MetricD3GraphView() {
         super();
     }
 
-    public MetricD3Graph(AbstractGraph graph) {
+    public MetricD3GraphView(StackedBarMetricGraphImpl graph) {
         super();
         this.graph = graph;
         setHeight100();
@@ -134,18 +133,12 @@ public class MetricD3Graph extends EnhancedVLayout {
         graph.drawJsniChart();
     }
 
-    public HasD3MetricJsniChart getJsniChart() {
-        return graph;
-    }
 
     public String getFullChartId() {
         return "rChart-" + graph.getMetricGraphData().getChartId();
 
     }
 
-    public void setGraph(AbstractGraph graph) {
-        this.graph = graph;
-    }
 
 
     public Integer getChartHeight() {

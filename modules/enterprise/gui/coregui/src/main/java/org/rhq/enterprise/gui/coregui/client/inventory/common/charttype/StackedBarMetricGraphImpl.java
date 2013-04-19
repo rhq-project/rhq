@@ -23,15 +23,21 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
  *
  * @author Mike Thompson
  */
-public final class MetricStackedBarGraph extends AbstractGraph {
+public class StackedBarMetricGraphImpl extends AbstractGraph {
 
+    /**
+     * GWT constructor for GWT.create() deferred instantiation.
+     */
+    public StackedBarMetricGraphImpl() {
+        super();
+    }
     /**
      * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
      * for all cases but the dashboard portlet).
      */
-    public MetricStackedBarGraph(MetricGraphData metricGraphData) {
-        setMetricGraphData(metricGraphData);
-    }
+//    public StackedBarMetricGraphImpl(MetricGraphData metricGraphData) {
+//        setMetricGraphData(metricGraphData);
+//    }
 
 
     /**
@@ -39,8 +45,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
      */
     @Override
     public native void drawJsniChart() /*-{
-        if($wnd.d3 !== 'undefined'){
-
         //console.log("Draw Stacked Bar jsni chart");
         var global = this,
 
@@ -637,7 +641,6 @@ public final class MetricStackedBarGraph extends AbstractGraph {
 
         metricStackedBarGraph.draw(chartContext);
 
-        }
     }-*/;
 
 }

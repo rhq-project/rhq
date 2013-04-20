@@ -45,6 +45,7 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -78,6 +79,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     public void start(ResourceContext context) throws Exception {
         super.start(context);
         Cluster cluster = Cluster.builder().addContactPoints(new String[] { "localhost" }).withoutMetrics()
+            .withPort(getCQLPort(context.getPluginConfiguration()))
             .withAuthInfoProvider(
                 new SimpleAuthInfoProvider().add("username",
                     this.getResourceContext().getPluginConfiguration().getSimpleValue("username")).add("password",
@@ -85,6 +87,11 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             .build();
         this.cassandraSession = cluster.connect("rhq");
     };
+
+    private int getCQLPort(Configuration pluginConfig) {
+        String property = pluginConfig.getSimpleValue("nativeTransportPort", "9042");
+        return Integer.parseInt(property);
+    }
 
     @Override
     public AvailabilityType getAvailability() {

@@ -44,6 +44,7 @@
       <c:simple-property name="additionalClassPathEntries" required="false" type="string" description="Comma-separated list of directories and filenames that contain resources and classes needed to communicate with the JMX Server and its MBeans. If you specify 'some/directory/*.jar', all jars found in the given directory will be added."/>
       <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
+      <c:simple-property name="nativeTransportPort" description="The port on which Cassandra listens for CQL client connections." default="9042" type="integer"/>
     </plugin-configuration>
 
     <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.service.CassandraDaemon|match=.*"/>

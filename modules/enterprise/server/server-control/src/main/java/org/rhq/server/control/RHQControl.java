@@ -60,6 +60,8 @@ public class RHQControl {
 
                 command.exec(getCommandLine(commandName, args));
             }
+        } catch(UsageException e) {
+            printUsage();
         } catch (RHQControlException e) {
             log.error(e);
         }
@@ -74,7 +76,7 @@ public class RHQControl {
         }
 
         if (commandNames.size() != 1) {
-            throw new RHQControlException();
+            throw new UsageException();
         }
 
         return commandNames.get(0);

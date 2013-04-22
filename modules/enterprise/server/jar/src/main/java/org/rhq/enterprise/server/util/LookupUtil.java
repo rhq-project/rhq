@@ -62,14 +62,14 @@ import org.rhq.enterprise.server.bundle.BundleManagerBean;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerBean;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
-import org.rhq.enterprise.server.cloud.TopologyManagerBean;
-import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.FailoverListManagerBean;
 import org.rhq.enterprise.server.cloud.FailoverListManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerBean;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.StatusManagerBean;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.cloud.TopologyManagerBean;
+import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerBean;
@@ -642,7 +642,7 @@ public final class LookupUtil {
     }
 
     private static <T> String getLocalJNDIName(@NotNull
-    Class<? super T> beanClass) {
+                                               Class<? extends T> beanClass) {
         return getLocalJNDIName(beanClass.getSimpleName(), beanClass.getName().replace("Bean", "Local"));
     }
 
@@ -654,13 +654,12 @@ public final class LookupUtil {
      * @return JNDI name that the remote interface is registered as
      */
     private static <T> String getRemoteJNDIName(@NotNull
-    Class<? super T> beanClass) {
+                                                Class<? extends T> beanClass) {
         return ("java:global/rhq/rhq-enterprise-server-ejb3/" + beanClass.getSimpleName() + "!" + beanClass.getName()
-            .replace("Bean", "Remote"));
+                .replace("Bean", "Remote"));
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T lookupLocal(Class<? super T> type) {
+    private static <T> T lookupLocal(Class<? extends T> type) {
         String localJNDIName = "-not initialized-";
         try {
             localJNDIName = getLocalJNDIName(type);
@@ -678,12 +677,11 @@ public final class LookupUtil {
             return lookup(localJNDIName);
         } catch (NamingException e) {
             throw new RuntimeException("Failed to lookup local interface to EJB " + beanName + ", localJNDI=["
-                + localJNDIName + "]", e);
+                    + localJNDIName + "]", e);
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T> T lookupRemote(Class<? super T> type) {
+    private static <T> T lookupRemote(Class<? extends T> type) {
         try {
             return (T) lookup(getRemoteJNDIName(type));
         } catch (NamingException e) {

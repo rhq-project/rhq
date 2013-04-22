@@ -18,7 +18,7 @@
      <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
      <jboss.unzip.location>${basedir}/target/${jboss.eap.version}</jboss.unzip.location>
      <rhq.internal>false</rhq.internal>
-     <jboss.vm.args>-Xmx2500m -XX:MaxPermSize=320m</jboss.vm.args>
+     <jboss.vm.args>-Xmx500m -XX:MaxPermSize=320m</jboss.vm.args>
      <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
      <!-- These properties guide which datasources are used for integration tests. Only one should be true.
           The default is Postgres, specify -Pitest.oracle to use Oracle -->
@@ -474,16 +474,10 @@
                   <value>org.rhq.test.testng.StdoutReporter</value>
                 </property>
               </properties>
-              <systemProperties>
-                <property>
-                  <name>ejbjarDirectory</name>
-                  <value>target/classes</value>
-                </property>
-                <property>
-                  <name>hibernate.dialect</name>
-                  <value>${rhq.test.ds.hibernate-dialect}</value>
-                </property>
-              </systemProperties>
+              <systemPropertyVariables>
+                <ejbjarDirectory>target/classes</ejbjarDirectory>
+                <hibernate.dialect>${rhq.test.ds.hibernate-dialect}</hibernate.dialect>
+              </systemPropertyVariables>
               <excludes>
                 <exclude>**/ResourceTypeTest.java</exclude> <!-- TODO: this should be fixed up and reinstated -->
               </excludes>
@@ -537,6 +531,12 @@
              <artifactId>jboss-as-arquillian-container-managed</artifactId>
              <scope>test</scope>
            </dependency>
+           <dependency>
+               <groupId>org.rhq</groupId>
+               <artifactId>rhq-arquillian-suite-extension</artifactId>
+               <version>${project.version}</version>
+               <scope>test</scope>
+             </dependency>
          </dependencies>
        </profile>
 

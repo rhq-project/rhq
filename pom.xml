@@ -1781,6 +1781,9 @@
                   <dependency>
                      <groupId>org.jacoco</groupId>
                      <artifactId>org.jacoco.ant</artifactId>
+                      <!-- For some strange reason this needs to be here even though the version is specified
+                           in the dependency management of the root pom. -->
+                     <version>${jacoco.version}</version>
                   </dependency>
                </dependencies>
             </plugin>

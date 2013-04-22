@@ -52,7 +52,6 @@ public class Installer {
 
     public static void main(String[] args) {
         try {
-            LOG.info("Starting installer...");
             final Installer installer = new Installer();
             installer.doInstall(args);
         } catch (Exception e) {
@@ -192,13 +191,14 @@ public class Installer {
             case ':':
             case '?': {
                 // for now both of these should exit
-                displayUsage();
-                throw new IllegalArgumentException();
+                LOG.error("Invalid option");
+                return new WhatToDo[] { WhatToDo.DISPLAY_USAGE };
             }
 
             case 1: {
                 // this will catch non-option arguments (which we don't currently support)
-                throw new IllegalArgumentException("Unknown option: " + getopt.getOptarg());
+                LOG.error("Unknown option: " + getopt.getOptarg());
+                return new WhatToDo[] { WhatToDo.DISPLAY_USAGE };
             }
 
             case 'H': {

@@ -9,6 +9,7 @@ RHQ_SERVER_HOME=`pwd`
 _INSTALLER_SCRIPT="${RHQ_SERVER_HOME}/bin/rhq-installer.sh"
 _CCM_SCRIPT="${RHQ_SERVER_HOME}/bin/rhq-ccm.sh"
 _JBOSS_CLI_SCRIPT="${RHQ_SERVER_HOME}/jbossas/bin/jboss-cli.sh"
+_ROPERTY_SET_MARKER="/tmp/.cassandra.seeds.set"
 
 # we are normally executed just before the server starts, so give it time to initialize
 sleep 5
@@ -16,7 +17,7 @@ sleep 5
 echo Installing embedded Cassandra cluster...
 eval ${_CCM_SCRIPT} deploy
 
-if [ ! -e "${RHQ_SERVER_HOME}/bin/.propSet" ]; then
+if [ ! -e ${_ROPERTY_SET_MARKER} ]; then
    echo Updating the rhq.cassandra.seeds property...
    #jboss-cli needs to have clear JAVA_OPTS
    JAVA_OPTS_BACKUP=$JAVA_OPTS
@@ -24,7 +25,7 @@ if [ ! -e "${RHQ_SERVER_HOME}/bin/.propSet" ]; then
    SEEDS=`cat ${RHQ_SERVER_HOME}/bin/rhq-server.properties | sed -ne 's/,/;/g' -e 's/rhq.cassandra.seeds=//gp'`
    ${_JBOSS_CLI_SCRIPT} --connect controller=localhost:6999 /system-property=rhq.cassandra.seeds/:add\(value="$SEEDS"\)
    export JAVA_OPTS=$JAVA_OPTS_BACKUP
-   touch "${RHQ_SERVER_HOME}/bin/.propSet"
+   touch ${_ROPERTY_SET_MARKER}
 fi
 
 _TRIES="1 2"

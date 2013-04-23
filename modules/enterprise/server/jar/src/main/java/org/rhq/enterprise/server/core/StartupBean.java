@@ -813,7 +813,7 @@ public class StartupBean {
     private void initCassandraClusterHeartBeatJob() {
         String seeds = System.getProperty("rhq.cassandra.seeds");
         if (seeds != null) {
-            seeds.replaceAll(";", ",");
+            seeds=seeds.replaceAll(";", ",");
         }
         String jobTrigger = "CassandraClusterHeartBeatTrigger - " + UUID.randomUUID().toString();
         String jobGroup = CassandraClusterHeartBeatJob.JOB_NAME + "Group";

@@ -97,4 +97,62 @@
       </plugin>
     </plugins>
   </build>
+
+  <profiles>
+    <profile>
+      <id>dev</id>
+
+      <properties>
+        <rhq.rootDir>../../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.deploymentDir>${rhq.containerDir}/modules/org/rhq/rhq-server-control/main</rhq.deploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+              <execution>
+                <id>deploy</id>
+                <phase>compile</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${rhq.deploymentDir}" />
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                    <echo>*** Updating ${deployment.file}...</echo>
+                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
+                    <echo>*** Deleting ${deployment.file}...</echo>
+                    <delete file="${deployment.file}" />
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+  
 </project>

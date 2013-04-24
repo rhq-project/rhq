@@ -501,6 +501,7 @@ public class StartupBean {
         serverManager.scheduleServerHeartbeat();
         cacheConsistencyManager.scheduleServerCacheReloader();
         systemManager.scheduleConfigCacheReloader();
+        subjectManager.scheduleSessionPurgeJob();
 
         try {
             // Do not check until we are up at least 1 min, and every minute thereafter.

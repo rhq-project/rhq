@@ -27,8 +27,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.Timeout;
+import javax.ejb.Timer;
+import javax.ejb.TimerConfig;
+import javax.ejb.TimerService;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.interceptor.ExcludeDefaultInterceptors;
 import javax.persistence.EntityExistsException;
 import javax.persistence.EntityManager;
@@ -110,7 +117,37 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     //@IgnoreDependency
     private RepoManagerLocal repoManager;
 
+    @Resource
+    private TimerService timerService;
+
     private SessionManager sessionManager = SessionManager.getInstance();
+
+    public void scheduleSessionPurgeJob() {
+        // each time the webapp is reloaded, we don't want to create duplicate jobs
+        Collection<Timer> timers = timerService.getTimers();
+        for (Timer existingTimer : timers) {
+            log.debug("Found timer - attempting to cancel: " + existingTimer.toString());
+            try {
+                existingTimer.cancel();
+            } catch (Exception e) {
+                log.warn("Failed in attempting to cancel timer: " + existingTimer.toString());
+            }
+        }
+
+        // timer that will trigger every 60 seconds
+        timerService.createIntervalTimer(60000L, 60000L, new TimerConfig(null, false));
+    }
+
+    @Timeout
+    // we don't need transactioning here
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void purgeTimedOutSessions() {
+        try {
+            sessionManager.purgeTimedOutSessions();
+        } catch (Throwable t) {
+            log.error("Failed to purge timed out sessions - will try again later. Cause: " + t);
+        }
+    }
 
     /**
      * @see org.rhq.enterprise.server.auth.SubjectManagerLocal#loadUserConfiguration(Integer)

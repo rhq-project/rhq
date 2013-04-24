@@ -88,8 +88,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         super.start(resourceContext);
 
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
-        connection = new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(),
-            serverPluginConfig.getUser(), serverPluginConfig.getPassword());
+        connection = ASConnection.newInstanceForServerPluginConfiguration(serverPluginConfig);
         getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();

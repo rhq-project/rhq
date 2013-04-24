@@ -129,6 +129,7 @@ public class DBInstallationTest {
     }
 
     private void recreateTestDatabase() throws Exception {
+        System.out.println("Using DB ==> " + DB_URL + " -- user " + USERNAME + " /admin user:pass " + ADMIN_USERNAME + ":" + ADMIN_PASSWORD);
         DBReset dbReset = new DBReset();
         dbReset.performDBReset(DB_TYPE_MAPPING, DB_URL, DB_NAME, USERNAME, ADMIN_USERNAME, ADMIN_PASSWORD);
     }

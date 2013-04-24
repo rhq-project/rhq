@@ -44,20 +44,36 @@ public abstract class OperationJob implements Job {
 
     /**
      * For security purposes, we need to provide a subject with a valid login session. This creates such a subject by
-     * logging in as the given user and returning the subject with a valid session. Call this even if the user already
-     * has a session if you think the session may have timed out - this will refresh the session.
+     * logging in as the given user and returning the subject with a valid session. A new session is created
+     * each time this is called unless <code>reattach</code> is <code>true</code>, in which case if a session
+     * already exists, it will be refreshed - only if a session doesn't exist will a new one be created.
      *
-     * @param  user     the user whose needs a valid session assigned to it
+     * @param  user the user whose needs a valid session assigned to it - the session ID will be assigned to this object
      * @param  reattach if the user already has a session, reattach to it rather than creating a new session
-     *
      * @return the user with a valid session associated with it
      *
      * @throws Exception
-     *
      * @see    SubjectManagerLocal#loginUnauthenticated(String)
      */
-    protected Subject getUserWithSession(Subject user) throws Exception {
-        return LookupUtil.getSubjectManager().loginUnauthenticated(user.getName());
+    protected Subject getUserWithSession(Subject user, boolean reattach) throws Exception {
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+        Subject subject = null;
+
+        if (reattach && user.getSessionId() != null) {
+            try {
+                subject = subjectManager.getSubjectBySessionId(user.getSessionId());
+            } catch (Exception e) {
+                // session either doesn't exist or has timed out - fall thru to create a new session
+            }
+        }
+
+        if (subject == null) {
+            subject = subjectManager.loginUnauthenticated(user.getName());
+            user.setSessionId(subject.getSessionId()); // we update the passed in object so the caller can use it as well
+
+        }
+
+        return subject;
     }
 
     protected void updateOperationScheduleEntity(JobDetail jobDetail, Date nextFireTime,

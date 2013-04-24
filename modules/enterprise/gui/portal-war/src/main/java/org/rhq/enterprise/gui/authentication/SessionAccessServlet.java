@@ -112,7 +112,7 @@ public class SessionAccessServlet extends HttpServlet {
             Subject subject = webUser.getSubject();
             try {
                 SessionManager.getInstance().getSubject(subject.getSessionId());
-                long lastAccess = SessionManager.getInstance().getlastAccess(subject.getSessionId());
+                long lastAccess = SessionManager.getInstance().getLastAccess(subject.getSessionId());
 
                 PrintWriter writer = response.getWriter();
                 String output = subject.getId() + ":" + webUser.getSessionId() + ":" + lastAccess;

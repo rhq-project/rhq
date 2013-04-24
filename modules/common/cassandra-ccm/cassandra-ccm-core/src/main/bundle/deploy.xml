@@ -114,7 +114,7 @@
                         defaultValue=""
                         type="string"/>
 
-    <rhq:input-property name="rhq.casandra.native_transport_max_threads"
+    <rhq:input-property name="rhq.cassandra.native_transport_max_threads"
                         description="The maximum number of threads handling native CQL requests."
                         required="false"
                         defaultValue="64"

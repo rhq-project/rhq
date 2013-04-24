@@ -141,7 +141,7 @@ public class DeploymentOptions {
         setNumTokens(Integer.valueOf(loadProperty("rhq.cassandra.num-tokens", properties)));
         setNativeTransportPort(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-port", properties)));
         setRpcPort(Integer.valueOf(loadProperty("rhq.cassandra.rpc-port", properties)));
-        setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.casandra.native-transport-max-threads",
+        setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-max-threads",
             properties)));
         setUsername(loadProperty("rhq.cassandra.username", properties));
         setPassword(loadProperty("rhq.cassandra.password", properties));
@@ -365,7 +365,7 @@ public class DeploymentOptions {
     /**
      * @return The max number of threads to handle CQL requests
      */
-    @DeploymentProperty(name = "rhq.casandra.native_transport_max_threads")
+    @DeploymentProperty(name = "rhq.cassandra.native_transport_max_threads")
     public Integer getNativeTransportMaxThreads() {
         return nativeTransportMaxThreads;
     }

@@ -28,6 +28,7 @@ package org.rhq.storage.installer;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -111,68 +112,62 @@ public class StorageInstaller {
         storageBasedir = new File(basedir, "rhq-storage");
         logDir = new File(serverBasedir, "logs");
 
-        Option hostname = new Option("n", "hostname", true, "The hostname or IP address on which the node will listen for " +
-            "requests. If not specified, defaults to the hostname for localhost.");
-         hostname.setArgName("HOSTNAME");
+        Option hostname = new Option("n", "hostname", true,
+            "The hostname or IP address on which the node will listen for "
+                + "requests. If not specified, defaults to the hostname for localhost.");
+        hostname.setArgName("HOSTNAME");
 
-        Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that " +
-            "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. " +
-            "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
+        Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that "
+            + "serve as contact points. Nodes use this list to find each other and to learn the cluster topology. "
+            + "It does not need to specify all nodes in the cluster. Defaults to this node's hostname.");
         seeds.setArgName("SEEDS");
 
-        Option jmxPortOption = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. " +
-            "Defaults to " + jmxPort + ".");
+        Option jmxPortOption = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. "
+            + "Defaults to " + jmxPort + ".");
         jmxPortOption.setArgName("PORT");
 
-        Option nativeTransportPortOption = new Option("c", "client-port", true, "The port on which to " +
-            "listen for client requests. Defaults to " + nativeTransportPort);
+        Option nativeTransportPortOption = new Option("c", "client-port", true, "The port on which to "
+            + "listen for client requests. Defaults to " + nativeTransportPort);
         nativeTransportPortOption.setArgName("PORT");
 
-        Option storagePortOption = new Option(null, "storage-port", true, "The port on which to listen for requests " +
-            " from other nodes. Defaults to " + storagePort);
+        Option storagePortOption = new Option(null, "storage-port", true, "The port on which to listen for requests "
+            + " from other nodes. Defaults to " + storagePort);
         storagePortOption.setArgName("PORT");
 
-        Option sslStoragePortOption = new Option(null, "ssl-storage-port", true, "The port on which to listen for " +
-            "encrypted requests from other nodes. Only used when encryption is enabled. Defaults to " + sslStoragePort);
+        Option sslStoragePortOption = new Option(null, "ssl-storage-port", true, "The port on which to listen for "
+            + "encrypted requests from other nodes. Only used when encryption is enabled. Defaults to "
+            + sslStoragePort);
         sslStoragePortOption.setArgName("PORT");
 
-        Option startOption = new Option(null, "start", true, "Start the storage node after installing it on disk. " +
-            "Defaults to true.");
+        Option startOption = new Option(null, "start", true, "Start the storage node after installing it on disk. "
+            + "Defaults to true.");
         startOption.setArgName("true|false");
 
-        Option checkStatus = new Option(null, "check-status", true, "Check the node status to verify that it is up " +
-            "after starting it. This option is ignored if the start option is not set. Defaults to true.");
+        Option checkStatus = new Option(null, "check-status", true, "Check the node status to verify that it is up "
+            + "after starting it. This option is ignored if the start option is not set. Defaults to true.");
         checkStatus.setArgName("true|false");
 
-        Option commitLogOption = new Option(null, "commitlog", true, "The directory where the storage node keeps " +
-            "commit log files. Defaults to " + commitLogDir + ".");
+        Option commitLogOption = new Option(null, "commitlog", true, "The directory where the storage node keeps "
+            + "commit log files. Defaults to " + commitLogDir + ".");
         commitLogOption.setArgName("DIR");
 
-        Option dataDirOption = new Option(null, "data", true, "The directory where the storage node keeps data files. " +
-            "Defaults to " + dataDir + ".");
+        Option dataDirOption = new Option(null, "data", true, "The directory where the storage node keeps data files. "
+            + "Defaults to " + dataDir + ".");
         dataDirOption.setArgName("DIR");
 
-        Option savedCachesDirOption = new Option(null, "saved-caches", true, "The directory where the storage node " +
-            "keeps saved cache files. Defaults to " + savedCachesDir + ".");
+        Option savedCachesDirOption = new Option(null, "saved-caches", true, "The directory where the storage node "
+            + "keeps saved cache files. Defaults to " + savedCachesDir + ".");
         savedCachesDirOption.setArgName("DIR");
 
-        Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed " +
-            "The default directory will be " + storageBasedir);
+        Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed "
+            + "The default directory will be " + storageBasedir);
 
-        options = new Options()
-            .addOption(new Option("h", "help", false, "Show this message."))
+        options = new Options().addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
             //.addOption(seeds)
-            .addOption(jmxPortOption)
-            .addOption(startOption)
-            .addOption(checkStatus)
-            .addOption(commitLogOption)
-            .addOption(dataDirOption)
-            .addOption(savedCachesDirOption)
-            .addOption(nativeTransportPortOption)
-            .addOption(storagePortOption)
-            .addOption(sslStoragePortOption)
-            .addOption(basedirOption);
+            .addOption(jmxPortOption).addOption(startOption).addOption(checkStatus).addOption(commitLogOption)
+            .addOption(dataDirOption).addOption(savedCachesDirOption).addOption(nativeTransportPortOption)
+            .addOption(storagePortOption).addOption(sslStoragePortOption).addOption(basedirOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -231,8 +226,8 @@ public class StorageInstaller {
             checkPerms(options.getOption("data"), dataDir, errors);
 
             if (!errors.isEmpty()) {
-                log.error("Problems have been detected with one or more of the directories in which the storage " +
-                    "node will need to store data");
+                log.error("Problems have been detected with one or more of the directories in which the storage "
+                    + "node will need to store data");
                 for (String error : errors) {
                     log.error(error);
                 }
@@ -252,7 +247,7 @@ public class StorageInstaller {
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
             try {
                 serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
-            }  catch (IOException e) {
+            } catch (IOException e) {
                 throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
             }
 
@@ -262,7 +257,7 @@ public class StorageInstaller {
                 String startupErrors = startNode(deploymentOptions);
                 if (startupErrors == null) {
                     boolean checkStatus = Boolean.parseBoolean(cmdLine.getOptionValue("check-status", "true"));
-                    if (checkStatus) {
+                    if (checkStatus || isWindows()) { // no reliable pid file on windows
                         if (verifyNodeIsUp(jmxPort, 5, 3000)) {
                             log.info("RHQ Storage Node is up and running and ready to service client requests");
                             log.info("Installation of the storage node has completed successfully.");
@@ -275,24 +270,24 @@ public class StorageInstaller {
                         }
                     } else {
                         if (isRunning()) {
-                            log.info("Installation of the storage node is complete. The node should be up and " +
-                                "running");
+                            log.info("Installation of the storage node is complete. The node should be up and "
+                                + "running");
                             return STATUS_NO_ERRORS;
                         } else {
-                            log.warn("Installation of the storage node is complete, but the node does not appear to " +
-                                "be running. No start up errors were reported.  Check the log file at " + logFile +
-                                " for any other possible errors.");
+                            log.warn("Installation of the storage node is complete, but the node does not appear to "
+                                + "be running. No start up errors were reported.  Check the log file at " + logFile
+                                + " for any other possible errors.");
                             return STATUS_STORAGE_NOT_RUNNING;
                         }
                     }
                 } else {
-                    log.error("The storage node reported the following errors while trying to start:\n\n" +
-                        startupErrors + "\n\n");
+                    log.error("The storage node reported the following errors while trying to start:\n\n"
+                        + startupErrors + "\n\n");
                     if (startupErrors.contains("java.net.BindException: Address already in use")) {
                         log.error("This error may indicate a conflict for the JMX port.");
                     }
-                    log.error("Please review your configuration for possible sources of errors such as port " +
-                        "conflicts or invalid arguments/options passed to the java executable.");
+                    log.error("Please review your configuration for possible sources of errors such as port "
+                        + "conflicts or invalid arguments/options passed to the java executable.");
                     log.error("The installer will now exit.");
                     return STATUS_STORAGE_NOT_RUNNING;
                 }
@@ -317,9 +312,9 @@ public class StorageInstaller {
         } else {
             File parent = findParentDir(new File(path));
             if (!parent.canWrite()) {
-                errors.add("The user running this installer does not appear to have write permissions to " + parent +
-                    ". Either make sure that the user running the storage node has write permissions or use the --" +
-                    option.getLongOpt() + " to change this value.");
+                errors.add("The user running this installer does not appear to have write permissions to " + parent
+                    + ". Either make sure that the user running the storage node has write permissions or use the --"
+                    + option.getLongOpt() + " to change this value.");
             }
         }
     }
@@ -356,31 +351,98 @@ public class StorageInstaller {
     }
 
     private String startNode(DeploymentOptions deploymentOptions) throws Exception {
-        File basedir = new File(deploymentOptions.getBasedir());
-        File binDir = new File(basedir, "bin");
+        org.apache.commons.exec.CommandLine cmdLine;
+        String errOutput;
 
-        File startScript;
         if (isWindows()) {
-            startScript = new File(binDir, "cassandra.bat");
+            File basedir = new File(System.getProperty("rhq.server.basedir"));
+            basedir = (null == basedir) ? new File(deploymentOptions.getBasedir()).getParentFile() : basedir;
+            File binDir = new File(basedir, "bin");
+
+            // First, stop the service if it exists
+            cmdLine = new org.apache.commons.exec.CommandLine("cmd.exe");
+            cmdLine.addArgument("/C");
+            cmdLine.addArgument("rhq-storage.bat");
+            cmdLine.addArgument("stop");
+            errOutput = exec(binDir, cmdLine);
+
+            if (!errOutput.isEmpty()) {
+                return errOutput;
+            }
+
+            // Second, remove it if it exists
+            cmdLine = new org.apache.commons.exec.CommandLine("cmd.exe");
+            cmdLine.addArgument("/C");
+            cmdLine.addArgument("rhq-storage.bat");
+            cmdLine.addArgument("remove");
+            errOutput = exec(binDir, cmdLine);
+
+            if (!errOutput.isEmpty()) {
+                return errOutput;
+            }
+
+            // Third installer the service
+            cmdLine = new org.apache.commons.exec.CommandLine("cmd.exe");
+            cmdLine.addArgument("/C");
+            cmdLine.addArgument("rhq-storage.bat");
+            cmdLine.addArgument("install");
+            errOutput = exec(binDir, cmdLine);
+
+            if (!errOutput.isEmpty()) {
+                return errOutput;
+            }
+
+            // Fourth, start the service
+            cmdLine = new org.apache.commons.exec.CommandLine("cmd.exe");
+            cmdLine.addArgument("/C");
+            cmdLine.addArgument("rhq-storage.bat");
+            cmdLine.addArgument("start");
+            errOutput = exec(binDir, cmdLine);
+
+            if (!errOutput.isEmpty()) {
+                return errOutput;
+            }
+
         } else {
-            startScript = new File(binDir, "cassandra");
+            File basedir = new File(deploymentOptions.getBasedir());
+            File binDir = new File(basedir, "bin");
+
+            cmdLine = new org.apache.commons.exec.CommandLine("cassandra");
+            cmdLine.addArgument("--PidFile");
+            cmdLine.addArgument("cassandra.pid");
+            errOutput = exec(binDir, cmdLine);
+
+            if (!errOutput.isEmpty()) {
+                return errOutput;
+            }
         }
 
-        org.apache.commons.exec.CommandLine cmdLine = new org.apache.commons.exec.CommandLine(startScript)
-            .addArgument("-p")
-            .addArgument(new File(binDir, "cassandra.pid").getAbsolutePath());
-
-        Executor executor = new DefaultExecutor();
-        org.apache.commons.io.output.ByteArrayOutputStream buffer =
-            new org.apache.commons.io.output.ByteArrayOutputStream();
-        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), buffer);
-        executor.setStreamHandler(streamHandler);
-        executor.execute(cmdLine);
-
-        if (buffer.size() > 0) {
-            return buffer.toString();
-        }
         return null;
+    }
+
+    private String exec(File workingDir, org.apache.commons.exec.CommandLine cmdLine) throws Exception {
+        Executor executor = new DefaultExecutor();
+        org.apache.commons.io.output.ByteArrayOutputStream buffer = new org.apache.commons.io.output.ByteArrayOutputStream();
+        NullOutputStream nullOs = new NullOutputStream();
+        PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), buffer);
+        executor.setWorkingDirectory(workingDir);
+        executor.setStreamHandler(streamHandler);
+        String result = "";
+
+        try {
+            executor.execute(cmdLine);
+            result = buffer.toString();
+
+        } finally {
+            try {
+                buffer.close();
+                nullOs.close();
+            } catch (Exception e) {
+                // best effort
+            }
+        }
+
+        return result;
     }
 
     private boolean isWindows() {
@@ -394,7 +456,13 @@ public class StorageInstaller {
     }
 
     private boolean verifyNodeIsUp(int jmxPort, int retries, long timeout) throws Exception {
-        String url = "service:jmx:rmi:///jndi/rmi://localhost:" + jmxPort + "/jmxrmi";
+        String address;
+        try {
+            address = InetAddress.getLocalHost().getHostAddress();
+        } catch (UnknownHostException e) {
+            address = "localhost";
+        }
+        String url = "service:jmx:rmi:///jndi/rmi://" + address + ":" + jmxPort + "/jmxrmi";
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         JMXConnector connector = null;
         MBeanServerConnection serverConnection = null;
@@ -405,7 +473,7 @@ public class StorageInstaller {
         } catch (InterruptedException e) {
         }
 
-        Map<String, String> env  = new HashMap<String, String>();
+        Map<String, String> env = new HashMap<String, String>();
         env.put("java.naming.factory.initial", RMIContextFactory.class.getName());
 
         for (int i = 0; i < retries; ++i) {
@@ -423,8 +491,8 @@ public class StorageInstaller {
                         log.debug("The storage node is not up.", e);
                     } else {
                         Throwable rootCause = ThrowableUtil.getRootCause(e);
-                        log.info("The storage node is not up: " + rootCause.getClass().getName() + ": " +
-                            rootCause.getMessage());
+                        log.info("The storage node is not up: " + rootCause.getClass().getName() + ": "
+                            + rootCause.getMessage());
                     }
                     log.info("Checking storage node status again in " + (timeout * (i + 1)) + " ms...");
                 }
@@ -437,7 +505,7 @@ public class StorageInstaller {
     public void printUsage() {
         Options options = getOptions();
         HelpFormatter helpFormatter = new HelpFormatter();
-        String syntax = "rhq-storage-installer.sh [options]";
+        String syntax = "rhq-storage-installer.sh|bat [options]";
         String header = "";
 
         helpFormatter.printHelp(syntax, header, options, null);

@@ -46,8 +46,7 @@ public class Start extends ControlCommand {
     private Options options;
 
     public Start() {
-        options = new Options()
-            .addOption(null, STORAGE_OPTION, false, "Start RHQ storage node")
+        options = new Options().addOption(null, STORAGE_OPTION, false, "Start RHQ storage node")
             .addOption(null, SERVER_OPTION, false, "Start RHQ server")
             .addOption(null, AGENT_OPTION, false, "Start RHQ agent");
     }
@@ -86,24 +85,24 @@ public class Start extends ControlCommand {
                     if (isStorageInstalled()) {
                         startStorage();
                     } else {
-                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
+                            + " option will be ignored.");
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
                         startRHQServer();
                     } else {
-                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
+                            + " option will be ignored.");
                     }
                 }
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
                         startAgent();
                     } else {
-                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
+                            + " option will be ignored.");
                     }
                 }
             }
@@ -143,8 +142,7 @@ public class Start extends ControlCommand {
     private void startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-server." + getExtension()).addArgument("start");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -156,8 +154,7 @@ public class Start extends ControlCommand {
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-agent-wrapper." + getExtension()).addArgument("start");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "start");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());

@@ -45,7 +45,7 @@ public class RHQControl {
 
     public void printUsage() {
         HelpFormatter helpFormatter = new HelpFormatter();
-        String syntax = "rhqctl.sh <cmd> [options]";
+        String syntax = "rhqctl <cmd> [options]";
         String header = "\nwhere <cmd> is one of:";
 
         helpFormatter.setOptPrefix("");
@@ -65,7 +65,7 @@ public class RHQControl {
         } catch(UsageException e) {
             printUsage();
         } catch (RHQControlException e) {
-            log.error(e);
+            log.error(e.getMessage() + " [Cause: " + e.getCause() + "]");
         }
     }
 

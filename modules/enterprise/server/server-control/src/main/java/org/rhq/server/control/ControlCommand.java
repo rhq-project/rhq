@@ -116,9 +116,9 @@ public abstract class ControlCommand {
         String syntax;
 
         if (options.getOptions().isEmpty()) {
-            syntax = "rhqctl.sh " + getName();
+            syntax = "rhqctl " + getName();
         } else {
-            syntax = "rhqctl.sh " + getName() + " [options]";
+            syntax = "rhqctl " + getName() + " [options]";
         }
 
         helpFormatter.setNewLine("\n");
@@ -158,7 +158,7 @@ public abstract class ControlCommand {
         return getAgentBasedir().exists();
     }
 
-    protected  boolean isStorageInstalled() {
+    protected boolean isStorageInstalled() {
         return getStorageBasedir().exists();
     }
 
@@ -217,11 +217,31 @@ public abstract class ControlCommand {
         return file;
     }
 
-    protected String getExtension() {
+    protected org.apache.commons.exec.CommandLine getCommandLine(String scriptName, String... args) {
+        org.apache.commons.exec.CommandLine result;
+
         if (isWindows()) {
-            return "bat";
+            result = new org.apache.commons.exec.CommandLine("cmd.exe");
+            result.addArgument("/C");
+            result.addArgument(scriptName + ".bat");
+            return result;
+        } else {
+            result = new org.apache.commons.exec.CommandLine("./" + scriptName + ".sh");
         }
-        return "sh";
+
+        for (String arg : args) {
+            result.addArgument(arg);
+        }
+
+        return result;
+    }
+
+    protected String getScript(String scriptName) {
+        if (isWindows()) {
+            return scriptName + ".bat";
+        }
+
+        return "./" + scriptName + ".sh";
     }
 
     protected boolean isWindows() {

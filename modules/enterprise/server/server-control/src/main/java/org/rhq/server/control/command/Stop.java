@@ -44,10 +44,8 @@ public class Stop extends ControlCommand {
     private Options options;
 
     public Stop() {
-        options = new Options()
-            .addOption(null, "storage", false, "Stop RHQ storage node")
-            .addOption(null, "server", false, "Stop RHQ server")
-            .addOption(null, "agent", false, "Stop RHQ agent");
+        options = new Options().addOption(null, "storage", false, "Stop RHQ storage node")
+            .addOption(null, "server", false, "Stop RHQ server").addOption(null, "agent", false, "Stop RHQ agent");
     }
 
     @Override
@@ -84,24 +82,24 @@ public class Stop extends ControlCommand {
                     if (isStorageInstalled()) {
                         stopStorage();
                     } else {
-                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
+                            + " option will be ignored.");
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
                         stopRHQServer();
                     } else {
-                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
+                            + " option will be ignored.");
                     }
                 }
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
                         stopAgent();
                     } else {
-                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
+                            + " option will be ignored.");
                     }
                 }
             }
@@ -133,8 +131,7 @@ public class Stop extends ControlCommand {
 
         String pid = getServerPid();
         if (pid != null) {
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-                "./rhq-server." + getExtension()).addArgument("stop");
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(binDir);
             executor.setStreamHandler(new PumpStreamHandler());
@@ -149,8 +146,7 @@ public class Stop extends ControlCommand {
         String pid = getAgentPid();
 
         if (pid != null) {
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-                "./rhq-agent-wrapper." + getExtension()).addArgument("stop");
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(agentBinDir);
             executor.setStreamHandler(new PumpStreamHandler());

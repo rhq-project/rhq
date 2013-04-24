@@ -36,16 +36,14 @@
 #                           use. This will be ignored if
 #                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
 #                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-#                           not set, the Server's embedded JRE will be used.
+#                           not set, JAVA_HOME will be used.
 #
 #    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 #                                    executable to use. If this is set,
 #                                    RHQ_SERVER_JAVA_HOME is ignored.
 #                                    If this is not set, then
 #                                    $RHQ_SERVER_JAVA_HOME/bin/java
-#                                    is used. If this and
-#                                    RHQ_SERVER_JAVA_HOME are not set, the
-#                                    Server's embedded JRE will be used.
+#                                    is used.
 #
 #    RHQ_SERVER_JAVA_OPTS - Java VM command line options to be
 #                           passed into the Server's VM. If this is not defined
@@ -81,9 +79,6 @@
 #                             script can write its pidfile to.
 #                             If not defined, this defaults to the Server's
 #                             bin directory.
-#
-# If the embedded JRE is to be used but is not available, the fallback
-# JRE to be used will be determined by the JAVA_HOME environment variable.
 #
 # This script calls standalone.sh when starting the underlying JBossAS server.
 # =============================================================================
@@ -309,13 +304,8 @@ fi
 
 if [ -z "$RHQ_SERVER_JAVA_EXE_FILE_PATH" ]; then
    if [ -z "$RHQ_SERVER_JAVA_HOME" ]; then
-      RHQ_SERVER_JAVA_HOME="${RHQ_SERVER_HOME}/jre"
-      if [ -d "$RHQ_SERVER_JAVA_HOME" ]; then
-         debug_msg "Using the embedded JRE"
-      else
-         debug_msg "No embedded JRE found - will try to use JAVA_HOME: $JAVA_HOME"
-         RHQ_SERVER_JAVA_HOME="$JAVA_HOME"
-      fi
+      debug_msg "No JRE found - will try to use JAVA_HOME: $JAVA_HOME"
+      RHQ_SERVER_JAVA_HOME="$JAVA_HOME"
    fi
    debug_msg "RHQ_SERVER_JAVA_HOME: $RHQ_SERVER_JAVA_HOME"
    RHQ_SERVER_JAVA_EXE_FILE_PATH="${RHQ_SERVER_JAVA_HOME}/bin/java"

@@ -46,8 +46,7 @@ public class Status extends ControlCommand {
     private Options options;
 
     public Status() {
-        options = new Options()
-            .addOption(null, STORAGE_OPTION, false, "Check status of RHQ storage node")
+        options = new Options().addOption(null, STORAGE_OPTION, false, "Check status of RHQ storage node")
             .addOption(null, SERVER_OPTION, false, "Check status of RHQ server")
             .addOption(null, AGENT_OPTION, false, "Check status of RHQ agent");
     }
@@ -86,24 +85,24 @@ public class Status extends ControlCommand {
                     if (isStorageInstalled()) {
                         checkStorageStatus();
                     } else {
-                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
+                            + " option will be ignored.");
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
                         checkServerStatus();
                     } else {
-                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
+                            + " option will be ignored.");
                     }
                 }
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
                         checkAgentStatus();
                     } else {
-                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
+                            + " option will be ignored.");
                     }
                 }
             }
@@ -129,8 +128,7 @@ public class Status extends ControlCommand {
     private void checkServerStatus() throws Exception {
         log.debug("Checking RHQ server status");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-server." + getExtension()).addArgument("status");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "status");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -142,8 +140,7 @@ public class Status extends ControlCommand {
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-agent-wrapper." + getExtension()).addArgument("status");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "status");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());

@@ -48,8 +48,7 @@ public class Console extends ControlCommand {
     private Options options;
 
     public Console() {
-        options = new Options()
-            .addOption(null, "storage", false, "Start the RHQ storage node in the foreground")
+        options = new Options().addOption(null, "storage", false, "Start the RHQ storage node in the foreground")
             .addOption(null, "server", false, "Start the RHQ server in the foreground")
             .addOption(null, "agent", false, "Start the RHQ agent in the foreground");
     }
@@ -80,22 +79,22 @@ public class Console extends ControlCommand {
                     if (isStorageInstalled()) {
                         startStorageInForeground();
                     } else {
-                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
+                            + " option will be ignored.");
                     }
                 } else if (option.equals(SERVER_OPTION)) {
                     if (isServerInstalled()) {
                         startServerInForeground();
                     } else {
-                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
+                            + " option will be ignored.");
                     }
                 } else if (option.equals(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
                         startAgentInForeground();
                     } else {
-                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION +
-                            " option will be ignored.");
+                        log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
+                            + " option will be ignored.");
                     }
                 } else {
                     throw new IllegalArgumentException(option + " is not a supported option");
@@ -129,8 +128,7 @@ public class Console extends ControlCommand {
     private void startServerInForeground() throws Exception {
         log.debug("Starting RHQ server in foreground");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-server." + getExtension()).addArgument("console");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -145,33 +143,34 @@ public class Console extends ControlCommand {
         File confDir = new File(agentHomeDir, "conf");
         File agentConfigFile = new File(confDir, "agent-configuration.xml");
 
-        Process process = new ProcessBuilder("./rhq-agent." + getExtension(), "-c", agentConfigFile.getPath())
-            .directory(agentBinDir)
-//            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
-//            .redirectInput(ProcessBuilder.Redirect.INHERIT)
-//            .redirectError(ProcessBuilder.Redirect.INHERIT)
+        //TODO: fix for windows
+        Process process = new ProcessBuilder(getScript("rhq-agent"), "-c", agentConfigFile.getPath()).directory(
+            agentBinDir)
+        //            .redirectOutput(ProcessBuilder.Redirect.INHERIT)
+        //            .redirectInput(ProcessBuilder.Redirect.INHERIT)
+        //            .redirectError(ProcessBuilder.Redirect.INHERIT)
             .start();
-//            .waitFor();
+        //            .waitFor();
 
         AgentInputStreamPipe pipe = new AgentInputStreamPipe(process.getInputStream());
         pipe.start();
         pipe.join();
-//        final InputStream inputStream = process.getInputStream();
-//        final CountDownLatch doneSignal = new CountDownLatch(1);
-//        Thread agentThread = new Thread(new Runnable() {
-//            @Override
-//            public void run() {
-//                InputStreamReader reader = new InputStreamReader(inputStream);
-//                Scanner scanner = new Scanner(reader);
-//                while (scanner.hasNextLine()) {
-//                    System.out.println(scanner.nextLine());
-//                }
-//                doneSignal.countDown();
-//            }
-//        });
-//        agentThread.start();
-//        doneSignal.await();
-//        agentThread.join();
+        //        final InputStream inputStream = process.getInputStream();
+        //        final CountDownLatch doneSignal = new CountDownLatch(1);
+        //        Thread agentThread = new Thread(new Runnable() {
+        //            @Override
+        //            public void run() {
+        //                InputStreamReader reader = new InputStreamReader(inputStream);
+        //                Scanner scanner = new Scanner(reader);
+        //                while (scanner.hasNextLine()) {
+        //                    System.out.println(scanner.nextLine());
+        //                }
+        //                doneSignal.countDown();
+        //            }
+        //        });
+        //        agentThread.start();
+        //        doneSignal.await();
+        //        agentThread.join();
     }
 
     private class AgentInputStreamPipe extends Thread {

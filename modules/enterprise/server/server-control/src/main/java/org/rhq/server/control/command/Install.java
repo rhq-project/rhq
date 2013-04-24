@@ -74,20 +74,32 @@ public class Install extends ControlCommand {
 
     public Install() {
         options = new Options()
-            .addOption(null, "storage", false, "Install RHQ storage node. The default install directory will be " +
-                DEFAULT_STORAGE_BASEDIR + ". Use the --storage-dir option to choose an alternate directory.")
+            .addOption(
+                null,
+                "storage",
+                false,
+                "Install RHQ storage node. The default install directory will be " + DEFAULT_STORAGE_BASEDIR
+                    + ". Use the --storage-dir option to choose an alternate directory.")
             .addOption(null, "server", false, "Install RHQ server")
-            .addOption(null, "agent", false, "Install RHQ agent. The default install directory will be " +
-                DEFAULT_AGENT_BASEDIR + ". Use the --agent-dir option to choose an alternate directory.")
+            .addOption(
+                null,
+                "agent",
+                false,
+                "Install RHQ agent. The default install directory will be " + DEFAULT_AGENT_BASEDIR
+                    + ". Use the --agent-dir option to choose an alternate directory.")
             .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
             .addOption(null, "agent-dir", true, "The directory where the agent will be installed.")
-            .addOption(null, SERVER_CONFIG_OPTION, true, "An alternate properties file to use in place of the default " +
-                "rhq-server.properties")
-            .addOption(null, AGENT_CONFIG_OPTION, true, "An alternate XML file to use in place of the default " +
-                "agent-configuration.xml")
-            .addOption(null, STORAGE_CONFIG_OPTION, true, "A properties file with keys that correspond to option names " +
-                "of the storage installer. Each property will be translated into an option that is passed to the " +
-                " storage installer. See example.storage.properties for examples.");
+            .addOption(null, SERVER_CONFIG_OPTION, true,
+                "An alternate properties file to use in place of the default " + "rhq-server.properties")
+            .addOption(null, AGENT_CONFIG_OPTION, true,
+                "An alternate XML file to use in place of the default " + "agent-configuration.xml")
+            .addOption(
+                null,
+                STORAGE_CONFIG_OPTION,
+                true,
+                "A properties file with keys that correspond to option names "
+                    + "of the storage installer. Each property will be translated into an option that is passed to the "
+                    + " storage installer. See example.storage.properties for examples.");
     }
 
     @Override
@@ -118,8 +130,8 @@ public class Install extends ControlCommand {
             }
 
             // if no options specified, then install whatever is installed
-            if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) ||
-                commandLine.hasOption(AGENT_OPTION))) {
+            if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
+                .hasOption(AGENT_OPTION))) {
 
                 replaceServerPropertiesIfNecessary(commandLine);
 
@@ -190,8 +202,8 @@ public class Install extends ControlCommand {
     private List<String> validateOptions(CommandLine commandLine) {
         List<String> errors = new LinkedList<String>();
 
-        if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) ||
-            commandLine.hasOption(AGENT_OPTION))) {
+        if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
+            .hasOption(AGENT_OPTION))) {
             if (commandLine.hasOption(SERVER_CONFIG_OPTION) && !isServerInstalled()) {
                 File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
                 validateServerConfigOption(serverConfig, errors);
@@ -219,14 +231,14 @@ public class Install extends ControlCommand {
                 }
             }
 
-            if (commandLine.hasOption(SERVER_OPTION) && !isStorageInstalled() &&
-                commandLine.hasOption(SERVER_CONFIG_OPTION)) {
+            if (commandLine.hasOption(SERVER_OPTION) && !isStorageInstalled()
+                && commandLine.hasOption(SERVER_CONFIG_OPTION)) {
                 File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
                 validateServerConfigOption(serverConfig, errors);
             }
 
-            if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled() &&
-                commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+            if (commandLine.hasOption(AGENT_OPTION) && !isAgentInstalled()
+                && commandLine.hasOption(AGENT_CONFIG_OPTION)) {
                 File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                 validateAgentConfigOption(agentConfig, errors);
             }
@@ -237,34 +249,34 @@ public class Install extends ControlCommand {
 
     private void validateServerConfigOption(File serverConfig, List<String> errors) {
         if (!serverConfig.exists()) {
-            errors.add("The --server-config option has as its value a file that does not exist [" +
-                serverConfig.getAbsolutePath() + "]");
+            errors.add("The --server-config option has as its value a file that does not exist ["
+                + serverConfig.getAbsolutePath() + "]");
         } else if (serverConfig.isDirectory()) {
-            errors.add("The --server-config option has as its value a path that is a directory [" +
-                serverConfig.getAbsolutePath() + "]. It should be a properties file that replaces the " +
-                "default rhq-server.properties");
+            errors.add("The --server-config option has as its value a path that is a directory ["
+                + serverConfig.getAbsolutePath() + "]. It should be a properties file that replaces the "
+                + "default rhq-server.properties");
         }
     }
 
     private void validateAgentConfigOption(File agentConfig, List<String> errors) {
         if (!agentConfig.exists()) {
-            errors.add("The --agent-config option has as its value a file that does not exist [" +
-                agentConfig.getAbsolutePath() + "]");
+            errors.add("The --agent-config option has as its value a file that does not exist ["
+                + agentConfig.getAbsolutePath() + "]");
         } else if (agentConfig.isDirectory()) {
-            errors.add("The --agent-config option has as its value a path that is a directory [" +
-                agentConfig.getAbsolutePath() + "]. It should be an XML file that replaces the default " +
-                "agent-configuration.xml");
+            errors.add("The --agent-config option has as its value a path that is a directory ["
+                + agentConfig.getAbsolutePath() + "]. It should be an XML file that replaces the default "
+                + "agent-configuration.xml");
         }
     }
 
     private void validateStorageConfigOption(File storageConfig, List<String> errors) {
         if (!storageConfig.exists()) {
-            errors.add("The --storage-config option has as its value a file that does not exist [" +
-                storageConfig.getAbsolutePath() + "]");
+            errors.add("The --storage-config option has as its value a file that does not exist ["
+                + storageConfig.getAbsolutePath() + "]");
         } else if (storageConfig.isDirectory()) {
-            errors.add("The --storage-config option has as its value a path that is a directory [" +
-                storageConfig.getAbsolutePath() + "]. It should be a properties file with keys that " +
-                "correspond to options for the storage installer.");
+            errors.add("The --storage-config option has as its value a path that is a directory ["
+                + storageConfig.getAbsolutePath() + "]. It should be a properties file with keys that "
+                + "correspond to options for the storage installer.");
         }
     }
 
@@ -289,9 +301,8 @@ public class Install extends ControlCommand {
 
         putProperty(RHQ_STORAGE_BASEDIR_PROP, storageBasedir.getAbsolutePath());
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-storage-installer." + getExtension()).addArgument("--dir")
-            .addArgument(storageBasedir.getAbsolutePath());
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
+            storageBasedir.getAbsolutePath());
 
         if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
             String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
@@ -323,8 +334,7 @@ public class Install extends ControlCommand {
     }
 
     private void startRHQServerForInstallation() throws Exception {
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-server." + getExtension()).addArgument("start");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
@@ -332,8 +342,7 @@ public class Install extends ControlCommand {
 
         executor.execute(commandLine, new DefaultExecuteResultHandler());
 
-        commandLine = new org.apache.commons.exec.CommandLine("./rhq-installer." + getExtension())
-            .addArgument("--test");
+        commandLine = getCommandLine("rhq-installer", "--test");
         executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
 
@@ -346,8 +355,7 @@ public class Install extends ControlCommand {
     private void installRHQServer() throws Exception {
         log.debug("Installing RHQ server");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-installer." + getExtension());
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -382,8 +390,7 @@ public class Install extends ControlCommand {
         putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
-            .addArgument("-jar")
-            .addArgument(agentInstallerJar.getAbsolutePath())
+            .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
             .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath());
 
         Executor executor = new DefaultExecutor();
@@ -435,8 +442,7 @@ public class Install extends ControlCommand {
     private void startAgent(File agentBasedir) throws Exception {
         File agentBinDir = new File(agentBasedir, "bin");
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(
-            "./rhq-agent-wrapper." + getExtension()).addArgument("start");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "start");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
@@ -456,8 +462,7 @@ public class Install extends ControlCommand {
         try {
             StreamUtil.copy(new FileReader(newServerProperties), new FileWriter(defaultServerProps));
         } catch (IOException e) {
-            throw new RHQControlException("Failed to replace " + defaultServerProps + " with " + newServerProperties,
-                e);
+            throw new RHQControlException("Failed to replace " + defaultServerProps + " with " + newServerProperties, e);
         }
     }
 

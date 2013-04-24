@@ -98,7 +98,7 @@ public final class AlertDefUtil {
                 if (alertDefinitionManager.isTemplate(alertDefinitionId)) {
                     resourceTypeId = cond.getAlertDefinition().getResourceType().getId();
                 } else if (alertDefinitionManager.isGroupAlertDefinition(alertDefinitionId)) {
-                    resourceTypeId = cond.getAlertDefinition().getResourceGroup().getResourceType().getId();
+                    resourceTypeId = cond.getAlertDefinition().getGroup().getResourceType().getId();
                 } else {
                     resourceTypeId = cond.getAlertDefinition().getResource().getResourceType().getId();
                 }
@@ -265,7 +265,7 @@ public final class AlertDefUtil {
                 if (context == AlertDefinitionContext.Type) {
                     RequestUtils.setResourceType(request, alertDefinition.getResourceType());
                 } else if (context == AlertDefinitionContext.Group) {
-                    RequestUtils.setResourceGroup(request, alertDefinition.getResourceGroup());
+                    RequestUtils.setResourceGroup(request, alertDefinition.getGroup());
                 } else {
                     RequestUtils.setResource(request, alertDefinition.getResource());
                 }

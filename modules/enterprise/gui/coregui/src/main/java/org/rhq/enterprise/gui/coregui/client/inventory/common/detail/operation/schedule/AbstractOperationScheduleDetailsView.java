@@ -52,6 +52,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
@@ -66,21 +67,21 @@ import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.components.trigger.JobTriggerEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.ConfigurationGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A view for viewing or editing an RHQ {@link org.rhq.core.domain.operation.bean.OperationSchedule operation schedule}.
  *
  * @author Ian Springer
  */
-@SuppressWarnings("unchecked")
 public abstract class AbstractOperationScheduleDetailsView extends
-    AbstractRecordEditor<AbstractOperationScheduleDataSource> {
+    AbstractRecordEditor<AbstractOperationScheduleDataSource<? extends OperationSchedule>> {
 
     private static final String FIELD_OPERATION_DESCRIPTION = "operationDescription";
     private static final String FIELD_OPERATION_PARAMETERS = "operationParameters";
@@ -101,7 +102,7 @@ public abstract class AbstractOperationScheduleDetailsView extends
     private ViewPath viewPath;
     private boolean isImmediateExecution;
 
-    public AbstractOperationScheduleDetailsView(AbstractOperationScheduleDataSource dataSource,
+    public AbstractOperationScheduleDetailsView(AbstractOperationScheduleDataSource<? extends OperationSchedule> dataSource,
         ResourceType resourceType, int scheduleId) {
         super(dataSource, scheduleId, MSG.view_operationScheduleDetails_operationSchedule(), null);
 
@@ -126,14 +127,17 @@ public abstract class AbstractOperationScheduleDetailsView extends
         // to the history page so that he can view the status/result of the operation;
         // otherwise, the user will stay on the schedules list view.
         if (isImmediateExecution) {
-            // If the operation is scheduled from the context menu, the view path will
-            // another entry appended to the end, the operation definition id.
-            if (viewPath.getCurrentIndex() == 6) {
+            // If the operation is scheduled from the context menu, the view path will have
+            // another entry appended to the end, the operation definition id (viewPath.getCurrentIndex() == 6)
+            // Similarly, auto groups have another chunk of view path present ("AutoGroup").
+            // If the operation is scheduled for the auto group, the view path will include "Resource/AutoGroup"
+            // This was causing BZ 823908
+            boolean isAutogroup = viewPath.getParentViewPath().contains(ResourceGroupDetailView.AUTO_GROUP_VIEW);
+            if ((!isAutogroup && viewPath.getCurrentIndex() == 6) || (isAutogroup && viewPath.getCurrentIndex() == 7)) {
                 return viewPath.getPathToIndex(viewPath.getCurrentIndex() - 3) + "/History";
-            } else {
-                return viewPath.getPathToIndex(viewPath.getCurrentIndex() - 2) + "/History";
             }
-
+            // common case (for resource, group not using context menu)
+            return viewPath.getPathToIndex(viewPath.getCurrentIndex() - 2) + "/History";
         }
         return super.getListViewPath();
     }

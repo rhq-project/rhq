@@ -64,8 +64,11 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -80,6 +83,7 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.collection.ArrayUtils;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -87,6 +91,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceAvailabilityManagerLocal;
@@ -145,13 +150,15 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private ProductVersionManagerLocal productVersionManager;
     @EJB
     private SystemManagerLocal systemManager;
-
     @EJB
     private PluginManagerLocal pluginManager;
+    @EJB
+    private AvailabilityManagerLocal availabilityManager;
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public ResourceSyncInfo mergeInventoryReport(InventoryReport report) throws InvalidInventoryReportException {
+    public MergeInventoryReportResults mergeInventoryReport(InventoryReport report)
+        throws InvalidInventoryReportException {
         validateInventoryReport(report);
 
         DeletedResourceTypeFilter filter = new DeletedResourceTypeFilter(subjectManager, resourceTypeManager,
@@ -189,11 +196,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Set<Resource> roots = report.getAddedRoots();
         log.debug(report);
 
+        final Map<String, ResourceType> allTypes = new HashMap<String, ResourceType>();
+
         for (Resource root : roots) {
             // Make sure all platform, server, and service types are valid. Also, make sure they're fetched - otherwise
             // we'll get persistence exceptions when we try to merge OR persist the platform.
             long rootStart = System.currentTimeMillis();
-            if (!initResourceTypes(root)) {
+            if (!initResourceTypes(root, allTypes)) {
                 continue;
             }
 
@@ -210,6 +219,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
         }
 
+        allTypes.clear(); // help GC, we don't need this anymore
+
         // Prepare the ResourceSyncInfo tree which contains all the info the PC needs to sync itself up with us.
         // The platform can be null in only one scenario.. a brand new agent has connected to the server
         // and that agent is currently trying to upgrade its resources. For that it asks us to send down
@@ -218,11 +229,26 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // a chance yet to send us its full inventory report.
         ResourceSyncInfo syncInfo = discoveryBoss.getResourceSyncInfo(knownAgent);
 
+        // we need to also tell the agent if there were any ignored types - we must provide the agent with
+        // ALL types that are ignored, not just for those resources that were in the report
+        ResourceTypeCriteria ignoredTypesCriteria = new ResourceTypeCriteria();
+        ignoredTypesCriteria.addFilterIgnored(true);
+        ignoredTypesCriteria.setPageControl(PageControl.getUnlimitedInstance());
+        PageList<ResourceType> ignoredTypes = resourceTypeManager.findResourceTypesByCriteria(
+            subjectManager.getOverlord(), ignoredTypesCriteria);
+
+        MergeInventoryReportResults results;
+        if (syncInfo != null) {
+            results = new MergeInventoryReportResults(syncInfo, ignoredTypes);
+        } else {
+            results = null;
+        }
+
         if (log.isDebugEnabled()) {
             log.debug("Inventory merge completed in (" + (System.currentTimeMillis() - start) + ")ms");
         }
 
-        return syncInfo;
+        return results;
     }
 
     @Override
@@ -314,7 +340,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
         // Update and persist the actual inventory statuses
         // This is done is a separate transaction to stop failures in the agent from rolling back the transaction
-        discoveryBoss.updateInventoryStatus(user, status, platforms, servers);
+        discoveryBoss.updateInventoryStatusInNewTransaction(user, platforms, servers, status);
 
         scheduleAgentInventoryOperationJob(platforms, servers);
 
@@ -428,8 +454,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * version.
      */
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void updateInventoryStatus(Subject user, InventoryStatus status, List<Resource> platforms,
-        List<Resource> servers) {
+    public void updateInventoryStatusInNewTransaction(Subject user, List<Resource> platforms, List<Resource> servers,
+        InventoryStatus status) {
         for (Resource platform : platforms) {
             resourceManager.setResourceStatus(user, platform, status, false);
         }
@@ -743,6 +769,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         // We don't merge the entire resource tree. Instead we batch them in order to reduce transaction overhead
         // while ensuring no transaction is too big (and thus risks timeout). To do this we need to flatten the
         // tree and chunk through it.  Parents must be merged before children, so use a breadth first approach.
+        // NOTE: this will also strip out all resources that are to be ignored; thus, ignored resources won't get merged
         List<Resource> resourceList = treeToBreadthFirstList(resource);
 
         if (log.isDebugEnabled()) {
@@ -770,12 +797,23 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     private List<Resource> treeToBreadthFirstList(Resource resource) {
+        // if we are to ignore this resource's type, don't bother doing anything since all is to be ignored
+        if (resource.getResourceType().isIgnored()) {
+            return new ArrayList<Resource>(0);
+        }
+
         List<Resource> result = new ArrayList<Resource>(MERGE_BATCH_SIZE);
 
         LinkedList<Resource> queue = new LinkedList<Resource>();
         queue.add(resource);
         while (!queue.isEmpty()) {
             Resource node = queue.remove();
+
+            // if this node is to be ignored, don't traverse it and don't add it to the returned results
+            if (node.getResourceType().isIgnored()) {
+                continue;
+            }
+
             result.add(node);
             for (Resource child : node.getChildResources()) {
                 queue.add(child);
@@ -1070,7 +1108,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
      * recursively assign (detached) ResourceType entities to the resource tree
      * @param resource
      * @param loadedTypeMap Empty map to start, filled as we go to minimize DB fetches
-     * @return
+     * @return false if a resource's type is unknown; true if all types were successfully loaded
      */
     private boolean initResourceTypes(Resource resource, Map<String, ResourceType> loadedTypeMap) {
 
@@ -1099,6 +1137,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         }
 
         resource.setResourceType(resourceType);
+
+        // don't bother looking at the children if we are just going to ignore this resource
+        if (resourceType.isIgnored()) {
+            return true;
+        }
 
         for (Iterator<Resource> childIterator = resource.getChildResources().iterator(); childIterator.hasNext();) {
             Resource child = childIterator.next();
@@ -1179,7 +1222,19 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         if (resourceIds == null || resourceIds.length == 0) {
             return;
         }
-        checkStatus(subject, resourceIds, InventoryStatus.IGNORED, EnumSet.of(InventoryStatus.NEW));
+
+        checkStatus(subject, resourceIds, InventoryStatus.IGNORED,
+            EnumSet.of(InventoryStatus.NEW, InventoryStatus.COMMITTED));
+
+        // We want to set all availabilities for the ignored resources to "unknown" since we won't be tracking them anymore.
+        // This is more of a convienence; if it fails for any reason, just log an error but don't roll back ignoring the resources.
+        try {
+            this.availabilityManager.setResourceAvailabilities(resourceIds, AvailabilityType.UNKNOWN);
+        } catch (Exception e) {
+            log.error("Failed to reset availabilities for resources being ignored: " + ThrowableUtil.getAllMessages(e));
+        }
+
+        return;
     }
 
     public void unignoreResources(Subject subject, int[] resourceIds) {
@@ -1187,6 +1242,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             return;
         }
         checkStatus(subject, resourceIds, InventoryStatus.NEW, EnumSet.of(InventoryStatus.IGNORED));
+    }
+
+    public void unignoreAndImportResources(Subject subject, int[] resourceIds) {
+        if (resourceIds == null || resourceIds.length == 0) {
+            return;
+        }
+        checkStatus(subject, resourceIds, InventoryStatus.COMMITTED, EnumSet.of(InventoryStatus.IGNORED));
     }
 
     @SuppressWarnings("unchecked")
@@ -1243,11 +1305,13 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         for (Resource resource : resources) {
             ResourceCategory category = resource.getResourceType().getCategory();
             if (category == ResourceCategory.PLATFORM) {
-                platforms.add(resource);
-            } else if (category == ResourceCategory.SERVER) {
-                servers.add(resource);
+                if (target == InventoryStatus.IGNORED && (resource.getInventoryStatus() == InventoryStatus.COMMITTED)) {
+                    log.warn("Cannot ignore a committed platform - skipping request to ignore:" + resource);
+                } else {
+                    platforms.add(resource);
+                }
             } else {
-                throw new IllegalArgumentException("Can not directly change the inventory status of a service");
+                servers.add(resource); // we include services in here now (see BZ 535289)
             }
         }
 

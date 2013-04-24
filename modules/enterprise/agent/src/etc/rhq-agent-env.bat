@@ -61,7 +61,7 @@ rem                          rhq-agent-wrapper.bat. The Java VM command line
 rem                          options used by rhq-agent-wrapper.bat are set in
 rem                          wrapper\rhq-agent-wrapper.conf.
 rem
-rem set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true
+rem set RHQ_AGENT_JAVA_OPTS=-Xms64m -Xmx128m -Djava.net.preferIPv4Stack=true -Drhq.preferences.file=%RHQ_AGENT_HOME%\conf\agent-prefs.properties
 
 rem    RHQ_AGENT_JAVA_ENDORSED_DIRS - Java VM command line option to set the
 rem                                   endorsed dirs for the agent's VM. If this

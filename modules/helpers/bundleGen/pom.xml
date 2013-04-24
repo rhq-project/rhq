@@ -17,7 +17,6 @@
          <plugin>
          <groupId>org.apache.maven.plugins</groupId>
          <artifactId>maven-jar-plugin</artifactId>
-         <version>2.2</version>
          <configuration>
            <archive>
              <manifest>
@@ -58,7 +57,6 @@
          <dependency>
              <groupId>commons-logging</groupId>
              <artifactId>commons-logging</artifactId>
-             <version>${commons-logging.version}</version>
          </dependency>
 
          <dependency>

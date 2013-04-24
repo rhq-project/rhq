@@ -238,7 +238,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
 
         //Have thread sleep longer to discover deeper resource types.
         //spinder 6/29/12: up this number if the resources are not being discovered.
-        Thread.sleep(180 * 1000L); // delay so that PC gets a chance to scan for resources
+        Thread.sleep(240 * 1000L); // delay so that PC gets a chance to scan for resources
     }
 
     /** This test method exercises a number of things:
@@ -592,8 +592,7 @@ public class SecurityModuleOptionsTest extends AbstractJBossAS7PluginTest {
         ResourceType modulesType = new ResourceType(descriptorName, PLUGIN_NAME, ResourceCategory.SERVICE, null);
         //Ex. profile=full-ha,subsystem=security,security-domain=testDomain2,acl=classic,acl-modules:0
         String sharedRoot = "profile=full-ha,subsystem=security,security-domain=testDomain2";
-        String moduleOptionTypeKey = sharedRoot += "," + moduleAttribute + ","
-            + optionAttributeType + ":0";
+        String moduleOptionTypeKey = sharedRoot += "," + moduleAttribute + "," + optionAttributeType + ":0";
         //Ex. Module Options Type children [ACL Modules (Profile),etc.]
         Resource modulesInstance = getResourceByTypeAndKey(parent, modulesType, moduleOptionTypeKey);
 

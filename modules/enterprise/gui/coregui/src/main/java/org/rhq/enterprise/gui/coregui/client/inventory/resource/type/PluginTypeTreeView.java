@@ -40,9 +40,11 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 public class PluginTypeTreeView extends EnhancedVLayout {
 
     private ResourceTypeGWTServiceAsync resourceTypeService = GWTServiceLookup.getResourceTypeGWTService();
+    private final boolean showIgnoredResourceTypes;
 
-    public PluginTypeTreeView() {
+    public PluginTypeTreeView(boolean showIgnoredResourceTypes) {
         super();
+        this.showIgnoredResourceTypes = showIgnoredResourceTypes;
         setWidth100();
         setHeight100();
     }
@@ -69,6 +71,7 @@ public class PluginTypeTreeView extends EnhancedVLayout {
         addMember(treeGrid);
 
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        criteria.addFilterIgnored((showIgnoredResourceTypes ? (Boolean) null : Boolean.FALSE));
         criteria.fetchParentResourceTypes(true);
         criteria.setPageControl(PageControl.getUnlimitedInstance());
 

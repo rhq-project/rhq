@@ -256,7 +256,18 @@ class AgentConditionCache extends AbstractConditionCache {
             }
         } else if (alertConditionCategory == AlertConditionCategory.TRAIT) {
             AlertConditionTraitCategoryComposite traitsComposite = (AlertConditionTraitCategoryComposite) composite;
-            String value = traitsComposite.getValue();
+            String value = null;
+
+            switch (alertConditionOperator) {
+            case CHANGES:
+                value = traitsComposite.getValue();
+                break;
+            case REGEX:
+                value = traitsComposite.getCondition().getOption();
+                break;
+            default:
+                log.error("Invalid operator for Trait condition: " + alertConditionOperator);
+            }
 
             try {
                 /* 

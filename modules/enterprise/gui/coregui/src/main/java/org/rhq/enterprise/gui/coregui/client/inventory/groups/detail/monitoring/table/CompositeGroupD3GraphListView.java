@@ -64,6 +64,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
     private int groupId;
     private int definitionId;
+    private boolean isAutogroup;
 
     private MeasurementDefinition definition;
 
@@ -77,14 +78,16 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private HTMLFlow title;
     private HTMLFlow graph;
 
-    public CompositeGroupD3GraphListView(int groupId, int defId) {
+    public CompositeGroupD3GraphListView(int groupId, int defId, boolean isAutogroup) {
         super();
         this.groupId = groupId;
+        this.isAutogroup = isAutogroup;
         setDefinitionId(defId);
         measurementForEachResource = new ArrayList<MultiLineGraphData>();
         measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
         setHeight100();
         setWidth100();
+        setPadding(10);
     }
 
     public void populateData() {
@@ -93,8 +96,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
         criteria.fetchResourceType(true);
-        criteria.addFilterVisible(false);
-        criteria.addFilterPrivate(true);
+        criteria.addFilterVisible(!isAutogroup);
         criteria.fetchExplicitResources(true);
 
         measurementForEachResource.clear();
@@ -180,8 +182,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                                                     @Override
                                                     public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
                                                     {
-                                                        countDownLatch.countDown();
                                                         addMeasurementForEachResource(childResource.getName(), childResource.getId(), result.get(0));
+                                                        countDownLatch.countDown();
                                                     }
                                                 });
                                     }

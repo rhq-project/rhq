@@ -18,7 +18,6 @@
         <dependency>
             <groupId>jboss.jboss-embeddable-ejb3</groupId>
             <artifactId>jboss-ejb3-all</artifactId>
-            <version>1.0.0.Alpha9</version>
             <scope>compile</scope>
         </dependency>
 

@@ -42,6 +42,7 @@ import org.mockito.stubbing.Answer;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeRequest;
 import org.rhq.core.clientapi.agent.upgrade.ResourceUpgradeResponse;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.discovery.MergeInventoryReportResults;
 import org.rhq.core.domain.discovery.MergeResourceResponse;
 import org.rhq.core.domain.discovery.ResourceSyncInfo;
 import org.rhq.core.domain.measurement.DataType;
@@ -82,12 +83,14 @@ public class FakeServerInventory {
      * @author Lukas Krejci
      */
     public static class CompleteDiscoveryChecker {
-        private boolean depthReached;
+        private volatile boolean depthReached;
         private final int expectedDepth;
         private final Object sync = new Object();
+        private volatile boolean finished;
 
         public CompleteDiscoveryChecker(int expectedDepth) {
             this.expectedDepth = expectedDepth;
+            this.depthReached = expectedDepth == 0;
         }
 
         public void waitForDiscoveryComplete() throws InterruptedException {
@@ -106,6 +109,8 @@ public class FakeServerInventory {
                         LOG.debug("Discovery already complete... no need to wait on " + this);
                     }
                 }
+
+                finished = true;
             }
         }
 
@@ -132,11 +137,13 @@ public class FakeServerInventory {
                             } catch (InterruptedException e) {
                                 //well, we are going to finish in a few anyway
                             } finally {
-                                if (LOG.isDebugEnabled()) {
-                                    LOG.debug("Notifying about discovery complete on " + CompleteDiscoveryChecker.this);
-                                }
                                 synchronized (sync) {
-                                    sync.notifyAll();
+                                    if (!finished) {
+                                        if (LOG.isDebugEnabled()) {
+                                            LOG.debug("Notifying about discovery complete on " + CompleteDiscoveryChecker.this);
+                                        }
+                                        sync.notifyAll();
+                                    }
                                 }
                             }
                         }
@@ -212,10 +219,11 @@ public class FakeServerInventory {
         };
     }
 
-    public synchronized Answer<ResourceSyncInfo> mergeInventoryReport(final InventoryStatus requiredInventoryStatus) {
-        return new Answer<ResourceSyncInfo>() {
+    public synchronized Answer<MergeInventoryReportResults> mergeInventoryReport(
+        final InventoryStatus requiredInventoryStatus) {
+        return new Answer<MergeInventoryReportResults>() {
             @Override
-            public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
+            public MergeInventoryReportResults answer(InvocationOnMock invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     InventoryReport inventoryReport = (InventoryReport) invocation.getArguments()[0];
 
@@ -229,7 +237,7 @@ public class FakeServerInventory {
                                 platform = persisted;
                             }
                         }
-                        return getSyncInfo();
+                        return new MergeInventoryReportResults(getSyncInfo(), null);
                     } finally {
                         if (discoveryChecker != null && !inventoryReport.getAddedRoots().isEmpty()) {
                             discoveryChecker.setDepth(getResourceTreeDepth());

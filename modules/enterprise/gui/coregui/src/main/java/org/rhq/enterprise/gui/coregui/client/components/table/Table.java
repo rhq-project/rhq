@@ -50,7 +50,6 @@ import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.HiddenItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
@@ -82,12 +81,12 @@ import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedSearchBarIt
 import org.rhq.enterprise.gui.coregui.client.util.CriteriaUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A tabular view of set of data records from an {@link RPCDataSource}.
@@ -1173,7 +1172,8 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
 
         public TableFilter(Table<?> table) {
             super();
-            setWidth100();
+            setOverflow(Overflow.VISIBLE);
+            setAutoWidth();
             setPadding(5);
             this.table = table;
         }
@@ -1226,16 +1226,18 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 Log.debug("Table.TableFilter Pressed Enter key");
 
                 if (null != searchBarItem) {
-                    TextItem searchTextItem = searchBarItem.getSearchBar().getSearchTextItem();
-                    String searchBarValue = searchTextItem.getValueAsString();
-                    String hiddenValue = (String) hiddenItem.getValue();
-                    Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
+                    if (searchBarItem.getSearchBar().isFilterEnabled()) {
+                        TextItem searchTextItem = searchBarItem.getSearchBar().getSearchTextItem();
+                        String searchBarValue = searchTextItem.getValueAsString();
+                        String hiddenValue = (String) hiddenItem.getValue();
+                        Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
 
-                    // Only send a fetch request if the user actually changed the search expression.
-                    if (!equals(searchBarValue, hiddenValue)) {
-                        hiddenItem.setValue(searchBarValue);
-                        Log.debug("Table.TableFilter fetchFilteredTableData");
-                        fetchFilteredTableData();
+                        // Only send a fetch request if the user actually changed the search expression.
+                        if (!equals(searchBarValue, hiddenValue)) {
+                            hiddenItem.setValue(searchBarValue);
+                            Log.debug("Table.TableFilter fetchFilteredTableData");
+                            fetchFilteredTableData();
+                        }
                     }
                 } else {
                     fetchFilteredTableData();

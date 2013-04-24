@@ -199,6 +199,14 @@ public class AlertFormatUtility {
             str.append(" [");
             str.append(condition.getName());
             str.append("]");
+            if (condition.getOption() != null && condition.getOption().length() > 0) {
+                str.append(" ");
+                str.append(MSG.view_alert_common_tab_conditions_type_metric_trait_matching());
+                str.append(" '");
+                str.append(condition.getOption());
+                str.append("'");
+            }
+
             break;
         }
         case CONTROL: {

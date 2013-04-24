@@ -22,6 +22,7 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,6 +30,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
 import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -37,7 +39,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class MeasurementScheduleCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 3L;
 
     // sort fields from the MeasurementSchedule's MeasurementDefinition
     public static final String SORT_FIELD_NAME = "name";
@@ -48,6 +50,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     public static final String FILTER_FIELD_DEFINITION_IDS = "definitionIds";
     public static final String FILTER_FIELD_RESOURCE_ID = "resourceId";
     public static final String FILTER_FIELD_RESOURCE_GROUP_ID = "resourceGroupId";
+    public static final String FILTER_FIELD_RESOURCE_INVENTORY_STATUSES = "resourceInventoryStatuses";
     public static final String FILTER_FIELD_RESOURCE_TYPE_ID = "resourceTypeId";
     public static final String FILTER_FIELD_AUTO_GROUP_RESOURCE_TYPE_ID = "autoGroupResourceTypeId";
     public static final String FILTER_FIELD_AUTO_GROUP_PARENT_RESOURCE_ID = "autoGroupParentResourceId";
@@ -56,6 +59,7 @@ public class MeasurementScheduleCriteria extends Criteria {
     private List<Integer> filterDefinitionIds; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterResourceGroupId; // requires overrides
+    private List<InventoryStatus> filterResourceInventoryStatuses; // requires overrides
     private Integer filterAutoGroupResourceTypeId; // requires overrides
     private Integer filterAutoGroupParentResourceId; // requires overrides
     private Integer filterResourceTypeId; // requires overrides
@@ -76,6 +80,7 @@ public class MeasurementScheduleCriteria extends Criteria {
             + "    FROM Resource res " //
             + "    JOIN res.explicitGroups eg " //
             + "   WHERE eg.id = ? )");
+        filterOverrides.put(FILTER_FIELD_RESOURCE_INVENTORY_STATUSES, "resource.inventoryStatus IN ( ? )");
         filterOverrides.put(FILTER_FIELD_AUTO_GROUP_RESOURCE_TYPE_ID, "resource.id IN " //
             + "( SELECT res.id " //
             + "    FROM Resource res " //
@@ -91,6 +96,11 @@ public class MeasurementScheduleCriteria extends Criteria {
         sortOverrides.put(SORT_FIELD_NAME, "definition.name");
         sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "definition.displayName");
         sortOverrides.put(SORT_FIELD_DATA_TYPE, "definition.dataType");
+
+        // by default, we want to only return schedules for committed resources
+        ArrayList<InventoryStatus> defaults = new ArrayList<InventoryStatus>(1);
+        defaults.add(InventoryStatus.COMMITTED);
+        addFilterResourceInventoryStatuses(defaults);
     }
 
     @Override
@@ -112,6 +122,10 @@ public class MeasurementScheduleCriteria extends Criteria {
 
     public void addFilterResourceGroupId(Integer filterResourceGroupId) {
         this.filterResourceGroupId = filterResourceGroupId;
+    }
+
+    public void addFilterResourceInventoryStatuses(List<InventoryStatus> filterResourceInventoryStatuses) {
+        this.filterResourceInventoryStatuses = filterResourceInventoryStatuses;
     }
 
     public void addFilterAutoGroupResourceTypeId(Integer filterAutoGroupResourceTypeId) {

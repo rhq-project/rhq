@@ -28,9 +28,6 @@
     <set-property name="gwt.logging.systemHandler" value="ENABLED" />
     <set-property name="gwt.logging.simpleRemoteHandler" value="DISABLED" />
 
-
-
-
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
     </replace-with>
@@ -38,7 +35,15 @@
     <!-- Special case for IE8 where upload onsubmit handlers need special registration code from other browsers -->
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE8">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
-        <when-property-is name="user.agent" value="ie8"/>
+        <any>
+            <when-property-is name="user.agent" value="ie8"/>
+            <when-property-is name="user.agent" value="ie9"/>
+        </any>
+    </replace-with>
+
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphIE8Impl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+            <when-property-is name="user.agent" value="ie8"/>
     </replace-with>
 
 
@@ -52,11 +57,7 @@
          the version of jquery (1.7.2).
     -->
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
-    <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
-    <script src="/coregui/js/d3.v3.js"/>
-    <script src="/coregui/js/nv.d3.js"/>
-    <script src="/coregui/js/jquery.tipsy.js"/>
-    <script src="/coregui/js/rhq.js"/>
+
 
 
     <!--

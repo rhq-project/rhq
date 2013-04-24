@@ -43,7 +43,6 @@
         <dependency>
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
-            <version>${xercesImpl.version}</version>
             <scope>provided</scope>
         </dependency>
 

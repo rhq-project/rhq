@@ -21,10 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.alert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.ResultSet;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
@@ -36,6 +39,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -43,7 +47,8 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
+import org.rhq.enterprise.gui.coregui.client.components.table.ResourceAuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -162,17 +167,35 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
     }
 
     protected void setupTableInteractions(final boolean hasWriteAccess) {
-        TableActionEnablement singleTargetEnablement = hasWriteAccess ? TableActionEnablement.ANY
-            : TableActionEnablement.NEVER;
 
-        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), new AbstractTableAction(
-            singleTargetEnablement) {
+        addTableAction(MSG.common_button_delete(), MSG.view_alerts_delete_confirm(), new ResourceAuthorizedTableAction(
+            AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null : Permission.MANAGE_ALERTS),
+            new RecordExtractor<Integer>() {
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("resourceId"));
+                    }
+                    return result;
+                }
+            }) {
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 delete(selection);
             }
         });
-        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), new AbstractTableAction(
-            singleTargetEnablement) {
+        addTableAction(MSG.common_button_ack(), MSG.view_alerts_ack_confirm(), new ResourceAuthorizedTableAction(
+            AlertHistoryView.this, TableActionEnablement.ANY, (hasWriteAccess ? null : Permission.MANAGE_ALERTS),
+            new RecordExtractor<Integer>() {
+                public Collection<Integer> extract(Record[] records) {
+                    List<Integer> result = new ArrayList<Integer>(records.length);
+                    for (Record record : records) {
+                        result.add(record.getAttributeAsInt("resourceId"));
+                    }
+                    return result;
+                }
+            }) {
+
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 acknowledge(selection);
             }

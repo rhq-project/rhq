@@ -63,7 +63,6 @@
    <dependency>
        <groupId>jline</groupId>
        <artifactId>jline</artifactId>
-       <version>${jline.version}</version>
     </dependency>
 
     <!-- 3rd Party Deps -->
@@ -87,7 +86,6 @@
     <dependency>
       <groupId>org.jboss.logging</groupId>
       <artifactId>jboss-logging</artifactId>
-      <version>${jboss-logging.version}</version> <!-- just using the one that is also used by AS7 -->
     </dependency>
 
   </dependencies>
@@ -224,7 +222,6 @@ Build-Number=${buildNumber}
 
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.6</version>
       </plugin>
 
     </plugins>
@@ -243,7 +240,6 @@ Build-Number=${buildNumber}
           <plugin>
             <groupId>org.codehaus.mojo</groupId>
             <artifactId>build-helper-maven-plugin</artifactId>
-            <version>1.5</version>
             <executions>
               <execution>
                 <id>attach-installed-file-for-deployment</id>
@@ -285,7 +281,6 @@ Build-Number=${buildNumber}
 
       <plugin>
         <artifactId>maven-surefire-report-plugin</artifactId>
-        <version>2.6</version>
       </plugin>
 
     </plugins>

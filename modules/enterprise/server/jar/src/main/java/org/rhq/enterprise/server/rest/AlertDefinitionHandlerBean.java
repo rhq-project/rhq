@@ -218,7 +218,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
         if (groupId!=null) {
             ResourceGroup group = resourceGroupMgr.getResourceGroup(caller,groupId);
-            alertDefinition.setResourceGroup(group);
+            alertDefinition.setGroup(group);
         }
         if (resourceTypeId!=null) {
             ResourceType type = resourceTypeMgr.getResourceTypeById(caller,resourceTypeId);
@@ -258,7 +258,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
                 throw new StuffNotFoundException("Recovery alert with id " + adr.getRecoveryId());
         }
 
-        int definitionId = alertDefinitionManager.createAlertDefinition(caller, alertDefinition, resourceId, false);
+        int definitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(caller, alertDefinition, resourceId, false);
 
         AlertDefinition updatedDefinition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
         AlertDefinitionRest uadr = definitionToDomain(updatedDefinition,true, uriInfo) ; // TODO param 'full' ?
@@ -823,8 +823,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
         if (def.getResource()!=null) {
             adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.RESOURCE_ALERT_DEF,def.getResource().getId(),adr.getId()));
-        } else if (def.getResourceGroup()!=null) {
-            adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.GROUP_ALERT_DEF,def.getResourceGroup().getId(),adr.getId()));
+        } else if (def.getGroup() != null) {
+            adr.getLinks().add(
+                createUILink(uriInfo, UILinkTemplate.GROUP_ALERT_DEF, def.getGroup().getId(), adr.getId()));
         } else {
             adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.TEMPLATE_ALERT_DEF,def.getResourceType().getId(),adr.getId()));
         }

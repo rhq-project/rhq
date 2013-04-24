@@ -22,19 +22,24 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DataSource;
-import com.smartgwt.client.data.fields.DataSourceIntegerField;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordDoubleClickEvent;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * Search Strategy for the Favorite Saved Searches.
@@ -44,6 +49,8 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
  * @author Mike Thompson
  */
 public class FavoritesSearchStrategy extends AbstractSearchStrategy {
+
+    private boolean isSearchInProgress = false;
 
     public FavoritesSearchStrategy(EnhancedSearchBar searchBar) {
         super(searchBar);
@@ -77,23 +84,59 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
      */
     @Override
     public void onRecordClick(RecordClickEvent event) {
-        // do nothing here; just here if we need to do something
         searchBar.getSaveSearchTextItem().setValue(event.getRecord().getAttribute(ATTR_NAME));
         searchBar.getSearchTextItem().setValue(event.getRecord().getAttribute(ATTR_PATTERN));
+        searchBar.getSearchTextItem().focusInItem();
+    }
 
+    @Override
+    public void onRecordDoubleClick(RecordDoubleClickEvent event) {
+        final Record record = event.getRecord();
+        final String name = record.getAttribute(ATTR_NAME);
+
+        SC.ask(MSG.view_searchBar_savedSearch_confirmDelete(name), new BooleanCallback() {
+            public void execute(Boolean confirmed) {
+                if (confirmed) {
+                    Integer id = record.getAttributeAsInt(ATTR_ID);
+
+                    GWTServiceLookup.getSearchService().deleteSavedSearch(id, new AsyncCallback<Void>() {
+
+                        @Override
+                        public void onSuccess(Void result) {
+                            Message message = new Message(MSG.view_searchBar_savedSearch_delete(name),
+                                Message.Severity.Info);
+                            CoreGUI.getMessageCenter().notify(message);
+                            populateSavedSearches();
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            Message message = new Message(MSG.view_searchBar_savedSearch_failDelete(name),
+                                Message.Severity.Error);
+                            CoreGUI.getMessageCenter().notify(message);
+                        }
+                    });
+                }
+            }
+        });
     }
 
     @Override
     public void searchKeyUpHandler(KeyUpEvent keyUpEvent) {
-        populateSearchComboboxSavedSearchesWithAutoComplete();
+        // do nothing
     }
 
     @Override
     public void searchFocusHandler() {
-        // nothing currently
+        populateSavedSearches();
     }
 
-    private void populateSearchComboboxSavedSearchesWithAutoComplete() {
+    private void populateSavedSearches() {
+
+        // avoid concurrent searches
+        if (isSearchInProgress) {
+            return;
+        }
 
         Log.debug("Search Saved Searches");
         SavedSearchCriteria savedSearchCriteria = new SavedSearchCriteria();
@@ -103,52 +146,58 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
         final long startTime = System.currentTimeMillis();
         searchBar.getPickListGrid().setData(new ListGridRecord[] {});
 
+        isSearchInProgress = true;
+
         searchService.findSavedSearchesByCriteria(savedSearchCriteria, new AsyncCallback<List<SavedSearch>>() {
 
             @Override
             public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.search_failed_to_retrieve_saved_search(), caught);
+                isSearchInProgress = false;
+                CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_savedSearch_failFetch(), caught);
             }
 
             @Override
             public void onSuccess(List<SavedSearch> result) {
-                long fetchTime = System.currentTimeMillis() - startTime;
-                Log.debug(result.size() + " saved searches fetched in: " + fetchTime + "ms");
-                ListGrid searchBarPickListGrid = searchBar.getPickListGrid();
-                DataSource ds = searchBarPickListGrid.getDataSource();
-
-                if (null == ds) {
-                    ds = new DataSource();
-                    ds.setClientOnly(true);
-                    DataSourceTextField valueField = new DataSourceTextField(ATTR_ID, "Id");
-                    valueField.setPrimaryKey(true);
-                    DataSourceTextField kindField = new DataSourceTextField(ATTR_KIND, "Kind");
-                    DataSourceTextField nameField = new DataSourceTextField(ATTR_NAME, "Name");
-                    DataSourceTextField patternField = new DataSourceTextField(ATTR_PATTERN, "Pattern");
-                    DataSourceTextField descriptionField = new DataSourceTextField(ATTR_DESCRIPTION, "Description");
-                    DataSourceIntegerField recordCount = new DataSourceIntegerField(ATTR_RESULT_COUNT, "Result Count");
-                    ds.setFields(valueField, kindField, nameField, patternField, descriptionField, recordCount);
-                } else {
-                    ds.invalidateCache();
-                }
-                searchBarPickListGrid.setData(new ListGridRecord[] {});
-                for (SavedSearch savedSearch : result) {
-                    Log.debug("savedSearch: " + savedSearch.getName());
-                    ListGridRecord record = new ListGridRecord();
-                    record.setAttribute(ATTR_ID, savedSearch.getId());
-                    record.setAttribute(ATTR_KIND, "Saved");
-                    record.setAttribute(ATTR_NAME, savedSearch.getName());
-                    record.setAttribute(ATTR_DESCRIPTION, savedSearch.getDescription());
-                    record.setAttribute(ATTR_PATTERN, savedSearch.getPattern());
-                    if (savedSearch.getResultCount() != null)
-                        record.setAttribute(ATTR_RESULT_COUNT, savedSearch.getResultCount());
-                    ds.addData(record);
-                }
-
                 try {
-                    searchBarPickListGrid.fetchData();
-                } catch (Exception e) {
-                    Log.debug("Caught exception on fetchData: " + e);
+                    long fetchTime = System.currentTimeMillis() - startTime;
+                    Log.debug(result.size() + " saved searches fetched in: " + fetchTime + "ms");
+
+                    ListGrid searchBarPickListGrid = searchBar.getPickListGrid();
+                    DataSource ds = searchBarPickListGrid.getDataSource();
+
+                    if (null == ds) {
+                        ds = new DataSource();
+                        ds.setClientOnly(true);
+                        DataSourceTextField valueField = new DataSourceTextField(ATTR_ID, "Id");
+                        valueField.setPrimaryKey(true);
+                        ds.setFields(valueField);
+                        searchBarPickListGrid.setDataSource(ds);
+
+                    } else {
+                        ds.invalidateCache();
+                    }
+
+                    for (SavedSearch savedSearch : result) {
+                        Log.debug("savedSearch: " + savedSearch.getName());
+                        ListGridRecord record = new ListGridRecord();
+                        record.setAttribute(ATTR_ID, savedSearch.getId());
+                        record.setAttribute(ATTR_KIND, "Saved");
+                        record.setAttribute(ATTR_NAME, savedSearch.getName());
+                        record.setAttribute(ATTR_DESCRIPTION, savedSearch.getDescription());
+                        record.setAttribute(ATTR_PATTERN, savedSearch.getPattern());
+                        if (savedSearch.getResultCount() != null)
+                            record.setAttribute(ATTR_RESULT_COUNT, savedSearch.getResultCount());
+                        ds.addData(record);
+                    }
+
+                    try {
+                        searchBarPickListGrid.setData(new ListGridRecord[] {});
+                        searchBarPickListGrid.fetchData();
+                    } catch (Exception e) {
+                        Log.debug("Caught exception on fetchData: " + e);
+                    }
+                } finally {
+                    isSearchInProgress = false;
                 }
             }
         });
@@ -162,6 +211,5 @@ public class FavoritesSearchStrategy extends AbstractSearchStrategy {
     @Override
     public void searchReturnKeyHandler(KeyUpEvent keyUpEvent) {
         // do nothing
-        Log.debug("return key in SavedSearchProvider");
     }
 }

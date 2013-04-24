@@ -39,7 +39,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class MeasurementDefinitionCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private String filterName;
     private String filterDisplayName;
@@ -55,7 +55,7 @@ public class MeasurementDefinitionCriteria extends Criteria {
     private Long filterDefaultInterval;
 
     private boolean fetchResourceType;
-    
+
     private PageOrdering sortName;
     private PageOrdering sortDisplayName;
     private PageOrdering sortResourceTypeName; // requires overrides

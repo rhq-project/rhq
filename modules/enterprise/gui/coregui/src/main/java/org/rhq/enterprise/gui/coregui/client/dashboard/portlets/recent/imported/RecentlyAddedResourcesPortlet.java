@@ -41,7 +41,7 @@ import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -253,12 +253,12 @@ public class RecentlyAddedResourcesPortlet extends EnhancedVLayout implements Cu
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
     @Override
     protected void onDestroy() {
-        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+        AutoRefreshUtil.onDestroy(refreshTimer);
 
         super.onDestroy();
     }

@@ -36,7 +36,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @SuppressWarnings("unused")
 public class AgentCriteria extends Criteria {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public static final String SORT_FIELD_CTIME = "ctime";
 

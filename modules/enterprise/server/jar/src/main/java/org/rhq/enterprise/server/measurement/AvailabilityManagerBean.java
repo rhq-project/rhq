@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.measurement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.ejb.EJB;
@@ -42,13 +43,16 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
+import org.rhq.core.domain.discovery.AvailabilityReport.Datum;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceIdWithAvailabilityComposite;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite.GroupAvailabilityType;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -153,6 +157,203 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
 
         return retAvailability;
+    }
+
+    @Override
+    public List<Availability> getAvailabilitiesForResource(Subject subject, int resourceId, long startTime, long endTime) {
+
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
+            throw new PermissionException("User [" + subject.getName() + "] does not have permission to view ["
+                + resourceId + "]");
+        }
+
+        List<Availability> result;
+        Date startDate = new Date(startTime);
+        Date endDate = new Date(endTime);
+
+        AvailabilityCriteria c = new AvailabilityCriteria();
+        c.addFilterResourceId(resourceId);
+        c.addFilterInterval(startTime, endTime); // reduce by 1 ms to fake exclusive end time on the range.
+        c.addSortStartTime(PageOrdering.ASC);
+        result = findAvailabilityByCriteria(subject, c);
+
+        // The criteria interval filter is inclusive.  But since availN(endTime) == availN+1(startTime) we can get
+        // unwanted avails in the query result, when the range falls on an avail border.
+        // For example, assume the following three Availability records exist:
+        // AV-1 [0..100]
+        // AV-2        [100..200]
+        // AV-3                 [200..300]
+        //
+        // If we happen to query for startTime=100 and endTime=200 we'll end up with 3 avails in the result:
+        // Result = { AV-1 [0..100], AV-2 [100..200], AV-3 [200..300] }. We really only want AV-2 [100..200] because
+        // the other two end up having 0 length, |100..100| and |200..200|.
+        //
+        // Remove any unwanted entries.
+        for (Iterator<Availability> i = result.iterator(); i.hasNext();) {
+            Availability av = i.next();
+            if ((null != av.getEndTime() && av.getEndTime().equals(startTime) || av.getStartTime().equals(endTime))) {
+                i.remove();
+            }
+        }
+
+        // Check if the availabilities obtained cover the startTime of the range.
+        // If not, we need to provide a "surrogate" for the beginning interval. The availabilities
+        // obtained from the DB are sorted in ascending order of time. So we can insert one
+        // pseudo-availability in front of the list if needed. Note that due to avail purging
+        // we can end up with periods without avail data. The surrogate will be for type UNKNOWN.
+        if (result.size() > 0) {
+            Availability firstAvailability = result.get(0);
+            if (firstAvailability.getStartTime() > startDate.getTime()) {
+                Availability surrogateAvailability = new Availability(firstAvailability.getResource(),
+                    startDate.getTime(), AvailabilityType.UNKNOWN);
+                surrogateAvailability.setEndTime(firstAvailability.getStartTime());
+                result.add(0, surrogateAvailability); // add at the head of the list
+            }
+        } else {
+            Resource surrogateResource = entityManager.find(Resource.class, resourceId);
+            Availability surrogateAvailability = new Availability(surrogateResource, startDate.getTime(),
+                AvailabilityType.UNKNOWN);
+            surrogateAvailability.setEndTime(endDate.getTime());
+            result.add(surrogateAvailability); // add as the only element, covering the entire interval
+        }
+
+        // Now, limit the Availability ranges to the desired range. Detach the entities prior to to the update so
+        // the value changes are not propagated to the DB.
+        entityManager.detach(result.get(0));
+        if (result.size() > 1) {
+            entityManager.detach(result.get(result.size() - 1));
+        }
+        result.get(0).setStartTime(startDate.getTime());
+        result.get(result.size() - 1).setEndTime(endDate.getTime());
+
+        return result;
+    }
+
+    @Override
+    public List<ResourceGroupAvailability> getAvailabilitiesForResourceGroup(Subject subject, int groupId,
+        long startTime, long endTime) {
+
+        if (!authorizationManager.canViewGroup(subject, groupId)) {
+            throw new PermissionException("User [" + subject.getName() + "] does not have permission to view ["
+                + groupId + "]");
+        }
+
+        List<ResourceGroupAvailability> result = new ArrayList<ResourceGroupAvailability>();
+        Date startDate = new Date(startTime);
+        Date endDate = new Date(endTime);
+
+        // all avails for all explicit resources for the time range, ordered by asc startTime
+        List<Availability> allAvailabilities = findResourceGroupAvailabilityWithinInterval(groupId, startDate, endDate);
+
+        // If we have no availabilities we need to return a single group avail, either EMPTY or WARN (all UNKNOWN)
+        if (allAvailabilities.isEmpty()) {
+            ResourceGroupAvailability groupAvail = new ResourceGroupAvailability(groupId);
+            groupAvail.setStartTime(startTime);
+            groupAvail.setEndTime(endTime);
+            int explicitMemberCount = resourceGroupManager.getExplicitGroupMemberCount(groupId);
+            groupAvail.setGroupAvailabilityType((0 == explicitMemberCount) ? GroupAvailabilityType.EMPTY
+                : GroupAvailabilityType.WARN);
+            result.add(groupAvail);
+
+            return result;
+        }
+
+        // OK, let's try and explain explain what we are doing here. The goal is to have a continuous set of intervals
+        // extending from startTime to endTime showing all changes in group avail.  Each avail change for any member
+        // could signify a change in the overall group avail.  We must first establish the initial group avail and
+        // then walk forward, checking for changes at each resource avail startTime for a group member.
+        // One subtlety is that group membership can change over time. We don't track when resources come and go, we
+        // are dealing with the avails for the *current* explicit members.  So, we'll only work with the avails we have
+        // and not worry about missing avails at any given time. In other words, no "surrogate" UNKNOWN avail insertion.
+
+        // OK, calculate the initial group avail
+        Long atTime = startTime;
+        int atTimeIndex = 0;
+        ResourceGroupAvailability currentGroupAvail = null;
+        int size = allAvailabilities.size();
+
+        do {
+            GroupAvailabilityType groupAvailTypeAtTime = getGroupAvailabilityType(atTime, allAvailabilities);
+
+            // if this is a change in group avail type then add it to the result
+            if (null == currentGroupAvail || currentGroupAvail.getGroupAvailabilityType() != groupAvailTypeAtTime) {
+                if (null != currentGroupAvail) {
+                    currentGroupAvail.setEndTime(atTime);
+                }
+
+                // leave endTime unset, we don't know endTime until we know the next startTime, or are done
+                currentGroupAvail = new ResourceGroupAvailability(groupId);
+                currentGroupAvail.setStartTime(atTime);
+                currentGroupAvail.setGroupAvailabilityType(groupAvailTypeAtTime);
+                result.add(currentGroupAvail);
+            }
+
+            // move atTime to the next possible startTime
+            while (atTimeIndex < size && allAvailabilities.get(atTimeIndex).getStartTime() <= atTime) {
+                ++atTimeIndex;
+            }
+
+            if (atTimeIndex < size) {
+                atTime = allAvailabilities.get(atTimeIndex).getStartTime();
+            }
+
+        } while (atTimeIndex < size);
+
+        currentGroupAvail.setEndTime(endTime);
+
+        return result;
+    }
+
+    private GroupAvailabilityType getGroupAvailabilityType(long atTime, List<Availability> allAvailabilities) {
+
+        long count = 0;
+        long disabled = 0;
+        long down = 0;
+        long unknown = 0;
+        long up = 0;
+
+        for (Availability av : allAvailabilities) {
+            // if the Avail straddles startTime (startTime inclusive, endTime exclusive) then it is relevant.
+            // EndTime is exclusive because Avail(N).endTime=Avail(N+1).startTime and we don't want to consider
+            // two records. The relevant availType is the one starting, not ending at atTime. 
+            Long startTime = av.getStartTime();
+            Long endTime = av.getEndTime();
+            if (startTime <= atTime && (null == endTime || endTime > atTime)) {
+                ++count;
+                switch (av.getAvailabilityType()) {
+                case UP:
+                    ++up;
+                    break;
+                case DOWN:
+                    ++down;
+                    break;
+                case UNKNOWN:
+                    ++unknown;
+                    break;
+                case DISABLED:
+                    ++disabled;
+                    break;
+                }
+            }
+        }
+
+        if (0 == count) {
+            return GroupAvailabilityType.EMPTY;
+        }
+
+        if (down == count) {
+            return GroupAvailabilityType.DOWN;
+        }
+
+        if (down > 0 || unknown > 0) {
+            return GroupAvailabilityType.WARN;
+        }
+
+        if (disabled > 0) {
+            return GroupAvailabilityType.DISABLED;
+        }
+
+        return GroupAvailabilityType.UP;
     }
 
     public List<AvailabilityPoint> findAvailabilitiesForResource(Subject subject, int resourceId,
@@ -460,7 +661,18 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void setResourceAvailabilities(int[] resourceIds, AvailabilityType avail) {
+        long now = System.currentTimeMillis();
+        AvailabilityReport report = new AvailabilityReport(true, null);
+        report.setServerSideReport(true);
+        for (int resourceId : resourceIds) {
+            report.addAvailability(new Datum(resourceId, avail, now));
+        }
+        this.availabilityManager.mergeAvailabilityReport(report);
+        return;
+    }
+
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public boolean mergeAvailabilityReport(AvailabilityReport report) {
         int reportSize = report.getResourceAvailability().size();
@@ -488,7 +700,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         Integer agentToUpdate = agentManager.getAgentIdByName(agentName);
 
         // if this report is from an agent update the lastAvailReport time        
-        if (!report.isEnablementReport() && agentToUpdate != null) {
+        if (!report.isServerSideReport() && agentToUpdate != null) {
             availabilityManager.updateLastAvailabilityReportInNewTransaction(agentToUpdate.intValue());
         }
 
@@ -498,7 +710,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         // then we need to skip this report so as not to waste our time. Then, immediately request and process
         // a full report because, obviously, the agent is no longer down but the server thinks
         // it still is down - we need to know the availabilities for all the resources on that agent
-        if (!report.isEnablementReport() && report.isChangesOnlyReport()
+        if (!report.isServerSideReport() && report.isChangesOnlyReport()
             && agentManager.isAgentBackfilled(agentToUpdate.intValue())) {
 
             mergeInfo.setAskForFullReport(true);
@@ -524,7 +736,7 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             watch.reset();
         }
 
-        if (!report.isEnablementReport()) {
+        if (!report.isServerSideReport()) {
             if (agentToUpdate != null) {
                 // don't bother asking for a full report if the one we are currently processing is already full
                 if (mergeInfo.isAskForFullReport() && report.isChangesOnlyReport()) {
@@ -570,6 +782,10 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
 
         public boolean isEnablementReport() {
             return report.isEnablementReport();
+        }
+
+        public boolean isServerSideReport() {
+            return report.isServerSideReport();
         }
 
         public String toString(boolean includeAll) {
@@ -1015,6 +1231,9 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
         return result;
     }
 
+    /**
+     * @return all avails for all member resources for the specified interval, ordered by asc startTime 
+     */
     @SuppressWarnings("unchecked")
     private List<Availability> findResourceGroupAvailabilityWithinInterval(int groupId, Date startDate, Date endDate) {
         Query q = entityManager.createNamedQuery(Availability.FIND_FOR_RESOURCE_GROUP_WITHIN_INTERVAL);
@@ -1073,4 +1292,5 @@ public class AvailabilityManagerBean implements AvailabilityManagerLocal, Availa
             log.debug(callingMethod + ": " + stats.toString());
         }
     }
+
 }

@@ -43,7 +43,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -266,14 +266,14 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
         recentOobContent.markForRedraw();
         markForRedraw();
     }
 
     @Override
     protected void onDestroy() {
-        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+        AutoRefreshUtil.onDestroy(refreshTimer);
 
         super.onDestroy();
     }

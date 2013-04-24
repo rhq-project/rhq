@@ -21,25 +21,6 @@
 
     <build>
         <finalName>rhq-enterprise-server-services-sar</finalName>
-        
-        <!-- we don't need this right now - only if we need deps stored in the sar META-INF/lib/ will we need this -->
-        <!-- NOTE: extensions=true below allows Maven to grok the jboss-sar packaging type -->
-        <!--
-        <plugins>
-
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>jboss-packaging-maven-plugin</artifactId>
-                <version>1.9.99</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <libDirectory>${sarDirectory}/META-INF/lib</libDirectory>
-                </configuration>
-            </plugin>
-
-        </plugins>
-        -->
-
         <resources>
             <resource>
                 <directory>src/main/resources</directory>

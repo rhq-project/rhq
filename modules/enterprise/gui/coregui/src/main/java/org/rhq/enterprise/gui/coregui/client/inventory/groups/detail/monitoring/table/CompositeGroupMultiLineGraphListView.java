@@ -27,9 +27,9 @@ package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring
 public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3GraphListView
 {
 
-    public CompositeGroupMultiLineGraphListView(int groupId, int defId)
+    public CompositeGroupMultiLineGraphListView(int groupId, int defId, boolean isAutogroup)
     {
-        super(groupId, defId);
+        super(groupId, defId, isAutogroup);
     }
 
 
@@ -69,10 +69,4 @@ public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3
         });
 
     }-*/;
-
-
-    public CompositeGroupMultiLineGraphListView getInstance(int groupId, int definitionId) {
-        return new CompositeGroupMultiLineGraphListView(groupId, definitionId);
-    }
-
 }

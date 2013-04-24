@@ -137,6 +137,12 @@ public interface AlertI18NResourceKeys {
     @I18NMessages({ @I18NMessage("{0} Val Chg"), @I18NMessage(locale = "de", value = "{0} Wert�nd.") })
     String ALERT_METRIC_CHANGED_SHORT = "alert.condition.metric.changed.short";
 
+    @I18NMessages({ @I18NMessage("{0} Value Changed Matching Expression \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CHANGED_WITH_EXPR = "alert.condition.metric.changed-with-expr";
+
+    @I18NMessages({ @I18NMessage("{0} Val Chg Matching \"{1}\"") /*, @I18NMessage(locale = "de", value = "") */})
+    String ALERT_METRIC_CHANGED_WITH_EXPR_SHORT = "alert.condition.metric.changed-with-expr.short";
+
     @I18NMessages({ @I18NMessage("Operation [{0}] has status=[{1}]") ,
             @I18NMessage(locale = "de", value = "Operation [{0}] hat den Status [{1}]") })
     String ALERT_OPERATION = "alert.condition.op";

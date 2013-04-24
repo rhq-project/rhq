@@ -39,13 +39,11 @@
    	  <dependency>
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
-         <version>1.4</version>
       </dependency>
 
       <dependency>
          <groupId>org.testng</groupId>
          <artifactId>testng</artifactId>
-         <version>${testng.version}</version>
       </dependency>
 
       <dependency>
@@ -196,7 +194,6 @@
                                 <artifactItem>
 							        <groupId>commons-io</groupId>
 							         <artifactId>commons-io</artifactId>
-							         <version>1.4</version>
                                 </artifactItem>
                              </artifactItems>
                              <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

@@ -233,7 +233,9 @@
          name="Tomcat Virtual Host"
          discovery="TomcatVHostDiscoveryComponent"
          class="TomcatVHostComponent"
-         description="A virtual host in the web container">
+         description="A virtual host in the web container"
+         createDeletePolicy="both"
+         creationDataType="configuration">
 
          <plugin-configuration>
             <c:group
@@ -508,10 +510,6 @@
                      type="integer"
                      description="Maximum size of the static resource cache in kilobytes. If not specified, the default value is 10240  (10 megabytes)." />
                   <c:simple-property
-                     name="caseSensitive"
-                     type="boolean"
-                     description="If the value of this flag is true, all case sensitivity checks will be disabled. If not specified, the default value of the flag is true. NOTE: This flag MUST NOT be set to false on the Windows platform (or any other OS which does not have a case sensitive filesystem), as it will disable case sensitivity checks, allowing JSP source code disclosure, among other security problems." />
-                  <c:simple-property
                      name="cookies"
                      type="boolean"
                      description="Set to true if you want cookies to be used for session identifier communication if supported by the client (this is the default). Set to false if you want to disable the use of cookies for session identifier communication, and rely only on URL rewriting by the application." />
@@ -523,7 +521,8 @@
                   <c:simple-property
                      name="configFile"
                      type="string"
-                     description="The location of the context.xml resource or file" />
+                     description="The location of the context.xml resource or file Note: Does not exist in Tomcat 7 (return type changed to URL)" 
+                     required="false" />
                   <c:simple-property
                      name="crossContext"
                      type="boolean"
@@ -533,13 +532,7 @@
                      readOnly="true"
                      required="true"
                      description="The docBase set for this application" />
-                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
-                  <c:simple-property
-                     name="eventProvider"
-                     type="boolean"
-                     description="Event provider support for this managed object?"                     
-                     readOnly="true" />                     
-                  <c:simple-property
+                   <c:simple-property
                      name="privileged"
                      type="boolean"
                      description="Set to true to allow this context to use container servlets, like the manager servlet. Use of the privileged  attribute will change the context's parent class loader to be the Server class loader rather than the Shared class loader. Note that in a default installation, the Common class loader is used for both the Server and the Shared  class loaders." />
@@ -551,18 +544,6 @@
                      name="saveConfig"
                      type="boolean"
                      description="Write the configuration as needed on startup?" />
-                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
-                  <c:simple-property
-                     name="stateManageable"
-                     type="boolean"
-                     description="State management support for this managed object?"
-                     readOnly="true" />
-                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
-                  <c:simple-property
-                     name="statisticsProvider"
-                     type="boolean"
-                     description="Performance statistics support for this managed object?"                     
-                     readOnly="true" />
                   <c:simple-property
                      name="swallowOutput"
                      type="boolean"
@@ -767,7 +748,8 @@
                <c:simple-property
                   name="connector"
                   type="string"
-                  description="Connector protocol connector."
+                  description="Connector protocol connector. Note: Only available on Tomcat 7."
+                  required="false"
                   readOnly="true" />
                <c:simple-property
                   name="address"
@@ -864,10 +846,6 @@
                   type="boolean"
                   description="A boolean value which can be used to enable or disable the TRACE HTTP method. If not specified, this attribute is set to false." />
                <c:simple-property
-                  name="bufferSize"
-                  type="integer"
-                  description="HTTP: The size (in bytes) of the buffer to be provided for input streams created by this connector. By default, buffers of 2048 bytes will be provided. AJP: The size of the output buffer to use. If less than or equal to zero, then output buffering is disabled. The default value is -1 (i.e. buffering disabled)" />
-               <c:simple-property
                   name="connectionTimeout"
                   type="integer"
                   description="HTTP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is 60000 (i.e. 60 seconds). AJP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is infinite (i.e. no timeout)."
@@ -875,7 +853,8 @@
                <c:simple-property
                   name="emptySessionPath"
                   type="boolean"
-                  description="If set to true, all paths for session cookies will be set to /. This can be useful for portlet specification implementations, but will greatly affect performance if many applications are accessed on a given server by the client. If not specified, this attribute is set to false." />
+                  description="If set to true, all paths for session cookies will be set to /. This can be useful for portlet specification implementations, but will greatly affect performance if many applications are accessed on a given server by the client. If not specified, this attribute is set to false. Note: Does not exist in Tomcat 7" 
+                  required="false" />
                <c:simple-property
                   name="enableLookups"
                   type="boolean"

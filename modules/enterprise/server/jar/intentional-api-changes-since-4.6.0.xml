@@ -6,4 +6,34 @@
      <method>void uninventoryAllResourcesByAgent(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.resource.Agent)</method>
     <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
   </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/resource/ResourceManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+     <method>void uninventoryResourcesOfResourceType(org.rhq.core.domain.auth.Subject, int)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/operation/OperationManagerRemote</className>
+    <differenceType>7006</differenceType>  <!-- method return type changed -->
+     <method>java.util.List findOperationDefinitionsByCriteria(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.criteria.OperationDefinitionCriteria)</method>
+    <to>org.rhq.core.domain.util.PageList</to>
+    <justification>Method Return Type changed. Returning the PageList instead of List. PageList is assignable to a List variable, therefore this change is safe.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/discovery/DiscoveryBossRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+     <method>void unignoreAndImportResources(org.rhq.core.domain.auth.Subject, int[])</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
+  
+  <difference>
+    <className>org/rhq/enterprise/server/resource/ResourceTypeManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+     <method>void setResourceTypeIgnoreFlagAndUninventoryResources(org.rhq.core.domain.auth.Subject, int, boolean)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
+
 </differences>

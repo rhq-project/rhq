@@ -30,12 +30,6 @@ import javax.ejb.ApplicationException;
  *
  * @author John Sanda
  */
-
-// TODO (jshaughn): Is this annotation necessary?  It forces ejb deps in places like coregui and
-// does not seem to server much purpose. From what I can see in docs, an ApplicationException with
-// rollback=true differs from RuntimeException only in that the servicing bean is not destroyed. For
-// a stateless, pooled bean this does not seem like a big deal.
-// http://openejb.apache.org/examples-trunk/applicationexception/
 @ApplicationException(rollback = true)
 public class CannotConnectToAgentException extends RuntimeException {
     private static final long serialVersionUID = 1L;

@@ -18,7 +18,7 @@
             <property>
                <name>code-coverage</name>
             </property>
-         </activation>   
+         </activation>
          <build>
             <plugins>
                <plugin>
@@ -60,7 +60,6 @@
                               <artifactItem>
                                  <groupId>org.jacoco</groupId>
                                  <artifactId>org.jacoco.ant</artifactId>
-                                 <version>${jacoco.version}</version>
                               </artifactItem>
                            </artifactItems>
                            <stripVersion>true</stripVersion>
@@ -179,7 +178,7 @@
                                              <include name="**/target/generated-sources/*" />
                                           </dirset>
                                        </sourcefiles>
-                                    </group>   
+                                    </group>
                                  </structure>
                                  <html destdir="${project.reporting.outputDirectory}/coverage-report/overall" />
                                  <xml destfile="${project.reporting.outputDirectory}/coverage-report/overall/coverage-report.xml" />
@@ -193,6 +192,8 @@
                      <dependency>
                         <groupId>org.jacoco</groupId>
                         <artifactId>org.jacoco.ant</artifactId>
+                        <!-- For some strange reason this needs to be here even though the version is specified
+                             in the dependency management of the root pom. -->
                         <version>${jacoco.version}</version>
                      </dependency>
                   </dependencies>
@@ -202,4 +203,3 @@
       </profile>
    </profiles>
 </project>
-      

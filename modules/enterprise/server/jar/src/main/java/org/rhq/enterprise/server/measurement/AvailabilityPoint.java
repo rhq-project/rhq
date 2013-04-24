@@ -31,6 +31,7 @@ import org.rhq.core.domain.measurement.AvailabilityType;
  *
  * @author Heiko W. Rupp
  * @author John Mazzitelli
+ * @deprecated going away with portal war removal.
  */
 public class AvailabilityPoint implements Serializable {
     private static final long serialVersionUID = 1L;

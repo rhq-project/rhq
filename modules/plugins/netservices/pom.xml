@@ -25,12 +25,10 @@
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
-      <version>${commons-httpclient.version}</version>
     </dependency>
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>${commons-codec.version}</version>
     </dependency>
 
     <!-- Test dependencies -->
@@ -141,7 +139,6 @@
                 <artifactItem>
                   <groupId>commons-httpclient</groupId>
                   <artifactId>commons-httpclient</artifactId>
-                  <version>${commons-httpclient.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>commons-codec</groupId>

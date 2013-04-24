@@ -34,6 +34,7 @@ import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInst
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.IgnoreResourceTypesView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.MetricTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.AffinityGroupTableView;
 import org.rhq.enterprise.gui.coregui.client.admin.topology.AgentTableView;
@@ -64,16 +65,6 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     public static final ViewName SECTION_CONFIGURATION_VIEW_ID = new ViewName("Configuration",
         MSG.view_admin_configuration());
     public static final ViewName SECTION_CONTENT_VIEW_ID = new ViewName("Content", MSG.view_admin_content());
-
-    // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
-    private static final ViewName PAGE_SERVERS_VIEW_ID = new ViewName("Servers", MSG.view_adminTopology_servers(),
-        IconEnum.SERVERS);
-    private static final ViewName PAGE_AGENTS_VIEW_ID = new ViewName("Agents", MSG.view_adminTopology_agents(),
-        IconEnum.AGENT);
-    private static final ViewName PAGE_AFFINITY_GROUPS_VIEW_ID = new ViewName("AffinityGroups",
-        MSG.view_adminTopology_affinityGroups(), IconEnum.ALL_GROUPS);
-    private static final ViewName PAGE_PARTITION_EVENTS_VIEW_ID = new ViewName("PartitionEvents",
-        MSG.view_adminTopology_partitionEvents(), IconEnum.EVENTS);
 
     // TODO these iframe page view ids should go away in favor of the gwt view page view_id, when available
     private static final ViewName PAGE_CONTENT_SOURCES_VIEW_ID = new ViewName("ContentSources",
@@ -213,6 +204,13 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         });
         metricTemplatesItem.setRefreshRequired(true); // we always need a new page        
 
+        NavigationItem ignoreResourceTypesItem = new NavigationItem(IgnoreResourceTypesView.VIEW_ID, new ViewFactory() {
+            public Canvas createView() {
+                return new IgnoreResourceTypesView();
+            }
+        });
+        ignoreResourceTypesItem.setRefreshRequired(true); // we always need a new page
+
         NavigationItem downloadsItem = new NavigationItem(DownloadsView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
                 return new DownloadsView();
@@ -232,7 +230,8 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
         return new NavigationSection(SECTION_CONFIGURATION_VIEW_ID, systemSettingsItem, alertTemplatesItem,
-            driftTemplatesItem, metricTemplatesItem, downloadsItem, agentPluginsItem, serverPluginsItem);
+            driftTemplatesItem, metricTemplatesItem, ignoreResourceTypesItem, downloadsItem, agentPluginsItem,
+            serverPluginsItem);
     }
 
     private NavigationSection buildContentSection() {

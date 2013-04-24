@@ -41,7 +41,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class JPADriftChangeSetCriteria extends Criteria implements DriftChangeSetCriteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private Integer filterInitial; // needs override
     private Integer filterResourceId; // needs override

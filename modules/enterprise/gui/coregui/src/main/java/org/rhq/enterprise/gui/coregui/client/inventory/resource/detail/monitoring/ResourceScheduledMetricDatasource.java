@@ -22,6 +22,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring;
 
+import java.util.HashSet;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -161,7 +162,7 @@ public class ResourceScheduledMetricDatasource extends RPCDataSource<Measurement
     }
 
     private ListGridRecord[] buildRecords(PageList<MeasurementSchedule> list) {
-        PageList<MeasurementDefinition> definitions = new PageList<MeasurementDefinition>();
+        HashSet<MeasurementDefinition> definitions = new HashSet<MeasurementDefinition>();
 
         for (MeasurementSchedule schedule : list) {
             if (schedule.isEnabled() && schedule.getDefinition().getDataType() == DataType.MEASUREMENT) {

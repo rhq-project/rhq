@@ -267,7 +267,7 @@ public interface OperationManagerRemote {
 
     List<GroupOperationSchedule> findScheduledGroupOperations(Subject subject, int groupId) throws Exception;
 
-    List<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
+    PageList<OperationDefinition> findOperationDefinitionsByCriteria(Subject subject, OperationDefinitionCriteria criteria);
 
     PageList<ResourceOperationHistory> findResourceOperationHistoriesByCriteria(Subject subject,
         ResourceOperationHistoryCriteria criteria);

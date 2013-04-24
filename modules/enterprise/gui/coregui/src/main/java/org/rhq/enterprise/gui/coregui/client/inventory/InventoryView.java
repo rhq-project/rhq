@@ -29,6 +29,7 @@ import com.smartgwt.client.widgets.Label;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -73,6 +74,8 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
     private static final ViewName PAGE_SERVERS = new ViewName("Servers", MSG.view_inventory_servers(), IconEnum.SERVERS);
     private static final ViewName PAGE_SERVICES = new ViewName("Services", MSG.view_inventory_services(),
         IconEnum.SERVICES);
+    private static final ViewName PAGE_IGNORED_RESOURCES = new ViewName("IgnoredResources",
+        MSG.view_inventory_ignoredResources(), IconEnum.ALL_RESOURCES);
     private static final ViewName PAGE_UNAVAIL_SERVERS = new ViewName("UnavailableServers",
         MSG.view_inventory_unavailableServers(), IconEnum.UNAVAILABLE_SERVERS);
 
@@ -138,6 +141,11 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         return new ResourceSearchViewWrapper(viewName, initialCriteria, viewName.getIcon().getIcon24x24Path());
     }
 
+    private ResourceSearchView createIgnoredResourceSearchView(ViewName viewName, Criteria initialCriteria) {
+        return new ResourceSearchViewWrapper(false, true, viewName, initialCriteria, viewName.getIcon()
+            .getIcon24x24Path());
+    }
+
     private NavigationSection buildResourcesSection() {
         NavigationItem autodiscoveryQueueItem = new NavigationItem(ResourceAutodiscoveryView.VIEW_ID,
             new ViewFactory() {
@@ -190,6 +198,17 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
             }
         });
 
+        NavigationItem ignoredResourcesItem = new NavigationItem(PAGE_IGNORED_RESOURCES, new ViewFactory() {
+            public Canvas createView() {
+                Criteria initialCriteria = new Criteria(ResourceDataSourceField.INVENTORY_STATUS.propertyName(),
+                    InventoryStatus.IGNORED.name());
+                initialCriteria.addCriteria(ResourceDataSourceField.PARENT_INVENTORY_STATUS.propertyName(),
+                    InventoryStatus.COMMITTED.name());
+
+                return createIgnoredResourceSearchView(PAGE_IGNORED_RESOURCES, initialCriteria);
+            }
+        });
+
         NavigationItem downServersItem = new NavigationItem(PAGE_UNAVAIL_SERVERS, new ViewFactory() {
             public Canvas createView() {
                 Criteria initialCriteria = new Criteria(ResourceDataSourceField.AVAILABILITY.propertyName(),
@@ -202,7 +221,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         });
 
         return new NavigationSection(RESOURCES_SECTION_VIEW_ID, autodiscoveryQueueItem, allResourcesItem,
-            platformsItem, topLevelServersItem, serversItem, servicesItem, downServersItem);
+            platformsItem, topLevelServersItem, serversItem, servicesItem, ignoredResourcesItem, downServersItem);
     }
 
     private NavigationSection buildGroupsSection() {
@@ -250,15 +269,34 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         private ViewName viewName;
 
+        private final boolean showIgnoreButton;
+        private final boolean showUnignoreButton;
+
         public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String... headerIcons) {
+            this(true, false, viewName, criteria, headerIcons);
+        }
+
+        public ResourceSearchViewWrapper(boolean showIgnoredButton, boolean showUnignoreButton, ViewName viewName,
+            Criteria criteria, String... headerIcons) {
             super(criteria, viewName.getTitle(), headerIcons);
             this.viewName = viewName;
+            this.showIgnoreButton = showIgnoredButton;
+            this.showUnignoreButton = showUnignoreButton;
         }
 
         @Override
         public ViewName getViewName() {
             return viewName;
         }
-    }
 
+        @Override
+        protected boolean shouldShowIgnoreButton() {
+            return this.showIgnoreButton;
+        }
+
+        @Override
+        protected boolean shouldShowUnignoreButton() {
+            return this.showUnignoreButton;
+        }
+    }
 }

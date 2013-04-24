@@ -58,9 +58,12 @@ class AlertConditionCacheUtils {
 
         case RESOURCE_CONFIG:
         case CHANGE:
-        case TRAIT:
             // the model currently supports CHANGE as a category type instead of a comparator
             return AlertConditionOperator.CHANGES;
+
+        case TRAIT:
+            String regex = alertCondition.getOption();
+            return (null == regex || regex.isEmpty()) ? AlertConditionOperator.CHANGES : AlertConditionOperator.REGEX;
 
         case AVAILABILITY: {
             AlertConditionOperator operator = AlertConditionOperator.valueOf(name.toUpperCase());

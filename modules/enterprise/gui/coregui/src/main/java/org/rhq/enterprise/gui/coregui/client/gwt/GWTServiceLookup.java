@@ -28,9 +28,9 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
- * This lookup service retrieves each RPC service and sets a
- * custom RpcRequestBuilder that adds the login session id to
- * be security checked on the server.
+ * This lookup service retrieves each RPC service and sets a custom RpcRequestBuilder that adds the login session 
+ * id to be security checked on the server.  Where timeouts can be specified: -1=default, 0=disable,
+ * >0=specifiedValueInMilliseconds.
  *
  * @author Greg Hinkle
  * @author Joseph Marques
@@ -202,6 +202,10 @@ public class GWTServiceLookup {
         return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance());
     }
     
+    public static PlatformUtilizationGWTServiceAsync getPlatformUtilizationService(int timeout) {
+        return secure(PlatformUtilizationGWTServiceAsync.Util.getInstance(), timeout);
+    }
+
     public static TopologyGWTServiceAsync getTopologyService() {
         return secure(TopologyGWTServiceAsync.Util.getInstance());
     }
@@ -235,7 +239,7 @@ public class GWTServiceLookup {
             if (rpcTimeout > -1) {
                 this.timeout = rpcTimeout;
             } else {
-                this.timeout = (timeout <= 0) ? DEFAULT_RPC_TIMEOUT : timeout;
+                this.timeout = (timeout < 0) ? DEFAULT_RPC_TIMEOUT : timeout;
             }
 
             if (CoreGUI.isDebugMode() && (this.timeout != 0)) {

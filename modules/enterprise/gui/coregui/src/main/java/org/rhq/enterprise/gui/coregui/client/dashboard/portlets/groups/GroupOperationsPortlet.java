@@ -49,7 +49,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -58,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.operation.history.GroupOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -167,7 +168,8 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
                             .valueOf(groupComposite.getResourceGroup().getId()));
 
                         groupOperations = new GroupOperationsCriteriaHistoryListView(
-                            new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
+                            new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite,
+                            isAutoGroup);
                     } else {
                         Criteria criteria = new Criteria();
                         ResourceGroup emptyGroup = new ResourceGroup("");
@@ -176,7 +178,8 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
                         groupComposite = new ResourceGroupComposite(zero, zero, zero, zero, zero, zero, zero, zero,
                             emptyGroup);
                         groupOperations = new GroupOperationsCriteriaHistoryListView(
-                            new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite);
+                            new GroupOperationsCriteriaDataSource(portletConfig), null, criteria, groupComposite,
+                            isAutoGroup);
                     }
 
                     //cleanup
@@ -304,12 +307,12 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
     }
 
     @Override
     protected void onDestroy() {
-        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+        AutoRefreshUtil.onDestroy(refreshTimer);
 
         super.onDestroy();
     }
@@ -348,12 +351,14 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
 class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListView {
 
     private ResourceGroupComposite composite;
+    private boolean isAutogroup;
 
     public GroupOperationsCriteriaHistoryListView(GroupOperationsCriteriaDataSource dataSource, String title,
-        Criteria criteria, ResourceGroupComposite composite) {
+        Criteria criteria, ResourceGroupComposite composite, boolean isAutogroup) {
         super(composite);
         super.setDataSource(dataSource);
         this.composite = composite;
+        this.isAutogroup = isAutogroup;
         setShowFooterRefresh(false); //disable footer refresh
     }
 
@@ -373,7 +378,7 @@ class GroupOperationsCriteriaHistoryListView extends GroupOperationHistoryListVi
 
     @Override
     protected String getBasePath() {
-        return "ResourceGroup/" + composite.getResourceGroup().getId() + "/Operations/History";
+        return (isAutogroup ? ResourceGroupDetailView.AUTO_GROUP_VIEW + '/' : "ResourceGroup/") + composite.getResourceGroup().getId() + "/Operations/History";
     }
 
     @Override

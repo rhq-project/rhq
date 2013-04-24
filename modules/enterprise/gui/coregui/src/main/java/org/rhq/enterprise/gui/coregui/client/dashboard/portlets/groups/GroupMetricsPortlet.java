@@ -59,7 +59,7 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortletUtil;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
@@ -84,8 +84,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettingsPortlet, AutoRefreshPortlet {
 
     private int groupId = -1;
-    private boolean isAutoCluster;
-    private boolean isAutoGroup;
+    private EntityContext context;
     protected Canvas recentMeasurementsContent = new Canvas();
     protected boolean currentlyLoading = false;
     protected long start = -1;
@@ -118,8 +117,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     public GroupMetricsPortlet(EntityContext context) {
         super();
         this.groupId = context.getGroupId();
-        this.isAutoGroup = context.isAutoGroup();
-        this.isAutoCluster = context.isAutoCluster();
+        this.context = context;
     }
 
     @Override
@@ -403,17 +401,22 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                         link.setClipValue(true);
                                                         link.setWrap(true);
                                                         link.setHeight(26);
+                                                        if(!BrowserUtility.isBrowserPreIE9()){
+
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
                                                                 ChartViewWindow window = new ChartViewWindow(title);
                                                                 CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(
-                                                                    groupId, md.getId());
+                                                                    groupId, md.getId(), isAutoGroup);
                                                                 window.addItem(graph);
                                                                 graph.populateData();
                                                                 window.show();
                                                             }
                                                         });
+                                                        }else {
+                                                            link.disable();
+                                                        }
 
                                                         //@todo: this goes away once we have validated the new d3 charts
                                                         final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
@@ -465,9 +468,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                     } else {
                                                         //insert see more link
                                                         DynamicForm row = new DynamicForm();
-                                                        String link = LinkManager
-                                                            .getGroupMonitoringGraphsLink(EntityContext
-                                                                .forGroup(groupId));
+                                                        String link = LinkManager.getGroupMonitoringGraphsLink(context);
                                                         AbstractActivityView.addSeeMoreLink(row, link, column);
                                                     }
                                                     //call out to 3rd party javascript lib
@@ -517,7 +518,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     @Override
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshPortletUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
 
         //call out to 3rd party javascript lib
         BrowserUtility.graphSparkLines();
@@ -526,7 +527,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     @Override
     protected void onDestroy() {
-        AutoRefreshPortletUtil.onDestroy(this, refreshTimer);
+        AutoRefreshUtil.onDestroy(refreshTimer);
 
         super.onDestroy();
     }
@@ -544,11 +545,11 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     }
 
     private boolean isAutoGroup() {
-        return this.isAutoGroup;
+        return this.context.isAutoGroup();
     }
 
     private boolean isAutoCluster() {
-        return this.isAutoCluster;
+        return this.context.isAutoCluster();
     }
 
     protected void setRefreshing(boolean currentlyRefreshing) {

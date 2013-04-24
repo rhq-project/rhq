@@ -35,6 +35,7 @@ import java.util.TreeSet;
 import mazz.i18n.Msg;
 
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -383,6 +384,8 @@ public class DiscoveryPromptCommand implements AgentPromptCommand {
                     }
                 }
             }
+        } catch (ResourceTypeNotEnabledException rtne) {
+            // we are to ignore this type of resource, just skip it
         } catch (Throwable t) {
             out.println(ThrowableUtil.getAllMessages(t));
         }

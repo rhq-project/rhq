@@ -81,7 +81,7 @@ public class AlertManagerBeanTest {
         AlertCondition condition = createCondition(AlertConditionCategory.THRESHOLD, md.getDisplayName(), ">", 12.5d,
             null, md);
         pretty = getPrettyAlertConditionString(condition);
-        String ref = String.format("Foo Prop > %2.1fB",12.5d);
+        String ref = String.format("Foo Prop > %2.1fB", 12.5d);
         assert ref.equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
         assert ref.equals(pretty) : pretty;
@@ -93,19 +93,18 @@ public class AlertManagerBeanTest {
 
         AlertCondition condition = createCondition(AlertConditionCategory.THRESHOLD, regex, ">", 12.5d, "MAX", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR, "CT Prop", "MAX", ">",
-                TWELVE_DOT_5_B, regex);
+        check(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR, "CT Prop", "MAX", ">", TWELVE_DOT_5_B,
+            regex);
         pretty = getShortPrettyAlertConditionString(condition);
         check(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_WITH_EXPR_SHORT, "CT Prop", "MAX", ">",
-                TWELVE_DOT_5_B, regex);
+            TWELVE_DOT_5_B, regex);
 
         // no regex
         condition = createCondition(AlertConditionCategory.THRESHOLD, null, ">", 12.5d, "MAX", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD,"CT Prop","MAX",">", TWELVE_DOT_5_B);
+        check(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD, "CT Prop", "MAX", ">", TWELVE_DOT_5_B);
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_SHORT, "CT Prop", "MAX", ">",
-                TWELVE_DOT_5_B);
+        check(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_THRESHOLD_SHORT, "CT Prop", "MAX", ">", TWELVE_DOT_5_B);
     }
 
     public void testPrettyPrintBASELINE() {
@@ -113,21 +112,21 @@ public class AlertManagerBeanTest {
         AlertCondition condition = createCondition(AlertConditionCategory.BASELINE, md.getDisplayName(), ">", 0.10d,
             "mean", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_BASELINE_MEAN,"Foo Prop",">", TEN_PERCENT);
+        check(AlertI18NResourceKeys.ALERT_BASELINE_MEAN, "Foo Prop", ">", TEN_PERCENT);
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_BASELINE_MEAN_SHORT,"Foo Prop",">", TEN_PERCENT);
+        check(AlertI18NResourceKeys.ALERT_BASELINE_MEAN_SHORT, "Foo Prop", ">", TEN_PERCENT);
 
         condition = createCondition(AlertConditionCategory.BASELINE, md.getDisplayName(), ">", 0.10d, "min", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_BASELINE_MIN,"Foo Prop",">", TEN_PERCENT);
+        check(AlertI18NResourceKeys.ALERT_BASELINE_MIN, "Foo Prop", ">", TEN_PERCENT);
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_BASELINE_MIN_SHORT,"Foo Prop",">", TEN_PERCENT);
+        check(AlertI18NResourceKeys.ALERT_BASELINE_MIN_SHORT, "Foo Prop", ">", TEN_PERCENT);
 
         condition = createCondition(AlertConditionCategory.BASELINE, md.getDisplayName(), ">", 0.10d, "max", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_BASELINE_MAX,"Foo Prop",">", TEN_PERCENT);
+        check(AlertI18NResourceKeys.ALERT_BASELINE_MAX, "Foo Prop", ">", TEN_PERCENT);
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_BASELINE_MAX_SHORT,"Foo Prop",">", TEN_PERCENT);
+        check(AlertI18NResourceKeys.ALERT_BASELINE_MAX_SHORT, "Foo Prop", ">", TEN_PERCENT);
     }
 
     public void testPrettyPrintCHANGE() {
@@ -149,24 +148,23 @@ public class AlertManagerBeanTest {
         String msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_SHRINKS);
         String ref = "Calltime Metric CT Prop MIN %s by at least %2.1f%% with calltime destination matching \"some.*(reg)?ex$\"";
         String refs = "CT Prop MIN %s by %2.1f%% matching \"some.*(reg)?ex$\"";
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "CH", 0.10d, "MIN", md);
         pretty = getPrettyAlertConditionString(condition);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_CHANGES);
-        assert String.format(ref,msg,10.0f).equals(pretty)  ;
+        assert String.format(ref, msg, 10.0f).equals(pretty);
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty)  ;
-
+        assert String.format(refs, msg, 10.0f).equals(pretty);
 
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "HI", 0.10d, "MIN", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_GROWS);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         ref = "Calltime Metric CT Prop MAX %s by at least %2.1f%% with calltime destination matching \"some.*(reg)?ex$\"";
         refs = "CT Prop MAX %s by %2.1f%% matching \"some.*(reg)?ex$\"";
@@ -174,23 +172,23 @@ public class AlertManagerBeanTest {
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "LO", 0.10d, "MAX", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_SHRINKS);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "CH", 0.10d, "MAX", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_CHANGES);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "HI", 0.10d, "MAX", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_GROWS);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         ref = "Calltime Metric CT Prop AVG %s by at least %2.1f%% with calltime destination matching \"some.*(reg)?ex$\"";
         refs = "CT Prop AVG %s by %2.1f%% matching \"some.*(reg)?ex$\"";
@@ -198,23 +196,23 @@ public class AlertManagerBeanTest {
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "LO", 0.10d, "AVG", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_SHRINKS);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "CH", 0.10d, "AVG", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_CHANGES);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         condition = createCondition(AlertConditionCategory.CHANGE, regex, "HI", 0.10d, "AVG", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_GROWS);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         // no regex
         ref = "Calltime Metric CT Prop AVG %s by at least %2.1f%%";
@@ -223,23 +221,23 @@ public class AlertManagerBeanTest {
         condition = createCondition(AlertConditionCategory.CHANGE, null, "LO", 0.10d, "AVG", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_SHRINKS);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         condition = createCondition(AlertConditionCategory.CHANGE, null, "CH", 0.10d, "AVG", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_CHANGES);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
 
         condition = createCondition(AlertConditionCategory.CHANGE, null, "HI", 0.10d, "AVG", md);
         msg = AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CALLTIME_CHANGE_GROWS);
         pretty = getPrettyAlertConditionString(condition);
-        assert String.format(ref,msg,10.0f).equals(pretty) : pretty ;
+        assert String.format(ref, msg, 10.0f).equals(pretty) : pretty;
         pretty = getShortPrettyAlertConditionString(condition);
-        assert String.format(refs,msg,10.0f).equals(pretty) : pretty +  " \n<=> " +String.format(refs,msg,10.0f);
+        assert String.format(refs, msg, 10.0f).equals(pretty) : pretty + " \n<=> " + String.format(refs, msg, 10.0f);
     }
 
     public void testPrettyPrintTRAIT() {
@@ -247,25 +245,31 @@ public class AlertManagerBeanTest {
         AlertCondition condition = createCondition(AlertConditionCategory.TRAIT, md.getDisplayName(), null, null, null,
             md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED,"Blah Trait");
+        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, "Blah Trait");
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT,"Blah Trait");
+        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, "Blah Trait");
+
+        condition = createCondition(AlertConditionCategory.TRAIT, md.getDisplayName(), null, null, "RegexPattern", md);
+        pretty = getPrettyAlertConditionString(condition);
+        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR, "Blah Trait", "RegexPattern");
+        pretty = getShortPrettyAlertConditionString(condition);
+        check(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR_SHORT, "Blah Trait", "RegexPattern");
     }
 
     public void testPrettyPrintCONTROL() {
         AlertCondition condition = createCondition(AlertConditionCategory.CONTROL, "opNameHere", null, null,
             OperationRequestStatus.FAILURE.name(), null);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_OPERATION,"opNameHere","FAILURE");
+        check(AlertI18NResourceKeys.ALERT_OPERATION, "opNameHere", "FAILURE");
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_OPERATION_SHORT,"opNameHere","FAILURE");
+        check(AlertI18NResourceKeys.ALERT_OPERATION_SHORT, "opNameHere", "FAILURE");
 
         condition = createCondition(AlertConditionCategory.CONTROL, "opNameHere", null, null,
             OperationRequestStatus.SUCCESS.name(), null);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_OPERATION,"opNameHere","SUCCESS");
+        check(AlertI18NResourceKeys.ALERT_OPERATION, "opNameHere", "SUCCESS");
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_OPERATION_SHORT,"opNameHere","SUCCESS");
+        check(AlertI18NResourceKeys.ALERT_OPERATION_SHORT, "opNameHere", "SUCCESS");
     }
 
     public void testPrettyPrintEVENT() {
@@ -325,27 +329,35 @@ public class AlertManagerBeanTest {
         AlertCondition condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), "<=", 1.0,
             "22.2", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_INCL,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_INCL, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_INCL_SHORT,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_INCL_SHORT, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
 
         condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), ">=", 1.0, "22.2", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_INCL,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_INCL, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_INCL_SHORT,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_INCL_SHORT, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
 
         condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), "<", 1.0, "22.2", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_EXCL,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_EXCL, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_EXCL_SHORT,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_INSIDE_EXCL_SHORT, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
 
         condition = createCondition(AlertConditionCategory.RANGE, md.getDisplayName(), ">", 1.0, "22.2", md);
         pretty = getPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_EXCL,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_EXCL, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
         pretty = getShortPrettyAlertConditionString(condition);
-        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_EXCL_SHORT,"Foo Prop",String.format("%1.1fB",1d),String.format("%2.1fB",22.2d));
+        check(AlertI18NResourceKeys.ALERT_RANGE_OUTSIDE_EXCL_SHORT, "Foo Prop", String.format("%1.1fB", 1d),
+            String.format("%2.1fB", 22.2d));
     }
 
     private String getPrettyAlertConditionString(AlertCondition condition) {
@@ -429,7 +441,7 @@ public class AlertManagerBeanTest {
     }
 
     private void check(String msg, Object... args) {
-        String ref = AlertI18NFactory.getMessage(msg,args);
+        String ref = AlertI18NFactory.getMessage(msg, args);
         assert ref != null : "Could not find reference message";
         assert ref.equals(pretty) : "Got : >>" + pretty + "<<   Expect: >>" + ref + "<<";
     }

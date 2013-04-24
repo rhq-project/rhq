@@ -192,16 +192,19 @@ public class SessionTestHelper {
         return newGroup;
     }
 
+    /** This uses only EM, it does not call the SLSB for adding resources to a group! */
     public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName) {
         ResourceType type = group.getResourceType();
         return createNewResourceForGroup(em, group, resourceName, type, true);
     }
 
+    /** This uses only EM, it does not call the SLSB for adding resources to a group! */
     public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName,
         ResourceType type, boolean doFlush) {
         return createNewResourceForGroup(em, group, resourceName, type, AvailabilityType.UP, doFlush);
     }
 
+    /** This uses only EM, it does not call the SLSB for adding resources to a group! */
     public static Resource createNewResourceForGroup(EntityManager em, ResourceGroup group, String resourceName,
         ResourceType type, AvailabilityType avail, boolean doFlush) {
 

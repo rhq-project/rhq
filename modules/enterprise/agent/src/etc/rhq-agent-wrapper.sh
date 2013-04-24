@@ -346,9 +346,6 @@ case "$1" in
 
 'status')
         echo $_STATUS
-        if [ "$_RUNNING" = "0" ]; then
-           exit 1
-        fi
         exit 0
         ;;
 

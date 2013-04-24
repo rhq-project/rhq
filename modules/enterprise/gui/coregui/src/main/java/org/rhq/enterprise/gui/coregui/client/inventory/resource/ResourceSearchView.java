@@ -22,6 +22,7 @@ import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceD
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CATEGORY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.CTIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.DESCRIPTION;
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.INVENTORY_STATUS;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.ITIME;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.KEY;
 import static org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDataSourceField.LOCATION;
@@ -53,6 +54,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.search.SearchSubsystem;
@@ -195,7 +197,7 @@ public class ResourceSearchView extends Table {
                         public void onSuccess(List<Integer> result) {
                             CoreGUI.getMessageCenter().notify(
                                 new Message(MSG.view_inventory_resources_uninventorySuccessful(), Severity.Info));
-                            onUninventorySuccess();
+                            onActionSuccess();
                         }
                     });
                 }
@@ -260,7 +262,7 @@ public class ResourceSearchView extends Table {
                                 new Message(
                                     MSG.view_inventory_resources_disableSuccessful(String.valueOf(result.size())),
                                     Severity.Info));
-                            onUninventorySuccess();
+                            onActionSuccess();
                         }
                     });
                 }
@@ -325,11 +327,19 @@ public class ResourceSearchView extends Table {
                                 new Message(
                                     MSG.view_inventory_resources_enableSuccessful(String.valueOf(result.size())),
                                     Severity.Info));
-                            onUninventorySuccess();
+                            onActionSuccess();
                         }
                     });
                 }
             });
+
+        if (shouldShowIgnoreButton()) {
+            addIgnoreButton();
+        }
+
+        if (shouldShowUnignoreButton()) {
+            addUnignoreButton();
+        }
 
         if (exportable) {
             addExportAction();
@@ -340,11 +350,187 @@ public class ResourceSearchView extends Table {
                 ListGrid listGrid = (ListGrid) event.getSource();
                 ListGridRecord[] selectedRows = listGrid.getSelectedRecords();
                 if (selectedRows != null && selectedRows.length == 1) {
-                    String selectedId = selectedRows[0].getAttribute("id");
-                    CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
+                    String invStatus = selectedRows[0].getAttribute(INVENTORY_STATUS.propertyName());
+                    if (InventoryStatus.COMMITTED == InventoryStatus.valueOf(invStatus)) {
+                        String selectedId = selectedRows[0].getAttribute("id");
+                        CoreGUI.goToView(LinkManager.getResourceLink(Integer.valueOf(selectedId)));
+                    }
                 }
             }
         });
+    }
+
+    /**
+     * If returns true, the ignore button will be added to the list of table buttons.
+     * Subclasses can remove the ignore button by overriding this and returning false.
+     * The only time you normally do not want an ignore button is if you know your
+     * criteria will only ever show ignored resources (in which case, its useless
+     * showing an ignore button since everything will already have been ignored).
+     */
+    protected boolean shouldShowIgnoreButton() {
+        return true; // by default, show the ignore button
+    }
+
+    /**
+     * If returns true, the unignore button will be added to the list of table buttons.
+     * Subclasses can add the unignore button by overriding this and returning true.
+     * The only time you normally want an unignore button is if you know your
+     * criteria will only ever show ignored resources (so it makes sense to allow someone
+     * to unignore those resources).
+     */
+    protected boolean shouldShowUnignoreButton() {
+        return false; // by default, do not show the unignore button
+    }
+
+    /**
+     * Adds an ignore button to the list of table buttons. Subclasses normally do not have to override
+     * this - instead, look at {@link #shouldShowIgnoreButton()}.
+     */
+    protected void addIgnoreButton() {
+        addTableAction(MSG.common_button_ignore(), MSG.view_inventory_resources_ignoreConfirm(),
+            new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+                Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            // we only care about those that are not platforms since you cannot ignore platforms outside of discovery queue anyway
+                            String resCat = record.getAttribute(CATEGORY.propertyName());
+                            if (ResourceCategory.valueOf(resCat) != ResourceCategory.PLATFORM) {
+                                result.add(record.getAttributeAsInt("id"));
+                            }
+                        }
+                        return result;
+                    }
+                }) {
+
+                public boolean isEnabled(ListGridRecord[] selection) {
+                    if (selection == null || selection.length == 0) {
+                        return false;
+                    }
+
+                    // do not enable the ignore button if everything selected is a platform
+                    boolean nonPlatformSelected = false;
+                    for (Record record : selection) {
+                        // we only care about those that are not platforms since you cannot ignore platforms outside of discovery queue anyway
+                        String resCat = record.getAttribute(CATEGORY.propertyName());
+                        if (ResourceCategory.valueOf(resCat) != ResourceCategory.PLATFORM) {
+                            nonPlatformSelected = true;
+                            break;
+                        }
+                    }
+
+                    if (!nonPlatformSelected) {
+                        return false; // everything selected is a platform - you can't ignore them
+                    }
+
+                    // at least one non-platform was selected, let's ask what our superclass thinks
+                    return super.isEnabled(selection);
+                }
+
+                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                    if (selection == null || selection.length == 0) {
+                        return; // should never happen, but ignore it if it does
+                    }
+
+                    final int[] numberOfPlatformsSelected = new int[] { 0 };
+                    final ArrayList<Integer> resourceIdsList = new ArrayList<Integer>(selection.length);
+                    for (ListGridRecord selectedRecord : selection) {
+                        // we only include those that are not platforms (you cannot ignore platforms outside of discovery queue)
+                        String resCat = selectedRecord.getAttribute(CATEGORY.propertyName());
+                        if (ResourceCategory.valueOf(resCat) != ResourceCategory.PLATFORM) {
+                            resourceIdsList.add(selectedRecord.getAttributeAsInt("id"));
+                        } else {
+                            numberOfPlatformsSelected[0]++;
+                        }
+                    }
+
+                    if (resourceIdsList.isEmpty()) {
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_inventory_resources_ignoreSkipAllPlatforms(), Severity.Warning));
+                        return;
+                    } else if (numberOfPlatformsSelected[0] > 0) {
+                        String n = Integer.toString(numberOfPlatformsSelected[0]);
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_inventory_resources_ignoreSkipSomePlatforms(n), Severity.Warning));
+                    }
+
+                    // the remote API requires int[]
+                    int[] resourceIds = new int[resourceIdsList.size()];
+                    int i = 0;
+                    for (Integer id : resourceIdsList) {
+                        resourceIds[i++] = id;
+                    }
+
+                    // ask the server to ignore the selected non-platform resources
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+                    resourceManager.ignoreResources(resourceIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_ignoreFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(Void result) {
+                            String msg;
+                            if (numberOfPlatformsSelected[0] > 0) {
+                                String n = Integer.toString(numberOfPlatformsSelected[0]);
+                                msg = MSG.view_inventory_resources_ignoreSuccessfulSkipPlatforms(n);
+                            } else {
+                                msg = MSG.view_inventory_resources_ignoreSuccessful();
+                            }
+                            CoreGUI.getMessageCenter().notify(new Message(msg, Severity.Info));
+                            onActionSuccess(); // do the same thing as if we uninventoried the resource
+                        }
+                    });
+
+                    return;
+                }
+            });
+    }
+
+    /**
+     * Adds an unignore button to the list of table buttons. Subclasses normally do not have to override
+     * this - instead, look at {@link #shouldShowUnignoreButton()}.
+     */
+    protected void addUnignoreButton() {
+        addTableAction(MSG.common_button_unignore(), MSG.view_inventory_resources_unignoreConfirm(),
+            new ResourceAuthorizedTableAction(ResourceSearchView.this, TableActionEnablement.ANY,
+                Permission.DELETE_RESOURCE, new RecordExtractor<Integer>() {
+                    public Collection<Integer> extract(Record[] records) {
+                        List<Integer> result = new ArrayList<Integer>(records.length);
+                        for (Record record : records) {
+                            result.add(record.getAttributeAsInt("id"));
+                        }
+
+                        return result;
+                    }
+                }) {
+
+                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                    if (selection == null || selection.length == 0) {
+                        return; // should never happen, but ignore it if it does
+                    }
+
+                    int[] resourceIds = TableUtility.getIds(selection);
+
+                    // ask the server to unignore the selected resources and immediately commit them to inventory again
+                    ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+                    resourceManager.unignoreAndImportResources(resourceIds, new AsyncCallback<Void>() {
+                        public void onFailure(Throwable caught) {
+                            CoreGUI.getErrorHandler()
+                                .handleError(MSG.view_inventory_resources_unignoreFailed(), caught);
+                            refreshTableInfo();
+                        }
+
+                        public void onSuccess(Void result) {
+                            String msg = MSG.view_inventory_resources_unignoreSuccessful();
+                            CoreGUI.getMessageCenter().notify(new Message(msg, Severity.Info));
+                            onActionSuccess();
+                        }
+                    });
+
+                    return;
+                }
+            });
     }
 
     private void addExportAction() {
@@ -375,7 +561,7 @@ public class ResourceSearchView extends Table {
         });
     }
 
-    protected void onUninventorySuccess() {
+    protected void onActionSuccess() {
         refresh(true);
         // the group type may have changed
         CoreGUI.refresh();
@@ -405,9 +591,14 @@ public class ResourceSearchView extends Table {
         ListGridField nameField = new ListGridField(NAME.propertyName(), NAME.title(), 250);
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
-                String name = StringUtility.escapeHtml(value.toString());
-                return LinkManager.getHref(url, name);
+                String invStatus = record.getAttribute(INVENTORY_STATUS.propertyName());
+                if (InventoryStatus.COMMITTED == InventoryStatus.valueOf(invStatus)) {
+                    String url = LinkManager.getResourceLink(record.getAttributeAsInt("id"));
+                    String name = StringUtility.escapeHtml(value.toString());
+                    return LinkManager.getHref(url, name);
+                } else {
+                    return value.toString();
+                }
             }
         });
         nameField.setShowHover(true);
@@ -463,6 +654,10 @@ public class ResourceSearchView extends Table {
 
         ListGridField modifiedByField = new ListGridField(MODIFIER.propertyName(), MODIFIER.title(), 100);
         fields.add(modifiedByField);
+
+        ListGridField inventoryStatusField = new ListGridField(INVENTORY_STATUS.propertyName(),
+            INVENTORY_STATUS.title(), 100);
+        fields.add(inventoryStatusField);
 
         return fields;
     }

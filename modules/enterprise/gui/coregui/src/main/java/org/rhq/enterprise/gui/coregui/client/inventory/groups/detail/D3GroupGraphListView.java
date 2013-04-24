@@ -24,27 +24,27 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.layout.VLayout;
 
-import org.rhq.core.domain.criteria.AvailabilityCriteria;
-import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceMetricD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -54,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
  * Build the Group version of the View that shows the individual graph views.
  * @author Mike Thompson
  */
-public final class D3GroupGraphListView extends AbstractD3GraphListView {
+public final class D3GroupGraphListView extends AbstractD3GraphListView implements AutoRefresh{
 
     private ResourceGroup resourceGroup;
     private VLayout graphsVLayout;
@@ -85,17 +85,23 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
         graphsVLayout.setWidth100();
 
         if (resourceGroup != null) {
-            redrawGraphs();
+            buildGraphs();
         }
         addMember(graphsVLayout);
+    }
+
+
+    public void redrawGraphs() {
+        this.onDraw();
+        availabilityGraph.drawJsniChart();
     }
 
     /**
      * Build whatever graph metrics (MeasurementDefinitions) are defined for the resource.
      */
-    public void redrawGraphs() {
+    private void buildGraphs() {
 
-        queryAvailability(resourceGroup.getId(), measurementRangeEditor.getStartTime(),
+        queryAvailability(EntityContext.forGroup(resourceGroup), measurementRangeEditor.getStartTime(),
             measurementRangeEditor.getEndTime(), null);
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceGroup.getResourceType().getId(),
@@ -142,8 +148,11 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
                                     for (List<MeasurementDataNumericHighLowComposite> data : result) {
                                         buildIndividualGraph(measurementDefinitions.get(i++), data);
                                     }
-                                    availabilityGraph.setAvailabilityList(availabilityList);
-                                    availabilityGraph.drawJsniChart();
+                                    // There is a weird timing case when availabilityGraph can be null
+                                    if (availabilityGraph != null) {
+                                        availabilityGraph.setGroupAvailabilityList(groupAvailabilityList);
+                                        availabilityGraph.drawJsniChart();
+                                    }
                                 }
                             }
                         });
@@ -152,19 +161,14 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
             });
     }
 
-    protected void queryAvailability(final int entityId, Long startTime, Long endTime,
+    protected void queryAvailability(final EntityContext groupContext, Long startTime, Long endTime,
         final CountDownLatch countDownLatch) {
 
         final long timerStart = System.currentTimeMillis();
 
         // now return the availability
-        //@todo: prep for New GroupAvailability SLSB call
-        AvailabilityCriteria c = new AvailabilityCriteria();
-        c.addFilterResourceId(entityId);
-        c.addFilterInterval(startTime, endTime);
-        c.addSortStartTime(PageOrdering.ASC);
-        GWTServiceLookup.getAvailabilityService().findAvailabilityByCriteria(c,
-            new AsyncCallback<PageList<Availability>>() {
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResourceGroup(groupContext.getGroupId(),
+            startTime, endTime, new AsyncCallback<List<ResourceGroupAvailability>>() {
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
@@ -174,31 +178,36 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView {
                 }
 
                 @Override
-                public void onSuccess(PageList<Availability> availList) {
+                public void onSuccess(List<ResourceGroupAvailability> groupAvailList) {
                     Log.debug("\nSuccessfully queried group availability in: "
                         + (System.currentTimeMillis() - timerStart) + " ms.");
-                    availabilityList = new PageList<Availability>();
-                    for (Availability availability : availList) {
-                        availabilityList.add(availability);
-                    }
+                    groupAvailabilityList = groupAvailList;
                     if (countDownLatch != null) {
                         countDownLatch.countDown();
                     }
                 }
             });
+
     }
 
     private void buildIndividualGraph(MeasurementDefinition measurementDefinition,
         List<MeasurementDataNumericHighLowComposite> data) {
 
-        MetricGraphData metricGraphData = new MetricGraphData(resourceGroup.getId(), resourceGroup.getName(),
-            measurementDefinition, data);
-        MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
-        ResourceMetricD3Graph graphView = new ResourceMetricD3Graph(graph);
+        MetricGraphData metricGraphData = MetricGraphData.createForResourceGroup(resourceGroup.getId(),
+                resourceGroup.getName(), measurementDefinition, data );
+
+        StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
+        graph.setMetricGraphData(metricGraphData);
+        MetricD3GraphView graphView = new MetricD3GraphView(graph);
 
         graphView.setWidth("95%");
-        graphView.setHeight(225);
+        graphView.setHeight(MULTI_CHART_HEIGHT);
 
-        graphsVLayout.addMember(graphView);
+        if(graphsVLayout != null){
+            graphsVLayout.addMember(graphView);
+        }
     }
+
+
+
 }

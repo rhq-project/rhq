@@ -110,6 +110,7 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
         public QueryResultsIterator(PageList<T> firstPage) {
             currentPage = firstPage;
             iterator = currentPage.iterator();
+            count = firstPage == null || firstPage.getPageControl() == null ? 0 : firstPage.getPageControl().getStartRow();
         }
 
         @Override

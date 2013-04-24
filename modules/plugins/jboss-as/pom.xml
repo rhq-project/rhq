@@ -18,7 +18,7 @@
    <properties>
       <rhq.internal>false</rhq.internal>
    </properties>
-   
+
    <dependencies>
       <!-- internal -->
       <!-- TODO: Move this up to the parent pom. -->
@@ -74,14 +74,12 @@
        <dependency>
           <groupId>org.powermock</groupId>
           <artifactId>powermock-module-testng</artifactId>
-          <version>${powermock.version}</version>
           <scope>test</scope>
        </dependency>
 
        <dependency>
            <groupId>org.powermock</groupId>
            <artifactId>powermock-api-mockito</artifactId>
-           <version>${powermock.version}</version>
            <scope>test</scope>
        </dependency>
 
@@ -101,7 +99,7 @@
                   </goals>
                   <configuration>
                      <artifactItems>
-                        <!-- 
+                        <!--
                         <artifactItem>
                            <groupId>jboss</groupId>
                            <artifactId>jboss-common</artifactId>
@@ -124,7 +122,6 @@
                         <artifactItem>
                            <groupId>jboss</groupId>
                            <artifactId>jbpm</artifactId>
-                           <version>3.1.1</version>
                         </artifactItem>
                         <artifactItem>
                            <groupId>ant</groupId>
@@ -152,7 +149,6 @@
                        <artifactItem>
                          <groupId>jboss</groupId>
                          <artifactId>jbpm</artifactId>
-                         <version>3.1.1</version>
                        </artifactItem>
                        <artifactItem>
                          <groupId>ant</groupId>
@@ -201,7 +197,7 @@
                   <executions>
                      <execution>
                         <phase>pre-integration-test</phase>
-      
+
                   <configuration>
                            <target>
                               <echo>Setting up plugin dependencies...</echo>

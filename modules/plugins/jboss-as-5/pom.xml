@@ -64,7 +64,6 @@
     <dependency>
       <groupId>commons-lang</groupId>
       <artifactId>commons-lang</artifactId>
-      <version>2.4</version>
     </dependency>
 
     <dependency>
@@ -144,14 +143,12 @@
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-module-testng</artifactId>
-      <version>${powermock.version}</version>
       <scope>test</scope>
     </dependency>
 
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-api-mockito</artifactId>
-      <version>${powermock.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -188,7 +185,6 @@
                 <artifactItem>
                   <groupId>jboss</groupId>
                   <artifactId>jbpm</artifactId>
-                  <version>3.1.1</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>ant</groupId>
@@ -447,14 +443,14 @@
       </properties>
 
       <dependencies>
-        
+
         <dependency>
           <groupId>org.jboss.shrinkwrap.resolver</groupId>
           <artifactId>shrinkwrap-resolver-depchain</artifactId>
           <type>pom</type>
           <scope>test</scope>
         </dependency>
-        
+
       </dependencies>
 
       <build>
@@ -669,7 +665,7 @@
 
         </plugins>
       </build>
-    </profile>    
+    </profile>
   </profiles>
 
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,9 +18,6 @@
  */
 package org.rhq.enterprise.server.alert;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,7 +68,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.server.MeasurementConverter;
 import org.rhq.core.util.collection.ArrayUtils;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NFactory;
 import org.rhq.enterprise.server.alert.i18n.AlertI18NResourceKeys;
@@ -138,7 +134,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return alert;
     }
 
-    // TODO: iterate in batches of 1000 elements at a time
     public int deleteAlerts(Subject user, int[] alertIds) {
         if (alertIds == null || alertIds.length == 0) {
             return 0;
@@ -168,7 +163,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return updated;
     }
 
-    // TODO: iterate in batches of 1000 elements at a time
     /**
      * Acknowledge alert(s) so that administrators know who is working on remedying the underlying
      * condition(s) that caused the alert(s) in the first place.
@@ -425,59 +419,6 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             + "alert audit records in [" + (totalTime) + "]ms");
 
         return deletedAlerts;
-    }
-
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @TransactionTimeout(6 * 60 * 60)
-    public int purgeAlerts() {
-        long totalTime = 0;
-
-        Connection conn = null;
-        PreparedStatement truncateConditionLogsStatement = null;
-        PreparedStatement truncateNotificationLogsStatement = null;
-        PreparedStatement truncateAlertsStatement = null;
-        try {
-            conn = rhqDs.getConnection();
-
-            truncateConditionLogsStatement = conn.prepareStatement(AlertConditionLog.QUERY_NATIVE_TRUNCATE_SQL);
-            truncateNotificationLogsStatement = conn.prepareStatement(AlertNotificationLog.QUERY_NATIVE_TRUNCATE_SQL);
-            truncateAlertsStatement = conn.prepareStatement(Alert.QUERY_NATIVE_TRUNCATE_SQL);
-
-            long start = System.currentTimeMillis();
-            int purgedConditions = truncateConditionLogsStatement.executeUpdate();
-            long end = System.currentTimeMillis();
-            log.debug("Purged [" + purgedConditions + "] alert condition logs in [" + (end - start) + "]ms");
-            totalTime += (end - start);
-
-            start = System.currentTimeMillis();
-            int purgedNotifications = truncateNotificationLogsStatement.executeUpdate();
-            end = System.currentTimeMillis();
-            log.debug("Purged [" + purgedNotifications + "] alert notifications in [" + (end - start) + "]ms");
-            totalTime += (end - start);
-
-            start = System.currentTimeMillis();
-            int purgedAlerts = truncateAlertsStatement.executeUpdate();
-            end = System.currentTimeMillis();
-            log.debug("Purged [" + purgedAlerts + "] alerts in [" + (end - start) + "]ms");
-            totalTime += (end - start);
-
-            MeasurementMonitor.getMBean().incrementPurgeTime(totalTime);
-            MeasurementMonitor.getMBean().setPurgedAlerts(purgedAlerts);
-            MeasurementMonitor.getMBean().setPurgedAlertConditions(purgedConditions);
-            MeasurementMonitor.getMBean().setPurgedAlertNotifications(purgedNotifications);
-            log.debug("Deleted [" + (purgedAlerts + purgedConditions + purgedNotifications) + "] "
-                + "alert audit records in [" + (totalTime) + "]ms");
-
-            return purgedAlerts;
-        } catch (SQLException sqle) {
-            log.error("Error purging alerts", sqle);
-            throw new RuntimeException("Error purging alerts: " + sqle.getMessage());
-        } finally {
-            JDBCUtil.safeClose(truncateConditionLogsStatement);
-            JDBCUtil.safeClose(truncateNotificationLogsStatement);
-            JDBCUtil.safeClose(truncateAlertsStatement);
-            JDBCUtil.safeClose(conn);
-        }
     }
 
     public int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end) {
@@ -1014,10 +955,23 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
         case TRAIT: {
             String metricName = condition.getName();
-            if (isShort) {
-                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
+            String expression = condition.getOption();
+
+            if (expression != null && !expression.isEmpty()) {
+                if (isShort) {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR_SHORT,
+                        metricName, expression));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_WITH_EXPR,
+                        metricName, expression));
+                }
             } else {
-                str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, metricName));
+                if (isShort) {
+                    str.append(AlertI18NFactory
+                        .getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED_SHORT, metricName));
+                } else {
+                    str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_METRIC_CHANGED, metricName));
+                }
             }
             break;
         }

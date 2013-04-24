@@ -25,7 +25,6 @@
       <dependency>
          <groupId>ant-contrib</groupId>
          <artifactId>ant-contrib</artifactId>
-         <version>${ant.contrib.version}</version>
          <scope>provided</scope>
       </dependency>
 
@@ -38,7 +37,6 @@
        <dependency>
         <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
-         <version>1.4</version>
       </dependency>
    </dependencies>
 
@@ -271,7 +269,6 @@
                                 <artifactItem>
 							        <groupId>commons-io</groupId>
 							         <artifactId>commons-io</artifactId>
-							         <version>1.4</version>
                                 </artifactItem>
                              </artifactItems>
                              <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>

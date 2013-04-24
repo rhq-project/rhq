@@ -252,7 +252,7 @@ import org.rhq.core.domain.util.Summary;
 @SqlResultSetMapping(name = ResourceType.MAPPING_FIND_CHILDREN_BY_CATEGORY, entities = { @EntityResult(entityClass = ResourceType.class) })
 // @Cache(usage = CacheConcurrencyStrategy.TRANSACTIONAL)
 public class ResourceType implements Serializable, Comparable<ResourceType> {
-    private static final long serialVersionUID = 2L;
+    private static final long serialVersionUID = 3L;
 
     public static final String TABLE_NAME = "RHQ_RESOURCE_TYPE";
 
@@ -338,6 +338,9 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     @Column(name = "DELETED")
     private boolean deleted;
+
+    @Column(name = "IGNORED")
+    private boolean ignored;
 
     @ManyToMany(mappedBy = "parentResourceTypes", cascade = { CascadeType.REFRESH })
     @OrderBy
@@ -586,6 +589,14 @@ public class ResourceType implements Serializable, Comparable<ResourceType> {
 
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
+    }
+
+    public boolean isIgnored() {
+        return ignored;
+    }
+
+    public void setIgnored(boolean ignored) {
+        this.ignored = ignored;
     }
 
     @PreUpdate

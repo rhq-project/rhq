@@ -47,7 +47,7 @@ import org.rhq.core.domain.alert.Alert;
 
 /**
  * A log record for a triggered action and/or notification taken for a fired alert.
- * 
+ *
  * @author Joseph Marques
  */
 @Entity
@@ -68,8 +68,7 @@ import org.rhq.core.domain.alert.Alert;
         + "                             FROM AlertDefinition ad " //
         + "                             JOIN ad.alerts alert " //
         + "                            WHERE ad.resource.id IN ( :resourceIds ) ))"),
-    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE,
-    query = "DELETE AlertNotificationLog log "
+    @NamedQuery(name = AlertNotificationLog.QUERY_DELETE_BY_RESOURCE_TEMPLATE, query = "DELETE AlertNotificationLog log "
         + "  WHERE log.alert.id IN (SELECT alert.id "
         + "                         FROM   AlertDefinition alertDef "
         + "                         JOIN   alertDef.alerts alert "

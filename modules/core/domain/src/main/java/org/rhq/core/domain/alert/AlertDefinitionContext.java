@@ -33,7 +33,7 @@ public enum AlertDefinitionContext {
             return Type;
         } else if (definition.getResource() != null) {
             return Resource;
-        } else if (definition.getResourceGroup() != null) {
+        } else if (definition.getGroup() != null) {
             return Group;
         } else {
             throw new IllegalArgumentException("Unknown AlertDefinitionContext: " + definition);

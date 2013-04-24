@@ -302,7 +302,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         availManager.mergeAvailabilityReport(availReport);
 
         // wait for our JMS messages to process and see if we get any alerts
-        Thread.sleep(3000);
+        Thread.sleep(4000);
 
         PageList<Alert> alerts = getAlerts(resource.getId());
         assert alerts.size() == 0 : "No alert should have fired on the initial avail reporting: " + alerts;
@@ -314,13 +314,13 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         availManager.mergeAvailabilityReport(availReport);
 
         // wait for our JMS messages to process and see if we get any alerts
-        Thread.sleep(5000);
+        Thread.sleep(4000);
 
         alerts = getAlerts(resource.getId());
-        assert alerts.size() == 0 : "No alert should have fired after 30s, will take at least a minute: " + alerts;
+        assert alerts.size() == 0 : "No alert should have fired after 4s, will take at least 10s: " + alerts;
 
-        // wait for our JMS messages to process and see if we get any alerts
-        Thread.sleep(6000);
+        // wait for our alert condition duration to pass and see if we get any alerts
+        Thread.sleep(10000);
 
         alerts = getAlerts(resource.getId());
         assert alerts.size() == 2 : "Two alerts should have fired on the avail duration: " + alerts;
@@ -470,7 +470,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -504,7 +504,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -537,7 +537,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -570,7 +570,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -604,7 +604,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         alertDefinition.setConditions(conditions);
 
         AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
-        int defId = alertDefManager.createAlertDefinition(getOverlord(), alertDefinition, resourceId, true);
+        int defId = alertDefManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resourceId, true);
         alertDefinition = alertDefManager.getAlertDefinition(getOverlord(), defId); // load it back so we get its ID and all condition IDs
         assert alertDefinition != null && alertDefinition.getId() > 0 : "did not persist alert def properly: "
             + alertDefinition;
@@ -618,7 +618,7 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     /**
      * Creates a resource, stores it in the "resource" data field and returns the measurement definition
      * that the schedule is for.
-     * 
+     *
      * @return measurement definition that was used to create the schedule for the new resource
      * @throws Exception
      */

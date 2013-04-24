@@ -39,7 +39,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public abstract class OperationHistoryCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private String filterJobName;
     private String filterJobGroup;

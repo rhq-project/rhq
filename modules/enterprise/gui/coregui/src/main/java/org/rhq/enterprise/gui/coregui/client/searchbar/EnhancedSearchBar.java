@@ -24,19 +24,16 @@ import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Autofit;
+import com.smartgwt.client.core.Rectangle;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.MouseOutEvent;
-import com.smartgwt.client.widgets.events.MouseOutHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
-import com.smartgwt.client.widgets.form.fields.events.FocusHandler;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.toolbar.ToolStripButton;
 
 import org.rhq.core.domain.auth.Subject;
@@ -49,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -61,12 +59,11 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author  Mike Thompson
  */
-public class EnhancedSearchBar extends ToolStrip {
+public class EnhancedSearchBar extends EnhancedToolStrip {
     private static final Messages MSG = CoreGUI.getMessages();
-    private static final int PICKLIST_WIDTH = 600;
+    private static final int SEARCH_WIDTH = 500;
+    private static final int SAVED_SEARCH_WIDTH = 150;
     private static final int PICKLIST_HEIGHT = 500;
-    private static final int PICKLIST_LEFT_OFFSET = 307;
-    private static final int PICKLIST_TOP_OFFSET = 140;
     private SearchSubsystem searchSubsystem;
     private ToolStripButton searchTextButton;
     private ToolStripButton saveSearchButton;
@@ -76,6 +73,7 @@ public class EnhancedSearchBar extends ToolStrip {
     private final FavoritesSearchStrategy favoritesSearchStrategy;
     private final BasicSearchStrategy basicSearchStrategy;
     private String lastSearchTerm;
+    private Timer searchDelayTimer;
 
     private final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
@@ -88,9 +86,11 @@ public class EnhancedSearchBar extends ToolStrip {
     private static final List<String> IGNORED_KEYS;
 
     static {
-        IGNORED_KEYS = new ArrayList<String>(2);
+        IGNORED_KEYS = new ArrayList<String>();
         IGNORED_KEYS.add("Arrow_Down");
         IGNORED_KEYS.add("Arrow_Up");
+        IGNORED_KEYS.add("Arrow_Left");
+        IGNORED_KEYS.add("Arrow_Right");
     }
 
     enum SearchMode {
@@ -106,96 +106,111 @@ public class EnhancedSearchBar extends ToolStrip {
     private EnumMap<SearchMode, AbstractSearchStrategy> searchStrategies = new EnumMap<SearchMode, AbstractSearchStrategy>(
         SearchMode.class);
 
-
     public EnhancedSearchBar(SearchSubsystem searchSubsystem, String initialSearchText) {
         if (null == searchSubsystem) {
             this.searchSubsystem = SearchSubsystem.RESOURCE; // default to resource
         } else {
             this.searchSubsystem = searchSubsystem;
         }
+
+        setOverflow(Overflow.VISIBLE);
         setAutoHeight();
         setWidth100();
-        addSpacer(40);
 
-        searchTextItem = new TextItem("search", MSG.common_button_search());
-        // now that we have searchComboBoxItem setup dependent objects
         favoritesSearchStrategy = new FavoritesSearchStrategy(this);
         basicSearchStrategy = new BasicSearchStrategy(this);
         // now we can fill our enumMap
         searchStrategies.put(SearchMode.BASIC_SEARCH_MODE, basicSearchStrategy);
         searchStrategies.put(SearchMode.SAVED_SEARCH_MODE, favoritesSearchStrategy);
 
-        searchTextItem.setWidth(PICKLIST_WIDTH);
-        searchTextItem.setBrowserSpellCheck(false);
+        // set the default search provider
+        setSearchMode(SearchMode.BASIC_SEARCH_MODE);
 
         pickListGrid = new ListGrid();
+        configurePickListGrid();
 
-        searchTextItem.setRedrawOnChange(true);
-        // this changes it to autocomplete field from combobox
+        DynamicForm searchTextForm = new DynamicForm();
+        searchTextForm.setWidth100();
+
+        searchTextItem = new TextItem("search", MSG.common_button_search());
+        searchTextItem.setWidth(SEARCH_WIDTH);
+        searchTextItem.setBrowserSpellCheck(false);
+
         searchTextItem.addKeyUpHandler(new KeyUpHandler() {
-            @Override
+
             public void onKeyUp(final KeyUpEvent keyUpEvent) {
-                Log.debug("onKeyUp search Mode: " + searchMode + " key: "+keyUpEvent.getKeyName());
+                Log.debug("onKeyUp search Mode: " + searchMode + " key: " + keyUpEvent.getKeyName());
+                keyUpEvent.cancel();
 
                 if (IGNORED_KEYS.contains(keyUpEvent.getKeyName())) {
                     return;
                 }
 
                 if (keyUpEvent.getKeyName().equals("Enter")) {
-                    String currentSearchTerm = (String)keyUpEvent.getItem().getValue();
+                    if (getSearchMode().equals(SearchMode.SAVED_SEARCH_MODE)) {
+                        return;
+                    }
+
+                    String currentSearchTerm = (String) keyUpEvent.getItem().getValue();
+                    currentSearchTerm = (null == currentSearchTerm) ? "" : currentSearchTerm; // avoid NPEs
                     Log.debug("onKeyUp search Mode Enter key pressed");
+
                     // stop any duplicate searches
-                    if(!currentSearchTerm.equalsIgnoreCase(lastSearchTerm)){
+                    if (!currentSearchTerm.equalsIgnoreCase(lastSearchTerm)) {
                         getSearchStrategy().searchReturnKeyHandler(keyUpEvent);
                         searchTextItem.focusInItem();
-                        pickListGrid.hide();
                         lastSearchTerm = currentSearchTerm;
-                    }
-                }
-                else {
-                    Log.debug("Do searchKeyUpHandler...");
-                    // add our own delay
-                    new Timer(){
-                        /**
-                         * This method will be called when a timer fires. Override it to implement the timer's logic.
-                         */
-                        @Override
-                        public void run() {
-                            getSearchStrategy().searchKeyUpHandler(keyUpEvent);
-                            pickListGrid.show();
-                            showPickListGrid();
+                    } else {
+                        if (pickListGrid.isVisible()) {
+                            pickListGrid.hide();
                         }
-                    }.schedule(SEARCH_KEYUP_DELAY);
+                    }
+                } else if (keyUpEvent.getKeyName().equals("Escape")) {
+                    if (pickListGrid.isVisible()) {
+                        pickListGrid.hide();
+                    }
+                } else {
+                    if (null == searchDelayTimer) {
+                        searchDelayTimer = new Timer() {
+
+                            public void run() {
+                                getSearchStrategy().searchKeyUpHandler(keyUpEvent);
+                                pickListGrid.show();
+                            }
+                        };
+                    } else {
+                        searchDelayTimer.cancel();
+                    }
+
+                    // wait for some typing quiet time before performing a search
+                    searchDelayTimer.schedule(SEARCH_KEYUP_DELAY);
                 }
             }
         });
 
-
-        searchTextItem.addFocusHandler(new FocusHandler() {
-            @Override
-            public void onFocus(FocusEvent event) {
-                Log.debug("onFocus search Mode: " + searchMode);
-                populateInitialSearch();
-            }
-        });
         searchTextItem.addClickHandler(new com.smartgwt.client.widgets.form.fields.events.ClickHandler() {
             @Override
             public void onClick(com.smartgwt.client.widgets.form.fields.events.ClickEvent clickEvent) {
-                populateInitialSearch();
+                Log.debug("onClick search Mode: " + searchMode);
+                if (!pickListGrid.isDrawn() || pickListGrid.isVisible()) {
+                    populateInitialSearch();
+                }
             }
         });
-        configurePickListGrid();
 
-        addFormItem(searchTextItem);
+        searchTextForm.setFields(searchTextItem);
+        addMember(searchTextForm);
 
         searchTextButton = new ToolStripButton();
         searchTextButton.setIcon(IconEnum.ARROW_GRAY.getIcon16x16Path());
+        searchTextButton.setTooltip(MSG.view_searchBar_buttonTooltip());
         searchTextButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                if(pickListGrid.isVisible()){
+                if (pickListGrid.isVisible()) {
                     pickListGrid.hide();
-                }else {
+                    searchTextItem.focusInItem();
+                } else {
                     populateInitialSearch();
                 }
             }
@@ -204,6 +219,7 @@ public class EnhancedSearchBar extends ToolStrip {
 
         saveSearchButton = new ToolStripButton();
         saveSearchButton.setIcon(IconEnum.STAR_OFF.getIcon16x16Path());
+        saveSearchButton.setTooltip(MSG.view_searchBar_savedSearch_buttonTooltip());
         saveSearchButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
@@ -212,10 +228,16 @@ public class EnhancedSearchBar extends ToolStrip {
         });
         addButton(saveSearchButton);
 
+        DynamicForm saveSearchTextForm = new DynamicForm();
+        saveSearchTextForm.setWidth100();
+
         saveSearchTextItem = new TextItem("savedSearchName");
         saveSearchTextItem.setShowTitle(false);
-        saveSearchTextItem.setWidth(150);
-        addFormItem(saveSearchTextItem);
+        saveSearchTextItem.setWidth(SAVED_SEARCH_WIDTH);
+
+        saveSearchTextForm.setFields(saveSearchTextItem);
+        addMember(saveSearchTextForm);
+
         saveSearchTextItem.hide();
 
         saveSearchTextItem.addKeyUpHandler(new KeyUpHandler() {
@@ -226,26 +248,54 @@ public class EnhancedSearchBar extends ToolStrip {
                 }
             }
         });
-        pickListGrid.addMouseOutHandler(new MouseOutHandler() {
-            @Override
-            public void onMouseOut(MouseOutEvent mouseOutEvent) {
-                pickListGrid.hide();
-            }
-        });
-        // set the default search provider
-        switchToBasicSearchMode();
 
         this.draw();
     }
+
     private void populateInitialSearch() {
         getSearchStrategy().searchFocusHandler();
         pickListGrid.show();
         showPickListGrid();
+        searchTextItem.focusInItem();
     }
+
     private void saveFavoriteSearch() {
-        Log.debug("Saving Favorite Search: " + saveSearchTextItem.getValueAsString());
-        createSavedSearch(saveSearchTextItem.getValueAsString(), searchTextItem.getValueAsString());
-        toggleFavoriteSearch();
+        String savedSearchName = saveSearchTextItem.getValueAsString();
+        if (null == savedSearchName || savedSearchName.isEmpty()) {
+            return;
+        }
+
+        String savedSearchPattern = searchTextItem.getValueAsString();
+        if (null == savedSearchPattern || savedSearchPattern.isEmpty()) {
+            return;
+        }
+
+        // This may be a name change, a pattern change or a new saved search. Look at the existing SS list and
+        // decided what to do.
+        boolean updated = false;
+        for (int i = 0, size = pickListGrid.getTotalRows(); !updated && (i < size); ++i) {
+            ListGridRecord record = pickListGrid.getRecord(i);
+            String name = record.getAttribute(AbstractSearchStrategy.ATTR_NAME);
+            String pattern = record.getAttribute(AbstractSearchStrategy.ATTR_PATTERN);
+
+            if (savedSearchName.equalsIgnoreCase(name) && savedSearchPattern.equals(pattern)) {
+                return; // SS already exists
+
+            } else if (savedSearchName.equalsIgnoreCase(name)) {
+                Integer id = record.getAttributeAsInt(AbstractSearchStrategy.ATTR_ID);
+                updateSavedSearchPattern(id, name, savedSearchPattern);
+                updated = true;
+
+            } else if (savedSearchPattern.equals(pattern)) {
+                Integer id = record.getAttributeAsInt(AbstractSearchStrategy.ATTR_ID);
+                updateSavedSearchName(id, savedSearchName);
+                updated = true;
+            }
+        }
+
+        if (!updated) {
+            createSavedSearch(savedSearchName, savedSearchPattern);
+        }
     }
 
     public SearchMode getSearchMode() {
@@ -259,19 +309,16 @@ public class EnhancedSearchBar extends ToolStrip {
     private void configurePickListGrid() {
         pickListGrid.setCellHeight(getSearchStrategy().getCellHeight());
         pickListGrid.addRecordClickHandler(getSearchStrategy());
+        pickListGrid.addRecordDoubleClickHandler(getSearchStrategy());
         pickListGrid.setCellFormatter(getSearchStrategy());
         pickListGrid.setShowHeader(false);
-//        pickListGrid.setShowAllRecords(true);
-//        pickListGrid.setBodyOverflow(Overflow.CLIP_V);
-//        pickListGrid.setOverflow(Overflow.CLIP_V);
-//        pickListGrid.setLeaveScrollbarGap(false);
-
     }
 
-    private void showPickListGrid(){
-        pickListGrid.setLeft(searchTextItem.getLeft()+PICKLIST_LEFT_OFFSET);
-        pickListGrid.setTop(searchTextItem.getTop()+PICKLIST_TOP_OFFSET);
-        pickListGrid.setWidth(PICKLIST_WIDTH);
+    private void showPickListGrid() {
+        Rectangle searchTextRect = searchTextItem.getPageRect();
+        pickListGrid.setLeft(searchTextRect.getLeft());
+        pickListGrid.setWidth(searchTextRect.getWidth());
+        pickListGrid.setTop(searchTextRect.getTop() + searchTextRect.getHeight());
         pickListGrid.setHeight(PICKLIST_HEIGHT);
         pickListGrid.redraw();
     }
@@ -293,24 +340,30 @@ public class EnhancedSearchBar extends ToolStrip {
     }
 
     public void switchToBasicSearchMode() {
+        pickListGrid.destroy();
+        pickListGrid = new ListGrid();
+
         setSearchMode(SearchMode.BASIC_SEARCH_MODE);
         saveSearchButton.setIcon(IconEnum.STAR_OFF.getIcon16x16Path());
         saveSearchTextItem.hide();
         configurePickListGrid();
-        showPickListGrid();
+        populateInitialSearch();
     }
 
     public void switchToSavedSearchMode() {
-        setSearchMode(SearchMode.SAVED_SEARCH_MODE);
-        saveSearchButton.setIcon(IconEnum.STAR_ON.getIcon16x16Path());
-        saveSearchTextItem.show();
-        saveSearchTextItem.setValue(MSG.search_name_your_search());
-        saveSearchTextItem.setSelectOnFocus(true);
-        saveSearchTextItem.selectValue();
-        configurePickListGrid();
-        showPickListGrid();
-    }
+        pickListGrid.destroy();
+        pickListGrid = new ListGrid();
 
+        setSearchMode(SearchMode.SAVED_SEARCH_MODE);
+
+        saveSearchButton.setIcon(IconEnum.STAR_ON.getIcon16x16Path());
+        saveSearchTextItem.setValue(MSG.view_searchBar_savedSearch_namePrompt());
+        saveSearchTextItem.selectValue();
+        saveSearchTextItem.show();
+
+        configurePickListGrid();
+        populateInitialSearch();
+    }
 
     public String getValue() {
         return searchTextItem.getValueAsString();
@@ -320,15 +373,51 @@ public class EnhancedSearchBar extends ToolStrip {
         Subject subject = UserSessionManager.getSessionSubject();
         SavedSearch newSavedSearch = new SavedSearch(searchSubsystem, name, pattern, subject);
         searchService.createSavedSearch(newSavedSearch, new AsyncCallback<Integer>() {
-            @Override
+
             public void onSuccess(Integer newSavedSearchId) {
-                Message message = new Message(MSG.search_successfully_saved_search(name),  Message.Severity.Info);
+                Message message = new Message(MSG.view_searchBar_savedSearch_save(name), Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(message);
+                getSearchStrategy().searchFocusHandler();
+            }
+
+            public void onFailure(Throwable caught) {
+                Message message = new Message(MSG.view_searchBar_savedSearch_failSave(name), Message.Severity.Error);
+                CoreGUI.getMessageCenter().notify(message);
+            }
+        });
+    }
+
+    private void updateSavedSearchName(final int id, final String name) {
+        Subject subject = UserSessionManager.getSessionSubject();
+        searchService.updateSavedSearchName(id, name, new AsyncCallback<Boolean>() {
+
+            public void onSuccess(Boolean result) {
+                Message message = new Message(MSG.view_searchBar_savedSearch_save(name), Message.Severity.Info);
+                CoreGUI.getMessageCenter().notify(message);
+                getSearchStrategy().searchFocusHandler();
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                Message message = new Message(MSG.search_failed_to_save_search(name), Message.Severity.Error);
+                Message message = new Message(MSG.view_searchBar_savedSearch_failRename(name), Message.Severity.Error);
+                CoreGUI.getMessageCenter().notify(message);
+            }
+        });
+    }
+
+    private void updateSavedSearchPattern(final int id, final String name, final String pattern) {
+        Subject subject = UserSessionManager.getSessionSubject();
+        searchService.updateSavedSearchPattern(id, pattern, new AsyncCallback<Boolean>() {
+
+            public void onSuccess(Boolean result) {
+                Message message = new Message(MSG.view_searchBar_savedSearch_save(name), Message.Severity.Info);
+                CoreGUI.getMessageCenter().notify(message);
+                getSearchStrategy().searchFocusHandler();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                Message message = new Message(MSG.view_searchBar_savedSearch_failSave(name), Message.Severity.Error);
                 CoreGUI.getMessageCenter().notify(message);
             }
         });
@@ -336,6 +425,10 @@ public class EnhancedSearchBar extends ToolStrip {
 
     public AbstractSearchStrategy getSearchStrategy() {
         return searchStrategies.get(searchMode);
+    }
+
+    public boolean isFilterEnabled() {
+        return !SearchMode.SAVED_SEARCH_MODE.equals(getSearchMode());
     }
 
     public ListGrid getPickListGrid() {
@@ -348,5 +441,12 @@ public class EnhancedSearchBar extends ToolStrip {
 
     public TextItem getSaveSearchTextItem() {
         return saveSearchTextItem;
+    }
+
+    @Override
+    public void destroy() {
+        if (null != pickListGrid) {
+            pickListGrid.destroy();
+        }
     }
 }

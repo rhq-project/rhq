@@ -408,8 +408,10 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         if ((resourceTypes != null) && (resourceTypes.size() > 0)) {
             //spinder 1-31-13: sleep for 30s to see if type removal has then completed
             //it's possible this could fail on smaller boxes. Not sure how to test this otherwise as
-            //after fix to break resource deletion into chunks[BZ 905632] this should work.  
-            Thread.sleep(1000 * 30);
+            //after fix to break resource deletion into chunks[BZ 905632] this should work.
+            //tsegismo 4-12-13: sleep for 60s as some master builds already failed on Jenkins reporting:
+            // "Resource type 'serviceE4' not fully removed"
+            Thread.sleep(1000 * 60);
             resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
             assertEquals("Resource type '" + resourceTypes.get(0).getName() + "' not fully removed", 0,
                 resourceTypes.size());

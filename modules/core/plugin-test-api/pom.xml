@@ -39,13 +39,11 @@
        <dependency>
            <groupId>org.powermock</groupId>
            <artifactId>powermock-module-testng</artifactId>
-           <version>${powermock.version}</version>
        </dependency>
 
        <dependency>
            <groupId>org.powermock</groupId>
            <artifactId>powermock-api-mockito</artifactId>
-           <version>${powermock.version}</version>
        </dependency>
 
        <dependency>

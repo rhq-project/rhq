@@ -20,16 +20,18 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 /**
  * Contains the javascript chart definition for a d3 Line graph chart.
+ * NOTE: this class isn't used just provided as an example as how to create
+ * other graph types.
  *
  * @author Mike Thompson
  */
-public final class MetricLineGraph extends AbstractGraph {
+public final class LineMetricGraph extends AbstractGraph {
 
     /**
      * General constructor for stacked bar graph when you have all the data needed to
      * produce the graph. (This is true for all cases but the dashboard portlet).
      */
-    public MetricLineGraph(MetricGraphData metricGraphData) {
+    public LineMetricGraph(MetricGraphData metricGraphData) {
         setMetricGraphData(metricGraphData);
     }
 

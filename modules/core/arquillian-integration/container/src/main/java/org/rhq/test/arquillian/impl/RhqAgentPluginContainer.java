@@ -47,6 +47,7 @@ import org.jboss.arquillian.container.spi.client.protocol.ProtocolDescription;
 import org.jboss.arquillian.container.spi.client.protocol.metadata.ProtocolMetaData;
 import org.jboss.arquillian.core.api.Instance;
 import org.jboss.arquillian.core.api.annotation.Inject;
+import org.jboss.arquillian.test.spi.annotation.TestScoped;
 import org.jboss.shrinkwrap.api.Archive;
 import org.jboss.shrinkwrap.api.ArchivePath;
 import org.jboss.shrinkwrap.api.ArchivePaths;
@@ -95,8 +96,6 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
             sigar = new File(root, "sigar");
             sigar.mkdir();
         } catch (IOException e) {
-            root = null;
-            deployments = null;
             throw new IllegalStateException(
                 "Could not create the root directory for RHQ plugin container test deployments");
         }
@@ -344,9 +343,12 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     /**
      * Starts the plugin container.
+     * This method is package private so that other instances can start/stop the PC the same way as the container
+     * itself even outside the default lifecycle of the container.
+     *
      * @return true if the plugin container needed to be started (i.e. was not running before), false otherwise.
      */
-    private boolean startPc() {
+    boolean startPc() {
         LOG.debug("Starting PluginContainer on demand...");
         
         PluginContainer pc = PluginContainer.getInstance();
@@ -369,22 +371,31 @@ public class RhqAgentPluginContainer implements DeployableContainer<RhqAgentPlug
 
     /**
      * Stops the plugin container.
+     * This method is package private so that other instances can start/stop the PC the same way as the container
+     * itself even outside the default lifecycle of the container.
+     *
      * @return true if PC was running before this call, false otherwise
      */
-    private boolean stopPc() {
+    boolean stopPc() {
         LOG.debug("Stopping PluginContainer on demand...");
         PluginContainer pc = PluginContainer.getInstance();
-        if (pc.isStarted()) {
+        boolean wasStarted = pc.isStarted();
+        if (wasStarted) {
             boolean shutdownGracefully = pc.shutdown();
             if (shutdownGracefully) {
                 LOG.debug("Stopped PluginContainer gracefully.");
             } else {
                 LOG.debug("Stopped PluginContainer.");
             }
-            return true;
         }
 
-        return false;
+        FileUtil.purge(configuration.getTemporaryDirectory(), false);
+
+        if (configuration.isClearDataOnShutdown()) {
+            FileUtil.purge(configuration.getDataDirectory(), false);
+        }
+
+        return wasStarted;
     }
 
     private void deployPlugin(RhqAgentPluginArchive plugin) {

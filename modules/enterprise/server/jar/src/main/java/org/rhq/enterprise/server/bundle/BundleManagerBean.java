@@ -891,6 +891,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         liveDeployment.setBundleVersion(bvs.get(0)); // wire up the full bundle version back into the live deployment
         // the bundle type doesn't eagerly load the resource type - the remote plugin container needs that too
         ResourceTypeCriteria rtc = new ResourceTypeCriteria();
+        rtc.addFilterIgnored(null); // we are purging, so we don't care if this returns ignored types or not, just purge anyway
         rtc.addFilterBundleTypeId(liveDeployment.getBundleVersion().getBundle().getBundleType().getId());
         PageList<ResourceType> rts = resourceTypeManager.findResourceTypesByCriteria(subject, rtc);
         liveDeployment.getBundleVersion().getBundle().getBundleType().setResourceType(rts.get(0));
@@ -1219,6 +1220,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Bundle bundle = bundleManager.findBundlesByCriteria(subject, bc).get(0);
 
         ResourceTypeCriteria rtc = new ResourceTypeCriteria();
+        rtc.addFilterIgnored(false); // we only care about those that are not ignored
         rtc.addFilterBundleTypeId(bundle.getBundleType().getId());
         ResourceType resourceType = resourceTypeManager.findResourceTypesByCriteria(subject, rtc).get(0);
         bundle.getBundleType().setResourceType(resourceType);

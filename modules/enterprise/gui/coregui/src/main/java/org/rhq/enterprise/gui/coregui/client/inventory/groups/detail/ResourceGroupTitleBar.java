@@ -44,9 +44,9 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -67,7 +67,8 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
     private Img badge;
     private Img favoriteButton;
     private HTMLFlow title;
-    private Img availabilityImage;
+    private Img explicitAvailabilityImage;
+    private Img implicitAvailabilityImage;
     private boolean favorite;
     private boolean supportsFavorite;
     private GeneralProperties generalProperties;
@@ -96,7 +97,10 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
         this.title = new HTMLFlow();
         this.title.setWidth("*");
 
-        this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
+        this.explicitAvailabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
+        this.explicitAvailabilityImage.setTooltip(MSG.view_group_detail_explicitAvail());
+        this.implicitAvailabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
+        this.implicitAvailabilityImage.setTooltip(MSG.view_group_detail_implicitAvail());
 
         if (this.supportsFavorite) {
             this.favoriteButton = new Img(NOT_FAV_ICON, 24, 24);
@@ -145,6 +149,7 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
                     generalProperties = new GeneralProperties(resultComposite, ResourceGroupTitleBar.this,
                         (!(isAutoGroup || isAutoCluster)));
                     generalProperties.setVisible(false);
+
                     ResourceGroupTitleBar.this.addMember(generalProperties);
                     expandCollapseArrow.addClickHandler(new ClickHandler() {
                         private boolean collapsed = true;
@@ -201,7 +206,8 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
         hlayout.addMember(expandCollapseArrow);
         hlayout.addMember(badge);
         hlayout.addMember(title);
-        hlayout.addMember(availabilityImage);
+        hlayout.addMember(explicitAvailabilityImage);
+        hlayout.addMember(implicitAvailabilityImage);
         if (this.supportsFavorite) {
             hlayout.addMember(favoriteButton);
         }
@@ -291,10 +297,17 @@ public class ResourceGroupTitleBar extends EnhancedVLayout {
     }
 
     private void setGroupIcons(ResourceGroupComposite composite) {
-        GroupAvailabilityType groupAvailType = composite.getExplicitAvailabilityType();
+        GroupAvailabilityType explicitGroupAvailType = composite.getExplicitAvailabilityType();
 
-        this.badge.setSrc(ImageManager.getGroupLargeIcon(this.group.getGroupCategory(), groupAvailType));
-        this.availabilityImage.setSrc(ImageManager.getAvailabilityGroupLargeIcon(groupAvailType));
+        this.badge.setSrc(ImageManager.getGroupLargeIcon(this.group.getGroupCategory(), explicitGroupAvailType));
+        this.explicitAvailabilityImage.setSrc(ImageManager.getAvailabilityGroupLargeIcon(explicitGroupAvailType));
+
+        if (composite.getResourceGroup().isRecursive()) {
+            GroupAvailabilityType implicitGroupAvailType = composite.getImplicitAvailabilityType();
+            this.implicitAvailabilityImage.setSrc(ImageManager.getAvailabilityGroupLargeIcon(implicitGroupAvailType));
+        } else {
+            this.implicitAvailabilityImage.setVisible(false);
+        }
     }
 
     private void updateFavoriteButton() {

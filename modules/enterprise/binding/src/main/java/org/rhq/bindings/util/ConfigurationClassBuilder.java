@@ -40,7 +40,7 @@ public class ConfigurationClassBuilder {
      * @return Map of propertyName to types for the config def
      * @throws NotFoundException
      */
-    public static LinkedHashMap<String, CtClass> translateParameters(ConfigurationDefinition def)
+    public static LinkedHashMap<String, CtClass> translateParameters(ClassPool cp, ConfigurationDefinition def)
         throws NotFoundException {
         LinkedHashMap<String, CtClass> result = new LinkedHashMap<String, CtClass>();
         if (def == null || def.getPropertyDefinitions() == null) {
@@ -51,14 +51,14 @@ public class ConfigurationClassBuilder {
             if (pd instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple simple = (PropertyDefinitionSimple) pd;
                 String name = pd.getName();
-                CtClass paramType = getSimpleTypeClass(simple);
+                CtClass paramType = getSimpleTypeClass(cp, simple);
                 result.put(name, paramType);
             }
         }
         return result;
     }
 
-    private static CtClass getSimpleTypeClass(PropertyDefinitionSimple simple) throws NotFoundException {
+    private static CtClass getSimpleTypeClass(ClassPool cp, PropertyDefinitionSimple simple) throws NotFoundException {
         Class<?> paramType = null;
         switch (simple.getType()) {
         case STRING:
@@ -84,19 +84,19 @@ public class ConfigurationClassBuilder {
             paramType = Double.TYPE;
             break;
         }
-        return ClassPool.getDefault().get(paramType.getName());
+        return cp.get(paramType.getName());
     }
 
-    public static CtClass translateConfiguration(ConfigurationDefinition def) throws NotFoundException {
+    public static CtClass translateConfiguration(ClassPool cp, ConfigurationDefinition def) throws NotFoundException {
         if (def == null) {
             return CtClass.voidType;
         } else if (def.getPropertyDefinitionSimple("operationResult") != null) {
             // Its a simple type
-            return getSimpleTypeClass(def.getPropertyDefinitionSimple("operationResult"));
+            return getSimpleTypeClass(cp, def.getPropertyDefinitionSimple("operationResult"));
         } else {
 
             // TODO GH: Build a custom type?
-            return ClassPool.getDefault().get(Configuration.class.getName());
+            return cp.get(Configuration.class.getName());
         }
     }
 
@@ -108,9 +108,9 @@ public class ConfigurationClassBuilder {
         return Character.toLowerCase(name.charAt(0)) + name.substring(1, name.length());
     }
 
-    public static Configuration translateParametersToConfig(ConfigurationDefinition parametersConfigurationDefinition,
+    public static Configuration translateParametersToConfig(ClassPool cp, ConfigurationDefinition parametersConfigurationDefinition,
         Object[] args) throws NotFoundException {
-        LinkedHashMap<String, CtClass> translateParameters = translateParameters(parametersConfigurationDefinition);
+        LinkedHashMap<String, CtClass> translateParameters = translateParameters(cp, parametersConfigurationDefinition);
         Configuration config = new Configuration();
 
         int index = 0;
@@ -122,12 +122,12 @@ public class ConfigurationClassBuilder {
 
     }
 
-    public static Object translateResults(ConfigurationDefinition resultsConfigurationDefinition, Configuration result)
+    public static Object translateResults(ClassPool cp, ConfigurationDefinition resultsConfigurationDefinition, Configuration result)
         throws NotFoundException {
 
-        CtClass expectedReturn = translateConfiguration(resultsConfigurationDefinition);
+        CtClass expectedReturn = translateConfiguration(cp, resultsConfigurationDefinition);
 
-        if (expectedReturn.equals(ClassPool.getDefault().get(Configuration.class.getName()))) {
+        if (expectedReturn.equals(cp.get(Configuration.class.getName()))) {
             return result;
         } else {
             //bail on translation if Configuration passed in is null

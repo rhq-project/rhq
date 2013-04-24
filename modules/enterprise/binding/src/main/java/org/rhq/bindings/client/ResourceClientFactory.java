@@ -2,6 +2,8 @@ package org.rhq.bindings.client;
 
 import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -26,6 +28,7 @@ import javax.jws.WebParam;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bindings.util.ClassPoolFactory;
 import org.rhq.bindings.util.ConfigurationClassBuilder;
 import org.rhq.bindings.util.ResourceTypeFingerprint;
 import org.rhq.core.domain.resource.ResourceCreationDataType;
@@ -109,12 +112,16 @@ public class ResourceClientFactory {
                         instantiateMethodHandler(proxy, interfaces, rhqFacade));
             } catch (InstantiationException e) {
                 LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
+                throw new IllegalStateException("Could not instantiate a ResourceClientProxy, this is a bug.", e);
             } catch (IllegalAccessException e) {
                 LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
+                throw new IllegalStateException("Could not instantiate a ResourceClientProxy, this is a bug.", e);
             } catch (NoSuchMethodException e) {
                 LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
+                throw new IllegalStateException("Could not instantiate a ResourceClientProxy, this is a bug.", e);
             } catch (InvocationTargetException e) {
                 LOG.error("Could not instantiate a ResourceClientProxy, this is a bug.", e);
+                throw new IllegalStateException("Could not instantiate a ResourceClientProxy, this is a bug.", e);
             }
             return proxied;
         }
@@ -145,7 +152,7 @@ public class ResourceClientFactory {
     private Class<?> defineCustomInterface(ResourceClientProxy proxy) {
         try {
             // define the dynamic class - do not put it in any known rhq package in case our jars are signed (see BZ-794503)
-            ClassPool pool = ClassPool.getDefault();
+            ClassPool pool = ClassPoolFactory.getClassPool(ResourceClientProxy.class.getClassLoader());
             CtClass customClass = pool.makeInterface("org.rhq.bindings.client.dynamic."
                 + ResourceClientProxy.class.getSimpleName() + proxy.fingerprint);
 
@@ -165,8 +172,8 @@ public class ResourceClientFactory {
                 } else if (prop instanceof ResourceClientProxy.Operation) {
                     ResourceClientProxy.Operation o = (ResourceClientProxy.Operation) prop;
 
-                    LinkedHashMap<String, CtClass> types = ConfigurationClassBuilder.translateParameters(o
-                            .getDefinition().getParametersConfigurationDefinition());
+                    LinkedHashMap<String, CtClass> types = ConfigurationClassBuilder.translateParameters(pool, o
+                        .getDefinition().getParametersConfigurationDefinition());
 
                     CtClass[] params = new CtClass[types.size()];
                     int x = 0;
@@ -174,8 +181,10 @@ public class ResourceClientFactory {
                         params[x++] = types.get(param);
                     }
 
-                    CtMethod method = CtNewMethod.abstractMethod(ConfigurationClassBuilder.translateConfiguration(o
-                            .getDefinition().getResultsConfigurationDefinition()), ResourceClientProxy.simpleName(key), params,
+                    CtMethod method = CtNewMethod
+                        .abstractMethod(ConfigurationClassBuilder.translateConfiguration(pool, o
+                            .getDefinition().getResultsConfigurationDefinition()), ResourceClientProxy.simpleName(key),
+                            params,
                             new javassist.CtClass[0], customClass);
 
                     // Setup @WebParam annotations so the signatures have the config prop names
@@ -200,21 +209,16 @@ public class ResourceClientFactory {
                 }
             }
 
-            ClassLoader cl = Thread.currentThread().getContextClassLoader();
-            try {
-                Thread.currentThread().setContextClassLoader(ResourceClientProxy.class.getClassLoader());
-                return customClass.toClass();
-            } finally {
-                Thread.currentThread().setContextClassLoader(cl);
-            }
+            return customClass.toClass();
         } catch (NotFoundException e) {
             LOG.error("Could not create custom interface for resource with id " + proxy.getId(), e);
+            throw new IllegalStateException("Could not create custom interface for resource with id " + proxy.getId(), e);
         } catch (CannotCompileException e) {
             LOG.error("Could not create custom interface for resource with id " + proxy.getId(), e);
+            throw new IllegalStateException("Could not create custom interface for resource with id " + proxy.getId(), e);
         } catch (Exception e) {
             LOG.error("Could not create custom interface for resource with id " + proxy.getId(), e);
+            throw new IllegalStateException("Could not create custom interface for resource with id " + proxy.getId(), e);
         }
-        
-        return null;
     }
 }

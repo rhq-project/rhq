@@ -40,7 +40,7 @@ import org.rhq.core.domain.util.PageOrdering;
 @XmlAccessorType(XmlAccessType.FIELD)
 @SuppressWarnings("unused")
 public class AvailabilityCriteria extends Criteria {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     // this is used to perform an interval check, see below for more, or to filter out the initial avail record
     private Long filterStartTime;
@@ -79,9 +79,9 @@ public class AvailabilityCriteria extends Criteria {
         // specified interval.  Things to note about the fragment below:
         // - "startTime >= 0" is done on purpose, the fragment must start with "startTime" due to the generator
         // - we do not use BETWEEN on purpose, it caused a problem with param assignment in hibernate. so, we use the expanded form
-        // - startTime and endTime are persisted in seconds,  so the paremeters should be in seconds
+        // - startTime and endTime are persisted in seconds,  so the parameters should be in seconds
         String filterFragment = "" //
-            + "startTime >= 0" // innoccuous tautology just needed to get generated syntax correct 
+            + "startTime >= 0" // innocuous tautology just needed to get generated syntax correct 
             + " AND (  ( availability.startTime >= ? AND availability.startTime <= " + intervalEndTime + " )" // interval straddles :start
             + " OR ( availability.startTime <= ? AND ( availability.endTime >= ? OR availability.endTime IS NULL ) ) )"; // availability straddles :start 
 

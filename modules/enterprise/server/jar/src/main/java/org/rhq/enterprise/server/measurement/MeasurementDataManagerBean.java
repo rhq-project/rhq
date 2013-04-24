@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.TimeoutException;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -50,6 +51,7 @@ import org.apache.commons.logging.LogFactory;
 import org.jetbrains.annotations.Nullable;
 
 import org.jboss.ejb3.annotation.TransactionTimeout;
+import org.jboss.remoting.CannotConnectException;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -775,6 +777,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @Override
     @SuppressWarnings("unchecked")
     public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
+        // use default timeout
+        return findLiveData(subject, resourceId, definitionIds, null);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds, Long timeout) {
         if (authorizationManager.canViewResource(subject, resourceId) == false) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view live measurement data for resource[id=" + resourceId + "]");
@@ -794,15 +803,28 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             requests.add(new MeasurementScheduleRequest(schedule));
         }
 
-        AgentClient ac = agentClientManager.getAgentClient(agent);
-        Set<MeasurementData> values = ac.getMeasurementAgentService().getRealTimeMeasurementValue(resourceId, requests);
-        //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
-        //            Global UI Exceptions when attempting to serialize null responses.
-        if (values == null) {
-            values = Collections.emptySet();
+        Set<MeasurementData> result = null;
+        try {
+            AgentClient ac = agentClientManager.getAgentClient(agent);
+            result = ac.getMeasurementAgentService(timeout).getRealTimeMeasurementValue(resourceId, requests);
+
+        } catch (RuntimeException e) {
+            if (e instanceof CannotConnectException //
+                || (null != e.getCause() && (e.getCause() instanceof TimeoutException))) {
+
+                // ignore timeouts and connect issue,  just return an empty result and keep the logs clean
+            } else {
+                throw e;
+            }
         }
 
-        return values;
+        //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
+        //            Global UI Exceptions when attempting to serialize null responses.
+        if (null == result) {
+            result = Collections.emptySet();
+        }
+
+        return result;
     }
 
     @Override

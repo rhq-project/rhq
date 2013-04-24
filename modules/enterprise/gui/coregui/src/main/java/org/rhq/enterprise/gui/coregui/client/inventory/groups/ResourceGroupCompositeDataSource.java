@@ -110,12 +110,12 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
     }
 
     @Override
-    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceGroupCriteria criteria ) {
+    public void executeFetch(final DSRequest request, final DSResponse response, final ResourceGroupCriteria criteria) {
         groupService.findResourceGroupCompositesByCriteria(criteria,
             new AsyncCallback<PageList<ResourceGroupComposite>>() {
                 public void onFailure(Throwable caught) {
                     if (caught.getMessage().contains("SearchExpressionException")) {
-                        Message message = new Message(MSG.search_invalid_search_expression(), Message.Severity.Error);
+                        Message message = new Message(MSG.view_searchBar_suggest_noSuggest(), Message.Severity.Error);
                         CoreGUI.getMessageCenter().notify(message);
                     } else {
                         CoreGUI.getErrorHandler().handleError(MSG.view_inventory_groups_loadFailed(), caught);
@@ -123,14 +123,15 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                     response.setStatus(RPCResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
-                
+
                 private PageList<ResourceGroupComposite> applyAvailabilitySearchFilter(
-                    PageList<ResourceGroupComposite> result){
+                    PageList<ResourceGroupComposite> result) {
 
                     if (!isAvailabilitySearch(criteria)) {
                         return result;
                     }
-                    PageList<ResourceGroupComposite> pageList = new PageList<ResourceGroupComposite>(result.getPageControl());
+                    PageList<ResourceGroupComposite> pageList = new PageList<ResourceGroupComposite>(result
+                        .getPageControl());
 
                     for (ResourceGroupComposite rgc : result) {
                         if (rgc.getExplicitCount() > 0) {
@@ -286,8 +287,8 @@ public class ResourceGroupCompositeDataSource extends RPCDataSource<ResourceGrou
                 results.append(getColumn(false, " <img height=\"12\" width=\"12\" src=\"" + imagePath + "\" />",
                     unknown));
             } else {
-                results.append(getColumn(false,
- "&nbsp;<img src=\"/images/blank.png\" width=\"1px\" height=\"1px\" />"));
+                results
+                    .append(getColumn(false, "&nbsp;<img src=\"/images/blank.png\" width=\"1px\" height=\"1px\" />"));
             }
         }
         results.append("</tr></table>");

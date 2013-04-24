@@ -2,6 +2,29 @@
  * Charting Javascript Functions.
  */
 
+// Avoid `console` errors in browsers that lack a console.
+(function() {
+        var method;
+        var noop = function () {};
+        var methods = [
+        'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
+        'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
+        'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
+        'timeStamp', 'trace', 'warn'
+        ];
+        var length = methods.length;
+        var console = (window.console = window.console || {});
+
+        while (length--) {
+                method = methods[length];
+
+            // Only stub undefined methods.
+                if (!console[method]) {
+                console[method] = noop;
+                }
+        }
+} ());
+
 
 /**
  * ChartContext Constructor Object
@@ -9,15 +32,13 @@
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat)
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId )
 {
     "use strict";
     if(!(this instanceof ChartContext)){
         throw new Error("ChartContext function cannot be called as a function.")
     }
     this.chartId = chartId;
-    this.chartHandle = "#rChart-" + this.chartId;
-    this.chartSelection = this.chartHandle + " svg";
     this.chartHeight = chartHeight;
     this.data = jQuery.parseJSON(metricsData); // make into json
     this.xAxisLabel = xAxisLabel;
@@ -37,6 +58,14 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.hoverBarLabel = hoverBarLabel;
     this.chartHoverTimeFormat = chartHoverTimeFormat;
     this.chartHoverDateFormat = chartHoverDateFormat;
+    this.isPortalGraph = isPortalGraph;
+    this.portalId = portalId;
+    if(isPortalGraph){
+        this.chartHandle =  "rChart-"+chartId+"-"+portalId;
+    }else {
+        this.chartHandle =  "rChart-"+chartId;
+    }
+    this.chartSelection = this.chartHandle + " svg";
 
 },
 AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat) {

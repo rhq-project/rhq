@@ -31,21 +31,16 @@
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
       <!-- make sure you match that which is used by standalone agent! -->
-      <version>1.1.0.jboss</version>
     </dependency>
 
     <dependency>
       <groupId>log4j</groupId>
       <artifactId>log4j</artifactId>
-      <!-- make sure you match that which is used by standalone agent! -->
-      <version>1.2.14</version>
     </dependency>
 
     <dependency>
       <groupId>commons-httpclient</groupId>
       <artifactId>commons-httpclient</artifactId>
-      <!-- make sure you match that which is used by standalone agent! -->
-      <version>2.0.2</version>
     </dependency>
 
   </dependencies>

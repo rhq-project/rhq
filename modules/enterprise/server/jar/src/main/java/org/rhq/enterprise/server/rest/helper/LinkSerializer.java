@@ -51,9 +51,4 @@ public class LinkSerializer extends JsonSerializer<Link> {
 
         jsonGenerator.writeEndObject();
     }
-
-    @Override
-    public Class<Link> handledType() {
-        return Link.class;
-    }
 }

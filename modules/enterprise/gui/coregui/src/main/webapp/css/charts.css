@@ -2,7 +2,7 @@
  * CSS for the d3 SVG charts. This is SVG css not HTML css so some elements
  * may look different from standard CSS.
  * NOTE: the SVG <defs> section that contains gradients etc. is in the
- * java class : /org/rhq/enterprise/gui/coregui/client/inventory/common/AbstractMetricD3GraphView.java
+ * java class : /org/rhq/enterprise/gui/coregui/client/inventory/common/ResourceMetricD3Graph.java
  *
  */
 
@@ -27,11 +27,12 @@
 }
 
 .y.axis  text, .x.axis text {
-    font-family: Arial, Verdana, sans-serif;
+    font-family: 'Liberation Sans', Arial, Helvetica, sans-serif;
     font-size: 10px;
     font-weight: normal;
     font-style: normal;
     stroke: #50505a;
+    text-rendering: optimize-legibility;
 
 }
 
@@ -46,18 +47,38 @@
 .minLabel, .avgLabel, .highLabel {
     font-family: Arial, Verdana, sans-serif;
     font-size: 12px;
-    font-weight: bold;
+    text-anchor: start;
+    stroke: #003168;
+    fill: #003168;
+    text-rendering: optimize-legibility;
 }
 
 .minText, .avgText, .highText {
     font-family: Arial, Verdana, sans-serif;
     font-size: 12px;
+    text-anchor: start;
+    stroke: #003168;
+    fill: #003168;
+    text-rendering: optimize-legibility;
 }
 
-.titleName {
+.chartTitleName {
     font-family: Arial, Verdana, sans-serif;
     font-size: 12px;
     font-weight: bold;
+    fill: #003168;
+}
+.chartTitleBox {
+    fill:none;
+
+}
+
+rect.high {
+    fill: #1794bc;
+}
+
+rect.low {
+    fill: #70c4e2;
 }
 
 /**
@@ -109,17 +130,17 @@
 #chartHoverPeakValue {
     width: 50px;
     font-weight: bold;
-    color: #ff8a9a;
+    color: #1794BC;
 }
 
 #chartHoverAvgValue {
     width: 50px;
     font-weight: bold;
-    color: #b0d9b0;
+    color: #2e376a;
 }
 
 #chartHoverLowValue {
     width: 50px;
     font-weight: bold;
-    color: #8ad6ff;
+    color: #70c4e2;
 }

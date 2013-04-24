@@ -50,7 +50,7 @@ import org.rhq.core.domain.alert.notification.AlertNotificationLog;
  * @author Joseph Marques
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     @NamedQuery(name = Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID, query = "SELECT a " + "  FROM Alert AS a "
         + "  JOIN a.alertDefinition definition " + "  JOIN definition.conditions condition "
         + " WHERE condition.measurementDefinition.id = :measurementDefinitionId "

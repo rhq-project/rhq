@@ -18,10 +18,11 @@
  */
 package org.rhq.enterprise.gui.coregui.client.searchbar;
 
-import com.smartgwt.client.widgets.form.fields.events.FocusEvent;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
+import com.smartgwt.client.widgets.grid.events.RecordDoubleClickEvent;
+import com.smartgwt.client.widgets.grid.events.RecordDoubleClickHandler;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -30,15 +31,13 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.SearchGWTServiceAsync;
 
-
 /**
  * AbstractSearchStrategy defines common search strategy behaviors the subclasses must implement.
  * Also, houses common functionality such as user auth and searching the domain.
  *
  * @author Mike Thompson
  */
-public abstract  class AbstractSearchStrategy implements RecordClickHandler, CellFormatter
-{
+public abstract class AbstractSearchStrategy implements RecordClickHandler, RecordDoubleClickHandler, CellFormatter {
     protected static final Messages MSG = CoreGUI.getMessages();
     public static final String ATTR_ID = "id";
     public static final String ATTR_KIND = "kind"; // not for saved search
@@ -47,13 +46,14 @@ public abstract  class AbstractSearchStrategy implements RecordClickHandler, Cel
     public static final String ATTR_RESULT_COUNT = "resultCount";
     public static final String ATTR_PATTERN = "pattern";
     public static final String ATTR_VALUE = "value";
+    public static final String ATTR_OPTIONAL = "value";
 
-    protected final SearchGWTServiceAsync searchService =  GWTServiceLookup.getSearchService();
+    protected final SearchGWTServiceAsync searchService = GWTServiceLookup.getSearchService();
 
     final Subject subject;
     protected final EnhancedSearchBar searchBar;
 
-    public AbstractSearchStrategy(EnhancedSearchBar searchBar){
+    public AbstractSearchStrategy(EnhancedSearchBar searchBar) {
         this.searchBar = searchBar;
         subject = UserSessionManager.getSessionSubject();
     }
@@ -76,15 +76,18 @@ public abstract  class AbstractSearchStrategy implements RecordClickHandler, Cel
      */
     public abstract int getCellHeight();
 
-
     /**
      * When return key is pressed in the search bar do I want to do any further
      * customization. Optionally, overridden by subclass.
      * @param keyUpEvent
      */
-    public void searchReturnKeyHandler(KeyUpEvent keyUpEvent){
+    public void searchReturnKeyHandler(KeyUpEvent keyUpEvent) {
         // do nothing by default
     }
 
+    @Override
+    public void onRecordDoubleClick(RecordDoubleClickEvent event) {
+        // do nothing by default
+    }
 
 }

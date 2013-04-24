@@ -31,6 +31,7 @@ import java.util.TreeSet;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUpdateRequest;
 import org.rhq.core.clientapi.agent.inventory.CreateResourceRequest;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
+import org.rhq.core.clientapi.agent.metadata.ResourceTypeNotEnabledException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.measurement.DataType;
@@ -301,7 +302,12 @@ public abstract class AbstractResourceTest extends AbstractPluginTest {
 
     private boolean supportsFacet(Class<?> facetInterface) {
         PluginMetadataManager manager = PluginContainer.getInstance().getPluginManager().getMetadataManager();
-        String componentClass = manager.getComponentClass(getResourceType());
+        String componentClass;
+        try {
+            componentClass = manager.getComponentClass(getResourceType());
+        } catch (ResourceTypeNotEnabledException rtne) {
+            throw new RuntimeException(rtne);
+        }
 
         try {
             return facetInterface.isAssignableFrom(Class.forName(componentClass));

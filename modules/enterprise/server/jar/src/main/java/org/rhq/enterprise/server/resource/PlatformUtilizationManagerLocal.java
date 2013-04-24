@@ -39,7 +39,7 @@ public interface PlatformUtilizationManagerLocal {
 
     PageList<PlatformMetricsSummary> loadPlatformMetrics(Subject subject);
 
-    Set<MeasurementData> loadLiveMetricsForPlatform(Subject subject, Resource platform,
-        Set<Integer> metricDefinitionIds);
+    Set<MeasurementData> loadLiveMetricsForPlatformInNewTransaction(Subject subject, Resource platform,
+        Set<Integer> metricDefinitionIds, Long timeout);
 
 }

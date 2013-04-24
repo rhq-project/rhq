@@ -198,6 +198,9 @@
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpmime/4.2.3/httpmime-4.2.3.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpmime/4.2.3/httpmime-4.2.3-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.SP1/jboss-profileservice-spi-5.1.0.SP1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/man/jboss-managed/2.1.1.GA/jboss-managed-2.1.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/man/jboss-metatype/2.1.1.GA/jboss-metatype-2.1.1.GA.jar"/>
@@ -219,8 +222,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/log4j/log4j/1.2.14/log4j-1.2.14.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/tomcat-jk/4.1.31/tomcat-jk-4.1.31.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jdom/jdom/1.0/jdom-1.0.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/commons-collections/commons-collections/3.2/commons-collections-3.2.jar" sourcepath="/M2_REPO/commons-collections/commons-collections/3.2/commons-collections-3.2-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0.jar" sourcepath="/M2_REPO/javax/persistence/persistence-api/1.0/persistence-api-1.0-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1.jar" sourcepath="/M2_REPO/commons-collections/commons-collections/3.2.1/commons-collections-3.2.1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-jmx/4.2.3.GA/jboss-jmx-4.2.3.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/tomcat/catalina/5.5.20/catalina-5.5.20.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar"/>

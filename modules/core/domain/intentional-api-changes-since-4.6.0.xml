@@ -18,4 +18,20 @@
             large result sets.
         </justification>
     </difference>
+    <difference>
+        <className>org/rhq/core/domain/criteria/SavedSearchCriteria</className>
+        <differenceType>6003</differenceType> <!-- Value of compile-time constant has changed -->
+        <field>serialVersionUID</field>
+        <justification>
+            The value of serialVersionUID was increased by 1.
+        </justification>
+    </difference>
+    <difference>
+        <className>org/rhq/core/domain/criteria/SavedSearchCriteria</className>
+        <differenceType>6010</differenceType> <!-- Field Less Accessible -->
+        <field>serialVersionUID</field>
+        <justification>
+            The serialVersionUID should be private.
+        </justification>
+    </difference>
 </differences>

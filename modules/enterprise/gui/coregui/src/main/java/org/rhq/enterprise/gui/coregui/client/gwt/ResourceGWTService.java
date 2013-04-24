@@ -107,6 +107,8 @@ public interface ResourceGWTService extends RemoteService {
 
     void unignoreResources(int[] resourceIds) throws RuntimeException;
 
+    void unignoreAndImportResources(int[] resourceIds) throws RuntimeException;
+
     void uninventoryAllResourcesByAgent(Agent[] agents) throws RuntimeException;
 
     List<Integer> uninventoryResources(int[] resourceIds) throws RuntimeException;

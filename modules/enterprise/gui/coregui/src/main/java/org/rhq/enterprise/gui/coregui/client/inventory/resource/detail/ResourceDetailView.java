@@ -236,13 +236,8 @@ public class ResourceDetailView extends
         tabs.add(configurationTab);
 
         driftTab = new TwoLevelTab(new ViewName(Tab.DRIFT, MSG.view_tabs_common_drift()), IconEnum.DRIFT_COMPLIANCE);
-        // TODO: Experimenting with not shoing a drift history tab and having all resource level drift viewing
-        // go through the comprehensive drift carousel view.  Leave it in, but commented, in case we want it back. 
-        //this.driftHistory = new SubTab(driftTab, new ViewName(DriftSubTab.HISTORY,
-        //    MSG.view_tabs_common_history()), null);
         this.driftDefinitions = new SubTab(driftTab, new ViewName(DriftSubTab.DEFINITIONS,
             MSG.common_title_definitions()), null);
-        //driftTab.registerSubTabs(driftHistory, driftDefinitions);
         driftTab.registerSubTabs(driftDefinitions);
         tabs.add(driftTab);
 
@@ -409,7 +404,7 @@ public class ResourceDetailView extends
         };
         updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
-        boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
+        boolean visibleToIE8 = !BrowserUtility.isBrowserPreIE9();
 
         viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
             @Override

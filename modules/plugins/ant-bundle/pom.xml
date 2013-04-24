@@ -72,7 +72,6 @@
                                 <artifactItem>
                                     <groupId>org.liquibase</groupId>
                                     <artifactId>liquibase-core</artifactId>
-                                    <version>1.9.5</version>
                                 </artifactItem>
 
                             </artifactItems>

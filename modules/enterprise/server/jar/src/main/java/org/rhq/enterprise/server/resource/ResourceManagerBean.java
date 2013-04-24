@@ -127,6 +127,7 @@ import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStr
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.rest.ResourceHandlerBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.QueryUtility;
@@ -249,6 +250,26 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return entityManager.merge(persistedResource);
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public void uninventoryResourcesOfResourceType(Subject subject, int resourceTypeId) {
+        List<Integer> typeIds = new ArrayList<Integer>(1);
+        typeIds.add(resourceTypeId);
+
+        List<Integer> resourceIds = resourceManager.findIdsByTypeIds(typeIds);
+
+        if (resourceIds != null && !resourceIds.isEmpty()) {
+            log.info("Uninventorying all [" + resourceIds.size() + "] resources with resource type ID of ["
+                + resourceTypeId + "]");
+
+            for (Integer resourceId : resourceIds) {
+                resourceManager.uninventoryResourceInNewTransaction(resourceId);
+            }
+        }
+
+        return;
+    }
+
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void uninventoryAllResourcesByAgent(Subject user, Agent doomedAgent) {
         Resource platform = resourceManager.getPlatform(doomedAgent);
@@ -333,7 +354,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     + "]. Unable to inform agent of inventory removal (this may be ok): " + t);
             }
 
-            // since we delete the resource asynchronously, make sure we remove things that would cause system 
+            // since we delete the resource asynchronously, make sure we remove things that would cause system
             // side effects after markForDeletion completed but before the resource is actually removed from the DB
 
             // delete the resource and all its children
@@ -362,7 +383,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                     log.debug("== Bounds " + i + ", " + j);
                 }
 
-                // refresh overlord session for each batch to avoid session timeout 
+                // refresh overlord session for each batch to avoid session timeout
                 overlord = subjectManager.getOverlord();
                 boolean hasErrors = uninventoryResourcesBulkDelete(overlord, idsToDelete);
                 if (hasErrors) {
@@ -400,11 +421,16 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             }
 
             // still need to tell the agent about the removed resources so it stops avail reports
+            // but not if this is a synthetic agent that was created in the REST-api
+            // See org.rhq.enterprise.server.rest.ResourceHandlerBean.createPlatformInternal()
+            // See also https://docs.jboss.org/author/display/RHQ/Virtual+platforms+and+synthetic+agents
             if (agentClient != null) {
-                try {
-                    agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
-                } catch (Exception e) {
-                    log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+                if (agentClient.getAgent() == null || agentClient.getAgent().getName() == null || !agentClient.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // don't do that on "REST-agents"
+                    try {
+                        agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
+                    } catch (Exception e) {
+                        log.warn(" Unable to inform agent of inventory removal for resource [" + resourceId + "]", e);
+                    }
                 }
             }
 
@@ -662,12 +688,21 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
     public Resource setResourceStatus(Subject user, Resource resource, InventoryStatus newStatus, boolean setDescendents) {
-        if ((resource.getParentResource() != null)
-            && (resource.getParentResource().getInventoryStatus() != InventoryStatus.COMMITTED)) {
-            throw new IllegalStateException("Cannot commit resource [" + resource
-                + "] to inventory, because its parent resource [" + resource.getParentResource()
-                + "] has not yet been committed.");
+        // do special processing if we are being asked to commit the resource to inventory
+        if (newStatus == InventoryStatus.COMMITTED) {
+            if ((resource.getParentResource() != null)
+                && (resource.getParentResource().getInventoryStatus() != InventoryStatus.COMMITTED)) {
+                throw new IllegalStateException("Cannot commit resource [" + resource
+                    + "] to inventory, because its parent resource [" + resource.getParentResource()
+                    + "] has not yet been committed.");
+            }
+
+            if ((resource.getResourceType() == null) || (resource.getResourceType().isIgnored())) {
+                log.debug("Not commiting resource [" + resource + "] to inventory because its type is ignored");
+                return resource;
+            }
         }
+
 
         long now = System.currentTimeMillis();
         updateInventoryStatus(resource, newStatus, now);
@@ -936,6 +971,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
         resourceTypeCriteria.addFilterIds(typesSet.toArray(new Integer[typesSet.size()]));
+        resourceTypeCriteria.addFilterIgnored(null); // don't worry if they are ignored or not, get the ancestry anyway
         List<ResourceType> types = typeManager.findResourceTypesByCriteria(subject, resourceTypeCriteria);
 
         for (Resource resource : resources) {
@@ -2692,7 +2728,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
         List<Integer> disableResourceIds = new ArrayList<Integer>();
 
-        // one report for each agent, keyed by agent name        
+        // one report for each agent, keyed by agent name
         Map<Agent, AvailabilityReport> reports = resourceManager.getDisableResourcesReportInNewTransaction(subject,
             resourceIds, disableResourceIds);
 

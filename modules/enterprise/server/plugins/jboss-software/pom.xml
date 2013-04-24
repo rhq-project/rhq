@@ -26,7 +26,6 @@
         <dependency>
             <groupId>commons-httpclient</groupId>
             <artifactId>commons-httpclient</artifactId>
-            <version>${commons-httpclient.version}</version>
             <scope>provided</scope>
         </dependency>
 
@@ -40,7 +39,6 @@
         <dependency>
             <groupId>xerces</groupId>
             <artifactId>xercesImpl</artifactId>
-            <version>${xercesImpl.version}</version>
             <scope>provided</scope>
         </dependency>
 

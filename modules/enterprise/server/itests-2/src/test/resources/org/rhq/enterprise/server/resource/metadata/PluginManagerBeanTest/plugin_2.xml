@@ -8,4 +8,6 @@
     <depends plugin="PluginManagerBeanTestPlugin1" useClasses="true"/>
 
     <server name="TestServer2"/>
+    <server name="TestServer2Ignored"/> <!-- to be ignored in tests -->
+
 </plugin>

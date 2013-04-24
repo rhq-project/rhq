@@ -111,6 +111,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
         ResourceTypeCriteria resourceTypeCriteria = new ResourceTypeCriteria();
         resourceTypeCriteria.setStrict(true);
+        resourceTypeCriteria.addFilterIgnored(null);
         resourceTypeCriteria.addFilterName(typeName);
         resourceTypeCriteria.addFilterPluginName(pluginName);
 

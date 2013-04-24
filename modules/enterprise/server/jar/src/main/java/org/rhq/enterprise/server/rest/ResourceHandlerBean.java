@@ -22,6 +22,10 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
@@ -30,11 +34,13 @@ import java.util.Set;
 import java.util.UUID;
 
 import javax.ejb.EJB;
+import javax.ejb.EJBTransactionRolledbackException;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -66,6 +72,7 @@ import org.jboss.resteasy.links.AddLinks;
 import org.jboss.resteasy.links.LinkResource;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AvailabilityCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -76,10 +83,13 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.CreateResourceHistory;
+import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -87,10 +97,12 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
-import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.domain.AvailabilityRest;
+import org.rhq.enterprise.server.rest.domain.AvailabilitySummary;
+import org.rhq.enterprise.server.rest.domain.CreateCBRresourceRequest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
@@ -109,17 +121,21 @@ import org.rhq.enterprise.server.rest.domain.StringValue;
 public class ResourceHandlerBean extends AbstractRestBean {
 
     private static final String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
+    private static final String DEFAULT_PACKAGE = "default.rest.package";
+
+    // Name prefix for synthetic/dummy agents created with the rest api. See #createPlatformInternal
+    public static final String DUMMY_AGENT_NAME_PREFIX = "dummy-agent:name";
 
     @EJB
     AvailabilityManagerLocal availMgr;
-    @EJB
-    MeasurementScheduleManagerLocal scheduleManager;
     @EJB
     AlertManagerLocal alertManager;
     @EJB
     ResourceTypeManagerLocal resourceTypeManager;
     @EJB
     AgentManagerLocal agentMgr;
+    @EJB
+    ResourceFactoryManagerLocal resourceFactory;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -209,7 +225,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
      * @param uriInfo Uri from the request
      * @param resources List of resources
      * @param page Page of pageSize. If null, paging is ignored
-     * @param pageSize numer of elements on a page
+     * @param pageSize number of elements on a page
      * @return An initialized ResponseBuilder
      */
     private Response.ResponseBuilder getResponseBuilderForResourceList(HttpHeaders headers, UriInfo uriInfo,
@@ -332,7 +348,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         criteria.addFilterResourceId(resourceId);
         criteria.addSortStartTime(PageOrdering.DESC);
 
-        List<Availability> points = availMgr.findAvailabilityByCriteria(caller,criteria);
+        List<Availability> points = availMgr.findAvailabilityByCriteria(caller, criteria);
         List<AvailabilityRest> ret = new ArrayList<AvailabilityRest>(points.size());
         for (Availability avail : points) {
             AvailabilityRest availabilityRest;
@@ -360,6 +376,26 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     }
 
+    @GET
+    @Path("/{id}/availability/summary")
+    @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
+    @ApiOperation(value = "Return the availability history for the passed resource", responseClass = "AvailabilitySummary", multiValueResponse = false)
+    public Response getAvailabilitySummary(
+        @ApiParam("Id of the resource to query") @PathParam("id") int resourceId,
+        @Context HttpHeaders headers) {
+
+        fetchResource(resourceId);
+        ResourceAvailabilitySummary summary = resMgr.getAvailabilitySummary(caller,resourceId);
+        AvailabilitySummary as = new AvailabilitySummary(resourceId,summary);
+
+        Response.ResponseBuilder builder = Response.ok(as);
+
+        MediaType type = headers.getAcceptableMediaTypes().get(0);
+        builder.type(type);
+
+        return builder.build();
+
+    }
 
     @PUT
     @Path("/{id}/availability")
@@ -487,7 +523,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     }
 
     private Resource obtainResource(int resourceId) {
-        Resource resource = resMgr.getResource(caller,resourceId);
+        Resource resource = resMgr.getResource(caller, resourceId);
         if (resource == null) {
             resource = resMgr.getResource(caller, resourceId);
             if (resource != null)
@@ -546,7 +582,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         String typeName = resource.getTypeName();
         String resourceName = resource.getResourceName();
 
-        return createPlatformInternal(resourceName,typeName,uriInfo);
+        return createPlatformInternal(resourceName, typeName, uriInfo);
     }
 
 
@@ -575,8 +611,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
 
         // Create a dummy agent per platform - otherwise we can't delete the platform later
+        // See also https://docs.jboss.org/author/display/RHQ/Virtual+platforms+and+synthetic+agents
         Agent agent ;
-        agent = new Agent("dummy-agent:name"+name,"-dummy-p:"+name,12345,"http://foo.com/p:name/"+name,"abc-"+name);
+        agent = new Agent(DUMMY_AGENT_NAME_PREFIX +name,"-dummy-p:"+name,12345,"http://foo.com/p:name/"+name,"abc-"+name);
         agentMgr.createAgent(agent);
 
         Resource platform = new Resource(resourceKey,name,type);
@@ -627,12 +664,19 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/")
-    @ApiOperation("Create a new resource as a child of an existing resource<A1>")
+    @ApiOperation("Create a new resource as a child of an existing resource. If a handle is given, a content based resource is created.")
     public Response createResource(
-        @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") ResourceWithType resource,
-        @Context UriInfo uriInfo)
+        @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") CreateCBRresourceRequest resource,
+        @Context HttpHeaders headers,
+        @QueryParam("handle") String handle,
+        @Context UriInfo uriInfo) throws IOException
     {
-        return createResourceInternal(resource.getResourceName(),resource.getPluginName(),resource.getParentId(),resource.getTypeName(),uriInfo);
+
+        if (handle!=null) {
+            return createContentBackedResource(resource,handle,headers,uriInfo);
+        } else {
+            return createResourceInternal(resource.getResourceName(),resource.getPluginName(),resource.getParentId(),resource.getTypeName(),uriInfo);
+        }
     }
 
     private Response createResourceInternal(String name, String plugin, int parentId, String typeName,
@@ -687,14 +731,154 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
     }
 
+    private Response createContentBackedResource(CreateCBRresourceRequest request, String handle, HttpHeaders headers, UriInfo uriInfo) throws IOException
+    {
+        int parentId = request.getParentId();
+        String typeName = request.getTypeName();
+        String plugin = request.getPluginName();
+        String name = request.getResourceName();
+
+        String tmpDirName = System.getProperty("java.io.tmpdir");
+
+        File tmpDir = new File(tmpDirName);
+        File content = new File(tmpDir,handle);
+
+        if (!content.exists() || !content.canRead())
+            throw new StuffNotFoundException("Content for handle " + handle);
+
+        BufferedInputStream resourceBits = new BufferedInputStream(new FileInputStream(content));
+
+        // Check for valid parent
+        fetchResource(parentId);
+
+        ResourceType resType = resourceTypeManager.getResourceTypeByNameAndPlugin(typeName,plugin);
+        if (resType==null)
+            throw new StuffNotFoundException("ResourceType with name [" + typeName + "] and plugin [" + plugin + "]");
+
+        Configuration pluginConfig = mapToConfiguration(request.getPluginConfig());
+        Configuration deployConfig = mapToConfiguration(request.getResourceConfig());
+
+        String packageName = DEFAULT_PACKAGE;
+
+        CreateResourceHistory history = resourceFactory.createResource(caller,parentId, resType.getId(),name,pluginConfig,
+            packageName, null,null,deployConfig,resourceBits);
+
+        CreateResourceStatus status = history.getStatus();
+
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
+        Response.ResponseBuilder builder;
+
+        if ( status == CreateResourceStatus.SUCCESS) {
+
+            ResourceWithType rwt = findCreatedResource(history.getParentResource().getId(),history.getCreatedResourceName(),uriInfo);
+
+            builder = Response.ok();
+            builder.entity(rwt);
+        }
+        else if (status==CreateResourceStatus.IN_PROGRESS) {
+
+            try {
+                Thread.sleep(2000L); // give the agent time to do the work
+            } catch (InterruptedException e) {
+                ; // nothing
+            }
+
+            UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
+            uriBuilder.path("/resource/creationStatus/{id}");
+            URI uri = uriBuilder.build(history.getId());
+            builder =  Response.status(302);
+            builder.location(uri); // redirect to self
+
+        }
+        else  {  // All kinds of failures
+            builder = Response.serverError();
+            builder.entity(new StringValue(history.getErrorMessage()));
+        }
+        builder.type(mediaType);
+
+        return builder.build();
+
+
+    }
+
+    @GET
+    @Path("/creationStatus/{id}")
+    @ApiOperation("Get the status of a resource creation for content based resources.")
+    public Response getHistoryItem(@PathParam("id") int historyId, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+
+        CreateResourceHistory history;
+        try {
+            history = resourceFactory.getCreateHistoryItem(historyId);
+        } catch (EJBTransactionRolledbackException e) {
+            if (e.getCause() instanceof NoResultException)
+                throw new StuffNotFoundException("Resource creation status with id " + historyId);
+            else
+                return Response.serverError().entity(e.getMessage()).build();
+        }
+
+        CreateResourceStatus status = history.getStatus();
+
+        Response.ResponseBuilder builder;
+        try {
+            Thread.sleep(2000L); // give the agent time to do the work
+        } catch (InterruptedException e) {
+            ; // nothing
+        }
+        if (status== CreateResourceStatus.SUCCESS) {
+
+            ResourceWithType rwt = findCreatedResource(history.getParentResource().getId(),history.getCreatedResourceName(),uriInfo);
+
+            builder = Response.ok();
+            setCachingHeader(builder, 600);
+            builder.entity(rwt);
+
+        }
+        else if (status==CreateResourceStatus.IN_PROGRESS) {
+
+
+            UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
+            URI uri = uriBuilder.build();
+            builder =  Response.status(302);
+            builder.location(uri); // redirect to self
+        }
+        else {
+            builder = Response.serverError();
+        }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        builder.type(mediaType);
+
+        return builder.build();
+
+    }
+
+    private ResourceWithType findCreatedResource(int parentId, String name, UriInfo uriInfo) {
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.setStrict(true);
+        criteria.addFilterParentResourceId(parentId);
+        criteria.addFilterName(name);
+        criteria.addFilterInventoryStatus(InventoryStatus.COMMITTED);
+        List<Resource> resources = resMgr.findResourcesByCriteria(caller,criteria);
+        Resource res = resources.get(0);
+        return fillRWT(res,uriInfo);
+    }
+
+
     @DELETE
     @Path("/{id}")
     @ApiOperation("Remove a resource from inventory")
     public Response uninventoryOrDeleteResource(
             @PathParam("id") int resourceId
-            /*,@DefaultValue("false") @QueryParam("physical") boolean delete*/) {
+            ,@DefaultValue("false") @QueryParam("physical") boolean delete) {
 
-        resMgr.uninventoryResource(caller,resourceId);
+        if (delete==false) {
+            resMgr.uninventoryResource(caller,resourceId);
+        }
+        else {
+            resourceFactory.deleteResource(caller,resourceId);
+        }
 
         return Response.status(Response.Status.NO_CONTENT).build();
 

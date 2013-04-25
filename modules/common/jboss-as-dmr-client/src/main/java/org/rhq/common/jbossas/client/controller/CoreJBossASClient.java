@@ -126,6 +126,12 @@ public class CoreJBossASClient extends JBossASClient {
         return dir;
     }
 
+    public String getAppServerDataDir() throws Exception {
+        final String[] address = { CORE_SERVICE, SERVER_ENVIRONMENT };
+        final String dir = getStringAttribute(true, "data-dir", Address.root().add(address));
+        return dir;
+    }
+
     /**
      * Enabled or disables the default deployment scanner.
      * @param enabled the new status to be set

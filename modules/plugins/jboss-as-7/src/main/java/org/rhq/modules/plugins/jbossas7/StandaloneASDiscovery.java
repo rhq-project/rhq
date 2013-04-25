@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,10 +21,13 @@ package org.rhq.modules.plugins.jbossas7;
 import java.io.File;
 import java.util.Arrays;
 
+import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.modules.plugins.jbossas7.helper.HostConfiguration;
 import org.rhq.modules.plugins.jbossas7.helper.HostPort;
+import org.rhq.modules.plugins.jbossas7.helper.StandaloneServerPluginConfiguration;
 
 /**
  * Discovery component for "JBossAS7 Standalone Server" Resources.
@@ -83,12 +86,29 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
         ProcessInfo process, AS7CommandLine commandLine) throws Exception {
 
         DiscoveredResourceDetails resourceDetails = super.buildResourceDetails(discoveryContext, process, commandLine);
+        Configuration pluginConfig = resourceDetails.getPluginConfiguration();
+        StandaloneServerPluginConfiguration standalonePluginConfig = new StandaloneServerPluginConfiguration(
+            pluginConfig);
 
         // Do RHQ Server specific work
         if (isRhqServer(process)) {
             String name = resourceDetails.getResourceName();
             resourceDetails.setResourceName(name + " RHQ Server");
         }
+
+        File hostXmlFile = standalonePluginConfig.getHostConfigFile();
+        File deploymentScannerPath = null;
+
+        if (hostXmlFile != null) {
+            HostConfiguration hostConfig = loadHostConfiguration(hostXmlFile);
+            deploymentScannerPath = hostConfig.getDeploymentScannerPath(commandLine);
+            if (deploymentScannerPath != null && !deploymentScannerPath.isAbsolute() && !deploymentScannerPath.exists()) {
+                deploymentScannerPath = new File(standalonePluginConfig.getBaseDir().toString(),
+                    deploymentScannerPath.toString());
+            }
+        }
+
+        standalonePluginConfig.setDeploymentScannerPath(deploymentScannerPath);
 
         return resourceDetails;
     }

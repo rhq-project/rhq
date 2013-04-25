@@ -1170,6 +1170,7 @@
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
       <c:simple-property name="logDir" type="file" description="the directory where log files will be written for this server" displayName="Log Directory" readOnly="true" required="false"/>
       <c:simple-property name="productType" type="string" readOnly="true" required="false" description="Server product type (e.g. AS or EAP)"/>
+      <c:simple-property name="deploymentScannerPath" type="string" description="Path that is being monitored by a deployment-scanner. For example, deployments" required="false"/>
 
       &startScriptPluginConfigGroup;
       &logSources;
@@ -1327,15 +1328,15 @@
         name="Template-Deploy Files"
         description="Monitor standalone deployment dir for drift. ">
       <basedir>
-        <value-context>measurementTrait</value-context>
-        <value-name>deployDir</value-name>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>deploymentScannerPath</value-name>
       </basedir>
     </drift-definition>
 
     <bundle-target>
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
-        <value-context>measurementTrait</value-context>
-        <value-name>deployDir</value-name>
+        <value-context>pluginConfiguration</value-context>
+        <value-name>deploymentScannerPath</value-name>
       </destination-base-dir>
     </bundle-target>
 

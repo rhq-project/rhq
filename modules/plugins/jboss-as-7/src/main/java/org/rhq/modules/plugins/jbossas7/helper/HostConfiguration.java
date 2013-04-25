@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2012-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -231,6 +231,28 @@ public class HostConfiguration {
         File securityPropertyFile = new File(configDir, fileName);
 
         return securityPropertyFile;
+    }
+
+    /**
+     * Try to obtain the deployment-scanner path value by looking it up in the 
+     * host/standalone.xml file.
+     *  
+     * @param commandLine will be used to attempt to resolve any variables that 
+     *        may be contained in the path definition
+     * @return path defined by deployment-scanner or null if undefined
+     */
+    public File getDeploymentScannerPath(AS7CommandLine commandLine) {
+        // first check remote, as we can't distinguish between a missing local element or
+        // an empty one, which is the default
+        String path = obtainXmlPropertyViaXPath("//deployment-scanner/@path");
+
+        if (commandLine != null) {
+            path = replaceDollarExpression(path, commandLine, null);
+        }
+        if (path == null || path.length() <= 0) {
+            return null;
+        }
+        return new File(path);
     }
 
     /**

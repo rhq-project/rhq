@@ -87,6 +87,10 @@ public class ScriptingAPIServerTest extends ScriptableAbstractEJB3Test {
         //Simplification itself is unit tested separately.
 
         for (RhqManager m : RhqManager.values()) {
+            if (!m.enabled()) {
+                continue;
+            }
+
             String name = m.name();
             Object scriptedManager = engine.eval(name);
             assertNotNull(scriptedManager);

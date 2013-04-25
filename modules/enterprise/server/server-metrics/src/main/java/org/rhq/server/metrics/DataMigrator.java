@@ -394,7 +394,7 @@ public class DataMigrator {
 
             while (true) {
                 nativeQuery = entityManager.createNativeQuery(this.selectQuery);
-                nativeQuery.setFirstResult(lastMigratedRecord + 1);
+                nativeQuery.setFirstResult(lastMigratedRecord);
                 nativeQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
 
                 existingData = nativeQuery.getResultList();
@@ -535,7 +535,7 @@ public class DataMigrator {
 
                 int lastMigratedRecord = 0;
                 while (true) {
-                    nativeSelectQuery.setFirstResult(lastMigratedRecord + 1);
+                    nativeSelectQuery.setFirstResult(lastMigratedRecord);
                     nativeSelectQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
 
                     existingData = nativeSelectQuery.getResultList();

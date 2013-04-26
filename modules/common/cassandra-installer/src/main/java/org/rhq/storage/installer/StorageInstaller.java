@@ -100,11 +100,13 @@ public class StorageInstaller {
 
     private File logDir;
 
-    private String commitLogDir = "/var/lib/rhq/storage/commitlog";
+    private String dirPrefix = (isWindows()) ? "" : "var/lib";
 
-    private String dataDir = "/var/lib/rhq/storage/data";
+    private String commitLogDir = dirPrefix + "/rhq/storage/commitlog";
 
-    private String savedCachesDir = "/var/lib/rhq/storage/saved_caches";
+    private String dataDir = dirPrefix + "/rhq/storage/data";
+
+    private String savedCachesDir = dirPrefix + "/rhq/storage/saved_caches";
 
     public StorageInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");

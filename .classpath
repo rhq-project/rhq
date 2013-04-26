@@ -384,5 +384,8 @@
 	<classpathentry kind="var" path="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
+	<classpathentry exported="true" kind="var" path="JDK_HOME/jre/lib/rt.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-configuration/commons-configuration/1.6/commons-configuration-1.6.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/maven/plugin-tools/maven-plugin-annotations/3.2/maven-plugin-annotations-3.2.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

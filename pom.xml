@@ -153,6 +153,7 @@
     <arquillian.version>1.0.3.Final</arquillian.version>
     <arquillian.jboss.container.version>7.2.0.Final</arquillian.jboss.container.version>
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
+    <xnio.version>3.0.7.GA</xnio.version> <!-- needed in jndi-access tests to talk to the managed AS -->
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>
     <commons-httpclient.version>3.0.1</commons-httpclient.version>
@@ -721,6 +722,12 @@
       <dependency>
          <groupId>org.jboss.as</groupId>
          <artifactId>jboss-as-arquillian-container-managed</artifactId>
+         <version>${arquillian.jboss.container.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.as</groupId>
+         <artifactId>jboss-as-arquillian-container-remote</artifactId>
          <version>${arquillian.jboss.container.version}</version>
       </dependency>
 

@@ -1237,12 +1237,11 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private void writeInstalledFileMarker() throws Exception {
-        File basedir = new File(getAppServerDataDir());
-        File standalonedir = new File(basedir, "jbossas/standalone");
-        if (!standalonedir.isDirectory()) {
-            throw new IOException("Directory Not Found: [" + standalonedir.getPath() + "]");
+        File datadir = new File(getAppServerDataDir());
+        if (!datadir.isDirectory()) {
+            throw new IOException("Directory Not Found: [" + datadir.getPath() + "]");
         }
-        File markerFile = new File(standalonedir, "data/rhq.installed");
+        File markerFile = new File(datadir, "rhq.installed");
         markerFile.createNewFile();
     }
 }

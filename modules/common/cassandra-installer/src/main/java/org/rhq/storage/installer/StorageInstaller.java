@@ -56,6 +56,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.Deployer;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
@@ -179,7 +180,8 @@ public class StorageInstaller {
             printUsage();
             return STATUS_SHOW_USAGE;
         } else {
-            DeploymentOptions deploymentOptions = new DeploymentOptions();
+            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+            DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
 
             File basedir;
             if (cmdLine.hasOption("dir")) {

@@ -13,6 +13,7 @@ import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 
@@ -49,7 +50,8 @@ public class Deploy extends CCMCommand {
         if (cmdLine.hasOption("h")) {
             printUsage();
         } else {
-            DeploymentOptions deploymentOptions = new DeploymentOptions();
+            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+            DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
             if (cmdLine.hasOption("n")) {
                 int numNodes = Integer.parseInt(cmdLine.getOptionValue("n"));
                 deploymentOptions.setNumNodes(numNodes);

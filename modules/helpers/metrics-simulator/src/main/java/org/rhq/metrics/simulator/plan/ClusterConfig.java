@@ -42,7 +42,7 @@ public class ClusterConfig {
 
     private String heapNewSize = "64M";
 
-    private String stackSize = "180k";
+    private String stackSize;
 
     public boolean isEmbedded() {
         return embedded;

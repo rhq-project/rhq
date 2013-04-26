@@ -58,7 +58,8 @@ public class DeployerITest {
         deployDir = new File(System.getProperty("rhq.storage.deploy-dir", System.getProperty("java.io.tmpdir")));
         confDir = new File(deployDir, "conf");
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
         deploymentOptions.setBasedir(deployDir.getAbsolutePath());
         deploymentOptions.setCommitLogDir("/var/lib/rhq/storage/commit_log");
         deploymentOptions.setDataDir("/var/lib/rhq/storage/data");

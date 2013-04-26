@@ -82,7 +82,8 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         }
 
         int numNodes = annotation.numNodes();
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir);
         deploymentOptions.setNumNodes(numNodes);
         deploymentOptions.setUsername(annotation.username());

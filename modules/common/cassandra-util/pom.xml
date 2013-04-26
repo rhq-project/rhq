@@ -9,22 +9,10 @@
     <version>4.7.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>rhq-cassandra-schema</artifactId>
-  <name>RHQ Cassandra Schema</name>
+  <artifactId>rhq-cassandra-util</artifactId>
+  <name>RHQ Cassandra Util</name>
 
   <dependencies>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-cassandra-ccm-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-cassandra-util</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
     <dependency>
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>

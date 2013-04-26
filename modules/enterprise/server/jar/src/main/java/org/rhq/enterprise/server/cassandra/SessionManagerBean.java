@@ -25,8 +25,6 @@
 
 package org.rhq.enterprise.server.cassandra;
 
-import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
-
 import javax.annotation.PostConstruct;
 import javax.ejb.Singleton;
 
@@ -35,6 +33,7 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 
 import org.rhq.cassandra.CassandraNode;
+import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.server.metrics.CQLException;
 import org.rhq.server.metrics.MetricsConfiguration;
 
@@ -79,10 +78,9 @@ public class SessionManagerBean {
                     Session.class.getName() + " object.");
             }
 
-            Cluster cluster = Cluster.builder()
+            Cluster cluster = new ClusterBuilder()
                 .addContactPoints(hostNames)
                 .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
-                .withCompression(SNAPPY)
                 .withPort(port)
                 .build();
             session = cluster.connect("rhq");

@@ -51,7 +51,9 @@ import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
+import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.metrics.simulator.plan.ClusterConfig;
 import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
@@ -82,10 +84,17 @@ public class Simulator implements ShutdownManager {
         });
 
         List<CassandraNode> nodes = initCluster(plan);
-        ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
-            plan.getClientCompression().toUpperCase());
-        createSchema(nodes, compression);
-        Session session = createSession(nodes, compression);
+
+        createSchema(nodes);
+
+        Session session;
+        if (plan.getClientCompression() == null) {
+            session = createSession(nodes);
+        } else {
+            ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
+                plan.getClientCompression().toUpperCase());
+            session = createSession(nodes, compression);
+        }
 
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setSession(session);
@@ -174,12 +183,15 @@ public class Simulator implements ShutdownManager {
         log.info("Deploying cluster to " + clusterDir);
         clusterDir.mkdirs();
 
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(clusterConfig.getNumNodes());
         deploymentOptions.setHeapSize(clusterConfig.getHeapSize());
         deploymentOptions.setHeapNewSize(clusterConfig.getHeapNewSize());
-        deploymentOptions.setStackSize(clusterConfig.getStackSize());
+        if (clusterConfig.getStackSize() != null) {
+            deploymentOptions.setStackSize(clusterConfig.getStackSize());
+        }
         deploymentOptions.setLoggingLevel("INFO");
         deploymentOptions.load();
 
@@ -201,10 +213,10 @@ public class Simulator implements ShutdownManager {
         clusterInitService.waitForClusterToStart(nodes, nodes.size(), 3000, 20);
     }
 
-    private void createSchema(List<CassandraNode> nodes, ProtocolOptions.Compression compression) {
+    private void createSchema(List<CassandraNode> nodes) {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes, compression);
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
             schemaManager.createSchema();
             schemaManager.updateSchema();
         } catch (Exception e) {
@@ -212,27 +224,56 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private Session createSession(List<CassandraNode> nodes, ProtocolOptions.Compression compression)
-        throws NoHostAvailableException {
+    private Session createSession(List<CassandraNode> nodes) throws NoHostAvailableException {
         try {
             SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
             authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
 
-            Cluster cluster = Cluster.builder()
+            Cluster cluster = new ClusterBuilder()
+                .addContactPoints(getHostNames(nodes))
+                .withAuthInfoProvider(authInfoProvider)
+                .build();
+
+            log.debug("Created cluster object with " + cluster.getConfiguration().getProtocolOptions().getCompression()
+                + " compression.");
+
+            return initSession(cluster);
+        } catch (Exception e) {
+            log.error("Failed to start simulator. Unable to create " + Session.class, e);
+            throw new RuntimeException("Failed to start simulator. Unable to create " + Session.class, e);
+        }
+    }
+
+    private Session createSession(List<CassandraNode> nodes, ProtocolOptions.Compression compression)
+        throws NoHostAvailableException {
+        try {
+            log.debug("Creating session using " + compression.name() + " compression");
+
+            SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
+            authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
+
+            Cluster cluster = new ClusterBuilder()
                 .addContactPoints(getHostNames(nodes))
                 .withAuthInfoProvider(authInfoProvider)
                 .withCompression(compression)
                 .build();
 
-            NodeFailureListener listener = new NodeFailureListener();
-            for (Host host : cluster.getMetadata().getAllHosts()) {
-                host.getMonitor().register(listener);
-            }
+            log.debug("Created cluster object with " + cluster.getConfiguration().getProtocolOptions().getCompression()
+                + " compression.");
 
-            return cluster.connect("rhq");
+            return initSession(cluster);
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. Unable to create " + Session.class, e);
         }
+    }
+
+    private Session initSession(Cluster cluster) {
+        NodeFailureListener listener = new NodeFailureListener();
+        for (Host host : cluster.getMetadata().getAllHosts()) {
+            host.getMonitor().register(listener);
+        }
+
+        return cluster.connect("rhq");
     }
 
     private String[] getHostNames(List<CassandraNode> nodes) {

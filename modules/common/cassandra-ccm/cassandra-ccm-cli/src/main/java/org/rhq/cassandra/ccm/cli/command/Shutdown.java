@@ -5,6 +5,7 @@ import org.apache.commons.cli.Options;
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 
 /**
  * @author John Sanda
@@ -39,7 +40,8 @@ public class Shutdown extends CCMCommand {
         if (cmdLine.hasOption("h")) {
             printUsage();
         } else {
-            DeploymentOptions deploymentOptions = new DeploymentOptions();
+            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+            DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
 
             if (cmdLine.hasOption("n")) {

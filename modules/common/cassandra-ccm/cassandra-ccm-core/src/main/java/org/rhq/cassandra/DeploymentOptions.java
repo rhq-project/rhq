@@ -93,7 +93,7 @@ public class DeploymentOptions {
     private String logFileName;
     private String stackSize;
 
-    public DeploymentOptions() {
+    DeploymentOptions() {
     }
 
     /**

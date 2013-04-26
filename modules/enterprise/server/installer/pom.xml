@@ -165,6 +165,11 @@
                                 </artifactItem>
                                 <artifactItem>
                                   <groupId>org.rhq</groupId>
+                                  <artifactId>rhq-cassandra-util</artifactId>
+                                  <version>${project.version}</version>
+                                </artifactItem>
+                                <artifactItem>
+                                  <groupId>org.rhq</groupId>
                                   <artifactId>rhq-cassandra-ccm-core</artifactId>
                                   <version>${project.version}</version>
                                 </artifactItem>

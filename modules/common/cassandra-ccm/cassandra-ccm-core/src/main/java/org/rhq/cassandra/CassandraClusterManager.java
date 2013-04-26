@@ -61,7 +61,7 @@ public class CassandraClusterManager {
     private List<File> installedNodeDirs = new ArrayList<File>();
 
     public CassandraClusterManager() {
-        this(new DeploymentOptions());
+        this(new DeploymentOptionsFactory().newDeploymentOptions());
     }
 
     public CassandraClusterManager(DeploymentOptions deploymentOptions) {
@@ -107,7 +107,8 @@ public class CassandraClusterManager {
             File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
             String address = getLocalIPAddress(i + 1);
 
-            DeploymentOptions nodeOptions = new DeploymentOptions();
+            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+            DeploymentOptions nodeOptions = factory.newDeploymentOptions();
             nodeOptions.setSeeds(seeds);
             nodeOptions.setJmxPort(deploymentOptions.getJmxPort() + i);
             nodeOptions.setBasedir(basedir.getAbsolutePath());

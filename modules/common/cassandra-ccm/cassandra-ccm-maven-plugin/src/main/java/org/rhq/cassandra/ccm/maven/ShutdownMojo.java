@@ -35,6 +35,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 
 /**
  * @author John Sanda
@@ -48,7 +49,8 @@ public class ShutdownMojo extends AbstractMojo {
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
         getLog().info("Shutting down cluster in " + clusterDir);
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
 
         long start = System.currentTimeMillis();

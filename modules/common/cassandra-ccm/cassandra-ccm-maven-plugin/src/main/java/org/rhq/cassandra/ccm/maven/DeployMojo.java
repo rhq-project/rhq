@@ -37,6 +37,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 
 /**
@@ -53,7 +54,8 @@ public class DeployMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        DeploymentOptions deploymentOptions = new DeploymentOptions();
+        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+        DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
         deploymentOptions.setClusterDir(clusterDir.getAbsolutePath());
         deploymentOptions.setNumNodes(numNodes);
 

@@ -5,6 +5,7 @@ import org.apache.commons.cli.Options;
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 
 /**
  * @author John Sanda
@@ -38,7 +39,8 @@ public class Start extends CCMCommand {
         if (commandLine.hasOption("h")) {
             printUsage();
         } else {
-            DeploymentOptions deploymentOptions = new DeploymentOptions();
+            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+            DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
             CassandraClusterManager ccm = new CassandraClusterManager(deploymentOptions);
             // TODO handle -n option
             if (commandLine.hasOption("n")) {

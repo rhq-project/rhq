@@ -59,6 +59,7 @@ import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
+import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 
 /**
@@ -81,7 +82,8 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
             File basedir = new File("target");
             File clusterDir = new File(basedir, "cassandra");
 
-            DeploymentOptions options = new DeploymentOptions();
+            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+            DeploymentOptions options = factory.newDeploymentOptions();
             options.setClusterDir(clusterDir.getAbsolutePath());
             options.setUsername("rhqadmin");
             options.setPassword("rhqadmin");

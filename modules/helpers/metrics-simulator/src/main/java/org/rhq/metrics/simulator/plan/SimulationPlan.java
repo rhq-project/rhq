@@ -51,7 +51,7 @@ public class SimulationPlan {
 
     private ClusterConfig clusterConfig;
 
-    private String clientCompression = "none";
+    private String clientCompression = null;
 
     public List<ScheduleGroup> getScheduleSets() {
         return scheduleSets;

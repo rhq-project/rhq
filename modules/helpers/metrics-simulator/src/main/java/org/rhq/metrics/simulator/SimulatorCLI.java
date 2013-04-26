@@ -34,6 +34,8 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import org.rhq.metrics.simulator.plan.SimulationPlan;
 import org.rhq.metrics.simulator.plan.SimulationPlanner;
@@ -42,6 +44,8 @@ import org.rhq.metrics.simulator.plan.SimulationPlanner;
  * @author John Sanda
  */
 public class SimulatorCLI {
+
+    private final Log log = LogFactory.getLog(SimulatorCLI.class);
 
     private Options options;
 
@@ -112,6 +116,7 @@ public class SimulatorCLI {
         try {
             cli.exec(args);
         } catch (Exception e) {
+            cli.log.error("There was an unxpected error", e);
             System.exit(1);
         }
     }

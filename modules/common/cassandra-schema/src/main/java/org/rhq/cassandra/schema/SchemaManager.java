@@ -25,13 +25,10 @@
 
 package org.rhq.cassandra.schema;
 
-import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
-
 import java.util.ArrayList;
 import java.util.List;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
@@ -41,6 +38,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.CassandraNode;
+import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.util.StringUtil;
 
 /**
@@ -59,8 +57,6 @@ public class SchemaManager {
     private String password;
 
     private List<CassandraNode> nodes = new ArrayList<CassandraNode>();
-
-    private ProtocolOptions.Compression compression = SNAPPY;
 
     public SchemaManager(String username, String password, String... nodes) {
         try {
@@ -90,20 +86,6 @@ public class SchemaManager {
         }
     }
 
-    public SchemaManager(String username, String password, List<CassandraNode> nodes,
-        ProtocolOptions.Compression compression) {
-        try {
-            this.username = username;
-            this.password = password;
-            this.nodes = nodes;
-            this.compression = compression;
-
-            initCluster();
-        } catch (NoHostAvailableException e) {
-            throw new RuntimeException("Unable create session.", e);
-        }
-    }
-
     private void initCluster() throws NoHostAvailableException {
         String[] hostNames = new String[nodes.size()];
         for (int i = 0; i < hostNames.length; ++i) {
@@ -113,16 +95,15 @@ public class SchemaManager {
         if (log.isDebugEnabled()) {
             log.debug("Initializing session to connect to " + StringUtil.arrayToString(hostNames));
         } else {
-            log.debug("Initializing session");
+            log.info("Initializing session");
         }
 
         SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
         authInfoProvider.add("username", "cassandra").add("password", "cassandra");
 
-        Cluster cluster = Cluster.builder()
+        Cluster cluster = new ClusterBuilder()
             .addContactPoints(hostNames)
             .withAuthInfoProvider(authInfoProvider)
-            .withCompression(compression)
             .withPort(nodes.get(0).getNativeTransportPort())
             .build();
         session = cluster.connect("system");

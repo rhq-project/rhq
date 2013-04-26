@@ -335,7 +335,7 @@ native_transport_port: ${rhq.cassandra.native_transport_port}
 # rpc_min_threads and rpc_max_threads, though the default differ slightly and
 # are the ones below:
 # native_transport_min_threads: 16
-native_transport_max_threads: ${rhq.casandra.native_transport_max_threads}
+native_transport_max_threads: ${rhq.cassandra.native_transport_max_threads}
 
 
 # Whether to start the thrift rpc server.

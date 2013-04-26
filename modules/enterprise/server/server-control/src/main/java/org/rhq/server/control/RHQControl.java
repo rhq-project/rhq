@@ -32,6 +32,8 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.exception.ThrowableUtil;
+
 /**
  * @author John Sanda
  */
@@ -100,7 +102,8 @@ public class RHQControl {
             control.exec(args);
             System.exit(0);
         } catch (RHQControlException e) {
-            control.log.error("There was an unxpected error", e);
+            Throwable rootCause = ThrowableUtil.getRootCause(e);
+            control.log.error("There was an unxpected error: " + rootCause.getMessage(), rootCause);
             System.exit(1);
         }
     }

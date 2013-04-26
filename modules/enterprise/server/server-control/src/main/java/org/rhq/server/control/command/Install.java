@@ -334,17 +334,35 @@ public class Install extends ControlCommand {
     }
 
     private void startRHQServerForInstallation() throws Exception {
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
 
-        executor.execute(commandLine, new DefaultExecuteResultHandler());
+        if (isWindows()) {
+            // For windows we will [re-]install the server as a windows service, then start the service.
 
+            commandLine = getCommandLine("rhq-server", "stop");
+            executor.execute(commandLine);
+
+            commandLine = getCommandLine("rhq-server", "remove");
+            executor.execute(commandLine);
+
+            commandLine = getCommandLine("rhq-server", "install");
+            executor.execute(commandLine);
+
+            commandLine = getCommandLine("rhq-server", "start");
+            executor.execute(commandLine);
+
+        } else {
+            // For *nix, just start the server in the background
+            commandLine = getCommandLine("rhq-server", "start");
+            executor.execute(commandLine, new DefaultExecuteResultHandler());
+        }
+
+        // Wait for the server to complete it's startup
         commandLine = getCommandLine("rhq-installer", "--test");
-        executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
 
         int exitCode = executor.execute(commandLine);
         while (exitCode != 0) {
@@ -371,15 +389,30 @@ public class Install extends ControlCommand {
 
     private boolean isRHQServerInitialized() throws Exception {
         File logDir = new File(basedir, "logs");
-        BufferedReader reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
-        String line = reader.readLine();
-        while (line != null) {
-            if (line.contains("Server started")) {
-                return true;
+
+        BufferedReader reader = null;
+
+        try {
+            reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
+            String line = reader.readLine();
+            while (line != null) {
+                if (line.contains("Server started")) {
+                    return true;
+                }
+                line = reader.readLine();
             }
-            line = reader.readLine();
+
+            return false;
+
+        } finally {
+            if (null != reader) {
+                try {
+                    reader.close();
+                } catch (Exception e) {
+                    // best effort
+                }
+            }
         }
-        return false;
     }
 
     private void installAgent(File agentBasedir) throws Exception {

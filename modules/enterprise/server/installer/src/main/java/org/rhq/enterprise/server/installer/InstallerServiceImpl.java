@@ -19,9 +19,7 @@
 package org.rhq.enterprise.server.installer;
 
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,7 +40,6 @@ import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseType;
 
@@ -482,8 +479,8 @@ public class InstallerServiceImpl implements InstallerService {
                 if (cassandraSchemaManager.schemaExists()) {
                     log("Cassandra schema exists.");
                     if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
-                        log("Cassandra schema exists but installer was told to overwrite it - a new schema will be " +
-                            "created now.");
+                        log("Cassandra schema exists but installer was told to overwrite it - a new schema will be "
+                            + "created now.");
                         cassandraSchemaManager.dropSchema();
                         cassandraSchemaManager.createSchema();
 
@@ -778,6 +775,18 @@ public class InstallerServiceImpl implements InstallerService {
             mcc = getModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String dir = client.getAppServerHomeDir();
+            return dir;
+        } finally {
+            safeClose(mcc);
+        }
+    }
+
+    private String getAppServerDataDir() throws Exception {
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            final String dir = client.getAppServerDataDir();
             return dir;
         } finally {
             safeClose(mcc);
@@ -1227,13 +1236,13 @@ public class InstallerServiceImpl implements InstallerService {
         return new SchemaManager(username, password, hosts);
     }
 
-    private void writeInstalledFileMarker() throws IOException {
-        File basedir = new File(System.getProperty("rhq.server.basedir"));
-        File modulesDir = new File(basedir, "modules");
-        File metaInfDir = new File(modulesDir,
-            "org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/META-INF/");
-        File markerFile = new File(metaInfDir, ".installed");
-
-        StreamUtil.copy(new StringReader(""), new FileWriter(markerFile));
+    private void writeInstalledFileMarker() throws Exception {
+        File basedir = new File(getAppServerDataDir());
+        File standalonedir = new File(basedir, "jbossas/standalone");
+        if (!standalonedir.isDirectory()) {
+            throw new IOException("Directory Not Found: [" + standalonedir.getPath() + "]");
+        }
+        File markerFile = new File(standalonedir, "data/rhq.installed");
+        markerFile.createNewFile();
     }
 }

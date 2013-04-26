@@ -26,13 +26,11 @@
 package org.rhq.server.control;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -45,7 +43,6 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -146,10 +143,7 @@ public abstract class ControlCommand {
     }
 
     protected boolean isServerInstalled() {
-        File modulesDir = new File(basedir, "modules");
-        File metaInfDir = new File(modulesDir,
-            "org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/META-INF/");
-        File markerFile = new File(metaInfDir, ".installed");
+        File markerFile = new File(basedir, "jbossas/standalone/data/rhq.installed");
 
         return markerFile.exists();
     }
@@ -224,7 +218,7 @@ public abstract class ControlCommand {
             result = new org.apache.commons.exec.CommandLine("cmd.exe");
             result.addArgument("/C");
             result.addArgument(scriptName + ".bat");
-            return result;
+
         } else {
             result = new org.apache.commons.exec.CommandLine("./" + scriptName + ".sh");
         }

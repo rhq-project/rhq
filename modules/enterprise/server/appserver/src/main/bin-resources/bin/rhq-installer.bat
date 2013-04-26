@@ -120,7 +120,7 @@ if not defined RHQ_SERVER_DEBUG set _RHQ_LOGLEVEL=INFO
 set RHQ_SERVER_INSTALLER_JAVA_OPTS=%RHQ_SERVER_INSTALLER_JAVA_OPTS% -Djava.awt.headless=true -Di18nlog.logger-type=commons -Drhq.server.properties-file=%RHQ_SERVER_HOME%\bin\rhq-server.properties -Drhq.server.installer.logdir=%RHQ_SERVER_HOME%\logs -Drhq.server.installer.loglevel=%_RHQ_LOGLEVEL%
 
 rem Sample JPDA settings for remote socket debugging
-rem RHQ_SERVER_INSTALLER_JAVA_OPTS=%RHQ_SERVER_INSTALLER_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y
+rem set RHQ_SERVER_INSTALLER_JAVA_OPTS=%RHQ_SERVER_INSTALLER_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y
 
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_INSTALLER_JAVA_OPTS: %RHQ_SERVER_INSTALLER_JAVA_OPTS%
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS: %RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS%

@@ -30,6 +30,10 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 
 /**
+ * This class should generally be used for creating a {@link Cluster} instead of
+ * {@link Cluster.Builder}. It ensures that the cluster and session objects are configured
+ * in a consistent fashion everywhere they are used.
+ *
  * @author John Sanda
  */
 public class ClusterBuilder {

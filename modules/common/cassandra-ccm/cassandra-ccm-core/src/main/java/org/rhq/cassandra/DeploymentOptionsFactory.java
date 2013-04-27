@@ -26,10 +26,21 @@
 package org.rhq.cassandra;
 
 /**
+ * Creates {@link DeploymentOptions} objects.
+ *
  * @author John Sanda
  */
 public class DeploymentOptionsFactory {
 
+    /**
+     * @return A new {@link DeploymentOptions}. This method checks the platform arch
+     * (32 bit vs 64 bit) and the JRE being used to determine if any particular defaults
+     * need to be set. For example, on 32 bit arches running on OpenJDK 6, Cassandra
+     * cannot use its default thread stack stack of 180k. It causes the JVM to segfault on
+     * start up. When this runtime environment is detected, the factory will set the
+     * appropriate system property so that a default thread stack of 240k is used. That
+     * can be overridden by calling {@link DeploymentOptions#setStackSize(String)}.
+     */
     public DeploymentOptions newDeploymentOptions() {
         String arch = System.getProperty("os.arch");
         String javaVMName = System.getProperty("java.vm.name");

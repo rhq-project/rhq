@@ -46,7 +46,8 @@ public class DeploymentOptionsFactory {
         String javaVMName = System.getProperty("java.vm.name");
         String javaVersion = System.getProperty("java.version");
 
-        if (arch.equals("i386") && javaVMName.startsWith("OpenJDK") && javaVersion.startsWith("1.6")) {
+        if ((arch.equals("i386") || arch.equals("amd64")) && javaVMName.startsWith("OpenJDK") &&
+            javaVersion.startsWith("1.6")) {
             System.setProperty("rhq.cassandra.stack.size", "240k");
         }
 

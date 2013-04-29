@@ -70,6 +70,9 @@ public class MetricsManagerBean implements MetricsManagerLocal {
         MetricsServer metricsServer = getMetricsServer();
         RawNumericMetric metric = metricsServer.findLatestValueForResource(scheduleId);
 
+        if (metric == null) {
+            return null;
+        }
         return new MeasurementDataNumeric(metric.getTimestamp(), scheduleId, metric.getValue());
     }
 

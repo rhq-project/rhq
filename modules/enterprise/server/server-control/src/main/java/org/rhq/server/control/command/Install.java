@@ -473,13 +473,37 @@ public class Install extends ControlCommand {
     }
 
     private void startAgent(File agentBasedir) throws Exception {
-        File agentBinDir = new File(agentBasedir, "bin");
-
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "start");
-
         Executor executor = new DefaultExecutor();
+        File agentBinDir = new File(agentBasedir, "bin");
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
+
+        if (isWindows()) {
+            // For windows we will [re-]install the server as a windows service, then start the service.
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist or be running, , script returns 1
+                log.debug("Failed to stop agent service", e);
+            }
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "remove");
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist, script returns 1
+                log.debug("Failed to uninstall agent service", e);
+            }
+
+            commandLine = getCommandLine("rhq-agent-wrapper", "install");
+            executor.execute(commandLine);
+        }
+
+        // For *nix, just start the server in the background, for Win, now that the service is installed, start it
+        commandLine = getCommandLine("rhq-agent-wrapper", "start");
         executor.execute(commandLine);
     }
 

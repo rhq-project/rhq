@@ -103,6 +103,8 @@ import org.rhq.enterprise.server.core.EmailManagerBean;
 import org.rhq.enterprise.server.core.EmailManagerLocal;
 import org.rhq.enterprise.server.core.RemoteClientManagerBean;
 import org.rhq.enterprise.server.core.RemoteClientManagerLocal;
+import org.rhq.enterprise.server.core.StartupBean;
+import org.rhq.enterprise.server.core.StartupLocal;
 import org.rhq.enterprise.server.core.plugin.PluginDeploymentScannerMBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerBean;
 import org.rhq.enterprise.server.dashboard.DashboardManagerLocal;
@@ -587,6 +589,10 @@ public final class LookupUtil {
 
     public static SubjectPreferencesCacheLocal getSubjectPreferencesCache() {
         return lookupLocal(SubjectPreferencesCacheBean.class);
+    }
+
+    public static StartupLocal getStartupLocal() {
+        return lookupLocal(StartupBean.class);
     }
 
     public static CoreServerMBean getCoreServer() {

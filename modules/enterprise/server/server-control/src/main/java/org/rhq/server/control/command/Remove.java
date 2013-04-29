@@ -39,23 +39,24 @@ import org.rhq.server.control.RHQControlException;
 /**
  * @author John Sanda
  */
-public class Stop extends ControlCommand {
+public class Remove extends ControlCommand {
 
     private Options options;
 
-    public Stop() {
-        options = new Options().addOption(null, "storage", false, "Stop RHQ storage node")
-            .addOption(null, "server", false, "Stop RHQ server").addOption(null, "agent", false, "Stop RHQ agent");
+    public Remove() {
+        options = new Options().addOption(null, "storage", false, "Remove RHQ storage node service")
+            .addOption(null, "server", false, "Remove RHQ server service")
+            .addOption(null, "agent", false, "Remove RHQ agent service");
     }
 
     @Override
     public String getName() {
-        return "stop";
+        return "remove";
     }
 
     @Override
     public String getDescription() {
-        return "Stops RHQ services";
+        return "Removes RHQ services on Windows. Otherwise, same as Stop command";
     }
 
     @Override
@@ -69,18 +70,18 @@ public class Stop extends ControlCommand {
             // if no options specified, then stop whatever is installed
             if (commandLine.getOptions().length == 0) {
                 if (isAgentInstalled()) {
-                    stopAgent();
+                    removeAgentService();
                 }
                 if (isServerInstalled()) {
-                    stopRHQServer();
+                    removeServerService();
                 }
                 if (isStorageInstalled()) {
-                    stopStorage();
+                    removeStorageService();
                 }
             } else {
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
-                        stopAgent();
+                        removeAgentService();
                     } else {
                         log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
                             + " option will be ignored.");
@@ -88,7 +89,7 @@ public class Stop extends ControlCommand {
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
-                        stopRHQServer();
+                        removeServerService();
                     } else {
                         log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
                             + " option will be ignored.");
@@ -96,7 +97,7 @@ public class Stop extends ControlCommand {
                 }
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        stopStorage();
+                        removeStorageService();
                     } else {
                         log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
                             + " option will be ignored.");
@@ -108,7 +109,7 @@ public class Stop extends ControlCommand {
         }
     }
 
-    private void stopStorage() throws Exception {
+    private void removeStorageService() throws Exception {
         log.debug("Stopping RHQ storage node");
 
         Executor executor = new DefaultExecutor();
@@ -117,14 +118,11 @@ public class Stop extends ControlCommand {
         org.apache.commons.exec.CommandLine commandLine;
 
         if (isWindows()) {
-            commandLine = getCommandLine("rhq-storage", "stop");
+            commandLine = getCommandLine("rhq-storage", "remove");
             try {
                 executor.execute(commandLine);
-                System.out.println("RHQ storage node has stopped");
-
             } catch (Exception e) {
-                // Ignore, service may not exist or be running, script returns 1
-                log.debug("Failed to stop storage service", e);
+                log.debug("Failed to remove storage service", e);
             }
         } else {
             String pid = getStoragePid();
@@ -141,50 +139,54 @@ public class Stop extends ControlCommand {
         }
     }
 
-    private void stopRHQServer() throws Exception {
+    private void removeServerService() throws Exception {
         log.debug("Stopping RHQ server");
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
+        org.apache.commons.exec.CommandLine commandLine;
 
         if (isWindows()) {
             try {
+                commandLine = getCommandLine("rhq-server", "remove");
                 executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
-                log.debug("Failed to stop server service", e);
+                log.debug("Failed to remove server service", e);
             }
         } else {
             String pid = getServerPid();
 
             if (pid != null) {
+                commandLine = getCommandLine("rhq-server", "stop");
                 executor.execute(commandLine);
             }
         }
     }
 
-    private void stopAgent() throws Exception {
+    private void removeAgentService() throws Exception {
         log.debug("Stopping RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+        org.apache.commons.exec.CommandLine commandLine;
 
         if (isWindows()) {
             try {
+                commandLine = getCommandLine("rhq-agent-wrapper", "remove");
                 executor.execute(commandLine);
             } catch (Exception e) {
-                // Ignore, service may not exist or be running, , script returns 1
-                log.debug("Failed to stop agent service", e);
+                // Ignore, service may not exist, script returns 1
+                log.debug("Failed to remove agent service", e);
             }
         } else {
             String pid = getAgentPid();
 
             if (pid != null) {
+                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
                 executor.execute(commandLine);
             }
         }

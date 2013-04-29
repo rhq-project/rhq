@@ -114,14 +114,29 @@ public class Status extends ControlCommand {
     private void checkStorageStatus() throws Exception {
         log.debug("Checking RHQ storage node status");
 
-        File storageBinDir = new File(getStorageBasedir(), "bin");
-        File pidFile = new File(storageBinDir, "cassandra.pid");
+        if (isWindows()) {
+            Executor executor = new DefaultExecutor();
+            executor.setStreamHandler(new PumpStreamHandler());
+            org.apache.commons.exec.CommandLine commandLine;
+            executor.setWorkingDirectory(binDir);
+            commandLine = getCommandLine("rhq-storage", "status");
+            try {
+                executor.execute(commandLine);
 
-        if (pidFile.exists()) {
-            String pid = StreamUtil.slurp(new FileReader(pidFile));
-            System.out.println("RHQ storage node (pid " + pid + ") is running");
+            } catch (Exception e) {
+                log.debug("Failed to check storage service status", e);
+            }
         } else {
-            System.out.println("RHQ storage node (no pid file) is NOT running");
+
+            File storageBinDir = new File(getStorageBasedir(), "bin");
+            File pidFile = new File(storageBinDir, "cassandra.pid");
+
+            if (pidFile.exists()) {
+                String pid = StreamUtil.slurp(new FileReader(pidFile));
+                System.out.println("RHQ storage node (pid " + pid + ") is running");
+            } else {
+                System.out.println("RHQ storage node (no pid file) is NOT running");
+            }
         }
     }
 

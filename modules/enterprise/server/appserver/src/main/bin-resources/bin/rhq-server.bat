@@ -148,11 +148,11 @@ rem ----------------------------------------------------------------------
 rem Create and configure the wrapper log directory.
 rem ----------------------------------------------------------------------
 
-if not defined %RHQ_SERVER_WRAPPER_LOG_DIR_PATH (
+if not defined RHQ_SERVER_WRAPPER_LOG_DIR_PATH (
    set RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_HOME%\logs
 )
-if not exist "RHQ_SERVER_WRAPPER_LOG_DIR_PATH" (
-      mkdir "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%"
+if not exist "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" (
+   mkdir "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%"
 )
 
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_LOG_DIR_PATH: %RHQ_SERVER_WRAPPER_LOG_DIR_PATH%

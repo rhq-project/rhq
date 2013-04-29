@@ -55,6 +55,7 @@ public class Commands {
         registerCommand(new Start());
         registerCommand(new Stop());
         registerCommand(new Status());
+        // registerCommand(new Remove());  TODO: Do we need this? Maybe use would just use individual .bat files...
         registerCommand(new Console());
     }
 

@@ -133,13 +133,12 @@ public abstract class ControlCommand {
     }
 
     protected File getStorageBasedir() {
-        return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP, new File(basedir,
-            STORAGE_BASEDIR_NAME).getAbsolutePath()));
+        return new File(
+            getProperty(RHQ_STORAGE_BASEDIR_PROP, new File(basedir, STORAGE_BASEDIR_NAME).getAbsolutePath()));
     }
 
     protected File getAgentBasedir() {
-        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP, new File(basedir,
-            AGENT_BASEDIR_NAME).getAbsolutePath()));
+        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP, new File(basedir, AGENT_BASEDIR_NAME).getAbsolutePath()));
     }
 
     protected boolean isServerInstalled() {
@@ -189,7 +188,7 @@ public abstract class ControlCommand {
         return rhqctlConfig.getString(key);
     }
 
-    private String getProperty(String key, String defaultValue)  {
+    private String getProperty(String key, String defaultValue) {
         return rhqctlConfig.getString(key, defaultValue);
     }
 
@@ -205,13 +204,17 @@ public abstract class ControlCommand {
 
         File file = new File(sysprop);
         if (!file.isFile()) {
-            throw new RHQControlException("rhqctl.properties-file has as its values [" + file + "] which is not " +
-                "a file.");
+            throw new RHQControlException("rhqctl.properties-file has as its values [" + file + "] which is not "
+                + "a file.");
         }
         return file;
     }
 
     protected org.apache.commons.exec.CommandLine getCommandLine(String scriptName, String... args) {
+        return getCommandLine(true, scriptName, args);
+    }
+
+    protected org.apache.commons.exec.CommandLine getCommandLine(boolean addShExt, String scriptName, String... args) {
         org.apache.commons.exec.CommandLine result;
 
         if (isWindows()) {
@@ -220,7 +223,7 @@ public abstract class ControlCommand {
             result.addArgument(scriptName + ".bat");
 
         } else {
-            result = new org.apache.commons.exec.CommandLine("./" + scriptName + ".sh");
+            result = new org.apache.commons.exec.CommandLine("./" + (addShExt ? scriptName + ".sh" : scriptName));
         }
 
         for (String arg : args) {

@@ -114,51 +114,86 @@ public class Start extends ControlCommand {
     private void startStorage() throws Exception {
         log.debug("Starting RHQ storage node");
 
-        File storageBinDir = new File(getStorageBasedir(), "bin");
-        File pidFile = new File(storageBinDir, "cassandra.pid");
+        Executor executor = new DefaultExecutor();
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
 
-        // For now we are duplicating logic in the status command. This code will be
-        // replaced when we implement a rhq-storage.sh script.
-        if (pidFile.exists()) {
-            String pid = StreamUtil.slurp(new FileReader(pidFile));
-            System.out.println("RHQ storage node (pid " + pid + ") is running");
-        } else {
-            String startScript;
-            if (isWindows()) {
-                startScript = "./cassandra.bat";
-            } else {
-                startScript = "./cassandra";
+        if (isWindows()) {
+            executor.setWorkingDirectory(binDir);
+            commandLine = getCommandLine("rhq-storage", "start");
+            try {
+                executor.execute(commandLine);
+
+            } catch (Exception e) {
+                // Ignore, service may not exist or may already be running, script returns 1
+                log.debug("Failed to start storage service", e);
             }
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(startScript)
-                .addArgument("-p").addArgument(pidFile.getAbsolutePath());
-            Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(storageBinDir);
-            executor.setStreamHandler(new PumpStreamHandler());
+        } else {
 
-            executor.execute(commandLine);
+            File storageBinDir = new File(getStorageBasedir(), "bin");
+            File pidFile = new File(storageBinDir, "cassandra.pid");
+
+            // For now we are duplicating logic in the status command. This code will be
+            // replaced when we implement a rhq-storage.sh script.
+            if (pidFile.exists()) {
+                String pid = StreamUtil.slurp(new FileReader(pidFile));
+                System.out.println("RHQ storage node (pid " + pid + ") is running");
+            } else {
+                commandLine = getCommandLine(false, "cassandra", "-p", pidFile.getAbsolutePath());
+                executor.setWorkingDirectory(storageBinDir);
+
+                executor.execute(commandLine);
+            }
         }
     }
 
     private void startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
 
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(binDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        executor.execute(commandLine);
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
+
+        if (isWindows()) {
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist or be running, , script returns 1
+                log.debug("Failed to start server service", e);
+            }
+        } else {
+            String pid = getServerPid();
+
+            if (pid != null) {
+                executor.execute(commandLine);
+            }
+        }
     }
 
     private void startAgent() throws Exception {
         log.debug("Starting RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
-
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "start");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        executor.execute(commandLine);
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "start");
+
+        if (isWindows()) {
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist or be running, , script returns 1
+                log.debug("Failed to start agent service", e);
+            }
+        } else {
+            String pid = getAgentPid();
+
+            if (pid != null) {
+                executor.execute(commandLine);
+            }
+        }
     }
 
 }

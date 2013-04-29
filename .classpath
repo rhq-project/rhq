@@ -279,7 +279,6 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-user/2.5.0/gwt-user-2.5.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/gwt/gwt-dev/2.5.0/gwt-dev-2.5.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/smartgwt/smartgwt/3.0/smartgwt-3.0.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/gflot/gflot/2.4.2/gflot-2.4.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/jcraft/jsch/0.1.29/jsch-0.1.29.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-jxpath/commons-jxpath/1.3/commons-jxpath-1.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/dbunit/dbunit/2.4.8/dbunit-2.4.8.jar"/>

@@ -59,7 +59,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupGraphPortlet;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.groups.graph.ResourceGroupD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
@@ -248,69 +248,8 @@ public class ResourceGroupContextMenu extends Menu {
 
         // Metric graph addition menu
         addItem(buildMetricsMenu(resourceType));
-
-        /* TODO: We don't support group factory create
-        // Create Menu
-        MenuItem createChildMenu = new MenuItem("Create Child");
-        Menu createChildSubMenu = new Menu();
-        for (final ResourceType childType : resourceType.getChildResourceTypes()) {
-            if (childType.isCreatable()) {
-                MenuItem createItem = new MenuItem(childType.getName());
-                createChildSubMenu.addItem(createItem);
-                createItem.addClickHandler(new ClickHandler() {
-                    public void onClick(MenuItemClickEvent event) {
-                        ResourceFactoryCreateWizard.showCreateWizard(resource, childType);
-                    }
-                });
-
-            }
-        }
-        createChildMenu.setSubmenu(createChildSubMenu);
-        createChildMenu.setEnabled(createChildSubMenu.getItems().length > 0);
-        contextMenu.addItem(createChildMenu);*/
-
-        /*
-        // TODO We don't group manual import
-        // Manually Add Menu
-        MenuItem importChildMenu = new MenuItem("Import");
-        Menu importChildSubMenu = new Menu();
-        for (ResourceType childType : resourceType.getChildResourceTypes()) {
-            if (childType.isSupportsManualAdd()) {
-                importChildSubMenu.addItem(new MenuItem(childType.getName()));
-            }
-        }
-        if (resourceType.getCategory() == ResourceCategory.PLATFORM) {
-            loadManuallyAddServersToPlatforms(importChildSubMenu);
-        }
-        importChildMenu.setSubmenu(importChildSubMenu);
-        importChildMenu.setEnabled(importChildSubMenu.getItems().length > 0);
-        addItem(importChildMenu);
-        */
     }
 
-    /*
-    private void loadManuallyAddServersToPlatforms(final Menu manuallyAddMenu) {
-        ResourceTypeGWTServiceAsync rts = GWTServiceLookup.getResourceTypeGWTService();
-
-        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
-        criteria.addFilterSupportsManualAdd(true);
-        criteria.fetchParentResourceTypes(true);
-        rts.findResourceTypesByCriteria(criteria, new AsyncCallback<PageList<ResourceType>>() {
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFail_children(), caught);
-            }
-
-            public void onSuccess(PageList<ResourceType> result) {
-                for (ResourceType type : result) {
-                    if (type.getParentResourceTypes() == null || type.getParentResourceTypes().isEmpty()) {
-                        MenuItem item = new MenuItem(type.getName());
-                        manuallyAddMenu.addItem(item);
-                    }
-                }
-            }
-        });
-    }
-    */
 
     private MenuItem buildMetricsMenu(final ResourceType type) {
         MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
@@ -354,12 +293,12 @@ public class ResourceGroupContextMenu extends Menu {
 
                                             DashboardPortlet p = new DashboardPortlet(MSG
                                                 .view_tree_common_contextMenu_groupGraph(),
-                                                ResourceGroupGraphPortlet.KEY, 250);
+                                                ResourceGroupD3GraphPortlet.KEY, 250);
                                             p.getConfiguration().put(
-                                                new PropertySimple(ResourceGroupGraphPortlet.CFG_RESOURCE_GROUP_ID,
+                                                new PropertySimple(ResourceGroupD3GraphPortlet.CFG_RESOURCE_GROUP_ID,
                                                     group.getId()));
                                             p.getConfiguration().put(
-                                                new PropertySimple(ResourceGroupGraphPortlet.CFG_DEFINITION_ID, def
+                                                new PropertySimple(ResourceGroupD3GraphPortlet.CFG_DEFINITION_ID, def
                                                     .getId()));
 
                                             d.addPortlet(p);
@@ -388,7 +327,7 @@ public class ResourceGroupContextMenu extends Menu {
 
                                     //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
                                     String currentViewPath = History.getToken();
-                                    if (currentViewPath.indexOf("Monitoring/Graphs") > -1) {
+                                    if (currentViewPath.indexOf("Monitoring/NewGraphs") > -1) {
                                         MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
                                         defSubItem.addItem(addGraphItem);
 

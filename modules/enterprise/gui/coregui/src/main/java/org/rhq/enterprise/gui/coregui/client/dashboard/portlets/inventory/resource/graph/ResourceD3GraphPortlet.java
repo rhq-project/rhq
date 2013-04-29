@@ -75,7 +75,7 @@ public class ResourceD3GraphPortlet extends MetricD3GraphView implements AutoRef
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceMetricD3";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = "d3-" + MSG.view_portlet_defaultName_resourceMetric();
+    public static final String NAME = MSG.view_portlet_defaultName_resourceMetric();
     public static final String CFG_RESOURCE_ID = "resourceId";
     public static final String CFG_DEFINITION_ID = "definitionId";
     // set on initial configuration, the window for this portlet view.

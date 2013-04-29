@@ -102,8 +102,6 @@ public class ResourceDetailView extends
     }
 
     public static class DriftSubTab {
-        //public static final String HISTORY = "History";
-        //public static final String SNAPSHOTS = "Snapshots";
         public static final String DEFINITIONS = "Definitions";
     }
 
@@ -130,7 +128,6 @@ public class ResourceDetailView extends
 
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
-    private SubTab monitorGraphs;
     private SubTab monitorNewGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
@@ -150,7 +147,6 @@ public class ResourceDetailView extends
     private SubTab configCurrent;
     private SubTab configHistory;
     private SubTab eventHistory;
-    //private SubTab driftHistory;
     private SubTab driftDefinitions;
     private SubTab contentDeployed;
     private SubTab contentNew;
@@ -198,9 +194,8 @@ public class ResourceDetailView extends
 
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
-        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
 
-        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", "d3 Graphs"), null);
+        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
 
         monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
@@ -208,7 +203,7 @@ public class ResourceDetailView extends
             null);
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorTables, monitorGraphs, monitorNewGraphs, monitorTraits, monitorAvail,
+        monitoringTab.registerSubTabs(monitorTables,  monitorNewGraphs, monitorTraits, monitorAvail,
             monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
@@ -393,16 +388,7 @@ public class ResourceDetailView extends
 
     private void updateMonitoringTabContent(final Resource resource, Set<ResourceTypeFacet> facets) {
         boolean visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT);
-
-        ViewFactory viewFactory = (!visible) ? null : new ViewFactory() {
-            @Override
-            public Canvas createView() {
-                return new IFrameWithMeasurementRangeEditorView("/rhq/resource/monitor/graphs-plain.xhtml?id="
-                    + resource.getId());
-            }
-
-        };
-        updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
+        ViewFactory viewFactory;
 
         boolean visibleToIE8 = !BrowserUtility.isBrowserPreIE9();
 
@@ -519,15 +505,6 @@ public class ResourceDetailView extends
 
     private void updateDriftTabContent(final ResourceComposite resourceComposite, Set<ResourceTypeFacet> facets) {
         if (updateTab(this.driftTab, facets.contains(ResourceTypeFacet.DRIFT), true)) {
-
-            // TODO: Experimenting with not shoing a drift history tab and having all resource level drift viewing
-            // go through the comprehensive drift carousel view.  Leave it in, but commented, in case we want it back. 
-            //updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
-            //    @Override
-            //    public Canvas createView() {
-            //        return ResourceDriftHistoryView.get(resourceComposite);
-            //    }
-            //});
 
             updateSubTab(this.driftTab, this.driftDefinitions, true, true, new ViewFactory() {
                 @Override

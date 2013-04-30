@@ -213,8 +213,7 @@ public class StorageInstaller {
             deploymentOptions.setCommitLogDir(commitLogDir);
             deploymentOptions.setDataDir(dataDir);
             deploymentOptions.setSavedCachesDir(savedCachesDir);
-            // deploymentOptions.setLogFileName(logFile.getPath());
-            deploymentOptions.setLogFileName(logFile.getName());
+            deploymentOptions.setLogFileName(logFile.getPath());
             deploymentOptions.setLoggingLevel("INFO");
             deploymentOptions.setRpcPort(rpcPort);
             deploymentOptions.setJmxPort(getPort(cmdLine, "jmx-port", jmxPort));

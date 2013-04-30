@@ -18,7 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.migrator;
 
 import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
 
@@ -43,11 +43,16 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
 
+
 /**
  * @author Stefan Negrea
  *
  */
 public class DataMigrator {
+
+    public enum DatabaseType {
+        Postgres, Oracle
+    }
 
     private final Log log = LogFactory.getLog(DataMigrator.class);
 
@@ -105,8 +110,9 @@ public class DataMigrator {
     }
 
     private final EntityManager entityManager;
-
     private final Session session;
+    private final DatabaseType databaseType;
+    private final boolean experimentalDataSource;
 
     private boolean deleteDataImmediatelyAfterMigration;
     private boolean deleteAllDataAtEndOfMigration;
@@ -118,9 +124,17 @@ public class DataMigrator {
 
     private long estimation;
 
-    public DataMigrator(EntityManager entityManager, Session session) {
+    public DataMigrator(EntityManager entityManager, Session session, DatabaseType databaseType) {
+        this(entityManager, session, databaseType, false);
+    }
+
+    public DataMigrator(EntityManager entityManager, Session session, DatabaseType databaseType,
+        boolean experimentalDataSource) {
         this.entityManager = entityManager;
         this.session = session;
+        this.databaseType = databaseType;
+
+        this.experimentalDataSource = experimentalDataSource;
 
         this.deleteDataImmediatelyAfterMigration = false;
         this.deleteAllDataAtEndOfMigration = false;
@@ -295,7 +309,21 @@ public class DataMigrator {
         return tables;
     }
 
-    enum Task {
+    private ExistingDataSource getExistingDataSource(EntityManager entityManager, String query) {
+        if (this.databaseType == DatabaseType.Oracle) {
+            return new ExistingDataJPASource(entityManager, query);
+        } else {
+            if (!experimentalDataSource) {
+                return new ExistingDataJPASource(entityManager, query);
+            } else {
+                return new ExistingPostgresDataBulkExportSource(entityManager, query);
+            }
+        }
+
+        //return new ExistingDataJPASource(entityManager, query);
+    }
+
+    private enum Task {
         Migrate, Estimate
     }
 
@@ -381,23 +409,19 @@ public class DataMigrator {
             }
         }
 
-        @SuppressWarnings("unchecked")
         private long performMigration(Task task) throws Exception {
             long migrationStartTime = System.currentTimeMillis();
             long numberOfBatchesMigrated = 0;
 
             List<Object[]> existingData;
             int failureCount;
-            Query nativeQuery;
 
             int lastMigratedRecord = 0;
+            ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery);
+            dataSource.initialize();
 
             while (true) {
-                nativeQuery = entityManager.createNativeQuery(this.selectQuery);
-                nativeQuery.setFirstResult(lastMigratedRecord);
-                nativeQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
-
-                existingData = nativeQuery.getResultList();
+                existingData = dataSource.getData(lastMigratedRecord, MAX_RECORDS_TO_LOAD_FROM_SQL);
 
                 if (existingData.size() == 0) {
                     break;
@@ -429,6 +453,8 @@ public class DataMigrator {
                     break;
                 }
             }
+
+            dataSource.close();
 
             return System.currentTimeMillis() - migrationStartTime;
         }
@@ -517,7 +543,6 @@ public class DataMigrator {
             performMigration(Task.Migrate);
         }
 
-        @SuppressWarnings("unchecked")
         private long performMigration(Task task) throws Exception {
             long migrationStartTime = System.currentTimeMillis();
             long numberOfBatchesMigrated = 0;
@@ -529,16 +554,15 @@ public class DataMigrator {
                 String table = tablesNotProcessed.peek();
 
                 String selectQuery = String.format(MigrationQuery.SELECT_RAW_DATA.toString(), table);
-                Query nativeSelectQuery = entityManager.createNativeQuery(selectQuery);
+
+                ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery);
+                dataSource.initialize();
 
                 log.info("Start migrating raw table: " + table);
 
                 int lastMigratedRecord = 0;
                 while (true) {
-                    nativeSelectQuery.setFirstResult(lastMigratedRecord);
-                    nativeSelectQuery.setMaxResults(MAX_RECORDS_TO_LOAD_FROM_SQL);
-
-                    existingData = nativeSelectQuery.getResultList();
+                    existingData = dataSource.getData(lastMigratedRecord, MAX_RECORDS_TO_LOAD_FROM_SQL);
 
                     if (existingData.size() == 0) {
                         break;
@@ -582,6 +606,7 @@ public class DataMigrator {
                     break;
                 }
 
+                dataSource.close();
                 tablesNotProcessed.poll();
             }
 

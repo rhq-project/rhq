@@ -18,7 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.migrator;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -52,6 +52,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.hibernate.ejb.Ejb3Configuration;
+
+import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 
 
 /**
@@ -122,6 +124,9 @@ public class DataMigratorRunner {
         .withDescription("Only estimate how long the migration will take (default: false)").create();
     private Option deleteOnlyOption = OptionBuilder.withLongOpt("delete-only").hasOptionalArg().withType(Boolean.class)
         .withDescription("Only delete data from the old SQL server, no migration will be performed (default: false)")
+        .create();
+    private Option experimentalExportOption = OptionBuilder.withLongOpt("experimental-export").hasOptionalArg().withType(Boolean.class)
+        .withDescription("Enable experimental bulk export for Postgres, option ignored for Oracle migration (default: false)")
         .create();
 
     //Runner
@@ -212,6 +217,7 @@ public class DataMigratorRunner {
         options.addOption(deleteDataOption);
         options.addOption(estimateOnlyOption);
         options.addOption(deleteOnlyOption);
+        options.addOption(experimentalExportOption);
 
         options.addOption(helpOption);
         options.addOption(debugLogOption);
@@ -275,6 +281,7 @@ public class DataMigratorRunner {
         configuration.put(preserveDataOption, true);
         configuration.put(estimateOnlyOption, false);
         configuration.put(deleteOnlyOption, false);
+        configuration.put(experimentalExportOption, false);
     }
 
     /**
@@ -449,7 +456,12 @@ public class DataMigratorRunner {
 
         if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
             value = tryParseBoolean(commandLine.getOptionValue(estimateOnlyOption.getLongOpt()), true);
-            configuration.put(estimateOnlyOption, true);
+            configuration.put(estimateOnlyOption, value);
+        }
+
+        if (commandLine.hasOption(experimentalExportOption.getLongOpt())) {
+            value = tryParseBoolean(commandLine.getOptionValue(experimentalExportOption.getLongOpt()), true);
+            configuration.put(experimentalExportOption, value);
         }
     }
 
@@ -462,7 +474,12 @@ public class DataMigratorRunner {
         Session session = this.createCassandraSession();
         log.debug("Done creating Cassandra session");
 
-        DataMigrator migrator = new DataMigrator(entityManager, session);
+        DatabaseType databaseType = DatabaseType.Postgres;
+        if ("oracle".equals(configuration.get(sqlServerType))) {
+            databaseType = databaseType.Oracle;
+        }
+        DataMigrator migrator = new DataMigrator(entityManager, session, databaseType, tryParseBoolean(
+            configuration.get(experimentalExportOption), false));
 
         if (!(Boolean) configuration.get(deleteOnlyOption)) {
             if ((Boolean) configuration.get(preserveDataOption)) {
@@ -514,6 +531,13 @@ public class DataMigratorRunner {
                 System.out.println("Old data deletion process - ended\n");
             }
         }
+
+        /*if (entityManager != null) {
+            entityManager.close();
+        }
+        if (entityManagerFactory != null) {
+            entityManagerFactory.close();
+        }*/
     }
 
     /**

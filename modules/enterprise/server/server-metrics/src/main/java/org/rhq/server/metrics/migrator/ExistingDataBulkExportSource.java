@@ -17,24 +17,18 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.migrator;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.StringTokenizer;
-
-import javax.persistence.EntityManager;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.hibernate.Session;
-import org.hibernate.engine.spi.SessionFactoryImplementor;
-import org.hibernate.service.jdbc.connections.spi.ConnectionProvider;
 
 import org.rhq.core.util.stream.StreamUtil;
 
@@ -43,19 +37,11 @@ import org.rhq.core.util.stream.StreamUtil;
  */
 public abstract class ExistingDataBulkExportSource implements ExistingDataSource {
 
-    private static final Log LOG = LogFactory.getLog(ExistingDataBulkExportSource.class);
+    private static final Log log = LogFactory.getLog(ExistingDataBulkExportSource.class);
 
     protected static final int IO_BUFFER_SIZE = 1024 * 64;
 
     protected static final String DELIMITER = "|";
-
-    private EntityManager entityManager;
-
-    private String selectNativeQuery;
-
-    private File workDirectory;
-
-    private String fileName;
 
     private File existingDataFile;
 
@@ -63,33 +49,31 @@ public abstract class ExistingDataBulkExportSource implements ExistingDataSource
 
     private int currentIndex;
 
-    public ExistingDataBulkExportSource(EntityManager entityManager, String selectNativeQuery, File workDirectory,
-        String fileName) {
-        this.entityManager = entityManager;
-        this.selectNativeQuery = selectNativeQuery;
-        this.workDirectory = workDirectory;
-        this.fileName = fileName;
-        existingDataFile = new File(workDirectory, fileName);
+    public ExistingDataBulkExportSource() {
+        Random random = new Random();
+        String exportFileName = System.currentTimeMillis() + "." + random.nextInt() + ".export";
+        this.existingDataFile = new File(System.getProperty("java.io.tmpdir"), exportFileName);
     }
 
-    protected String getSelectNativeQuery() {
-        return selectNativeQuery;
+    @Override
+    public void initialize() throws Exception {
+        this.exportExistingData();
+        this.startReading();
     }
+
+    @Override
+    public void close() throws Exception {
+        this.stopReading();
+        this.removeTempFile();
+    }
+
+    protected abstract void exportExistingData() throws Exception;
 
     protected File getExistingDataFile() {
         return existingDataFile;
     }
 
-    protected Connection getConnection() throws SQLException {
-        Session session = (Session) entityManager.getDelegate();
-        SessionFactoryImplementor sfi = (SessionFactoryImplementor) session.getSessionFactory();
-        ConnectionProvider cp = sfi.getConnectionProvider();
-        return cp.getConnection();
-    }
-
-    public abstract void exportExistingData() throws Exception;
-
-    public void startReading() throws Exception {
+    protected void startReading() throws Exception {
         if (!existingDataFile.exists() && !existingDataFile.isFile() && !existingDataFile.canRead()) {
             throw new IllegalStateException();
         }
@@ -97,18 +81,30 @@ public abstract class ExistingDataBulkExportSource implements ExistingDataSource
         currentIndex = 0;
     }
 
-    public void stopReading() {
+    protected void stopReading() {
         StreamUtil.safeClose(existingDataFileReader);
     }
 
-    @Override
-    public List<Object[]> getExistingData(int fromIndex, int maxResults) throws Exception {
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Reading lines " + fromIndex + "-" + (fromIndex + maxResults));
+    protected void removeTempFile(){
+        if(this.existingDataFile.exists()){
+            try{
+                this.existingDataFile.delete();
+            }catch(Exception e){
+                log.debug("Unable to clean temporary file " + this.existingDataFile, e);
+            }
         }
+    }
+
+    @Override
+    public List<Object[]> getData(int fromIndex, int maxResults) throws Exception {
+        if (log.isDebugEnabled()) {
+            log.debug("Reading lines " + fromIndex + " to " + (fromIndex + maxResults));
+        }
+
         if (fromIndex != currentIndex) {
             throw new IllegalStateException();
         }
+
         List<Object[]> results = new LinkedList<Object[]>();
         for (int i = 0; i < maxResults; i++) {
             String nextLine = existingDataFileReader.readLine();
@@ -125,5 +121,4 @@ public abstract class ExistingDataBulkExportSource implements ExistingDataSource
         }
         return results;
     }
-
 }

@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.migrator;
 
 import java.util.List;
 
@@ -26,6 +26,9 @@ import java.util.List;
  */
 public interface ExistingDataSource {
 
-    List<Object[]> getExistingData(int fromIndex, int maxResults) throws Exception;
+    List<Object[]> getData(int fromIndex, int maxResults) throws Exception;
 
+    void initialize() throws Exception;
+
+    void close() throws Exception;
 }

@@ -188,7 +188,7 @@
               </descriptorRefs>
               <archive>
                   <manifest>
-                      <mainClass>org.rhq.server.metrics.DataMigratorRunner</mainClass>
+                      <mainClass>org.rhq.server.metrics.migrator.DataMigratorRunner</mainClass>
                       <addClasspath>true</addClasspath>
                   </manifest>
               </archive>
@@ -293,7 +293,7 @@
               </descriptorRefs>
               <archive>
                   <manifest>
-                      <mainClass>org.rhq.server.metrics.DataMigratorRunner</mainClass>
+                      <mainClass>org.rhq.server.metrics.migrator.DataMigratorRunner</mainClass>
                       <addClasspath>true</addClasspath>
                   </manifest>
               </archive>

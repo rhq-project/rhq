@@ -31,13 +31,6 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
     public StackedBarMetricGraphImpl() {
         super();
     }
-    /**
-     * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
-     * for all cases but the dashboard portlet).
-     */
-//    public StackedBarMetricGraphImpl(MetricGraphData metricGraphData) {
-//        setMetricGraphData(metricGraphData);
-//    }
 
 
     /**

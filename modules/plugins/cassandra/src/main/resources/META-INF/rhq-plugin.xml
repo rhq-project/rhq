@@ -47,6 +47,12 @@
       <c:simple-property name="nativeTransportPort" description="The port on which Cassandra listens for CQL client connections." default="9042" type="integer"/>
       <c:simple-property name="host" description="The host on which cassandra listens to CQL client connections" default="localhost"/>
       <c:simple-property name="clusterName" description="Cluster name" default="localhost"/>
+      <c:simple-property name="authenticator" required="true" default="org.apache.cassandra.auth.AllowAllAuthenticator">
+        <c:property-options>
+          <c:option name="org.apache.cassandra.auth.AllowAllAuthenticator" value="org.apache.cassandra.auth.AllowAllAuthenticator"/>
+          <c:option name="org.apache.cassandra.auth.PasswordAuthenticator" value="org.apache.cassandra.auth.PasswordAuthenticator"/>
+        </c:property-options>
+      </c:simple-property>
     </plugin-configuration>
 
     <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.service.CassandraDaemon|match=.*"/>

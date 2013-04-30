@@ -120,6 +120,10 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                         pluginConfig.put(new PropertySimple("nativeTransportPort", parsedProperties
                             .get("native_transport_port")));
                     }
+
+                    if (parsedProperties.get("authenticator") != null) {
+                        pluginConfig.put(new PropertySimple("authenticator", parsedProperties.get("authenticator")));
+                    }
                 } catch (Exception e) {
                     log.error("YAML Configuration load exception ", e);
                 } finally {

@@ -30,7 +30,7 @@ import static org.rhq.core.system.OperatingSystemType.WINDOWS;
 import java.io.File;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.ProtocolOptions.Compression;
+import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 
@@ -73,7 +73,9 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         String host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
         String clusterName = context.getPluginConfiguration().getSimpleValue("clusterName", "unknown");
         String username = context.getPluginConfiguration().getSimpleValue("username", "cassandra");
-        String password = context.getPluginConfiguration().getSimpleValue("password", "password");
+        String password = context.getPluginConfiguration().getSimpleValue("password", "cassandra");
+        String authenticatorClassName = context.getPluginConfiguration().getSimpleValue("authenticator",
+            "org.apache.cassandra.auth.AllowAllAuthenticator");
 
         Integer nativePort = 9042;
         try {
@@ -83,16 +85,20 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             log.debug("Native transport port parsing failed...", e);
         }
 
+
         try {
-            Cluster cluster = Cluster
+            Builder clusterBuilder = Cluster
                 .builder()
                 .addContactPoints(new String[] { host })
                 .withoutMetrics()
-                .withPort(nativePort)
-                .withCompression(Compression.NONE)
-                .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
-                .build();
-            this.cassandraSession = cluster.connect(clusterName);
+                .withPort(nativePort);
+
+            if (authenticatorClassName.endsWith("PasswordAuthenticator")) {
+                clusterBuilder = clusterBuilder.withAuthInfoProvider(new SimpleAuthInfoProvider().add("username",
+                    username).add("password", password));
+            }
+
+            this.cassandraSession = clusterBuilder.build().connect(clusterName);
         } catch (Exception e) {
             log.error("Connect to Cassandra " + host + ":" + nativePort, e);
             throw e;

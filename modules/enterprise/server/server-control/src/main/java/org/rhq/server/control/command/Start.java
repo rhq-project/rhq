@@ -188,11 +188,7 @@ public class Start extends ControlCommand {
                 log.debug("Failed to start agent service", e);
             }
         } else {
-            String pid = getAgentPid();
-
-            if (pid != null) {
-                executor.execute(commandLine);
-            }
+            executor.execute(commandLine);
         }
     }
 

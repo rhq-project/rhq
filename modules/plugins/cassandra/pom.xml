@@ -20,9 +20,14 @@
       <version>${cassandra.driver.version}</version>
     </dependency>
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <scope>provided</scope>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.12</version>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+      <version>1.0.5-M3-p1</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -83,39 +88,8 @@
                     <artifactId>cassandra-driver-core</artifactId>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>io.netty</groupId>
-                  <artifactId>netty</artifactId>
-                  <version>${cassandra.driver.netty.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.cassandra</groupId>
-                  <artifactId>cassandra-all</artifactId>
-                  <version>${cassandra.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.cassandra</groupId>
-                  <artifactId>cassandra-thrift</artifactId>
-                  <version>${cassandra.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.thrift</groupId>
-                  <artifactId>libthrift</artifactId>
-                  <version>${cassandra.thrift.version}</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>com.google.guava</groupId>
-                  <artifactId>guava</artifactId>
-                  <version>14.0.1</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>com.yammer.metrics</groupId>
-                  <artifactId>metrics-core</artifactId>
-                  <version>2.2.0</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.slf4j</groupId>
-                  <artifactId>slf4j-api</artifactId>
-                  <version>1.7.2</version>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.slf4j</groupId>
@@ -126,16 +100,6 @@
                   <groupId>org.xerial.snappy</groupId>
                   <artifactId>snappy-java</artifactId>
                   <version>1.0.5-M3-p1</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.codehaus.jackson</groupId>
-                  <artifactId>jackson-core-asl</artifactId>
-                  <version>1.9.2</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.codehaus.jackson</groupId>
-                  <artifactId>jackson-mapper-asl</artifactId>
-                  <version>1.9.2</version>
                 </artifactItem>
               </artifactItems>
             </configuration>

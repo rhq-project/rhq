@@ -365,6 +365,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final.jar" sourcepath="/M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/python/jython-standalone/2.5.2/jython-standalone-2.5.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1.1-20121031.024335-6.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/yaml/snakeyaml/1.12/snakeyaml-1.12.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2-sources.jar"/>

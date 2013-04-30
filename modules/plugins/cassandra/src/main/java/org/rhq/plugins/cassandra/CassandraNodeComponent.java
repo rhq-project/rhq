@@ -28,14 +28,11 @@ import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 import static org.rhq.core.system.OperatingSystemType.WINDOWS;
 
 import java.io.File;
-import java.util.Set;
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Query;
-import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ProtocolOptions.Compression;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -45,14 +42,9 @@ import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.MeasurementDataTrait;
-import org.rhq.core.domain.measurement.MeasurementReport;
-import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
-import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
@@ -67,8 +59,7 @@ import org.rhq.plugins.jmx.JMXServerComponent;
 /**
  * @author John Sanda
  */
-public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent<?>> implements MeasurementFacet,
-    OperationFacet {
+public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent<?>> implements OperationFacet {
 
     private Log log = LogFactory.getLog(CassandraNodeComponent.class);
 
@@ -78,20 +69,35 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     @Override
     public void start(ResourceContext context) throws Exception {
         super.start(context);
-        Cluster cluster = Cluster.builder().addContactPoints(new String[] { "localhost" }).withoutMetrics()
-            .withPort(getCQLPort(context.getPluginConfiguration()))
-            .withAuthInfoProvider(
-                new SimpleAuthInfoProvider().add("username",
-                    this.getResourceContext().getPluginConfiguration().getSimpleValue("username")).add("password",
-                    this.getResourceContext().getPluginConfiguration().getSimpleValue("password")))
-            .build();
-        this.cassandraSession = cluster.connect("rhq");
-    };
 
-    private int getCQLPort(Configuration pluginConfig) {
-        String property = pluginConfig.getSimpleValue("nativeTransportPort", "9042");
-        return Integer.parseInt(property);
-    }
+        String host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
+        String clusterName = context.getPluginConfiguration().getSimpleValue("clusterName", "unknown");
+        String username = context.getPluginConfiguration().getSimpleValue("username", "cassandra");
+        String password = context.getPluginConfiguration().getSimpleValue("password", "password");
+
+        Integer nativePort = 9042;
+        try {
+            nativePort = Integer.parseInt(context.getPluginConfiguration()
+                .getSimpleValue("nativeTransportPort", "9042"));
+        } catch (Exception e) {
+            log.debug("Native transport port parsing failed...", e);
+        }
+
+        try {
+            Cluster cluster = Cluster
+                .builder()
+                .addContactPoints(new String[] { host })
+                .withoutMetrics()
+                .withPort(nativePort)
+                .withCompression(Compression.NONE)
+                .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
+                .build();
+            this.cassandraSession = cluster.connect(clusterName);
+        } catch (Exception e) {
+            log.error("Connect to Cassandra " + host + ":" + nativePort, e);
+            throw e;
+        }
+    };
 
     @Override
     public AvailabilityType getAvailability() {
@@ -206,20 +212,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             return "cassandra.bat";
         } else {
             return "cassandra";
-        }
-    }
-
-    //@Override
-    public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        for (MeasurementScheduleRequest scheduleRequest : metrics) {
-            if (scheduleRequest.getName().equals("cluster")) {
-                Query q = QueryBuilder.select().from("system", "local");
-                ResultSet resultSet = this.getCassandraSession().execute(q);
-                if (!resultSet.isExhausted()) {
-                    report
-                        .addData(new MeasurementDataTrait(scheduleRequest, resultSet.one().getString("cluster_name")));
-                }
-            }
         }
     }
 

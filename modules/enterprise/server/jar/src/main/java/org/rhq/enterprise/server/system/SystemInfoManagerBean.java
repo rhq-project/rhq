@@ -9,6 +9,8 @@ import javax.ejb.Stateless;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
+import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.auth.Subject;
@@ -58,6 +60,16 @@ public class SystemInfoManagerBean implements  SystemInfoManagerLocal{
         result.put("BuildNumber", productInfo.getBuildNumber());
         result.put("FullName", productInfo.getFullName());
         result.put("Name", productInfo.getName());
+
+        try {
+            CoreJBossASClient coreClient = new CoreJBossASClient(MCCHelper.getModelControllerClient());
+            result.put("AS version",coreClient.getAppServerVersion());
+            result.put("AS product version", coreClient.getServerProductVersion());
+            result.put("AS product name", coreClient.getServerProductName());
+            result.put("AS config dir", coreClient.getAppServerConfigDir());
+        } catch (Exception e) {
+            result.put("AS*", "Not able to get AS props due to " + e.getMessage());
+        }
 
         SystemSettings systemSettings=systemManager.getSystemSettings(caller);
         Map<String,String> settingsMap = systemSettings.toMap();

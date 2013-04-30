@@ -24,6 +24,7 @@ import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.List;
 
+import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -42,8 +43,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricStackedBarGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -194,8 +195,10 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
 
         MetricGraphData metricGraphData = MetricGraphData.createForResourceGroup(resourceGroup.getId(),
                 resourceGroup.getName(), measurementDefinition, data );
-        MetricStackedBarGraph graph = new MetricStackedBarGraph(metricGraphData);
-        MetricD3Graph graphView = new MetricD3Graph(graph);
+
+        StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
+        graph.setMetricGraphData(metricGraphData);
+        MetricD3GraphView graphView = new MetricD3GraphView(graph);
 
         graphView.setWidth("95%");
         graphView.setHeight(MULTI_CHART_HEIGHT);

@@ -1132,6 +1132,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // return first ten
         c.addFilterName(TEST_PREFIX);
+        c.addSortId(PageOrdering.ASC); // without sorting we'll get no predictable ordering
         c.setPaging(0, 10);
         bvs = bundleManager.findBundleVersionsByCriteria(overlord, c);
         assertNotNull(bvs);

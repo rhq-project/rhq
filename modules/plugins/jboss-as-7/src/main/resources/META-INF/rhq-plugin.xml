@@ -852,6 +852,7 @@
       <c:simple-property name="port" default="9990" type="integer" required="true" description="Port of the domain API"/>
       <c:simple-property name="user" type="string" description="Management user for a secured Host controller" required="false"/>
       <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
+      <c:simple-property name="managementConnectionTimeout" type="long" description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
@@ -1163,6 +1164,7 @@
       <c:simple-property name="port" default="9990" type="integer" required="true"/>
       <c:simple-property name="user" type="string" description="Management user for a secured AS" required="false"/>
       <c:simple-property name="password" type="password" description="Password for the management user" required="false"/>
+      <c:simple-property name="managementConnectionTimeout" type="long" description="Maximum time in milliseconds to keep alive an idle management connection. Zero and negative values will disable connection persistence. Defaults to 5000 ms." required="false" default="5000"/>
       <c:simple-property name="homeDir" type="file" description="Root directory of the server installation" displayName="Home Directory" readOnly="true" required="false"/>
       <c:simple-property name="baseDir" type="file" description="Base directory for server content" displayName="Base Directory" readOnly="true" required="false"/>
       <c:simple-property name="configDir" type="file" description="Base configuration directory" displayName="Configuration Directory" readOnly="true" required="false"/>
@@ -1331,6 +1333,10 @@
     </drift-definition>
 
     <bundle-target>
+      <destination-base-dir name="Install Directory" description="The top directory where the application server is installed. (i.e. the value found in the 'Home Directory' connection property)">
+        <value-context>pluginConfiguration</value-context>
+        <value-name>homeDir</value-name>
+      </destination-base-dir>
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
         <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>

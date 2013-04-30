@@ -49,7 +49,7 @@ public class CoreJBossASClient extends JBossASClient {
      * This returns the system properties that are set in the AS JVM. This is not the system properties
      * in the JVM of this client object - it is actually the system properties in the remote
      * JVM of the AS instance that the client is talking to.
-     * 
+     *
      * @return the AS JVM's system properties
      * @throws Exception
      */
@@ -83,6 +83,16 @@ public class CoreJBossASClient extends JBossASClient {
 
     public String getAppServerVersion() throws Exception {
         final String version = getStringAttribute("release-version", Address.root());
+        return version;
+    }
+
+    public String getServerProductVersion() throws Exception {
+        final String version = getStringAttribute("product-version", Address.root());
+        return version;
+    }
+
+    public String getServerProductName() throws Exception {
+        final String version = getStringAttribute("product-name", Address.root());
         return version;
     }
 

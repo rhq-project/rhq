@@ -40,12 +40,16 @@ public class BrowserUtility {
      $wnd.jQuery('.dynamicsparkline').sparkline();
     }-*/;
 
-    public static native boolean isBrowserIE8()
+    /**
+     * Things such as charting are not supported before IE9. So this is a test for browser compat.
+     * @return true if the browser is IE and the version is before IE9.
+     */
+    public static native boolean isBrowserPreIE9()
         /*-{
             var myUserAgent = $wnd.navigator.userAgent;
             if (/MSIE (\d+\.\d+);/.test(myUserAgent)){ //test for MSIE x.x;
-                var ieversion=new Number(RegExp.$1); // capture x.x portion and store as a number
-                if (ieversion>=8){
+                var ieVersion = new Number(RegExp.$1); // capture x.x portion and store as a number
+                if (ieVersion < 9){
                     return true;
                 }
             }

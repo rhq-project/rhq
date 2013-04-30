@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.legacy.util.SessionUtils;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
 import org.rhq.enterprise.server.auth.SessionTimeoutException;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Greg Hinkle
@@ -58,6 +59,20 @@ public class SessionAccessServlet extends HttpServlet {
         response.addHeader("Cache-Control", "must-revalidate");
         // some date in the past
         response.addHeader("Expires", "Mon, 8 Aug 2006 10:00:00 GMT");
+
+        // do not go any further unless we know the server has been fully initialized
+        boolean serverInitialized;
+        try {
+            serverInitialized = LookupUtil.getStartupLocal().isInitialized();
+        } catch (Throwable t) {
+            serverInitialized = false; // this probably means we are still starting up and app server hasn't made EJBs available yet
+        }
+
+        if (!serverInitialized) {
+            response.setHeader("Retry-After", "30");
+            response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Server is not ready - still booting up");
+            return;
+        }
 
         //if a session does not already exist this call will create one
         HttpSession session = request.getSession();
@@ -112,7 +127,7 @@ public class SessionAccessServlet extends HttpServlet {
             Subject subject = webUser.getSubject();
             try {
                 SessionManager.getInstance().getSubject(subject.getSessionId());
-                long lastAccess = SessionManager.getInstance().getlastAccess(subject.getSessionId());
+                long lastAccess = SessionManager.getInstance().getLastAccess(subject.getSessionId());
 
                 PrintWriter writer = response.getWriter();
                 String output = subject.getId() + ":" + webUser.getSessionId() + ":" + lastAccess;

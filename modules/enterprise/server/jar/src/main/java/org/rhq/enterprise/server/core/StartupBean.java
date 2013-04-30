@@ -103,7 +103,7 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  */
 @Singleton
 //@Startup // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
-public class StartupBean {
+public class StartupBean implements StartupLocal {
     private Log log = LogFactory.getLog(this.getClass());
 
     private boolean initialized = false;
@@ -140,6 +140,12 @@ public class StartupBean {
 
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public boolean isInitialized() {
+        return this.initialized;
+    }
 
     /**
      * Modifies the naming subsystem to be able to check for Java security permissions on JNDI lookup.
@@ -505,6 +511,7 @@ public class StartupBean {
         serverManager.scheduleServerHeartbeat();
         cacheConsistencyManager.scheduleServerCacheReloader();
         systemManager.scheduleConfigCacheReloader();
+        subjectManager.scheduleSessionPurgeJob();
 
         try {
             // Do not check until we are up at least 1 min, and every minute thereafter.

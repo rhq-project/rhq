@@ -43,7 +43,7 @@ public class StartupBeanPreparation {
     private Log log = LogFactory.getLog(this.getClass());
 
     @EJB
-    private StartupBean startupBean;
+    private StartupLocal startupBean;
 
     @Resource
     private TimerService timerService; // needed to schedule our startup bean init call

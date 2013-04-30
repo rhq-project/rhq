@@ -70,14 +70,20 @@
          The dependency versions below are declared together as the versions of each are dependent on the
          overall JBoss AS Server version.  Meaning, the AS provides these libs. When the Server
          version is changed the versions of each of these should be validated and updated as needed.
+
+         the jboss.version is the version of the zip file
+         the jboss.eap.version is the version of the eap inside if the directory
+         inside the zip is not the same as the name of the zip
+         e.g. jboss-as-dist-7.2.0.Alpha1-redhat-4.zip unzips to jboss-eap-6.1
     -->
-    <jboss.version>7.1.1.Final</jboss.version>
-    <jboss.javaee6.spec.version>3.0.0.Final</jboss.javaee6.spec.version>
+    <jboss.version>7.2.0.Alpha1-redhat-4</jboss.version>
+    <jboss.eap.version>jboss-eap-6.1</jboss.eap.version>
+    <jboss.javaee6.spec.version>3.0.2.Final</jboss.javaee6.spec.version>
 
     <!-- Provided -->
     <antlr.version>2.7.7</antlr.version>
-    <hibernate.version>4.0.1.Final</hibernate.version>
-    <hibernate-annotations.version>3.5.6-Final</hibernate-annotations.version>
+    <hibernate.version>4.2.0.CR1</hibernate.version>
+    <hibernate-annotations.version>4.0.1.Final</hibernate-annotations.version>
     <hibernate-jpa-2.0-api.version>1.0.1.Final</hibernate-jpa-2.0-api.version>
     <infinispan.version>5.1.2.FINAL</infinispan.version>
     <javax.annotation.api.version>1.0.1.Final</javax.annotation.api.version>
@@ -90,12 +96,12 @@
     <jboss-common-core.version>2.2.17.GA</jboss-common-core.version>
     <jboss-ejb3-ext-api.version>2.0.0</jboss-ejb3-ext-api.version>
     <jboss-interceptors-api.version>1.0.0.Final</jboss-interceptors-api.version>
-    <jboss-jts.version>4.16.2.Final</jboss-jts.version>
-    <jboss-logging.version>3.1.0.GA</jboss-logging.version>
+    <jboss-jts.version>4.16.4.Final</jboss-jts.version>
+    <jboss-logging.version>3.1.2.GA</jboss-logging.version>
     <jboss-remotingjmx.version>1.0.2.Final</jboss-remotingjmx.version>
     <jboss-transaction-api.version>1.0.0.Final</jboss-transaction-api.version>
     <picketbox.version>4.0.7.Final</picketbox.version>
-    <resteasy.version>2.3.4.Final</resteasy.version>
+    <resteasy.version>2.3.5.Final</resteasy.version>
     <jboss-staxmapper.version>1.1.0.Final</jboss-staxmapper.version>
     <jboss-modules.version>1.1.1.GA</jboss-modules.version>
     <jboss-dmr.version>1.1.1.Final</jboss-dmr.version>
@@ -145,8 +151,9 @@
     <freemarker.version>2.3.18</freemarker.version>
     <powermock.version>1.4.12</powermock.version>
     <arquillian.version>1.0.3.Final</arquillian.version>
-    <arquillian.jboss.container.version>7.1.1.Final</arquillian.jboss.container.version>
+    <arquillian.jboss.container.version>7.2.0.Final</arquillian.jboss.container.version>
     <shrinkwrap-resolver.version>2.0.0-alpha-7</shrinkwrap-resolver.version>
+    <xnio.version>3.0.7.GA</xnio.version> <!-- needed in jndi-access tests to talk to the managed AS -->
     <xercesImpl.version>2.9.1-jbossas-2</xercesImpl.version> <!-- see BZ-820629 and CVE-2009-2625 -->
     <opencsv.version>1.8</opencsv.version>
     <commons-httpclient.version>3.0.1</commons-httpclient.version>
@@ -507,8 +514,8 @@
       </dependency>
 
       <dependency>
-         <groupId>org.hibernate</groupId>
-         <artifactId>hibernate-annotations</artifactId>
+         <groupId>org.hibernate.common</groupId>
+         <artifactId>hibernate-commons-annotations</artifactId>
          <version>${hibernate-annotations.version}</version>
       </dependency>
 
@@ -722,6 +729,12 @@
       <dependency>
          <groupId>org.jboss.as</groupId>
          <artifactId>jboss-as-arquillian-container-managed</artifactId>
+         <version>${arquillian.jboss.container.version}</version>
+      </dependency>
+
+      <dependency>
+         <groupId>org.jboss.as</groupId>
+         <artifactId>jboss-as-arquillian-container-remote</artifactId>
          <version>${arquillian.jboss.container.version}</version>
       </dependency>
 
@@ -1540,6 +1553,16 @@
           </snapshots>
       </repository>
 
+      <repository>
+        <id>redhat-maven-repository</id>
+        <name>Red Hat maven repository</name>
+        <url>http://maven.repository.redhat.com/earlyaccess/all</url>
+        <snapshots>
+            <enabled>false</enabled>
+        </snapshots>
+
+      </repository>
+
   </repositories>
 
   <pluginRepositories>
@@ -1771,6 +1794,9 @@
                   <dependency>
                      <groupId>org.jacoco</groupId>
                      <artifactId>org.jacoco.ant</artifactId>
+                      <!-- For some strange reason this needs to be here even though the version is specified
+                           in the dependency management of the root pom. -->
+                     <version>${jacoco.version}</version>
                   </dependency>
                </dependencies>
             </plugin>

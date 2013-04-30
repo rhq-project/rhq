@@ -11,11 +11,6 @@
     <inherits name='com.smartgwt.SmartGwt' />
     <inherits name="com.smartgwt.tools.SmartGwtTools"/>
 
-
-    <!-- @todo: take out GFlot once we have d3 graphing in place -->
-    <inherits name='ca.nanometrics.gflot.GFlot'/>
-    <set-property name="gflot.load.jquery" value="EXTERNAL" />
-
     <!-- ============================ gwt logging ============================= -->
     <set-property name="gwt.logging.enabled" value="TRUE"/>
     <!-- FINE ~= DEBUG in gwt-log -->
@@ -35,7 +30,15 @@
     <!-- Special case for IE8 where upload onsubmit handlers need special registration code from other browsers -->
     <replace-with class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImplIE8">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.components.upload.DynamicCallbackFormImpl"/>
-        <when-property-is name="user.agent" value="ie8"/>
+        <any>
+            <when-property-is name="user.agent" value="ie8"/>
+            <when-property-is name="user.agent" value="ie9"/>
+        </any>
+    </replace-with>
+
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphIE8Impl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+            <when-property-is name="user.agent" value="ie8"/>
     </replace-with>
 
 
@@ -49,10 +52,7 @@
          the version of jquery (1.7.2).
     -->
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
-    <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
-    <script src="/coregui/js/d3.v3.js"/>
-    <script src="/coregui/js/nv.d3.js"/>
-    <script src="/coregui/js/jquery.tipsy.js"/>
+
 
 
     <!--

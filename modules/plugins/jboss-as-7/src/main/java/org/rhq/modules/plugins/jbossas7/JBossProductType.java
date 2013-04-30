@@ -36,7 +36,8 @@ public enum JBossProductType {
     EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "Portal Platform"),
     JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "Portal Platform"),
 //    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6", "EWP"),
-    SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)", "SOAP");
+    SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)", "SOAP"),
+    WILDFLY8("WildFly","WildFly 8" ,"WildFly Appliction Server 8" , "WildFly");
 
     public final String SHORT_NAME;
     public final String NAME;
@@ -98,7 +99,7 @@ public enum JBossProductType {
                 productType = JBossProductType.EAP;
             } else if (slot.equals("jdg")) {
                 productType = JBossProductType.JDG;
-            } else if (slot.equals("epp")) {//old EPP 
+            } else if (slot.equals("epp")) {//old EPP
                 productType = JBossProductType.EPP;
             } else if (slot.equals("jpp")) {//new EPP->JPP plugin
                 productType = JBossProductType.JPP;
@@ -108,7 +109,9 @@ public enum JBossProductType {
                 throw new RuntimeException("Unknown product type: " + slot);
             }
         } else {
-            productType = JBossProductType.AS;
+            // Wildfly and The Server Formerly Known AS JBossAS share the same absence of a slot
+            // so we need another way to distinguish them
+            productType = determineJBossProductTypeViaHomeDirName(homeDir);
         }
 
         return productType;
@@ -119,6 +122,8 @@ public enum JBossProductType {
         String homeDirName = homeDir.getName();
         if (homeDirName.contains("-as-")) {
             productType = JBossProductType.AS;
+        } else if (homeDirName.contains("wildfly")) {
+            productType = JBossProductType.WILDFLY8;
         } else if (homeDirName.contains("-eap-")) {
             productType = JBossProductType.EAP;
         } else if (homeDirName.contains("-jdg-")||(homeDirName.contains("datagrid-server"))) {

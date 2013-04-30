@@ -243,8 +243,8 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                         }
                                                     }
                                                     DynamicForm row = new DynamicForm();
-                                                    row.setNumCols(4);
-                                                    row.setColWidths(65, "*", 20, 100);
+                                                    row.setNumCols(3);
+                                                    row.setColWidths(65, "*", 100);
                                                     row.setWidth100();
                                                     row.setAutoHeight();
                                                     row.setOverflow(Overflow.VISIBLE);
@@ -273,51 +273,30 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     link.setWrap(true);
                                                     link.setHeight(26);
                                                     link.setWidth("100%");
-                                                    link.addClickHandler(new ClickHandler() {
-                                                        @Override
-                                                        public void onClick(ClickEvent event) {
-                                                            window = new ChartViewWindow(title);
+                                                    if(!BrowserUtility.isBrowserPreIE9()){
+                                                        link.addClickHandler(new ClickHandler() {
+                                                            @Override
+                                                            public void onClick(ClickEvent event) {
+                                                                window = new ChartViewWindow(title);
 
-                                                            graphView = D3GraphListView
-                                                                .createSingleGraph(resourceComposite.getResource(),
-                                                                    md.getId(), true);
-                                                            graphView.addSetButtonClickHandler(new ClickHandler() {
-                                                                @Override
-                                                                public void onClick(ClickEvent event) {
-                                                                    graphView.redrawGraphs();
-                                                                }
-                                                            });
+                                                                graphView = D3GraphListView
+                                                                    .createSingleGraph(resourceComposite.getResource(),
+                                                                        md.getId(), true);
+                                                                graphView.addSetButtonClickHandler(new ClickHandler() {
+                                                                    @Override
+                                                                    public void onClick(ClickEvent event) {
+                                                                        graphView.redrawGraphs();
+                                                                    }
+                                                                });
 
-                                                            window.addItem(graphView);
-                                                            window.show();
-                                                        }
-                                                    });
+                                                                window.addItem(graphView);
+                                                                window.show();
+                                                            }
+                                                        });
+                                                    }else{
+                                                        link.disable();
+                                                    }
 
-                                                    //@todo: this goes away once we have validated charts
-                                                    final String chartTitle = md.getDisplayName();
-                                                    final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricSingleResource&id="
-                                                        + resourceId + "&m=" + md.getId();
-
-                                                    //have link launch modal window on click
-                                                    LinkItem oldLink = AbstractActivityView.newLinkItem("*",
-                                                        destination);
-                                                    oldLink.setTooltip("Link to test Old Chart");
-                                                    oldLink.setTitleVAlign(VerticalAlignment.TOP);
-                                                    oldLink.setAlign(Alignment.LEFT);
-                                                    oldLink.setClipValue(true);
-                                                    oldLink.setWrap(true);
-                                                    oldLink.setHeight(26);
-                                                    oldLink.setWidth("100%");
-                                                    oldLink.addClickHandler(new ClickHandler() {
-                                                        @Override
-                                                        public void onClick(ClickEvent event) {
-                                                            ChartViewWindow window = new ChartViewWindow(chartTitle);
-                                                            //generate and include iframed content
-                                                            FullHTMLPane iframe = new FullHTMLPane(destination);
-                                                            window.addItem(iframe);
-                                                            window.show();
-                                                        }
-                                                    });
 
                                                     //Value
                                                     String convertedValue;
@@ -328,7 +307,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     value.setVAlign(VerticalAlignment.TOP);
                                                     value.setAlign(Alignment.RIGHT);
 
-                                                    row.setItems(sparklineContainer, link, oldLink, value);
+                                                    row.setItems(sparklineContainer, link, value);
                                                     row.setWidth100();
 
                                                     //if graph content returned

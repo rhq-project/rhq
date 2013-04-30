@@ -263,7 +263,10 @@ public class ServerPluginDescriptorMetadataParser {
             for (PropertyDefinition currentPropDef : allPropDefs.values()) {
                 if (currentPropDef instanceof PropertyDefinitionSimple) {
                     String currentPropDefName = currentPropDef.getName();
-                    callbackData.setProperty(currentPropDefName, defaults.getSimpleValue(currentPropDefName, null));
+                    String currentPropDefValue = defaults.getSimpleValue(currentPropDefName, null);
+                    if (currentPropDefValue != null) {
+                        callbackData.setProperty(currentPropDefName, currentPropDefValue);
+                    }
                 }
             }
 
@@ -354,7 +357,10 @@ public class ServerPluginDescriptorMetadataParser {
             for (Property currentProp : allProps.values()) {
                 if (currentProp instanceof PropertySimple) {
                     String currentPropName = currentProp.getName();
-                    callbackData.setProperty(currentPropName, jobMap.getSimpleValue(currentPropName, null));
+                    String currentPropValue = jobMap.getSimpleValue(currentPropName, null);
+                    if (currentPropValue != null) {
+                        callbackData.setProperty(currentPropName, currentPropValue);
+                    }
                 }
             }
 

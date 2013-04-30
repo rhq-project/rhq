@@ -42,14 +42,14 @@ import javax.persistence.Table;
 
 /**
  * The JPA Drift Server plugin (the RHQ default) implementation of Drift.
- *  
+ *
  * @author Jay Shaughnessy
- * @author John Sanda 
+ * @author John Sanda
  */
 @Entity
 @NamedQueries( { @NamedQuery(name = JPADrift.QUERY_DELETE_BY_RESOURCES, query = "" //
     + "DELETE FROM JPADrift d " //
-    + " WHERE d.changeSet IN ( SELECT dcs FROM JPADriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) )"), //
+    + " WHERE d.changeSet IN ( SELECT dcs FROM JPADriftChangeSet dcs WHERE dcs.resource.id IN ( :resourceIds ) ) "), //
     @NamedQuery(name = JPADrift.QUERY_DELETE_BY_DRIFTDEF_RESOURCE, query = "" //
         + "DELETE FROM JPADrift d " //
         + "  WHERE d.changeSet.id IN " //
@@ -77,11 +77,9 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     private DriftCategory category;
 
     @Column(name = "PATH", nullable = false)
-    @Enumerated(EnumType.STRING)
     private String path;
 
     @Column(name = "PATH_DIRECTORY", nullable = false)
-    @Enumerated(EnumType.STRING)
     private String directory;
 
     @JoinColumn(name = "DRIFT_CHANGE_SET_ID", referencedColumnName = "ID", nullable = false)
@@ -100,7 +98,8 @@ public class JPADrift implements Serializable, Drift<JPADriftChangeSet, JPADrift
     }
 
     /**
-     * @param resource
+     * @param changeSet
+     * @param path
      * @param category
      * @param oldDriftFile required for FILE_CHANGED and FILE_REMOVED, null for FILE_ADDED
      * @param newDriftFile required for FILE_CHANGED and FILE_ADDED, null for FILE_REMOVED

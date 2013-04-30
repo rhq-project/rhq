@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.operation;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
@@ -39,6 +40,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -48,6 +50,8 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author John Mazzitelli
  */
 public class GroupOperationJob extends OperationJob {
+    private static final Log log = LogFactory.getLog(GroupOperationJob.class);
+
     public static final String DATAMAP_INT_GROUP_ID = "groupId";
     public static final String DATAMAP_INT_ARRAY_EXECUTION_ORDER = "executionOrder"; // comma-separated list of IDs
     public static final String DATAMAP_BOOL_HALT_ON_FAILURE = "haltOnFailure";
@@ -83,6 +87,7 @@ public class GroupOperationJob extends OperationJob {
     public void execute(JobExecutionContext context) throws JobExecutionException {
         GroupOperationSchedule schedule = null;
         GroupOperationHistory groupHistory;
+        Subject user = null;
 
         try {
             JobDetail jobDetail = context.getJobDetail();
@@ -96,7 +101,7 @@ public class GroupOperationJob extends OperationJob {
                 jobDetail);
 
             // create a new session even if user is logged in elsewhere, we don't want to attach to that user's session
-            Subject user = getUserWithSession(schedule.getSubject());
+            user = getUserWithSession(schedule.getSubject(), false);
             ResourceGroup group = schedule.getGroup();
 
             // we need the operation definition to fill in the history item
@@ -126,11 +131,11 @@ public class GroupOperationJob extends OperationJob {
 
             // now create detail composites from the resource list
             List<ResourceOperationDetailsComposite> resourceComposites = new ArrayList<ResourceOperationDetailsComposite>();
-            Subject creator = getUserWithSession(user);
+            getUserWithSession(user, true); // refresh our session to reset the timeout clock
             for (Resource nextResourceToOperateOn : resourcesToOperateOn) {
                 // create the non-quartz schedule entity for the given job execution context data
                 ResourceOperationSchedule resourceSchedule = createScheduleForResource(schedule, jobDetail.getGroup(),
-                    creator, nextResourceToOperateOn);
+                    user, nextResourceToOperateOn);
 
                 // crate the resource-level history entity for the newly created non-quartz schedule entity
                 // this method also does the persisting
@@ -159,7 +164,7 @@ public class GroupOperationJob extends OperationJob {
                                 + "this resource operation to be cancelled.");
                             composite.history.setStatus(OperationRequestStatus.CANCELED);
                             composite.history = (ResourceOperationHistory) operationManager.updateOperationHistory(
-                                creator, composite.history);
+                                getUserWithSession(user, true), composite.history);
                             continue;
                         }
 
@@ -170,7 +175,7 @@ public class GroupOperationJob extends OperationJob {
                         do {
                             Thread.sleep(5000);
                             updatedOperationHistory = operationManager.getOperationHistoryByHistoryId(
-                                getUserWithSession(user), resourceHistoryId);
+                                getUserWithSession(user, true), resourceHistoryId);
 
                             // if the duration was ridiculously long, let's break out of here. this will rarely
                             // be triggered because our operation manager will timeout long running operations for us
@@ -192,7 +197,7 @@ public class GroupOperationJob extends OperationJob {
                         // failed to even send to the agent, immediately mark the job as failed
                         groupHistory.setErrorMessage(ThrowableUtil.getStackAsString(e));
                         groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
-                            getUserWithSession(user), groupHistory);
+                            getUserWithSession(user, true), groupHistory);
 
                         if (schedule.isHaltOnFailure()) {
                             hadFailure = true;
@@ -201,7 +206,6 @@ public class GroupOperationJob extends OperationJob {
                 }
             } else {
                 // send the invocation requests without waiting for each to return
-                creator = getUserWithSession(user);
                 for (ResourceOperationDetailsComposite composite : resourceComposites) {
                     try {
                         invokeOperationOnResource(composite, operationManager);
@@ -212,8 +216,8 @@ public class GroupOperationJob extends OperationJob {
 
                         // failed to even send to the agent, immediately mark the job as failed
                         groupHistory.setErrorMessage(ThrowableUtil.getStackAsString(e));
-                        groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(creator,
-                            groupHistory);
+                        groupHistory = (GroupOperationHistory) operationManager.updateOperationHistory(
+                            getUserWithSession(user, true), groupHistory);
 
                         // Note: in actuality - I don't think users have a way in the user interface to turn on halt-on-failure for parallel execution.
                         // So this isHaltOnFailure will probably always be false. But in case we want to support this, leave this here.
@@ -233,6 +237,17 @@ public class GroupOperationJob extends OperationJob {
             String error = "Failed to execute scheduled operation [" + schedule + "]";
             LogFactory.getLog(GroupOperationJob.class).error(error, e);
             throw new JobExecutionException(error, e, false);
+        } finally {
+            // clean up our temporary session by logging out of it
+            try {
+                if (user != null) {
+                    SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+                    subjectMgr.logout(user);
+                }
+            } catch (Exception e) {
+                log.debug("Failed to log out of temporary group operation session - will be cleaned up during session purge later: "
+                    + ThrowableUtil.getAllMessages(e));
+            }
         }
     }
 

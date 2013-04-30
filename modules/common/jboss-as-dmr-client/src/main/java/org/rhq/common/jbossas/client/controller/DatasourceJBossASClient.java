@@ -25,7 +25,7 @@ import org.jboss.dmr.ModelNode;
 
 /**
  * Provides convenience methods associated with datasource management.
- * 
+ *
  * @author John Mazzitelli
  */
 public class DatasourceJBossASClient extends JBossASClient {
@@ -130,7 +130,7 @@ public class DatasourceJBossASClient extends JBossASClient {
      * NOTE: the JDBC module must have already been installed in the JBossAS's modules/ location.
      *
      * @param name the name of the JDBC driver (this is not the name of the JDBC jar or the module name, it is
-     *             just a convienence name of the JDBC driver configuration).
+     *             just a convenience name of the JDBC driver configuration).
      * @param moduleName the name of the JBossAS module where the JDBC driver is installed
      * @param driverXaClassName the JDBC driver's XA datasource classname (null if XA is not supported)
      *
@@ -144,15 +144,17 @@ public class DatasourceJBossASClient extends JBossASClient {
             dmrTemplate = "" //
                 + "{" //
                 + "\"driver-module-name\" => \"%s\" " //
+                + ", \"driver-name\" => \"%s\" " //
                 + ", \"driver-xa-datasource-class-name\" => \"%s\" " //
                 + "}";
-            dmr = String.format(dmrTemplate, moduleName, driverXaClassName);
+            dmr = String.format(dmrTemplate, moduleName, name,  driverXaClassName);
         } else {
             dmrTemplate = "" //
                 + "{" //
                 + "\"driver-module-name\" => \"%s\" " //
+                + ", \"driver-name\" => \"%s\" " //
                 + "}";
-            dmr = String.format(dmrTemplate, moduleName);
+            dmr = String.format(dmrTemplate, name, moduleName);
         }
 
         Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, JDBC_DRIVER, name);
@@ -333,11 +335,11 @@ public class DatasourceJBossASClient extends JBossASClient {
             + ", \"jndi-name\" => \"%s\" " //
             + ", \"jta\" => true " //
             + ", \"min-pool-size\" => %d " //
-            + ", \"max-pool-size\" => %d " //            
-            + ", \"no-recovery\" => %b " //            
-            + ", \"no-tx-separate-pools\" => %b " //            
+            + ", \"max-pool-size\" => %d " //
+            + ", \"no-recovery\" => %b " //
+            + ", \"no-tx-separate-pools\" => %b " //
             + ", \"prepared-statements-cache-size\" => %dL " //
-            + ", \"recovery-plugin-class-name\" => \"%s\" " //            
+            + ", \"recovery-plugin-class-name\" => \"%s\" " //
             + ", \"security-domain\" => \"%s\" " //
             + ", \"stale-connection-checker-class-name\" => \"%s\" " //
             + ", \"transaction-isolation\" => \"%s\" " //

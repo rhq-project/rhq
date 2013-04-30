@@ -366,7 +366,7 @@ public class MetricGraphData implements JsonMetricProducer {
      * connecting the points has less meaning because we are essentially a scatterplot.
      * A different algorithm could be used here but this will suffice.
      * @return true if the graphs should show the bar avg line meaning there is aggregates in the data
-     * @see MetricStackedBarGraph
+     * @see StackedBarMetricGraphImpl
      */
     public boolean showBarAvgTrendLine() {
         for (MeasurementDataNumericHighLowComposite measurement : metricData) {

@@ -1014,36 +1014,35 @@ commands named "config", "setconfig" and "setup" and the command line options
                rhq.agent.client.security.server-auth-mode-enabled
 
                These are the settings that are used if SSL is to be used for
-               either the server or client communications. These can be left
-               unset since the defaults will normally suffice.  These
-               properties are here just in case some use case occurs that
-               require one or more of these settings to be customized.
+               either the server-side or client-side communications (that is,
+               for incoming messages into the agent and for outgoing messages
+               getting sent by the agent).
 
                Note that if client-auth-mode is specified, it must be one of:
                "none", "want", "need".
                -->
                <!--
                <entry key="rhq.communications.connector.security.secure-socket-protocol" value="TLS" />
-               <entry key="rhq.communications.connector.security.keystore.file"          value="data/keystore.dat" />
+               <entry key="rhq.communications.connector.security.keystore.file"          value="conf/keystore.dat" />
                <entry key="rhq.communications.connector.security.keystore.algorithm"     value="SunX509" />
                <entry key="rhq.communications.connector.security.keystore.type"          value="JKS" />
                <entry key="rhq.communications.connector.security.keystore.password"      value="rhqpwd" />
                <entry key="rhq.communications.connector.security.keystore.key-password"  value="rhqpwd" />
                <entry key="rhq.communications.connector.security.keystore.alias"         value="rhq" />
-               <entry key="rhq.communications.connector.security.truststore.file"        value="data/truststore.dat" />
+               <entry key="rhq.communications.connector.security.truststore.file"        value="conf/truststore.dat" />
                <entry key="rhq.communications.connector.security.truststore.algorithm"   value="SunX509" />
                <entry key="rhq.communications.connector.security.truststore.type"        value="JKS" />
                <entry key="rhq.communications.connector.security.truststore.password"    value="" />
                <entry key="rhq.communications.connector.security.client-auth-mode"       value="none" />
 
                <entry key="rhq.agent.client.security.secure-socket-protocol"   value="TLS" />
-               <entry key="rhq.agent.client.security.keystore.file"            value="data/keystore.dat" />
+               <entry key="rhq.agent.client.security.keystore.file"            value="conf/keystore.dat" />
                <entry key="rhq.agent.client.security.keystore.algorithm"       value="SunX509" />
                <entry key="rhq.agent.client.security.keystore.type"            value="JKS" />
                <entry key="rhq.agent.client.security.keystore.password"        value="rhqpwd" />
                <entry key="rhq.agent.client.security.keystore.key-password"    value="rhqpwd" />
                <entry key="rhq.agent.client.security.keystore.alias"           value="rhq" />
-               <entry key="rhq.agent.client.security.truststore.file"          value="data/truststore.dat" />
+               <entry key="rhq.agent.client.security.truststore.file"          value="conf/truststore.dat" />
                <entry key="rhq.agent.client.security.truststore.algorithm"     value="SunX509" />
                <entry key="rhq.agent.client.security.truststore.type"          value="JKS" />
                <entry key="rhq.agent.client.security.truststore.password"      value="" />

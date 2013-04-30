@@ -187,7 +187,7 @@
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
     	<!-- make sure we have an oracle driver jar so the AS7 module is valid and loadable, this is empty -->
         <copy file="src/main/module-resources/ojdbc6-readme.jar"
-        	  toFile="${jboss.modules.dir}/org/rhq/oracle/main/ojdbc6-${ojdbc6.version}.jar"        	  
+        	  toFile="${jboss.modules.dir}/org/rhq/oracle/main/ojdbc6-${ojdbc6.version}.jar"
         	  failonerror="false" verbose="true" />
     	<!-- if we have access to the real driver then overwrite the dummy version-->
         <copy file="${settings.localRepository}/com/oracle/ojdbc6/${ojdbc6.version}/ojdbc6-${ojdbc6.version}.jar"
@@ -346,12 +346,12 @@
         <mkdir dir="${rhq.ear.dir}/rhq-downloads" />
 
         <echo>Deploying static downloadable content</echo>
-        <copy todir="${rhq.ear.dir}/rhq-downloads" 
+        <copy todir="${rhq.ear.dir}/rhq-downloads"
               verbose="true"
               failonerror="false">
             <fileset dir="${basedir}/src/main/downloadable-resources" />
         </copy>
-      
+
         <echo>Make sure our downloads directories exist</echo>
         <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-agent" />
         <mkdir dir="${rhq.ear.dir}/rhq-downloads/rhq-client" />
@@ -381,10 +381,10 @@
 
         <!-- we don't need these in our modules directory because we deploy the rtfilter directly in the EAR
         <echo>Deploying RT filter jar ...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip" 
+        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip"
                dest="${jboss.modules.dir}" />
 
-        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip" 
+        <unzip src="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip"
                dest="${jboss.modules.dir}" />
         -->
 
@@ -403,10 +403,10 @@
         </zip>
 
         <!-- rtfilter AS7 modules -->
-        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip" 
+        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter/${project.version}/rhq-rtfilter-${project.version}.zip"
               tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-module.zip" />
 
-        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip" 
+        <copy file="${settings.localRepository}/org/rhq/helpers/rhq-rtfilter-subsystem/${project.version}/rhq-rtfilter-subsystem-${project.version}.zip"
               tofile="${rhq.ear.dir}/rhq-downloads/connectors/rhq-rtfilter-subsystem-module.zip" />
     </target>
 
@@ -711,7 +711,19 @@ rhq.casandra.native-transport-max-threads=${rhq.casandra.native-transport-max-th
         <echo>Unzipping JBossAS ${jboss.version} found at ${jboss.zip}</echo>
         <unzip src="${jboss.zip}" dest="${basedir}/target" />
         <delete dir="${jboss.home}" />
-        <move file="${basedir}/target/jboss-as-${jboss.version}" tofile="${jboss.home}" />
+
+        <available property="zip.is.dir" file="${basedir}/target/jboss-as-${jboss.version}" />
+        <antcall target="move-as"/>
+        <antcall target="move-eap"/>
+    </target>
+
+    <!-- depending on the inner file of the zip, we need to move different files in place -->
+    <target name="move-as" if="zip.is.dir">
+      <move file="${basedir}/target/jboss-as-${jboss.version}" tofile="${jboss.home}" />
+    </target>
+
+    <target name="move-eap" unless="zip.is.dir">
+      <move file="${basedir}/target/${jboss.eap.version}" tofile="${jboss.home}" />
     </target>
 
     <target name="generate-rhq-ssl-key" unless="rhq.keystore.exists">

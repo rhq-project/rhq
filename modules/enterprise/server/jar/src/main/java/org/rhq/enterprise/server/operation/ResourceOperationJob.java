@@ -70,6 +70,7 @@ public class ResourceOperationJob extends OperationJob {
      */
     public void execute(JobExecutionContext context) throws JobExecutionException {
         ResourceOperationSchedule schedule = null;
+        Subject loggedInSubject = null;
 
         try {
             JobDetail jobDetail = context.getJobDetail();
@@ -82,7 +83,8 @@ public class ResourceOperationJob extends OperationJob {
 
             // Login the schedule's subject so its assigned a session, so our security tests pass.
             // Create a new session even if user is logged in elsewhere, we don't want to attach to that user's session
-            schedule.setSubject(getUserWithSession(schedule.getSubject()));
+            loggedInSubject = getUserWithSession(schedule.getSubject(), false);
+            schedule.setSubject(loggedInSubject);
 
             // for the security check, can the user who scheduled the operation in the first 
             // place still have the authority to execute it against the resource in question
@@ -111,6 +113,17 @@ public class ResourceOperationJob extends OperationJob {
             }
 
             throw new JobExecutionException(error, e, false);
+        } finally {
+            // clean up our temporary session by logging out of it
+            try {
+                if (loggedInSubject != null) {
+                    SubjectManagerLocal subjectMgr = LookupUtil.getSubjectManager();
+                    subjectMgr.logout(loggedInSubject);
+                }
+            } catch (Exception e) {
+                log.debug("Failed to log out of temporary resource operation session - will be cleaned up during session purge later: "
+                    + ThrowableUtil.getAllMessages(e));
+            }
         }
     }
 
@@ -157,7 +170,7 @@ public class ResourceOperationJob extends OperationJob {
     void invokeOperationOnResource(ResourceOperationSchedule schedule, ResourceOperationHistory resourceHistory,
         OperationManagerLocal operationManager) throws Exception {
         // make sure we have a valid session
-        Subject s = getUserWithSession(schedule.getSubject());
+        Subject s = getUserWithSession(schedule.getSubject(), true);
         schedule.setSubject(s);
 
         resourceHistory.setStartedTime();

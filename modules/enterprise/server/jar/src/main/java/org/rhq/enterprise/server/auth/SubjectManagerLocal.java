@@ -175,6 +175,12 @@ public interface SubjectManagerLocal {
      */
     Subject checkAuthentication(String username, String password);
 
+    /**
+     * For internal use only - used by the StartupBean only - don't call this.
+     * This will schedule the periodic EJB timer to trigger a purge of all timed out sessions.
+     */
+    void scheduleSessionPurgeJob();
+
     // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     //
     // The following are shared with the Remote Interface

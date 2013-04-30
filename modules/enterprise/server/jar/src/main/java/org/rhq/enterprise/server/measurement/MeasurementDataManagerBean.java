@@ -748,7 +748,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public Set<MeasurementData> findLiveData(Subject subject, int resourceId, int[] definitionIds) {
+        // use default timeout
         return findLiveData(subject, resourceId, definitionIds, null);
     }
 

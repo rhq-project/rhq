@@ -577,6 +577,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                     // Using GWT Code Splitting feature to decrease the size of generated JS code using lazy
                     // fetching. Each view built in createContent method has its Java Script code in a separate
                     // file.
+                    final long startTime = System.currentTimeMillis();
                     GWT.runAsync(new RunAsyncCallback() {
                         public void onFailure(Throwable caught) {
                           Window.alert("Code download failed");
@@ -590,6 +591,7 @@ public class CoreGUI implements EntryPoint, ValueChangeHandler<String>, Event.Na
                             }
                             contentCanvas.markForRedraw();
                             render(viewPath);
+                            Log.info("Time to Load first codesplit fragment: "+(System.currentTimeMillis() - startTime) + " ms.");
                         }
                       });
                 } else {

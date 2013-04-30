@@ -590,6 +590,7 @@
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/nonpc/ManagementConnectionPersistenceTest.java</include>-->
               </includes>
               <properties>
                 <property>

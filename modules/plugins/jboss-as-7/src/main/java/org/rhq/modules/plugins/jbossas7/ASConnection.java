@@ -40,6 +40,7 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.DefaultConnectionReuseStrategy;
 import org.apache.http.impl.client.DefaultConnectionKeepAliveStrategy;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.PoolingClientConnectionManager;
@@ -54,6 +55,7 @@ import org.codehaus.jackson.map.SerializationConfig;
 
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.util.StringUtil;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.json.ComplexResult;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -84,7 +86,7 @@ public class ASConnection {
 
     private static final int MAX_POOLED_CONNECTIONS = 10;
 
-    private static final int DEFAULT_KEEPALIVE_DURATION = 5 * 1000; // 5sec
+    private static final int DEFAULT_KEEPALIVE_TIMEOUT = 5 * 1000; // 5sec
 
     private static final String ACCEPT_HTTP_HEADER = "Accept";
 
@@ -117,6 +119,8 @@ public class ASConnection {
 
     private UsernamePasswordCredentials credentials;
 
+    private long keepAliveTimeout;
+
     private String managementUrl;
 
     private DefaultHttpClient httpClient;
@@ -126,12 +130,28 @@ public class ASConnection {
     /**
      * Construct an ASConnection object. The real "physical" connection is done in {@link #executeRaw(Operation)}.
      *
+     * The returned instance will use the default keep alive connection timeout.
+     *
      * @param host Host of the DomainController or standalone server
      * @param port Port of the JSON api.
      * @param user user needed for authentication
      * @param password password needed for authentication
      */
     public ASConnection(String host, int port, String user, String password) {
+        this(host, port, user, password, null);
+    }
+
+    /**
+     * Create a new instance.
+     *
+     * @param host                        Host of the DomainController or standalone server
+     * @param port                        Port of the JSON api.
+     * @param user                        User needed for authentication
+     * @param password                    Password needed for authentication
+     * @param managementConnectionTimeout Maximum time to keep alive a management connection. Zero and negative values
+     *                                    will disable connection persistence.
+     */
+    public ASConnection(String host, int port, String user, String password, Long managementConnectionTimeout) {
 
         // Check and store the basic parameters
 
@@ -158,22 +178,41 @@ public class ASConnection {
         HttpParams httpParams = httpClient.getParams();
         // See http://hc.apache.org/httpcomponents-client-ga/tutorial/html/connmgmt.html
         HttpConnectionParams.setStaleCheckingEnabled(httpParams, false);
-        // The default keep-alive strategy does not expire connections if the 'Keep-Alive' header is not present
-        // in the response. This strategy will apply a default duration in this case.
-        httpClient.setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy() {
+        keepAliveTimeout = managementConnectionTimeout == null ? DEFAULT_KEEPALIVE_TIMEOUT : managementConnectionTimeout;
+        // Do not reuse connection if keep alive timeout has zero or negative value
+        httpClient.setReuseStrategy(new DefaultConnectionReuseStrategy() {
             @Override
-            public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
-                long duration = super.getKeepAliveDuration(response, context);
-                if (duration < 0) {
-                    duration = DEFAULT_KEEPALIVE_DURATION;
-                }
-                return duration;
+            public boolean keepAlive(HttpResponse response, HttpContext context) {
+                return keepAliveTimeout > 0 && super.keepAlive(response, context);
             }
         });
-        // Initial schedule of a cleaning task. Subsequent executions will be scheduled as needed.
-        // See ConnectionManagerCleaner implementation.
-        cleanerExecutor.schedule(new ConnectionManagerCleaner(this), DEFAULT_KEEPALIVE_DURATION / 2,
-            TimeUnit.MILLISECONDS);
+        if (keepAliveTimeout > 0) {
+            // The default keep-alive strategy does not expire connections if the 'Keep-Alive' header is not present
+            // in the response. This strategy will apply the desired duration in this case.
+            httpClient.setKeepAliveStrategy(new DefaultConnectionKeepAliveStrategy() {
+                @Override
+                public long getKeepAliveDuration(HttpResponse response, HttpContext context) {
+                    long duration = super.getKeepAliveDuration(response, context);
+                    if (duration < 0 || duration > keepAliveTimeout) {
+                        duration = keepAliveTimeout;
+                    }
+                    if (duration < keepAliveTimeout) {
+                        if (LOG.isWarnEnabled()) {
+                            LOG.warn(ASConnection.this.host + ":" + ASConnection.this.port
+                                    + " declares a keep alive timeout value of [" + duration
+                                    + "] ms. Will now use this value instead of the value from configuration ["
+                                    + keepAliveTimeout + "] ms.");
+                        }
+                        keepAliveTimeout = duration;
+                    }
+                    return duration;
+                }
+            });
+            // Initial schedule of a cleaning task. Subsequent executions will be scheduled as needed.
+            // See ConnectionManagerCleaner implementation.
+            cleanerExecutor.schedule(new ConnectionManagerCleaner(this), keepAliveTimeout / 2,
+                    TimeUnit.MILLISECONDS);
+        }
         HttpClientParams.setRedirecting(httpParams, false);
         if (credentials != null) {
             httpClient.getCredentialsProvider().setCredentials(new AuthScope(host, port), credentials);
@@ -182,6 +221,12 @@ public class ASConnection {
         mapper = new ObjectMapper();
         mapper.configure(DeserializationConfig.Feature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
+
+
+    public static ASConnection newInstanceForServerPluginConfiguration(ServerPluginConfiguration serverPluginConfig) {
+        return new ASConnection(serverPluginConfig.getHostname(), serverPluginConfig.getPort(), serverPluginConfig.getUser(), serverPluginConfig.getPassword(), serverPluginConfig.getManagementConnectionTimeout());
+    }
+
 
     @Override
     protected void finalize() throws Throwable {
@@ -530,12 +575,12 @@ public class ASConnection {
                 try {
                     asConnection.httpClient.getConnectionManager().closeExpiredConnections();
                     // Defensive call to close idle connections
-                    asConnection.httpClient.getConnectionManager().closeIdleConnections(DEFAULT_KEEPALIVE_DURATION,
-                        TimeUnit.MILLISECONDS);
+                    asConnection.httpClient.getConnectionManager().closeIdleConnections(asConnection.keepAliveTimeout,
+                            TimeUnit.MILLISECONDS);
                 } finally {
                     // Keep cleaning the target ASConnection while it has not been marked for collection
-                    cleanerExecutor.schedule(new ConnectionManagerCleaner(asConnection), DEFAULT_KEEPALIVE_DURATION,
-                        TimeUnit.MILLISECONDS);
+                    cleanerExecutor.schedule(new ConnectionManagerCleaner(asConnection), asConnection.keepAliveTimeout,
+                            TimeUnit.MILLISECONDS);
                 }
             }
         }

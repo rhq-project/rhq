@@ -24,8 +24,8 @@
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in
               in your settings.xml -->
-    <gwt-plugin.extraJvmArgs>-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
-    <gwt-plugin.localWorkers>4</gwt-plugin.localWorkers>
+    <gwt-plugin.extraJvmArgs>-Xms512M -Xmx1300M -XX:PermSize=128M -XX:MaxPermSize=256M</gwt-plugin.extraJvmArgs>
+    <gwt-plugin.localWorkers>2</gwt-plugin.localWorkers>
 
     <coreGuiParams/>
     <coreGuiRunTarget>'http://localhost:7080/coregui/CoreGUI.html${coreGuiParams}'</coreGuiRunTarget>
@@ -94,7 +94,7 @@
       <groupId>org.rhq</groupId>
       <artifactId>rhq-enterprise-server</artifactId>
       <version>${project.version}</version>
-      <scope>provided</scope>    
+      <scope>provided</scope>
     </dependency>
 
     <!-- by rhq.ear -->
@@ -175,12 +175,12 @@
     <dependency>
       <groupId>org.hibernate.javax.persistence</groupId>
       <artifactId>hibernate-jpa-2.0-api</artifactId>
-      <scope>provided</scope>    
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
       <groupId>org.hibernate</groupId>
-      <artifactId>hibernate-annotations</artifactId>
+      <artifactId>hibernate-core</artifactId>
       <scope>provided</scope>
     </dependency>
 
@@ -208,13 +208,13 @@
         <targetPath>${project.build.directory}/generated-sources/gwt</targetPath>
         <directory>src/main/resources</directory>
         <filtering>true</filtering>
-                <!-- 
+                <!--
                   Do NOT include java files here, because otherwise the java files from
                   resources would end up in WEB-INF/classes which definitely not something
                   we want. The java files in resources are used for providing alternate,
                   gwt-compatible, implementations of domain classes and we do not want
                   those implementations to "spoil" the server-side classpath.
-                  
+
                   Actually, I'm not even sure we need the properties in the generated
                   sources (but we definitely DO need the gwt.xml in there, because we
                   need to replace the ${...} place-holders with the build-provided values
@@ -244,7 +244,7 @@
           <noServer>true</noServer>
           <inplace>false</inplace>
 <!--          <logLevel>INFO' -bindAddress 0.0.0.0 -logLevel 'INFO</logLevel> -->
-          <logLevel>INFO</logLevel> 
+          <logLevel>INFO</logLevel>
           <runTarget>${coreGuiRunTarget}</runTarget>
           <extraJvmArgs>${gwt-plugin.extraJvmArgs}</extraJvmArgs>
           <localWorkers>${gwt-plugin.localWorkers}</localWorkers>

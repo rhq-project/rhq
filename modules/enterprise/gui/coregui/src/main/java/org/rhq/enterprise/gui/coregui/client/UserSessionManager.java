@@ -154,6 +154,12 @@ public class UserSessionManager {
                     Log.info("response text = " + response.getText());
                     String sessionIdString = response.getText();
 
+                    if (sessionIdString.startsWith("booting")) {
+                        // "booting" is the string we get back from SessionAccessServlet if StartupBean hasn't finished
+                        new LoginView().showLoginDialog(MSG.view_core_serverInitializing());
+                        return;
+                    }
+
                     // If a session is active it will return valid session strings
                     if (sessionIdString != null && sessionIdString.length() > 0) {
 

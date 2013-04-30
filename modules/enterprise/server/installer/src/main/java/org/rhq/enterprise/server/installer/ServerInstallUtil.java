@@ -92,11 +92,19 @@ public class ServerInstallUtil {
         public String name;
         public String sysprop;
         public int port;
+        public boolean required = true;
 
         public SocketBindingInfo(String n, String s, int p) {
             name = n;
             sysprop = s;
             port = p;
+        }
+
+        public SocketBindingInfo(String name, String sysprop, int port, boolean required) {
+            this.name = name;
+            this.port = port;
+            this.required = required;
+            this.sysprop = sysprop;
         }
     }
 
@@ -126,7 +134,7 @@ public class ServerInstallUtil {
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_NATIVE,
             "jboss.management.native.port", 6999));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_OSGI_HTTP,
-            "rhq.server.socket.binding.port.osgi-http", 7090));
+            "rhq.server.socket.binding.port.osgi-http", 7090, false));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_REMOTING,
             "rhq.server.socket.binding.port.remoting", 3447));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_TXN_RECOVERY_ENV,
@@ -192,7 +200,7 @@ public class ServerInstallUtil {
 
     /**
      * Prepares the mail service by configuring the SMTP settings.
-     * 
+     *
      * @param mcc JBossAS management client
      * @param serverProperties the server's properties
      * @throws Exception
@@ -238,7 +246,7 @@ public class ServerInstallUtil {
 
     /**
      * Give the server properties, this returns the type of database that will be connected to.
-     * 
+     *
      * @param serverProperties
      * @return the type of DB
      */
@@ -248,7 +256,7 @@ public class ServerInstallUtil {
 
     /**
      * Give the database type string, this returns the type of database that it refers to.
-     * 
+     *
      * @param dbType the database type string
      * @return the type of DB
      */
@@ -278,9 +286,16 @@ public class ServerInstallUtil {
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
         final String obfuscatedPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        final CoreJBossASClient coreClient = new CoreJBossASClient(mcc);
+        String asVersion = coreClient.getAppServerVersion();
         final String securityDomain = RHQ_DS_SECURITY_DOMAIN;
         if (!client.isSecurityDomain(securityDomain)) {
-            client.createNewSecureIdentitySecurityDomain(securityDomain, dbUsername, obfuscatedPassword);
+            if (asVersion.startsWith("7.2")) {
+                client.createNewSecureIdentitySecurityDomain72(securityDomain, dbUsername, obfuscatedPassword);
+            }
+            else {
+                client.createNewSecureIdentitySecurityDomain71(securityDomain, dbUsername, obfuscatedPassword);
+            }
             LOG.info("Security domain [" + securityDomain + "] created");
         } else {
             LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
@@ -369,12 +384,21 @@ public class ServerInstallUtil {
         throws Exception {
 
         final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        final CoreJBossASClient coreClient = new CoreJBossASClient(mcc);
+        String asRelase = coreClient.getAppServerVersion();
         final String securityDomain = RHQ_REST_SECURITY_DOMAIN;
         if (!client.isSecurityDomain(securityDomain)) {
             String dsJndiName = "java:jboss/datasources/" + RHQ_DATASOURCE_NAME_XA;
-            client.createNewDatabaseServerSecurityDomain(securityDomain, dsJndiName,
-                "SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?",
-                "SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?", null, null);
+            if (asRelase.startsWith("7.2")) {
+                client.createNewDatabaseServerSecurityDomain72(securityDomain, dsJndiName,
+                    "SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?",
+                    "SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?", null, null);
+            }
+            else {
+                client.createNewDatabaseServerSecurityDomain71(securityDomain, dsJndiName,
+                    "SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?",
+                    "SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?", null, null);
+            }
             LOG.info("Security domain [" + securityDomain + "] created");
         } else {
             LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
@@ -549,7 +573,7 @@ public class ServerInstallUtil {
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLExceptionSorter", 15, false, 2, 5, 75,
                 RHQ_DS_SECURITY_DOMAIN, "-unused-stale-conn-checker-", "TRANSACTION_READ_COMMITTED",
                 "org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker", props);
-            noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres            
+            noTxDsRequest.get("steps").get(0).remove("stale-connection-checker-class-name"); // we don't have one of these for postgres
         } else {
             LOG.info("Postgres datasource [" + RHQ_DATASOURCE_NAME_NOTX + "] already exists");
         }
@@ -847,9 +871,9 @@ public class ServerInstallUtil {
      * database connection. If <code>props</code> is <code>null</code>, it will use the server properties from
      * {@link #getServerProperties()}.
      *
-     * @param connectionUrl 
-     * @param userName 
-     * @param password 
+     * @param connectionUrl
+     * @param userName
+     * @param password
      * @return the database connection
      *
      * @throws SQLException if cannot successfully connect to the database
@@ -1303,9 +1327,9 @@ public class ServerInstallUtil {
      * has a value whose pathname is already absolute, return it. If the property has a value whose path
      * is relative, it is considered relative to defaultRootDir and its absolute path based on that root dir
      * is returned.
-     * 
+     *
      * @param propertyName the property whose value in properties is considered a pathname (which may
-     *                     relative or it may be absolute). 
+     *                     relative or it may be absolute).
      * @param properties where to find the named property
      * @param defaultRootDir if the property value is a relative file path, this is what it is relative to
      * @return the absolute path of the file
@@ -1364,7 +1388,7 @@ public class ServerInstallUtil {
 
     /**
      * Creates a keystore whose cert has a CN of this server's public endpoint address.
-     * 
+     *
      * @param serverDetails details of the server being installed - must not be null and endpoint must be included in it
      * @param configDirStr location of a configuration directory where the keystore is to be stored
      * @return where the keystore file should be created (if an error occurs, this file won't exist)
@@ -1410,7 +1434,7 @@ public class ServerInstallUtil {
     /**
      * Create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
      * connect to the RHQ Server.
-     * 
+     *
      * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the mgmt-users.properties file lives
      */
@@ -1463,7 +1487,17 @@ public class ServerInstallUtil {
                 }
             }
             LOG.info(String.format("Setting socket binding [%s] to [${%s:%d}]", binding.name, binding.sysprop, newPort));
-            client.setStandardSocketBindingPortExpression(binding.name, binding.sysprop, newPort);
+            try {
+                client.setStandardSocketBindingPortExpression(binding.name, binding.sysprop, newPort);
+            } catch (Exception e) {
+                // If the binding is required, we re-throw a possible exception. Otherwise just log
+                if (binding.required) {
+                    throw e;
+                }
+                else {
+                    LOG.info(String.format("Setting socket binding: [%s] resulted in [%s] -- this is harmless " , binding.name , e.getMessage())); // TODO log at debug level only?
+                }
+            }
         }
     }
 

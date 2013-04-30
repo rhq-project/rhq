@@ -55,7 +55,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.monitoring.IFrameWithMeasurementRangeEditorView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationView;
@@ -101,7 +100,6 @@ public class ResourceGroupDetailView extends
     // subtabs
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
-    private SubTab monitorGraphs;
     private SubTab monitorNewGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
@@ -193,14 +191,13 @@ public class ResourceGroupDetailView extends
 
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
-        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
-        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", "d3 Graphs"), null);
+        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
         monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
 
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorNewGraphs, monitorTables, monitorTraits, monitorSched,
+        monitoringTab.registerSubTabs( monitorNewGraphs, monitorTables, monitorTraits, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 
@@ -224,15 +221,6 @@ public class ResourceGroupDetailView extends
         this.configHistory = new SubTab(configurationTab, new ViewName("History", MSG.view_tabs_common_history()), null);
         configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
         tabs.add(configurationTab);
-
-        //        driftTab = new TwoLevelTab(getTabSet(), new ViewName(Tab.DRIFT, MSG
-        //            .view_tabs_common_drift()), "subsystems/drift/Drift_16.png");
-        //        this.driftHistory = new SubTab(driftTab, new ViewName(DriftSubTab.HISTORY,
-        //            MSG.view_tabs_common_history()), null);
-        //        this.driftDefinition = new SubTab(driftTab, new ViewName(
-        //            DriftSubTab.DEFINITIONS, MSG.common_title_definitions()), null);
-        //        driftTab.registerSubTabs(driftHistory, driftDefinition);
-        //        tabs.add(driftTab);
 
         return tabs;
     }
@@ -258,7 +246,6 @@ public class ResourceGroupDetailView extends
             updateEventsTab(groupCategory, facets);
             updateOperationsTab(groupCategory, facets);
             updateConfigurationTab(groupCategory, facets);
-            // updateDriftTab(groupCategory, facets);
 
             this.show();
             markForRedraw();
@@ -275,36 +262,27 @@ public class ResourceGroupDetailView extends
                 return new ActivityView(groupComposite, isAutoCluster(), isAutoGroup());
             }
         });
-        // TODO (ips): Add Timeline subtab?
     }
 
     private void updateMonitoringTab(Set<ResourceTypeFacet> facets) {
         ViewFactory viewFactory;
-        // TODO: Once we add an Availability subtab, the Monitoring tab will always be visible, even for groups with
-        //       no metrics.
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
             final EntityContext groupContext = EntityContext.forGroup(groupComposite.getResourceGroup());
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
-            viewFactory = (!visible) ? null : new ViewFactory() {
-                @Override
-                public Canvas createView() {
-                    String url = "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId;
+            boolean showOnPage;
 
-                    if (groupContext.isAutoGroup()) {
-                        url += "&parent=" + groupContext.parentResourceId + "&type=" + groupContext.resourceTypeId
-                            + "&groupType=auto";
-                    } else if (groupContext.isAutoCluster()) {
-                        url += "&groupType=cluster";
-                    }
-                    return new IFrameWithMeasurementRangeEditorView(url);
+            if(BrowserUtility.isBrowserPreIE9()){
+                showOnPage = false;
+            }else{
+                if(visible) {
+                    showOnPage = true;
+                }else {
+                    showOnPage = false;
                 }
-            };
-            updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
+            }
 
-            boolean visibleToIE8 = !BrowserUtility.isBrowserIE8();
-
-            viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
+            viewFactory = (!showOnPage) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
                     return createD3GraphListView();
@@ -349,7 +327,6 @@ public class ResourceGroupDetailView extends
                 }
             };
             updateSubTab(this.monitoringTab, this.monitorCallTime, visible, true, viewFactory);
-            // TODO (ips): Add Availability subtab.
         }
     }
 
@@ -454,28 +431,6 @@ public class ResourceGroupDetailView extends
         }
     }
 
-    //
-    //    private void updateDriftTab(GroupCategory groupCategory, Set<ResourceTypeFacet> facets) {
-    //        boolean visible = (groupCategory == GroupCategory.COMPATIBLE && facets.contains(ResourceTypeFacet.DRIFT));
-    //        Set<Permission> groupPermissions = this.groupComposite.getResourcePermission().getPermissions();
-    //
-    //        if (updateTab(this.driftTab, visible, visible && groupPermissions.contains(Permission.MANAGE_DRIFT))) {
-    //
-    //            updateSubTab(this.driftTab, this.driftHistory, true, true, new ViewFactory() {
-    //                @Override
-    //                public Canvas createView() {
-    //                    return ResourceDriftHistoryView.get(null);
-    //                }
-    //            });
-    //
-    //            updateSubTab(this.driftTab, this.driftDefinition, true, true, new ViewFactory() {
-    //                @Override
-    //                public Canvas createView() {
-    //                    return ResourceDriftDefinitionsView.get(null);
-    //                }
-    //            });
-    //        }
-    //    }
 
     @Override
     protected ResourceGroupComposite getSelectedItem() {
@@ -529,10 +484,8 @@ public class ResourceGroupDetailView extends
 
                                     @Override
                                     public void onSuccess(Subject result) {
-                                        if (Log.isDebugEnabled()) {
-                                            Log.debug("Updated recently viewed resource groups for " + result
+                                        Log.debug("Updated recently viewed resource groups for " + result
                                                 + " with resourceGroupId [" + groupId + "]");
-                                        }
                                     }
                                 });
                         }

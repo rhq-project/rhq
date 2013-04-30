@@ -18,10 +18,10 @@
  */
 package org.rhq.enterprise.server.auth;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Random;
 
 import org.rhq.core.domain.auth.Subject;
@@ -95,6 +95,16 @@ public final class SessionManager {
      */
     public static SessionManager getInstance() {
         return _manager;
+    }
+
+    /**
+     * Returns the number of sessions that are currently held by this manager.
+     * This count includes those sessions that may have already timed out but not yet invalidated and purged.
+     *
+     * @return total number of sessions
+     */
+    public synchronized int getSessionCount() {
+        return _cache.size();
     }
 
     /**
@@ -181,17 +191,24 @@ public final class SessionManager {
         _cache.remove(new Integer(sessionId));
 
         // while we are here, let's go through the entire session cache and remove expired sessions
-        List<Integer> expired_session_ids = new ArrayList<Integer>();
+        purgeTimedOutSessions();
 
-        for (Map.Entry<Integer, AuthSession> map_entry : _cache.entrySet()) {
+        return;
+    }
+
+    /**
+     * Asks the session manager to examine all sessions and invalidate those sessions that have timed out.
+     */
+    public synchronized void purgeTimedOutSessions() {
+        checkPermission();
+
+        Iterator<Entry<Integer, AuthSession>> iterator = _cache.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, AuthSession> map_entry = iterator.next();
             AuthSession session = map_entry.getValue();
             if (session.isExpired()) {
-                expired_session_ids.add(map_entry.getKey());
+                iterator.remove();
             }
-        }
-
-        for (Integer expired_session_id : expired_session_ids) {
-            _cache.remove(expired_session_id);
         }
 
         return;
@@ -204,20 +221,20 @@ public final class SessionManager {
      */
     public synchronized void invalidate(String username) {
         checkPermission();
-        List<Integer> doomedSessionIds = new ArrayList<Integer>(_cache.size());
-        for (AuthSession s : _cache.values()) {
-            if (username.equals(s.getSubject(false).getName())) {
-                doomedSessionIds.add(s.getSubject(false).getSessionId());
+
+        Iterator<Entry<Integer, AuthSession>> iterator = _cache.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry<Integer, AuthSession> map_entry = iterator.next();
+            AuthSession session = map_entry.getValue();
+            if (username.equals(session.getSubject(false).getName())) {
+                iterator.remove();
             }
-        }
-        for (Integer sessionId : doomedSessionIds) {
-            _cache.remove(new Integer(sessionId));
         }
 
         return;
     }
 
-    public long getlastAccess(int sessionId) {
+    public synchronized long getLastAccess(int sessionId) {
         checkPermission();
         AuthSession session = _cache.get(sessionId);
         if (session == null) {

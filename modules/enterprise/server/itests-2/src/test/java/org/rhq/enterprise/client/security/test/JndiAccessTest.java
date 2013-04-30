@@ -167,7 +167,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
         };
         G manager = new G();
         
-        manager.testInvoke("getlastAccess(0);");
+        manager.testInvoke("getLastAccess(0);");
         manager.testInvoke("getOverlord()");
         manager.testInvoke("getSubject(2);");
         manager.testInvoke("invalidate(0);");

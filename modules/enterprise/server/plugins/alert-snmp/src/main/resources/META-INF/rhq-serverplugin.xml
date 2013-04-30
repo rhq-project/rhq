@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 
-<alert-plugin
+<a:alert-plugin
         name="alert-snmp"
         displayName="Alert:SNMP"
-        xmlns="urn:xmlns:rhq-serverplugin.alert"
+        xmlns:a="urn:xmlns:rhq-serverplugin.alert"
         xmlns:c="urn:xmlns:rhq-configuration"
         xmlns:serverplugin="urn:xmlns:rhq-serverplugin"
         package="org.rhq.enterprise.server.plugins.alertSnmp"
@@ -65,15 +65,33 @@
     </serverplugin:plugin-configuration>
 
     <!-- How does this sender show up in drop downs etc -->
-    <short-name>SNMP Traps</short-name>
+    <a:short-name>SNMP Traps</a:short-name>
 
     <!-- Class that does the actual sending -->
-    <plugin-class>SnmpSender</plugin-class>
+    <a:plugin-class>SnmpSender</a:plugin-class>
 
-    <alert-configuration>
+    <a:alert-configuration>
         <c:simple-property name="host" type="string" required="true" description="Trap target host"/>
         <c:simple-property name="port" type="integer" required="false" default="162" description="Trap target port"/>
-        <c:simple-property name="oid" type="string" required="true" description="OID of the trap sent"/>
-
-    </alert-configuration>
-</alert-plugin>
+        <c:simple-property name="oid" displayName="Variable bindings prefix" type="string" required="true">
+          <c:description>
+            <![CDATA[
+            <p>RHQ will send alert notification details as a list of variable bindings in the
+             SNMP trap PDU.</p>
+            <p><strong>Do not confuse this paramater with 'Trap Oid'.</strong></p>
+            ]]>
+          </c:description>
+        </c:simple-property>
+        <c:simple-property name="trapOid" required="false">
+          <c:description>
+            <![CDATA[
+            <p>If set, the value of this paramater will override the value of the Trap Oid parameter defined globally
+             in the server plugin configuration. The Trap OID is sent as the second variable binding in the SNMP trap
+             PDU.</p>
+            <p><strong>Only applicable to v2c and v3 traps.</strong></p>
+            <p><strong>Do not confuse this paramater with 'Variable bindings prefix'.</strong></p>
+            ]]>
+          </c:description>
+        </c:simple-property>
+    </a:alert-configuration>
+</a:alert-plugin>

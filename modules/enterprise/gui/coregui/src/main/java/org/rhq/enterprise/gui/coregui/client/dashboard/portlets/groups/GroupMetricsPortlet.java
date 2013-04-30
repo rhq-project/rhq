@@ -371,8 +371,8 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                             }
                                                         }
                                                         DynamicForm row = new DynamicForm();
-                                                        row.setNumCols(4);
-                                                        row.setColWidths(65, "*", 20, 100);
+                                                        row.setNumCols(3);
+                                                        row.setColWidths(65, "*", 100);
                                                         row.setWidth100();
                                                         row.setAutoHeight();
                                                         row.setOverflow(Overflow.VISIBLE);
@@ -401,6 +401,8 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                         link.setClipValue(true);
                                                         link.setWrap(true);
                                                         link.setHeight(26);
+                                                        if(!BrowserUtility.isBrowserPreIE9()){
+
                                                         link.addClickHandler(new ClickHandler() {
                                                             @Override
                                                             public void onClick(ClickEvent event) {
@@ -412,32 +414,11 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                                 window.show();
                                                             }
                                                         });
+                                                        }else {
+                                                            link.disable();
+                                                        }
 
-                                                        //@todo: this goes away once we have validated the new d3 charts
-                                                        final String destination = "/resource/common/monitor/Visibility.do?mode=chartSingleMetricMultiResource&groupId="
-                                                            + groupId + "&m=" + md.getId();
-                                                        LinkItem oldLink = AbstractActivityView.newLinkItem("*",
-                                                            destination);
-                                                        oldLink.setTooltip("Link to Old Charts");
-                                                        oldLink.setTitleVAlign(VerticalAlignment.TOP);
-                                                        oldLink.setAlign(Alignment.LEFT);
-                                                        oldLink.setClipValue(true);
-                                                        oldLink.setWrap(true);
-                                                        oldLink.setHeight(26);
-                                                        oldLink.setWidth("100%");
 
-                                                        oldLink.addClickHandler(new ClickHandler() {
-                                                            @Override
-                                                            public void onClick(ClickEvent event) {
-                                                                ChartViewWindow window = new ChartViewWindow(title);
-                                                                //generate and include iframed content
-                                                                FullHTMLPane iframe = new FullHTMLPane(destination);
-                                                                //                                                                            .extendLocatorId("View"),
-                                                                //                                                                        AbstractActivityView.iframeLink(destination));
-                                                                window.addItem(iframe);
-                                                                window.show();
-                                                            }
-                                                        });
                                                         //Value
                                                         String convertedValue = AbstractActivityView
                                                             .convertLastValueForDisplay(lastValue, md);
@@ -447,7 +428,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                         value.setAlign(Alignment.RIGHT);
                                                         value.setWidth("100%");
 
-                                                        row.setItems(graphContainer, link, oldLink, value);
+                                                        row.setItems(graphContainer, link, value);
                                                         row.setWidth100();
                                                         //if graph content returned
                                                         if ((!md.getName().trim().contains("Trait."))

@@ -180,8 +180,8 @@
                dest="${jboss.modules.dir}"/>
 
         <echo>Updating module descriptor for sun.jdk to work around https://issues.jboss.org/browse/AS7-2138</echo>
-        <copy file="src/main/bin-resources/jbossas/modules/sun/jdk/main/module.xml"
-              tofile="${jboss.home}/modules/sun/jdk/main/module.xml"
+        <copy file="src/main/bin-resources/jbossas/modules/system/layers/base/sun/jdk/main/module.xml"
+              tofile="${jboss.home}/modules/system/layers/base/sun/jdk/main/module.xml"
               overwrite="true"/>
 
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>

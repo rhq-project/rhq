@@ -834,7 +834,6 @@ rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
         <echo>Make sure shell scripts are readable and executable.</echo>
         <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh,rhqctl" perm="ug+x" verbose="true" />
         <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
-        <chmod file="${project.build.outputDirectory}/bin/rhqctl" perm="ug+x" verbose="true" />
     </target>
 
     <target name="developer-release-message" if="predeploy">

@@ -271,12 +271,9 @@
 
                                         <!-- Make sure shell scripts are readable and executable. -->
                                         <chmod perm="ug+x" verbose="true">
-                                            <fileset dir="${deployment.dir}/bin"         includes="*.sh" />
+                                            <fileset dir="${deployment.dir}/bin"         includes="*.sh,rhqctl" />
                                             <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh" />
                                         </chmod>
-
-                                        <!-- Adding explicitly the rhqctl script. -->
-                                        <chmod perm="ug+x" verbose="true" file="${deployment.dir}/bin/rhqctl" />
                                     </target>
                                 </configuration>
                                 <goals>

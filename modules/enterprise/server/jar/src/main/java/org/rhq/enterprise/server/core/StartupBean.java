@@ -146,11 +146,8 @@ public class StartupBean implements StartupLocal {
 
     /**
      * Modifies the naming subsystem to be able to check for Java security permissions on JNDI lookup.
-     * <p>
-     * Made public so that this can be reused in tests.
      */
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void secureNaming() {
+    private void secureNaming() {
         NamingHack.bruteForceInitialContextFactoryBuilder();
     }
 

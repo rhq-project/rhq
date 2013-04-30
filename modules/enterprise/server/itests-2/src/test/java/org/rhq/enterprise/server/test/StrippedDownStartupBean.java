@@ -21,8 +21,6 @@
 package org.rhq.enterprise.server.test;
 
 import javax.ejb.Singleton;
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
 
 import org.rhq.enterprise.server.core.StartupBean;
 import org.rhq.enterprise.server.naming.NamingHack;
@@ -34,8 +32,7 @@ import org.rhq.enterprise.server.naming.NamingHack;
 @Singleton
 public class StrippedDownStartupBean {
 
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void secureNaming() {
+    private void secureNaming() {
         NamingHack.bruteForceInitialContextFactoryBuilder();
     }
 

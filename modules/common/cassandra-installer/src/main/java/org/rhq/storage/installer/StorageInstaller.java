@@ -164,12 +164,31 @@ public class StorageInstaller {
         Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed "
             + "The default directory will be " + storageBasedir);
 
+        Option heapSizeOption = new Option(null, "heap-size", true, "The value to use for both the min and max heap. " +
+            "This value is passed directly to the -Xms and -Xmx options of the Java executable.");
+
+        Option heapNewSizeOption = new Option(null, "heap-new-size", true, "The value to use for the new generation " +
+            "of the heap. This value is passed directly to the -Xmn option of the Java executable");
+
+        Option stackSizeOption = new Option(null, "stack-size", true, "The value to use for the thread stack size. " +
+            "This value is passed directly to the -Xss option of the Java executable.");
+
         options = new Options().addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
-            //.addOption(seeds)
-            .addOption(jmxPortOption).addOption(startOption).addOption(checkStatus).addOption(commitLogOption)
-            .addOption(dataDirOption).addOption(savedCachesDirOption).addOption(nativeTransportPortOption)
-            .addOption(storagePortOption).addOption(sslStoragePortOption).addOption(basedirOption);
+            .addOption(seeds)
+            .addOption(jmxPortOption)
+            .addOption(startOption)
+            .addOption(checkStatus)
+            .addOption(commitLogOption)
+            .addOption(dataDirOption)
+            .addOption(savedCachesDirOption)
+            .addOption(nativeTransportPortOption)
+            .addOption(storagePortOption)
+            .addOption(sslStoragePortOption)
+            .addOption(basedirOption)
+            .addOption(heapSizeOption)
+            .addOption(heapNewSizeOption)
+            .addOption(stackSizeOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -201,7 +220,7 @@ public class StorageInstaller {
             // Rather than have the user specify the seeds for each node, the installer can
             // obtain the list either from the RHQ server or directly from querying the
             // database.
-            String seeds = hostname;
+            String seeds = cmdLine.getOptionValue("seeds", hostname);
             deploymentOptions.setSeeds(seeds);
 
             commitLogDir = cmdLine.getOptionValue("commitlog", commitLogDir);
@@ -220,6 +239,19 @@ public class StorageInstaller {
             deploymentOptions.setNativeTransportPort(getPort(cmdLine, "client-port", nativeTransportPort));
             deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
             deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
+
+            if (cmdLine.hasOption("heap-size")) {
+                deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size"));
+            }
+
+            if (cmdLine.hasOption("heap-new-size")) {
+                deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size"));
+            }
+
+            if (cmdLine.hasOption("stack-size")) {
+                deploymentOptions.setStackSize(cmdLine.getOptionValue("stack-size"));
+            }
+
             deploymentOptions.load();
 
             List<String> errors = new ArrayList<String>();

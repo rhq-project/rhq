@@ -566,6 +566,7 @@ public class StorageInstaller {
             System.exit(1);
         } catch (ParseException e) {
             installer.printUsage();
+            System.exit(STATUS_SHOW_USAGE);
         }
     }
 

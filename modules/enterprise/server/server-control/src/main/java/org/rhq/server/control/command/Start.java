@@ -163,11 +163,7 @@ public class Start extends ControlCommand {
                 log.debug("Failed to start server service", e);
             }
         } else {
-            String pid = getServerPid();
-
-            if (pid != null) {
-                executor.execute(commandLine);
-            }
+            executor.execute(commandLine);
         }
     }
 

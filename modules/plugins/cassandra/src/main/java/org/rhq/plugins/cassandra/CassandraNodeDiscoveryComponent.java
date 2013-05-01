@@ -69,15 +69,18 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
     @SuppressWarnings({ "unchecked", "deprecation" })
     private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext<?> context,
         ProcessScanResult processScanResult) {
+
         ProcessInfo processInfo = processScanResult.getProcessInfo();
 
-        Configuration pluginConfig = new Configuration();
+        Configuration pluginConfig = context.getDefaultPluginConfiguration();
 
         String jmxPort = null;
 
 
         String[] arguments = processInfo.getCommandLine();
+        StringBuilder commandLineBuilder = new StringBuilder(400);
         int classpathIndex = -1;
+
         for (int i = 0; i < arguments.length; i++) {
             String arg = arguments[i];
 
@@ -88,7 +91,12 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
             if (arg.startsWith("-cp")) {
                 classpathIndex = i;
             }
+
+            commandLineBuilder.append(arg);
+            commandLineBuilder.append(' ');
         }
+
+        pluginConfig.put(new PropertySimple("commandLine", commandLineBuilder.toString()));
 
         if (classpathIndex != -1 && classpathIndex + 1 < arguments.length) {
             String[] classpathEntries = arguments[classpathIndex + 1].split(":");
@@ -104,7 +112,10 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
                 InputStream inputStream = null;
                 try {
-                    inputStream = new FileInputStream(new File(yamlConfigurationPath + "/cassandra.yaml"));
+                    File yamlConfigurationFile = new File(yamlConfigurationPath + "/cassandra.yaml");
+                    pluginConfig.put(new PropertySimple("yamlConfiguration", yamlConfigurationFile.getAbsolutePath()));
+
+                    inputStream = new FileInputStream(yamlConfigurationFile);
                     Yaml yaml = new Yaml();
                     Map<String, String> parsedProperties = (Map<String, String>) yaml.load(inputStream);
 

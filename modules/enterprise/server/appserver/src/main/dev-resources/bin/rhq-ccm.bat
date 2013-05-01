@@ -120,7 +120,7 @@ if not defined RHQ_SERVER_DEBUG set _RHQ_LOGLEVEL=INFO
 set RHQ_CCM_JAVA_OPTS=%RHQ_CCM_JAVA_OPTS% -Djava.awt.headless=true -Drhq.server.properties-file=%RHQ_SERVER_HOME%\bin\rhq-server.properties -Drhq.ccm.logdir=%RHQ_SERVER_HOME%\logs -Drhq.ccm.loglevel=%_RHQ_LOGLEVEL%
 
 rem Sample JPDA settings for remote socket debugging
-rem RHQ_CCM_JAVA_OPTS=%RHQ_CCM_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y
+rem set RHQ_CCM_JAVA_OPTS=%RHQ_CCM_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y
 
 if defined RHQ_SERVER_DEBUG echo RHQ_CCM_JAVA_OPTS: %RHQ_CCM_JAVA_OPTS%
 if defined RHQ_SERVER_DEBUG echo RHQ_CCM_ADDITIONAL_JAVA_OPTS: %RHQ_CCM_ADDITIONAL_JAVA_OPTS%

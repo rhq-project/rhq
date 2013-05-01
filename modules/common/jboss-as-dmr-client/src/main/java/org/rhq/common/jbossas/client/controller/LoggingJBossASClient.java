@@ -72,7 +72,7 @@ public class LoggingJBossASClient extends JBossASClient {
         final ModelNode request;
 
         if (isLogger(loggerName)) {
-            request = createWriteAttributeRequest("level", level.toUpperCase(), addr);
+            request = createWriteAttributeRequest("level", level, addr);
         } else {
             final String dmrTemplate = "" //
                 + "{" //
@@ -80,7 +80,7 @@ public class LoggingJBossASClient extends JBossASClient {
                 + ", \"level\" => \"%s\" " //
                 + ", \"use-parent-handlers\" => \"true\" " //
                 + "}";
-            final String dmr = String.format(dmrTemplate, loggerName, level.toUpperCase());
+            final String dmr = String.format(dmrTemplate, loggerName, level);
 
             request = ModelNode.fromString(dmr);
             request.get(OPERATION).set(ADD);

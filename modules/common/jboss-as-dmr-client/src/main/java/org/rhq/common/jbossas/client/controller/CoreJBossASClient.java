@@ -46,6 +46,29 @@ public class CoreJBossASClient extends JBossASClient {
     }
 
     /**
+     * Given a string with possible ${x} expressions in it, this will resolve that expression
+     * using system property values that are set within the AS JVM itself. If the string
+     * to resolve has no expressions, or has no expressions that are resolveable, the expression
+     * string itself is returned as-is (this includes if <code>expression</code> is <code>null</code>).
+     *
+     * @param expression string containing zero, one or more ${x} expressions to be resolved
+     * @return the expression with the expressions resolved using system properties of the AS JVM
+     * @throws Exception if failed to resolve the expression.
+     */
+    public String resolveExpression(String expression) throws Exception {
+        if (expression == null || expression.length() == 0) {
+            return expression;
+        }
+        final ModelNode request = createRequest("resolve-expression", Address.root());
+        request.get("expression").set(expression);
+        final ModelNode response = execute(request);
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return getResults(response).asString();
+    }
+
+    /**
      * This returns the system properties that are set in the AS JVM. This is not the system properties
      * in the JVM of this client object - it is actually the system properties in the remote
      * JVM of the AS instance that the client is talking to.

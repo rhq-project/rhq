@@ -117,6 +117,13 @@ public class SchemaManager {
             log.debug("Creating keyspace [" + RHQ_KEYSPACE + "]");
             session.execute(
                 "CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
+
+            // Note that once we have a schema management tool back in place, the call
+            // to createTables will be moved back to the updateSchema method as it
+            // previously was when we were using liquibase. We do NOT want to have
+            // separate install/update schema changes. Treating everything as an update as
+            // liquibase does dramatically simplifies things.
+            createTables();
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }
@@ -143,6 +150,10 @@ public class SchemaManager {
 
     public void updateSchema() {
         log.info("Applying schema updates");
+        //createTables();
+    }
+
+    private void createTables() {
         try {
             log.debug("Creating table raw_metrics");
             session.execute(

@@ -101,18 +101,21 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         if (classpathIndex != -1 && classpathIndex + 1 < arguments.length) {
             String[] classpathEntries = arguments[classpathIndex + 1].split(":");
 
-            String yamlConfigurationPath = null;
+            File yamlConfigurationPath = null;
             for (String classpathEntry : classpathEntries) {
                 if (classpathEntry.endsWith("conf")) {
-                    yamlConfigurationPath = processInfo.getExecutable().getCwd() + "/" + classpathEntry;
+                    yamlConfigurationPath = new File(classpathEntry);
+                    if (!yamlConfigurationPath.isAbsolute()) {
+                        //relative path, use process CWD to find absolute path of the conf directory
+                        yamlConfigurationPath = new File(processInfo.getExecutable().getCwd(), classpathEntry);
+                    }
                 }
             }
 
             if (yamlConfigurationPath != null) {
-
                 InputStream inputStream = null;
                 try {
-                    File yamlConfigurationFile = new File(yamlConfigurationPath + "/cassandra.yaml");
+                    File yamlConfigurationFile = new File(yamlConfigurationPath, "cassandra.yaml");
                     pluginConfig.put(new PropertySimple("yamlConfiguration", yamlConfigurationFile.getAbsolutePath()));
 
                     inputStream = new FileInputStream(yamlConfigurationFile);

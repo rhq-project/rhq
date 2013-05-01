@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 /**
  * Contains the javascript chart definition for an IE8 d3 Stacked Bar graph chart.
+ * Curr
  *
  * @author Mike Thompson
  */
@@ -39,8 +40,7 @@ public final class StackedBarMetricGraphIE8Impl extends StackedBarMetricGraphImp
      */
     @Override
     public native void drawJsniChart() /*-{
-        console.log("Using StackedBarMetricGraphIE8Impl for IE8.");
-
+        // no-op implementation for ie8
     }-*/;
 
 }

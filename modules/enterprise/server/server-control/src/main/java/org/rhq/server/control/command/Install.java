@@ -195,7 +195,7 @@ public class Install extends ControlCommand {
                 }
             }
         } catch (Exception e) {
-            throw new RHQControlException("Failed to install services", e);
+            throw new RHQControlException("An error occurred while executing the install command", e);
         }
     }
 
@@ -296,24 +296,31 @@ public class Install extends ControlCommand {
         return DEFAULT_AGENT_BASEDIR;
     }
 
-    private int installStorageNode(File storageBasedir, CommandLine rhqctlCommandLine) throws Exception {
-        log.debug("Installing RHQ storage node");
+    private int installStorageNode(File storageBasedir, CommandLine rhqctlCommandLine) throws IOException {
+        try {
+            log.info("Preparing to install RHQ storage node.");
 
-        putProperty(RHQ_STORAGE_BASEDIR_PROP, storageBasedir.getAbsolutePath());
+            putProperty(RHQ_STORAGE_BASEDIR_PROP, storageBasedir.getAbsolutePath());
 
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
-            storageBasedir.getAbsolutePath());
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
+                storageBasedir.getAbsolutePath());
 
-        if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
-            String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
-            commandLine.addArguments(args);
+            if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
+                String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
+                commandLine.addArguments(args);
+            }
+
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(binDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+
+            int exitCode = executor.execute(commandLine);
+            log.info("The storage node installer has finished with an exit value of " + exitCode);
+            return exitCode;
+        } catch (IOException e) {
+            log.error("An error occurred while running the storage installer: " + e.getMessage());
+            throw e;
         }
-
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
-        executor.setStreamHandler(new PumpStreamHandler());
-
-        return executor.execute(commandLine);
     }
 
     private Properties loadStorageProperties(String path) throws IOException {
@@ -333,61 +340,86 @@ public class Install extends ControlCommand {
         return array;
     }
 
-    private void startRHQServerForInstallation() throws Exception {
+    private void startRHQServerForInstallation() throws IOException {
+        try {
+            log.info("Starting the RHQ server in preparation of running the installer");
 
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
-        executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine;
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(binDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+            org.apache.commons.exec.CommandLine commandLine;
 
-        if (isWindows()) {
-            // For windows we will [re-]install the server as a windows service, then start the service.
+            if (isWindows()) {
+                // For windows we will [re-]install the server as a windows service, then start the service.
 
-            commandLine = getCommandLine("rhq-server", "stop");
-            executor.execute(commandLine);
+                commandLine = getCommandLine("rhq-server", "stop");
+                executor.execute(commandLine);
 
-            commandLine = getCommandLine("rhq-server", "remove");
-            executor.execute(commandLine);
+                commandLine = getCommandLine("rhq-server", "remove");
+                executor.execute(commandLine);
 
-            commandLine = getCommandLine("rhq-server", "install");
-            executor.execute(commandLine);
+                commandLine = getCommandLine("rhq-server", "install");
+                executor.execute(commandLine);
 
-            commandLine = getCommandLine("rhq-server", "start");
-            executor.execute(commandLine);
+                commandLine = getCommandLine("rhq-server", "start");
+                executor.execute(commandLine);
 
-        } else {
-            // For *nix, just start the server in the background
-            commandLine = getCommandLine("rhq-server", "start");
-            executor.execute(commandLine, new DefaultExecuteResultHandler());
-        }
+            } else {
+                // For *nix, just start the server in the background
+                commandLine = getCommandLine("rhq-server", "start");
+                executor.execute(commandLine, new DefaultExecuteResultHandler());
+            }
 
-        // Wait for the server to complete it's startup
-        commandLine = getCommandLine("rhq-installer", "--test");
+            // Wait for the server to complete it's startup
+            log.info("Waiting for server to complete its start up");
+            commandLine = getCommandLine("rhq-installer", "--test");
 
-        int exitCode = executor.execute(commandLine);
-        while (exitCode != 0) {
-            exitCode = executor.execute(commandLine);
+            // TODO add a max retries (probably want it to be configurable)
+            int exitCode = executor.execute(commandLine);
+            while (exitCode != 0) {
+                log.debug("Still waiting for server to complete its start up");
+                exitCode = executor.execute(commandLine);
+            }
+
+            log.info("The server start up has completed");
+        } catch (IOException e) {
+            log.error("An error occurred while starting the RHQ server: " + e.getMessage());
+            throw e;
         }
     }
 
-    private void installRHQServer() throws Exception {
-        log.debug("Installing RHQ server");
+    private void installRHQServer() throws IOException {
+        try {
+            log.info("Installing RHQ server");
 
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
-        executor.setStreamHandler(new PumpStreamHandler());
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(binDir);
+            executor.setStreamHandler(new PumpStreamHandler());
 
-        executor.execute(commandLine, new DefaultExecuteResultHandler());
+            executor.execute(commandLine, new DefaultExecuteResultHandler());
+            log.info("The server installer is running");
+        } catch (IOException e) {
+            log.error("An error occurred while starting the server installer: " + e.getMessage());
+        }
     }
 
     private void waitForRHQServerToInitialize() throws Exception {
-        while (!isRHQServerInitialized()) {
-            Thread.sleep(5000);
+        try {
+            log.info("Waiting for RHQ server to initialize");
+            while (!isRHQServerInitialized()) {
+                Thread.sleep(5000);
+            }
+        } catch (IOException e) {
+            log.error("An error occurred while checking to see if the server is initialized: " + e.getMessage());
+            throw e;
+        } catch (InterruptedException e) {
+            // Don't think we need to log any details here
+            throw e;
         }
     }
 
-    private boolean isRHQServerInitialized() throws Exception {
+    private boolean isRHQServerInitialized() throws IOException {
         File logDir = new File(basedir, "logs");
 
         BufferedReader reader = null;
@@ -415,24 +447,30 @@ public class Install extends ControlCommand {
         }
     }
 
-    private void installAgent(File agentBasedir) throws Exception {
-        log.debug("Installing RHQ agent");
+    private void installAgent(File agentBasedir) throws IOException {
+        try {
+            log.info("Installing RHQ agent");
 
-        File agentInstallerJar = getAgentInstaller();
+            File agentInstallerJar = getAgentInstaller();
 
-        putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
+            putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath());
 
-        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
-            .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
-            .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath());
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
+                .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
+                .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath());
 
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(basedir);
-        executor.setStreamHandler(new PumpStreamHandler());
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(basedir);
+            executor.setStreamHandler(new PumpStreamHandler());
 
-        executor.execute(commandLine);
+            int exitValue = executor.execute(commandLine);
+            log.info("The agent installer finished running with exit value " + exitValue);
 
-        new File(basedir, "rhq-agent-update.log").delete();
+            new File(basedir, "rhq-agent-update.log").delete();
+        } catch (IOException e) {
+            log.error("An error occurred while running the agent installer: " + e.getMessage());
+            throw e;
+        }
     }
 
     private File getAgentInstaller() {
@@ -447,25 +485,33 @@ public class Install extends ControlCommand {
     }
 
     private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
-        if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
-            replaceAgentConfigIfNecessary(commandLine);
-        } else {
-            File agentConfDir = new File(agentBasedir, "conf");
-            File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
-            agentConfigFile.delete();
+        try {
+            log.info("Configuring the RHQ agent");
+            if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+                replaceAgentConfigIfNecessary(commandLine);
+            } else {
+                File agentConfDir = new File(agentBasedir, "conf");
+                File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
+                agentConfigFile.delete();
 
-            Map<String, String> tokens = new TreeMap<String, String>();
-            tokens.put("rhq.agent.server.bind-address", InetAddress.getLocalHost().getHostName());
+                Map<String, String> tokens = new TreeMap<String, String>();
+                tokens.put("rhq.agent.server.bind-address", InetAddress.getLocalHost().getHostName());
 
-            InputStream inputStream = getClass().getResourceAsStream("/agent-configuration.xml");
-            TokenReplacingReader reader = new TokenReplacingReader(new InputStreamReader(inputStream), tokens);
-            BufferedWriter writer = new BufferedWriter(new FileWriter(agentConfigFile));
+                InputStream inputStream = getClass().getResourceAsStream("/agent-configuration.xml");
+                TokenReplacingReader reader = new TokenReplacingReader(new InputStreamReader(inputStream), tokens);
+                BufferedWriter writer = new BufferedWriter(new FileWriter(agentConfigFile));
 
-            StreamUtil.copy(reader, writer);
+                StreamUtil.copy(reader, writer);
+                log.info("Finished configuring the agent");
+            }
+        } catch (Exception e) {
+            log.error("An error occurred while configuring the agent: " + e.getMessage());
+            throw e;
         }
     }
 
     private void clearAgentPreferences() throws Exception {
+        log.info("Removing any existing agent preferences");
         Preferences agentPrefs = Preferences.userRoot().node("/rhq-agent");
         agentPrefs.removeNode();
         agentPrefs.flush();
@@ -473,38 +519,46 @@ public class Install extends ControlCommand {
     }
 
     private void startAgent(File agentBasedir) throws Exception {
-        Executor executor = new DefaultExecutor();
-        File agentBinDir = new File(agentBasedir, "bin");
-        executor.setWorkingDirectory(agentBinDir);
-        executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine;
+        try {
+            log.info("Starting RHQ agent");
+            Executor executor = new DefaultExecutor();
+            File agentBinDir = new File(agentBasedir, "bin");
+            executor.setWorkingDirectory(agentBinDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+            org.apache.commons.exec.CommandLine commandLine;
 
-        if (isWindows()) {
-            // For windows we will [re-]install the server as a windows service, then start the service.
+            if (isWindows()) {
+                // For windows we will [re-]install the server as a windows service, then start the service.
 
-            commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-            try {
+                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+                try {
+                    executor.execute(commandLine);
+                } catch (Exception e) {
+                    // Ignore, service may not exist or be running, , script returns 1
+                    log.debug("Failed to stop agent service", e);
+                }
+
+                commandLine = getCommandLine("rhq-agent-wrapper", "remove");
+                try {
+                    executor.execute(commandLine);
+                } catch (Exception e) {
+                    // Ignore, service may not exist, script returns 1
+                    log.debug("Failed to uninstall agent service", e);
+                }
+
+                commandLine = getCommandLine("rhq-agent-wrapper", "install");
                 executor.execute(commandLine);
-            } catch (Exception e) {
-                // Ignore, service may not exist or be running, , script returns 1
-                log.debug("Failed to stop agent service", e);
             }
 
-            commandLine = getCommandLine("rhq-agent-wrapper", "remove");
-            try {
-                executor.execute(commandLine);
-            } catch (Exception e) {
-                // Ignore, service may not exist, script returns 1
-                log.debug("Failed to uninstall agent service", e);
-            }
-
-            commandLine = getCommandLine("rhq-agent-wrapper", "install");
+            // For *nix, just start the server in the background, for Win, now that the service is installed, start it
+            commandLine = getCommandLine("rhq-agent-wrapper", "start");
             executor.execute(commandLine);
-        }
 
-        // For *nix, just start the server in the background, for Win, now that the service is installed, start it
-        commandLine = getCommandLine("rhq-agent-wrapper", "start");
-        executor.execute(commandLine);
+            log.info("The agent has started up");
+        } catch (IOException e) {
+            log.error("An error occurred while starting the agent: " + e.getMessage());
+            throw e;
+        }
     }
 
     private void replaceServerPropertiesIfNecessary(CommandLine commandLine) {

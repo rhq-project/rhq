@@ -89,6 +89,11 @@
                     <version>${cassandra.driver.version}</version>
                 </artifactItem>
                 <artifactItem>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                    <version>1.12</version>
+                </artifactItem>
+                <artifactItem>
                   <groupId>io.netty</groupId>
                   <artifactId>netty</artifactId>
                   <version>${cassandra.driver.netty.version}</version>

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
@@ -19,11 +19,30 @@
    <name>RHQ Arquillian Integration Modules</name>
    <description>parent POM for integration modules with Arquillian</description>
 
-   <modules>
-      <module>test-agent-plugin</module>
-      <module>container</module>
-      <module>archive</module>
-      <module>suite-extension</module>
-   </modules>
+
+   <profiles>
+      <profile>
+	      <!--
+	        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+	        does not run, compile or need tests.
+	        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+	        test jars, or conflicts with changing the container version.
+	       -->
+	      <id>test.dependencies</id>
+	      <activation>
+	        <property>
+	          <name>maven.test.skip</name>
+	          <value>!true</value>
+	        </property>
+	      </activation>
+
+		  <modules>
+		     <module>test-agent-plugin</module>
+		     <module>container</module>
+		     <module>archive</module>
+		     <module>suite-extension</module>
+		  </modules>
+      </profile>
+   </profiles>
 
 </project>

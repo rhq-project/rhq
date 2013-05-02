@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.auth;
 
@@ -59,8 +59,10 @@ import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.criteria.SavedSearchCriteria;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.search.SavedSearch;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -75,6 +77,7 @@ import org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean;
 import org.rhq.enterprise.server.exception.LoginException;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
+import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
@@ -116,6 +119,9 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
     @EJB
     //@IgnoreDependency
     private RepoManagerLocal repoManager;
+
+    @EJB
+    private SavedSearchManagerLocal savedSearchManager;
 
     @Resource
     private TimerService timerService;
@@ -661,6 +667,10 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 throw new PermissionException("You cannot remove yourself: " + doomedSubject.getName());
             }
 
+            if (authorizationManager.isSystemSuperuser(doomedSubject)) {
+                throw new PermissionException("You cannot delete a system root user - they must always exist");
+            }
+
             Set<Role> roles = doomedSubject.getRoles();
             doomedSubject.setRoles(new HashSet<Role>()); // clean out roles
 
@@ -694,7 +704,20 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
                 }
             }
 
-            deleteSubject(doomedSubject);
+            // Delete searches saved by this user
+            SavedSearchCriteria savedSearchCriteria = new SavedSearchCriteria();
+            savedSearchCriteria.addFilterSubjectId(doomedSubjectId);
+            savedSearchCriteria.clearPaging();
+            PageList<SavedSearch> savedSearches = savedSearchManager.findSavedSearchesByCriteria(subject, savedSearchCriteria);
+            for (SavedSearch savedSearch : savedSearches) {
+                savedSearchManager.deleteSavedSearch(subject, savedSearch.getId());
+            }
+
+            alertNotificationManager.cleanseAlertNotificationBySubject(doomedSubject.getId());
+
+            repoManager.removeOwnershipOfSubject(doomedSubject.getId());
+
+            entityManager.remove(doomedSubject);
         }
 
         return;
@@ -706,27 +729,6 @@ public class SubjectManagerBean implements SubjectManagerLocal, SubjectManagerRe
      */
     public void deleteSubjects(Subject sessionSubject, int[] subjectIds) {
         deleteUsers(sessionSubject, subjectIds);
-    }
-
-    /**
-     * Deletes the given {@link Subject} from the database.
-     *
-     *
-     * @param  doomedSubject identifies the subject to delete
-     *
-     * @throws PermissionException if caller tried to delete a system superuser
-     */
-    private void deleteSubject(Subject doomedSubject) throws PermissionException {
-        if (authorizationManager.isSystemSuperuser(doomedSubject)) {
-            throw new PermissionException("You cannot delete a system root user - they must always exist");
-        }
-
-        alertNotificationManager.cleanseAlertNotificationBySubject(doomedSubject.getId());
-        repoManager.removeOwnershipOfSubject(doomedSubject.getId());
-
-        entityManager.remove(doomedSubject);
-
-        return;
     }
 
     /**

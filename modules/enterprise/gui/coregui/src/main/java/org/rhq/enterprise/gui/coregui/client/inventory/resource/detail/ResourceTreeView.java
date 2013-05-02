@@ -757,7 +757,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                             defItem.setSubmenu(defSubItem);
 
                             for (final Dashboard d : result) {
-                                MenuItem addToDBItem = new MenuItem("d3-"+MSG
+                                MenuItem addToDBItem = new MenuItem(MSG
                                     .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
                                 defSubItem.addItem(addToDBItem);
 
@@ -802,7 +802,7 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                             //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
                             String currentViewPath = History.getToken();
-                            if (currentViewPath.indexOf("Monitoring/Graphs") > -1) {
+                            if (currentViewPath.contains("Monitoring/NewGraphs")) {
                                 MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
                                 defSubItem.addItem(addGraphItem);
 

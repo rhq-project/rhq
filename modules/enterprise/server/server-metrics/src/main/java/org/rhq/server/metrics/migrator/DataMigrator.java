@@ -66,9 +66,9 @@ public class DataMigrator {
 
 
     private enum MigrationQuery {
-        SELECT_1H_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_1H ORDER BY schedule_id"),
-        SELECT_6H_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_6H ORDER BY schedule_id"),
-        SELECT_1D_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_1D ORDER BY schedule_id"),
+        SELECT_1H_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_1H ORDER BY schedule_id, time_stamp"),
+        SELECT_6H_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_6H ORDER BY schedule_id, time_stamp"),
+        SELECT_1D_DATA("SELECT  schedule_id, time_stamp, value, minvalue, maxvalue FROM RHQ_MEASUREMENT_DATA_NUM_1D ORDER BY schedule_id, time_stamp"),
 
         DELETE_1H_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
         DELETE_6H_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
@@ -80,7 +80,7 @@ public class DataMigrator {
         COUNT_1D_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
 
         COUNT_RAW("SELECT COUNT(*) FROM %s"),
-        SELECT_RAW_DATA("SELECT schedule_id, time_stamp, value FROM %s ORDER BY schedule_id"),
+        SELECT_RAW_DATA("SELECT schedule_id, time_stamp, value FROM %s ORDER BY schedule_id, time_stamp"),
         DELETE_RAW_ALL_DATA("DELETE FROM %s"),
         DELETE_RAW_ENTRY("DELETE FROM %s WHERE schedule_id = ?");
 

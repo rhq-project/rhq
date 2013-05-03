@@ -574,6 +574,7 @@ public class DataMigratorRunner {
     private EntityManager createEntityManager() throws Exception {
         Properties properties = new Properties();
         properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
+        properties.put("javax.persistence.query.timeout", 400000);
         properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
         properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
 

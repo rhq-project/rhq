@@ -784,6 +784,7 @@ public class DashboardView extends EnhancedVLayout {
         }
         this.editForm.markForRedraw();
         this.portalLayout.show();
+        redraw();
         this.portalLayout.markForRedraw();
     }
 

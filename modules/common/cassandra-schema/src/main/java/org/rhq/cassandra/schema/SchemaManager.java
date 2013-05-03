@@ -26,6 +26,7 @@
 package org.rhq.cassandra.schema;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.datastax.driver.core.Cluster;
@@ -99,31 +100,32 @@ public class SchemaManager {
         }
 
         SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-        authInfoProvider.add("username", "cassandra").add("password", "cassandra");
+        authInfoProvider.add("username", username).add("password", password);
 
-        Cluster cluster = new ClusterBuilder()
-            .addContactPoints(hostNames)
-            .withAuthInfoProvider(authInfoProvider)
-            .withPort(nodes.get(0).getNativeTransportPort())
-            .build();
+        Cluster cluster = new ClusterBuilder().addContactPoints(hostNames).withAuthInfoProvider(authInfoProvider)
+            .withPort(nodes.get(0).getNativeTransportPort()).build();
         session = cluster.connect("system");
     }
 
     public void createSchema() {
         try {
-            log.info("Preparing to create schema");
-            log.debug("Creating user [rhqadmin]");
-            session.execute("CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER");
-            log.debug("Creating keyspace [" + RHQ_KEYSPACE + "]");
-            session.execute(
-                "CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
+            if (!schemaExists()) {
+                log.info("Preparing to create schema");
+                log.debug("Creating user [rhqadmin]");
+                session.execute("CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER");
+                log.debug("Creating keyspace [" + RHQ_KEYSPACE + "]");
+                session
+                    .execute("CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
 
-            // Note that once we have a schema management tool back in place, the call
-            // to createTables will be moved back to the updateSchema method as it
-            // previously was when we were using liquibase. We do NOT want to have
-            // separate install/update schema changes. Treating everything as an update as
-            // liquibase does dramatically simplifies things.
-            createTables();
+                // Note that once we have a schema management tool back in place, the call
+                // to createTables will be moved back to the updateSchema method as it
+                // previously was when we were using liquibase. We do NOT want to have
+                // separate install/update schema changes. Treating everything as an update as
+                // liquibase does dramatically simplifies things.
+                createTables();
+            } else {
+                log.info("Ignoring createSchema, schema already exists.");
+            }
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }
@@ -131,8 +133,22 @@ public class SchemaManager {
 
     public void dropSchema() {
         try {
-            log.info("Dropping keyspace [" + RHQ_KEYSPACE + "]");
-            session.execute("DROP KEYSPACE rhq");
+            if (schemaExists()) {
+                log.info("Dropping keyspace [" + RHQ_KEYSPACE + "]");
+                session.execute("DROP KEYSPACE rhq");
+                session.execute("DROP USER rhqadmin");
+            } else {
+                log.info("Ignoring dropSchema, schema does not exist.");
+            }
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public void resetSchema() {
+        try {
+            dropSchema();
+            createSchema();
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }
@@ -156,54 +172,25 @@ public class SchemaManager {
     private void createTables() {
         try {
             log.debug("Creating table raw_metrics");
-            session.execute(
-                "CREATE TABLE rhq.raw_metrics (" +
-                    "schedule_id int, " +
-                    "time timestamp, " +
-                    "value double, " +
-                    "PRIMARY KEY (schedule_id, time) " +
-                    ") WITH COMPACT STORAGE"
-            );
+            session.execute("CREATE TABLE rhq.raw_metrics (" + "schedule_id int, " + "time timestamp, "
+                + "value double, " + "PRIMARY KEY (schedule_id, time) " + ") WITH COMPACT STORAGE");
             log.debug("Creating table one_hour_metrics");
-            session.execute(
-                "CREATE TABLE rhq.one_hour_metrics (" +
-                    "schedule_id int, " +
-                    "time timestamp, " +
-                    "type int, " +
-                    "value double, " +
-                    "PRIMARY KEY (schedule_id, time, type) " +
-                ") WITH COMPACT STORAGE"
-            );
+            session
+                .execute("CREATE TABLE rhq.one_hour_metrics (" + "schedule_id int, " + "time timestamp, "
+                    + "type int, " + "value double, " + "PRIMARY KEY (schedule_id, time, type) "
+                    + ") WITH COMPACT STORAGE");
             log.debug("Creating table six_hour_metrics");
-            session.execute(
-                "CREATE TABLE rhq.six_hour_metrics (" +
-                    "schedule_id int, " +
-                    "time timestamp, " +
-                    "type int, " +
-                    "value double, " +
-                    "PRIMARY KEY (schedule_id, time, type) " +
-                ") WITH COMPACT STORAGE;"
-            );
+            session.execute("CREATE TABLE rhq.six_hour_metrics (" + "schedule_id int, " + "time timestamp, "
+                + "type int, " + "value double, " + "PRIMARY KEY (schedule_id, time, type) "
+                + ") WITH COMPACT STORAGE;");
             log.debug("Creating table twenty_four_hour_metrics");
-            session.execute(
-                "CREATE TABLE rhq.twenty_four_hour_metrics (" +
-                    "schedule_id int, " +
-                    "time timestamp, " +
-                    "type int, " +
-                    "value double, " +
-                    "PRIMARY KEY (schedule_id, time, type) " +
-                ") WITH COMPACT STORAGE;"
-            );
+            session.execute("CREATE TABLE rhq.twenty_four_hour_metrics (" + "schedule_id int, " + "time timestamp, "
+                + "type int, " + "value double, " + "PRIMARY KEY (schedule_id, time, type) "
+                + ") WITH COMPACT STORAGE;");
             log.debug("Creating table metrics_index");
-            session.execute(
-                "CREATE TABLE rhq.metrics_index (" +
-                    "bucket varchar, " +
-                    "time timestamp, " +
-                    "schedule_id int, " +
-                    "null_col boolean, " +
-                    "PRIMARY KEY (bucket, time, schedule_id) " +
-                ") WITH COMPACT STORAGE;"
-            );
+            session.execute("CREATE TABLE rhq.metrics_index (" + "bucket varchar, " + "time timestamp, "
+                + "schedule_id int, " + "null_col boolean, " + "PRIMARY KEY (bucket, time, schedule_id) "
+                + ") WITH COMPACT STORAGE;");
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }
@@ -212,6 +199,34 @@ public class SchemaManager {
     public void shutdown() {
         log.info("Shutting down connections");
         session.getCluster().shutdown();
+    }
+
+    public static void main(String[] args) {
+        if (args.length < 3) {
+            System.out.println("Usage      : command username password nodes...");
+            System.out.println("\n");
+            System.out.println("Commands   : createSchema | dropSchema | resetSchema");
+            System.out.println("Node format: hostname|thriftPort|nativeTransportPort");
+
+            return;
+        }
+
+        String command = args[0];
+        String username = args[1];
+        String password = args[2];
+
+        SchemaManager schemaManager = new SchemaManager(username, password, Arrays.copyOfRange(args, 3, args.length));
+
+        if ("createSchema".equalsIgnoreCase(command)) {
+            schemaManager.createSchema();
+
+        } else if ("dropSchema".equalsIgnoreCase(command)) {
+            schemaManager.dropSchema();
+
+        } else if ("resetSchema".equalsIgnoreCase(command)) {
+            schemaManager.resetSchema();
+        }
+
     }
 
 }

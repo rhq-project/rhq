@@ -19,7 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
 /**
- * Contains the chart definition for a Bar Chart Graph.
+ * Contains the chart definition for a MultiLine Graph.
  *
  * @author Mike Thompson
  */
@@ -39,7 +39,7 @@ public final class MetricNvd3BarChartGraph extends AbstractGraph
      */
     public native void drawJsniChart() /*-{
         console.log("Draw NVD3 Bar jsni chart");
-        console.time("multiChart")
+        console.time("multiChart");
         var global = this,
             chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
             chartHandle = "#rChart-"+chartId,
@@ -49,7 +49,7 @@ public final class MetricNvd3BarChartGraph extends AbstractGraph
             yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
             xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()(),
             displayDayOfWeek = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::shouldDisplayDayOfWeekInXAxisLabel()(),
-            xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I %p",
+            xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I : %M %p",
 
         // nvd3 defines their json models a standard way (same model for other graphs)
         data = function() {
@@ -63,7 +63,7 @@ public final class MetricNvd3BarChartGraph extends AbstractGraph
         };
         $wnd.nv.addGraph(function() {
             var chart = $wnd.nv.models.multiBarChart()
-                    .showControls(false)
+                    .showControls(true)
                     .tooltips(true);
 
             chart.xAxis.axisLabel(xAxisLabel)

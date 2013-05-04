@@ -172,25 +172,54 @@ public class SchemaManager {
     private void createTables() {
         try {
             log.debug("Creating table raw_metrics");
-            session.execute("CREATE TABLE rhq.raw_metrics (" + "schedule_id int, " + "time timestamp, "
-                + "value double, " + "PRIMARY KEY (schedule_id, time) " + ") WITH COMPACT STORAGE");
+            session.execute(
+                "CREATE TABLE rhq.raw_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time) " +
+                    ") WITH COMPACT STORAGE"
+            );
             log.debug("Creating table one_hour_metrics");
-            session
-                .execute("CREATE TABLE rhq.one_hour_metrics (" + "schedule_id int, " + "time timestamp, "
-                    + "type int, " + "value double, " + "PRIMARY KEY (schedule_id, time, type) "
-                    + ") WITH COMPACT STORAGE");
+            session.execute(
+                "CREATE TABLE rhq.one_hour_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "type int, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time, type) " +
+                ") WITH COMPACT STORAGE"
+            );
             log.debug("Creating table six_hour_metrics");
-            session.execute("CREATE TABLE rhq.six_hour_metrics (" + "schedule_id int, " + "time timestamp, "
-                + "type int, " + "value double, " + "PRIMARY KEY (schedule_id, time, type) "
-                + ") WITH COMPACT STORAGE;");
+            session.execute(
+                "CREATE TABLE rhq.six_hour_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "type int, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time, type) " +
+                ") WITH COMPACT STORAGE;"
+            );
             log.debug("Creating table twenty_four_hour_metrics");
-            session.execute("CREATE TABLE rhq.twenty_four_hour_metrics (" + "schedule_id int, " + "time timestamp, "
-                + "type int, " + "value double, " + "PRIMARY KEY (schedule_id, time, type) "
-                + ") WITH COMPACT STORAGE;");
+            session.execute(
+                "CREATE TABLE rhq.twenty_four_hour_metrics (" +
+                    "schedule_id int, " +
+                    "time timestamp, " +
+                    "type int, " +
+                    "value double, " +
+                    "PRIMARY KEY (schedule_id, time, type) " +
+                ") WITH COMPACT STORAGE;"
+            );
             log.debug("Creating table metrics_index");
-            session.execute("CREATE TABLE rhq.metrics_index (" + "bucket varchar, " + "time timestamp, "
-                + "schedule_id int, " + "null_col boolean, " + "PRIMARY KEY (bucket, time, schedule_id) "
-                + ") WITH COMPACT STORAGE;");
+            session.execute(
+                "CREATE TABLE rhq.metrics_index (" +
+                    "bucket varchar, " +
+                    "time timestamp, " +
+                    "schedule_id int, " +
+                    "null_col boolean, " +
+                    "PRIMARY KEY (bucket, time, schedule_id) " +
+                ") WITH COMPACT STORAGE;"
+            );
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);
         }

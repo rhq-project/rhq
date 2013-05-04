@@ -115,7 +115,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
             ClusterInitService clusterInitService = new ClusterInitService();
             clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20);
 
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
+            SchemaManager schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
             if (!schemaManager.schemaExists()) {
                 schemaManager.createSchema();
             }

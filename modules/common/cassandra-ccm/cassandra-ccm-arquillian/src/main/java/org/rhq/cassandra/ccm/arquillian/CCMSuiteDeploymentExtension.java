@@ -85,8 +85,8 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
             DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
             DeploymentOptions options = factory.newDeploymentOptions();
             options.setClusterDir(clusterDir.getAbsolutePath());
-            options.setUsername("rhqadmin");
-            options.setPassword("rhqadmin");
+            options.setUsername("cassandra");
+            options.setPassword("cassandra");
 
             ccm = new CassandraClusterManager(options);
         }

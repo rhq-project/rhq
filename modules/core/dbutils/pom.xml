@@ -193,17 +193,17 @@
                     <name>!jon.release</name>
                 </property>
             </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>${project.groupId}</groupId>
-                    <artifactId>rhq-cassandra-schema</artifactId>
-                    <version>${project.version}</version>
-                </dependency>
-            </dependencies>
             <build>
                 <plugins>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
+                        <dependencies>
+                          <dependency>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-cassandra-schema</artifactId>
+                            <version>${project.version}</version>
+                          </dependency>
+                        </dependencies>
                         <executions>
                             <execution>
                                 <id>i18n-generator</id>
@@ -268,8 +268,8 @@
                                         <property name="rhq.dev.cassandra.username" value="cassandra" />
                                         <property name="rhq.dev.cassandra.password" value="cassandra" />
                                         <property name="rhq.dev.cassandra.seeds" value="127.0.0.1|9160|9142" />
-                                        <java classname="org.rhq.cassandra.schema.SchemaManager">
-                                            <classpath refid="maven.compile.classpath" />
+                                        <java classname="org.rhq.cassandra.schema.SchemaManager" failonerror="true">
+                                            <classpath refid="maven.plugin.classpath"/>
                                             <arg value="resetSchema" />
                                             <arg value="${rhq.dev.cassandra.username}" />
                                             <arg value="${rhq.dev.cassandra.password}" />

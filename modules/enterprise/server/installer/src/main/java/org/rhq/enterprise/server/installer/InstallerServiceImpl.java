@@ -1233,7 +1233,7 @@ public class InstallerServiceImpl implements InstallerService {
         String username = serverProps.get("rhq.cassandra.username");
         String password = serverProps.get("rhq.cassandra.password");
 
-        return new SchemaManager(username, password, hosts);
+        return new SchemaManager("cassandra", "cassandra", hosts);
     }
 
     private void writeInstalledFileMarker() throws Exception {

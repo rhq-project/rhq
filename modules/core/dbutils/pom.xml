@@ -203,6 +203,11 @@
                             <artifactId>rhq-cassandra-schema</artifactId>
                             <version>${project.version}</version>
                           </dependency>
+                          <dependency>
+                            <groupId>org.codehaus.groovy</groupId>
+                            <artifactId>groovy-all</artifactId>
+                            <version>2.1.3</version>
+                          </dependency>
                         </dependencies>
                         <executions>
                             <execution>
@@ -263,18 +268,21 @@
                                 <phase>test</phase>
                                 <configuration>
                                     <target if="dbsetup">
-                                        <echo>PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA</echo>
-                                        <!-- If not set, set the default values -->
-                                        <property name="rhq.dev.cassandra.username" value="cassandra" />
-                                        <property name="rhq.dev.cassandra.password" value="cassandra" />
-                                        <property name="rhq.dev.cassandra.seeds" value="127.0.0.1|9160|9142" />
-                                        <java classname="org.rhq.cassandra.schema.SchemaManager" failonerror="true">
-                                            <classpath refid="maven.plugin.classpath"/>
-                                            <arg value="resetSchema" />
-                                            <arg value="${rhq.dev.cassandra.username}" />
-                                            <arg value="${rhq.dev.cassandra.password}" />
-                                            <arg value="${rhq.dev.cassandra.seeds}" />
-                                        </java>
+                                        <script language="groovy">
+                                          import org.rhq.cassandra.schema.SchemaManager
+
+                                          if (project.getProperty('db') == 'dev') {
+                                            self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
+                                            username = project.getProperty('rhq.dev.cassandra.username') ?: "cassandra"
+                                            password = project.getProperty('rhq.dev.cassandra.password') ?: "cassandra"
+                                            seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|9160|9142"
+
+                                            schemaManager = new SchemaManager(username, password, seeds)
+                                            schemaManager.resetSchema()
+                                          } else {
+                                            self.log('SKIPPING SCHEMA SETUP FOR STORAGE NODE')
+                                          }
+                                        </script>
                                     </target>
                                 </configuration>
                                 <goals>

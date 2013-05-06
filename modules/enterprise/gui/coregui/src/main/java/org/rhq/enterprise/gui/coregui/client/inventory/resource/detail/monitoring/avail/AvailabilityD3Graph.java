@@ -26,6 +26,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -37,12 +38,12 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  */
 public class AvailabilityD3Graph extends EnhancedVLayout implements AvailabilityGraph {
 
-    protected AvailabilityLineGraphType availabilityGraphType;
+    protected AvailabilityOverUnderGraphType availabilityGraphType;
 
-    public AvailabilityD3Graph(AvailabilityLineGraphType graphType) {
+    public AvailabilityD3Graph(AvailabilityOverUnderGraphType graphType) {
         super();
         this.availabilityGraphType = graphType;
-        setHeight(25);
+        setHeight(70);
         setWidth100();
     }
 
@@ -82,7 +83,7 @@ public class AvailabilityD3Graph extends EnhancedVLayout implements Availability
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"availChart-" + availabilityGraphType.getChartId()
-            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:20px;\">");
+            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:110px;\">");
         divAndSvgDefs.append("</svg></div>");
         HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
         graph.setWidth100();

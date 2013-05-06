@@ -42,6 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3GraphView;
@@ -74,7 +75,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
 
         addMember(measurementRangeEditor);
         if (showAvailabilityGraph) {
-            availabilityGraph = new AvailabilityD3Graph(new AvailabilityLineGraphType(resourceGroup.getId()));
+            availabilityGraph = new AvailabilityD3Graph(new AvailabilityOverUnderGraphType(resourceGroup.getId()));
             // first step in 2 step to create d3 chart
             // create a placeholder for avail graph
             availabilityGraph.createGraphMarker();

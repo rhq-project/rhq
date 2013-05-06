@@ -234,8 +234,10 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                 chart.append("g").append("rect")
                         .attr("class", "rightSidePanel")
                         .attr("x", xLabel - 10)
-                        .attr("y", margin.top + 60)
-                        .attr("height", 100)
+                        .attr("y", margin.top + 70)
+                        .attr("rx", 10)
+                        .attr("ry", 10)
+                        .attr("height", 80)
                         .attr("width", 135)
                         .attr("opacity", "0.3")
                         .attr("fill", "#E8E8E8");

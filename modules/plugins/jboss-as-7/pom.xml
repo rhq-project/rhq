@@ -99,21 +99,6 @@
     <!-- === Test Deps === -->
 
     <dependency>
-      <groupId>${rhq.groupId}</groupId>
-      <artifactId>rhq-core-plugin-test-api</artifactId>
-      <version>${project.version}</version>
-      <type>pom</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>${rhq.groupId}</groupId>
-      <artifactId>rhq-core-plugin-test-util</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
       <scope>test</scope>
@@ -249,6 +234,39 @@
 
 
   <profiles>
+
+     <profile>
+	     <!--
+	        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+	        does not run, compile or need tests.
+	        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+	        test jars, or conflicts with changing the container version.
+	       -->
+	     <id>test.dependencies</id>
+	     <activation>
+	        <property>
+	           <name>maven.test.skip</name>
+	           <value>!true</value>
+	        </property>
+	     </activation>
+
+	     <dependencies>
+	       <dependency>
+		       <groupId>${rhq.groupId}</groupId>
+		       <artifactId>rhq-core-plugin-test-api</artifactId>
+		       <version>${project.version}</version>
+		       <type>pom</type>
+		       <scope>test</scope>
+		    </dependency>
+
+		    <dependency>
+		       <groupId>${rhq.groupId}</groupId>
+		       <artifactId>rhq-core-plugin-test-util</artifactId>
+		       <version>${project.version}</version>
+		       <scope>test</scope>
+		    </dependency>
+	     </dependencies>
+    </profile>
 
     <profile>
       <id>java7</id>

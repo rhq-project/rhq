@@ -30,7 +30,9 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.ServerCriteria;
+import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -543,6 +545,69 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
 
                 assertTrue("Expected " + shouldBeFoundCount + " to be parsed, but there were parsed " + actualCount
                     + " servers", actualCount == shouldBeFoundCount);
+            }
+        });
+    }
+    
+    
+    @Test(groups = "integration.ejb3")
+    public void testStorageNodeCriteriaFinder() throws Exception {
+
+        final int storageNodeCount = 42;
+        executeInTransaction(new TransactionCallback() {
+
+            public void execute() throws Exception {
+                // verify that all storage nodes objects are actually parsed. 
+                final Set<String> nodeAddresses = new HashSet<String>(storageNodeCount);
+
+                final String prefix = "storage_node";
+                StorageNode lastOne = null, firstOne = null;
+                for (int i = 0; i < storageNodeCount; i++) {
+                    String address = prefix + String.format(" %03d", i + 1) + ".domain.com";
+                    StorageNode node = new StorageNode();
+                    node.setAddress(address);
+                    node.setOperationMode(StorageNode.OperationMode.NORMAL);
+                    node.setJmxPort(7299 + i);
+                    node.setCqlPort(9142 + i);
+                    if(i == 0) {
+                        firstOne = node;
+                    } else if (i == storageNodeCount - 1) {
+                        lastOne = node;
+                    }
+
+                    em.persist(node);
+                    nodeAddresses.add(address);
+                    em.flush();
+                }
+                em.flush();
+
+                assertTrue("The number of created storage nodes should be " + storageNodeCount + ". Was: " + nodeAddresses.size(),
+                    storageNodeCount == nodeAddresses.size());
+
+                StorageNodeCriteria criteria = new StorageNodeCriteria();
+                criteria.addFilterAddress(prefix);
+                criteria.addSortAddress(PageOrdering.DESC); // use DESC just to make sure sorting on name is different than insert order
+                PageList<StorageNode> list = topologyManager.findStorageNodesByCriteria(overlord, criteria);
+                
+                assertTrue("The number of found storage nodes should be " + storageNodeCount + ". Was: " + list.size(),
+                    storageNodeCount == list.size());
+                
+                assertTrue("The first storage node [" + firstOne + "] should be same as the last one in the list [ " + list.get(list.size() - 1) + "]",
+                    firstOne.equals(list.get(list.size() - 1)));
+                
+                assertTrue("The last storage node [" + lastOne + "] should be same as the first one in the list [ " + list.get(0) + "]",
+                    lastOne.equals(list.get(0)));
+                
+                String prevAddress = null;
+                for (StorageNode s : list) {
+                    assert null == prevAddress || s.getAddress().compareTo(prevAddress) < 0 : "Results should be sorted by address DESC, something is out of order";
+                    prevAddress = s.getAddress();
+                    nodeAddresses.remove(s.getAddress());
+                }
+
+                // test that entire list was parsed
+                assertTrue("Expected resourceNames to be empty. Still " + nodeAddresses.size() + " name(s).",
+                    nodeAddresses.size() == 0);
             }
         });
     }

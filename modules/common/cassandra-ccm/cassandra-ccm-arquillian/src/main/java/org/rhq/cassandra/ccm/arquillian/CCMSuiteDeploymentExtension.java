@@ -113,7 +113,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
             ccm.startCluster(false);
 
             ClusterInitService clusterInitService = new ClusterInitService();
-            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
+            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 5);
 
             SchemaManager schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
             if (!schemaManager.schemaExists()) {

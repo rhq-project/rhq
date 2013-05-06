@@ -70,17 +70,14 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
     private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext<?> context,
         ProcessScanResult processScanResult) {
 
-        ProcessInfo processInfo = processScanResult.getProcessInfo();
-
         Configuration pluginConfig = context.getDefaultPluginConfiguration();
 
         String jmxPort = null;
-
-
-        String[] arguments = processInfo.getCommandLine();
         StringBuilder commandLineBuilder = new StringBuilder(400);
         int classpathIndex = -1;
 
+        ProcessInfo processInfo = processScanResult.getProcessInfo();
+        String[] arguments = processInfo.getCommandLine();
         for (int i = 0; i < arguments.length; i++) {
             String arg = arguments[i];
 
@@ -106,8 +103,12 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                 if (classpathEntry.endsWith("conf")) {
                     yamlConfigurationPath = new File(classpathEntry);
                     if (!yamlConfigurationPath.isAbsolute()) {
-                        //relative path, use process CWD to find absolute path of the conf directory
-                        yamlConfigurationPath = new File(processInfo.getExecutable().getCwd(), classpathEntry);
+                        try {
+                            //relative path, use process CWD to find absolute path of the conf directory
+                            yamlConfigurationPath = new File(processInfo.getExecutable().getCwd(), classpathEntry);
+                        } catch (Exception e) {
+                            log.error("Error creating path for yaml file.", e);
+                        }
                     }
                 }
             }

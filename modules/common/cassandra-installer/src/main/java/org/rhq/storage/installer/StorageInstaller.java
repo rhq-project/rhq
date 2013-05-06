@@ -40,6 +40,7 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
+import javax.naming.Context;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -508,7 +509,7 @@ public class StorageInstaller {
         }
 
         Map<String, String> env = new HashMap<String, String>();
-        env.put("java.naming.factory.initial", RMIContextFactory.class.getName());
+        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
 
         for (int i = 0; i < retries; ++i) {
             try {

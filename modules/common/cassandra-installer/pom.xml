@@ -40,14 +40,6 @@
       <artifactId>commons-io</artifactId>
       <version>2.1</version>
     </dependency>
-
-    <dependency>
-      <groupId>com.sun</groupId>
-      <artifactId>rt</artifactId>
-      <version>1.6.0</version>
-      <scope>system</scope>
-      <systemPath>${java.home}/lib/rt.jar</systemPath>
-    </dependency>
   </dependencies>
 
   <build>
@@ -95,6 +87,11 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-core-util</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>rhq-cassandra-jmx</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
               </artifactItems>

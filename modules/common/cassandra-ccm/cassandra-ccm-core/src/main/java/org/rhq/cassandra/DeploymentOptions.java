@@ -73,6 +73,7 @@ public class DeploymentOptions {
     private String loggingLevel;
     private Integer numTokens;
     private Integer nativeTransportPort;
+    private Boolean startRpc;
     private Integer rpcPort;
     private Integer nativeTransportMaxThreads;
     private String username;
@@ -152,6 +153,7 @@ public class DeploymentOptions {
         setSavedCachesDir(loadProperty("rhq.cassandra.saved.caches.dir", properties));
         setLogFileName(loadProperty("rhq.cassandra.log.file", properties));
         setListenAddress(loadProperty("rhq.cassandra.listen.address", properties));
+        setStartRpc(Boolean.valueOf(loadProperty("rhq.cassandra.start_rpc", properties)));
         setRpcAddress(loadProperty("rhq.cassandra.rpc.address", properties));
         setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
         setStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.storage.port", properties)));
@@ -189,6 +191,7 @@ public class DeploymentOptions {
         setLogFileName(other.logFileName);
         setListenAddress(other.listenAddress);
         setRpcAddress(other.rpcAddress);
+        setStartRpc(other.startRpc);
         setRpcPort(other.rpcPort);
         setJmxPort(other.jmxPort);
         setStoragePort(other.storagePort);
@@ -348,6 +351,23 @@ public class DeploymentOptions {
     public void setNativeTransportPort(Integer port) {
         if (nativeTransportPort == null) {
             nativeTransportPort = port;
+        }
+    }
+    
+    /**
+     * @return true whether the Thrift-based RPC should be started
+     */
+    @DeploymentProperty(name = "rhq.cassandra.start_rpc")
+    public Boolean getStartRpc() {
+        return startRpc;
+    }
+
+    /**
+     * @param startRpc whether the Thrift-based RPC should be started
+     */
+    public void setStartRpc(Boolean startRpc) {
+        if (startRpc == null) {
+            this.startRpc = startRpc;
         }
     }
 

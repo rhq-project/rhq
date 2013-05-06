@@ -30,6 +30,7 @@
     <java.tieredCompilation>-Dxxx</java.tieredCompilation>
     <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
     <rhq.internal>false</rhq.internal>
+    <as7.itest.mock.http.management.server.port>32259</as7.itest.mock.http.management.server.port>
   </properties>
 
 
@@ -115,6 +116,13 @@
     <dependency>
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all</artifactId>
+      <version>8.1.8.v20121106</version>
       <scope>test</scope>
     </dependency>
 
@@ -588,6 +596,7 @@
                 <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
                 <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/InterruptibleOperationsTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/nonpc/ManagementConnectionPersistenceTest.java</include>-->
@@ -609,6 +618,7 @@
                 <jboss.domain.portOffset>${jboss.domain.portOffset}</jboss.domain.portOffset>
                 <jboss.domain.httpManagementPort>${jboss.domain.httpManagementPort}</jboss.domain.httpManagementPort>
                 <settings.localRepository>${settings.localRepository}</settings.localRepository>
+                <as7.itest.mock.http.management.server.port>${as7.itest.mock.http.management.server.port}</as7.itest.mock.http.management.server.port>
               </systemPropertyVariables>
             </configuration>
             <executions>

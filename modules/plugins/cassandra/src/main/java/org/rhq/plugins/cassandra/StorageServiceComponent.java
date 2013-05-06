@@ -59,12 +59,13 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
 
             AvailabilityType availability = UP;
 
-            EmsAttribute thriftEnabledAttr = emsBean.getAttribute("RPCServerRunning");
-            Boolean thriftEnabled = (Boolean) thriftEnabledAttr.getValue();
+//            EmsAttribute thriftEnabledAttr = emsBean.getAttribute("RPCServerRunning");
+            EmsAttribute nativeTransportEnabledAttr = emsBean.getAttribute("NativeTransportRunning");
+            Boolean nativeTransportEnabled = (Boolean) nativeTransportEnabledAttr.getValue();
 
-            if (!thriftEnabled) {
+            if (!nativeTransportEnabled) {
                 if (log.isWarnEnabled()) {
-                    log.warn("Thrift RPC server is disabled for " + context.getResourceKey());
+                    log.warn("Native transport is disabled for " + context.getResourceKey());
                 }
                 availability = DOWN;
             }

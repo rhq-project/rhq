@@ -25,7 +25,6 @@
 
 package org.rhq.enterprise.server.cassandra;
 
-import static org.rhq.core.domain.cloud.Server.OperationMode;
 import static org.rhq.core.domain.cloud.Server.OperationMode.MAINTENANCE;
 import static org.rhq.core.domain.cloud.Server.OperationMode.NORMAL;
 
@@ -42,6 +41,7 @@ import org.quartz.JobExecutionException;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -71,7 +71,8 @@ public class CassandraClusterHeartBeatJob implements Job {
             cassandraHosts.add(CassandraNode.parseNode(s));
 
         }
-        if (clusterInitService.ping(cassandraHosts, 1)) {
+        boolean pingable = clusterInitService.ping(cassandraHosts, 1);
+        if (pingable) {
             if (rhqServer.getOperationMode() != NORMAL) {
                 changeServerMode(rhqServer, NORMAL);
             }

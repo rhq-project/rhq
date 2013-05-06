@@ -29,7 +29,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
@@ -43,16 +42,8 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
-import org.apache.cassandra.thrift.Cassandra;
-import org.apache.cassandra.thrift.InvalidRequestException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.thrift.TException;
-import org.apache.thrift.protocol.TBinaryProtocol;
-import org.apache.thrift.protocol.TProtocol;
-import org.apache.thrift.transport.TFramedTransport;
-import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransportException;
 
 /**
  * This class provides operations to ensure a cluster is initialized and in a consistent
@@ -60,51 +51,56 @@ import org.apache.thrift.transport.TTransportException;
  * sure that nodes have started up and are accepting client connections for example.
  *
  * @author John Sanda
+ * @author Jirka Kremser
  */
-public class ClusterInitService {
-
+public final class ClusterInitService {
+        
     private final Log log = LogFactory.getLog(ClusterInitService.class);
-
-    /**
-     * Attempts to establish a Thrift RPC connection to the hosts for the number specified.
-     * In other words, if there are four hosts and <code>numHosts</code> is two, this
-     * method will immediately return after making two successful connections.
-     *
-     * @param hosts The cluster nodes to which a connection should be made
-     * @param numHosts The number of hosts to which a successful connection has to be made
-     *                 before returning.
-     * @return true if connections are made to the number of specified hosts, false
-     * otherwise.
-     */
+    
+    private Session initRhqSession(List<CassandraNode> hosts) {
+        return initSession(hosts, "rhq", "rhqadmin", "rhqadmin");
+    }
+    
+    private Session initSession(List<CassandraNode> hosts, String keySpace, String username, String password) {
+        if (hosts == null) {
+            throw new IllegalArgumentException("No cassandra nodes were provided.");
+        }
+        String[] addresses = new String[hosts.size()];
+        for (int i = 0; i < hosts.size(); i++) {
+            addresses[i] = hosts.get(i).getHostName();
+        }
+        Cluster cluster = Cluster.builder().addContactPoints(addresses).withoutMetrics()
+            .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
+            .build();
+        Session session = cluster.connect(keySpace);
+        return session;
+    }
+    
     public boolean ping(List<CassandraNode> hosts, int numHosts) {
-        long sleep = 100;
-        int timeout = 50;
         int connections = 0;
+        long sleep = 100;
 
         for (CassandraNode host : hosts) {
-            TSocket socket = new TSocket(host.getHostName(), host.getThriftPort(), timeout);
             try {
-                socket.open();
-                if (log.isDebugEnabled()) {
-                    log.debug("Successfully connected to cassandra node [" + host + "]");
+                boolean isNativeTransportRunning = host.isNativeTransportRunning();
+                if (isNativeTransportRunning) {
+                    ++connections;
                 }
-                ++connections;
-                socket.close();
                 if (connections == numHosts) {
                     return true;
                 }
-            } catch (TTransportException e) {
+            } catch (Exception e) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Unable to open thrift connection to cassandra node [" + host + "]");
+                    log.debug("Unable to open JMX connection to cassandra node [" + host + "]", e);
                 }
+                return false;
             }
             try {
                 Thread.sleep(sleep);
-            } catch (InterruptedException e) {
+            } catch (InterruptedException ex) {
             }
         }
-
-        return false;
+        return true;
     }
 
     /**
@@ -141,9 +137,10 @@ public class ClusterInitService {
      *                thrown when the number of failed connections exceeds this value.
      */
     public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, int retries) {
-        waitForClusterToStart(hosts, numHosts, 250, retries);
+        waitForClusterToStart(hosts, numHosts, 250, retries, 1);
     }
-
+    
+    
     /**
      * This method attempts to establish a Thrift RPC connection to each host for the
      * number specified. In other words, if there are four hosts and <code>numHosts</code>
@@ -163,9 +160,19 @@ public class ClusterInitService {
      * @param delay The amount of time wait between attempts to make a connection
      * @param retries The number of times to retry connecting. A runtime exception will be
      *                thrown when the number of failed connections exceeds this value.
+     * @param initialWait The amount of seconds before first try.
      */
-    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, long delay, int retries) {
-        int timeout = 50;
+    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, long delay, int retries, int initialWait) {
+        if (initialWait > 0) {
+            try {
+                if (log.isDebugEnabled()) {
+                    log.debug("Waiting before JMX calls to the storage nodes for " + initialWait + " seconds...");
+                }
+                Thread.sleep(initialWait * 1000);
+            } catch (InterruptedException e) {
+            }
+        }
+        
         int connections = 0;
         int failedConnections = 0;
         Queue<CassandraNode> queue = new LinkedList<CassandraNode>(hosts);
@@ -173,30 +180,36 @@ public class ClusterInitService {
 
         while (host != null) {
             if (failedConnections >= retries) {
-                throw new RuntimeException("Unable to verify that cluster nodes have started after " +
-                    failedConnections + " failed attempts");
+                throw new RuntimeException("Unable to verify that cluster nodes have started after "
+                    + failedConnections + " failed attempts");
             }
-            TSocket socket = new TSocket(host.getHostName(), host.getThriftPort(), timeout);
             try {
-                socket.open();
-                if (log.isDebugEnabled()) {
+                boolean isNativeTransportRunning = host.isNativeTransportRunning();
+                if (log.isDebugEnabled() && isNativeTransportRunning) {
                     log.debug("Successfully connected to cassandra node [" + host + "]");
                 }
-                ++connections;
-                socket.close();
+                if (isNativeTransportRunning) {
+                    ++connections;
+                }
                 if (connections == numHosts) {
+                        if (log.isDebugEnabled()) {
+                        log.debug("Successdully connected to all nodes. Sleeping for 10 seconds to allow for the "
+                            + "cassandra superuser set up to complete.");
+                    }
                     try {
-                        log.debug("Successdully connected to all nodes. Sleeping for 10 seconds to allow for the " +
-                            "cassandra superuser set up to complete.");
                         Thread.sleep(10000);
                     } catch (InterruptedException e) {
                     }
                     return;
                 }
-            } catch (TTransportException e) {
+            } catch (Exception e) {
                 ++failedConnections;
                 queue.offer(host);
-                log.debug("Unable to open thrift connection to cassandra node [" + host + "]");
+                if (log.isDebugEnabled()) {
+                    log.debug("Unable to open JMX connection to cassandra node [" + host + "].", e);
+                } else if (log.isInfoEnabled()) {
+                    log.debug("Unable to open connection to cassandra node.");
+                }
             }
             try {
                 Thread.sleep(delay);
@@ -256,29 +269,7 @@ public class ClusterInitService {
                     }
                 }
             }
-        }
-        client.closeConnection();
 
-        if (log.isInfoEnabled()) {
-            log.info("Schema agreement has been reached at version [" + schemaVersion + "]");
-        }
-    }
-
-    private CassandraClient createClient(CassandraNode node) {
-        TSocket socket = new TSocket(node.getHostName(), node.getThriftPort());
-        TFramedTransport transport = new TFramedTransport(socket);
-        TProtocol protocol = new TBinaryProtocol(transport);
-
-        return new CassandraClient(socket, protocol, node);
-    }
-
-    private void logException(String msg, Exception e) {
-        if (log.isDebugEnabled()) {
-            log.debug(msg, e);
-        } else if (log.isInfoEnabled()) {
-            log.info(msg + ": " + e.getMessage());
-        } else {
-            log.warn(msg);
         }
     }
     

@@ -99,15 +99,19 @@ public class CCMTestNGListener implements IInvokedMethodListener {
 
         if (System.getProperty("rhq.cassandra.cluster.skip-shutdown") == null) {
             for (CassandraNode node : nodes) {
-                if (node.isThrifPortOpen()) {
-                    throw new RuntimeException("A cluster is already running on the same ports.");
+                try {
+                    if (node.isNativeTransportRunning()) {
+                        throw new RuntimeException("A cluster is already running on the same ports.");
+                    }
+                } catch (Exception e) {
+                    throw new RuntimeException("Unable to check whether node is running.", e);
                 }
             }
         }
         ccm.startCluster(false);
 
-        ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 3000, 20);
+        ClusterInitService clusterInitService = new ClusterInitService ();
+        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         if (!schemaManager.schemaExists()) {

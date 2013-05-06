@@ -679,7 +679,7 @@ rhq.cassandra.password=${rhq.cassandra.password}
 # Each entry in the list consists of three fields that are pipe-delimited. The
 # of an entry is as follows,
 #
-#    hostname|thriftPort|nativeTransportPort|
+#    hostname|jmxPort|nativeTransportPort|
 #
 rhq.cassandra.seeds=
 

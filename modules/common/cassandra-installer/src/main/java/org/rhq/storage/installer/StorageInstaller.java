@@ -380,7 +380,7 @@ public class StorageInstaller {
         String[] hosts = seeds.split(",");
         List<String> list = new ArrayList<String>(hosts.length);
         for (String host : hosts) {
-            list.add(host + "|" + rpcPort + "|" + nativeTransportPort);
+            list.add(host + "|" + jmxPort + "|" + nativeTransportPort);
         }
         return StringUtil.collectionToString(list);
     }

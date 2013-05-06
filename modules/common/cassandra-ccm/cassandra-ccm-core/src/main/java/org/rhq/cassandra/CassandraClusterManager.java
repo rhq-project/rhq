@@ -127,7 +127,7 @@ public class CassandraClusterManager {
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
 
-                nodes.add(new CassandraNode(address, nodeOptions.getRpcPort(),
+                nodes.add(new CassandraNode(address, deploymentOptions.getJmxPort() + i,
                     nodeOptions.getNativeTransportPort()));
                 installedNodeDirs.add(basedir);
             } catch (Exception e) {
@@ -158,7 +158,7 @@ public class CassandraClusterManager {
     private List<CassandraNode> calculateNodes() {
         List<CassandraNode> nodes = new ArrayList<CassandraNode>(deploymentOptions.getNumNodes());
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-            nodes.add(new CassandraNode(getLocalIPAddress(i + 1), deploymentOptions.getRpcPort(),
+            nodes.add(new CassandraNode(getLocalIPAddress(i + 1), deploymentOptions.getJmxPort() + i,
                 deploymentOptions.getNativeTransportPort()));
         }
         return nodes;

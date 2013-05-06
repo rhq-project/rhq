@@ -624,7 +624,7 @@ public class DataMigratorRunner {
 
     /**
      * Parse Cassandra host information submitted in the form:
-     * host_addres,thrift_port,native_port|host_address_2,thrift_port,native_port
+     * host_addres,jmx_port,native_port|host_address_2,jmx_port,native_port
      *
      * @param stringValue
      * @return

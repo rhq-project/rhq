@@ -210,7 +210,7 @@ public class Simulator implements ShutdownManager {
     private void waitForClusterToInitialize(List<CassandraNode> nodes) {
         log.info("Waiting for cluster to initialize");
         ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 3000, 20);
+        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
     }
 
     private void createSchema(List<CassandraNode> nodes) {

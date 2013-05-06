@@ -124,7 +124,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
             // is no cluster name argument.
             //
             // jsanda
-            clusterInitService.waitForSchemaAgreement("rhq", nodes);
+            clusterInitService.waitForSchemaAgreement(nodes);
         }
     }
 

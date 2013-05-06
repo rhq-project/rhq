@@ -25,10 +25,23 @@
 
 package org.rhq.cassandra;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
+import java.util.UUID;
+
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Row;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SimpleAuthInfoProvider;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.cassandra.thrift.InvalidRequestException;
@@ -192,30 +205,28 @@ public class ClusterInitService {
             host = queue.poll();
         }
     }
-
+    
     /**
      * Waits for the cluster to reach schema agreement. During cluster initialization
      * before and while schema changes propagate throughout the cluster, there could be
      * multiple schema versions found among nodes. Schema agreement is reached when there
      * is a single schema version and all nodes are on that version.
      *
-     * @param clusterName The cluster name used by underlying Hector APIs.
      * @param hosts The cluster nodes
      */
-    public void waitForSchemaAgreement(String clusterName, List<CassandraNode> hosts) {
+    public void waitForSchemaAgreement(List<CassandraNode> hosts) {
+        if (hosts == null) return;
         long sleep = 100L;
-        CassandraClient client = createClient(hosts.get(0));
-        client.openConnection();
         boolean schemaInAgreement = false;
-        String schemaVersion = null;
 
         while (!schemaInAgreement) {
-            Map<String, List<String>> schemaVersions = null;
+            Set<UUID> schemaVersions = new HashSet<UUID>();
             try {
-                schemaVersions = client.describe_schema_versions();
-            } catch (InvalidRequestException e) {
-                throw new RuntimeException("Unable to get schema versions from " + hosts.get(0), e);
-            } catch (TException e) {
+                for (CassandraNode host : hosts) {
+                    UUID otherSchchemaVersion = getSchemaVersionForNode(host);
+                    schemaVersions.add(otherSchchemaVersion);
+                }
+            } catch (NoHostAvailableException e) {
                 throw new RuntimeException("Unable to get schema versions from " + hosts.get(0), e);
             }
             if (schemaVersions.size() > 1) {
@@ -224,25 +235,20 @@ public class ClusterInitService {
                         " schema versions");
                 }
                 if (log.isDebugEnabled()) {
-                    log.debug("Found the following schema versions: " + schemaVersions.keySet());
+                    log.debug("Found the following schema versions: " + schemaVersions);
                 }
                 try {
                     Thread.sleep(sleep);
                 } catch (InterruptedException e) {
                 }
             } else {
-                schemaVersion = schemaVersions.keySet().iterator().next();
-                List<String> hostAddresses = schemaVersions.get(schemaVersion);
-                if (hostAddresses.size() == hosts.size()) {
+                UUID schemaVersion = schemaVersions.iterator().next();
+                if (schemaVersion != null) {
                     schemaInAgreement = true;
                 } else {
                     if (log.isInfoEnabled()) {
-                        log.info("Schema agreement has not been reached. Found one schema version but only " +
-                            hostAddresses.size() + " of " + hosts.size() + " nodes at version [" + schemaVersion + "]");
-                    }
-                    if (log.isDebugEnabled()) {
-                        log.debug("Found the following nodes at schema version [" + schemaVersion + "]: " +
-                            hostAddresses);
+                        log.info("Schema agreement has not been reached. Unable to get the schema version from cassandra nodes ["
+                            + hosts + "]");
                     }
                     try {
                         Thread.sleep(sleep);
@@ -275,27 +281,21 @@ public class ClusterInitService {
             log.warn(msg);
         }
     }
-
-    private static class CassandraClient extends Cassandra.Client {
-        private TSocket socket;
-        private CassandraNode node;
-
-        public CassandraClient(TSocket socket, TProtocol protocol, CassandraNode node) {
-            super(protocol);
-            this.socket = socket;
-            this.node = node;
-        }
-
-        public void openConnection() {
-            try {
-                socket.open();
-            } catch (TTransportException e) {
-                throw new RuntimeException("Could not open thrift connection to " + node, e);
+    
+    private UUID getSchemaVersionForNode(CassandraNode node) {
+        Session session = null;
+        try {
+            session = initRhqSession(Arrays.asList(node));
+            PreparedStatement statement = session.prepare("SELECT schema_version from system.local");
+            BoundStatement boundStatement = statement.bind();
+            ResultSet rs = session.execute(boundStatement);
+            for (Row row : rs) {
+                return row.getUUID(0);
             }
-        }
-
-        public void closeConnection() {
-            socket.close();
+            return null;
+        } finally {
+            if (session != null)
+                session.getCluster().shutdown();
         }
     }
 

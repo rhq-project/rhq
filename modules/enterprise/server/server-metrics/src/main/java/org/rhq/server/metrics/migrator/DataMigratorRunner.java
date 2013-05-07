@@ -71,7 +71,10 @@ import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 @SuppressWarnings({ "static-access", "deprecation" })
 public class DataMigratorRunner {
 
+    private static final int SQL_TIMEOUT = 40000;
+
     private final Log log = LogFactory.getLog(DataMigratorRunner.class);
+
 
     //Cassandra
     private Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg().withType(String.class)
@@ -84,7 +87,7 @@ public class DataMigratorRunner {
     private Option cassandraPortOption = OptionBuilder.withLongOpt("cassandra-port").hasArg().withType(Integer.class)
         .withDescription("Cassandra native binary protocol port (default: 9142)").create();
     private Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression").hasOptionalArg()
-        .withType(String.class).withDescription("Enable compression for communication with Cassandra (default: true)")
+        .withType(Boolean.class).withDescription("Enable compression for communication with Cassandra (default: true)")
         .create();
 
     //SQL
@@ -574,9 +577,10 @@ public class DataMigratorRunner {
     private EntityManager createEntityManager() throws Exception {
         Properties properties = new Properties();
         properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
-        properties.put("javax.persistence.query.timeout", 400000);
         properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
         properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
+        properties.put("javax.persistence.query.timeout", SQL_TIMEOUT);
+        properties.put("hibernate.c3p0.timeout", SQL_TIMEOUT);
 
         if ("oracle".equals(configuration.get(sqlServerType))) {
             String driverClassName = "oracle.jdbc.driver.OracleDriver";
@@ -595,6 +599,7 @@ public class DataMigratorRunner {
             properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
                 + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
             properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
+            properties.put("hibernate.connection.oracle.jdbc.ReadTimeout", SQL_TIMEOUT);
         } else {
             String driverClassName = "org.postgresql.Driver";
 

@@ -19,6 +19,11 @@
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.rhq.core.domain.util.ResourceTypeUtility.getMeasurementDefinitions;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +32,8 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Set;
 
 import org.mockito.Mockito;
@@ -47,8 +54,18 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.content.PackageDetailsKey;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
 import org.rhq.core.domain.content.transfer.ResourcePackageDetails;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementDataTrait;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.MeasurementDefinitionFilter;
+import org.rhq.core.pc.inventory.ResourceContainer;
+import org.rhq.core.pc.util.FacetLockType;
+import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.modules.plugins.jbossas7.StandaloneASComponent;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.DiscoveredResources;
@@ -100,6 +117,9 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
 
     @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "Deployment")
     private Set<Resource> deploymentResources;
+
+    @DiscoveredResources(plugin = PLUGIN_NAME, resourceType = "Web Runtime")
+    private Set<Resource> webRuntimeResources;
 
     private static TestDeployments DEPLOYMENT_TO_SERVE = TestDeployments.DEPLOYMENT_1;
 
@@ -242,6 +262,60 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
     }
 
     @Test(priority = 15)
+    @RunDiscovery
+    public void testWebRuntimeMetricsHaveNonNullValues() throws Exception {
+        assertTrue(webRuntimeResources != null && !webRuntimeResources.isEmpty(),
+            "Web Runtime resource should have been discovered");
+        assertEquals(webRuntimeResources.size(), 1, "Found more than one Web Runtime resource: " + webRuntimeResources);
+
+        Resource webRuntimeResource = webRuntimeResources.iterator().next();
+        ResourceContainer webRuntimeResourceContainer = pluginContainer.getInventoryManager().getResourceContainer(
+            webRuntimeResource);
+        MeasurementFacet measurementFacet = webRuntimeResourceContainer.createResourceComponentProxy(
+            MeasurementFacet.class, FacetLockType.READ, SECONDS.toMillis(5), false, false);
+        MeasurementReport report = new MeasurementReport();
+        Set<MeasurementScheduleRequest> measurementScheduleRequests = getMeasurementScheduleRequests(webRuntimeResource);
+        measurementFacet.getValues(report, measurementScheduleRequests);
+        assertEquals(report.getCallTimeData().size(), 0, "No calltime data was requested");
+        assertTrue(
+            report.getNumericData().size() + report.getTraitData().size() == measurementScheduleRequests.size(),
+            "Some requested measurements are missing: "
+                + getMissingMeasurements(measurementScheduleRequests, report.getNumericData(), report.getTraitData()));
+    }
+
+    private Set<String> getMissingMeasurements(Set<MeasurementScheduleRequest> measurementScheduleRequests,
+        Set<MeasurementDataNumeric> numericData, Set<MeasurementDataTrait> traitData) {
+        Set<String> missingMeasurements = new HashSet<String>();
+        for (MeasurementScheduleRequest measurementScheduleRequest : measurementScheduleRequests) {
+            missingMeasurements.add(measurementScheduleRequest.getName());
+        }
+        for (MeasurementDataNumeric measurementDataNumeric : numericData) {
+            missingMeasurements.remove(measurementDataNumeric.getName());
+        }
+        for (MeasurementDataTrait measurementDataTrait : traitData) {
+            missingMeasurements.remove(measurementDataTrait.getName());
+        }
+        return missingMeasurements;
+    }
+
+    private Set<MeasurementScheduleRequest> getMeasurementScheduleRequests(Resource webRuntimeResource) {
+        Set<MeasurementDefinition> measurementDefinitions = getMeasurementDefinitions(
+            webRuntimeResource.getResourceType(), new MeasurementDefinitionFilter() {
+                private final Set<DataType> acceptableDataTypes = EnumSet.of(DataType.MEASUREMENT, DataType.TRAIT);
+
+                public boolean accept(MeasurementDefinition measurementDefinition) {
+                    return acceptableDataTypes.contains(measurementDefinition.getDataType());
+                }
+            });
+        Set<MeasurementScheduleRequest> measurementScheduleRequests = new HashSet<MeasurementScheduleRequest>();
+        for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
+            measurementScheduleRequests.add(new MeasurementScheduleRequest(-1, measurementDefinition.getName(), -1,
+                true, measurementDefinition.getDataType(), measurementDefinition.getRawNumericType()));
+        }
+        return measurementScheduleRequests;
+    }
+
+    @Test(priority = 16)
     public void testUndeploy() throws Exception {
         Resource deployment = deploymentResources.iterator().next();
         DeleteResourceRequest request = new DeleteResourceRequest(0, deployment.getId());

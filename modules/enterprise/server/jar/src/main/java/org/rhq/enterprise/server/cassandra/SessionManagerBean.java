@@ -41,7 +41,7 @@ import com.datastax.driver.core.SimpleAuthInfoProvider;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.enterprise.server.cloud.StorageNodeManagerBean;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.server.metrics.CQLException;
 import org.rhq.server.metrics.MetricsConfiguration;
 
@@ -56,7 +56,7 @@ public class SessionManagerBean {
     private MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
 
     @EJB
-    private StorageNodeManagerBean storageNodeManager;
+    private StorageNodeManagerLocal storageNodeManager;
 
     @PostConstruct
     private void createSession() {

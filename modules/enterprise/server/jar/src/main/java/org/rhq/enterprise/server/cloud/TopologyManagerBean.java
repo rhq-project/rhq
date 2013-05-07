@@ -315,11 +315,4 @@ public class TopologyManagerBean implements TopologyManagerLocal {
         CriteriaQueryRunner<Server> runner = new CriteriaQueryRunner<Server>(criteria, generator, entityManager);
         return runner.execute();
     }
-    
-    @RequiredPermission(Permission.MANAGE_SETTINGS)
-    public PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria) {
-        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        CriteriaQueryRunner<StorageNode> runner = new CriteriaQueryRunner<StorageNode>(criteria, generator, entityManager);
-        return runner.execute();
-    }
 }

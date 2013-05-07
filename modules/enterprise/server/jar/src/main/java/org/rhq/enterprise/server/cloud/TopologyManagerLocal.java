@@ -154,6 +154,4 @@ public interface TopologyManagerLocal {
      * @return list of servers
      */
     PageList<Server> findServersByCriteria(Subject subject, ServerCriteria criteria);
-    
-    PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
 }

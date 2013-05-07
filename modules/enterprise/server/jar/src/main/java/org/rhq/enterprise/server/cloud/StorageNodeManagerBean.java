@@ -34,11 +34,18 @@ import javax.persistence.Query;
 
 import org.jetbrains.annotations.Nullable;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 @Stateless
-public class StorageNodeManagerBean {
+public class StorageNodeManagerBean implements StorageNodeManagerLocal {
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -54,5 +61,13 @@ public class StorageNodeManagerBean {
         for (StorageNode storageNode : storageNodes) {
             entityManager.persist(storageNode);
         }
+    }
+    
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+        CriteriaQueryRunner<StorageNode> runner = new CriteriaQueryRunner<StorageNode>(criteria, generator,
+            entityManager);
+        return runner.execute();
     }
 }

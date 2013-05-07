@@ -18,6 +18,9 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
 
+import java.util.Date;
+import java.util.List;
+
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
@@ -26,9 +29,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
-
-import java.util.Date;
-import java.util.List;
 
 /**
  * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
@@ -66,7 +66,7 @@ public class AvailabilityOverUnderGraphType {
             // loop through the avail intervals
             for (Availability availability : availabilityList) {
                 sb.append("{ \"availType\":\"" + availability.getAvailabilityType() + "\", ");
-                sb.append(" \"availTypeMessage\":\"" + availability.getAvailabilityType()+ "\", ");
+                sb.append(" \"availTypeMessage\":\"" + availability.getAvailabilityType() + "\", ");
                 sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
                 // last record will be null
                 long endTime = availability.getEndTime() != null ? availability.getEndTime() : (new Date()).getTime();
@@ -84,8 +84,9 @@ public class AvailabilityOverUnderGraphType {
             // loop through the group avail down intervals
             for (ResourceGroupAvailability groupAvailability : groupAvailabilityList) {
                 // allows substitution for situations like WARN=MIXED for easier terminology
-                String availabilityTypeMessage = (groupAvailability.getGroupAvailabilityType().equals(ResourceGroupComposite.GroupAvailabilityType.WARN))
-                        ? MSG.chart_hover_availability_type_warn() : groupAvailability.getGroupAvailabilityType().name();
+                String availabilityTypeMessage = (groupAvailability.getGroupAvailabilityType()
+                    .equals(ResourceGroupComposite.GroupAvailabilityType.WARN)) ? MSG
+                    .chart_hover_availability_type_warn() : groupAvailability.getGroupAvailabilityType().name();
 
                 sb.append("{ \"availType\":\"" + groupAvailability.getGroupAvailabilityType() + "\", ");
                 sb.append(" \"availTypeMessage\":\"" + availabilityTypeMessage + "\", ");
@@ -139,7 +140,6 @@ public class AvailabilityOverUnderGraphType {
                     barOffset = 10,
                     width = 750 - margin.left - margin.right + barOffset,
                     height = 40 - margin.top - margin.bottom,
-                    pixelsOffHeight = 0,
                     svg;
 
 
@@ -161,65 +161,65 @@ public class AvailabilityOverUnderGraphType {
                                 .domain([0, 4]),
 
                         xAxis = $wnd.d3.svg.axis()
-                            .scale(timeScale)
-                            .ticks(12)
-                            .tickSize(10, 0, 0)
-                            .orient("bottom"),
+                                .scale(timeScale)
+                                .ticks(12)
+                                .tickSize(13, 0, 0)
+                                .orient("bottom"),
 
-                       calcBarY = function(d) {
-                           var ABOVE = -10,
-                               BELOW = 0,
-                               STRADDLE = -5,
-                               offset;
+                        calcBarY = function (d) {
+                            var ABOVE = -10,
+                                    BELOW = 0,
+                                    STRADDLE = -5,
+                                    offset;
 
-                           if (d.availType === 'DOWN') {
-                               offset =  BELOW;
-                           }
-                           else if (d.availType === 'DISABLED') {
-                               offset =  STRADDLE;
-                           }
-                           else if (d.availType === 'UNKNOWN') {
-                               offset =  STRADDLE;
-                           }
-                           else if (d.availType === 'UP') {
-                               offset =  ABOVE;
-                           }
-                           else if (d.availType === 'WARN') {
-                               offset =  STRADDLE;
-                           }
-                           else if (d.availType === 'EMPTY') {
-                               offset =  STRADDLE;
-                           }
-                           return yScale(0) + offset;
+                            if (d.availType === 'DOWN') {
+                                offset = BELOW;
+                            }
+                            else if (d.availType === 'DISABLED') {
+                                offset = STRADDLE;
+                            }
+                            else if (d.availType === 'UNKNOWN') {
+                                offset = STRADDLE;
+                            }
+                            else if (d.availType === 'UP') {
+                                offset = ABOVE;
+                            }
+                            else if (d.availType === 'WARN') {
+                                offset = STRADDLE;
+                            }
+                            else if (d.availType === 'EMPTY') {
+                                offset = STRADDLE;
+                            }
+                            return yScale(0) + offset;
 
-                       },
+                        },
 
-                    calcBarFill = function(d) {
-                        if (d.availType === 'DOWN') {
-                            return "#FF1919"; // red
-                        }
-                        else if (d.availType === 'DISABLED') {
-                            return "#FF9933"; // orange
-                        }
-                        else if (d.availType === 'UNKNOWN') {
-                            return "#CCC"; // gray
-                        }
-                        else if (d.availType === 'UP') {
-                            return "#198C19"; // green
-                        }
-                        else if (d.availType === 'WARN') {
-                            return "#FFA500"; // yellow
-                        }
-                        else if (d.availType === 'EMPTY') {
-                            return "#CCC"; // gray
-                        }
-                        else {
-                            // should not ever happen, but...
-                            console.warn("AvailabilityType not valid.");
-                            return "#000"; //black
-                        }
-                    },
-                     svg = $wnd.d3.select(availChartContext.chartSelection).append("g")
+                        calcBarFill = function (d) {
+                            if (d.availType === 'DOWN') {
+                                return "#FF1919"; // red
+                            }
+                            else if (d.availType === 'DISABLED') {
+                                return "url(#diagonalHatchFill)"; // grey diagonal hatches
+                            }
+                            else if (d.availType === 'UNKNOWN') {
+                                return "#CCC"; // gray
+                            }
+                            else if (d.availType === 'UP') {
+                                return "#198C19"; // green
+                            }
+                            else if (d.availType === 'WARN') {
+                                return "#FFA500"; // orange
+                            }
+                            else if (d.availType === 'EMPTY') {
+                                return "#CCC"; // gray
+                            }
+                            else {
+                                // should not ever happen, but...
+                                console.warn("AvailabilityType not valid.");
+                                return "#000"; //black
+                            }
+                        },
+                        svg = $wnd.d3.select(availChartContext.chartSelection).append("g")
                                 .attr("width", width + margin.left + margin.right)
                                 .attr("height", height + margin.top + margin.bottom)
                                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
@@ -234,11 +234,9 @@ public class AvailabilityOverUnderGraphType {
                         })
                         .attr("y", function (d) {
                             return calcBarY(d);
-
                         })
                         .attr("height", function (d) {
                             return 10;
-
                         })
                         .attr("width", function (d) {
                             return timeScale(+d.availEnd) - timeScale(+d.availStart);
@@ -250,43 +248,43 @@ public class AvailabilityOverUnderGraphType {
 
                 // create x-axis
                 svg.append("g")
-                    .attr("class", "x axis")
-                    .attr("stroke", "#50505a")
-                    .attr("stroke-width", "0.5")
-                    .attr("transform", "translate(0," + height  + ")")
-                    .attr("letter-spacing", "3")
-                    .style("text-anchor", "end")
-                    .call(xAxis);
+                        .attr("class", "x axis")
+                        .attr("fill", "#50505a")
+                        .attr("stroke-width", "0.5")
+                        .attr("transform", "translate(0," + height + ")")
+                        .attr("letter-spacing", "3")
+                        .style("text-anchor", "end")
+                        .call(xAxis);
 
                 svg.append("text")
-                    .attr("class", "availabilityLabel")
-                    .attr("x", -40)
-                    .attr("y", 10)
-                    .style("font-size", "12px")
-                    .style("font-family", "Arial, Verdana, sans-serif;")
-                    .style("font-weight", "bold")
-                    .attr("fill", "#003168")
-                    .text("Availability");
+                        .attr("class", "availabilityLabel")
+                        .attr("x", -40)
+                        .attr("y", 10)
+                        .style("font-size", "12px")
+                        .style("font-family", "Arial, Verdana, sans-serif;")
+                        .style("font-weight", "bold")
+                        .attr("fill", "#003168")
+                        .text("Availability");
 
                 svg.append("text")
-                    .attr("class", "upLabel")
-                    .attr("x", -5)
-                    .attr("y", 28)
-                    .style("font-family", "Arial, Verdana, sans-serif;")
-                    .style("font-size", "9px")
-                    .attr("fill", "#50505a")
-                    .style("text-anchor", "end")
-                    .text("UP");
+                        .attr("class", "upLabel")
+                        .attr("x", -5)
+                        .attr("y", 28)
+                        .style("font-family", "Arial, Verdana, sans-serif;")
+                        .style("font-size", "9px")
+                        .attr("fill", "#50505a")
+                        .style("text-anchor", "end")
+                        .text("UP");
 
                 svg.append("text")
-                    .attr("class", "downLabel")
-                    .attr("x", -5)
-                    .attr("y", 39)
-                    .style("font-family", "Arial, Verdana, sans-serif;")
-                    .style("font-size", "9px")
-                    .attr("fill", "#50505a")
-                    .style("text-anchor", "end")
-                    .text("DOWN");
+                        .attr("class", "downLabel")
+                        .attr("x", -5)
+                        .attr("y", 39)
+                        .style("font-family", "Arial, Verdana, sans-serif;")
+                        .style("font-size", "9px")
+                        .attr("fill", "#50505a")
+                        .style("text-anchor", "end")
+                        .text("DOWN");
 
             }
 
@@ -306,19 +304,15 @@ public class AvailabilityOverUnderGraphType {
             }
 
             function formatHovers(d) {
-                var hoverString,
-                        timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
+                var  timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
                         dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
-                        availStart = new Date(+d.availStart),
-                        availEnd = new Date(+d.availEnd);
+                        availStart = new Date(+d.availStart);
 
-                hoverString =
-                        '<div class="chartHoverEnclosingDiv">' +
+                return '<div class="chartHoverEnclosingDiv">' +
                                 '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + d.availTypeMessage + '</span></div>' +
-                                '<div class="chartHoverAlignLeft"><span>'+  dateFormatter(availStart) + ' ' + timeFormatter(availStart) + '</span></div>' +
+                                '<div class="chartHoverAlignLeft"><span>' + dateFormatter(availStart) + ' ' + timeFormatter(availStart) + '</span></div>' +
                                 '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + d.availDuration + '</span></div>' +
                                 '</div>';
-                return hoverString;
 
             }
 
@@ -341,7 +335,7 @@ public class AvailabilityOverUnderGraphType {
             availabilityGraph.draw(availChartContext);
         }
 
-    }-*/;
+                                       }-*/;
 
     public String getChartId() {
         return String.valueOf(entityId);

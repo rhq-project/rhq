@@ -67,6 +67,31 @@ public class MetricD3GraphView extends EnhancedVLayout {
             + "                        width=\"6\" height=\"3\">"
             + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#2E9EC2; fill:none;\"/>"
             + "               </pattern>"
+            + "<pattern id=\"diagonalHatchFill\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"105\" height=\"105\">"
+            + "<g style=\"fill:none; stroke:black; stroke-width:1\">"
+            + "<circle cx=\"0\" cy=\"0\" r=\"1000\" fill=\"grey\"/>"
+            + "<path d=\"M0 90 l15,15\"/>"
+            + "<path d=\"M0 75 l30,30\"/>"
+            + "<path d=\"M0 60 l45,45\"/>"
+            + "<path d=\"M0 45 l60,60\"/>"
+            + "<path d=\"M0 30 l75,75\"/>"
+            + "<path d=\"M0 15 l90,90\"/>"
+            + "<path d=\"M0 0 l105,105\"/>"
+            + "<path d=\"M15 0 l90,90\"/>"
+            + "<path d=\"M30 0 l75,75\"/>"
+            + "<path d=\"M45 0 l60,60\"/>"
+            + "<path d=\"M60 0 l45,45\"/>"
+            + "<path d=\"M75 0 l30,30\"/>"
+            + "<path d=\"M90 0 l15,15\"/>"
+            + "</g>"
+            + "</pattern>"
+            + "<pattern id=\"diagonalHatch\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"105\" height=\"105\">"
+            + "<g style=\"fill:none; stroke:black; stroke-width:1\">" + "<path d=\"M0 90 l15,15\"/>"
+            + "<path d=\"M0 75 l30,30\"/>" + "<path d=\"M0 60 l45,45\"/>" + "<path d=\"M0 45 l60,60\"/>"
+            + "<path d=\"M0 30 l75,75\"/>" + "<path d=\"M0 15 l90,90\"/>" + "<path d=\"M0 0 l105,105\"/>"
+            + "<path d=\"M15 0 l90,90\"/>" + "<path d=\"M30 0 l75,75\"/>" + "<path d=\"M45 0 l60,60\"/>"
+            + "<path d=\"M60 0 l45,45\"/>" + "<path d=\"M75 0 l30,30\"/>" + "<path d=\"M90 0 l15,15\"/>" + "</g>"
+            + "</pattern>"
             + "               <pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
             + "                        width=\"6\" height=\"3\">"
             + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>"
@@ -101,9 +126,9 @@ public class MetricD3GraphView extends EnhancedVLayout {
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs
             .append("<div id=\""
-                    + getFullChartId()
-                    + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
-                    + getChartHeight() + "px;\">");
+                + getFullChartId()
+                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
+                + getChartHeight() + "px;\">");
         divAndSvgDefs.append(getSvgDefs());
         divAndSvgDefs.append("</svg></div>");
 
@@ -133,13 +158,10 @@ public class MetricD3GraphView extends EnhancedVLayout {
         graph.drawJsniChart();
     }
 
-
     public String getFullChartId() {
         return "rChart-" + graph.getMetricGraphData().getChartId();
 
     }
-
-
 
     public Integer getChartHeight() {
         return graph.getMetricGraphData().getChartHeight();

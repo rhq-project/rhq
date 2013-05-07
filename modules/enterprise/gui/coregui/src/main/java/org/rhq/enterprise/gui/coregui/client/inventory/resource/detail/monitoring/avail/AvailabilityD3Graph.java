@@ -25,7 +25,6 @@ import com.smartgwt.client.widgets.HTMLFlow;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -43,7 +42,7 @@ public class AvailabilityD3Graph extends EnhancedVLayout implements Availability
     public AvailabilityD3Graph(AvailabilityOverUnderGraphType graphType) {
         super();
         this.availabilityGraphType = graphType;
-        setHeight(70);
+        setHeight(65);
         setWidth100();
     }
 
@@ -83,13 +82,24 @@ public class AvailabilityD3Graph extends EnhancedVLayout implements Availability
 
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"availChart-" + availabilityGraphType.getChartId()
-            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:110px;\">");
+            + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:65px;\">");
+        divAndSvgDefs.append(getSvgDefs());
         divAndSvgDefs.append("</svg></div>");
         HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
         graph.setWidth100();
-        graph.setHeight(25);
+        graph.setHeight(65);
         addMember(graph);
 
+    }
+
+    /**
+     * Svg definitions for patterns and gradients to use on SVG shapes.
+     * @return xml String
+     */
+    private static String getSvgDefs() {
+        return " <defs>"+
+                "<pattern id=\"diagonalHatch\" patternUnits=\"userSpaceOnUse\" width=\"4\" height=\"4\">  <path d=\"M-1,1 l2,-2           M0,4 l4,-4           M3,5 l2,-2\" /> </pattern>"
+                + "</defs>";
     }
 
     @Override

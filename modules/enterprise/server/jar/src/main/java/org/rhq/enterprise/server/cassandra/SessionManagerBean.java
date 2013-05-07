@@ -41,6 +41,7 @@ import com.datastax.driver.core.SimpleAuthInfoProvider;
 import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.server.metrics.CQLException;
 import org.rhq.server.metrics.MetricsConfiguration;
@@ -123,6 +124,7 @@ public class SessionManagerBean {
             for (int i = 0; i < seeds.length; ++i) {
                 StorageNode discoveredStorageNode = new StorageNode();
                 discoveredStorageNode.parseNodeInformation(seeds[i]);
+                discoveredStorageNode.setOperationMode(OperationMode.NORMAL);
 
                 if (storageNodeMap.containsKey(discoveredStorageNode.getAddress())) {
                     StorageNode existingStorageNode = storageNodeMap.get(discoveredStorageNode.getAddress());

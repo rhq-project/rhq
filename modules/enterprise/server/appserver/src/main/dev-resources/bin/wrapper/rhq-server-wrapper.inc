@@ -9,7 +9,7 @@ wrapper.java.additional.9=-agentlib:jdwp=transport=dt_socket,address=8787,server
 wrapper.java.additional.10=-Xms256M
 wrapper.java.additional.11=-Xmx512M
 wrapper.java.additional.12=-XX:PermSize=128M
-wrapper.java.additional.13=-XX:MaxPermSize=128M
+wrapper.java.additional.13=-XX:MaxPermSize=256M
 
 # enable jprofiler
 #set.PATH=%PATH%;<jprofiler-install-dir>\bin\windows

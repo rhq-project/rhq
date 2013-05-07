@@ -37,7 +37,6 @@ import javax.naming.Context;
 
 import org.rhq.cassandra.installer.RMIContextFactory;
 
-
 /**
  * @author John Sanda
  * @author Jirka Kremser
@@ -49,7 +48,7 @@ public class CassandraNode {
     private int jmxPort;
 
     private int nativeTransportPort;
-    
+
     private static final String JMX_CONNECTION_STRING = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
 
     public CassandraNode(String hostName, int jmxPort, int nativeTransportPort) {
@@ -69,7 +68,7 @@ public class CassandraNode {
     public int getNativeTransportPort() {
         return nativeTransportPort;
     }
-    
+
     public boolean isNativeTransportRunning() throws Exception {
         Boolean nativeTransportRunning = false;
         String url = String.format(JMX_CONNECTION_STRING, getHostName(), getJmxPort());
@@ -125,7 +124,8 @@ public class CassandraNode {
     public static CassandraNode parseNode(String s) {
         String[] params = s.split("\\|");
         if (params.length != 3) {
-            throw new IllegalArgumentException("Expected string of the form, hostname|jmxPort|nativeTransportPort");
+            throw new IllegalArgumentException(
+                "Expected string of the form, hostname|jmxPort|nativeTransportPort but got: " + s);
         }
         return new CassandraNode(params[0], Integer.parseInt(params[1]), Integer.parseInt(params[2]));
     }

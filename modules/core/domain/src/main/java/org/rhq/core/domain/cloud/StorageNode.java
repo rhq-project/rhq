@@ -44,7 +44,7 @@ import org.rhq.core.domain.resource.Resource;
 
 /**
  * An RHQ Storage Node (Cassandra)
- * 
+ *
  * @author Jay Shaughnessy
  */
 @Entity(name = "StorageNode")
@@ -221,9 +221,9 @@ public class StorageNode implements Serializable {
 
         final StorageNode other = (StorageNode) obj;
 
-        if (ctime != other.ctime) {
-            return false;
-        }
+        //if (ctime != other.ctime) {
+        //    return false;
+        //}
 
         if (address == null) {
             if (other.address != null) {
@@ -234,6 +234,17 @@ public class StorageNode implements Serializable {
         }
 
         return true;
+    }
+
+    public void parseNodeInformation(String s) {
+        String[] params = s.split("\\|");
+        if (params.length != 3) {
+            throw new IllegalArgumentException("Expected string of the form, hostname|jmxPort|nativeTransportPort");
+        }
+
+        this.setAddress(params[0]);
+        this.setJmxPort(Integer.parseInt(params[1]));
+        this.setCqlPort(Integer.parseInt(params[2]));
     }
 
 }

@@ -38,8 +38,8 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.util.ClusterBuilder;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.StringUtil;
 
 /**
@@ -57,7 +57,7 @@ public class SchemaManager {
 
     private String password;
 
-    private List<CassandraNode> nodes = new ArrayList<CassandraNode>();
+    private List<StorageNode> nodes = new ArrayList<StorageNode>();
 
     public SchemaManager(String username, String password, String... nodes) {
         try {
@@ -65,8 +65,10 @@ public class SchemaManager {
             this.password = password;
 
             for (String node : nodes) {
-                CassandraNode cassandraNode = CassandraNode.parseNode(node);
-                this.nodes.add(cassandraNode);
+                StorageNode storageNode = new StorageNode();
+                storageNode.parseNodeInformation(node);
+
+                this.nodes.add(storageNode);
             }
 
             initCluster();
@@ -75,7 +77,7 @@ public class SchemaManager {
         }
     }
 
-    public SchemaManager(String username, String password, List<CassandraNode> nodes) {
+    public SchemaManager(String username, String password, List<StorageNode> nodes) {
         try {
             this.username = username;
             this.password = password;
@@ -90,7 +92,7 @@ public class SchemaManager {
     private void initCluster() throws NoHostAvailableException {
         String[] hostNames = new String[nodes.size()];
         for (int i = 0; i < hostNames.length; ++i) {
-            hostNames[i] = nodes.get(i).getHostName();
+            hostNames[i] = nodes.get(i).getAddress();
         }
 
         if (log.isDebugEnabled()) {
@@ -103,7 +105,7 @@ public class SchemaManager {
         authInfoProvider.add("username", username).add("password", password);
 
         Cluster cluster = new ClusterBuilder().addContactPoints(hostNames).withAuthInfoProvider(authInfoProvider)
-            .withPort(nodes.get(0).getNativeTransportPort()).build();
+            .withPort(nodes.get(0).getCqlPort()).build();
         session = cluster.connect("system");
     }
 

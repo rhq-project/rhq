@@ -47,13 +47,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.Minutes;
 
+
 import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.util.ClusterBuilder;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.metrics.simulator.plan.ClusterConfig;
 import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
@@ -83,7 +84,7 @@ public class Simulator implements ShutdownManager {
             }
         });
 
-        List<CassandraNode> nodes = initCluster(plan);
+        List<StorageNode> nodes = initCluster(plan);
 
         createSchema(nodes);
 
@@ -168,9 +169,9 @@ public class Simulator implements ShutdownManager {
         log.info("Shut down complete");
     }
 
-    private List<CassandraNode> initCluster(SimulationPlan plan) {
+    private List<StorageNode> initCluster(SimulationPlan plan) {
         try {
-            List<CassandraNode> nodes = deployCluster(plan.getClusterConfig());
+            List<StorageNode> nodes = deployCluster(plan.getClusterConfig());
             waitForClusterToInitialize(nodes);
             return nodes;
         } catch (Exception e) {
@@ -178,7 +179,7 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private List<CassandraNode> deployCluster(ClusterConfig clusterConfig) throws IOException {
+    private List<StorageNode> deployCluster(ClusterConfig clusterConfig) throws IOException {
         File clusterDir = new File(clusterConfig.getClusterDir(), "cassandra");
         log.info("Deploying cluster to " + clusterDir);
         clusterDir.mkdirs();
@@ -196,7 +197,7 @@ public class Simulator implements ShutdownManager {
         deploymentOptions.load();
 
         ccm = new CassandraClusterManager(deploymentOptions);
-        List<CassandraNode> nodes = ccm.createCluster();
+        List<StorageNode> nodes = ccm.createCluster();
         ccm.startCluster(false);
 
         return nodes;
@@ -207,13 +208,13 @@ public class Simulator implements ShutdownManager {
         ccm.shutdownCluster();
     }
 
-    private void waitForClusterToInitialize(List<CassandraNode> nodes) {
+    private void waitForClusterToInitialize(List<StorageNode> nodes) {
         log.info("Waiting for cluster to initialize");
         ClusterInitService clusterInitService = new ClusterInitService();
         clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
     }
 
-    private void createSchema(List<CassandraNode> nodes) {
+    private void createSchema(List<StorageNode> nodes) {
         try {
             log.info("Creating schema");
             SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
@@ -224,7 +225,7 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private Session createSession(List<CassandraNode> nodes) throws NoHostAvailableException {
+    private Session createSession(List<StorageNode> nodes) throws NoHostAvailableException {
         try {
             SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
             authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
@@ -244,7 +245,7 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private Session createSession(List<CassandraNode> nodes, ProtocolOptions.Compression compression)
+    private Session createSession(List<StorageNode> nodes, ProtocolOptions.Compression compression)
         throws NoHostAvailableException {
         try {
             log.debug("Creating session using " + compression.name() + " compression");
@@ -276,10 +277,10 @@ public class Simulator implements ShutdownManager {
         return cluster.connect("rhq");
     }
 
-    private String[] getHostNames(List<CassandraNode> nodes) {
+    private String[] getHostNames(List<StorageNode> nodes) {
         String[] hostnames = new String[nodes.size()];
         for (int i = 0; i < hostnames.length; ++i) {
-            hostnames[i] = nodes.get(i).getHostName();
+            hostnames[i] = nodes.get(i).getAddress();
         }
         return hostnames;
     }

@@ -72,6 +72,8 @@ public class StorageNode implements Serializable {
     public static final String QUERY_DELETE_BY_ID = "StorageNode.deleteById";
     public static final String QUERY_FIND_ALL_NORMAL = "StorageNode.findAllNormalCloudMembers";
 
+    private static final String JMX_CONNECTION_STRING = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
+
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_STORAGE_NODE_ID_SEQ")
     @Id
@@ -186,6 +188,11 @@ public class StorageNode implements Serializable {
         public String getMessage() {
             return message;
         }
+    }
+
+    public String getJMXConnectionURL() {
+        String[] split = JMX_CONNECTION_STRING.split("%s");
+        return split[0] + this.address + split[1] + this.jmxPort + split[2];
     }
 
     @Override

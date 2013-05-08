@@ -38,7 +38,6 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.SimpleAuthInfoProvider;
 
-import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
@@ -82,9 +81,10 @@ public class SessionManagerBean {
             String[] seeds = seedProp.split(",");
             String[] hostNames = new String[seeds.length];
             for (int i = 0; i < seeds.length; ++i) {
-                CassandraNode node = CassandraNode.parseNode(seeds[i]);
-                port = node.getNativeTransportPort();
-                hostNames[i] = node.getHostName();
+                StorageNode node = new StorageNode();
+                node.parseNodeInformation(seeds[i]);
+                port = node.getCqlPort();
+                hostNames[i] = node.getAddress();
             }
 
             if (port == -1) {

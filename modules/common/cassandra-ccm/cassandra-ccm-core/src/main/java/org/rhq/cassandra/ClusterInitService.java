@@ -26,12 +26,21 @@
 package org.rhq.cassandra;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
+
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+import javax.naming.Context;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
@@ -45,6 +54,9 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.cassandra.installer.RMIContextFactory;
+import org.rhq.core.domain.cloud.StorageNode;
+
 /**
  * This class provides operations to ensure a cluster is initialized and in a consistent
  * state. It does not offer functionality for initializing a cluster but rather to make
@@ -54,20 +66,20 @@ import org.apache.commons.logging.LogFactory;
  * @author Jirka Kremser
  */
 public final class ClusterInitService {
-        
+
     private final Log log = LogFactory.getLog(ClusterInitService.class);
-    
-    private Session initRhqSession(List<CassandraNode> hosts) {
-        return initSession(hosts, "rhq", "rhqadmin", "rhqadmin");
+
+    private Session initRhqSession(List<StorageNode> storageNodes) {
+        return initSession(storageNodes, "rhq", "rhqadmin", "rhqadmin");
     }
-    
-    private Session initSession(List<CassandraNode> hosts, String keySpace, String username, String password) {
+
+    private Session initSession(List<StorageNode> hosts, String keySpace, String username, String password) {
         if (hosts == null) {
             throw new IllegalArgumentException("No cassandra nodes were provided.");
         }
         String[] addresses = new String[hosts.size()];
         for (int i = 0; i < hosts.size(); i++) {
-            addresses[i] = hosts.get(i).getHostName();
+            addresses[i] = hosts.get(i).getAddress();
         }
         Cluster cluster = Cluster.builder().addContactPoints(addresses).withoutMetrics()
             .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
@@ -75,14 +87,14 @@ public final class ClusterInitService {
         Session session = cluster.connect(keySpace);
         return session;
     }
-    
-    public boolean ping(List<CassandraNode> hosts, int numHosts) {
+
+    public boolean ping(List<StorageNode> storageNodes, int numHosts) {
         int connections = 0;
         long sleep = 100;
 
-        for (CassandraNode host : hosts) {
+        for (StorageNode host : storageNodes) {
             try {
-                boolean isNativeTransportRunning = host.isNativeTransportRunning();
+                boolean isNativeTransportRunning = this.isNativeTransportRunning(host);
                 if (isNativeTransportRunning) {
                     ++connections;
                 }
@@ -113,8 +125,8 @@ public final class ClusterInitService {
      *
      * @param hosts The cluster nodes to which a connection should be made
      */
-    public void waitForClusterToStart(List<CassandraNode> hosts) {
-        waitForClusterToStart(hosts, hosts.size(), 10);
+    public void waitForClusterToStart(List<StorageNode> storageNodes) {
+        waitForClusterToStart(storageNodes, storageNodes.size(), 10);
     }
 
     /**
@@ -136,11 +148,10 @@ public final class ClusterInitService {
      * @param retries The number of times to retry connecting. A runtime exception will be
      *                thrown when the number of failed connections exceeds this value.
      */
-    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, int retries) {
-        waitForClusterToStart(hosts, numHosts, 250, retries, 1);
+    public void waitForClusterToStart(List<StorageNode> storageNodes, int numHosts, int retries) {
+        waitForClusterToStart(storageNodes, numHosts, 250, retries, 1);
     }
-    
-    
+
     /**
      * This method attempts to establish a Thrift RPC connection to each host for the
      * number specified. In other words, if there are four hosts and <code>numHosts</code>
@@ -162,7 +173,8 @@ public final class ClusterInitService {
      *                thrown when the number of failed connections exceeds this value.
      * @param initialWait The amount of seconds before first try.
      */
-    public void waitForClusterToStart(List<CassandraNode> hosts, int numHosts, long delay, int retries, int initialWait) {
+    public void waitForClusterToStart(List<StorageNode> storageNodes, int numHosts, long delay, int retries,
+        int initialWait) {
         if (initialWait > 0) {
             try {
                 if (log.isDebugEnabled()) {
@@ -172,21 +184,21 @@ public final class ClusterInitService {
             } catch (InterruptedException e) {
             }
         }
-        
+
         int connections = 0;
         int failedConnections = 0;
-        Queue<CassandraNode> queue = new LinkedList<CassandraNode>(hosts);
-        CassandraNode host = queue.poll();
+        Queue<StorageNode> queue = new LinkedList<StorageNode>(storageNodes);
+        StorageNode storageNode = queue.poll();
 
-        while (host != null) {
+        while (storageNode != null) {
             if (failedConnections >= retries) {
                 throw new RuntimeException("Unable to verify that cluster nodes have started after "
                     + failedConnections + " failed attempts");
             }
             try {
-                boolean isNativeTransportRunning = host.isNativeTransportRunning();
+                boolean isNativeTransportRunning = this.isNativeTransportRunning(storageNode);
                 if (log.isDebugEnabled() && isNativeTransportRunning) {
-                    log.debug("Successfully connected to cassandra node [" + host + "]");
+                    log.debug("Successfully connected to cassandra node [" + storageNode + "]");
                 }
                 if (isNativeTransportRunning) {
                     ++connections;
@@ -204,9 +216,9 @@ public final class ClusterInitService {
                 }
             } catch (Exception e) {
                 ++failedConnections;
-                queue.offer(host);
+                queue.offer(storageNode);
                 if (log.isDebugEnabled()) {
-                    log.debug("Unable to open JMX connection to cassandra node [" + host + "].", e);
+                    log.debug("Unable to open JMX connection to cassandra node [" + storageNode + "].", e);
                 } else if (log.isInfoEnabled()) {
                     log.debug("Unable to open connection to cassandra node.");
                 }
@@ -215,10 +227,10 @@ public final class ClusterInitService {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
             }
-            host = queue.poll();
+            storageNode = queue.poll();
         }
     }
-    
+
     /**
      * Waits for the cluster to reach schema agreement. During cluster initialization
      * before and while schema changes propagate throughout the cluster, there could be
@@ -227,20 +239,23 @@ public final class ClusterInitService {
      *
      * @param hosts The cluster nodes
      */
-    public void waitForSchemaAgreement(List<CassandraNode> hosts) {
-        if (hosts == null) return;
+    public void waitForSchemaAgreement(List<StorageNode> storageNodes) {
+        if (storageNodes == null) {
+            return;
+        }
+
         long sleep = 100L;
         boolean schemaInAgreement = false;
 
         while (!schemaInAgreement) {
             Set<UUID> schemaVersions = new HashSet<UUID>();
             try {
-                for (CassandraNode host : hosts) {
+                for (StorageNode host : storageNodes) {
                     UUID otherSchchemaVersion = getSchemaVersionForNode(host);
                     schemaVersions.add(otherSchchemaVersion);
                 }
             } catch (NoHostAvailableException e) {
-                throw new RuntimeException("Unable to get schema versions from " + hosts.get(0), e);
+                throw new RuntimeException("Unable to get schema versions from " + storageNodes.get(0), e);
             }
             if (schemaVersions.size() > 1) {
                 if (log.isInfoEnabled()) {
@@ -261,7 +276,7 @@ public final class ClusterInitService {
                 } else {
                     if (log.isInfoEnabled()) {
                         log.info("Schema agreement has not been reached. Unable to get the schema version from cassandra nodes ["
-                            + hosts + "]");
+                            + storageNodes + "]");
                     }
                     try {
                         Thread.sleep(sleep);
@@ -272,11 +287,33 @@ public final class ClusterInitService {
 
         }
     }
-    
-    private UUID getSchemaVersionForNode(CassandraNode node) {
+
+    public boolean isNativeTransportRunning(StorageNode storageNode) throws Exception {
+        Boolean nativeTransportRunning = false;
+        String url = storageNode.getJMXConnectionURL();
+        JMXServiceURL serviceURL = new JMXServiceURL(url);
+        Map<String, String> env = new HashMap<String, String>();
+        // see https://issues.jboss.org/browse/AS7-2138
+        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
+        JMXConnector connector = null;
+
+        try {
+            connector = JMXConnectorFactory.connect(serviceURL, env);
+            MBeanServerConnection serverConnection = connector.getMBeanServerConnection();
+            ObjectName storageService = new ObjectName("org.apache.cassandra.db:type=StorageService");
+            nativeTransportRunning = (Boolean) serverConnection.getAttribute(storageService, "NativeTransportRunning");
+        } finally {
+            if (connector != null) {
+                connector.close();
+            }
+        }
+        return nativeTransportRunning;
+    }
+
+    private UUID getSchemaVersionForNode(StorageNode storageNode) {
         Session session = null;
         try {
-            session = initRhqSession(Arrays.asList(node));
+            session = initRhqSession(Arrays.asList(storageNode));
             PreparedStatement statement = session.prepare("SELECT schema_version from system.local");
             BoundStatement boundStatement = statement.bind();
             ResultSet rs = session.execute(boundStatement);

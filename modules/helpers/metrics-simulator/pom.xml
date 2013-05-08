@@ -5,7 +5,7 @@
     <groupId>org.rhq.helpers</groupId>
     <version>4.7.0-SNAPSHOT</version>
   </parent>
-  
+
   <modelVersion>4.0.0</modelVersion>
   <artifactId>rhq-metrics-simulator</artifactId>
   <name>RHQ Metrics Simulator</name>
@@ -16,7 +16,13 @@
       <artifactId>rhq-cassandra-schema</artifactId>
       <version>${project.version}</version>
     </dependency>
- 
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-domain</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
     <dependency>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-server-metrics</artifactId>

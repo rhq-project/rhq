@@ -36,6 +36,7 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
 import org.rhq.cassandra.schema.SchemaManager;
+import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author John Sanda
@@ -95,12 +96,14 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         // consistency and failover. If we start doing that at some point, then
         // we cannot initialize ccm here.
         ccm = new CassandraClusterManager(deploymentOptions);
-        List<CassandraNode> nodes = ccm.createCluster();
+        ClusterInitService clusterInitService = new ClusterInitService();
+
+        List<StorageNode> nodes = ccm.createCluster();
 
         if (System.getProperty("rhq.cassandra.cluster.skip-shutdown") == null) {
-            for (CassandraNode node : nodes) {
+            for (StorageNode node : nodes) {
                 try {
-                    if (node.isNativeTransportRunning()) {
+                    if (clusterInitService.isNativeTransportRunning(node)) {
                         throw new RuntimeException("A cluster is already running on the same ports.");
                     }
                 } catch (Exception e) {
@@ -110,7 +113,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         }
         ccm.startCluster(false);
 
-        ClusterInitService clusterInitService = new ClusterInitService ();
+
         clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);

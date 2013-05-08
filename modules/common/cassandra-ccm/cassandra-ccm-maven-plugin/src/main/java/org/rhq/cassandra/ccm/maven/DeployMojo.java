@@ -35,10 +35,10 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 
 import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
+import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author John Sanda
@@ -63,7 +63,7 @@ public class DeployMojo extends AbstractMojo {
 
         long start = System.currentTimeMillis();
         getLog().info("Creating " + numNodes + " cluster in " + clusterDir);
-        List<CassandraNode> nodes = ccm.createCluster();
+        List<StorageNode> nodes = ccm.createCluster();
 
         getLog().info("Starting cluster nodes");
         ccm.startCluster();

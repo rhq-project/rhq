@@ -56,11 +56,11 @@ import org.jboss.arquillian.test.spi.event.suite.AfterClass;
 import org.jboss.arquillian.test.spi.event.suite.BeforeClass;
 
 import org.rhq.cassandra.CassandraClusterManager;
-import org.rhq.cassandra.CassandraNode;
 import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
+import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author John Sanda
@@ -109,7 +109,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
         ManagerStarted event, ArquillianDescriptor descriptor) {
             deploymentClass = getDeploymentClass(descriptor);
 
-            List<CassandraNode> nodes = ccm.createCluster();
+            List<StorageNode> nodes = ccm.createCluster();
             ccm.startCluster(false);
 
             ClusterInitService clusterInitService = new ClusterInitService();

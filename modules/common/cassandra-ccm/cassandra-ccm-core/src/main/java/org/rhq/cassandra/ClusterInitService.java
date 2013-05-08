@@ -307,7 +307,18 @@ public final class ClusterInitService {
             try {
                 nativeTransportRunning = (Boolean) serverConnection.getAttribute(storageService, attribute);
             } catch (Exception e) {
-                log.debug("Failed to read attribute [" + attribute + "] from " + storageService, e);
+                // It is ok to just catch and log exceptions here particularly in an integration
+                // test environment where we could potentially try to do the JMX query before
+                // Cassandra is fully initialized. We can query StorageService before the native
+                // transport server is initialized which will result in Cassandra throwing a NPE.
+                // We do not want propagate that exception because it is just a matter of waiting
+                // for Cassandra to finish initializing.
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to read attribute [" + attribute + "] from " + storageService, e);
+                } else {
+                    log.info("Faied to read attribute [" + attribute + "] from " + storageService + ": " +
+                        e.getMessage());
+                }
             }
         } finally {
             if (connector != null) {

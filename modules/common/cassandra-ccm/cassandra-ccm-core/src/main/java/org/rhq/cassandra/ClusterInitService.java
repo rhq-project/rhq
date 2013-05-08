@@ -202,6 +202,8 @@ public final class ClusterInitService {
                 }
                 if (isNativeTransportRunning) {
                     ++connections;
+                } else {
+                    queue.offer(storageNode);
                 }
                 if (connections == numHosts) {
                         if (log.isDebugEnabled()) {
@@ -301,7 +303,12 @@ public final class ClusterInitService {
             connector = JMXConnectorFactory.connect(serviceURL, env);
             MBeanServerConnection serverConnection = connector.getMBeanServerConnection();
             ObjectName storageService = new ObjectName("org.apache.cassandra.db:type=StorageService");
-            nativeTransportRunning = (Boolean) serverConnection.getAttribute(storageService, "NativeTransportRunning");
+            String attribute = "NativeTransportRunning";
+            try {
+                nativeTransportRunning = (Boolean) serverConnection.getAttribute(storageService, attribute);
+            } catch (Exception e) {
+                log.debug("Failed to read attribute [" + attribute + "] from " + storageService, e);
+            }
         } finally {
             if (connector != null) {
                 connector.close();

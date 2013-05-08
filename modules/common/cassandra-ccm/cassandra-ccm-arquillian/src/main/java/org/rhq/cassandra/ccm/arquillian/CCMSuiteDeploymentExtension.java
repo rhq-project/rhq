@@ -111,16 +111,20 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
             List<StorageNode> nodes = ccm.createCluster();
             ccm.startCluster(false);
+            try {
+                ClusterInitService clusterInitService = new ClusterInitService();
+                clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 5);
 
-            ClusterInitService clusterInitService = new ClusterInitService();
-            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 5);
-
-            SchemaManager schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
-            if (!schemaManager.schemaExists()) {
-                schemaManager.createSchema();
+                SchemaManager schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
+                if (!schemaManager.schemaExists()) {
+                    schemaManager.createSchema();
+                }
+                schemaManager.updateSchema();
+                schemaManager.shutdown();
+            } catch (Exception e) {
+                ccm.shutdownCluster();
+                throw new RuntimeException("Cassandra cluster initialization failed", e);
             }
-            schemaManager.updateSchema();
-            schemaManager.shutdown();
 
             executeInClassScope(new Callable<Void>() {
                 public Void call() throws Exception {
@@ -135,11 +139,15 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
         final AfterStart event, final ContainerRegistry registry) {
             executeInClassScope(new Callable<Void>() {
                 public Void call() throws Exception {
-                    for (Deployment d : suiteDeploymentScenario.deployments()) {
-                        deploymentEvent.fire(new DeployDeployment(findContainer(registry,
-                            event.getDeployableContainer()), d));
+                    try {
+                        for (Deployment d : suiteDeploymentScenario.deployments()) {
+                            deploymentEvent.fire(new DeployDeployment(findContainer(registry,
+                                event.getDeployableContainer()), d));
+                        }
+                        return null;
+                    } finally {
+                        ccm.shutdownCluster();
                     }
-                    return null;
                 }
             });
         }

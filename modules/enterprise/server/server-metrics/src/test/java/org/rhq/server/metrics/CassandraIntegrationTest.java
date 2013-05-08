@@ -66,7 +66,7 @@ public class CassandraIntegrationTest {
         session = cluster.connect("rhq");
     }
 
-    @AfterSuite
+    @AfterSuite(alwaysRun = true)
     @ShutdownCluster
     public void shutdownCluster() throws Exception {
     }

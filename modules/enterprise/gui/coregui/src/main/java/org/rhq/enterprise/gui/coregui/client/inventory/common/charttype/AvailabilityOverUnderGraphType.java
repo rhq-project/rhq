@@ -124,11 +124,13 @@ public class AvailabilityOverUnderGraphType {
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartDateLabel()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartTimeLabel()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverStartLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverEndLabel()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverBarLabel()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverAvailabilityLabel()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverDateFormat()()
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverDateFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getAvailChartTitleLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getAvailChartUpLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getAvailChartDownLabel()()
                 );
 
 
@@ -264,7 +266,7 @@ public class AvailabilityOverUnderGraphType {
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-weight", "bold")
                         .attr("fill", "#003168")
-                        .text("Availability");
+                        .text(availChartContext.chartTitle);
 
                 svg.append("text")
                         .attr("class", "upLabel")
@@ -274,7 +276,7 @@ public class AvailabilityOverUnderGraphType {
                         .style("font-size", "9px")
                         .attr("fill", "#50505a")
                         .style("text-anchor", "end")
-                        .text("UP");
+                        .text(availChartContext.chartUpLabel);
 
                 svg.append("text")
                         .attr("class", "downLabel")
@@ -284,7 +286,7 @@ public class AvailabilityOverUnderGraphType {
                         .style("font-size", "9px")
                         .attr("fill", "#50505a")
                         .style("text-anchor", "end")
-                        .text("DOWN");
+                        .text(availChartContext.chartDownLabel);
 
             }
 
@@ -355,8 +357,16 @@ public class AvailabilityOverUnderGraphType {
         return MSG.chart_hover_start_label();
     }
 
-    public String getChartHoverEndLabel() {
-        return MSG.chart_hover_end_label();
+    public String getAvailChartDownLabel() {
+        return MSG.avail_chart_down_label();
+    }
+
+    public String getAvailChartUpLabel() {
+        return MSG.avail_chart_up_label();
+    }
+
+    public String getAvailChartTitleLabel() {
+        return MSG.avail_chart_title_label();
     }
 
     public String getChartHoverBarLabel() {

@@ -48,7 +48,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.chartSelection = this.chartHandle + " svg";
 
 },
-AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat) {
+AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel) {
     "use strict";
     if (!(this instanceof AvailChartContext)) {
         throw new Error("AvailChartContext function cannot be called as a function.")
@@ -60,10 +60,12 @@ AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverSta
     this.dateLabel = dateLabel;
     this.timeLabel = timeLabel;
     this.hoverStartLabel = hoverStartLabel;
-    this.hoverEndLabel = hoverEndLabel;
     this.hoverBarLabel = hoverBarLabel;
     this.hoverBarAvailabilityLabel = availabilityLabel;
     this.chartHoverTimeFormat = chartHoverTimeFormat;
     this.chartHoverDateFormat = chartHoverDateFormat;
+    this.chartTitle = chartTitle;
+    this.chartDownLabel = chartDownLabel;
+    this.chartUpLabel = chartUpLabel;
 
 };

@@ -215,7 +215,7 @@ public class AvailabilityOverUnderGraphType {
                             }
                             else {
                                 // should not ever happen, but...
-                                console.warn("AvailabilityType not valid.");
+                                console.log("AvailabilityType not valid.");
                                 return "#000"; //black
                             }
                         },
@@ -318,13 +318,11 @@ public class AvailabilityOverUnderGraphType {
 
             return {
                 // Public API
-                draw: function (chartContext) {
+                draw: function (availChartContext) {
                     "use strict";
-                    console.info("AvailabilityChart");
-                    //console.time("availabilityChart");
+                    console.log("AvailabilityChart");
                     drawBars(availChartContext);
                     createHovers();
-                    //console.timeEnd("availabilityChart");
                 }
             }; // end public closure
 

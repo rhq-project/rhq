@@ -499,6 +499,22 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testCreateChildForUnknownParent() throws Exception {
+
+        given()
+            .body("{\"value\":\"CPU\"}") // Type of new resource
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .pathParam("name", "test")
+            .queryParam("plugin", "Platforms")
+            .queryParam("parentId", 321)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when().post("/resource/{name}");
+    }
+
+    @Test
     public void testAlertsForResource() throws Exception {
         given()
             .header("Accept", "application/json")
@@ -521,12 +537,34 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testSchedulesForUnknownResource() throws Exception {
+        given()
+            .header("Accept", "application/json")
+            .pathParam("id", 123)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/resource/{id}/schedules");
+    }
+
+    @Test
     public void testAvailabilityForResourceJson() throws Exception {
         given()
             .header(acceptJson)
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability");
+    }
+
+    @Test
+    public void testAvailabilityForUnknownResource() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id", 532)
+        .expect()
+            .statusCode(404)
         .when()
             .get("/resource/{id}/availability");
     }
@@ -549,6 +587,17 @@ public class ResourcesTest extends AbstractBase {
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability/history");
+    }
+
+    @Test
+    public void testAvailabilityHistoryForUnknownResource() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id", -42)
+        .expect()
+            .statusCode(404)
         .when()
             .get("/resource/{id}/availability/history");
     }

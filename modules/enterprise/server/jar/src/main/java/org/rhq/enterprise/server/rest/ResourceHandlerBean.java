@@ -338,6 +338,10 @@ public class ResourceHandlerBean extends AbstractRestBean {
             @ApiParam(value="Start time", defaultValue = "30 days ago") @QueryParam("start") long start,
             @ApiParam(value="End time", defaultValue = "Now") @QueryParam("end") long end,
             @Context HttpHeaders headers) {
+
+        // Vaildate it the resource exists
+        fetchResource(resourceId);
+
         if (end==0)
             end = System.currentTimeMillis();
 

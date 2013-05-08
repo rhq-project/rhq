@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<generic-plugin name="AlertDefinitionPlugin" displayName="Alert Definition Injection Plugin" description="Injects Factory Installed Alert Definitions"
+  package="org.rhq.enterprise.server.plugins.alertdef" version="1.0" apiVersion="1.0" disabledOnDiscovery="false"
+  xmlns="urn:xmlns:rhq-serverplugin.generic" xmlns:serverplugin="urn:xmlns:rhq-serverplugin" xmlns:c="urn:xmlns:rhq-configuration">
+
+  <serverplugin:help><![CDATA[
+        Injects Factory Installed Alert Templates/Definitions.
+    ]]></serverplugin:help>
+
+  <serverplugin:plugin-component class="AlertDefinitionServerPluginComponent">
+
+    <serverplugin:control name="listInjectedAlertDefinitions" description="Return a list of the alert definitions injected by this plugin">
+      <serverplugin:results>
+        <c:list-property name="injectedAlertDefinitions" description="A list of injected Alert Definitions">
+          <c:map-property name="injectedAlertDefinition" description="Injected Alert Definition">
+            <c:simple-property name="plugin" type="string" summary="true" />
+            <c:simple-property name="type" type="string" summary="true" />
+            <c:simple-property name="name" type="string" summary="true" />
+            <c:simple-property name="description" type="string" summary="true" />
+          </c:map-property>
+        </c:list-property>
+      </serverplugin:results>
+    </serverplugin:control>
+
+    <serverplugin:control name="injectAllAlertDefinitions" description="Inject all of the defined alert definitions">
+      <serverplugin:parameters>
+        <c:simple-property name="replaceIfExists" type="boolean" required="true" default="false"
+          description="If false do not replace the alert definition if it exists. Otherwise delete and replace.  Default is false." />
+      </serverplugin:parameters>
+    </serverplugin:control>
+
+    <serverplugin:control name="injectAlertDefinition" description="Inject the specified alert definition">
+      <serverplugin:parameters>
+        <c:simple-property name="plugin" type="string" required="true" default="" summary="true"
+          description="The plugin name" />
+        <c:simple-property name="type" type="string" required="true" default="true" summary="true"
+          description="The resource type name" />
+        <c:simple-property name="name" type="string" required="true" default="true" summary="true"
+          description="The name of the alert definition" />
+        <c:simple-property name="replaceIfExists" type="boolean" required="true" default="false"
+          description="If false do not replace the alert definition if it exists. Otherwise delete and replace.  Default is false." />
+      </serverplugin:parameters>
+    </serverplugin:control>
+
+  </serverplugin:plugin-component>
+
+  <!-- custom global config - unrelated to schedules -->
+  <serverplugin:plugin-configuration>
+    <c:simple-property name="injectAtPluginStart" type="boolean" required="true" default="true"
+      description="If true inject all templates at server plugin start. Otherwise skip injection. See 'replaceIfExists' property, which affects injection behavior.  Default is true." />
+    <c:simple-property name="replaceIfExists" type="boolean" required="true" default="false"
+      description="If false do not replace the alert definition if it exists. Otherwise delete and replace.  Default is false." />
+  </serverplugin:plugin-configuration>
+
+
+</generic-plugin>

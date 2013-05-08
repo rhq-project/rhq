@@ -524,6 +524,12 @@
 
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
+                                    <artifactId>serverplugin-alertdef-rhq</artifactId>
+                                    <version>${project.version}</version>
+                                </artifactItem>
+
+                                <artifactItem>
+                                    <groupId>${project.groupId}</groupId>
                                     <artifactId>rhq-serverplugin-drift</artifactId>
                                     <version>${project.version}</version>
                                 </artifactItem>

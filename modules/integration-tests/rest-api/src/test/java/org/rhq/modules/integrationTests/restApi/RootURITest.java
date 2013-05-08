@@ -50,7 +50,7 @@ public class RootURITest extends AbstractBase {
                 .expect().statusCode(200)
                 .when().get("/");
 
-        given().header("Accept","application/json")
+        given().header("Accept","application/xml")
                 .expect().statusCode(200)
                 .when().get("/index");
 

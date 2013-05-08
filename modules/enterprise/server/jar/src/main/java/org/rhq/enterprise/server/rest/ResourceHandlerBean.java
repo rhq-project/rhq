@@ -108,6 +108,7 @@ import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.StringValue;
+import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
 
 /**
  * Class that deals with getting data about resources
@@ -755,8 +756,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         if (resType==null)
             throw new StuffNotFoundException("ResourceType with name [" + typeName + "] and plugin [" + plugin + "]");
 
-        Configuration pluginConfig = mapToConfiguration(request.getPluginConfig());
-        Configuration deployConfig = mapToConfiguration(request.getResourceConfig());
+        Configuration pluginConfig = ConfigurationHelper.mapToConfiguration(request.getPluginConfig());
+        Configuration deployConfig = ConfigurationHelper.mapToConfiguration(request.getResourceConfig());
 
         String packageName = DEFAULT_PACKAGE;
 

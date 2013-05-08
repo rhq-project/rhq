@@ -184,6 +184,10 @@ public abstract class ControlCommand {
         return null;
     }
 
+    protected boolean hasProperty(String key) {
+        return rhqctlConfig.containsKey(key);
+    }
+
     protected String getProperty(String key) {
         return rhqctlConfig.getString(key);
     }

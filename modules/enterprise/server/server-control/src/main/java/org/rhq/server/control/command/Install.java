@@ -66,6 +66,10 @@ public class Install extends ControlCommand {
 
     private final String SERVER_CONFIG_OPTION = "server-config";
 
+    private final String AGENT_TOKEN_OPTION = "agent-security-token";
+
+    private final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
+
     private final File DEFAULT_STORAGE_BASEDIR = new File(basedir, STORAGE_BASEDIR_NAME);
 
     private final File DEFAULT_AGENT_BASEDIR = new File(basedir, AGENT_BASEDIR_NAME);
@@ -99,7 +103,10 @@ public class Install extends ControlCommand {
                 true,
                 "A properties file with keys that correspond to option names "
                     + "of the storage installer. Each property will be translated into an option that is passed to the "
-                    + " storage installer. See example.storage.properties for examples.");
+                    + " storage installer. See example.storage.properties for examples.")
+            .addOption(null, AGENT_TOKEN_OPTION, true, "The security token that the agent needs to include with " +
+                "commands sent to the server. Use this option when installing or upgrading an agent that is already " +
+                "registered with the server.");
     }
 
     @Override
@@ -307,6 +314,9 @@ public class Install extends ControlCommand {
 
             if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
                 String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
+                commandLine.addArguments(args);
+            } else if (hasProperty(STORAGE_CONFIG_PROP)) {
+                String[] args = toArray(loadStorageProperties(getProperty(STORAGE_CONFIG_PROP)));
                 commandLine.addArguments(args);
             }
 

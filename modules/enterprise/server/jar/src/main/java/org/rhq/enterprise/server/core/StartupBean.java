@@ -208,7 +208,6 @@ public class StartupBean implements StartupLocal {
         //startAgentClients(); // this could be expensive if we have large number of agents so skip it and we'll create them lazily
         //startEmbeddedAgent(); // this is obsolete - we no longer have an embedded agent
         registerShutdownListener();
-        initCassandraClusterHeartBeatJob();
         registerPluginDeploymentScannerJob();
 
         logServerStartedMessage();
@@ -584,7 +583,8 @@ public class StartupBean implements StartupLocal {
             // Do not check until we are up at least 10 mins, but check every 60 secs thereafter.
             final long initialDelay = 1000L * 60 * 10; // 10 mins
             final long interval = 1000L * 60; // 60 secs
-            schedulerBean.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay,
+                interval);
         } catch (Exception e) {
             log.error("Cannot schedule suspected Agents job.", e);
         }
@@ -614,8 +614,8 @@ public class StartupBean implements StartupLocal {
         try {
             final long initialDelay = 1000L * 60 * 5; // 5 mins
             final long interval = 1000L * 60 * 15; // 15 mins
-            schedulerBean.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, initialDelay,
-                interval);
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false,
+                initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule check-for-timed-out-artifact-requests job.", e);
         }
@@ -646,7 +646,31 @@ public class StartupBean implements StartupLocal {
             log.error("Cannot create alert availability duration job.", e);
         }
 
+        scheduleCassandraClusterHeartBeatJob();
+
         return;
+    }
+
+    private void scheduleCassandraClusterHeartBeatJob() {
+        String seeds = System.getProperty("rhq.cassandra.seeds");
+        if (seeds != null) {
+            seeds = seeds.replaceAll(";", ",");
+        }
+        String jobTrigger = "CassandraClusterHeartBeatTrigger - " + UUID.randomUUID().toString();
+        String jobGroup = CassandraClusterHeartBeatJob.JOB_NAME + "Group";
+
+        JobDataMap jobDataMap = new JobDataMap();
+        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CONNECTION_TIMEOUT, "100");
+        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CASSANDRA_HOSTS, seeds);
+
+        try {
+            schedulerBean.scheduleRepeatingJob(CassandraClusterHeartBeatJob.JOB_NAME, jobGroup, jobDataMap,
+                CassandraClusterHeartBeatJob.class, true, false, 3000, 5000);
+        } catch (SchedulerException e) {
+            String msg = "Unable to schedule " + CassandraClusterHeartBeatJob.class.getSimpleName() + " job. The "
+                + "server will reamin in maintenance mode without a manual override.";
+            log.error(msg, e);
+        }
     }
 
     /**
@@ -815,28 +839,6 @@ public class StartupBean implements StartupLocal {
         // If that doesn't work, we can try to create a system shutdown hook in here. Thus I'm leaving this method in here in case
         // we need it later. Just add a Runtime.addShutdownHook call in here that calls our ShutdownListener.
         return;
-    }
-
-    private void initCassandraClusterHeartBeatJob() {
-        String seeds = System.getProperty("rhq.cassandra.seeds");
-        if (seeds != null) {
-            seeds=seeds.replaceAll(";", ",");
-        }
-        String jobTrigger = "CassandraClusterHeartBeatTrigger - " + UUID.randomUUID().toString();
-        String jobGroup = CassandraClusterHeartBeatJob.JOB_NAME + "Group";
-
-        JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CONNECTION_TIMEOUT, "100");
-        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CASSANDRA_HOSTS, seeds);
-
-        try {
-            schedulerBean.scheduleRepeatingJob(CassandraClusterHeartBeatJob.JOB_NAME, jobGroup, jobDataMap,
-                CassandraClusterHeartBeatJob.class, true, true, 3000, 5000);
-        } catch (SchedulerException e) {
-            String msg = "Unable to schedule " + CassandraClusterHeartBeatJob.class.getSimpleName() + " job. The " +
-                "server will reamin in maintenance mode without a manual override.";
-            log.error(msg, e);
-        }
     }
 
     /**

@@ -162,7 +162,7 @@ public class AvailabilityOverUnderGraphType {
 
                         xAxis = $wnd.d3.svg.axis()
                                 .scale(timeScale)
-                                .ticks(12)
+                                .ticks(8)
                                 .tickSize(13, 0, 0)
                                 .orient("bottom"),
 

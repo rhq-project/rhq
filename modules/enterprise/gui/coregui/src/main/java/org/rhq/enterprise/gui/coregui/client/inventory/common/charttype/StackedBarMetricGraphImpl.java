@@ -129,13 +129,8 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                     else {
                         console.log("Using Large Charts Profile");
                         //  we use the width already defined above
-                        if(isIEBrowserGreaterThanOrEqualTo(9)){
-                            xTicks = 8;
-                            xTickSubDivide = 5;
-                        }else {
-                            xTicks = 12;
-                            xTickSubDivide = 5;
-                        }
+                        xTicks = 8;
+                        xTickSubDivide = 5;
                         chartData = chartContext.data;
                     }
 

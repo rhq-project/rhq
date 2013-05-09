@@ -26,6 +26,12 @@
     <dependencies>
         <dependency>
             <groupId>org.rhq</groupId>
+            <artifactId>rhq-core-domain</artifactId>
+            <version>${project.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.rhq</groupId>
             <artifactId>rhq-core-util</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -131,6 +137,10 @@
                         </goals>
                         <configuration>
                             <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.rhq</groupId>
+                                    <artifactId>rhq-core-domain</artifactId>
+                                </artifactItem>
                                 <artifactItem>
                                     <groupId>org.rhq</groupId>
                                     <artifactId>rhq-core-util</artifactId>

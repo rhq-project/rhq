@@ -23,7 +23,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.net.URL;
 import java.security.KeyStore;
-import java.security.NoSuchAlgorithmException;
 import java.security.cert.X509Certificate;
 
 import javax.net.ssl.HostnameVerifier;
@@ -62,29 +61,13 @@ public class SecureConnector {
     private final String truststoreAlgorithm;
 
     /**
-     * The {@link #openSecureConnection(URL) secure connections} built by this object will not
-     * authenticate the server endpoint, but they will use the default secure socket protocol to
-     * encrypt the connection traffic (see <code>javax.net.ssl.SSLContext.getDefault().getProtocol()</code>).
-     *
-     * @throws NoSuchAlgorithmException if the default secure connection protocol cannot be determined
-     */
-    public SecureConnector() throws NoSuchAlgorithmException {
-        this(null, null, null, null, null);
-    }
-
-    /**
      * The {@link #openSecureConnection(URL) secure connections} built by this object will
      * not authenticate the server endpoint, but they will use the given secure socket protocol
      * to encrypt the connection traffic.
      * 
-     * @param secureSocketProtocol the secure socket protocol to use; if <code>null</code>, then
-     *                             the JVM's default secure socket protocol will be used
-     *                             (see <code>javax.net.ssl.SSLContext.getDefault().getProtocol()</code>)
-     *
-     * @throws NoSuchAlgorithmException if <code>secureSocketProtocol</code> is <code>null</code>, and
-     *                                  the default secure connection protocol cannot be determined
+     * @param secureSocketProtocol the secure socket protocol to use (e.g. "TLS")
      */
-    public SecureConnector(String secureSocketProtocol) throws NoSuchAlgorithmException {
+    public SecureConnector(String secureSocketProtocol) {
         this(secureSocketProtocol, null, null, null, null);
     }
 
@@ -97,28 +80,22 @@ public class SecureConnector {
      * truststore parameters are ignored and the secure connections built by this object will
      * not authenticate the server endpoint.
      *
-     * @param secureSocketProtocol the secure socket protocol to use; if <code>null</code>, then
-     *                             the JVM's default secure socket protocol will be used
-     *                             (see <code>javax.net.ssl.SSLContext.getDefault().getProtocol()</code>)
+     * @param secureSocketProtocol the secure socket protocol to use (e.g. "TLS")
      * @param truststoreFile the truststore file containing authorized certificates
-     * @param truststorePassword the password to the truststore file
-     * @param truststoreType the type of the truststore file; if <code>null</code>, then the JVM's
+     * @param truststorePassword the password to the truststore file (if a file is given, this must not be <code>null</code>)
+     * @param truststoreType the type of the truststore file (e.g. "JKS"); if <code>null</code>, then the JVM's
      *                       default type is used (see <code>java.security.KeyStore.getDefaultType()</code>)
-     * @param truststoreAlgorithm the standard name of the trust management algorithm; if <code>null</code>,
-     *                            then the JVM's default algorithm is used (see
+     * @param truststoreAlgorithm the standard name of the trust management algorithm (e.g. "SunX509");
+     *                            if <code>null</code>, then the JVM's default algorithm is used (see
      *                            <code>javax.net.ssl.TrustManagerFactory.getDefaultAlgorithm()</code>)
-     *
-     * @throws NoSuchAlgorithmException if <code>secureSocketProtocol</code> is <code>null</code>, and
-     *                                  the default secure connection protocol cannot be determined
      */
     public SecureConnector(String secureSocketProtocol, File truststoreFile, String truststorePassword,
-        String truststoreType, String truststoreAlgorithm) throws NoSuchAlgorithmException {
+        String truststoreType, String truststoreAlgorithm) {
 
         if (secureSocketProtocol == null) {
-            this.secureSocketProtocol = SSLContext.getDefault().getProtocol();
-        } else {
-            this.secureSocketProtocol = secureSocketProtocol;
+            throw new IllegalArgumentException("secure socket protocol cannot be null");
         }
+        this.secureSocketProtocol = secureSocketProtocol;
 
         if (truststoreFile == null) {
             // no truststore file was provided, we don't need to know any truststore parameters
@@ -129,17 +106,21 @@ public class SecureConnector {
         } else {
             // the truststore file is provided, make sure we have non-null truststore parameters, using defaults if need be
             this.truststoreFile = truststoreFile;
+
+            if (truststorePassword == null) {
+                throw new IllegalArgumentException("truststorePassword cannot be null");
+            }
             this.truststorePassword = truststorePassword;
 
             if (truststoreType == null) {
                 truststoreType = KeyStore.getDefaultType();
             }
-            this.truststoreType = (truststoreType != null) ? truststoreType : "JKS";
+            this.truststoreType = truststoreType;
 
             if (truststoreAlgorithm == null) {
                 truststoreAlgorithm = TrustManagerFactory.getDefaultAlgorithm();
             }
-            this.truststoreAlgorithm = (truststoreAlgorithm != null) ? truststoreAlgorithm : "SunX509";
+            this.truststoreAlgorithm = truststoreAlgorithm;
         }
 
         return;
@@ -216,4 +197,16 @@ public class SecureConnector {
             return true;
         }
     };
+
+    public static void main(String[] args) throws Exception {
+        HttpsURLConnection conn = new SecureConnector("TLS").openSecureConnection(new URL(args[0]));
+        java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream();
+        java.io.InputStream input = new java.io.BufferedInputStream(conn.getInputStream(), 32768);
+        byte[] buffer = new byte[32768];
+        for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
+            out.write(buffer, 0, bytesRead);
+        }
+        out.flush();
+        System.out.println(out.toString());
+    }
 }

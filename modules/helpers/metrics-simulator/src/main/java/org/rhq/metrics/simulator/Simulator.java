@@ -217,7 +217,7 @@ public class Simulator implements ShutdownManager {
     private void createSchema(List<StorageNode> nodes) {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
+            SchemaManager schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
             schemaManager.createSchema();
             schemaManager.updateSchema();
         } catch (Exception e) {

@@ -21,9 +21,7 @@
          <!--<property name="com.intellij.javaee.persistence.datasource" value="rhq-oracle" />-->
          <property name="com.intellij.javaee.persistence.datasource" value="rhq-postgres" />
 
-         <!-- Used only for debugging the usages of JOIN FETCHes
          <property name="hibernate.query.factory_class" value="org.rhq.core.domain.util.JoinFetchReportingQueryTranslatorFactory" />
-         -->
 
          <!-- This value doesn't have any theoretical grounds and is purely based on experiments. Value of 32 gives
               the best compromise between the quick load of queries with low and high limits (i.e. page size in tens vs.

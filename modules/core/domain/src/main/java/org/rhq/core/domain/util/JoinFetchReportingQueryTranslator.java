@@ -15,8 +15,8 @@ import org.hibernate.event.spi.EventSource;
 import org.hibernate.hql.internal.ast.QueryTranslatorImpl;
 
 /**
- * This class can be used to quickly identify and analyze usages of JOIN FETCH together with limits on JPA queries.
- * It will log the JPA, generated SQL and a filtered stacktrace for each such usage. This is to enhance the diagnostics
+ * This class can be used to quickly identify and analyze usages of JOIN FETCH together with limits on JPA queries. It
+ * will log the JPA, generated SQL and a filtered stacktrace for each such usage. This is to enhance the diagnostics
  * that Hibernate itself offers that merely dumps a message about in-memory filtering of results resulting from the use
  * of JOIN FETCH together with limits.
  *
@@ -24,7 +24,7 @@ import org.hibernate.hql.internal.ast.QueryTranslatorImpl;
  */
 public class JoinFetchReportingQueryTranslator extends QueryTranslatorImpl {
 
-    private static Log LOG = LogFactory.getLog("JOIN FETCH Perf");
+    private static Log LOG = LogFactory.getLog("JOIN FETCH Performance");
 
     public JoinFetchReportingQueryTranslator(String queryIdentifier, String query, Map enabledFilters,
         SessionFactoryImplementor factory) {
@@ -49,11 +49,14 @@ public class JoinFetchReportingQueryTranslator extends QueryTranslatorImpl {
             }
         }
 
-        public void report() {
+        public void report(String method) {
             if (time != 0) {
                 time = System.currentTimeMillis() - time;
-                LOG.warn("List with first: " + firstRow + ", max: " + maxRows + " took " + time + "ms:\n" +
-                    getQueryString() + "\n\nSQL:\n" + getSQLString() + "\n" + extractRHQCalls(new Exception()));
+                LOG.warn("Encountered a query with potentially bad performance. While this is not a bug and the " +
+                    "system functions as designed, please report this to RHQ community so that we can reimplement our" +
+                    " code to work better.\n" + method + "() with first: " + firstRow + ", max: " + maxRows + " took "
+                    + time + "ms:\n" + getQueryString() + "\n\nSQL:\n" + getSQLString() + "\n" +
+                    extractRHQCalls(new Exception()));
             }
         }
 
@@ -80,7 +83,7 @@ public class JoinFetchReportingQueryTranslator extends QueryTranslatorImpl {
 
         List ret = super.list(session, queryParameters);
 
-        usage.report();
+        usage.report("list");
 
         return ret;
     }
@@ -91,7 +94,7 @@ public class JoinFetchReportingQueryTranslator extends QueryTranslatorImpl {
 
         Iterator ret = super.iterate(queryParameters, session);
 
-        usage.report();
+        usage.report("iterate");
 
         return ret;
     }
@@ -103,7 +106,7 @@ public class JoinFetchReportingQueryTranslator extends QueryTranslatorImpl {
 
         ScrollableResults ret = super.scroll(queryParameters, session);
 
-        usage.report();
+        usage.report("scroll");
 
         return ret;
     }

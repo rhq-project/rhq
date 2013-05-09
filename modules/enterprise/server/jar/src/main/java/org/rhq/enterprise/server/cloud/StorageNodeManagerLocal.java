@@ -31,16 +31,17 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface StorageNodeManagerLocal {
 
-    
+    void scanForStorageNodes();
+
     List<StorageNode> getStorageNodes();
 
     void updateStorageNodeList(Collection<StorageNode> storageNodes);
-    
+
     /**
      * Fetches the list of StorageNode entities based on provided criteria.
-     * 
+     *
      * the subject needs to have MANAGE_SETTINGS permissions.
-     * 
+     *
      * @param subject caller
      * @param criteria the criteria
      * @return list of nodes

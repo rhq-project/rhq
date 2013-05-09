@@ -26,9 +26,7 @@
 package org.rhq.enterprise.server.cassandra;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
@@ -40,7 +38,6 @@ import com.datastax.driver.core.SimpleAuthInfoProvider;
 
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.server.metrics.CQLException;
 import org.rhq.server.metrics.MetricsConfiguration;
@@ -61,8 +58,6 @@ public class SessionManagerBean {
     @PostConstruct
     private void createSession() {
         try {
-            this.createStorageNodeEntities();
-
             String username = System.getProperty("rhq.cassandra.username");
             if (username == null) {
                 throw new CQLException("The rhq.cassandra.username property is null. Cannot create session.");
@@ -73,27 +68,20 @@ public class SessionManagerBean {
                 throw new CQLException("The rhq.cassandra.password property is null. Cannot create session.");
             }
 
-            String seedProp = System.getProperty("rhq.cassandra.seeds");
-            if (seedProp == null) {
-                throw new CQLException("The rhq.cassandra.seeds property is null. Cannot create session.");
-            }
-            int port = -1;
-            String[] seeds = seedProp.split(",");
-            String[] hostNames = new String[seeds.length];
-            for (int i = 0; i < seeds.length; ++i) {
-                StorageNode node = new StorageNode();
-                node.parseNodeInformation(seeds[i]);
-                port = node.getCqlPort();
-                hostNames[i] = node.getAddress();
+            List<StorageNode> storageNodes = storageNodeManager.getStorageNodes();
+            if (storageNodes.size() <= 0) {
+                throw new CQLException("Storage node seed list not available.");
             }
 
-            if (port == -1) {
-                throw new RuntimeException("Failed to initialize client port. Cannot create " +
-                    Session.class.getName() + " object.");
+            List<String> hostNames = new ArrayList<String>();
+            for (StorageNode storageNode : storageNodes) {
+                hostNames.add(storageNode.getAddress());
             }
+            int port = storageNodes.get(0).getCqlPort();
 
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Cluster cluster = new ClusterBuilder()
-                .addContactPoints(hostNames)
+                .addContactPoints((String[]) hostNames.toArray())
                 .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
                 .withPort(port)
                 .build();
@@ -103,44 +91,6 @@ public class SessionManagerBean {
         }
     }
 
-    private void createStorageNodeEntities() {
-        try {
-            String seedProp = System.getProperty("rhq.cassandra.seeds");
-            if (seedProp == null) {
-                throw new CQLException("The rhq.cassandra.seeds property is null. Cannot create session.");
-            }
-
-            List<StorageNode> storageNodes = storageNodeManager.getStorageNodes();
-            if (storageNodes == null) {
-                storageNodes = new ArrayList<StorageNode>();
-            }
-
-            Map<String, StorageNode> storageNodeMap = new HashMap<String, StorageNode>();
-            for (StorageNode storageNode : storageNodes) {
-                storageNodeMap.put(storageNode.getAddress(), storageNode);
-            }
-
-            String[] seeds = seedProp.split(",");
-            for (int i = 0; i < seeds.length; ++i) {
-                StorageNode discoveredStorageNode = new StorageNode();
-                discoveredStorageNode.parseNodeInformation(seeds[i]);
-                discoveredStorageNode.setOperationMode(OperationMode.NORMAL);
-
-                if (storageNodeMap.containsKey(discoveredStorageNode.getAddress())) {
-                    StorageNode existingStorageNode = storageNodeMap.get(discoveredStorageNode.getAddress());
-                    existingStorageNode.setJmxPort(discoveredStorageNode.getJmxPort());
-                    existingStorageNode.setCqlPort(discoveredStorageNode.getCqlPort());
-                }
-                else {
-                    storageNodeMap.put(discoveredStorageNode.getAddress(), discoveredStorageNode);
-                }
-            }
-
-            storageNodeManager.updateStorageNodeList(storageNodeMap.values());
-        } catch (Exception e) {
-            throw new CQLException("Unable to create session", e);
-        }
-    }
 
     public Session getSession() {
         return session;

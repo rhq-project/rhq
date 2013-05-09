@@ -308,7 +308,11 @@ public final class CriteriaQueryGenerator {
 
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
+
+        PageControl pc = getPageControl(criteria);
+
         results.append("SELECT ");
+
         if (countQuery) {
             if (groupByClause == null) { // non-grouped method
                 // use count(*) instead of count(alias) due to https://bugzilla.redhat.com/show_bug.cgi?id=699842
@@ -325,7 +329,9 @@ public final class CriteriaQueryGenerator {
                 results.append(projection).append(NL);
             }
         }
+
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
+
         if (countQuery == false) {
             /* 
              * don't fetch in the count query to avoid: "query specified join fetching, 
@@ -336,19 +342,28 @@ public final class CriteriaQueryGenerator {
                     addPersistentBag(fetchField);
                 } else {
                     if (this.projection == null) {
-                        /* 
+                        /*
                          * if not altering the projection, join fetching can be using
                          * to retrieve the associated instance in the same SELECT
+                         *
+                         * We further avoid a JOIN FETCH when executing queries with limits.
+                         * Such execution has performance problems that we solve by initializing the fields
+                         * "manually" in the CriteriaQueryRunner and by defining a default batch fetch size in the
+                         * persistence.xml.
                          */
-                        results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchField).append(NL);
+                        if (pc.isUnlimited()) {
+                            results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchField).append(NL);
+                        } else {
+                            addJoinFetch(fetchField);
+                        }
                     } else {
-                        /* 
+                        /*
                          * if the projection is altered (perhaps converting it into a constructor query), then all
                          * fields specified in the fetch must be in the explicit return list.  this is not possible
                          * today with constructor queries, so any altered projection will implicitly disable fetching.
                          * instead, we'll record which fields need to be explicitly fetched after the primary query
                          * returns the bulk of the data, and use a similar methodology at the SLSB layer to eagerly
-                         * load those before returning the PageList back to the caller. 
+                         * load those before returning the PageList back to the caller.
                          */
                         addJoinFetch(fetchField);
                     }
@@ -357,7 +372,6 @@ public final class CriteriaQueryGenerator {
         }
 
         // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
-        PageControl pc = getPageControl(criteria);
         List<String> orderingFieldRequiredJoins = new ArrayList<String>();
         List<String> orderingFieldTokens = new ArrayList<String>();
 

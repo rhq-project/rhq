@@ -384,11 +384,15 @@ public class Install extends ControlCommand {
             log.info("Waiting for server to complete its start up");
             commandLine = getCommandLine("rhq-installer", "--test");
 
+            Executor installerExecutor = new DefaultExecutor();
+            installerExecutor.setWorkingDirectory(binDir);
+            installerExecutor.setStreamHandler(new PumpStreamHandler());
+
             // TODO add a max retries (probably want it to be configurable)
-            int exitCode = executor.execute(commandLine);
+            int exitCode = installerExecutor.execute(commandLine);
             while (exitCode != 0) {
                 log.debug("Still waiting for server to complete its start up");
-                exitCode = executor.execute(commandLine);
+                exitCode = installerExecutor.execute(commandLine);
             }
 
             log.info("The server start up has completed");

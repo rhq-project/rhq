@@ -37,7 +37,7 @@ public enum JBossProductType {
     JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "Portal Platform"),
 //    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6", "EWP"),
     SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)", "SOAP"),
-    WILDFLY8("WildFly","WildFly 8" ,"WildFly Appliction Server 8" , "WildFly");
+    WILDFLY8("WildFly","WildFly 8" ,"WildFly Application Server 8" , "WildFly");
 
     public final String SHORT_NAME;
     public final String NAME;
@@ -53,15 +53,41 @@ public enum JBossProductType {
     }
 
     /**
+     * Determine the product type of a JBoss install. This implies an api version of 1.x which
+     * is a JBossAS 7.x
+     * @param homeDir the JBoss product installation directory (e.g. /opt/jboss-as-7.1.1.Final)
+     * @return the product type
+     * @deprecated "Use the version with the apiVersion"
+     */
+    @Deprecated
+    public static JBossProductType determineJBossProductType(File homeDir) {
+        return determineJBossProductType(homeDir,"1.0");
+    }
+
+    /**
      * Determines the product type of a JBoss product installation.
      *
      * @param homeDir the JBoss product installation directory (e.g. /opt/jboss-as-7.1.1.Final)
      *
+     * @param apiVersion Api version of the domain api.
      * @return the product type
      */
-    public static JBossProductType determineJBossProductType(File homeDir) {
+    public static JBossProductType determineJBossProductType(File homeDir, String apiVersion) {
         try {
-            return determineJBossProductTypeViaProductConfFile(homeDir);
+            JBossProductType jBossProductType = determineJBossProductTypeViaProductConfFile(homeDir);
+            if (jBossProductType==null) {
+                // Wildfly and The Server Formerly Known AS JBossAS share the same absence of a slot
+                // and thus have no product type. So we need to check differently
+                // AS 7.0/1 use a domain api version of 1.x, while WildFly uses version 2.0+
+                // like 2.0 in "urn:jboss:domain:2.0" from <server xmlns="..." > element in standalone.xml
+                if (apiVersion.startsWith("1")) {
+                    jBossProductType = JBossProductType.AS;
+                } else {
+                    // We should later check for newer WildFly versions to differentiate them
+                    jBossProductType = JBossProductType.WILDFLY8;
+                }
+            }
+            return jBossProductType;
         } catch (Exception e) {
             // TODO: Log an error.
             return determineJBossProductTypeViaHomeDirName(homeDir);
@@ -109,9 +135,7 @@ public enum JBossProductType {
                 throw new RuntimeException("Unknown product type: " + slot);
             }
         } else {
-            // Wildfly and The Server Formerly Known AS JBossAS share the same absence of a slot
-            // so we need another way to distinguish them
-            productType = determineJBossProductTypeViaHomeDirName(homeDir);
+            productType = null;
         }
 
         return productType;

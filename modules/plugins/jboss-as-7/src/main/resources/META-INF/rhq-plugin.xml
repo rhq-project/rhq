@@ -8864,6 +8864,22 @@
     <metric property="responseTime"
             dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
             description="the minimum, maximum, and average response times for requests serviced by this webapp"/>
+    <metric property="active-sessions" displayName="Currently Active Sessions"
+            description="The number of sessions that are currently active"/>
+    <metric property="duplicated-session-ids" displayName="Duplicated Session Ids"
+            description="The number of duplicated session identifiers"/>
+    <metric property="expired-sessions" measurementType="trendsup" displayName="Expired Sessions"
+            description="The number of expired sessions"/>
+    <metric property="max-active-sessions" displayName="Maximum Active Sessions"
+            description="The maximum number of sessions that have been active"/>
+    <metric property="rejected-sessions" measurementType="trendsup" displayName="Rejected Sessions"
+            description="The number of sessions rejected"/>
+    <metric property="session-avg-alive-time" units="milliseconds" displayName="Average Session Alive Time"
+            description="The average alive time of sessions"/>
+    <metric property="session-max-alive-time" units="milliseconds" displayName="Max Session Alive Time"
+            description="The maximum alive time of sessions"/>
+    <metric property="sessions-created" measurementType="trendsup" displayName="Created Sessions"
+            description="The number of sessions created"/>
 
   </service>
 

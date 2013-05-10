@@ -266,8 +266,8 @@ public class AlertTest extends AbstractBase {
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("NONE"))
-                .body("dampeningCount",is("0"))
-                .body("dampeningPeriod",is("0"))
+                .body("dampeningCount",is(0))
+                .body("dampeningPeriod",is(0))
             .when()
                 .post("/alert/definitions")
             .as(AlertDefinition.class);
@@ -369,8 +369,8 @@ public class AlertTest extends AbstractBase {
             alertDefinition.setEnabled(false);
             alertDefinition.setPriority("LOW");
             alertDefinition.setDampeningCategory("PARTIAL_COUNT");
-            alertDefinition.setDampeningCount("3");
-            alertDefinition.setDampeningPeriod("5");
+            alertDefinition.setDampeningCount(3);
+            alertDefinition.setDampeningPeriod(5);
 
             AlertDefinition result =
             given()
@@ -381,8 +381,8 @@ public class AlertTest extends AbstractBase {
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("PARTIAL_COUNT"))
-                .body("dampeningCount",is("3"))
-                .body("dampeningPeriod",is("5"))
+                .body("dampeningCount",is(3))
+                .body("dampeningPeriod",is(5))
             .when()
                 .post("/alert/definitions")
             .as(AlertDefinition.class);
@@ -404,8 +404,9 @@ public class AlertTest extends AbstractBase {
             alertDefinition.setEnabled(false);
             alertDefinition.setPriority("LOW");
             alertDefinition.setDampeningCategory("DURATION_COUNT");
-            alertDefinition.setDampeningCount("1");
-            alertDefinition.setDampeningPeriod("3 minutes");
+            alertDefinition.setDampeningCount(1);
+            alertDefinition.setDampeningPeriod(3);
+            alertDefinition.setDampeningUnit("minutes");
 
             AlertDefinition result =
             given()
@@ -416,8 +417,9 @@ public class AlertTest extends AbstractBase {
             .expect()
                 .statusCode(201)
                 .body("dampeningCategory",is("DURATION_COUNT"))
-                .body("dampeningCount", is("1"))
-                .body("dampeningPeriod", is("3 MINUTES"))
+                .body("dampeningCount", is(1))
+                .body("dampeningPeriod", is(3))
+                .body("dampeningUnit", is("MINUTES"))
             .when()
                 .post("/alert/definitions")
             .as(AlertDefinition.class);

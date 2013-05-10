@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
+import org.apache.http.NoHttpResponseException;
 import org.apache.http.StatusLine;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -81,6 +82,8 @@ public class ASConnection {
      */
     @Deprecated
     public static final String MANAGEMENT = MANAGEMENT_URI;
+
+    static final String FAILURE_NO_RESPONSE = "The server closed the connection before sending the response";
 
     private static final Log LOG = LogFactory.getLog(ASConnection.class);
 
@@ -367,6 +370,16 @@ public class ASConnection {
 
             return operationResult;
 
+        } catch (NoHttpResponseException e) {
+            // For some operations like reload or shutdown, the server closes the connection before sending the
+            // response. We use a specific description here so that callers can write code to decide what to do
+            // in this situation.
+            Result failure = new Result();
+            failure.setFailureDescription(FAILURE_NO_RESPONSE);
+            failure.setOutcome("failure");
+            failure.setRhqThrowable(e);
+            JsonNode ret = mapper.valueToTree(failure);
+            return ret;
         } catch (IOException e) {
             Result failure = new Result();
             failure.setFailureDescription(e.getMessage());

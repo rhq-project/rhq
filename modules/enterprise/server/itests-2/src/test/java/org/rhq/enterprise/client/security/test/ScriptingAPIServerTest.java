@@ -87,6 +87,10 @@ public class ScriptingAPIServerTest extends ScriptableAbstractEJB3Test {
         //Simplification itself is unit tested separately.
 
         for (RhqManager m : RhqManager.values()) {
+            if (!m.enabled()) {
+                continue;
+            }
+
             String name = m.name();
             // Only check for the TagManager if it is enabled at all
             if (name.contains("TagManager") && !RhqManager.TagManager.enabled()) {

@@ -1,5 +1,5 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" 
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
    <modelVersion>4.0.0</modelVersion>
@@ -7,7 +7,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.7.0-SNAPSHOT</version>
+      <version>4.8.0-SNAPSHOT</version>
       <relativePath>../../pom.xml</relativePath>
    </parent>
 
@@ -23,9 +23,7 @@
       <profile>
          <id>default</id>
          <activation>
-            <property>
-               <name>java.home</name>
-            </property>
+            <activeByDefault>true</activeByDefault>
          </activation>
          <modules>
             <module>util</module>
@@ -46,6 +44,38 @@
             <module>plugin-container-itest</module>
          </modules>
       </profile>
+
+      <profile>
+         <!--
+	        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+	        does not run, compile or need tests.
+	        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+	        test jars, or conflicts with changing the container version.
+	     -->
+         <id>avoid.test.dependencies</id>
+	     <activation>
+	        <property>
+	           <name>maven.test.skip</name>
+	           <value>true</value>
+	        </property>
+	     </activation>
+         <modules>
+            <module>util</module>
+            <module>native-system</module>
+            <module>comm-api</module>
+            <module>dbutils</module>
+            <module>domain</module>
+            <module>plugin-api</module>
+            <module>client-api</module>
+            <module>plugin-container</module>
+            <module>gui</module>
+            <module>plugin-validator</module>
+            <module>arquillian-integration</module>
+            <module>plugin-test-api</module>
+            <module>plugin-container-itest</module>
+         </modules>
+      </profile>
+
 
      <profile>
         <id>plugindoc</id>

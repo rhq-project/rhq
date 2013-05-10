@@ -47,6 +47,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
@@ -69,13 +71,17 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.StringUtils;
+import org.rhq.enterprise.server.operation.OperationDefinitionNotFoundException;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.OperationDefinitionRest;
 import org.rhq.enterprise.server.rest.domain.OperationHistoryRest;
 import org.rhq.enterprise.server.rest.domain.OperationRest;
 import org.rhq.enterprise.server.rest.domain.SimplePropDef;
+import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
 
 /**
  * Deal with operations
@@ -88,32 +94,31 @@ import org.rhq.enterprise.server.rest.domain.SimplePropDef;
 public class OperationsHandlerBean extends AbstractRestBean  {
 
     @EJB
-    OperationManagerLocal opsManager;
+    private OperationManagerLocal opsManager;
 
     @EJB
-    ResourceManagerLocal resourceManager;
+    private ResourceManagerLocal resourceManager;
 
     @GET
     @Path("definition/{id}")
     @Cache(maxAge = 1200)
     @ApiOperation("Retrieve a single operation definition by its id")
     public Response getOperationDefinition(
-            @ApiParam("Id of the definition to retrieve") @PathParam("id") int definitionId,
-            @ApiParam("Id of a resource that supports this operation") @QueryParam("resourceId") Integer resourceId,
-               @Context UriInfo uriInfo,
-               @Context Request request,
-               @Context HttpHeaders httpHeaders) {
-
-
+        @ApiParam("Id of the definition to retrieve") @PathParam("id") int definitionId,
+        @ApiParam("Id of a resource that supports this operation") @QueryParam("resourceId") Integer resourceId,
+        @Context UriInfo uriInfo,
+        @Context Request request) {
 
         OperationDefinition def;
         def = getFromCache(definitionId, OperationDefinition.class);
         if (def==null) {
-            def = opsManager.getOperationDefinition(caller,definitionId);
-            if (def==null)
-                throw new StuffNotFoundException("OperationDefinition with id " + definitionId);
-            else
+            try {
+                def = opsManager.getOperationDefinition(caller,definitionId);
                 putToCache(definitionId,OperationDefinition.class,def);
+            }
+            catch (OperationDefinitionNotFoundException ode) {
+                throw new StuffNotFoundException("Operation definition with id " + definitionId);
+            }
         }
 
         EntityTag eTag = new EntityTag(Integer.toHexString(def.hashCode()));
@@ -145,43 +150,27 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
     }
 
-    private void copyParamsForDefinition(OperationDefinition def, OperationDefinitionRest odr) {
-        ConfigurationDefinition cd = def.getParametersConfigurationDefinition();
-        if (cd==null)
-            return;
-
-        for (Map.Entry<String,PropertyDefinition> entry : cd.getPropertyDefinitions().entrySet()) {
-            PropertyDefinition pd = entry.getValue();
-            if (pd instanceof PropertyDefinitionSimple) {
-                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
-                SimplePropDef prop = new SimplePropDef();
-                prop.setName(pds.getName());
-                prop.setRequired(pds.isRequired());
-                prop.setType(pds.getType());
-                prop.setDefaultValue(pds.getDefaultValue());
-                odr.addParam(prop);
-            }
-            log.debug("copyParams: " + pd.getName() + " not yet supported");
-        }
-    }
-
     @GZIP
     @GET
     @Path("definitions")
     @Cache(maxAge = 1200)
     @ApiOperation("List all operation definitions for a resource")
     public Response getOperationDefinitions(
-            @ApiParam(value = "Id of the resource",required = true) @QueryParam("resourceId") Integer resourceId,
-                                            @Context UriInfo uriInfo,
-                                            @Context Request request,
-                                            @Context HttpHeaders httpHeaders) {
+        @ApiParam(value = "Id of the resource", required = true) @QueryParam("resourceId") Integer resourceId,
+        @Context UriInfo uriInfo,
+        @Context Request request) {
 
-        if (resourceId == null)
+        if (resourceId == null) {
             throw new ParameterMissingException("resourceId");
+        }
 
-        Resource res =resourceManager.getResource(caller,resourceId);
-        if(res==null)
+        Resource res;
+        try {
+            res = resourceManager.getResource(caller,resourceId);
+        }
+        catch (ResourceNotFoundException rnfe) {
             throw new StuffNotFoundException("resource with id " + resourceId);
+        }
 
         ResourceType resourceType = res.getResourceType();
 
@@ -226,16 +215,24 @@ public class OperationsHandlerBean extends AbstractRestBean  {
             @ApiParam(value = "Id of the resource", required = true) @QueryParam("resourceId") Integer resourceId,
                                     @Context UriInfo uriInfo) {
 
-        if (resourceId == null)
+        if (resourceId == null) {
             throw new ParameterMissingException("resourceId");
+        }
 
-        Resource res =resourceManager.getResource(caller,resourceId);
-        if(res==null)
+        try {
+            // Check if the resource exists at all
+            resourceManager.getResource(caller,resourceId);
+        }
+        catch (ResourceNotFoundException rnfe) {
             throw new StuffNotFoundException("resource with id " + resourceId);
+        }
 
 
-        OperationDefinition opDef = opsManager.getOperationDefinition(caller,definitionId);
-        if (opDef==null) {
+        OperationDefinition opDef;
+        try {
+            opDef = opsManager.getOperationDefinition(caller,definitionId);
+        }
+        catch (OperationDefinitionNotFoundException odnfe) {
             throw new StuffNotFoundException("Operation definition with id " + definitionId);
         }
         OperationRest operationRest = new OperationRest(resourceId,definitionId);
@@ -266,9 +263,11 @@ public class OperationsHandlerBean extends AbstractRestBean  {
     @Path("{id}")
     @ApiOperation("Return a (draft) operation")
     public Response getOperation(@ApiParam("Id of the operation to retrieve") @PathParam("id") int operationId) {
+
         OperationRest op = getFromCache(operationId,OperationRest.class);
-        if (op==null)
+        if (op==null) {
             throw new StuffNotFoundException("Operation with id " + operationId);
+        }
 
         return Response.ok(op).build();
     }
@@ -277,20 +276,40 @@ public class OperationsHandlerBean extends AbstractRestBean  {
     @Path("{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @ApiOperation("Update a (draft) operation. If the state is set to 'ready', the operation will be scheduled")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "No draft operation with the passed id exists"),
+        @ApiError(code = 406, reason = "Draft was set for scheduling, but parameters failed validation"),
+        @ApiError(code = 200, reason = "Update was successful, operation was scheduled if requested" )
+        }
+    )
     public Response updateOperation(@ApiParam("Id of the operation to update") @PathParam("id") int operationId,
                 OperationRest operation, @Context UriInfo uriInfo) {
 
-        if (!operation.isReadyToSubmit() && operation.getDefinitionId()>0 && !operation.getName().isEmpty()) {
-            // TODO check all the required parameters for presence before allowing to submit
-            operation.setReadyToSubmit(true);
+        OperationRest op = getFromCache(operationId,OperationRest.class);
+        if (op==null) {
+            throw new StuffNotFoundException("Operation with id " + operationId);
         }
+
+        Configuration parameters = ConfigurationHelper.mapToConfiguration(operation.getParams());
+
         if (operation.isReadyToSubmit()) {
-            // todo check params
+
+            OperationDefinition opDef = opsManager.getOperationDefinition(caller,operation.getDefinitionId());
+
+            // Validate parameters
+            ConfigurationDefinition parameterDefinition = opDef.getParametersConfigurationDefinition();
+            List<String> errorMessages = ConfigurationHelper.checkConfigurationWrtDefinition(parameters, parameterDefinition);
+
+            if (errorMessages.size()>0) {
+                // Configuration is not ok
+                operation.setReadyToSubmit(false);
+                throw new BadArgumentException("Validation of parameters failed", StringUtils.getListAsString(errorMessages,", "));
+            }
+        }
+
+        if (operation.isReadyToSubmit()) {
 
             // submit
-
-            Configuration parameters = mapToConfiguration(operation.getParams());
-
             ResourceOperationSchedule sched = opsManager.scheduleResourceOperation(caller,operation.getResourceId(),operation.getName(),0,0,0,-1,
                     parameters,"Test");
             JobId jobId = new JobId(sched.getJobName(),sched.getJobGroup());
@@ -304,12 +323,12 @@ public class OperationsHandlerBean extends AbstractRestBean  {
         else {
             UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
             uriBuilder.path("/operation/{id}");
-            URI uri = uriBuilder.build(operation.getId());
+            URI uri = uriBuilder.build(operationId);
             Link editLink = new Link("edit",uri.toString());
             operation.addLink(editLink);
         }
         // Update item in cache
-        putToCache(operation.getId(),OperationRest.class,operation);
+        putToCache(operationId,OperationRest.class,operation);
         Response.ResponseBuilder builder = Response.ok(operation);
         return builder.build();
     }
@@ -381,8 +400,9 @@ public class OperationsHandlerBean extends AbstractRestBean  {
             @Context HttpHeaders httpHeaders) {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-        if (resourceId>0)
+        if (resourceId>0) {
             criteria.addFilterResourceIds(resourceId);
+        }
 
         criteria.addSortEndTime(PageOrdering.DESC);
 
@@ -424,30 +444,41 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
     }
 
-
+    /**
+     * Create a REST-object from the passed operation history
+     * @param history History object to convert
+     * @param uriInfo URI info of the incoming request, used to create links
+     * @return a populated OperationHistoryRest object
+     */
     private OperationHistoryRest historyToHistoryRest(ResourceOperationHistory history, UriInfo uriInfo) {
         String status;
-        if (history.getStatus()==null)
+        if (history.getStatus()==null) {
             status = " - no information yet -";
-        else
+        }
+        else {
             status = history.getStatus().getDisplayName();
+        }
 
         OperationHistoryRest hist = new OperationHistoryRest();
         hist.setStatus(status);
-        if (history.getResource()!=null)
+        if (history.getResource()!=null) {
             hist.setResourceName(history.getResource().getName());
+        }
         hist.setOperationName(history.getOperationDefinition().getName());
         hist.lastModified(history.getModifiedTime());
-        if (history.getErrorMessage()!=null)
+        if (history.getErrorMessage()!=null) {
             hist.setErrorMessage(history.getErrorMessage());
+        }
         if (history.getResults()!=null) {
             Configuration results = history.getResults();
             for (Property p : results.getProperties()) {
                 String val;
-                if (p instanceof PropertySimple)
+                if (p instanceof PropertySimple) {
                     val = ((PropertySimple)p).getStringValue();
-                else
+                }
+                else {
                     val = p.toString();
+                }
                 hist.getResult().put(p.getName(),val);
             }
         }
@@ -464,5 +495,35 @@ public class OperationsHandlerBean extends AbstractRestBean  {
         hist.getLinks().add(self);
         return hist;
     }
+
+    /**
+     * Copies the parameters of an OperationDefinition into to an object that can be
+     * returned to a REST-client, so that this knows which fields are to be filled in,
+     * of which type they are and which ones are required
+     * @param def OperationsDefinition to "copy"
+     * @param definitionRest The definition to fill in
+     */
+    private void copyParamsForDefinition(OperationDefinition def, OperationDefinitionRest definitionRest) {
+        ConfigurationDefinition cd = def.getParametersConfigurationDefinition();
+        if (cd==null) {
+            return;
+        }
+
+        for (Map.Entry<String,PropertyDefinition> entry : cd.getPropertyDefinitions().entrySet()) {
+            PropertyDefinition pd = entry.getValue();
+            if (pd instanceof PropertyDefinitionSimple) {
+                PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
+                SimplePropDef prop = new SimplePropDef();
+                prop.setName(pds.getName());
+                prop.setRequired(pds.isRequired());
+                prop.setType(pds.getType());
+                prop.setDefaultValue(pds.getDefaultValue());
+                definitionRest.addParam(prop);
+            }
+            log.debug("copyParams: " + pd.getName() + " not yet supported");
+        }
+    }
+
+
 
 }

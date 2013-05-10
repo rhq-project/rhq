@@ -79,10 +79,8 @@ import org.rhq.enterprise.server.rest.domain.*;
 @Interceptors(SetCallerInterceptor.class)
 public class AlertHandlerBean extends AbstractRestBean {
 
-//    private final Log log = LogFactory.getLog(AlertHandlerBean.class);
-
     @EJB
-    AlertManagerLocal alertManager;
+    private AlertManagerLocal alertManager;
 
 
     @GZIP
@@ -107,10 +105,12 @@ public class AlertHandlerBean extends AbstractRestBean {
         if (resourceId!=null && definitionId!=null) {
             throw new BadArgumentException("At most one of 'resourceId' and 'definitionId' may be given");
         }
-        if (size==0)
+        if (size==0) {
             throw new BadArgumentException("size","Must not be 0");
-        if (page<1)
+        }
+        if (page<1) {
             throw new BadArgumentException("page","Must be >=1");
+        }
 
         AlertCriteria criteria = new AlertCriteria();
 
@@ -119,8 +119,9 @@ public class AlertHandlerBean extends AbstractRestBean {
             pageControl.setPageNumber(page);
             criteria.setPageControl(pageControl);
         }
-        else
+        else {
             criteria.setPaging(page-1, size); // TODO implement linking to next page
+        }
 
         if (since!=null) {
             criteria.addFilterStartTime(since);
@@ -335,8 +336,9 @@ public class AlertHandlerBean extends AbstractRestBean {
         AlertCriteria criteria = new AlertCriteria();
         criteria.addFilterId(id);
         List<Alert> alerts = alertManager.findAlertsByCriteria(caller,criteria);
-        if (alerts.isEmpty())
+        if (alerts.isEmpty()) {
             throw new StuffNotFoundException("Alert with id " + id);
+        }
 
         return alerts.get(0);
     }

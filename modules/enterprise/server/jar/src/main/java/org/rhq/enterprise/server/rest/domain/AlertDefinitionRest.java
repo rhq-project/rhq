@@ -43,8 +43,9 @@ public class AlertDefinitionRest {
     List<AlertConditionRest> conditions = new ArrayList<AlertConditionRest>();
     List<AlertNotificationRest> notifications = new ArrayList<AlertNotificationRest>();
     String dampeningCategory;
-    String dampeningCount;
-    String dampeningPeriod;
+    int dampeningCount;
+    int dampeningPeriod;
+    String dampeningUnit;
     List<Link> links = new ArrayList<Link>();
 
     @SuppressWarnings("unused")
@@ -138,22 +139,31 @@ public class AlertDefinitionRest {
         this.dampeningCategory = dampeningCategory;
     }
 
-    @ApiProperty(value = "Number of occurrences of an alert (in a given period)")
-    public String getDampeningCount() {
+    @ApiProperty(value = "Number of occurrences of an alert (in a given period). Valid values are > -1")
+    public int getDampeningCount() {
         return dampeningCount;
     }
 
-    public void setDampeningCount(String dampeningCount) {
+    public void setDampeningCount(int dampeningCount) {
         this.dampeningCount = dampeningCount;
     }
 
     @ApiProperty( value = "Period to check events. Only applicable for PARTIAL_COUNT, DURATION_COUNT, INVERSE_COUNT")
-    public String getDampeningPeriod() {
+    public int getDampeningPeriod() {
         return dampeningPeriod;
     }
 
-    public void setDampeningPeriod(String dampeningPeriod) {
+    public void setDampeningPeriod(int dampeningPeriod) {
         this.dampeningPeriod = dampeningPeriod;
+    }
+
+    @ApiProperty( value = "Unit of the dampening period.",allowableValues = "MINUTES, HOURS, DAYS, WEEKS" )
+    public String getDampeningUnit() {
+        return dampeningUnit;
+    }
+
+    public void setDampeningUnit(String dampeningUnit) {
+        this.dampeningUnit = dampeningUnit;
     }
 
     public List<Link> getLinks() {

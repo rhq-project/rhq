@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import mazz.i18n.Logger;
 
@@ -153,7 +155,13 @@ public class AgentUpdateDownload {
                 // we only support http/s
                 url = getDownloadUrl();
                 LOG.info(AgentI18NResourceKeys.UPDATE_DOWNLOAD_RETRIEVAL, info, url);
-                conn = (HttpURLConnection) url.openConnection();
+
+                if (url.getProtocol().equals("https")) {
+                    conn = openSecureConnection(url);
+                } else {
+                    conn = (HttpURLConnection) url.openConnection(); // we only support http(s), so this cast is OK
+                }
+
                 inStream = conn.getInputStream();
 
                 // put the update content in the local file system
@@ -276,5 +284,25 @@ public class AgentUpdateDownload {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    private HttpsURLConnection openSecureConnection(URL url) throws Exception {
+        AgentConfiguration config = this.agent.getConfiguration();
+        String secureSocketProtocol = config.getClientSenderSecuritySocketProtocol();
+        SecureConnector secureConnector;
+        if (config.isClientSenderSecurityServerAuthMode()) {
+            File file = new File(config.getClientSenderSecurityTruststoreFile());
+            if (!file.isAbsolute()) {
+                file = new File(this.agent.getAgentHomeDirectory(), file.getPath());
+            }
+            String password = config.getClientSenderSecurityTruststorePassword();
+            String type = config.getClientSenderSecurityTruststoreType();
+            String algorithm = config.getClientSenderSecurityTruststoreAlgorithm();
+            secureConnector = new SecureConnector(secureSocketProtocol, file, password, type, algorithm);
+        } else {
+            secureConnector = new SecureConnector(secureSocketProtocol);
+        }
+
+        return secureConnector.openSecureConnection(url);
     }
 }

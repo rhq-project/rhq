@@ -19,8 +19,6 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.type;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -144,12 +142,6 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             }
         }
 
-        Collections.sort(nodes, new Comparator<TreeNode>() {
-            public int compare(TreeNode o1, TreeNode o2) {
-                return o1.getName().compareTo(o2.getName());
-            }
-        });
-
         TreeNode[] treeNodes = nodes.toArray(new TreeNode[nodes.size()]);
         return treeNodes;
     }
@@ -198,9 +190,8 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             setParentID(null);
 
             setAttribute("name", pluginName + " " + pluginStr);
-            //            setAttribute("plugin",pluginName);
-            setIcon("types/plugin_16.png"); // todo doesn't work
             setEnabled(true);
+            // setIcon(IconEnum.PLUGIN.getIcon16x16Path()); // IPickTreeItem doesn't appear to want to use this
         }
 
         @Override
@@ -245,10 +236,7 @@ public class ResourceTypePluginTreeDataSource extends DataSource {
             setAttribute("name", resourceType.getName());
             setAttribute("plugin", resourceType.getPlugin());
             setAttribute("category", resourceType.getCategory().getDisplayName());
-
-            setIcon("types/" + resourceType.getCategory().getDisplayName() + "_up_16.png");
-
-            setIsFolder(true);
+            // setIcon(ImageManager.getResourceIcon(resourceType.getCategory())); // IPickTreeItem doesn't appear to want to use this
         }
 
         public ResourceType getResourceType() {

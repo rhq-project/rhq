@@ -61,8 +61,9 @@ public class OperationsTest extends AbstractBase {
         definitionId = -1;
         List<Map<String,Object>> list = r.as(List.class);
         for (Map<String,Object> map : list) {
-            if (map.get("name").equals("discovery"))
+            if (map.get("name").equals("discovery")) {
                 definitionId = (Integer) map.get("id");
+            }
         }
 
         assert definitionId !=-1 : "No discovery operation found";
@@ -82,6 +83,92 @@ public class OperationsTest extends AbstractBase {
         .when()
             .get("/operation/definition/{did}");
 
+     }
+
+    @Test
+    public void testGetDefinitionByUnknownId() throws Exception {
+
+        // Now retrieve that definition by id
+
+        given()
+            .header(acceptJson)
+            .pathParam("did",-42)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/operation/definition/{did}");
+
+     }
+
+    @Test
+    public void testGetDefinitionsForUnknownResource() throws Exception {
+
+        // Now retrieve that definition by id
+
+        given()
+            .header(acceptJson)
+            .queryParam("resourceId",42)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/operation/definitions");
+     }
+
+    @Test
+    public void testGetDefinitionsForMissingResourceId() throws Exception {
+
+        // Now retrieve that definition by id
+
+        given()
+            .header(acceptJson)
+        .expect()
+            .statusCode(406)
+        .when()
+            .get("/operation/definitions");
+     }
+
+    @Test
+    public void testCreateScheduleByUnknownDefinitionId() throws Exception {
+
+        // Now retrieve that definition by id
+
+        given()
+            .header(acceptJson)
+            .pathParam("did",-42)
+        .expect()
+            .statusCode(406)
+        .when()
+            .post("/operation/definition/{did}");
+
+     }
+
+    @Test
+    public void testCreateScheduleForUnknownResource() throws Exception {
+
+        // Now retrieve that definition by id
+
+        given()
+            .header(acceptJson)
+            .queryParam("resourceId", 42)
+            .pathParam("definitionId", definitionId)
+        .expect()
+            .statusCode(404)
+        .when()
+            .post("/operation/definition/{definitionId}");
+     }
+
+    @Test
+    public void testCreateScheduleForMissingResourceId() throws Exception {
+
+        // Now retrieve that definition by id
+
+        given()
+            .header(acceptJson)
+            .pathParam("definitionId", definitionId)
+        .expect()
+            .statusCode(406)
+        .when()
+            .post("/operation/definition/{definitionId}");
      }
 
     @Test
@@ -196,8 +283,9 @@ public class OperationsTest extends AbstractBase {
         String history = null;
         List<Link> links = scheduled.getLinks();
         for (Link link : links) {
-            if (link.getRel().equals("history"))
-                history = (String) link.getHref();
+            if (link.getRel().equals("history")) {
+                history = link.getHref();
+            }
         }
         assert history != null;
 
@@ -272,4 +360,98 @@ public class OperationsTest extends AbstractBase {
         }
     }
 
+    @Test
+    public void testOpsScheduleMissingRequiredParam() throws Exception {
+
+        int platformId = findIdOfARealPlatform();
+
+        Operation draft =
+        given()
+            .header(acceptJson)
+            .pathParam("definitionId",definitionId)
+            .queryParam("resourceId",platformId)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .post("/operation/definition/{definitionId}")
+        .as(Operation.class);
+
+        assert draft != null;
+        assert draft.getDefinitionId() == definitionId;
+
+        int draftId = draft.getId();
+
+        // explicitly remove the param from the draft for
+        // the test
+        Map<String, Object> params = draft.getParams();
+        if (params.containsKey("detailedDiscovery")) {
+            params.remove("detailedDiscovery");
+        }
+
+        // Update to put the new version in the server
+        // We don't want to submit, so the server does not
+        // validate and we should get a 200 back
+        draft.setReadyToSubmit(false);
+        given()
+            .contentType(ContentType.JSON)
+            .pathParam("id",draftId)
+            .body(draft)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .put("/operation/{id}");
+
+
+        // update to schedule, lacking the required param
+        draft.setReadyToSubmit(true);
+
+        given()
+            .contentType(ContentType.JSON)
+            .pathParam("id",draftId)
+            .body(draft)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .put("/operation/{id}");
+    }
+
+    @Test
+    public void testOpsScheduleRequiredParamWrongDataType() throws Exception {
+
+        int platformId = findIdOfARealPlatform();
+
+        Operation draft =
+        given()
+            .header(acceptJson)
+            .pathParam("definitionId",definitionId)
+            .queryParam("resourceId",platformId)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .post("/operation/definition/{definitionId}")
+        .as(Operation.class);
+
+        assert draft != null;
+        assert draft.getDefinitionId() == definitionId;
+
+        int draftId = draft.getId();
+
+        draft.getParams().put("detailedDiscovery", 42);
+        draft.setReadyToSubmit(true);
+
+        // update to schedule
+        given()
+            .contentType(ContentType.JSON)
+            .pathParam("id",draftId)
+            .body(draft)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .put("/operation/{id}");
+    }
 }

@@ -52,8 +52,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -81,21 +79,21 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 @SuppressWarnings("unchecked")
 public class AbstractRestBean {
 
-    Log log = LogFactory.getLog(getClass().getName());
+    protected Log log = LogFactory.getLog(getClass().getName());
 
-    static private final CacheKey META_KEY = new CacheKey("rhq.rest.resourceMeta", 0);
+    private static final CacheKey META_KEY = new CacheKey("rhq.rest.resourceMeta", 0);
 
     @javax.annotation.Resource( name = "ISPN")
-    protected CacheContainer container;
+    private CacheContainer container;
     protected Cache<CacheKey, Object> cache;
 
     /** Subject of the caller that gets injected via {@link SetCallerInterceptor} */
     protected Subject caller;
 
     @EJB
-    ResourceManagerLocal resMgr;
+    protected ResourceManagerLocal resMgr;
     @EJB
-    ResourceGroupManagerLocal resourceGroupManager;
+    protected ResourceGroupManagerLocal resourceGroupManager;
 
     @PostConstruct
     public void start() {
@@ -116,15 +114,15 @@ public class AbstractRestBean {
             freemarker.template.Configuration config = new freemarker.template.Configuration();
 
             // XXX fall-over to ClassTL after failure in FTL seems not to work
-            // FileTemplateLoader ftl = new FileTemplateLoader(new File("src/main/resources"));
             ClassTemplateLoader ctl = new ClassTemplateLoader(getClass(), "/rest_templates/");
             TemplateLoader[] loaders = new TemplateLoader[] { ctl };
             MultiTemplateLoader mtl = new MultiTemplateLoader(loaders);
 
             config.setTemplateLoader(mtl);
 
-            if (!templateName.endsWith(".ftl"))
+            if (!templateName.endsWith(".ftl")) {
                 templateName = templateName + ".ftl";
+            }
             Template template = config.getTemplate(templateName);
 
             StringWriter out = new StringWriter();
@@ -171,8 +169,9 @@ public class AbstractRestBean {
 
         CacheValue value = (CacheValue) cache.get(key);
 
+        boolean debugEnabled = log.isDebugEnabled();
         if (null != value) {
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug("Cache Hit for " + key);
             }
 
@@ -180,12 +179,12 @@ public class AbstractRestBean {
                 o = value.getValue();
 
             } else {
-                if (log.isDebugEnabled()) {
+                if (debugEnabled) {
                     log.debug("Cache Hit ignored, caller " + caller.toString() + " not found");
                 }
             }
         } else {
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug("Cache Miss for " + key);
             }
         }
@@ -348,11 +347,13 @@ public class AbstractRestBean {
         rwt.setTypeName(resourceType.getName());
         rwt.setTypeId(resourceType.getId());
         rwt.setPluginName(resourceType.getPlugin());
+        rwt.setStatus(res.getInventoryStatus().name());
         Resource parent = res.getParentResource();
         if (parent != null) {
             rwt.setParentId(parent.getId());
-        } else
+        } else {
             rwt.setParentId(0);
+        }
 
         rwt.setAncestry(res.getAncestry());
 
@@ -429,8 +430,9 @@ public class AbstractRestBean {
     protected ResourceGroup fetchGroup(int groupId, boolean requireCompatible) {
         ResourceGroup resourceGroup;
         resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
-        if (resourceGroup == null)
+        if (resourceGroup == null) {
             throw new StuffNotFoundException("Group with id " + groupId);
+        }
         if (requireCompatible) {
             if (resourceGroup.getGroupCategory() != GroupCategory.COMPATIBLE) {
                 throw new BadArgumentException("Group with id " + groupId,"it is no compatible group");
@@ -445,8 +447,9 @@ public class AbstractRestBean {
         gr.setId(group.getId());
         gr.setCategory(group.getGroupCategory());
         gr.setRecursive(group.isRecursive());
-        if (group.getGroupDefinition()!=null)
+        if (group.getGroupDefinition()!=null) {
             gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
+        }
         gr.setExplicitCount(group.getExplicitResources().size());
         gr.setImplicitCount(group.getImplicitResources().size());
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
@@ -524,16 +527,6 @@ public class AbstractRestBean {
         Link link = new Link("resource", uri.toString());
         ms.addLink(link);
         return ms;
-    }
-
-    Configuration mapToConfiguration(Map<String,Object> in) {
-        Configuration config = new Configuration();
-        for (Map.Entry<String,Object> entry : in.entrySet()) {
-            config.put(new PropertySimple(entry.getKey(),entry.getValue())); // TODO honor more types
-        }
-
-        return config;
-
     }
 
     /**

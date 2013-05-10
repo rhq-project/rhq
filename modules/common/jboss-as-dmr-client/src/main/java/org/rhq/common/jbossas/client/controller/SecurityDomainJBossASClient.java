@@ -26,6 +26,7 @@ import javax.security.auth.login.AppConfigurationEntry.LoginModuleControlFlag;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+import org.jboss.dmr.ModelType;
 
 /**
  * Provides convenience methods associated with security domain management.
@@ -71,49 +72,6 @@ public class SecurityDomainJBossASClient extends JBossASClient {
      * Create a new security domain using the SecureIdentity authentication method.
      * This is used when you want to obfuscate a database password in the configuration.
      *
-     * @param securityDomainName the name of the new security domain
-     * @param username the username associated with the security domain
-     * @param password the value of the password to store in the configuration (e.g. the obfuscated password itself)
-     *
-     * @throws Exception if failed to create security domain
-     */
-    public void createNewSecureIdentitySecurityDomain71(String securityDomainName, String username, String password)
-        throws Exception {
-
-        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
-        ModelNode addTopNode = createRequest(ADD, addr);
-        addTopNode.get(CACHE_TYPE).set("default");
-
-        ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
-        ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
-        ModelNode loginModule = new ModelNode();
-        loginModule.get(CODE).set("SecureIdentity");
-        loginModule.get(FLAG).set("required");
-        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
-        moduleOptions.setEmptyList();
-        // TODO: we really want to use addExpression (e.g. ${rhq.server.database.user-name})
-        // for username and password so rhq-server.properties can be used to set these.
-        // However, AS7.1 doesn't support this yet - see https://issues.jboss.org/browse/AS7-5177
-        moduleOptions.add(USERNAME, username);
-        moduleOptions.add(PASSWORD, password);
-        loginModulesNode.add(loginModule);
-
-        ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
-
-        System.err.println("== security domain ==> " + batch.toJSONString(false));
-
-        ModelNode results = execute(batch);
-        if (!isSuccess(results)) {
-            throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
-        }
-
-        return;
-    }
-
-    /**
-     * Create a new security domain using the SecureIdentity authentication method.
-     * This is used when you want to obfuscate a database password in the configuration.
-     *
      * This is the version for as7.2+ (e.g. eap 6.1)
      *
      * @param securityDomainName the name of the new security domain
@@ -139,11 +97,8 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         loginModule.get(FLAG).set("required");
         ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
         moduleOptions.setEmptyList();
-        // TODO: we really want to use addExpression (e.g. ${rhq.server.database.user-name})
-        // for username and password so rhq-server.properties can be used to set these.
-        // However, AS7.1 doesn't support this yet - see https://issues.jboss.org/browse/AS7-5177
-        moduleOptions.add(USERNAME, username);
-        moduleOptions.add(PASSWORD, password);
+        addPossibleExpression(moduleOptions, USERNAME, username);
+        addPossibleExpression(moduleOptions, PASSWORD, password);
 
         ModelNode batch = createBatchRequest(addTopNode, addAuthNode, loginModule);
 
@@ -178,11 +133,8 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         loginModule.get(FLAG).set("required");
         ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
         moduleOptions.setEmptyList();
-        // TODO: we really want to use addExpression (e.g. ${rhq.server.database.user-name})
-        // for username and password so rhq-server.properties can be used to set these.
-        // However, AS7.1 doesn't support this yet - see https://issues.jboss.org/browse/AS7-5177
-        moduleOptions.add(USERNAME, username);
-        moduleOptions.add(PASSWORD, password);
+        addPossibleExpression(moduleOptions, USERNAME, username);
+        addPossibleExpression(moduleOptions, PASSWORD, password);
 
         // login modules attribute must be a list - we only have one item in it, the loginModule
         ModelNode loginModuleList = new ModelNode();
@@ -200,6 +152,14 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         }
 
         return;
+    }
+
+    private void addPossibleExpression(ModelNode node, String name, String value) {
+        if (value != null && value.contains("${")) {
+            node.add(name, new ModelNode(ModelType.EXPRESSION).setExpression(value));
+        } else {
+            node.add(name, value);
+        }
     }
 
     /**
@@ -226,49 +186,6 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         }
 
         return null;
-    }
-
-    /**
-     * Create a new security domain using the database server authentication method.
-     * This is used when you want to directly authenticate against a db entry.
-     *
-     * @param securityDomainName the name of the new security domain
-     * @param dsJndiName the jndi name for the datasource to query against
-     * @param principalsQuery the SQL query for selecting password info for a principal
-     * @param rolesQuery the SQL query for selecting role info for a principal
-     * @param hashAlgorithm if null defaults to "MD5"
-     * @param hashEncoding if null defaults to "base64"
-     * @throws Exception if failed to create security domain
-     */
-    public void createNewDatabaseServerSecurityDomain71(String securityDomainName, String dsJndiName,
-                                                        String principalsQuery, String rolesQuery, String hashAlgorithm,
-                                                        String hashEncoding) throws Exception {
-
-        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN, securityDomainName);
-        ModelNode addTopNode = createRequest(ADD, addr);
-        addTopNode.get(CACHE_TYPE).set("default");
-
-        ModelNode addAuthNode = createRequest(ADD, addr.clone().add(AUTHENTICATION, CLASSIC));
-        ModelNode loginModulesNode = addAuthNode.get(LOGIN_MODULES);
-        ModelNode loginModule = new ModelNode();
-        loginModule.get(CODE).set("Database");
-        loginModule.get(FLAG).set("required");
-        ModelNode moduleOptions = loginModule.get(MODULE_OPTIONS);
-        moduleOptions.setEmptyList();
-        moduleOptions.add(DS_JNDI_NAME, dsJndiName);
-        moduleOptions.add(PRINCIPALS_QUERY, principalsQuery);
-        moduleOptions.add(ROLES_QUERY, rolesQuery);
-        moduleOptions.add(HASH_ALGORITHM, (null == hashAlgorithm ? "MD5" : hashAlgorithm));
-        moduleOptions.add(HASH_ENCODING, (null == hashEncoding ? "base64" : hashEncoding));
-        loginModulesNode.add(loginModule);
-
-        ModelNode batch = createBatchRequest(addTopNode, addAuthNode);
-        ModelNode results = execute(batch);
-        if (!isSuccess(results)) {
-            throw new FailureException(results, "Failed to create security domain [" + securityDomainName + "]");
-        }
-
-        return;
     }
 
     /**

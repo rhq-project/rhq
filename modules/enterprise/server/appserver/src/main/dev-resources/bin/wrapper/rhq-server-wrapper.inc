@@ -4,17 +4,12 @@
 #
 
 # enable remote debugging
-wrapper.java.additional.9=-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n
-# override and lower the initial memory profile
-wrapper.java.additional.10=-Xms256M
-wrapper.java.additional.11=-Xmx512M
-wrapper.java.additional.12=-XX:PermSize=128M
-wrapper.java.additional.13=-XX:MaxPermSize=256M
+wrapper.java.additional.23=-agentlib:jdwp=transport=dt_socket,address=8787,server=y,suspend=n
 
 # enable jprofiler
 #set.PATH=%PATH%;<jprofiler-install-dir>\bin\windows
-#wrapper.java.additional.14=-agentlib:jprofilerti=port=8849
-#wrapper.java.additional.15=-Xbootclasspath/a:<jprofiler-install-dir>\bin\agent.jar
+#wrapper.java.additional.23=-agentlib:jprofilerti=port=8849
+#wrapper.java.additional.24=-Xbootclasspath/a:<jprofiler-install-dir>\bin\agent.jar
 
 # disable JVM startup timeout
 wrapper.startup.timeout=0

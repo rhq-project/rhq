@@ -257,7 +257,7 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
     protected void update() {
         if (advanced) {
             advancedSimpleButton.setTitle(MSG.view_measureRange_simple());
-            showItem(ADVANCED_END_ITEM);
+            showItem(ADVANCED_START_ITEM);
             showItem(ADVANCED_END_ITEM);
             hideItem(SIMPLE_VALUE_ITEM);
             hideItem(SIMPLE_UNIT_ITEM);

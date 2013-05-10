@@ -530,8 +530,21 @@ public class AntBundlePluginComponentTest {
             assert winDirs.size() == 1 : "should only have 1 ext backup dir on windows: " + winDirs;
             backupDir = winDirs.values().iterator().next().getAbsoluteFile();
         }
-        File file3Backup = new File(backupDir, file3Dest.getAbsolutePath());
-        File file4Backup = new File(backupDir, file4Dest.getAbsolutePath());
+
+        File file3Backup;
+        File file4Backup;
+        boolean isWindows = (File.separatorChar == '\\');
+        if (isWindows) {
+            StringBuilder file3AbsPath = new StringBuilder(file3Dest.getAbsolutePath());
+            StringBuilder file4AbsPath = new StringBuilder(file4Dest.getAbsolutePath());
+            FileUtil.stripDriveLetter(file3AbsPath);
+            FileUtil.stripDriveLetter(file4AbsPath);
+            file3Backup = new File(backupDir, file3AbsPath.toString());
+            file4Backup = new File(backupDir, file4AbsPath.toString());
+        } else {
+            file3Backup = new File(backupDir, file3Dest.getAbsolutePath());
+            file4Backup = new File(backupDir, file4Dest.getAbsolutePath());
+        }
         assert file3Backup.isFile() : "should have been backed up: " + file3Backup;
         assert file4Backup.isFile() : "should have been backed up: " + file4Backup;
         assert (TEST3 + "modified").equals(readFile(file3Backup)) : "bad backup file: " + file3Backup;

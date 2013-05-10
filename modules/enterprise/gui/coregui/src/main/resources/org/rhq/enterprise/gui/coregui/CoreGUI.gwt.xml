@@ -36,6 +36,10 @@
         </any>
     </replace-with>
 
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+    </replace-with>
+
     <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphIE8Impl">
         <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
             <when-property-is name="user.agent" value="ie8"/>
@@ -52,7 +56,10 @@
          the version of jquery (1.7.2).
     -->
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
-
+    <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
+    <script src="/coregui/js/d3.v3.js"/>
+    <script src="/coregui/js/nv.d3.js"/>
+    <script src="/coregui/js/jquery.tipsy.js"/>
 
 
     <!--

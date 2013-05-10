@@ -108,6 +108,7 @@ import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.ResourceWithChildren;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 import org.rhq.enterprise.server.rest.domain.StringValue;
+import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
 
 /**
  * Class that deals with getting data about resources
@@ -176,14 +177,28 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @GET @GZIP
     @Path("/")
+    @ApiError(code = 406, reason = "The passed inventory status was invalid")
     @ApiOperation(value = "Search for resources by the given search string, possibly limited by category and paged", responseClass = "ResourceWithType")
-    public Response getResourcesByQuery(@ApiParam("String to search in the resource name") @QueryParam("q") String q,
+    public Response getResourcesByQuery(@ApiParam("Limit results to param in the resource name") @QueryParam("q") String q,
                                         @ApiParam("Limit to category (PLATFORM, SERVER, SERVICE") @QueryParam("category") String category,
                                         @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
-                                        @ApiParam("Page for paging") @QueryParam("page") Integer page,
+                                        @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+                                        @ApiParam(value = "Limit to Inventory status of the resources", allowableValues = "ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED")
+                                            @DefaultValue("COMMITTED") @QueryParam("status") String status,
                                         @Context HttpHeaders headers,
                                         @Context UriInfo uriInfo) {
+
         ResourceCriteria criteria = new ResourceCriteria();
+        if (!status.toLowerCase().equals("all")) {
+            try {
+                criteria.addFilterInventoryStatus(InventoryStatus.valueOf(status.toUpperCase()));
+            } catch (IllegalArgumentException iae) {
+                throw new BadArgumentException("status","Value " + status + " is not in the list of allowed values: ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED" );
+            }
+        } else {
+            // JavaDoc says to explicitly set to null in order to get all Status
+            criteria.addFilterInventoryStatus(null);
+        }
         if (q!=null) {
             criteria.addFilterName(q);
         }
@@ -337,6 +352,10 @@ public class ResourceHandlerBean extends AbstractRestBean {
             @ApiParam(value="Start time", defaultValue = "30 days ago") @QueryParam("start") long start,
             @ApiParam(value="End time", defaultValue = "Now") @QueryParam("end") long end,
             @Context HttpHeaders headers) {
+
+        // Vaildate it the resource exists
+        fetchResource(resourceId);
+
         if (end==0)
             end = System.currentTimeMillis();
 
@@ -755,8 +774,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         if (resType==null)
             throw new StuffNotFoundException("ResourceType with name [" + typeName + "] and plugin [" + plugin + "]");
 
-        Configuration pluginConfig = mapToConfiguration(request.getPluginConfig());
-        Configuration deployConfig = mapToConfiguration(request.getResourceConfig());
+        Configuration pluginConfig = ConfigurationHelper.mapToConfiguration(request.getPluginConfig());
+        Configuration deployConfig = ConfigurationHelper.mapToConfiguration(request.getResourceConfig());
 
         String packageName = DEFAULT_PACKAGE;
 

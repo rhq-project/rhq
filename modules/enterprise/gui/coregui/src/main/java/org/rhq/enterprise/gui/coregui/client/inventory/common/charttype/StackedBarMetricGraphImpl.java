@@ -31,13 +31,6 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
     public StackedBarMetricGraphImpl() {
         super();
     }
-    /**
-     * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
-     * for all cases but the dashboard portlet).
-     */
-//    public StackedBarMetricGraphImpl(MetricGraphData metricGraphData) {
-//        setMetricGraphData(metricGraphData);
-//    }
 
 
     /**
@@ -45,7 +38,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
      */
     @Override
     public native void drawJsniChart() /*-{
-        //console.log("Draw Stacked Bar jsni chart");
+        console.log("Draw Stacked Bar jsni chart");
         var global = this,
 
         // create a chartContext object (from rhq.js) with the data required to render to a chart
@@ -127,22 +120,17 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
 
                     // if window is too small server up small chart
                     if (useSmallCharts()) {
-                        //console.log("Using Small Charts Profile for width: "+getChartWidth());
+                        console.log("Using Small Charts Profile for width: "+getChartWidth());
                         width = 250;
                         xTicks = 3;
                         xTickSubDivide = 2;
                         chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length - 1);
                     }
                     else {
-                        //console.log("Using Large Charts Profile");
+                        console.log("Using Large Charts Profile");
                         //  we use the width already defined above
-                        if(isIEBrowserGreaterThanOrEqualTo(9)){
-                            xTicks = 8;
-                            xTickSubDivide = 5;
-                        }else {
-                            xTicks = 12;
-                            xTickSubDivide = 5;
-                        }
+                        xTicks = 8;
+                        xTickSubDivide = 5;
                         chartData = chartContext.data;
                     }
 
@@ -241,8 +229,10 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                 chart.append("g").append("rect")
                         .attr("class", "rightSidePanel")
                         .attr("x", xLabel - 10)
-                        .attr("y", margin.top + 60)
-                        .attr("height", 100)
+                        .attr("y", margin.top + 70)
+                        .attr("rx", 10)
+                        .attr("ry", 10)
+                        .attr("height", 80)
                         .attr("width", 135)
                         .attr("opacity", "0.3")
                         .attr("fill", "#E8E8E8");
@@ -618,8 +608,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
-                        //console.info("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
-                        //console.time("chart");
+                        console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
 
                         determineScale();
                         createHeader(chartContext.chartTitle);
@@ -629,11 +618,10 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                         createXandYAxes();
                         createAvgLines();
                         if (oobMax > 0) {
-                            //console.info("OOB Data Exists!");
+                            console.log("OOB Data Exists!");
                             createOOBLines();
                         }
                         createHovers(chartContext);
-                        //console.timeEnd("chart");
                     }
                 }
             }; // end public closure

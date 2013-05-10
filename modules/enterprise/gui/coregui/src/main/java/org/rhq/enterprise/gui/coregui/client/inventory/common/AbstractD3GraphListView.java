@@ -38,8 +38,8 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * and User Preferences pickers for the date range.
  */
 public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh {
-    protected static int SINGLE_CHART_HEIGHT = 225;
-    protected static int MULTI_CHART_HEIGHT = 195;
+    protected final static int SINGLE_CHART_HEIGHT = 225;
+    protected final static int MULTI_CHART_HEIGHT = 195;
     protected List<Availability> availabilityList;
     protected List<ResourceGroupAvailability> groupAvailabilityList;
     protected AvailabilityD3Graph availabilityGraph;

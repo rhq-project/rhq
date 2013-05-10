@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.rhq</groupId>
     <artifactId>rhq-plugins-parent</artifactId>
-    <version>4.7.0-SNAPSHOT</version>
+    <version>4.8.0-SNAPSHOT</version>
   </parent>
 
   <groupId>org.rhq</groupId>
@@ -30,6 +30,7 @@
     <java.tieredCompilation>-Dxxx</java.tieredCompilation>
     <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
     <rhq.internal>false</rhq.internal>
+    <as7.itest.mock.http.management.server.port>32259</as7.itest.mock.http.management.server.port>
   </properties>
 
 
@@ -98,23 +99,15 @@
     <!-- === Test Deps === -->
 
     <dependency>
-      <groupId>${rhq.groupId}</groupId>
-      <artifactId>rhq-core-plugin-test-api</artifactId>
-      <version>${project.version}</version>
-      <type>pom</type>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
-      <groupId>${rhq.groupId}</groupId>
-      <artifactId>rhq-core-plugin-test-util</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
-
-    <dependency>
       <groupId>postgresql</groupId>
       <artifactId>postgresql</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.eclipse.jetty.aggregate</groupId>
+      <artifactId>jetty-all</artifactId>
+      <version>8.1.8.v20121106</version>
       <scope>test</scope>
     </dependency>
 
@@ -241,6 +234,39 @@
 
 
   <profiles>
+
+     <profile>
+	     <!--
+	        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
+	        does not run, compile or need tests.
+	        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
+	        test jars, or conflicts with changing the container version.
+	       -->
+	     <id>test.dependencies</id>
+	     <activation>
+	        <property>
+	           <name>maven.test.skip</name>
+	           <value>!true</value>
+	        </property>
+	     </activation>
+
+	     <dependencies>
+	       <dependency>
+		       <groupId>${rhq.groupId}</groupId>
+		       <artifactId>rhq-core-plugin-test-api</artifactId>
+		       <version>${project.version}</version>
+		       <type>pom</type>
+		       <scope>test</scope>
+		    </dependency>
+
+		    <dependency>
+		       <groupId>${rhq.groupId}</groupId>
+		       <artifactId>rhq-core-plugin-test-util</artifactId>
+		       <version>${project.version}</version>
+		       <scope>test</scope>
+		    </dependency>
+	     </dependencies>
+    </profile>
 
     <profile>
       <id>java7</id>
@@ -588,6 +614,8 @@
                 <!-- only include integration tests; normal unit tests are handled above by surefire plugin -->
                 <include>org/rhq/modules/plugins/jbossas7/itest/**/*Test.java</include>
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/InterruptibleOperationsTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/nonpc/ManagementConnectionPersistenceTest.java</include>-->
@@ -609,6 +637,7 @@
                 <jboss.domain.portOffset>${jboss.domain.portOffset}</jboss.domain.portOffset>
                 <jboss.domain.httpManagementPort>${jboss.domain.httpManagementPort}</jboss.domain.httpManagementPort>
                 <settings.localRepository>${settings.localRepository}</settings.localRepository>
+                <as7.itest.mock.http.management.server.port>${as7.itest.mock.http.management.server.port}</as7.itest.mock.http.management.server.port>
               </systemPropertyVariables>
             </configuration>
             <executions>

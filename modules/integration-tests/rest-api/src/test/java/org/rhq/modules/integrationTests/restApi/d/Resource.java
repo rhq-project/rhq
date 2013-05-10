@@ -33,6 +33,7 @@ public class Resource {
     String typeName;
     String pluginName;
     Integer parentId;
+    String status;
     int typeId;
     List<Map> links;
     String ancestry;
@@ -102,5 +103,13 @@ public class Resource {
 
     public void setAncestry(String ancestry) {
         this.ancestry = ancestry;
+    }
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

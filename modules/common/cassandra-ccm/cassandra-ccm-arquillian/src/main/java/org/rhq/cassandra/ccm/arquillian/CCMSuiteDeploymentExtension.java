@@ -145,8 +145,9 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                                 event.getDeployableContainer()), d));
                         }
                         return null;
-                    } finally {
+                    } catch (Exception e) {
                         ccm.shutdownCluster();
+                        throw e;
                     }
                 }
             });

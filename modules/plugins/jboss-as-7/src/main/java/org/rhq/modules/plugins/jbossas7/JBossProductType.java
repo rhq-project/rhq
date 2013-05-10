@@ -53,12 +53,23 @@ public enum JBossProductType {
     }
 
     /**
+     * Determine the product type of a JBoss install. This implies an api version of 1.x which
+     * is a JBossAS 7.x
+     * @param homeDir the JBoss product installation directory (e.g. /opt/jboss-as-7.1.1.Final)
+     * @return the product type
+     * @deprecated "Use the version with the apiVersion"
+     */
+    @Deprecated
+    public static JBossProductType determineJBossProductType(File homeDir) {
+        return determineJBossProductType(homeDir,"1.0");
+    }
+
+    /**
      * Determines the product type of a JBoss product installation.
-     *
      *
      * @param homeDir the JBoss product installation directory (e.g. /opt/jboss-as-7.1.1.Final)
      *
-     * @param apiVersion
+     * @param apiVersion Api version of the domain api.
      * @return the product type
      */
     public static JBossProductType determineJBossProductType(File homeDir, String apiVersion) {

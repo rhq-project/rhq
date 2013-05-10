@@ -177,14 +177,28 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @GET @GZIP
     @Path("/")
+    @ApiError(code = 406, reason = "The passed inventory status was invalid")
     @ApiOperation(value = "Search for resources by the given search string, possibly limited by category and paged", responseClass = "ResourceWithType")
-    public Response getResourcesByQuery(@ApiParam("String to search in the resource name") @QueryParam("q") String q,
+    public Response getResourcesByQuery(@ApiParam("Limit results to param in the resource name") @QueryParam("q") String q,
                                         @ApiParam("Limit to category (PLATFORM, SERVER, SERVICE") @QueryParam("category") String category,
                                         @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
-                                        @ApiParam("Page for paging") @QueryParam("page") Integer page,
+                                        @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+                                        @ApiParam(value = "Limit to Inventory status of the resources", allowableValues = "ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED")
+                                            @DefaultValue("COMMITTED") @QueryParam("status") String status,
                                         @Context HttpHeaders headers,
                                         @Context UriInfo uriInfo) {
+
         ResourceCriteria criteria = new ResourceCriteria();
+        if (!status.toLowerCase().equals("all")) {
+            try {
+                criteria.addFilterInventoryStatus(InventoryStatus.valueOf(status.toUpperCase()));
+            } catch (IllegalArgumentException iae) {
+                throw new BadArgumentException("status","Value " + status + " is not in the list of allowed values: ALL, NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED" );
+            }
+        } else {
+            // JavaDoc says to explicitly set to null in order to get all Status
+            criteria.addFilterInventoryStatus(null);
+        }
         if (q!=null) {
             criteria.addFilterName(q);
         }

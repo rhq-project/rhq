@@ -52,6 +52,7 @@ public class ResourceWithType {
     Integer typeId;
     String pluginName;
     Integer parentId;
+    String status;
     List<Link> links = new ArrayList<Link>();
     private String ancestry;
 
@@ -124,6 +125,15 @@ public class ResourceWithType {
 
     public void setParentId(Integer parentId) {
         this.parentId = parentId;
+    }
+
+    @ApiProperty(value = "Inventory status of the resource.",allowableValues = "NEW, IGNORED, COMMITTED, DELETED, UNINVENTORIED" )
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
     }
 
     @XmlElementRef

@@ -52,8 +52,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -349,6 +347,7 @@ public class AbstractRestBean {
         rwt.setTypeName(resourceType.getName());
         rwt.setTypeId(resourceType.getId());
         rwt.setPluginName(resourceType.getPlugin());
+        rwt.setStatus(res.getInventoryStatus().name());
         Resource parent = res.getParentResource();
         if (parent != null) {
             rwt.setParentId(parent.getId());

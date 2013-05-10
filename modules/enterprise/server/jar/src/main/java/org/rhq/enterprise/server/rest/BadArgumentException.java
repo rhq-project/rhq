@@ -23,7 +23,10 @@ import javax.ejb.ApplicationException;
 /**
  * Exception if arguments are bad.
  * Don't use java.lang.IllegalArgumentException, as this is no
- * Application Exception and gets wrapped
+ * Application Exception and gets wrapped.
+ *
+ * The ExceptionMapper translates this into a 406 repsonse code
+ *
  * @author Heiko W. Rupp
  */
 @ApplicationException(rollback = false, inherited = true)

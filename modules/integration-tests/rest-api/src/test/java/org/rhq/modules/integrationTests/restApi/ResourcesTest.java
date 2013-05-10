@@ -113,7 +113,6 @@ public class ResourcesTest extends AbstractBase {
     @Test
     public void testGetPlatformUILink() {
 
-        Response response =
         given()
             .header(acceptJson)
             .pathParam("id", _platformId)
@@ -140,6 +139,74 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(200)
             .body("links.self", notNullValue())
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryAllStatus() throws Exception {
+        String json = get("/resource/platforms.json").asString();
+        String platformName = JsonPath.with(json).get("[0].resourceName");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("q", platformName)
+            .queryParam("status","all")
+            .queryParam("category", "platform")
+        .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryCommittedStatus() throws Exception {
+        String json = get("/resource/platforms.json").asString();
+        String platformName = JsonPath.with(json).get("[0].resourceName");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("q", platformName)
+            .queryParam("status","committed")
+            .queryParam("category", "platform")
+        .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryNewStatus() throws Exception {
+
+        // Unfortunately we can not assume that there are
+        // any resources in other states than COMMITTED
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("status","NeW")
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryBadStatus() throws Exception {
+        String json = get("/resource/platforms.json").asString();
+        String platformName = JsonPath.with(json).get("[0].resourceName");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("q", platformName)
+            .queryParam("status","Frobnitz")
+            .queryParam("category", "platform")
+        .expect()
+            .statusCode(406)
         .when()
             .get("/resource");
     }

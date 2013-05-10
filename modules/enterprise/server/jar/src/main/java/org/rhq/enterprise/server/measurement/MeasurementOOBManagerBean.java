@@ -193,48 +193,53 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     @SuppressWarnings("unchecked")
     public void computeOOBsForLastHour(Subject subject, Iterable<AggregateNumericMetric> metrics) {
         for (AggregateNumericMetric metric : metrics) {
-            List<MeasurementBaseline> baselines = entityManager.createQuery(
-                "select baseline from MeasurementBaseline baseline where baseline.schedule.id = :scheduleId")
-                .setParameter("scheduleId", metric.getScheduleId())
-                .getResultList();
-            if (baselines.isEmpty()) {
-                continue;
-            }
-            MeasurementBaseline baseline = baselines.get(0);
-            Long upperDelta = null;
-            Long lowerDelta = null;
-
-            if (isPastUpperBound(baseline, metric)) {
-                upperDelta =
-                    Math.round(((metric.getMax() - baseline.getMax()) / (baseline.getMax() - baseline.getMin())) * 100);
-            }
-
-            if (isPastLowerBound(baseline, metric)) {
-                lowerDelta =
-                    Math.round(((baseline.getMin() - metric.getMin()) / (baseline.getMax() - baseline.getMin())) * 100);
-            }
-
-            Integer oobFactor;
-            if (upperDelta != null && lowerDelta == null) {
-                oobFactor = upperDelta.intValue();
-            } else if (upperDelta == null && lowerDelta != null) {
-                oobFactor = lowerDelta.intValue();
-            } else if (upperDelta != null && lowerDelta != null) {
-                if (upperDelta > lowerDelta) {
-                    oobFactor = upperDelta.intValue();
-                } else {
-                    oobFactor = lowerDelta.intValue();
+            try {
+                List<MeasurementBaseline> baselines = entityManager.createQuery(
+                    "select baseline from MeasurementBaseline baseline where baseline.schedule.id = :scheduleId")
+                    .setParameter("scheduleId", metric.getScheduleId())
+                    .getResultList();
+                if (baselines.isEmpty()) {
+                    continue;
                 }
-            } else { // both are null
-                oobFactor = null;
-            }
+                MeasurementBaseline baseline = baselines.get(0);
+                Long upperDelta = null;
+                Long lowerDelta = null;
 
-            if (oobFactor != null) {
-                MeasurementOOB oob = new MeasurementOOB();
-                oob.setScheduleId(metric.getScheduleId());
-                oob.setTimestamp(metric.getTimestamp());
-                oob.setOobFactor(oobFactor);
-                entityManager.persist(oob);
+                if (isPastUpperBound(baseline, metric)) {
+                    upperDelta =
+                        Math.round(((metric.getMax() - baseline.getMax()) / (baseline.getMax() - baseline.getMin())) * 100);
+                }
+
+                if (isPastLowerBound(baseline, metric)) {
+                    lowerDelta =
+                        Math.round(((baseline.getMin() - metric.getMin()) / (baseline.getMax() - baseline.getMin())) * 100);
+                }
+
+                Integer oobFactor;
+                if (upperDelta != null && lowerDelta == null) {
+                    oobFactor = upperDelta.intValue();
+                } else if (upperDelta == null && lowerDelta != null) {
+                    oobFactor = lowerDelta.intValue();
+                } else if (upperDelta != null && lowerDelta != null) {
+                    if (upperDelta > lowerDelta) {
+                        oobFactor = upperDelta.intValue();
+                    } else {
+                        oobFactor = lowerDelta.intValue();
+                    }
+                } else { // both are null
+                    oobFactor = null;
+                }
+
+                if (oobFactor != null) {
+                    MeasurementOOB oob = new MeasurementOOB();
+                    oob.setScheduleId(metric.getScheduleId());
+                    oob.setTimestamp(metric.getTimestamp());
+                    oob.setOobFactor(oobFactor);
+                    entityManager.persist(oob);
+                }
+            } catch (Exception e) {
+                log.error("An error occurred while calculating OOBs for " + metric, e);
+                throw new RuntimeException(e);
             }
         }
     }

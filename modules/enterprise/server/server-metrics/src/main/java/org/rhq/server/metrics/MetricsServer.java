@@ -195,8 +195,13 @@ public class MetricsServer {
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
-        Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, configuration.getRawTTL());
-        updateMetricsIndex(updates);
+        try {
+            Set<MeasurementDataNumeric> updates = dao.insertRawMetrics(dataSet, configuration.getRawTTL());
+            updateMetricsIndex(updates);
+        } catch (Exception e) {
+            log.error("An error occurred while inserting numeric data", e);
+            throw new RuntimeException(e);
+        }
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {

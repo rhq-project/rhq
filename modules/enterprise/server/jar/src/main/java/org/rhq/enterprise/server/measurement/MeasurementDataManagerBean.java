@@ -213,7 +213,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      *
      * @param data the actual data points
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void addNumericData(Set<MeasurementDataNumeric> data) {
         if ((data == null) || (data.isEmpty())) {
             return;

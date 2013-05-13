@@ -81,7 +81,7 @@ public class SessionManagerBean {
 
             System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Cluster cluster = new ClusterBuilder()
-                .addContactPoints((String[]) hostNames.toArray())
+                .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
                 .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
                 .withPort(port)
                 .build();

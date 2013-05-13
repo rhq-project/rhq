@@ -79,7 +79,6 @@ public class SessionManagerBean {
             }
             int port = storageNodes.get(0).getCqlPort();
 
-            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
             Cluster cluster = new ClusterBuilder()
                 .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
                 .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))

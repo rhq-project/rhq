@@ -49,7 +49,7 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * An alert def server-side plugin component that the server uses to inject alert defintions.
+ * An alert definition server-side plugin component that the server uses to inject "factory-installed" alert definitions.
  * 
  * @author Jay Shaughnessy
  */
@@ -57,18 +57,18 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
 
     private final Log log = LogFactory.getLog(AlertDefinitionServerPluginComponent.class);
 
-    static private final List<InjectedAlertDef> injectedAlertDefs;
-    static private final InjectedAlertDef testTemplate;
+    static private final List<InjectedTemplate> injectedTemplates;
+    static private final InjectedTemplate testTemplate;
 
     static {
-        testTemplate = new InjectedAlertDef( //
+        testTemplate = new InjectedTemplate( //
             "RHQAgent", //
             "RHQ Agent", //
             "TestTemplate", //            
             "A test template injection");
 
-        injectedAlertDefs = new ArrayList<InjectedAlertDef>();
-        injectedAlertDefs.add(testTemplate);
+        injectedTemplates = new ArrayList<InjectedTemplate>();
+        injectedTemplates.add(testTemplate);
     }
 
     private ServerPluginContext context;
@@ -111,12 +111,12 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         try {
             if (name.equals("listInjectedAlertDefinitions")) {
                 PropertyList result = new PropertyList("injectedAlertDefinitions");
-                for (InjectedAlertDef iad : injectedAlertDefs) {
+                for (InjectedTemplate iad : injectedTemplates) {
                     PropertyMap map = new PropertyMap("injectedAlertDefinition");
-                    map.put(new PropertySimple(InjectedAlertDef.FIELD_PLUGIN_NAME, iad.getPluginName()));
-                    map.put(new PropertySimple(InjectedAlertDef.FIELD_RESOURCE_TYPE_NAME, iad.getResourceTypeName()));
-                    map.put(new PropertySimple(InjectedAlertDef.FIELD_NAME, iad.getName()));
-                    map.put(new PropertySimple(InjectedAlertDef.FIELD_DESCRIPTION, iad.getDescription()));
+                    map.put(new PropertySimple(InjectedTemplate.FIELD_PLUGIN_NAME, iad.getPluginName()));
+                    map.put(new PropertySimple(InjectedTemplate.FIELD_RESOURCE_TYPE_NAME, iad.getResourceTypeName()));
+                    map.put(new PropertySimple(InjectedTemplate.FIELD_NAME, iad.getName()));
+                    map.put(new PropertySimple(InjectedTemplate.FIELD_DESCRIPTION, iad.getDescription()));
                     result.add(map);
                 }
                 controlResults.getComplexResults().put(result);
@@ -125,12 +125,12 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
                 injectAllAlertDefs(Boolean.valueOf(parameters.getSimpleValue("replaceIfExists")));
 
             } else if (name.equals("injectAlertDefinition")) {
-                InjectedAlertDef requestedInjection = new InjectedAlertDef( //
-                    parameters.getSimpleValue(InjectedAlertDef.FIELD_PLUGIN_NAME), //
-                    parameters.getSimpleValue(InjectedAlertDef.FIELD_RESOURCE_TYPE_NAME), //
-                    parameters.getSimpleValue(InjectedAlertDef.FIELD_NAME), null);
+                InjectedTemplate requestedInjection = new InjectedTemplate( //
+                    parameters.getSimpleValue(InjectedTemplate.FIELD_PLUGIN_NAME), //
+                    parameters.getSimpleValue(InjectedTemplate.FIELD_RESOURCE_TYPE_NAME), //
+                    parameters.getSimpleValue(InjectedTemplate.FIELD_NAME), null);
                 boolean injected = false;
-                for (InjectedAlertDef iad : injectedAlertDefs) {
+                for (InjectedTemplate iad : injectedTemplates) {
                     if (iad.equals(requestedInjection)) {
                         injectAlertDef(iad, Boolean.valueOf(parameters.getSimpleValue("replaceIfExists", "false")));
                         injected = true;
@@ -157,7 +157,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
 
         List<AlertDefinition> result = new ArrayList<AlertDefinition>();
 
-        for (InjectedAlertDef iad : injectedAlertDefs) {
+        for (InjectedTemplate iad : injectedTemplates) {
             AlertDefinition newAlertDef = injectAlertDef(iad, replaceIfExists);
             if (null != newAlertDef) {
                 result.add(newAlertDef);
@@ -167,7 +167,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         return result;
     }
 
-    private AlertDefinition injectAlertDef(InjectedAlertDef injectedAlertDef, boolean replaceIfExists) {
+    private AlertDefinition injectAlertDef(InjectedTemplate injectedAlertDef, boolean replaceIfExists) {
 
         AlertDefinition result = null;
         ResourceTypeManagerLocal typeManager = LookupUtil.getResourceTypeManager();
@@ -243,7 +243,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         return newTemplateId;
     }
 
-    private static class InjectedAlertDef {
+    private static class InjectedTemplate {
         static public final String FIELD_PLUGIN_NAME = "plugin";
         static public final String FIELD_RESOURCE_TYPE_NAME = "type";
         static public final String FIELD_NAME = "name";
@@ -254,7 +254,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         private String name;
         private String description;
 
-        public InjectedAlertDef(String pluginName, String resourceTypeName, String name, String description) {
+        public InjectedTemplate(String pluginName, String resourceTypeName, String name, String description) {
             super();
             this.pluginName = pluginName;
             this.resourceTypeName = resourceTypeName;
@@ -296,7 +296,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
                 return false;
             if (getClass() != obj.getClass())
                 return false;
-            InjectedAlertDef other = (InjectedAlertDef) obj;
+            InjectedTemplate other = (InjectedTemplate) obj;
             if (name == null) {
                 if (other.name != null)
                     return false;

@@ -311,10 +311,10 @@ public class DataMigrator {
 
     private ExistingDataSource getExistingDataSource(EntityManager entityManager, String query) {
         if (this.databaseType == DatabaseType.Oracle) {
-            return new ExistingDataJPASource(entityManager, query);
+            return new ScrollableDataSource(entityManager, query);
         } else {
             if (!experimentalDataSource) {
-                return new ExistingDataJPASource(entityManager, query);
+                return new ScrollableDataSource(entityManager, query);
             } else {
                 return new ExistingPostgresDataBulkExportSource(entityManager, query);
             }
@@ -471,7 +471,7 @@ public class DataMigrator {
             long creationTimeMillis;
             long itemTTLSeconds;
             long currentTimeMillis = System.currentTimeMillis();
-            long expectedTTLMillis = metricsTable.getTTLinMilliseconds() * 10;
+            long expectedTTLMillis = metricsTable.getTTLinMilliseconds();
 
 
             for (Object[] rawMeasurement : existingData) {
@@ -645,7 +645,7 @@ public class DataMigrator {
             long creationTimeMillis;
             long itemTTLSeconds;
             long currentTimeMillis = System.currentTimeMillis();
-            long expectedTTLMillis = MetricsTable.RAW.getTTLinMilliseconds() * 10;
+            long expectedTTLMillis = MetricsTable.RAW.getTTLinMilliseconds();
 
 
             for (Object[] rawDataPoint : existingData) {

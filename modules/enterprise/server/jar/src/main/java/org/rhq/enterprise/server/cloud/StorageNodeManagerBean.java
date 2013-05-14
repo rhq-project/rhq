@@ -36,6 +36,7 @@ import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.persistence.TypedQuery;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -148,11 +149,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal {
         }
     }
 
-    @SuppressWarnings("unchecked")
     @Nullable
     public List<StorageNode> getStorageNodes() {
-        Query query = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL);
-        return (List<StorageNode>) query.getResultList();
+        TypedQuery<StorageNode> query = entityManager.<StorageNode>createNamedQuery(StorageNode.QUERY_FIND_ALL, StorageNode.class);
+        return query.getResultList();
     }
 
     public void updateStorageNodeList(Collection<StorageNode> storageNodes) {

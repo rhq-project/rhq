@@ -191,6 +191,7 @@ public class StorageNode implements Serializable {
     }
 
     public String getJMXConnectionURL() {
+        // GWT doesn't support String.format()
         String[] split = JMX_CONNECTION_STRING.split("%s");
         return split[0] + this.address + split[1] + this.jmxPort + split[2];
     }

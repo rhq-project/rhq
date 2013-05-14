@@ -86,6 +86,10 @@ public class StorageNodeCriteria extends Criteria {
     public void addFilterResourceId(Integer filterResourceId) {
         this.filterResourceId = filterResourceId;
     }
+    
+    public void fetchResource(boolean fetchResource) {
+        this.fetchResource = fetchResource;
+    }
 
     public void addSortCtime(PageOrdering sort) {
         addSortField(SORT_FIELD_CTIME);

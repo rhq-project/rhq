@@ -1,0 +1,20 @@
+<plugin
+  name="RHQStorage"
+  displayName="RHQ Storage"
+  package="org.rhq.plugins.storage"
+  description="Monitoring of RHQ Storage features and performance"
+  xmlns="urn:xmlns:rhq-plugin"
+  xmlns:c="urn:xmlns:rhq-configuration">
+
+  <depends plugin="Cassandra" useClasses="true" />
+
+  <server
+    name="RHQ Storage Node"
+    discovery="StorageNodeDiscoveryComponent"
+    class="org.rhq.plugins.cassandra.CassandraNodeComponent"
+    description="RHQ Storage Node" sourcePlugin="Cassandra" sourceType="Cassandra Node">
+
+  </server>
+
+
+</plugin>

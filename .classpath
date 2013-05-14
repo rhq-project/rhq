@@ -7,7 +7,6 @@
 	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-core/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-arquillian/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/cassandra-installer/src/main/java"/>
-    <classpathentry kind="src" path="modules/common/cassandra-jmx/src/main/java"/>  
 	<classpathentry kind="src" path="modules/enterprise/server/server-control/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/itests-2/src/test/java"/>
@@ -215,6 +214,7 @@
 	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-testng/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-testng/src/test/java"/>
 	<classpathentry kind="src" path="modules/common/cassandra-jmx/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/rhq-storage/src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2-sources.jar"/>

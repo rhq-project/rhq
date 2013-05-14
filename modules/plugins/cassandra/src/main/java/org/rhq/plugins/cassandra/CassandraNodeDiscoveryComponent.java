@@ -50,9 +50,26 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
     private static final Log log = LogFactory.getLog(CassandraNodeDiscoveryComponent.class);
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    protected static final String HOST_PROPERTY = "host";
+    protected static final String CLUSTER_NAME_PROPERTY = "clusterName";
+    private static final String RESOURCE_NAME = "Cassandra";
+
+    @SuppressWarnings({ "rawtypes" })
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+        Set<DiscoveredResourceDetails> cassandraNodes = new HashSet<DiscoveredResourceDetails>();
+
+        for (DiscoveredResourceDetails discoveredResource : this.scanForResources(context)) {
+            if (isCassandraNode(discoveredResource)) {
+                cassandraNodes.add(discoveredResource);
+            }
+        }
+
+        return cassandraNodes;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    protected Set<DiscoveredResourceDetails> scanForResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
         List<ProcessScanResult> processScanResults = context.getAutoDiscoveredProcesses();
 
@@ -64,6 +81,14 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         }
 
         return details;
+    }
+
+    protected boolean isCassandraNode(DiscoveredResourceDetails discoveredResource) {
+        if ("rhq".equals(discoveredResource.getPluginConfiguration().getSimpleValue(CLUSTER_NAME_PROPERTY))) {
+            return false;
+        }
+
+        return true;
     }
 
     @SuppressWarnings({ "unchecked", "deprecation" })
@@ -124,11 +149,12 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                     Map<String, String> parsedProperties = (Map<String, String>) yaml.load(inputStream);
 
                     if (parsedProperties.get("cluster_name") != null) {
-                        pluginConfig.put(new PropertySimple("clusterName", parsedProperties.get("cluster_name")));
+                        pluginConfig
+                            .put(new PropertySimple(CLUSTER_NAME_PROPERTY, parsedProperties.get("cluster_name")));
                     }
 
                     if (parsedProperties.get("listen_address") != null) {
-                        pluginConfig.put(new PropertySimple("host", parsedProperties.get("listen_address")));
+                        pluginConfig.put(new PropertySimple(HOST_PROPERTY, parsedProperties.get("listen_address")));
                     }
 
                     if (parsedProperties.get("native_transport_port") != null) {
@@ -161,7 +187,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         }
 
         String resourceKey = "Cassandra (" + pluginConfig.getSimpleValue("host") + ") " + jmxPort;
-        String resourceName = "Cassandra (" + pluginConfig.getSimpleValue("host") + ")";
+        String resourceName = RESOURCE_NAME;
 
         String path = processInfo.getExecutable().getCwd();
         pluginConfig.put(new PropertySimple("baseDir", new File(path).getParentFile().getAbsolutePath()));
@@ -172,4 +198,5 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);
     }
+
 }

@@ -243,7 +243,7 @@ public class AvailabilityOverUnderGraphType {
                         .attr("width", function (d) {
                             return timeScale(+d.availEnd) - timeScale(+d.availStart);
                         })
-                        .attr("opacity", ".3")
+                        .attr("opacity", ".75")
                         .attr("fill", function (d) {
                             return calcBarFill(d);
                         });
@@ -265,7 +265,7 @@ public class AvailabilityOverUnderGraphType {
                         .style("font-size", "12px")
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-weight", "bold")
-                        .attr("fill", "#003168")
+                        .attr("fill", "#545454")
                         .text(availChartContext.chartTitle);
 
                 svg.append("text")

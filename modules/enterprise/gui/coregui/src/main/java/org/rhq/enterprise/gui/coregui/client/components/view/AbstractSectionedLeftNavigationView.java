@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.Canvas;
@@ -95,6 +96,7 @@ public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayou
 
         sectionStack = new SectionStack();
         sectionStack.setShowResizeBar(true);
+        sectionStack.setCanResizeSections(true);
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth(250);
         sectionStack.setHeight100();
@@ -135,6 +137,11 @@ public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayou
         treeGrid.setLeaveScrollbarGap(false);
         treeGrid.setShowHeader(false);
         treeGrid.setSelectionType(SelectionStyle.SINGLE);
+        treeGrid.setHeight(50);
+//        treeGrid.setExtraSpace(5);
+        treeGrid.addStyleName("noOutline");
+        treeGrid.setAutoFitData(Autofit.VERTICAL);
+
 
         List<NavigationItem> navigationItems = navigationSection.getNavigationItems();
         TreeNode[] treeNodes = new TreeNode[navigationItems.size()];
@@ -175,6 +182,7 @@ public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayou
         });
 
         SectionStackSection section = new SectionStackSection(sectionTitle);
+        section.setResizeable(true);
         section.setExpanded(true);
         section.addItem(treeGrid);
 

@@ -31,11 +31,13 @@ import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
 import org.rhq.core.domain.criteria.ServerCriteria;
+import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -118,6 +120,15 @@ public interface TopologyGWTService extends RemoteService {
      * @throws RuntimeException
      */
     PageList<Agent> findAgentsByCriteria(AgentCriteria criteria) throws RuntimeException;
+    
+    /**
+     * Finder for <code>StorageNode</code> instances
+     * 
+     * @param criteria the criteria for finding storage nodes
+     * @return a list of <code>StorageNode</code> instances
+     * @throws RuntimeException
+     */    
+    PageList<StorageNode> findStorageNodesByCriteria(StorageNodeCriteria criteria) throws RuntimeException;
 
     /**
      * Request forcing the repartition of the cluster. All agents should eventually reconnects to its most preferred server 

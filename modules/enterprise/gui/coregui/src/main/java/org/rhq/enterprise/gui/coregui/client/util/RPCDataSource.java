@@ -51,7 +51,8 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.cloud.PartitionEvent.ExecutionStatus;
 import org.rhq.core.domain.cloud.PartitionEventType;
-import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.drift.DriftCategory;
 import org.rhq.core.domain.event.EventSeverity;
@@ -64,9 +65,9 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.util.effects.ColoringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.rpc.DataSourceResponseStatistics;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * Base GWT-RPC oriented DataSource class.
@@ -328,7 +329,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
         processResponse(request.getRequestId(), response);
     }
 
-    protected void setPagingInfo(DSResponse response, PageList pageList) {
+    protected void setPagingInfo(DSResponse response, PageList<?> pageList) {
         // For paging to work, we have to specify size of full result set.
         int totalRows = (pageList.isUnbounded()) ? pageList.size() : pageList.getTotalSize();
         response.setTotalRows(totalRows);
@@ -570,7 +571,7 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             }
             List<S> buffer = new ArrayList<S>();
             for (String next : intermediates) {
-                buffer.add((S) Enum.valueOf((Class<? extends Enum>) type, next));
+                buffer.add((S) Enum.valueOf((Class<? extends Enum>)type, next));
             }
             resultArray = buffer.toArray(getEnumArray(type, buffer.size()));
         } else {
@@ -606,8 +607,10 @@ public abstract class RPCDataSource<T, C extends BaseCriteria> extends DataSourc
             return (S[]) new ExecutionStatus[size];
         } else if (genericEnumType == PartitionEventType.class) {
             return (S[]) new PartitionEventType[size];
-        } else if (genericEnumType == OperationMode.class) {
-            return (S[]) new OperationMode[size];
+        } else if (genericEnumType == Server.OperationMode.class) {
+            return (S[]) new Server.OperationMode[size];
+        } else if (genericEnumType == StorageNode.OperationMode.class) {
+            return (S[]) new StorageNode.OperationMode[size];
         } else {
             throw new IllegalArgumentException(MSG.dataSource_rpc_error_unsupportedEnumType(genericEnumType.getName()));
         }

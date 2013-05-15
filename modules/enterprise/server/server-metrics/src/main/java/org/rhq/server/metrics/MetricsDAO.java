@@ -66,16 +66,6 @@ public class MetricsDAO {
 
     private final Log log = LogFactory.getLog(MetricsDAO.class);
 
-    private static final String RAW_METRICS_QUERY =
-        "SELECT schedule_id, time, value " +
-        "FROM " + MetricsTable.RAW + " " +
-        "WHERE schedule_id = ? AND time >= ? AND time < ? ORDER BY time";
-
-    private static final String RAW_METRICS_WITH_METADATA_QUERY =
-        "SELECT schedule_id, time, value, ttl(value), writetime(value) " +
-            "FROM " + MetricsTable.RAW + " " +
-            "WHERE schedule_id = ? AND time >= ? AND time < ?";
-
     private Session session;
 
     private MetricsConfiguration configuration;
@@ -87,7 +77,6 @@ public class MetricsDAO {
     private PreparedStatement insertSixHourData;
     private PreparedStatement insertTwentyFourHourData;
     private PreparedStatement findLatestRawMetric;
-    private PreparedStatement findRawMetricsWithMetadata;
     private PreparedStatement findRawMetrics;
     private PreparedStatement findOneHourMetricsByDateRange;
     private PreparedStatement findSixHourMetricsByDateRange;
@@ -102,11 +91,22 @@ public class MetricsDAO {
     }
 
     public void initPreparedStatements() {
+        log.info("Initializing prepared statements");
+
+        // If we at any point decide to support configurable TTLs then some of the
+        // statements below will have to be updated and prepared again with the new TTL.
+        // So let's say the user triggers an API call to use new TTLs. Assuming this is
+        // done without requiring an RHQ server restart, then any MetricsDAO instances will
+        // have to get updated with the new TTLs. PreparedStatement object will have to be
+        // re-initialized and re-prepared with the new TTLs. None of this would be necessary
+        // if the TTL value could be a bound value.
+
         insertRawData = session.prepare(
             "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL " +
                 configuration.getRawTTL());
 
-        rawMetricsQuery = session.prepare(RAW_METRICS_QUERY);
+        rawMetricsQuery = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
+            " WHERE schedule_id = ? AND time >= ? AND time < ? ORDER BY time");
 
         insertOneHourData = session.prepare("INSERT INTO " + MetricsTable.ONE_HOUR + "(schedule_id, time, " +
             "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
@@ -122,8 +122,6 @@ public class MetricsDAO {
 
         findLatestRawMetric = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? ORDER BY time DESC LIMIT 1");
-
-        findRawMetricsWithMetadata = session.prepare(RAW_METRICS_WITH_METADATA_QUERY);
 
         findRawMetrics = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? AND time >= ? AND time <= ?");
@@ -244,38 +242,9 @@ public class MetricsDAO {
         return mapper.mapOne(resultSet);
     }
 
-    // ONLY USED IN TESTS
-    public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime,
-        boolean includeMetadata) {
-
-        if (!includeMetadata) {
-            return findRawMetrics(scheduleId, startTime, endTime);
-        }
-        BoundStatement boundStatement = findRawMetricsWithMetadata.bind(scheduleId, new Date(startTime),
-            new Date(endTime));
-        return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(true), session);
-    }
-
     public Iterable<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, long startTime, long endTime) {
         return new ListPagedResult<RawNumericMetric>(findRawMetrics, scheduleIds, startTime, endTime,
             new RawNumericMetricMapper(), session);
-    }
-
-    // ONLY USED IN TESTS
-    public Iterable<AggregateNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId) {
-        try {
-            String cql =
-                "SELECT schedule_id, time, type, value " +
-                "FROM " + table + " " +
-                "WHERE schedule_id = ? " +
-                "ORDER BY time, type";
-            PreparedStatement statement = session.prepare(cql);
-            BoundStatement boundStatement = statement.bind(scheduleId);
-
-            return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(), session);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
     }
 
     public Iterable<AggregateNumericMetric> findOneHourMetrics(int scheduleId, long startTime, long endTime) {
@@ -317,25 +286,6 @@ public class MetricsDAO {
         long endTime) {
         return new ListPagedResult<AggregateNumericMetric>(findTwentyFourHourMetricsByDateRange, scheduleIds, startTime, endTime,
             new AggregateNumericMetricMapper(), session);
-    }
-
-    // ONLY USED IN TESTS
-    public Iterable<AggregateNumericMetric> findAggregateMetricsWithMetadata(MetricsTable table, int scheduleId,
-        long startTime, long endTime) {
-
-        try {
-            String cql =
-                "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
-                "FROM " + table + " " +
-                "WHERE schedule_id = ? AND time >= ? AND time < ?";
-            PreparedStatement statement = session.prepare(cql);
-            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
-
-            return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(true),
-                session);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
     }
 
     public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table) {

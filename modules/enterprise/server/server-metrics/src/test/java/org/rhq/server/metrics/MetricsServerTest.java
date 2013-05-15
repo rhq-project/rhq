@@ -56,6 +56,8 @@ import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetricMapper;
+import org.rhq.server.metrics.domain.SimplePagedResult;
 
 /**
  * @author John Sanda
@@ -746,8 +748,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private void assertColumnMetadataEquals(int scheduleId, DateTime startTime, DateTime endTime, Integer ttl,
         long timestamp) {
-        List<RawNumericMetric> metrics = Lists.newArrayList(dao.findRawMetrics(scheduleId, startTime.getMillis(),
-            endTime.getMillis(), true));
+        List<RawNumericMetric> metrics = Lists.newArrayList(findRawMetricsWithMetadata(scheduleId, startTime.getMillis(),
+            endTime.getMillis()));
         for (RawNumericMetric metric : metrics) {
             assertEquals(metric.getColumnMetadata().getTtl(), ttl, "The TTL does not match the expected value for " +
                 metric);
@@ -776,7 +778,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
     private void assertMetricDataEquals(MetricsTable columnFamily, int scheduleId,
         List<AggregateNumericMetric> expected) {
-        List<AggregateNumericMetric> actual = Lists.newArrayList(dao.findAggregateMetrics(columnFamily, scheduleId));
+        List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
         assertCollectionMatchesNoOrder("Metric data for schedule id " + scheduleId + " in table " + columnFamily +
             " does not match expected values", expected, actual, TEST_PRECISION);
     }
@@ -790,7 +792,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     private void assertMetricDataEmpty(int scheduleId, MetricsTable columnFamily) {
-        List<AggregateNumericMetric> metrics = Lists.newArrayList(dao.findAggregateMetrics(columnFamily, scheduleId));
+        List<AggregateNumericMetric> metrics = Lists.newArrayList(findAggregateMetrics(columnFamily, scheduleId));
         assertEquals(metrics.size(), 0, "Expected " + columnFamily + " to be empty for schedule id " + scheduleId +
             " but found " + metrics);
     }
@@ -815,5 +817,13 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     static double divide(double dividend, int divisor) {
         return new BigDecimal(Double.toString(dividend)).divide(new BigDecimal(Integer.toString(divisor)),
             MathContext.DECIMAL64).doubleValue();
+    }
+
+    private Iterable<RawNumericMetric> findRawMetricsWithMetadata(int scheduleId, long startTime, long endTime) {
+        String cql =
+            "SELECT schedule_id, time, value, ttl(value), writetime(value) " +
+            "FROM " + MetricsTable.RAW + " " +
+            "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime + " AND time < " + endTime;
+        return new SimplePagedResult<RawNumericMetric>(cql, new RawNumericMetricMapper(true), session);
     }
 }

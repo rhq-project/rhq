@@ -186,13 +186,13 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, 4.0, 2.0, 10.0, hour0.plusHours(1).getMillis())
         );
 
-        List<AggregateNumericMetric> actual = Lists.newArrayList(dao.findAggregateMetrics(MetricsTable.ONE_HOUR,
+        List<AggregateNumericMetric> actual = Lists.newArrayList(findAggregateMetrics(MetricsTable.ONE_HOUR,
             scheduleId));
         assertEquals(actual, expected, "Failed to find one hour metrics");
 
         // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(dao
-            .findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, scheduleId, hour0.getMillis(), hour0()
+        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
+            findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, scheduleId, hour0.getMillis(), hour0()
                 .plusHours(1).plusSeconds(1).getMillis()));
         assertAggregateTTLSet(actualMetricsWithMetadata);
     }
@@ -395,7 +395,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         combinedList.addAll(firstHourMetrics);
         combinedList.addAll(secondHourMetrics);
 
-        List<AggregateNumericMetric> actualCombined = Lists.newArrayList(dao.findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId));
+        List<AggregateNumericMetric> actualCombined = Lists.newArrayList(findAggregateMetrics(MetricsTable.ONE_HOUR,
+            scheduleId));
         assertEquals(actualCombined, combinedList, "Failed to find one hour metrics");
 
         List<AggregateNumericMetric> actualFirstHour = Lists.newArrayList(dao.findOneHourMetrics(scheduleId,
@@ -406,17 +407,17 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             startTime + HOUR, endTime));
         assertEquals(actualSecondHour, secondHourMetrics, "Failed to find one hour metrics");
 
-        List<AggregateNumericMetric> actualAlternateScheduleIdMetrics = Lists.newArrayList(dao.findAggregateMetrics(
+        List<AggregateNumericMetric> actualAlternateScheduleIdMetrics = Lists.newArrayList(findAggregateMetrics(
             MetricsTable.ONE_HOUR, alternateScheduleId));
         assertEquals(actualAlternateScheduleIdMetrics, alternateScheduleIdMetrics, "Failed to find one hour metrics");
 
         // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(dao.findAggregateMetricsWithMetadata(
+        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(findAggregateMetricsWithMetadata(
             MetricsTable.ONE_HOUR, scheduleId, startTime, endTime));
         assertAggregateTTLSet(actualMetricsWithMetadata);
 
-        actualMetricsWithMetadata = Lists.newArrayList(dao.findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, alternateScheduleId,
-            startTime, endTime));
+        actualMetricsWithMetadata = Lists.newArrayList(findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR,
+            alternateScheduleId, startTime, endTime));
         assertAggregateTTLSet(actualMetricsWithMetadata);
     }
 
@@ -464,18 +465,18 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
 
         //verify data can be retrieve
-        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(dao
-            .findAggregateMetrics(MetricsTable.ONE_HOUR, scheduleId));
+        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(findAggregateMetrics(MetricsTable.ONE_HOUR,
+            scheduleId));
         assertEquals(actualMetrics, metrics, "Failed to find metrics in " + MetricsTable.ONE_HOUR + " table.");
 
-        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(dao.findAggregateMetrics(
+        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(findAggregateMetrics(
             MetricsTable.ONE_HOUR, alternateScheduleId));
         assertEquals(actualAlternateMetrics, alternateMetrics, "Failed to find metrics in " + MetricsTable.ONE_HOUR +
             " table.");
 
         // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(dao
-            .findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, scheduleId, startTime, endTime));
+        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
+            findAggregateMetricsWithMetadata(MetricsTable.ONE_HOUR, scheduleId, startTime, endTime));
         assertAggregateTTLSet(actualMetricsWithMetadata);
     }
 
@@ -497,18 +498,18 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
 
         //verify data can be retrieve
-        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(dao
-            .findAggregateMetrics(MetricsTable.SIX_HOUR, scheduleId));
+        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(findAggregateMetrics(MetricsTable.SIX_HOUR,
+            scheduleId));
         assertEquals(actualMetrics, metrics, "Failed to find metrics in " + MetricsTable.SIX_HOUR + " table.");
 
-        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(dao.findAggregateMetrics(
+        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(findAggregateMetrics(
             MetricsTable.SIX_HOUR, alternateScheduleId));
         assertEquals(actualAlternateMetrics, alternateMetrics, "Failed to find metrics in " + MetricsTable.SIX_HOUR +
             " table.");
 
         // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(dao
-            .findAggregateMetricsWithMetadata(MetricsTable.SIX_HOUR, scheduleId, startTime, endTime));
+        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
+            findAggregateMetricsWithMetadata(MetricsTable.SIX_HOUR, scheduleId, startTime, endTime));
         assertAggregateTTLSet(actualMetricsWithMetadata);
     }
 
@@ -536,18 +537,18 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         }
 
         //verify data can be retrieve
-        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(dao
-            .findAggregateMetrics(MetricsTable.TWENTY_FOUR_HOUR, scheduleId));
+        List<AggregateNumericMetric> actualMetrics = Lists.newArrayList(findAggregateMetrics(
+            MetricsTable.TWENTY_FOUR_HOUR, scheduleId));
         assertEquals(actualMetrics, metrics, "Failed to find metrics in " + MetricsTable.TWENTY_FOUR_HOUR + " table.");
 
-        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(dao.findAggregateMetrics(
+        List<AggregateNumericMetric> actualAlternateMetrics = Lists.newArrayList(findAggregateMetrics(
             MetricsTable.TWENTY_FOUR_HOUR, alternateScheduleId));
         assertEquals(actualAlternateMetrics, alternateMetrics, "Failed to find metrics in " +
             MetricsTable.TWENTY_FOUR_HOUR + " table.");
 
         // verify that the TTL is set
-        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(dao
-            .findAggregateMetricsWithMetadata(MetricsTable.TWENTY_FOUR_HOUR, scheduleId, startTime, endTime));
+        List<AggregateNumericMetric> actualMetricsWithMetadata = Lists.newArrayList(
+            findAggregateMetricsWithMetadata(MetricsTable.TWENTY_FOUR_HOUR, scheduleId, startTime, endTime));
         assertAggregateTTLSet(actualMetricsWithMetadata);
     }
 
@@ -621,26 +622,5 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
                 " is not set.");
         }
     }
-
-    //@Test
-//    public void batchTest() throws Exception {
-//        long timestamp = System.currentTimeMillis();
-//
-//        Batch batch = batch(
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(1, timestamp, 1.001),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(2, timestamp, 2.002),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(3, timestamp, 3.003),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(4, timestamp, 3.003),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(5, timestamp, 3.003),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(6, timestamp, 3.003),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(7, timestamp, 3.003),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(8, timestamp, 3.003),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(9, timestamp, 3.003),
-//            insert("schedule_id", "time", "value").into("raw_metrics").values(10, timestamp, 3.003)
-//        );
-//
-//        ResultSet resultsSet = session.execute(batch);
-//        assertEquals(resultsSet.fetchAll().size(), 2);
-//    }
 
 }

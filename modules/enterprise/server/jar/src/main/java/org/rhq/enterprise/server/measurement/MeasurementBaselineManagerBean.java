@@ -228,7 +228,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         List<MeasurementSchedule> scheduleIdsWithoutBaselines = query.getResultList();
 
         //2. calculate the baselines based metrics data
-        MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(this.sessionManager.getSession());
+        MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(sessionManager.getMetricsDAO());
         List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(scheduleIdsWithoutBaselines,
             startTime, endTime);
 

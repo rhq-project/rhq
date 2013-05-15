@@ -245,4 +245,6 @@ public interface TopologyGWTService extends RemoteService {
      * @throws RuntimeException
      */
     void removeAgentsFromGroup(Integer[] agentIds) throws RuntimeException;
+    
+    void invokeOperationOnStorageService(int storageNodeId, String operationName) throws RuntimeException;
 }

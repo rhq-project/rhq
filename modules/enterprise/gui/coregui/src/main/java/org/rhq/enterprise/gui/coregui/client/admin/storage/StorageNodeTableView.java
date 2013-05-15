@@ -22,8 +22,12 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
@@ -45,7 +49,10 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablem
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.async.Command;
+import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -112,11 +119,12 @@ public class StorageNodeTableView extends
                         try {
                             rawUrl = LinkManager.getResourceLink(record.getAttributeAsInt(FIELD_RESOURCE_ID.propertyName()));
                         } catch (NumberFormatException nfe) {
-                            Message msg = new Message("td(i18n) nfe", Message.Severity.Warning);
-                            CoreGUI.getMessageCenter().notify(msg);
+                            rawUrl = "td(i18n) none";
                         }
+                        
                         String formattedValue = StringUtility.escapeHtml(rawUrl);
-                        return formattedValue;
+                        String label = StringUtility.escapeHtml("td(i18n) Link to Resource");
+                        return LinkManager.getHref(formattedValue, label);
                     }
                 });
             }
@@ -129,52 +137,123 @@ public class StorageNodeTableView extends
     }
 
     private void showCommonActions() {
-        addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setNormal());
-        addChangeOperationModeAction(OperationMode.MAINTENANCE, MSG.view_adminTopology_server_setMaintenance());
+        addInvokeOperationsAction();
 
-        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                List<String> selectedNames = getSelectedNames(selections);
-                String message = MSG.view_adminTopology_message_removeServerConfirm(selectedNames.toString());
-                SC.ask(message, new BooleanCallback() {
-                    public void execute(Boolean confirmed) {
-                        if (confirmed) {
-                            SC.say("You've selected:\n\n" + getSelectedNames(selections));
-//                            int[] selectedIds = getSelectedIds(selections);
-//                            GWTServiceLookup.getTopologyService().deleteServers(selectedIds, new AsyncCallback<Void>() {
-//                                public void onSuccess(Void arg0) {
-//                                    Message msg = new Message(MSG.view_adminTopology_message_removedServer(String
-//                                        .valueOf(selections.length)), Message.Severity.Info);
-//                                    CoreGUI.getMessageCenter().notify(msg);
-//                                    refresh();
-//                                }
-//
-//                                public void onFailure(Throwable caught) {
-//                                    CoreGUI.getErrorHandler().handleError(
-//                                        MSG.view_adminTopology_message_removeServerFail(String
-//                                            .valueOf(selections.length)) + " " + caught.getMessage(), caught);
-//                                    refreshTableInfo();
-//                                }
-//
-//                            });
-                        }
-                    }
-                });
-            }
-        });
+//        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
+//            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+//            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+//                final List<String> selectedAddresses = getSelectedAddresses(selections);
+//                String message = MSG.view_adminTopology_message_removeServerConfirm(selectedAddresses.toString());
+//                SC.ask(message, new BooleanCallback() {
+//                    public void execute(Boolean confirmed) {
+//                        if (confirmed) {
+//                            SC.say("You've selected:\n\n" + selectedAddresses);
+////                            int[] selectedIds = getSelectedIds(selections);
+////                            GWTServiceLookup.getTopologyService().deleteServers(selectedIds, new AsyncCallback<Void>() {
+////                                public void onSuccess(Void arg0) {
+////                                    Message msg = new Message(MSG.view_adminTopology_message_removedServer(String
+////                                        .valueOf(selections.length)), Message.Severity.Info);
+////                                    CoreGUI.getMessageCenter().notify(msg);
+////                                    refresh();
+////                                }
+////
+////                                public void onFailure(Throwable caught) {
+////                                    CoreGUI.getErrorHandler().handleError(
+////                                        MSG.view_adminTopology_message_removeServerFail(String
+////                                            .valueOf(selections.length)) + " " + caught.getMessage(), caught);
+////                                    refreshTableInfo();
+////                                }
+////
+////                            });
+//                        }
+//                    }
+//                });
+//            }
+//        });
     }
 
-    private void addChangeOperationModeAction(final OperationMode mode, String label) {
-        addTableAction(label, null, new AuthorizedTableAction(this, TableActionEnablement.ANY,
+    private void addInvokeOperationsAction() {
+        final SortedMap<String, Object> operationsMap = new TreeMap<String, Object>();
+        operationsMap.put("Start", "start");
+        operationsMap.put("Stop", "stop");
+        operationsMap.put("Restart", "restart");
+        operationsMap.put("Stop RPC Server", "stopRPCServer");
+        operationsMap.put("Start RPC Server", "startRPCServer");
+        operationsMap.put("Decommission", "decommission");
+        
+        addTableAction("td(i18n) Invoke Operation", null, operationsMap, new AuthorizedTableAction(this, TableActionEnablement.ANY,
             Permission.MANAGE_SETTINGS) {
+            
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return StorageNodeTableView.this.isEnabled(super.isEnabled(selection), selection);
+            };
+            
+            @Override
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                List<String> selectedNames = getSelectedNames(selections);
-                String message = MSG.view_adminTopology_message_setModeConfirm(selectedNames.toString(), mode.name());
-                SC.ask(message, new BooleanCallback() {
+                final String operationName = (String) actionValue;
+                final List<String> selectedAddresses = getSelectedAddresses(selections);
+//                String message = MSG.view_adminTopology_message_setModeConfirm(selectedAddresses.toString(), mode.name());
+                SC.ask("Seriously?", new BooleanCallback() {
                     public void execute(Boolean confirmed) {
                         if (confirmed) {
-                            SC.say("You've selected:\n\n" + getSelectedNames(selections));
+                            SC.say("You've selected:\n\n" + selectedAddresses);
+                            final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {   
+                                @Override
+                                public void execute() {
+//                                    Message msg = new Message(MSG.view_adminTopology_message_setMode(
+                                    //                                      String.valueOf(selections.length), mode.name()), Message.Severity.Info);
+                                    Message msg = new Message("td(i18n) Operation" + operationName
+                                        + " was successfully scheduled for resources with ids"
+                                        + Arrays.asList(getSelectedIds(selections)), Message.Severity.Info);
+                                    CoreGUI.getMessageCenter().notify(msg);
+                                    refreshTableInfo();
+                                }
+                            });
+                            boolean isStopStartOrRestart = operationsMap.headMap("stopRPCServer").containsKey(operationName);
+                            for (ListGridRecord storageNodeRecord : selections) {
+                                // NFE should never happen, because of the condition for table action enablement
+                                int resourceId = storageNodeRecord.getAttributeAsInt(FIELD_RESOURCE_ID.propertyName());
+                                if (isStopStartOrRestart) {
+                                    // start, stop or restart the storage node
+                                    GWTServiceLookup.getOperationService().scheduleResourceOperation(resourceId,
+                                        operationName, null, "Run by Storage Node Administrations UI", 0,
+                                        new AsyncCallback<Void>() {
+                                            public void onSuccess(Void result) {
+                                                latch.countDown();
+                                            }
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError(
+                                                    "td(i18n) Scheduling operation " + operationName
+                                                        + " failed for resources with ids"
+                                                        + Arrays.asList(getSelectedIds(selections)) + " "
+                                                        + caught.getMessage(), caught);
+                                                latch.countDown();
+                                                refreshTableInfo();
+                                            }
+                                        });
+                                } else {
+                                    // invoke the operation on the storage service resource
+                                    GWTServiceLookup.getTopologyService().invokeOperationOnStorageService(resourceId,
+                                        operationName, new AsyncCallback<Void>() {
+                                            public void onSuccess(Void result) {
+                                                latch.countDown();
+                                            }
+
+                                            public void onFailure(Throwable caught) {
+                                                CoreGUI.getErrorHandler().handleError(
+                                                    "td(i18n) Scheduling operation " + operationName
+                                                        + " failed for resources with ids"
+                                                        + Arrays.asList(getSelectedIds(selections)) + " "
+                                                        + caught.getMessage(), caught);
+                                                latch.countDown();
+                                                refreshTableInfo();
+                                            }
+                                        });
+                                }
+                            }
+                            
+                            
 //                            int[] selectedIds = getSelectedIds(selections);
 //                            GWTServiceLookup.getTopologyService().updateServerMode(selectedIds, mode,
 //                                new AsyncCallback<Void>() {
@@ -215,15 +294,27 @@ public class StorageNodeTableView extends
         return ids;
     }
 
-    private List<String> getSelectedNames(ListGridRecord[] selections) {
+    private List<String> getSelectedAddresses(ListGridRecord[] selections) {
         if (selections == null) {
             return new ArrayList<String>(0);
         }
         List<String> ids = new ArrayList<String>(selections.length);
         for (ListGridRecord selection : selections) {
-            ids.add(selection.getAttributeAsString(FIELD_NAME));
+            ids.add(selection.getAttributeAsString(FIELD_ADDRESS.propertyName()));
         }
         return ids;
+    }
+    
+    private boolean isEnabled(boolean parentsOpinion, ListGridRecord[] selection) {
+        if (!parentsOpinion) {
+            return false;
+        }
+        for (ListGridRecord storageNodeRecord : selection) {
+            if (storageNodeRecord.getAttribute(FIELD_RESOURCE_ID.propertyName()) == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

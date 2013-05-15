@@ -98,8 +98,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         TimestampCellFormatter.prepareDateField(lastUpdateTimeField);
         fields.add(lastUpdateTimeField);
 
-        ListGridField resourceIdField = FIELD_RESOURCE_ID.getListGridField();
-        resourceIdField.setHidden(true);
+        ListGridField resourceIdField = FIELD_RESOURCE_ID.getListGridField("120");
+//        resourceIdField.setHidden(true);
         fields.add(resourceIdField);
 
         return fields;

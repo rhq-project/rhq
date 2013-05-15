@@ -137,7 +137,7 @@
       <operation name="stopNativeTransport" description="Stop native transport"/>
       <operation name="startRPCServer" description="Start the Thrift server"/>
       <operation name="stopRPCServer" description="Stop the Thrift server"/>
-      <operation name="decommision" description="Decomission node. WARNING! This will decomission current node!
+      <operation name="decommission" description="Decommission node. WARNING! This will decommission current node!
                                     This will stop streams to other nodes and will initiate the process to remove the node from cluster!"/>
 
 

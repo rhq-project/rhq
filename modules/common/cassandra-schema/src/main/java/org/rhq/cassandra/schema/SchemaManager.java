@@ -218,7 +218,6 @@ public class SchemaManager {
                     "bucket varchar, " +
                     "time timestamp, " +
                     "schedule_id int, " +
-                    "null_col boolean, " +
                     "PRIMARY KEY (bucket, time, schedule_id) " +
                 ") WITH COMPACT STORAGE;"
             );

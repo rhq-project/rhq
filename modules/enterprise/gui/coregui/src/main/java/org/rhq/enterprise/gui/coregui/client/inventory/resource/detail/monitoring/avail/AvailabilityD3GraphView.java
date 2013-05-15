@@ -24,8 +24,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -35,13 +34,13 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author Mike Thompson
  */
-public class AvailabilityD3Graph extends EnhancedVLayout implements AvailabilityGraph {
+public class AvailabilityD3GraphView extends EnhancedVLayout {
 
-    protected AvailabilityOverUnderGraphType availabilityGraphType;
+    protected AvailabilityGraphType availabilityGraphType;
 
-    public AvailabilityD3Graph(AvailabilityOverUnderGraphType graphType) {
+    public AvailabilityD3GraphView(AvailabilityGraphType availabilityGraphType) {
         super();
-        this.availabilityGraphType = graphType;
+        this.availabilityGraphType = availabilityGraphType;
         setHeight(65);
         setWidth100();
     }

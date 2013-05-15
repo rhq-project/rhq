@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
  *
  * @author Mike Thompson
  */
-public class AvailabilityLineGraphType implements AvailabilityGraphType {
+public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGraphType {
 
     private static Messages MSG = CoreGUI.getMessages();
     private List<Availability> availabilityList;
@@ -48,25 +48,28 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
      * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
      * for all cases but the dashboard portlet).
      */
-    public AvailabilityLineGraphType(Integer entityId) {
+    public AvailabilityOverUnderGraphWithSliderType(Integer entityId) {
         this.entityId = entityId;
     }
 
+    @Override
     public void setAvailabilityList(List<Availability> availabilityList) {
         this.availabilityList = availabilityList;
     }
 
+    @Override
     public void setGroupAvailabilityList(List<ResourceGroupAvailability> groupAvailabilityList) {
         this.groupAvailabilityList = groupAvailabilityList;
     }
 
+    @Override
     public String getAvailabilityJson() {
         StringBuilder sb = new StringBuilder("[");
         if (null != availabilityList) {
             // loop through the avail intervals
             for (Availability availability : availabilityList) {
                 sb.append("{ \"availType\":\"" + availability.getAvailabilityType() + "\", ");
-                sb.append(" \"availTypeMessage\":\"" + availability.getAvailabilityType()+ "\", ");
+                sb.append(" \"availTypeMessage\":\"" + availability.getAvailabilityType() + "\", ");
                 sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
                 // last record will be null
                 long endTime = availability.getEndTime() != null ? availability.getEndTime() : (new Date()).getTime();
@@ -84,8 +87,9 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
             // loop through the group avail down intervals
             for (ResourceGroupAvailability groupAvailability : groupAvailabilityList) {
                 // allows substitution for situations like WARN=MIXED for easier terminology
-                String availabilityTypeMessage = (groupAvailability.getGroupAvailabilityType().equals(ResourceGroupComposite.GroupAvailabilityType.WARN))
-                        ? MSG.chart_hover_availability_type_warn() : groupAvailability.getGroupAvailabilityType().name();
+                String availabilityTypeMessage = (groupAvailability.getGroupAvailabilityType()
+                    .equals(ResourceGroupComposite.GroupAvailabilityType.WARN)) ? MSG
+                    .chart_hover_availability_type_warn() : groupAvailability.getGroupAvailabilityType().name();
 
                 sb.append("{ \"availType\":\"" + groupAvailability.getGroupAvailabilityType() + "\", ");
                 sb.append(" \"availTypeMessage\":\"" + availabilityTypeMessage + "\", ");
@@ -112,22 +116,25 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
     /**
      * The magic JSNI to draw the charts with d3.
      */
+    @Override
     public native void drawJsniChart() /*-{
-        console.log("Draw Availability chart");
+        console.log("Draw Enhanced Availability chart");
 
         var global = this,
         // tidy up all of our interactions with java (via JSNI) thru AvailChartContext class
         // NOTE: rhq.js has the javascript object constructors in it.
-                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getAvailabilityJson()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartDateLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartTimeLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverStartLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverEndLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverBarLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverAvailabilityLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType::getChartHoverDateFormat()()
+                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartId()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailabilityJson()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartDateLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartTimeLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverStartLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverBarLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverAvailabilityLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverTimeFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverDateFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailChartTitleLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailChartUpLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailChartDownLabel()()
                 );
 
 
@@ -138,8 +145,7 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
             var margin = {top: 5, right: 5, bottom: 5, left: 40},
                     barOffset = 10,
                     width = 750 - margin.left - margin.right + barOffset,
-                    height = 20 - margin.top - margin.bottom,
-                    pixelsOffHeight = 0,
+                    height = 40 - margin.top - margin.bottom,
                     svg;
 
 
@@ -160,37 +166,46 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
                                 .rangeRound([height, 0])
                                 .domain([0, 4]),
 
-                        svg = $wnd.d3.select(availChartContext.chartSelection).append("g")
-                                .attr("width", width + margin.left + margin.right)
-                                .attr("height", height + margin.top + margin.bottom)
-                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+                        xAxis = $wnd.d3.svg.axis()
+                                .scale(timeScale)
+                                .ticks(8)
+                                .tickSize(13, 0, 0)
+                                .orient("bottom"),
 
+                        calcBarY = function (d) {
+                            var ABOVE = -10,
+                                    BELOW = 0,
+                                    STRADDLE = -5,
+                                    offset;
 
-                // The gray bars at the bottom leading up
-                svg.selectAll("rect.availBars")
-                        .data(availChartContext.data)
-                        .enter().append("rect")
-                        .attr("class", "availBars")
-                        .attr("x", function (d) {
-                            return timeScale(+d.availStart);
-                        })
-                        .attr("y", function (d) {
-                            return yScale(0);
-                        })
-                        .attr("height", function (d) {
-                            return height - yScale(4) - pixelsOffHeight;
-                        })
-                        .attr("width", function (d) {
-                            return timeScale(+d.availEnd) - timeScale(+d.availStart);
-                        })
+                            if (d.availType === 'DOWN') {
+                                offset = BELOW;
+                            }
+                            else if (d.availType === 'DISABLED') {
+                                offset = STRADDLE;
+                            }
+                            else if (d.availType === 'UNKNOWN') {
+                                offset = STRADDLE;
+                            }
+                            else if (d.availType === 'UP') {
+                                offset = ABOVE;
+                            }
+                            else if (d.availType === 'WARN') {
+                                offset = STRADDLE;
+                            }
+                            else if (d.availType === 'EMPTY') {
+                                offset = STRADDLE;
+                            }
+                            return yScale(0) + offset;
 
-                        .attr("opacity", ".9")
-                        .attr("fill", function (d) {
+                        },
+
+                        calcBarFill = function (d) {
                             if (d.availType === 'DOWN') {
                                 return "#FF1919"; // red
                             }
                             else if (d.availType === 'DISABLED') {
-                                return "#FF9933"; // orange
+                                return "url(#diagonalHatchFill)"; // grey diagonal hatches
                             }
                             else if (d.availType === 'UNKNOWN') {
                                 return "#CCC"; // gray
@@ -199,22 +214,89 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
                                 return "#198C19"; // green
                             }
                             else if (d.availType === 'WARN') {
-                                return "#FFFF00"; // yellow
+                                return "#FFA500"; // orange
                             }
                             else if (d.availType === 'EMPTY') {
                                 return "#CCC"; // gray
                             }
                             else {
                                 // should not ever happen, but...
-                                console.warn("AvailabilityType not valid.");
+                                console.log("AvailabilityType not valid.");
                                 return "#000"; //black
                             }
+                        },
+                        svg = $wnd.d3.select(availChartContext.chartSelection).append("g")
+                                .attr("width", width + margin.left + margin.right)
+                                .attr("height", height + margin.top + margin.bottom)
+                                .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+                svg.selectAll("rect.availBars")
+                        .data(availChartContext.data)
+                        .enter().append("rect")
+                        .attr("class", "availBars")
+                        .attr("x", function (d) {
+                            return timeScale(+d.availStart);
+                        })
+                        .attr("y", function (d) {
+                            return calcBarY(d);
+                        })
+                        .attr("height", function (d) {
+                            return 10;
+                        })
+                        .attr("width", function (d) {
+                            return timeScale(+d.availEnd) - timeScale(+d.availStart);
+                        })
+                        .attr("opacity", ".9")
+                        .attr("fill", function (d) {
+                            return calcBarFill(d);
                         });
+
+                // create x-axis
+                svg.append("g")
+                        .attr("class", "x axis")
+                        .attr("fill", "#50505a")
+                        .attr("stroke-width", "0.5")
+                        .attr("transform", "translate(0," + height + ")")
+                        .attr("letter-spacing", "3")
+                        .style("text-anchor", "end")
+                        .call(xAxis);
+
+                svg.append("text")
+                        .attr("class", "availabilityLabel")
+                        .attr("x", -40)
+                        .attr("y", 10)
+                        .style("font-size", "12px")
+                        .style("font-family", "Arial, Verdana, sans-serif;")
+                        .style("font-weight", "bold")
+                        .attr("fill", "#003168")
+                        .text(availChartContext.chartTitle);
+
+                svg.append("text")
+                        .attr("class", "upLabel")
+                        .attr("x", -5)
+                        .attr("y", 28)
+                        .style("font-family", "Arial, Verdana, sans-serif;")
+                        .style("font-size", "9px")
+                        .attr("fill", "#50505a")
+                        .style("text-anchor", "end")
+                        .text(availChartContext.chartUpLabel);
+
+                svg.append("text")
+                        .attr("class", "downLabel")
+                        .attr("x", -5)
+                        .attr("y", 39)
+                        .style("font-family", "Arial, Verdana, sans-serif;")
+                        .style("font-size", "9px")
+                        .attr("fill", "#50505a")
+                        .style("text-anchor", "end")
+                        .text(availChartContext.chartDownLabel);
+
             }
 
             function createHovers() {
                 $wnd.jQuery('svg rect.availBars').tipsy({
-                    gravity: 'n',
+                    gravity: 's',
                     html: true,
                     trigger: 'hover',
                     title: function () {
@@ -228,35 +310,25 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
             }
 
             function formatHovers(d) {
-                var hoverString,
-                        timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
+                var  timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
                         dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
-                        availStart = new Date(+d.availStart),
-                        availEnd = new Date(+d.availEnd);
+                        availStart = new Date(+d.availStart);
 
-                hoverString =
-                        '<div class="chartHoverEnclosingDiv">' +
-                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + d.availTypeMessage + '</span></div>' +
-                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverStartLabel + ': </span><span style="width:50px;">' + timeFormatter(availStart) + '</span></div>' +
-                                '<div class="chartHoverAlignRight"><span >' + ' </span><span style="width:50px;">' + dateFormatter(availStart) + '</span></div>' +
-                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverEndLabel + ': </span><span style="width:50px;">' + timeFormatter(availEnd) + '</span></div>' +
-                                '<div class="chartHoverAlignRight"><span >' + ' </span><span style="width:50px;">' + dateFormatter(availEnd) + '</span></div>' +
-                                '<div class="chartHoverAlignRight"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + d.availDuration + '</span></div>' +
+                return '<div class="chartHoverEnclosingDiv">' +
+                                '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + d.availTypeMessage + '</span></div>' +
+                                '<div class="chartHoverAlignLeft"><span>' + dateFormatter(availStart) + ' ' + timeFormatter(availStart) + '</span></div>' +
+                                '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + d.availDuration + '</span></div>' +
                                 '</div>';
-                return hoverString;
 
             }
 
             return {
                 // Public API
-                draw: function (chartContext) {
+                draw: function (availChartContext) {
                     "use strict";
-                    console.info("AvailabilityChart");
-                    //console.time("availabilityChart");
-
+                    console.log("AvailabilityChart");
                     drawBars(availChartContext);
                     createHovers();
-                    //console.timeEnd("availabilityChart");
                 }
             }; // end public closure
 
@@ -267,7 +339,7 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
             availabilityGraph.draw(availChartContext);
         }
 
-    }-*/;
+                                       }-*/;
 
     public String getChartId() {
         return String.valueOf(entityId);
@@ -289,8 +361,16 @@ public class AvailabilityLineGraphType implements AvailabilityGraphType {
         return MSG.chart_hover_start_label();
     }
 
-    public String getChartHoverEndLabel() {
-        return MSG.chart_hover_end_label();
+    public String getAvailChartDownLabel() {
+        return MSG.avail_chart_down_label();
+    }
+
+    public String getAvailChartUpLabel() {
+        return MSG.avail_chart_up_label();
+    }
+
+    public String getAvailChartTitleLabel() {
+        return MSG.avail_chart_title_label();
     }
 
     public String getChartHoverBarLabel() {

@@ -50,16 +50,19 @@
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
 
+    <script src="/coregui/js/moment.min.js"/>
+    <script src="/coregui/js/rhq.js"/>
     <!-- External javascript libraries -->
-    <!-- jquery.sparkline requires jquery. We don't explicitly provide jquery here because it is already
-         embedded in the GFlot JAR (the charting lib used for GraphPortlet).  Furthermore, GFlot 2.4.2 requires
-         the version of jquery (1.7.2).
+    <!-- jquery.sparkline requires jquery.
     -->
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
     <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>
     <script src="/coregui/js/d3.v3.js"/>
     <script src="/coregui/js/nv.d3.js"/>
     <script src="/coregui/js/jquery.tipsy.js"/>
+
+    <!-- for d3 dual slider control only -->
+    <script src="/coregui/js/bootstrap.min.js" />
 
 
     <!--

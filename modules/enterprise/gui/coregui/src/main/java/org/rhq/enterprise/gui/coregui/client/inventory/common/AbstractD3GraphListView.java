@@ -26,12 +26,14 @@ import com.smartgwt.client.widgets.Label;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.GraphDateTimeRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Provide the shared stuff for create GraphListViews like Availability graphs
@@ -42,15 +44,17 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     protected final static int MULTI_CHART_HEIGHT = 195;
     protected List<Availability> availabilityList;
     protected List<ResourceGroupAvailability> groupAvailabilityList;
-    protected AvailabilityD3Graph availabilityGraph;
+    protected AvailabilityD3GraphView availabilityGraph;
     protected static Label loadingLabel = new Label(MSG.common_msg_loading());
-    protected UserPreferencesMeasurementRangeEditor measurementRangeEditor;
+    protected MeasurementUserPreferences measurementUserPrefs;
     protected boolean showAvailabilityGraph = false;
+    protected GraphDateTimeRangeEditor graphDateTimeRangeEditor;
     protected Timer refreshTimer;
 
     public AbstractD3GraphListView() {
         super();
-        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
+        measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+        graphDateTimeRangeEditor = new GraphDateTimeRangeEditor(measurementUserPrefs);
         startRefreshCycle();
     }
 

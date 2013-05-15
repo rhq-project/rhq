@@ -71,10 +71,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
     private boolean isPortalGraph;
-    /**
-     * WindowWidth is used in determining what size graph to display in the dashboard portlets.
-     */
-    //private Integer windowWidth;
+
 
     private MetricGraphData(int portalId) {
         isPortalGraph = true;

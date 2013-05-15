@@ -23,13 +23,13 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
  *
  * @author Mike Thompson
  */
-public final class MetricNvd3BarChartGraph extends AbstractGraph
+public final class MetricNvd3MultiLineGraph extends AbstractGraph
 {
     /**
      * General constructor for stacked bar graph when you have all the data needed to
      * produce the graph. (This is true for all cases but the dashboard portlet).
      */
-    public MetricNvd3BarChartGraph(MetricGraphData metricGraphData){
+    public MetricNvd3MultiLineGraph(MetricGraphData metricGraphData){
         setMetricGraphData(metricGraphData);
     }
 

@@ -41,6 +41,7 @@
   <properties>
     <skipClusterShutdown>false</skipClusterShutdown>
     <clusterDir>${project.build.directory}/cassandra</clusterDir>
+    <deployCluster>true</deployCluster>
   </properties>
 
   <dependencies>
@@ -92,26 +93,6 @@
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.driver.version}</version>
     </dependency>
-
-    <!--<dependency>-->
-      <!--<groupId>org.apache.cassandra</groupId>-->
-      <!--<artifactId>cassandra-all</artifactId>-->
-      <!--<version>${cassandra.version}</version>-->
-      <!--<exclusions>-->
-        <!--<exclusion>-->
-          <!--<groupId>org.slf4j</groupId>-->
-          <!--<artifactId>slf4j-log4j12</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-          <!--<groupId>org.slf4j</groupId>-->
-          <!--<artifactId>slf4j-api</artifactId>-->
-        <!--</exclusion>-->
-        <!--<exclusion>-->
-          <!--<groupId>log4j</groupId>-->
-          <!--<artifactId>log4j</artifactId>-->
-        <!--</exclusion>-->
-      <!--</exclusions>-->
-    <!--</dependency>-->
 
     <dependency>
       <groupId>joda-time</groupId>
@@ -176,6 +157,7 @@
           <systemPropertyVariables>
             <rhq.cassandra.cluster.skip-shutdown>${skipClusterShutdown}</rhq.cassandra.cluster.skip-shutdown>
             <rhq.cassandra.cluster.dir>${rhq.cassandra.cluster.dir}</rhq.cassandra.cluster.dir>
+            <rhq.cassandra.cluster.deploy>${deployCluster}</rhq.cassandra.cluster.deploy>
           </systemPropertyVariables>
         </configuration>
       </plugin>

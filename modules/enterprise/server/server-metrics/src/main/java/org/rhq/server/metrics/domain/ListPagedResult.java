@@ -25,8 +25,9 @@
 
 package org.rhq.server.metrics.domain;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 import com.datastax.driver.core.BoundStatement;
@@ -48,58 +49,72 @@ public class ListPagedResult<T> implements Iterable<T> {
 
     private static final int DEFAULT_PAGE_SIZE = 200;
 
+    private final List<Integer> scheduleIds;
+    private final long startTime;
+    private final long endTime;
     private final ResultSetMapper<T> mapper;
-    private final String query;
+//    private final String query;
     private final Session session;
-    private final int pageSize;
-    private final List<?> valuesToBind;
+    private final int pageSize = -1;
+//    private final List<?> valuesToBind;
 
     private final PreparedStatement preparedStatement;
 
-    /**
-     * @param query query to execute
-     * @param mapper result set mapper
-     * @param session Cassandra session
-     * @param pageSize page size
-     */
-    public ListPagedResult(String query, List<?> valuesToBind, ResultSetMapper<T> mapper, Session session, int pageSize) {
-        this.query = query;
+    public ListPagedResult(PreparedStatement preparedStatement, List<Integer> scheduleIds, long startTime, long endTime,
+        ResultSetMapper<T> mapper, Session session) {
+        this.preparedStatement = preparedStatement;
+        this.scheduleIds = new LinkedList<Integer>(scheduleIds);
+        this.startTime = startTime;
+        this.endTime = endTime;
         this.mapper = mapper;
         this.session = session;
-        this.pageSize = pageSize;
-        this.valuesToBind = valuesToBind;
-
-        try {
-            this.preparedStatement = this.session.prepare(this.query);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
     }
 
-    /**
-     * @param query query to execute
-     * @param mapper result set mapper
-     * @param session Cassandra session
-     * @param pageSize page size
-     */
-    public ListPagedResult(String query, List<?> valuesToBind, ResultSetMapper<T> mapper, Session session) {
-        this(query, valuesToBind, mapper, session, DEFAULT_PAGE_SIZE);
-    }
+//    /**
+//     * @param query query to execute
+//     * @param mapper result set mapper
+//     * @param session Cassandra session
+//     * @param pageSize page size
+//     */
+//    public ListPagedResult(String query, List<?> valuesToBind, ResultSetMapper<T> mapper, Session session, int pageSize) {
+//        this.query = query;
+//        this.mapper = mapper;
+//        this.session = session;
+//        this.pageSize = pageSize;
+//        this.valuesToBind = valuesToBind;
+//
+//        try {
+//            this.preparedStatement = this.session.prepare(this.query);
+//        } catch (NoHostAvailableException e) {
+//            throw new CQLException(e);
+//        }
+//    }
+//
+//    /**
+//     * @param query query to execute
+//     * @param mapper result set mapper
+//     * @param session Cassandra session
+//     * @param pageSize page size
+//     */
+//    public ListPagedResult(String query, List<?> valuesToBind, ResultSetMapper<T> mapper, Session session) {
+//        this(query, valuesToBind, mapper, session, DEFAULT_PAGE_SIZE);
+//    }
 
-    /**
-     * @return page size
-     */
-    public int getPageSize() {
-        return this.pageSize;
-    }
+//    /**
+//     * @return page size
+//     */
+//    public int getPageSize() {
+//        return this.pageSize;
+//    }
 
     /**
      * @throws Exception
      */
-    private ResultSet retrieveNextResultSet(ResultSet existingResultSet, List<?> valuesToBind) {
+    private ResultSet retrieveNextResultSet(ResultSet existingResultSet, List<Integer> ids) {
         try{
-            while ((existingResultSet == null || existingResultSet.isExhausted()) && valuesToBind.size() != 0) {
-                BoundStatement boundStatement = this.preparedStatement.bind(valuesToBind.remove(0));
+            while ((existingResultSet == null || existingResultSet.isExhausted()) && ids.size() != 0) {
+                BoundStatement boundStatement = this.preparedStatement.bind(ids.remove(0), new Date(startTime),
+                    new Date(endTime));
                 return session.execute(boundStatement);
             }
         } catch (NoHostAvailableException e) {
@@ -116,12 +131,12 @@ public class ListPagedResult<T> implements Iterable<T> {
     public Iterator<T> iterator() {
         return new Iterator<T>() {
             @SuppressWarnings({ "unchecked", "rawtypes" })
-            private final List<?> localValuesToBind = new ArrayList(valuesToBind);
-            private ResultSet resultSet = retrieveNextResultSet(null, localValuesToBind);
+            private List<Integer> ids = new LinkedList<Integer>(scheduleIds);
+            private ResultSet resultSet = retrieveNextResultSet(null, ids);
             private T lastRetrievedItem = null;
 
             public boolean hasNext() {
-                resultSet = retrieveNextResultSet(resultSet, localValuesToBind);
+                resultSet = retrieveNextResultSet(resultSet, ids);
                 return resultSet != null && !resultSet.isExhausted();
             }
 

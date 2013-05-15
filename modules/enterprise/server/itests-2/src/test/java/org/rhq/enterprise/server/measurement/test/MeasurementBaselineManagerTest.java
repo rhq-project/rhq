@@ -53,6 +53,7 @@ import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
 
 @Test
@@ -85,7 +86,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         this.baselineManager = LookupUtil.getMeasurementBaselineManager();
         this.oobManager = LookupUtil.getOOBManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
-        metricsDAO = new MetricsDAO(cassandraSessionManager.getSession());
+        metricsDAO = cassandraSessionManager.getMetricsDAO();
 
         this.prepareScheduler();
         this.prepareForTestAgents();
@@ -626,7 +627,10 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private void insertMeasurementDataNumeric1H(long timeStamp, MeasurementSchedule schedule, double value, double min,
         double max) {
         AggregateNumericMetric metric = new AggregateNumericMetric(schedule.getId(), value, min, max, timeStamp);
-        metricsDAO.insertAggregates(MetricsTable.ONE_HOUR, asList(metric), MetricsTable.ONE_HOUR.getTTL());
+        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MIN, min);
+        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MAX, max);
+        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.AVG, value);
+
 //        String sql = "INSERT INTO RHQ_measurement_data_num_1h "
 //            + "(time_stamp, schedule_id, value, minvalue, maxvalue) " + "VALUES (" + timeStamp + "," + schedule.getId()
 //            + "," + value + "," + min + "," + max + ")";

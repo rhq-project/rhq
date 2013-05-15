@@ -52,6 +52,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -105,7 +106,8 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         dateTimeService.setConfiguration(configuration);
         metricsServer.setDateTimeService(dateTimeService);
 
-        dao = new MetricsDAO(session);
+        dao = new MetricsDAO(session, configuration);
+        metricsServer.setDAO(dao);
 
         purgeDB();
     }
@@ -208,8 +210,10 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         rawMetrics.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, secondValue));
         rawMetrics.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, thirdValue));
 
-        Set<MeasurementDataNumeric> insertedRawMetrics = dao.insertRawMetrics(rawMetrics, MetricsTable.RAW.getTTL());
-        metricsServer.updateMetricsIndex(insertedRawMetrics);
+        for (MeasurementDataNumeric raw : rawMetrics) {
+            dao.insertRawData(raw);
+        }
+        metricsServer.updateMetricsIndex(rawMetrics);
 
         metricsServer.setCurrentHour(hour9);
         metricsServer.calculateAggregates();
@@ -261,7 +265,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, avg1, min1, max1, hour7.getMillis()),
             new AggregateNumericMetric(scheduleId, avg2, min2, max2, hour8.getMillis())
         );
-        dao.insertAggregates(MetricsTable.ONE_HOUR, oneHourMetrics, MetricsTable.ONE_HOUR.getTTL());
+        for (AggregateNumericMetric metric : oneHourMetrics) {
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
 
         // update the 6 hour queue
         Map<Integer, Long> indexUpdates = new HashMap<Integer, Long>();
@@ -312,7 +320,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, avg1, min1, max1, hour6.getMillis()),
             new AggregateNumericMetric(scheduleId, avg2, min2, max2, hour12.getMillis())
         );
-        dao.insertAggregates(MetricsTable.SIX_HOUR, sixHourMetrics, MetricsTable.SIX_HOUR.getTTL());
+        for (AggregateNumericMetric metric : sixHourMetrics) {
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
 
         // update the 24 queue
         Map<Integer, Long> indexUpdates = new HashMap<Integer, Long>();
@@ -444,7 +456,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket59Time.plusHours(1).getMillis()),
             new AggregateNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
-        dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
+        for (AggregateNumericMetric metric : metrics) {
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
 
         AggregateNumericMetric actual = metricsServer.getSummaryAggregate(scheduleId, beginTime.getMillis(),
             endTime.getMillis());
@@ -474,7 +490,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId1, 5.1, 5.1, 5.1, bucket59Time.getMillis()),
             new AggregateNumericMetric(scheduleId2, 5.2, 5.2, 5.2, bucket59Time.getMillis())
         );
-        dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
+        for (AggregateNumericMetric metric : metrics) {
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
 
         AggregateNumericMetric actual = metricsServer.getSummaryAggregate(asList(scheduleId1, scheduleId2),
             beginTime.getMillis(), endTime.getMillis());
@@ -609,7 +629,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket59Time.plusHours(1).getMillis()),
             new AggregateNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
-        dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
+        for (AggregateNumericMetric metric : metrics) {
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
             scheduleId, beginTime.getMillis(), endTime.getMillis()));
@@ -653,7 +677,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId1, 4.1, 4.1, 4.1, bucket59Time.getMillis()),
             new AggregateNumericMetric(scheduleId2, 4.2, 4.2, 4.2, bucket59Time.getMillis())
         );
-        dao.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
+        for (AggregateNumericMetric metric : metrics) {
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
 
         List<MeasurementDataNumericHighLowComposite> actual = metricsServer.findDataForGroup(
             asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis());
@@ -690,7 +718,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             new AggregateNumericMetric(scheduleId, 5.0, 4.0, 6.0, bucket59Time.plusHours(1).getMillis()),
             new AggregateNumericMetric(scheduleId, 3.0, 3.0, 3.0, bucket59Time.plusHours(2).getMillis())
         );
-        dao.insertAggregates(MetricsTable.SIX_HOUR, metrics, MetricsTable.SIX_HOUR.getTTL());
+        for (AggregateNumericMetric metric : metrics) {
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+        }
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
             scheduleId, beginTime.getMillis(), endTime.getMillis()));

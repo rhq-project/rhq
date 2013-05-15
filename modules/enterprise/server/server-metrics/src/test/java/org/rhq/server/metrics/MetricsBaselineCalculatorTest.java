@@ -47,7 +47,6 @@ import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
-import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author Stefan Negrea
@@ -57,6 +56,8 @@ import org.rhq.server.metrics.domain.MetricsTable;
 public class MetricsBaselineCalculatorTest {
 
     private static final double TEST_PRECISION = Math.pow(10, -10);
+
+    private MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
 
     @ObjectFactory
     public IObjectFactory getObjectFactory() {
@@ -70,25 +71,26 @@ public class MetricsBaselineCalculatorTest {
         //those dependencies to get the method under test to completion.
         Session mockSession = mock(Session.class);
         MetricsDAO mockMetricsDAO = mock(MetricsDAO.class);
-        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class).withArguments(eq(mockSession))
-            .thenReturn(mockMetricsDAO);
+        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class, MetricsConfiguration.class)
+            .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
-        when(mockMetricsDAO.findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR), eq(1), eq(0),
+        when(mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(1), eq(0),
                 eq(1))).thenReturn(new ArrayList<AggregateSimpleNumericMetric>());
 
         MeasurementSchedule mockSchedule = mock(MeasurementSchedule.class);
         when(mockSchedule.getId()).thenReturn(0);
 
         //create object to test and inject required dependencies
-        MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(mockSession);
+        MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(new MetricsDAO(mockSession,
+            metricsConfiguration));
 
         //run code under test
         List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(mockSchedule), 0, 1);
 
         //verify the results (Assert and mock verification)
         Assert.assertEquals(result.size(), 0);
-        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR), any(Integer.class),
-            any(Integer.class), any(Integer.class));
+        verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(any(Integer.class), any(Integer.class),
+            any(Integer.class));
         verifyNoMoreInteractions(mockMetricsDAO);
 
         verify(mockSchedule, times(1)).getId();
@@ -138,18 +140,19 @@ public class MetricsBaselineCalculatorTest {
         //those dependencies to get the method under test to completion.
         Session mockSession = mock(Session.class);
         MetricsDAO mockMetricsDAO = mock(MetricsDAO.class);
-        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class).withArguments(eq(mockSession))
-            .thenReturn(mockMetricsDAO);
+        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class, MetricsConfiguration.class)
+            .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(
-            mockMetricsDAO.findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
-                eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime))).thenReturn(randomData);
+            mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(expectedScheduleId), eq(expectedStartTime),
+                eq(expectedEndTime))).thenReturn(randomData);
 
         MeasurementSchedule mockSchedule = mock(MeasurementSchedule.class);
         when(mockSchedule.getId()).thenReturn(expectedScheduleId);
 
         //create object to test and inject required dependencies
-        MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(mockSession);
+        MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(new MetricsDAO(mockSession,
+            metricsConfiguration));
 
         //run code under test
         List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(mockSchedule),
@@ -170,8 +173,8 @@ public class MetricsBaselineCalculatorTest {
             Assert.fail("Back compute time, the computation was backdated.");
         }
 
-        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
-            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime));
+        verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(eq(expectedScheduleId),
+            eq(expectedStartTime), eq(expectedEndTime));
         verifyNoMoreInteractions(mockMetricsDAO);
 
         verify(mockSchedule, times(1)).getId();
@@ -204,19 +207,19 @@ public class MetricsBaselineCalculatorTest {
         //those dependencies to get the method under test to completion.
         Session mockSession = mock(Session.class);
         MetricsDAO mockMetricsDAO = mock(MetricsDAO.class);
-        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class).withArguments(eq(mockSession))
-            .thenReturn(mockMetricsDAO);
+        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class, MetricsConfiguration.class)
+            .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(
-            mockMetricsDAO.findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
-                eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime))).thenReturn(
-            randomData);
+            mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(expectedScheduleId), eq(expectedStartTime),
+                eq(expectedEndTime))).thenReturn(randomData);
 
         MeasurementSchedule mockSchedule = mock(MeasurementSchedule.class);
         when(mockSchedule.getId()).thenReturn(expectedScheduleId);
 
         //create object to test and inject required dependencies
-        MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(mockSession);
+        MetricsBaselineCalculator objectUnderTest = new MetricsBaselineCalculator(new MetricsDAO(mockSession,
+            metricsConfiguration));
 
         //run code under test
         List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(mockSchedule),
@@ -231,8 +234,8 @@ public class MetricsBaselineCalculatorTest {
         Assert.assertEquals(baselineResult.getMin(), expectedMinMax);
         Assert.assertEquals(baselineResult.getSchedule(), mockSchedule);
 
-        verify(mockMetricsDAO, times(1)).findAggregateSimpleMetrics(eq(MetricsTable.ONE_HOUR),
-            eq(expectedScheduleId), eq(expectedStartTime), eq(expectedEndTime));
+        verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(eq(expectedScheduleId),
+            eq(expectedStartTime), eq(expectedEndTime));
         verifyNoMoreInteractions(mockMetricsDAO);
 
         verify(mockSchedule, times(1)).getId();

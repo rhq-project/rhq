@@ -40,7 +40,10 @@ import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.server.metrics.CQLException;
+import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.MetricsServer;
 
 /**
  * @author John Sanda
@@ -51,6 +54,10 @@ public class SessionManagerBean {
     private Session session;
 
     private MetricsConfiguration metricsConfiguration = new MetricsConfiguration();
+
+    private MetricsDAO metricsDAO;
+
+    private MetricsServer metricsServer;
 
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
@@ -85,9 +92,32 @@ public class SessionManagerBean {
                 .withPort(port)
                 .build();
             session = cluster.connect("rhq");
+
+            metricsDAO = new MetricsDAO(session, metricsConfiguration);
         } catch (Exception  e) {
             throw new CQLException("Unable to create session", e);
         }
+    }
+
+    public MetricsDAO getMetricsDAO() {
+        return metricsDAO;
+    }
+
+    public MetricsServer getMetricsServer() {
+        if (metricsServer != null) {
+            return metricsServer;
+        }
+
+        metricsServer = new MetricsServer();
+        metricsServer.setDAO(metricsDAO);
+        metricsServer.setSession(getSession());
+        metricsServer.setConfiguration(metricsConfiguration);
+
+        DateTimeService dateTimeService = new DateTimeService();
+        dateTimeService.setConfiguration(metricsConfiguration);
+        metricsServer.setDateTimeService(dateTimeService);
+
+        return metricsServer;
     }
 
 

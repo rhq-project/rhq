@@ -95,6 +95,9 @@ public class RawNumericMetricMapper implements ResultSetMapper<RawNumericMetric>
 
                 @Override
                 public RawNumericMetric mapOne(ResultSet resultSet) {
+                    if (resultSet.isExhausted()) {
+                        return null;
+                    }
                     return this.map(resultSet.one());
                 }
 

@@ -26,25 +26,25 @@
 package org.rhq.server.metrics;
 
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.batch;
 import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
-import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
@@ -64,69 +64,89 @@ import org.rhq.server.metrics.domain.SimplePagedResult;
  */
 public class MetricsDAO {
 
-    // It looks like that there might be a bug in the DataStax driver that will prevent our
-    // using prepared statements for range queries. See https://github.com/datastax/java-driver/issues/3
-    // for details.
-    //
-    // jsanda
-
-    private static final String RAW_METRICS_SIMPLE_QUERY =
-        "SELECT schedule_id, time, value " +
-        "FROM " + MetricsTable.RAW + " " +
-        "WHERE schedule_id = ? ORDER by time";
+    private final Log log = LogFactory.getLog(MetricsDAO.class);
 
     private static final String RAW_METRICS_QUERY =
         "SELECT schedule_id, time, value " +
         "FROM " + MetricsTable.RAW + " " +
         "WHERE schedule_id = ? AND time >= ? AND time < ? ORDER BY time";
 
-    private static final String RAW_METRICS_SCHEDULE_LIST_QUERY =
-        "SELECT schedule_id, time, value " +
-        "FROM " + MetricsTable.RAW + " " +
-        "WHERE schedule_id IN (?) AND time >= ? AND time < ? ORDER BY time";
-
     private static final String RAW_METRICS_WITH_METADATA_QUERY =
         "SELECT schedule_id, time, value, ttl(value), writetime(value) " +
             "FROM " + MetricsTable.RAW + " " +
             "WHERE schedule_id = ? AND time >= ? AND time < ?";
 
-    private static final String INSERT_RAW_METRICS =
-        "INSERT INTO "+ MetricsTable.RAW +" (schedule_id, time, value) " +
-        "VALUES (?, ?, ?) USING TTL ? AND TIMESTAMP ?";
-
-    private static final String METRICS_INDEX_QUERY =
-        "SELECT time, schedule_id " +
-        "FROM " + MetricsTable.INDEX + " " +
-        "WHERE bucket = ? " +
-        "ORDER BY time";
-
-    private static final String UPDATE_METRICS_INDEX =
-        "INSERT INTO " + MetricsTable.INDEX + " (bucket, time, schedule_id, null_col) VALUES (?, ?, ?, ?)";
-
     private Session session;
 
-    public MetricsDAO(Session session) {
+    private MetricsConfiguration configuration;
+
+    private PreparedStatement insertRawData;
+    private PreparedStatement rawMetricsQuery;
+    private PreparedStatement updateMetricsIndex;
+    private PreparedStatement insertOneHourData;
+    private PreparedStatement insertSixHourData;
+    private PreparedStatement insertTwentyFourHourData;
+    private PreparedStatement findLatestRawMetric;
+    private PreparedStatement findRawMetricsWithMetadata;
+    private PreparedStatement findRawMetrics;
+    private PreparedStatement findOneHourMetricsByDateRange;
+    private PreparedStatement findSixHourMetricsByDateRange;
+    private PreparedStatement findTwentyFourHourMetricsByDateRange;
+    private PreparedStatement findIndexEntries;
+    private PreparedStatement deleteIndexEntries;
+
+    public MetricsDAO(Session session, MetricsConfiguration configuration) {
         this.session = session;
+        this.configuration = configuration;
+        initPreparedStatements();
     }
 
-    public Set<MeasurementDataNumeric> insertRawMetrics(Set<MeasurementDataNumeric> dataSet, int ttl) {
-        // TODO Determine if batch inserts will be faster that prepared statements for raw data
-        try {
-            String cql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " + "USING TTL " + ttl;
-            PreparedStatement statement = session.prepare(cql);
+    public void initPreparedStatements() {
+        insertRawData = session.prepare(
+            "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL " +
+                configuration.getRawTTL());
 
-            Set<MeasurementDataNumeric> insertedMetrics = new HashSet<MeasurementDataNumeric>();
-            for (MeasurementDataNumeric data : dataSet) {
-                BoundStatement boundStatement = statement.bind(data.getScheduleId(), new Date(data.getTimestamp()),
-                    data.getValue());
-                session.execute(boundStatement);
-                insertedMetrics.add(data);
-            }
+        rawMetricsQuery = session.prepare(RAW_METRICS_QUERY);
 
-            return insertedMetrics;
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+        insertOneHourData = session.prepare("INSERT INTO " + MetricsTable.ONE_HOUR + "(schedule_id, time, " +
+            "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
+
+        insertSixHourData = session.prepare("INSERT INTO " + MetricsTable.SIX_HOUR + "(schedule_id, time, " +
+            "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
+
+        insertTwentyFourHourData = session.prepare("INSERT INTO " + MetricsTable.TWENTY_FOUR_HOUR + "(schedule_id, " +
+            "time, type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
+
+        updateMetricsIndex = session.prepare("INSERT INTO " + MetricsTable.INDEX + " (bucket, time, schedule_id) " +
+            "VALUES (?, ?, ?)");
+
+        findLatestRawMetric = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
+            " WHERE schedule_id = ? ORDER BY time DESC LIMIT 1");
+
+        findRawMetricsWithMetadata = session.prepare(RAW_METRICS_WITH_METADATA_QUERY);
+
+        findRawMetrics = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
+            " WHERE schedule_id = ? AND time >= ? AND time <= ?");
+
+        findOneHourMetricsByDateRange = session.prepare("SELECT schedule_id, time, type, value FROM " +
+            MetricsTable.ONE_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
+
+        findSixHourMetricsByDateRange = session.prepare("SELECT schedule_id, time, type, value FROM "
+            + MetricsTable.SIX_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
+
+        findTwentyFourHourMetricsByDateRange = session.prepare("SELECT schedule_id, time, type, value FROM " +
+            MetricsTable.TWENTY_FOUR_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
+
+        findIndexEntries = session.prepare("SELECT time, schedule_id FROM " + MetricsTable.INDEX +
+            " WHERE bucket = ? ORDER BY time");
+
+        deleteIndexEntries = session.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ?");
+    }
+
+    public ResultSet insertRawData(MeasurementDataNumeric data) {
+        BoundStatement statement = insertRawData.bind(data.getScheduleId(), new Date(data.getTimestamp()),
+            data.getValue());
+        return session.execute(statement);
     }
 
     public List<MetricResultFuture<MeasurementDataNumeric>> insertRawMetricsAsync(Set<MeasurementDataNumeric> dataSet,
@@ -151,48 +171,20 @@ public class MetricsDAO {
         }
     }
 
-    public List<AggregateNumericMetric> insertAggregates(MetricsTable table,
-        List<AggregateNumericMetric> metrics, int ttl) {
-        List<AggregateNumericMetric> updates = new ArrayList<AggregateNumericMetric>();
+    public ResultSet insertOneHourData(int scheduleId, long timestamp, AggregateType type, double value) {
+        BoundStatement statement = insertOneHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        return session.execute(statement);
+    }
 
-        if (metrics.isEmpty()) {
-            return updates;
-        }
+    public ResultSet insertSixHourData(int scheduleId, long timestamp, AggregateType type, double value) {
+        BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        return session.execute(statement);
+    }
 
-        try {
-            Statement[] statements = new Statement[metrics.size() * 3];
-            int i = 0;
-
-            for (AggregateNumericMetric metric : metrics) {
-                statements[i++] = insertInto(table.getTableName())
-                    .value("schedule_id", metric.getScheduleId())
-                    .value("time", new Date(metric.getTimestamp()))
-                    .value("type", AggregateType.MIN.ordinal())
-                    .value("value", metric.getMin())
-                    .using(ttl(ttl));
-
-                statements[i++] = insertInto(table.getTableName())
-                    .value("schedule_id", metric.getScheduleId())
-                    .value("time", new Date(metric.getTimestamp()))
-                    .value("type", AggregateType.MAX.ordinal())
-                    .value("value", metric.getMax())
-                    .using(ttl(ttl));
-
-                statements[i++] = insertInto(table.getTableName())
-                    .value("schedule_id", metric.getScheduleId())
-                    .value("time", new Date(metric.getTimestamp()))
-                    .value("type", AggregateType.AVG.ordinal())
-                    .value("value", metric.getAvg())
-                    .using(ttl(ttl));
-
-                updates.add(metric);
-            }
-            session.execute(batch(statements));
-
-            return updates;
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+    public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value) {
+        BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
+            value);
+        return session.execute(statement);
     }
 
     public List<MetricResultFuture<AggregateNumericMetric>> insertAggregatesAsync(MetricsTable table,
@@ -237,55 +229,39 @@ public class MetricsDAO {
 
     public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
         try {
-            PreparedStatement statement = session.prepare(RAW_METRICS_QUERY);
-            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
-
+            BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
             return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(false), session);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
     }
 
-    public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, PageOrdering ordering, int limit) {
-        try {
-            String cql = RAW_METRICS_SIMPLE_QUERY + " " + ordering;
-            if (limit > 0) {
-                cql += " LIMIT " + limit;
-            }
-            PreparedStatement statement = session.prepare(cql);
-            BoundStatement boundStatement = statement.bind(scheduleId);
+    public RawNumericMetric findLatestRawMetric(int scheduleId) {
+        RawNumericMetricMapper mapper = new RawNumericMetricMapper(false);
+        BoundStatement boundStatement = findLatestRawMetric.bind(scheduleId);
+        ResultSet resultSet = session.execute(boundStatement);
 
-            return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(false), session);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+        return mapper.mapOne(resultSet);
     }
 
+    // ONLY USED IN TESTS
     public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime,
         boolean includeMetadata) {
 
         if (!includeMetadata) {
             return findRawMetrics(scheduleId, startTime, endTime);
         }
-
-        try {
-            PreparedStatement statement = session.prepare(RAW_METRICS_WITH_METADATA_QUERY);
-            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
-
-            return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(true), session);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+        BoundStatement boundStatement = findRawMetricsWithMetadata.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(true), session);
     }
 
     public Iterable<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, long startTime, long endTime) {
-        String cql = "SELECT schedule_id, time, value " +
-                " FROM " + MetricsTable.RAW +
-                " WHERE schedule_id = ? AND time >= " + startTime + " AND time <= " + endTime;
-
-        return new ListPagedResult<RawNumericMetric>(cql, scheduleIds, new RawNumericMetricMapper(), session);
+        return new ListPagedResult<RawNumericMetric>(findRawMetrics, scheduleIds, startTime, endTime,
+            new RawNumericMetricMapper(), session);
     }
 
+    // ONLY USED IN TESTS
     public Iterable<AggregateNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId) {
         try {
             String cql =
@@ -302,48 +278,48 @@ public class MetricsDAO {
         }
     }
 
-    public Iterable<AggregateNumericMetric> findAggregateMetrics(MetricsTable table, int scheduleId, long startTime,
+    public Iterable<AggregateNumericMetric> findOneHourMetrics(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(), session);
+    }
+
+    public Iterable<AggregateNumericMetric> findSixHourMetrics(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(), session);
+    }
+
+    public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(int scheduleId, long startTime, long endTime) {
+        BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(), session);
+    }
+
+    public Iterable<AggregateSimpleNumericMetric> findAggregatedSimpleOneHourMetric(int scheduleId, long startTime,
         long endTime) {
-
-        try {
-            String cql =
-                "SELECT schedule_id, time, type, value " +
-                "FROM " + table + " " +
-                "WHERE schedule_id = ? AND time >= ? AND time < ?";
-            PreparedStatement statement = session.prepare(cql);
-            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
-
-            return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(), session);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        return new SimplePagedResult<AggregateSimpleNumericMetric>(statement, new AggregateSimpleNumericMetricMapper(),
+            session);
     }
 
-    public Iterable<AggregateSimpleNumericMetric> findAggregateSimpleMetrics(MetricsTable table, int scheduleId,
-        long startTime, long endTime) {
-        try {
-            String cql = "SELECT schedule_id, type, value " + "FROM " + table
-                + " WHERE schedule_id = ? AND time >= ? AND time < ?";
-            PreparedStatement statement = session.prepare(cql);
-            BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
-
-            return new SimplePagedResult<AggregateSimpleNumericMetric>(boundStatement,
-                new AggregateSimpleNumericMetricMapper(), session);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+    public Iterable<AggregateNumericMetric> findOneHourMetrics(List<Integer> scheduleIds, long startTime,
+        long endTime) {
+        return new ListPagedResult<AggregateNumericMetric>(findOneHourMetricsByDateRange, scheduleIds, startTime, endTime,
+            new AggregateNumericMetricMapper(), session);
     }
 
-    public Iterable<AggregateNumericMetric> findAggregateMetrics(MetricsTable table, List<Integer> scheduleIds,
-        long startTime, long endTime) {
-        String cql =
-                "SELECT schedule_id, time, type, value "+
-                "FROM " + table + " " +
-                "WHERE schedule_id = ? AND time >= " + startTime + " AND time < " + endTime;
-
-        return new ListPagedResult<AggregateNumericMetric>(cql, scheduleIds, new AggregateNumericMetricMapper(), session);
+    public Iterable<AggregateNumericMetric> findSixHourMetrics(List<Integer> scheduleIds, long startTime,
+        long endTime) {
+        return new ListPagedResult<AggregateNumericMetric>(findSixHourMetricsByDateRange, scheduleIds, startTime, endTime,
+            new AggregateNumericMetricMapper(), session);
     }
 
+    public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(List<Integer> scheduleIds, long startTime,
+        long endTime) {
+        return new ListPagedResult<AggregateNumericMetric>(findTwentyFourHourMetricsByDateRange, scheduleIds, startTime, endTime,
+            new AggregateNumericMetricMapper(), session);
+    }
+
+    // ONLY USED IN TESTS
     public Iterable<AggregateNumericMetric> findAggregateMetricsWithMetadata(MetricsTable table, int scheduleId,
         long startTime, long endTime) {
 
@@ -363,68 +339,20 @@ public class MetricsDAO {
     }
 
     public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table) {
-        /*
-          String query = "SELECT time, schedule_id " + "FROM " + MetricsTable.INDEX + " " + "WHERE bucket =  " + table
-            + " AND time >=0 ? AND time < ? " + "ORDER BY time";
-
-        ResultSetMapper<MetricsIndexEntry> resultSetMapper = new MetricsIndexResultSetMapper(table);
-        QueryCreator<MetricsIndexEntry> queryCreator = new QueryCreator<MetricsIndexEntry>() {
-
-            @Override
-            public String buildInitialQuery() {
-                String query = "SELECT time, schedule_id " +
-                               " FROM " + MetricsTable.INDEX + " " +
-                               " WHERE bucket =  " + table +
-                               " LIMIT 30000 ";
-                return query;
-            }
-
-            @Override
-            public String buildNextQuery(MetricsIndexEntry object) {
-                String query = "SELECT time, schedule_id " +
-                    " FROM " + MetricsTable.INDEX + " " +
-                    " WHERE bucket =  " + table + " AND time >= " + object.getTime().getMillis() + " AND schedule_id >= " + object.getScheduleId()+
-                    " LIMIT 30000 ";
-                return query;
-            }
-        };
-        SlicedPagedResult<MetricsIndexEntry> result = new SlicedPagedResult<MetricsIndexEntry>(queryCreator,
-            resultSetMapper, session);
-         */
-
-        try {
-            PreparedStatement statement = session.prepare(METRICS_INDEX_QUERY);
-            BoundStatement boundStatement = statement.bind(table.toString());
-
-            return new SimplePagedResult<MetricsIndexEntry>(boundStatement, new MetricsIndexEntryMapper(table), session);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+        BoundStatement statement = findIndexEntries.bind(table.toString());
+        return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), session);
     }
 
     public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {
-        try {
-            Statement[] statements = new Statement[updates.size()];
-            int i = 0;
             for (Integer scheduleId : updates.keySet()) {
-                statements[i++] = insertInto(MetricsTable.INDEX.toString())
-                    .value("bucket", table.getTableName())
-                    .value("time", new Date(updates.get(scheduleId)))
-                    .value("schedule_id", scheduleId)
-                    .value("null_col", false);
+                BoundStatement statement = updateMetricsIndex.bind(table.getTableName(),
+                    new Date(updates.get(scheduleId)), scheduleId);
+                session.execute(statement);
             }
-            session.execute(batch(statements));
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
     }
 
     public void deleteMetricsIndexEntries(MetricsTable table) {
-        try {
-            String cql = "DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = '" + table + "'";
-            session.execute(cql);
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+        BoundStatement statement = deleteIndexEntries.bind(table.getTableName());
+        session.execute(statement);
     }
 }

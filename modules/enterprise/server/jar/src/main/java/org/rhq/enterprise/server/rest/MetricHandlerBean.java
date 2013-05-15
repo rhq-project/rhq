@@ -870,7 +870,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
-            MetricsDAO metricsDAO = new MetricsDAO(sessionManager.getSession());
+            MetricsDAO metricsDAO = sessionManager.getMetricsDAO();
             Iterable<RawNumericMetric> resultSet = metricsDAO.findRawMetrics(scheduleId, startTime, endTime);
 
             PrintWriter pw = new PrintWriter(outputStream);

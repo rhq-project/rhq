@@ -27,13 +27,10 @@ package org.rhq.server.metrics;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.datastax.driver.core.Session;
-
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
-import org.rhq.server.metrics.domain.MetricsTable;
 
 /**
  * @author Stefan Negrea
@@ -42,8 +39,12 @@ public class MetricsBaselineCalculator {
 
     private MetricsDAO metricsDAO;
 
-    public MetricsBaselineCalculator(Session session) {
-        this.metricsDAO = new MetricsDAO(session);
+//    public MetricsBaselineCalculator(Session session) {
+//        this.metricsDAO = new MetricsDAO(session);
+//    }
+
+    public MetricsBaselineCalculator(MetricsDAO metricsDAO) {
+        this.metricsDAO = metricsDAO;
     }
 
     public List<MeasurementBaseline> calculateBaselines(List<MeasurementSchedule> schedules, long startTime,
@@ -62,8 +63,8 @@ public class MetricsBaselineCalculator {
     }
 
     private MeasurementBaseline calculateBaseline(MeasurementSchedule schedule, long startTime, long endTime) {
-        Iterable<AggregateSimpleNumericMetric> metrics = this.metricsDAO.findAggregateSimpleMetrics(
-            MetricsTable.ONE_HOUR, schedule.getId(), startTime, endTime);
+        Iterable<AggregateSimpleNumericMetric> metrics = this.metricsDAO.findAggregatedSimpleOneHourMetric(
+            schedule.getId(), startTime, endTime);
 
         if (metrics != null && metrics.iterator() != null && metrics.iterator().hasNext()) {
             ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();

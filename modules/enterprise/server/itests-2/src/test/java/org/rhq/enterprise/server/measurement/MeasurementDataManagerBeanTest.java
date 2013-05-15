@@ -67,6 +67,7 @@ import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.test.AssertUtils;
 
@@ -127,7 +128,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     protected void beforeMethod() throws Exception {
         overlord = subjectManager.getOverlord();
 
-        metricsDAO = new MetricsDAO(cassandraSessionManager.getSession());
+        metricsDAO = cassandraSessionManager.getMetricsDAO();
 
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
         // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin.
@@ -371,10 +372,13 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     private void insert1HourData(List<AggregateTestData> data) {
         List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>(data.size());
         for (AggregateTestData datum : data) {
-            metrics.add(new AggregateNumericMetric(datum.getScheduleId(), datum.getAvg(), datum.getMin(),
-                datum.getMax(), datum.getTimestamp()));
+            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MIN,
+                datum.getMin());
+            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.AVG,
+                datum.getAvg());
+            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MAX,
+                datum.getMax());
         }
-        metricsDAO.insertAggregates(MetricsTable.ONE_HOUR, metrics, MetricsTable.ONE_HOUR.getTTL());
     }
 
     private List<MeasurementDataNumericHighLowComposite> findDataForContext(Subject subject, EntityContext context,

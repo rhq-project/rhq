@@ -122,7 +122,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
 
         measurementDefs = new ArrayList<MeasurementDefinition>();
         schedules = new ArrayList<MeasurementSchedule>();
-        metricsDAO = new MetricsDAO(cassandraSessionManager.getSession());
+        metricsDAO = cassandraSessionManager.getMetricsDAO();
         createInventory();
     }
 

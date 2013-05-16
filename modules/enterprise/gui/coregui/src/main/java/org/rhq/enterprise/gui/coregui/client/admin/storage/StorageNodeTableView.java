@@ -23,9 +23,9 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -173,17 +173,17 @@ public class StorageNodeTableView extends
     }
 
     private void addInvokeOperationsAction() {
-        final SortedMap<String, Object> operationsMap = new TreeMap<String, Object>();
+        Map<String, Object> operationsMap = new LinkedHashMap<String, Object>();
         operationsMap.put("Start", "start");
-        operationsMap.put("Stop", "stop");
+        operationsMap.put("Shutdown", "shutdown");
         operationsMap.put("Restart", "restart");
         operationsMap.put("Stop RPC Server", "stopRPCServer");
         operationsMap.put("Start RPC Server", "startRPCServer");
         operationsMap.put("Decommission", "decommission");
-        
-        addTableAction("td(i18n) Invoke Operation", null, operationsMap, new AuthorizedTableAction(this, TableActionEnablement.ANY,
-            Permission.MANAGE_SETTINGS) {
-            
+
+        addTableAction("td(i18n) Invoke Operation", null, operationsMap, new AuthorizedTableAction(this,
+            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
+
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return StorageNodeTableView.this.isEnabled(super.isEnabled(selection), selection);
@@ -210,7 +210,8 @@ public class StorageNodeTableView extends
                                     refreshTableInfo();
                                 }
                             });
-                            boolean isStopStartOrRestart = operationsMap.headMap("stopRPCServer").containsKey(operationName);
+                            boolean isStopStartOrRestart = Arrays.asList("start", "shutdown", "restart").contains(
+                                operationName);
                             for (ListGridRecord storageNodeRecord : selections) {
                                 // NFE should never happen, because of the condition for table action enablement
                                 int resourceId = storageNodeRecord.getAttributeAsInt(FIELD_RESOURCE_ID.propertyName());

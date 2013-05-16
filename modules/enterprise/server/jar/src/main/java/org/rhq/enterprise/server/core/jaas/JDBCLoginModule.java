@@ -50,7 +50,7 @@ import org.rhq.enterprise.server.RHQConstants;
  *   this value is "SELECT password FROM principals WHERE principal=?"
  *
  * dsJndiName
- *   JNDI name of the datasource to use.  Default value is java:/HypericDS
+ *   JNDI name of the datasource to use.  Default value is java:/jboss/datasources/RHQDS
  * </pre>
  */
 

@@ -38,6 +38,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.crypto.CryptoUtil;
 import org.jboss.security.SimpleGroup;
+import org.jboss.security.SimplePrincipal;
 import org.jboss.security.auth.spi.UsernamePasswordLoginModule;
 
 import org.rhq.enterprise.server.RHQConstants;

@@ -38,6 +38,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.security.auth.login.AppConfigurationEntry;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.tools.ant.Project;
@@ -133,8 +135,6 @@ public class ServerInstallUtil {
             "jboss.management.https.port", 6443));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_NATIVE,
             "jboss.management.native.port", 6999));
-        defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_OSGI_HTTP,
-            "rhq.server.socket.binding.port.osgi-http", 7090, false));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_REMOTING,
             "rhq.server.socket.binding.port.remoting", 3447));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_TXN_RECOVERY_ENV,
@@ -146,7 +146,10 @@ public class ServerInstallUtil {
     private static final String RHQ_DATASOURCE_NAME_NOTX = "NoTxRHQDS";
     private static final String RHQ_DATASOURCE_NAME_XA = "RHQDS";
     private static final String RHQ_DS_SECURITY_DOMAIN = "RHQDSSecurityDomain";
+    private static final String RHQ_USER_SECURITY_DOMAIN = "RHQUserSecurityDomain";
     private static final String RHQ_REST_SECURITY_DOMAIN = "RHQRESTSecurityDomain";
+    private static final String JDBC_LOGIN_MODULE_NAME = "org.rhq.enterprise.server.core.jaas.JDBCLoginModule";
+    private static final String DELEGATIG_LOGIN_MODULE_NAME = "org.rhq.enterprise.server.core.jaas.DelegatingLoginModule";
     private static final String JDBC_DRIVER_POSTGRES = "postgres";
     private static final String JDBC_DRIVER_ORACLE = "oracle";
     private static final String JMS_ALERT_CONDITION_QUEUE = "AlertConditionQueue";
@@ -299,6 +302,48 @@ public class ServerInstallUtil {
     }
 
     /**
+     * Create the standard user security domain with the JDBCLogin module installed
+     *
+     * @param mcc ModelControllerClient to talk to the underlying AS
+     * @throws Exception If anything goes wrong
+     */
+    public static void createUserSecurityDomain(ModelControllerClient mcc) throws Exception {
+
+        Map<String,String> options = new HashMap<String, String>(2);
+        options.put("hashAlgorithm", "MD5");
+        options.put("hashEncoding", "base64");
+
+        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(JDBC_LOGIN_MODULE_NAME,
+            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
+
+
+        SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,loginModuleRequest);
+
+    }
+
+    /**
+     * Create a security domain for container managed security used with the rhq-rest.war
+     * @param mcc ModelControllerClient to talk to the underlying AS.
+     * @throws Exception If anything goes wrong
+     */
+    public static void createRestSecurityDomain(ModelControllerClient mcc) throws Exception {
+
+        Map<String,String> options = new HashMap<String, String>(2);
+        options.put("delegateTo", RHQ_USER_SECURITY_DOMAIN);
+        options.put("roles", "rest-user");
+
+        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(DELEGATIG_LOGIN_MODULE_NAME,
+            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
+
+
+        SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+        client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN,loginModuleRequest);
+    }
+
+
+
+    /**
      * Creates the JMS Queues required for Drift and Alerting.
      *
      * @param mcc the JBossAS management client
@@ -367,28 +412,6 @@ public class ServerInstallUtil {
         return;
     }
 
-    /**
-     * Creates the security domain for REST.
-     *
-     * @param mcc the JBossAS management client
-     * @param serverProperties contains the obfuscated password to store in the security domain
-     * @throws Exception
-     */
-    public static void createRESTSecurityDomain(ModelControllerClient mcc, HashMap<String, String> serverProperties)
-        throws Exception {
-
-        final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        final String securityDomain = RHQ_REST_SECURITY_DOMAIN;
-        if (!client.isSecurityDomain(securityDomain)) {
-            String dsJndiName = "java:jboss/datasources/" + RHQ_DATASOURCE_NAME_XA;
-            client.createNewDatabaseServerSecurityDomain72(securityDomain, dsJndiName,
-                "SELECT PASSWORD FROM RHQ_PRINCIPAL WHERE principal=?",
-                "SELECT 'all', 'Roles' FROM RHQ_PRINCIPAL WHERE principal=?", null, null);
-            LOG.info("Security domain [" + securityDomain + "] created");
-        } else {
-            LOG.info("Security domain [" + securityDomain + "] already exists, skipping the creation request");
-        }
-    }
 
     /**
      * Creates the Infinispan caches for RHQ.
@@ -856,7 +879,7 @@ public class ServerInstallUtil {
     /**
      * Returns a database connection with the given set of properties providing the settings that allow for a successful
      * database connection. If <code>props</code> is <code>null</code>, it will use the server properties from
-     * {@link #getServerProperties()}.
+     * {@link #getServerProperties}.
      *
      * @param connectionUrl
      * @param userName
@@ -898,7 +921,7 @@ public class ServerInstallUtil {
      * Use the internal JBossAS mechanism to de-obfuscate a password back to its
      * clear text form. This is not true encryption.
      *
-     * @param obfuscatedPasswordd the obfuscated password
+     * @param obfuscatedPassword the obfuscated password
      * @return the clear-text password
      */
     public static String deobfuscatePassword(String obfuscatedPassword) {
@@ -1003,7 +1026,7 @@ public class ServerInstallUtil {
     /**
      * This will create the database schema in the database. <code>props</code> define the connection to the database -
      *
-     * <p>Note that if the {@link #isDatabaseSchemaExist(Properties) schema already exists}, it will be purged of all
+     * <p>Note that if the {@link #isDatabaseSchemaExist schema already exists}, it will be purged of all
      * data/tables and recreated.</p>
      *
      * @param props the full set of server properties
@@ -1039,7 +1062,7 @@ public class ServerInstallUtil {
     /**
      * This will update an existing database schema so it can be upgraded to the latest schema version.
      *
-     * <p>Note that if the {@link #isDatabaseSchemaExist(Properties) schema does not already exist}, errors will
+     * <p>Note that if the {@link #isDatabaseSchemaExist schema does not already exist}, errors will
      * occur.</p>
      *
      * @param props the full set of server properties

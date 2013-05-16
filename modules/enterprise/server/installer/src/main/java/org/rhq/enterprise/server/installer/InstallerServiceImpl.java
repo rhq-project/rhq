@@ -278,6 +278,9 @@ public class InstallerServiceImpl implements InstallerService {
             // Set up the logging subsystem
             ServerInstallUtil.configureLogging(mcc, serverProperties);
 
+            ServerInstallUtil.createUserSecurityDomain(mcc);
+            ServerInstallUtil.createRestSecurityDomain(mcc);
+
             // create a keystore whose cert has a CN of this server's public endpoint address
             File keystoreFile = ServerInstallUtil.createKeystore(serverDetails != null ? serverDetails
                 : getServerDetailsFromPropertiesOnly(serverProperties), appServerConfigDir);
@@ -601,7 +604,7 @@ public class InstallerServiceImpl implements InstallerService {
      * Save the given properties to the server's .properties file.
      *
      * Note that this is private - it is not exposed to the installer UI. It should have no need to save
-     * this data outside of the normal installation process (see {@link #install()}).
+     * this data outside of the normal installation process (see {@link #install}).
      *
      * @param serverProperties the server properties to save
      * @throws Exception if failed to save the properties to the .properties file
@@ -1012,9 +1015,6 @@ public class InstallerServiceImpl implements InstallerService {
 
             // create the security domain needed by the datasources
             ServerInstallUtil.createDatasourceSecurityDomain(mcc, serverProperties);
-
-            // create the security domain needed by REST
-            ServerInstallUtil.createRESTSecurityDomain(mcc, serverProperties);
 
             // set up REST cache
             ServerInstallUtil.createNewCaches(mcc, serverProperties);

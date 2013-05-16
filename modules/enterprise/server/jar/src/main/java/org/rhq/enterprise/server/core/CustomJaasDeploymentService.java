@@ -57,7 +57,6 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean, MBeanRegistration {
 
     private Log log = LogFactory.getLog(CustomJaasDeploymentService.class.getName());
-    private MBeanServer mbeanServer = null;
 
     /**
      * Constructor for {@link CustomJaasDeploymentService}.
@@ -70,21 +69,51 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
      */
     public void installJaasModules() {
         try {
-            log.info("Installing RHQ Server's JAAS login modules");
+            log.info("Updating RHQ Server's JAAS login modules");
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            registerJaasModules(systemConfig);
+            updateJaasModules(systemConfig);
         } catch (Exception e) {
             log.fatal("Error deploying JAAS login modules", e);
             throw new RuntimeException(e);
         }
     }
 
+    @Override
+    public void upgradeRhqUserSecurityDomainIfNeeded() {
+        try {
+            Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
+                LookupUtil.getSubjectManager().getOverlord());
+
+            String value = systemConfig.getProperty(SystemSetting.LDAP_BASED_JAAS_PROVIDER.getInternalName());
+            boolean isLdapAuthenticationEnabled = (value != null) ? RHQConstants.LDAPJAASProvider.equals(value) : false;
+
+            if (isLdapAuthenticationEnabled) {
+
+                ModelControllerClient mcc = null;
+                mcc = ManagementService.getClient();
+                final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
+
+                boolean ldapModulesPresent = client.securityDomainHasLoginModule(RHQ_USER_SECURITY_DOMAIN,
+                    "org.rhq.enterprise.server.core.jaas.LdapLoginModule");
+
+
+                if (!ldapModulesPresent) {
+                    log.info("Updating RHQ Server's JAAS login modules with LDAP support");
+                    updateJaasModules(systemConfig);
+                }
+            }
+        } catch (Exception e) {
+            log.fatal("Error deploying JAAS login modules", e);
+            throw new RuntimeException(e);
+        }
+
+    }
+
     /**
      * @see javax.management.MBeanRegistration#preRegister(javax.management.MBeanServer,javax.management.ObjectName)
      */
     public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
-        this.mbeanServer = server;
         return name;
     }
 
@@ -107,13 +136,13 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
     }
 
     /**
-     * Will register the necessary JAAS login Modules.  The RHQ_USER_SECURITY_DOMAIN will be created, or recreated
-     * if it already exists.  This allows us to add/remove ldap support as it is enabled or disabled. 
-     * 
-     * @param systemConfig
+     * Will update the necessary JAAS login Modules.  The RHQ_USER_SECURITY_DOMAIN will be created, or recreated
+     * if it already exists.  This allows us to add/remove ldap support as it is enabled or disabled.
+     *
+     * @param systemConfig System configuration to read the LDAP settings from
      * @throws Exception
      */
-    private void registerJaasModules(Properties systemConfig) throws Exception {
+    private void updateJaasModules(Properties systemConfig) throws Exception {
 
         ModelControllerClient mcc = null;
         try {
@@ -144,7 +173,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                     AppConfigurationEntry.LoginModuleControlFlag.REQUISITE, getJdbcOptions(systemConfig));
                 loginModules.add(jdbcPrincipalCheckLoginModule);
 
-                // this is the LDAP module that checks the LDAP for auth                
+                // this is the LDAP module that checks the LDAP for auth
                 Map<String, String> ldapModuleOptionProperties = getLdapOptions(systemConfig);
                 try {
                     validateLdapOptions(ldapModuleOptionProperties);
@@ -170,7 +199,8 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
             client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,
                 loginModules.toArray(new LoginModuleRequest[loginModules.size()]));
-            log.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] created with login modules " + loginModules);
+            client.flushSecurityDomainCache("RHQRESTSecurityDomain");
+            log.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] re-created with login modules " + loginModules);
 
         } catch (Exception e) {
             throw new Exception("Error registering RHQ JAAS modules", e);

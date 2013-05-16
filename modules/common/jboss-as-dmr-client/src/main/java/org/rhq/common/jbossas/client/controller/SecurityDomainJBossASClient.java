@@ -39,6 +39,7 @@ public class SecurityDomainJBossASClient extends JBossASClient {
     public static final String SECURITY_DOMAIN = "security-domain";
     public static final String CACHE_TYPE = "cache-type";
     public static final String AUTHENTICATION = "authentication";
+    public static final String LOGIN_MODULE  = "login-module";
     public static final String LOGIN_MODULES = "login-modules";
     public static final String CLASSIC = "classic";
     public static final String CODE = "code";
@@ -374,6 +375,36 @@ public class SecurityDomainJBossASClient extends JBossASClient {
         }
 
         return;
+    }
+
+    /**
+     * send a :flush-cache operation to the passed security domain
+     * @param domain simple name of the domain
+     * @throws Exception
+     */
+    public void flushSecurityDomainCache(String domain) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN,domain);
+        ModelNode request = createRequest("flush-cache",addr);
+        ModelNode result = execute(request);
+        if (!isSuccess(result)) {
+            log.warn("Flushing " + domain + " failed - principals may be longer cached than expected");
+        }
+    }
+
+    /**
+     * Check if a certain login module is present inside the passed security domain
+     * @param domainName Name of the security domain
+     * @param moduleName Name of the Login module - wich usually is it FQCN
+     * @return True if the module is present
+     * @throws Exception
+     */
+    public boolean securityDomainHasLoginModule(String domainName, String moduleName) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_SECURITY, SECURITY_DOMAIN,domainName);
+        addr.add(AUTHENTICATION,CLASSIC);
+        addr.add(LOGIN_MODULE,moduleName);
+        ModelNode request = createRequest("read-resource", addr);
+        ModelNode response = execute(request);
+        return isSuccess(response);
     }
 
     /** Immutable helper */

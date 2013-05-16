@@ -33,7 +33,7 @@ build_datastax_driver()
     #clone_repo "git://github.com/datastax/java-driver.git"
     clone_repo git://github.com/jsanda/java-driver.git
     pushd java-driver
-    git checkout -b master-1.2.2 origin/master-1.2.2
+    git checkout -b rhq-1.0.0 origin/rhq-1.0.0
     run_mvn install -DskipTests
     popd
 }

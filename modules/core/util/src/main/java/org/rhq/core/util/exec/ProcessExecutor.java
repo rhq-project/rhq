@@ -68,8 +68,8 @@ public class ProcessExecutor {
         ProcessExecutorResults results = new ProcessExecutorResults();
 
         try {
-            Integer exitCode = startProgram(processToStart);
-            results.setExitCode(exitCode);
+            startProgram(processToStart, results);
+
         } catch (Throwable t) {
             results.setError(t);
         }
@@ -89,7 +89,7 @@ public class ProcessExecutor {
      *         start the process but not wait or was to wait and the wait time expired before the process exited
      * @throws Exception if any error occurs while trying to start the child process
      */
-    protected Integer startProgram(final ProcessToStart process) throws Exception {
+    protected void startProgram(final ProcessToStart process, ProcessExecutorResults results) throws Exception {
         // prepare the process comand line and environment
         String[] cmdline = getCommandLine(process);
         File workingDir = getWorkingDirectory(process);
@@ -97,6 +97,7 @@ public class ProcessExecutor {
 
         // execute the program
         final Process childProcess = Runtime.getRuntime().exec(cmdline, environment, workingDir);
+        results.setProcess(childProcess);
 
         // redirect the program's streams
         final RedirectThreads redirect = redirectAllStreams(process, childProcess);
@@ -138,7 +139,8 @@ public class ProcessExecutor {
             }
         }
 
-        return exitCode;
+        results.setExitCode(exitCode);
+        ;
     }
 
     /**

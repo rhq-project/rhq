@@ -198,6 +198,7 @@ public class JavaSystemInfo implements SystemInfo {
         ProcessExecutorResults javaExecResults = javaExec.execute(process);
         executionResults.setExitCode(javaExecResults.getExitCode());
         executionResults.setError(javaExecResults.getError());
+        executionResults.setProcess(javaExecResults.getProcess());
 
         return executionResults;
     }

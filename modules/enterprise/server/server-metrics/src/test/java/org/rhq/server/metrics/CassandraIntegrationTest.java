@@ -25,15 +25,12 @@
 
 package org.rhq.server.metrics;
 
-import static com.datastax.driver.core.ProtocolOptions.Compression.SNAPPY;
-
 import java.util.Date;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.joda.time.DateTime;
@@ -44,6 +41,7 @@ import org.testng.annotations.Listeners;
 import org.rhq.cassandra.CCMTestNGListener;
 import org.rhq.cassandra.DeployCluster;
 import org.rhq.cassandra.ShutdownCluster;
+import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
@@ -60,17 +58,13 @@ public class CassandraIntegrationTest {
     private static DateTimeService dateTimeService;
 
     @BeforeSuite
-    @DeployCluster(numNodes = 2, username = "cassandra", password = "cassandra")
+    @DeployCluster(numNodes = 1, username = "cassandra", password = "cassandra")
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
 
-        SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-        authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
-
-        Cluster cluster = Cluster.builder()
-            .addContactPoints("127.0.0.1", "127.0.0.2")
-            .withAuthInfoProvider(authInfoProvider)
-            .withCompression(SNAPPY)
+        Cluster cluster = new ClusterBuilder()
+            .addContactPoints("127.0.0.1")
+            .withCredentials("cassandra", "cassandra")
             .build();
         session = cluster.connect("rhq");
     }

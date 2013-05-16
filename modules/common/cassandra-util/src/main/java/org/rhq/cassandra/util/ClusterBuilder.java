@@ -25,7 +25,6 @@
 
 package org.rhq.cassandra.util;
 
-import com.datastax.driver.core.AuthInfoProvider;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 
@@ -51,10 +50,10 @@ public class ClusterBuilder {
     }
 
     /**
-     * @see Cluster.Builder#withAuthInfoProvider(com.datastax.driver.core.AuthInfoProvider)
+     * @see Cluster.Builder#withCredentials(String, String)
      */
-    public ClusterBuilder withAuthInfoProvider(AuthInfoProvider authInfoProvider) {
-        builder.withAuthInfoProvider(authInfoProvider);
+    public ClusterBuilder withCredentials(String username, String password) {
+        builder.withCredentials(username, password);
         return this;
     }
 

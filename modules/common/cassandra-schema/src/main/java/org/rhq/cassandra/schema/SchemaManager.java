@@ -32,7 +32,6 @@ import java.util.List;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
@@ -101,11 +100,11 @@ public class SchemaManager {
             log.info("Initializing session");
         }
 
-        SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-        authInfoProvider.add("username", username).add("password", password);
-
-        Cluster cluster = new ClusterBuilder().addContactPoints(hostNames).withAuthInfoProvider(authInfoProvider)
-            .withPort(nodes.get(0).getCqlPort()).build();
+        Cluster cluster = new ClusterBuilder()
+            .addContactPoints(hostNames)
+            .withCredentials("cassandra", "cassandra")
+            .withPort(nodes.get(0).getCqlPort())
+            .build();
         session = cluster.connect("system");
     }
 

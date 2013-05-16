@@ -34,7 +34,6 @@ import javax.ejb.Singleton;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleAuthInfoProvider;
 
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -88,7 +87,7 @@ public class SessionManagerBean {
 
             Cluster cluster = new ClusterBuilder()
                 .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
-                .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
+                .withCredentials(username, password)
                 .withPort(port)
                 .build();
             session = cluster.connect("rhq");

@@ -32,7 +32,6 @@ import java.io.File;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleAuthInfoProvider;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -94,8 +93,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
                 .withPort(nativePort);
 
             if (authenticatorClassName.endsWith("PasswordAuthenticator")) {
-                clusterBuilder = clusterBuilder.withAuthInfoProvider(new SimpleAuthInfoProvider().add("username",
-                    username).add("password", password));
+                clusterBuilder = clusterBuilder.withCredentials(username, password);
             }
 
             this.cassandraSession = clusterBuilder.build().connect(clusterName);

@@ -48,7 +48,6 @@ import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
@@ -82,7 +81,7 @@ public final class ClusterInitService {
             addresses[i] = hosts.get(i).getAddress();
         }
         Cluster cluster = Cluster.builder().addContactPoints(addresses).withoutMetrics()
-            .withAuthInfoProvider(new SimpleAuthInfoProvider().add("username", username).add("password", password))
+            .withCredentials(username, password)
             .build();
         Session session = cluster.connect(keySpace);
         return session;

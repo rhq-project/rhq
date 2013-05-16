@@ -34,7 +34,6 @@ import javax.persistence.EntityManagerFactory;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions.Compression;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.cli.CommandLine;
@@ -561,9 +560,9 @@ public class DataMigratorRunner {
             .withPort((Integer) configuration.get(cassandraPortOption))
             .withCompression(selectedCompression)
             .withoutMetrics()
-            .withAuthInfoProvider(
-                new SimpleAuthInfoProvider().add("username", (String) configuration.get(cassandraUserOption)).add(
-                    "password", (String) configuration.get(cassandraPasswordOption))).build();
+            .withCredentials((String) configuration.get(cassandraUserOption),
+                (String) configuration.get(cassandraPasswordOption))
+            .build();
 
         return cluster.connect("rhq");
     }

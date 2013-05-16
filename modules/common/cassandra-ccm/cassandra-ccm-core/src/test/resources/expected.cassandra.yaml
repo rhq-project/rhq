@@ -321,6 +321,9 @@ listen_address: localhost
 # Leaving this blank will set it to the same value as listen_address
 # broadcast_address: 1.2.3.4
 
+# Internode authentication backend, implementing IInternodeAuthenticator;
+# used to allow/disallow connections from peer nodes.
+# internode_authenticator: org.apache.cassandra.auth.AllowAllInternodeAuthenticator
 
 # Whether to start the native transport server.
 # Currently, only the thrift server is started by default because the native
@@ -390,6 +393,14 @@ rpc_server_type: sync
 # rpc_recv_buff_size_in_bytes:
 
 # uncomment to set socket buffer size for internode communication
+# Note that when setting this, the buffer size is limited by net.core.wmem_max
+# and when not setting it it is defined by net.ipv4.tcp_wmem
+# See:
+# /proc/sys/net/core/wmem_max
+# /proc/sys/net/core/rmem_max
+# /proc/sys/net/ipv4/tcp_wmem
+# /proc/sys/net/ipv4/tcp_wmem
+# and: man tcp
 # internode_send_buff_size_in_bytes:
 # internode_recv_buff_size_in_bytes:
 
@@ -469,8 +480,8 @@ compaction_preheat_key_cache: true
 # given total throughput in Mbps. This is necessary because Cassandra does
 # mostly sequential IO when streaming data during bootstrap or repair, which
 # can lead to saturating the network connection and degrading rpc performance.
-# When unset, the default is 400 Mbps or 50 MB/s.
-# stream_throughput_outbound_megabits_per_sec: 400
+# When unset, the default is 200 Mbps or 25 MB/s.
+# stream_throughput_outbound_megabits_per_sec: 200
 
 # How long the coordinator should wait for read operations to complete
 read_request_timeout_in_ms: 10000
@@ -655,12 +666,15 @@ client_encryption_options:
     enabled: false
     keystore: conf/.keystore
     keystore_password: cassandra
+    # require_client_auth: false
+    # Set trustore and truststore_password if require_client_auth is true
+    # truststore: conf/.truststore
+    # truststore_password: cassandra
     # More advanced defaults below:
     # protocol: TLS
     # algorithm: SunX509
     # store_type: JKS
     # cipher_suites: [TLS_RSA_WITH_AES_128_CBC_SHA,TLS_RSA_WITH_AES_256_CBC_SHA]
-
 
 # internode_compression controls whether traffic between nodes is
 # compressed.

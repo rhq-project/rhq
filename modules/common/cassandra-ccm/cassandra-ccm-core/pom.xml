@@ -167,7 +167,6 @@
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
                 <delete dir="${cassandra.dir}"/>
                 <delete file="${project.build.outputDirectory}/deploy.xml"/>
-                <!--<delete dir="${project.build.outputDirectory}/cassandra"/>-->
               </target>
             </configuration>
           </execution>

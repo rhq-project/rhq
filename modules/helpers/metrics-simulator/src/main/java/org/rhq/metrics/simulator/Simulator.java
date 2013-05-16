@@ -40,13 +40,11 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.SimpleAuthInfoProvider;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.Minutes;
-
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.ClusterInitService;
@@ -227,12 +225,9 @@ public class Simulator implements ShutdownManager {
 
     private Session createSession(List<StorageNode> nodes) throws NoHostAvailableException {
         try {
-            SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-            authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
-
             Cluster cluster = new ClusterBuilder()
                 .addContactPoints(getHostNames(nodes))
-                .withAuthInfoProvider(authInfoProvider)
+                .withCredentials("rhqadmin", "rhqadmin")
                 .build();
 
             log.debug("Created cluster object with " + cluster.getConfiguration().getProtocolOptions().getCompression()
@@ -250,12 +245,9 @@ public class Simulator implements ShutdownManager {
         try {
             log.debug("Creating session using " + compression.name() + " compression");
 
-            SimpleAuthInfoProvider authInfoProvider = new SimpleAuthInfoProvider();
-            authInfoProvider.add("username", "rhqadmin").add("password", "rhqadmin");
-
             Cluster cluster = new ClusterBuilder()
                 .addContactPoints(getHostNames(nodes))
-                .withAuthInfoProvider(authInfoProvider)
+                .withCredentials("cassandra", "cassandra")
                 .withCompression(compression)
                 .build();
 

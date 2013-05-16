@@ -202,6 +202,7 @@ JVM_OPTS="$JVM_OPTS -XX:SurvivorRatio=8"
 JVM_OPTS="$JVM_OPTS -XX:MaxTenuringThreshold=1"
 JVM_OPTS="$JVM_OPTS -XX:CMSInitiatingOccupancyFraction=75"
 JVM_OPTS="$JVM_OPTS -XX:+UseCMSInitiatingOccupancyOnly"
+JVM_OPTS="$JVM_OPTS -XX:+UseTLAB"
 # note: bash evals '1.7.x' as > '1.7' so this is really a >= 1.7 jvm check
 if [ "$JVM_VERSION" \\> "1.7" ] ; then
     JVM_OPTS="$JVM_OPTS -XX:+UseCondCardMark"
@@ -216,6 +217,12 @@ fi
 # JVM_OPTS="$JVM_OPTS -XX:+PrintPromotionFailure"
 # JVM_OPTS="$JVM_OPTS -XX:PrintFLSStatistics=1"
 # JVM_OPTS="$JVM_OPTS -Xloggc:/var/log/cassandra/gc-`date +%s`.log"
+# If you are using JDK 6u34 7u2 or later you can enable GC log rotation
+# don't stick the date in the log name if rotation is on.
+# JVM_OPTS="$JVM_OPTS -Xloggc:/var/log/cassandra/gc.log"
+# JVM_OPTS="$JVM_OPTS -XX:+UseGCLogFileRotation"
+# JVM_OPTS="$JVM_OPTS -XX:NumberOfGCLogFiles=10"
+# JVM_OPTS="$JVM_OPTS -XX:GCLogFileSize=10M"
 
 # uncomment to have Cassandra JVM listen for remote debuggers/profilers on port 1414
 # JVM_OPTS="$JVM_OPTS -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=1414"

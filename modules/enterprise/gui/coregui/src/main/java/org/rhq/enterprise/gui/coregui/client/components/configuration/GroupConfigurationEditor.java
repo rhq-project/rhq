@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2010-2011, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
 
@@ -71,10 +70,10 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.PopupWindow;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * A SmartGWT widget for editing a group of RHQ {@link Configuration}s that conform to the same
@@ -638,28 +637,20 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
     }
 
     private Property getProperty(Configuration configuration, Property referenceProperty, Integer index) {
-        LinkedList<Property> propertyHierarchy = new LinkedList<Property>();
-        Property currentProperty = referenceProperty;
-        propertyHierarchy.add(currentProperty);
-        do {
-            if (currentProperty.getParentMap() != null) {
-                currentProperty = currentProperty.getParentMap();
-            } else if (currentProperty.getParentList() != null) {
-                currentProperty = currentProperty.getParentList();
-            } else if (currentProperty.getConfiguration() == null) {
-                throw new IllegalStateException(currentProperty + " has no parent.");
-            }
-            propertyHierarchy.addFirst(currentProperty);
-        } while (currentProperty.getConfiguration() == null);
-
-        Property property = configuration.get(propertyHierarchy.get(0).getName());
-        for (int i = 1, propertyHierarchySize = propertyHierarchy.size(); i < propertyHierarchySize; i++) {
-            String childPropertyName = propertyHierarchy.get(i).getName();
+        List<Property> referenceHierarchy = getParentFirstPropertiesHierarchy(referenceProperty);
+        // Add referenceProperty to the configuration, creating parents if necessary
+        Property property = configuration.get(referenceHierarchy.get(0).getName());
+        if (property == null) {
+            property = createPropertyByExample(referenceHierarchy.get(0));
+            configuration.put(property);
+        }
+        for (int i = 1; i < referenceHierarchy.size(); i++) {
+            String childPropertyName = referenceHierarchy.get(i).getName();
             if (property instanceof PropertyMap) {
                 PropertyMap propertyMap = (PropertyMap) property;
                 property = propertyMap.get(childPropertyName);
                 if (property == null) {
-                    property = new PropertySimple(childPropertyName, null);
+                    property = createPropertyByExample(referenceHierarchy.get(i));
                     propertyMap.put(property);
                 }
             } else if (property instanceof PropertyList) {
@@ -667,12 +658,41 @@ public class GroupConfigurationEditor extends ConfigurationEditor {
                 if (index < propertyList.getList().size()) {
                     property = propertyList.getList().get(index);
                 } else {
-                    property = new PropertySimple(childPropertyName, null);
+                    property = createPropertyByExample(referenceHierarchy.get(i));
                     propertyList.add(property);
                 }
             }
         }
 
+        return property;
+    }
+
+    private List<Property> getParentFirstPropertiesHierarchy(Property bottomProperty) {
+        LinkedList<Property> propertyHierarchy = new LinkedList<Property>();
+        for (Property currentProperty = bottomProperty; currentProperty != null; ) {
+            propertyHierarchy.addFirst(currentProperty);
+            if (currentProperty.getParentMap() != null) {
+                currentProperty = currentProperty.getParentMap();
+            } else if (currentProperty.getParentList() != null) {
+                currentProperty = currentProperty.getParentList();
+            } else if (currentProperty.getConfiguration() == null) {
+                throw new IllegalStateException(currentProperty + " has no parent.");
+            } else {
+                currentProperty = null;
+            }
+        }
+        return new ArrayList<Property>(propertyHierarchy);
+    }
+
+    private <T extends Property> T createPropertyByExample(T example) {
+        T property = null;
+        if (example instanceof PropertyMap) {
+            property = (T) new PropertyMap(example.getName());
+        } else if (example instanceof PropertyList) {
+            property = (T) new PropertyList(example.getName());
+        } else {
+            property = (T) new PropertySimple(example.getName(), null);
+        }
         return property;
     }
 

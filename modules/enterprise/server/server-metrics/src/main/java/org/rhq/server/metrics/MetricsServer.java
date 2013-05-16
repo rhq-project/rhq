@@ -41,6 +41,7 @@ import org.joda.time.Duration;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.util.StringUtil;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
@@ -135,14 +136,14 @@ public class MetricsServer {
         long start = System.currentTimeMillis();
         try {
             if (log.isDebugEnabled()) {
-                log.debug("Calculating summary aggregate for [scheduleId: " + scheduleId + ", beginTime: " + beginTime +
-                    ", endTime: " + endTime + "]");
+                log.debug("Calculating resource summary aggregate for [scheduleId: " + scheduleId + ", beginTime: " +
+                    beginTime + ", endTime: " + endTime + "]");
             }
             DateTime begin = new DateTime(beginTime);
 
             if (dateTimeService.isInRawDataRange(begin)) {
                 Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
-                return createSummaryRawAggregate(metrics, beginTime);
+                return calculateAggregatedRaw(metrics, beginTime);
             }
 
             Iterable<AggregateNumericMetric> metrics = null;
@@ -156,35 +157,47 @@ public class MetricsServer {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
             }
 
-            return createSummaryAggregate(metrics, beginTime);
+            return calculateAggregate(metrics, beginTime);
         } finally {
             long end = System.currentTimeMillis();
             if (log.isDebugEnabled()) {
-                log.debug("Finished calculating summary aggregate in " + (end - start) + " ms");
+                log.debug("Finished calculating resource summary aggregate in " + (end - start) + " ms");
             }
         }
     }
 
     public AggregateNumericMetric getSummaryAggregate(List<Integer> scheduleIds, long beginTime, long endTime) {
-        DateTime begin = new DateTime(beginTime);
+        long start = System.currentTimeMillis();
+        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Calculating group summary aggregate for [scheduleIds: [" + StringUtil.listToString(
+                    scheduleIds) + "], beginTime: " + beginTime + ", endTime: " + endTime + "]");
+            }
+            DateTime begin = new DateTime(beginTime);
 
-        if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
-            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
-            return createSummaryRawAggregate(metrics, beginTime);
+            if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
+                Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
+                return calculateAggregatedRaw(metrics, beginTime);
+            }
+
+            Iterable<AggregateNumericMetric> metrics = null;
+            if (dateTimeService.isIn1HourDataRange(begin)) {
+                metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
+            } else if (dateTimeService.isIn6HourDataRnage(begin)) {
+                metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
+            } else if (dateTimeService.isIn24HourDataRnage(begin)) {
+                metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
+            } else {
+                throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
+            }
+
+            return calculateAggregate(metrics, beginTime);
+        } finally {
+            long end = System.currentTimeMillis();
+            if (log.isDebugEnabled()) {
+                log.debug("Finished calculating group summary aggregate in " + (end - start) + " ms");
+            }
         }
-
-        Iterable<AggregateNumericMetric> metrics = null;
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
-        } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-            metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
-        } else if (dateTimeService.isIn24HourDataRnage(begin)) {
-            metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
-        } else {
-            throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
-        }
-
-        return createSummaryAggregate(metrics, beginTime);
     }
 
     private List<MeasurementDataNumericHighLowComposite> createRawComposites(Iterable<RawNumericMetric> metrics,
@@ -201,22 +214,6 @@ public class MetricsServer {
                 bucket.getMax(), bucket.getMin()));
         }
         return data;
-    }
-
-    private AggregateNumericMetric createSummaryRawAggregate(Iterable<RawNumericMetric> metrics, long beginTime) {
-        if (!metrics.iterator().hasNext()) {
-            // We do not care about the scheudule id here so can just use a dummy value of zero.
-            return new AggregateNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
-        }
-        return calculateAggregatedRaw(metrics, beginTime);
-    }
-
-    private AggregateNumericMetric createSummaryAggregate(Iterable<AggregateNumericMetric> metrics, long beginTime) {
-        if (!metrics.iterator().hasNext()) {
-            // We do not care about the scheudule id here so can just use a dummy value of zero.
-            return new AggregateNumericMetric(0, Double.NaN, Double.NaN,Double.NaN, beginTime);
-        }
-        return calculateAggregate(metrics, beginTime);
     }
 
     private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
@@ -242,17 +239,12 @@ public class MetricsServer {
             }
             updateMetricsIndex(dataSet);
         } catch (Exception e) {
-            log.error("An error occurred while inserting numeric data", e);
+            log.error("An error occurred while inserting raw numeric data", e);
             throw new RuntimeException(e);
         }
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
-//        for (MeasurementDataNumeric rawMetric : rawMetrics) {
-//            dao.updateOneHourMetricsIndex(rawMetric.getScheduleId(), dateTimeService.getTimeSlice(
-//                new DateTime(rawMetric.getTimestamp()), configuration.getRawTimeSliceDuration()).getMillis());
-//        }
-
         Map<Integer, Long> updates = new TreeMap<Integer, Long>();
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
             updates.put(rawMetric.getScheduleId(), dateTimeService.getTimeSlice(
@@ -280,16 +272,16 @@ public class MetricsServer {
 
         Iterable<AggregateNumericMetric> newOneHourAggregates = null;
 
-        Iterable<AggregateNumericMetric> updatedSchedules = aggregateRawData();
+        List<AggregateNumericMetric> updatedSchedules = aggregateRawData();
         newOneHourAggregates = updatedSchedules;
-        if (updatedSchedules.iterator().hasNext()) {
+        if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, configuration.getOneHourTimeSliceDuration());
         }
 
         updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR,
             configuration.getOneHourTimeSliceDuration());
-        if (updatedSchedules.iterator().hasNext()) {
+        if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR);
             updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules,
                 configuration.getSixHourTimeSliceDuration());
@@ -297,7 +289,7 @@ public class MetricsServer {
 
         updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
             configuration.getSixHourTimeSliceDuration());
-        if (updatedSchedules.iterator().hasNext()) {
+        if (!updatedSchedules.isEmpty()) {
             dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
         }
 
@@ -313,7 +305,7 @@ public class MetricsServer {
         dao.updateMetricsIndex(bucket, updates);
     }
 
-    private Iterable<AggregateNumericMetric> aggregateRawData() {
+    private List<AggregateNumericMetric> aggregateRawData() {
         Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR);
         List<AggregateNumericMetric> oneHourMetrics = new ArrayList<AggregateNumericMetric>();
 
@@ -463,18 +455,6 @@ public class MetricsServer {
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
         return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
-    }
-
-    private MetricsTable getTable(DateTime begin) {
-        MetricsTable table;
-        if (dateTimeService.isIn1HourDataRange(begin)) {
-            table = MetricsTable.ONE_HOUR;
-        } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-            table = MetricsTable.SIX_HOUR;
-        } else {
-            table = MetricsTable.TWENTY_FOUR_HOUR;
-        }
-        return table;
     }
 
 //    public void addTraitData(Set<MeasurementDataTrait> dataSet) {

@@ -47,16 +47,12 @@ import org.rhq.server.metrics.CQLException;
  */
 public class ListPagedResult<T> implements Iterable<T> {
 
-    private static final int DEFAULT_PAGE_SIZE = 200;
 
     private final List<Integer> scheduleIds;
     private final long startTime;
     private final long endTime;
     private final ResultSetMapper<T> mapper;
-//    private final String query;
     private final Session session;
-    private final int pageSize = -1;
-//    private final List<?> valuesToBind;
 
     private final PreparedStatement preparedStatement;
 
@@ -69,43 +65,6 @@ public class ListPagedResult<T> implements Iterable<T> {
         this.mapper = mapper;
         this.session = session;
     }
-
-//    /**
-//     * @param query query to execute
-//     * @param mapper result set mapper
-//     * @param session Cassandra session
-//     * @param pageSize page size
-//     */
-//    public ListPagedResult(String query, List<?> valuesToBind, ResultSetMapper<T> mapper, Session session, int pageSize) {
-//        this.query = query;
-//        this.mapper = mapper;
-//        this.session = session;
-//        this.pageSize = pageSize;
-//        this.valuesToBind = valuesToBind;
-//
-//        try {
-//            this.preparedStatement = this.session.prepare(this.query);
-//        } catch (NoHostAvailableException e) {
-//            throw new CQLException(e);
-//        }
-//    }
-//
-//    /**
-//     * @param query query to execute
-//     * @param mapper result set mapper
-//     * @param session Cassandra session
-//     * @param pageSize page size
-//     */
-//    public ListPagedResult(String query, List<?> valuesToBind, ResultSetMapper<T> mapper, Session session) {
-//        this(query, valuesToBind, mapper, session, DEFAULT_PAGE_SIZE);
-//    }
-
-//    /**
-//     * @return page size
-//     */
-//    public int getPageSize() {
-//        return this.pageSize;
-//    }
 
     /**
      * @throws Exception

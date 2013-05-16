@@ -220,6 +220,7 @@
             <fileset dir="${jboss.home}/standalone/configuration">
                 <include name="standalone-ha.xml" />
                 <include name="standalone.xml" />
+                <include name="standalone-osgi.xml" />
                 <include name="standalone-full-ha.xml" />
             </fileset>
         </delete>

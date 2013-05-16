@@ -1,5 +1,5 @@
 <dataset>
-    <rhq_agent id="1"
+    <rhq_agent id="15641"
                name="TestAgent-dbbt"
                address="0.0.0.0"
                port="16163"
@@ -19,49 +19,49 @@
     <rhq_config_property/>
     <rhq_config_template/>
 
-    <rhq_resource_type id="1"
-                       name="test platform"
+    <rhq_resource_type id="15641"
+                       name="DiscoveryBossBeanTest-test platform"
                        category="PLATFORM"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
                        singleton="0"
-                       plugin="test"
+                       plugin="DiscoveryBossBeanTest-test"
                        deleted="0"/>
-    <rhq_resource_type id="2"
-                       name="test server"
+    <rhq_resource_type id="15642"
+                       name="DiscoveryBossBeanTest-test server"
                        category="SERVER"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
                        singleton="0"
-                       plugin="test"
+                       plugin="DiscoveryBossBeanTest-test"
                        deleted="0"/>
-    <rhq_resource_type id="3"
-                       name="test service 1"
+    <rhq_resource_type id="15643"
+                       name="DiscoveryBossBeanTest-test service 1"
                        category="SERVICE"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
                        singleton="0"
-                       plugin="test"
+                       plugin="DiscoveryBossBeanTest-test"
                        deleted="0"/>
-    <rhq_resource_type id="4"
-                       name="test service 2"
+    <rhq_resource_type id="15644"
+                       name="DiscoveryBossBeanTest-test service 2"
                        category="SERVICE"
                        creation_data_type="CONFIGURATION"
                        create_delete_policy="BOTH"
                        supports_manual_add="1"
                        singleton="1"
-                       plugin="test"
+                       plugin="DiscoveryBossBeanTest-test"
                        deleted="0"/>
 
-    <rhq_resource_type_parents resource_type_id="2"
-                               parent_resource_type_id="1"/>
-    <rhq_resource_type_parents resource_type_id="3"
-                               parent_resource_type_id="2"/>
-    <rhq_resource_type_parents resource_type_id="4"
-                               parent_resource_type_id="2"/>
+    <rhq_resource_type_parents resource_type_id="15642"
+                               parent_resource_type_id="15641"/>
+    <rhq_resource_type_parents resource_type_id="15643"
+                               parent_resource_type_id="15642"/>
+    <rhq_resource_type_parents resource_type_id="15644"
+                               parent_resource_type_id="15642"/>
 
     <rhq_process_scan/>
     <rhq_event_def/>
@@ -85,9 +85,9 @@
     <rhq_bundle/>
     <rhq_drift_def_template/>
 
-    <rhq_plugin id="1"
+    <rhq_plugin id="15641"
                 deployment="AGENT"
-                name="test"
+                name="DiscoveryBossBeanTest-test"
                 display_name="test"
                 enabled="1"
                 status="INSTALLED"

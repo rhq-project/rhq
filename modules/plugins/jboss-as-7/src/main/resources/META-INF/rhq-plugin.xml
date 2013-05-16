@@ -1333,6 +1333,10 @@
         <value-context>pluginConfiguration</value-context>
         <value-name>homeDir</value-name>
       </destination-base-dir>
+      <destination-base-dir name="Base Directory" description="The base directory for server content, such as '[install-dir]/standalone' (i.e. the value found in the 'Base Directory' connection property)">
+        <value-context>pluginConfiguration</value-context>
+        <value-name>baseDir</value-name>
+      </destination-base-dir>
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
         <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>

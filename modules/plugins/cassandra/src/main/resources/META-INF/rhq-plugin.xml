@@ -186,7 +186,6 @@
                in the system.schema_* column families. This value is used in an algorithm to compare schema versions
                between nodes and apply updates as necessary. This value should be the same for all fully initialized
                nodes in the cluster."/>
-      <metric property="Tokens" dataType="trait" displayType="summary" description="A string representation of this node's token" defaultOn="true"/>
 
       <resource-configuration>
         <c:group name="DataStorage">

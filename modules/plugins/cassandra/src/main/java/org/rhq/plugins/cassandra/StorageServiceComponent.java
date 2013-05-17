@@ -59,7 +59,6 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
 
             AvailabilityType availability = UP;
 
-//            EmsAttribute thriftEnabledAttr = emsBean.getAttribute("RPCServerRunning");
             EmsAttribute nativeTransportEnabledAttr = emsBean.getAttribute("NativeTransportRunning");
             Boolean nativeTransportEnabled = (Boolean) nativeTransportEnabledAttr.getValue();
 

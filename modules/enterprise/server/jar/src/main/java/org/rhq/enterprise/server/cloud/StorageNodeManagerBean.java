@@ -61,6 +61,9 @@ import org.rhq.server.metrics.CQLException;
 @Stateless
 public class StorageNodeManagerBean implements StorageNodeManagerLocal {
 
+    private static final String RESOURCE_TYPE_NAME = "RHQ Storage Node";
+    private static final String PLUGIN_NAME = "RHQStorage";
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -120,7 +123,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal {
     @SuppressWarnings("unchecked")
     private void discoverResourceInformation(Map<String, StorageNode> storageNodeMap) {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN)
-            .setParameter("name", "Cassandra Daemon").setParameter("plugin", "Cassandra");
+            .setParameter("name", RESOURCE_TYPE_NAME).setParameter("plugin", PLUGIN_NAME);
         List<ResourceType> resourceTypes = (List<ResourceType>) query.getResultList();
 
         if (resourceTypes.isEmpty()) {

@@ -25,9 +25,6 @@ package org.rhq.plugins.storage;
 import java.util.HashSet;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
@@ -38,8 +35,6 @@ import org.rhq.plugins.cassandra.CassandraNodeDiscoveryComponent;
  */
 public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryComponent {
 
-    private static final Log log = LogFactory.getLog(CassandraNodeDiscoveryComponent.class);
-
     private static final String RESOURCE_NAME = "RHQ Storage Node";
 
     @SuppressWarnings({ "rawtypes" })
@@ -49,11 +44,12 @@ public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryCompone
         Set<DiscoveredResourceDetails> storageNodes = new HashSet<DiscoveredResourceDetails>();
 
         for (DiscoveredResourceDetails discoveredResource : discoveredResources) {
-            Configuration test = discoveredResource.getPluginConfiguration();
+            Configuration configuration = discoveredResource.getPluginConfiguration();
 
             if (!isCassandraNode(discoveredResource)) {
-                String resourceKey = "RHQ Storage (" + test.getSimpleValue(HOST_PROPERTY, "localhost") + ")";
-                String resourceName = StorageNodeDiscoveryComponent.RESOURCE_NAME;
+                String resourceKey = StorageNodeDiscoveryComponent.RESOURCE_NAME + "("
+                    + configuration.getSimpleValue(HOST_PROPERTY, "localhost") + ")";
+                String resourceName = resourceKey;
 
                 discoveredResource.setResourceKey(resourceKey);
                 discoveredResource.setResourceName(resourceName);

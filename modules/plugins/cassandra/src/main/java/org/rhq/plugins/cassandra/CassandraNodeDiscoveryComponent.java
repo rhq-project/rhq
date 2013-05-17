@@ -52,7 +52,15 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
     protected static final String HOST_PROPERTY = "host";
     protected static final String CLUSTER_NAME_PROPERTY = "clusterName";
+    protected static final String NATIVE_TRANSPORT_PORT_PROPERTY = "nativeTransportPort";
+    protected static final String AUTHENTICATOR_PROPERTY = "authenticator";
+    protected static final String USERNAME_PROPERTY = "username";
+    protected static final String PASSWORD_PROPERTY = "password";
+
+    protected static final String DEFAULT_RHQ_CLUSTER = "rhq";
+
     private static final String RESOURCE_NAME = "Cassandra";
+
 
     @SuppressWarnings({ "rawtypes" })
     @Override
@@ -84,7 +92,8 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
     }
 
     protected boolean isCassandraNode(DiscoveredResourceDetails discoveredResource) {
-        if ("rhq".equals(discoveredResource.getPluginConfiguration().getSimpleValue(CLUSTER_NAME_PROPERTY))) {
+        if (DEFAULT_RHQ_CLUSTER.equals(discoveredResource.getPluginConfiguration()
+            .getSimpleValue(CLUSTER_NAME_PROPERTY))) {
             return false;
         }
 
@@ -158,12 +167,13 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                     }
 
                     if (parsedProperties.get("native_transport_port") != null) {
-                        pluginConfig.put(new PropertySimple("nativeTransportPort", parsedProperties
+                        pluginConfig.put(new PropertySimple(NATIVE_TRANSPORT_PORT_PROPERTY, parsedProperties
                             .get("native_transport_port")));
                     }
 
                     if (parsedProperties.get("authenticator") != null) {
-                        pluginConfig.put(new PropertySimple("authenticator", parsedProperties.get("authenticator")));
+                        pluginConfig.put(new PropertySimple(AUTHENTICATOR_PROPERTY, parsedProperties
+                            .get("authenticator")));
                     }
                 } catch (Exception e) {
                     log.error("YAML Configuration load exception ", e);
@@ -183,17 +193,18 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
             pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
                 J2SE5ConnectionTypeDescriptor.class.getName()));
             pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
-                "service:jmx:rmi:///jndi/rmi://" + pluginConfig.getSimpleValue("host") + ":" + jmxPort + "/jmxrmi"));
+                "service:jmx:rmi:///jndi/rmi://" + pluginConfig.getSimpleValue(HOST_PROPERTY) + ":" + jmxPort
+                    + "/jmxrmi"));
         }
 
-        String resourceKey = "Cassandra (" + pluginConfig.getSimpleValue("host") + ") " + jmxPort;
+        String resourceKey = "Cassandra (" + pluginConfig.getSimpleValue(HOST_PROPERTY) + ") " + jmxPort;
         String resourceName = RESOURCE_NAME;
 
         String path = processInfo.getExecutable().getCwd();
         pluginConfig.put(new PropertySimple("baseDir", new File(path).getParentFile().getAbsolutePath()));
 
-        pluginConfig.put(new PropertySimple("username", "cassandra"));
-        pluginConfig.put(new PropertySimple("password", "cassandra"));
+        pluginConfig.put(new PropertySimple(USERNAME_PROPERTY, "cassandra"));
+        pluginConfig.put(new PropertySimple(PASSWORD_PROPERTY, "cassandra"));
 
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);

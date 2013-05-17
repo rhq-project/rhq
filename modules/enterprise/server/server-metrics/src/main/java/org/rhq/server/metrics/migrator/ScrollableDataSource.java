@@ -37,18 +37,25 @@ import org.hibernate.StatelessSession;
  */
 public class ScrollableDataSource implements ExistingDataSource {
 
-    private static final Log log = LogFactory.getLog(ExistingDataJPASource.class);
+    private static final Log log = LogFactory.getLog(ScrollableDataSource.class);
 
-    private EntityManager entityManager;
-    private String selectNativeQuery;
+    private final EntityManager entityManager;
+    private final String selectNativeQuery;
+    private final int maxResults;
 
     private ScrollableResults results;
     private StatelessSession session;
     private int lastMigratedItemIndex;
 
+
     public ScrollableDataSource(EntityManager entityManager, String selectNativeQuery) {
+        this(entityManager, selectNativeQuery, -1);
+    }
+
+    public ScrollableDataSource(EntityManager entityManager, String selectNativeQuery, int maxResults) {
         this.entityManager = entityManager;
         this.selectNativeQuery = selectNativeQuery;
+        this.maxResults = maxResults;
     }
 
     @Override
@@ -83,17 +90,29 @@ public class ScrollableDataSource implements ExistingDataSource {
     @Override
     public void initialize() {
         if (session != null || results != null) {
-            this.close();
+            close();
         }
 
         session = ((Session) entityManager.getDelegate()).getSessionFactory().openStatelessSession();
 
+        if (log.isDebugEnabled()) {
+            log.debug("Preparing the query with " + maxResults + " results.");
+        }
+
         Query query = session.createSQLQuery(selectNativeQuery);
+        if (maxResults > 0) {
+            query.setMaxResults(maxResults);
+        }
         query.setFetchSize(30000);
         query.setReadOnly(true);
+        query.setTimeout(TIMEOUT);
         results = query.scroll(ScrollMode.FORWARD_ONLY);
 
         lastMigratedItemIndex = -1;
+
+        if (log.isDebugEnabled()) {
+            log.debug("Query prepared with " + maxResults + " results.");
+        }
     }
 
     @Override

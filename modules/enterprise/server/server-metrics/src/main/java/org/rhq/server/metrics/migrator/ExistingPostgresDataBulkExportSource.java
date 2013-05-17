@@ -39,13 +39,19 @@ import org.rhq.core.util.stream.StreamUtil;
  */
 public class ExistingPostgresDataBulkExportSource extends ExistingDataBulkExportSource {
 
-    private EntityManager entityManager;
-    private String selectNativeQuery;
+    private final EntityManager entityManager;
+    private final String selectNativeQuery;
+    private final int maxResults;
 
     public ExistingPostgresDataBulkExportSource(EntityManager entityManager, String selectNativeQuery) {
+        this(entityManager, selectNativeQuery, -1);
+    }
+
+    public ExistingPostgresDataBulkExportSource(EntityManager entityManager, String selectNativeQuery, int maxResults) {
         super();
         this.entityManager = entityManager;
         this.selectNativeQuery = selectNativeQuery;
+        this.maxResults = maxResults;
     }
 
     protected void exportExistingData() throws Exception {
@@ -58,8 +64,14 @@ public class ExistingPostgresDataBulkExportSource extends ExistingDataBulkExport
             ConnectionProvider cp = sfi.getConnectionProvider();
             connection = cp.getConnection();
             CopyManager copyManager = new CopyManager((BaseConnection) connection);
-            copyManager.copyOut("COPY (" + this.selectNativeQuery + ") TO STDOUT WITH DELIMITER '" + DELIMITER + "'",
-                fileWriter);
+
+            if (maxResults > 0) {
+                copyManager.copyOut("COPY (" + selectNativeQuery + " LIMIT " + maxResults
+                    + ") TO STDOUT WITH DELIMITER '" + DELIMITER + "'", fileWriter);
+            } else {
+                copyManager.copyOut("COPY (" + selectNativeQuery + ") TO STDOUT WITH DELIMITER '" + DELIMITER + "'",
+                    fileWriter);
+            }
         } finally {
             StreamUtil.safeClose(fileWriter);
             JDBCUtil.safeClose(connection);

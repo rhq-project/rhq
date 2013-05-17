@@ -37,8 +37,10 @@ import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.Batch;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
 
+import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.StatelessSession;
 
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
@@ -61,8 +63,9 @@ public class DataMigrator {
     private static final int MAX_RAW_BATCH_TO_CASSANDRA = 100;
     private static final int MAX_AGGREGATE_BATCH_TO_CASSANDRA = 50;
     private static final int MAX_NUMBER_OF_FAILURES = 5;
-    private static final long NUMBER_OF_BATCHES_FOR_ESTIMATION = 4;
-    private static final double UNDER_ESTIMATION_FACTOR = .10;
+    private static final int NUMBER_OF_BATCHES_FOR_ESTIMATION = 4;
+    private static final double UNDER_ESTIMATION_FACTOR = .15;
+    public static final int SQL_TIMEOUT = 6000000;
 
 
     private enum MigrationQuery {
@@ -73,7 +76,6 @@ public class DataMigrator {
         DELETE_1H_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
         DELETE_6H_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
         DELETE_1D_DATA("DELETE FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
-
 
         COUNT_1H_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
         COUNT_6H_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
@@ -309,22 +311,67 @@ public class DataMigrator {
         return tables;
     }
 
-    private ExistingDataSource getExistingDataSource(EntityManager entityManager, String query) {
-        if (this.databaseType == DatabaseType.Oracle) {
-            return new ScrollableDataSource(entityManager, query);
-        } else {
-            if (!experimentalDataSource) {
+    private ExistingDataSource getExistingDataSource(EntityManager entityManager, String query, Task task) {
+
+        if (Task.Migrate.equals(task)) {
+            if (this.databaseType == DatabaseType.Oracle) {
                 return new ScrollableDataSource(entityManager, query);
             } else {
-                return new ExistingPostgresDataBulkExportSource(entityManager, query);
+                if (!experimentalDataSource) {
+                    return new ScrollableDataSource(entityManager, query);
+                } else {
+                    return new ExistingPostgresDataBulkExportSource(entityManager, query);
+                }
+            }
+        } else if (Task.Estimate.equals(task)) {
+            int limit = MAX_RECORDS_TO_LOAD_FROM_SQL * (NUMBER_OF_BATCHES_FOR_ESTIMATION + 1);
+
+            if (this.databaseType == DatabaseType.Oracle) {
+                return new ScrollableDataSource(entityManager, query, limit);
+            } else {
+                if (!experimentalDataSource) {
+                    return new ScrollableDataSource(entityManager, query, limit);
+                } else {
+                    return new ExistingPostgresDataBulkExportSource(entityManager, query, limit);
+                }
             }
         }
 
-        //return new ExistingDataJPASource(entityManager, query);
+        return new ScrollableDataSource(entityManager, query);
     }
 
     private enum Task {
         Migrate, Estimate
+    }
+
+    private class Telemetry {
+        private StopWatch generalTimer;
+        private StopWatch migrationTimer;
+
+        public Telemetry() {
+            this.generalTimer = new StopWatch();
+            this.migrationTimer = new StopWatch();
+        }
+
+        public StopWatch getGeneralTimer() {
+            return generalTimer;
+        }
+
+        public StopWatch getMigrationTimer() {
+            return migrationTimer;
+        }
+
+        public long getMigrationTime() {
+            return migrationTimer.getTime();
+        }
+
+        public long getGeneralTime() {
+            return generalTimer.getTime();
+        }
+
+        public long getNonMigrationTime() {
+            return this.getGeneralTime() - this.getMigrationTime();
+        }
     }
 
     private interface CallableMigrationWorker {
@@ -372,12 +419,16 @@ public class DataMigrator {
 
         @Override
         public long estimate() throws Exception {
-            Query nativeQuery = entityManager.createNativeQuery(this.countQuery);
-            long recordCount = Long.parseLong(nativeQuery.getSingleResult().toString());
-            long estimatedTimeToMigrate = this.performMigration(Task.Estimate);
+            long recordCount = this.getRowCount(this.countQuery);
 
-            long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / NUMBER_OF_BATCHES_FOR_ESTIMATION)
+            Telemetry telemetry = this.performMigration(Task.Estimate);
+            long estimatedTimeToMigrate = telemetry.getMigrationTime();
+
+            long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / (long) NUMBER_OF_BATCHES_FOR_ESTIMATION)
                 * estimatedTimeToMigrate;
+
+            estimation += telemetry.getNonMigrationTime();
+
             return estimation;
         }
 
@@ -386,6 +437,17 @@ public class DataMigrator {
             if (deleteDataImmediatelyAfterMigration) {
                 deleteTableData();
             }
+        }
+
+        private long getRowCount(String countQuery) {
+            StatelessSession session = ((org.hibernate.Session) entityManager.getDelegate())
+                .getSessionFactory().openStatelessSession();
+
+            org.hibernate.Query query = session.createSQLQuery(countQuery);
+            query.setReadOnly(true);
+            query.setTimeout(SQL_TIMEOUT);
+
+            return Long.parseLong(query.uniqueResult().toString());
         }
 
         private void deleteTableData() throws Exception {
@@ -409,17 +471,20 @@ public class DataMigrator {
             }
         }
 
-        private long performMigration(Task task) throws Exception {
-            long migrationStartTime = System.currentTimeMillis();
+        private Telemetry performMigration(Task task) throws Exception {
+            Telemetry telemetry = new Telemetry();
+            telemetry.getGeneralTimer().start();
+
             long numberOfBatchesMigrated = 0;
 
             List<Object[]> existingData;
             int failureCount;
 
             int lastMigratedRecord = 0;
-            ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery);
+            ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery, task);
             dataSource.initialize();
 
+            telemetry.getMigrationTimer().start();
             while (true) {
                 existingData = dataSource.getData(lastMigratedRecord, MAX_RECORDS_TO_LOAD_FROM_SQL);
 
@@ -453,10 +518,12 @@ public class DataMigrator {
                     break;
                 }
             }
+            telemetry.getMigrationTimer().stop();
 
             dataSource.close();
+            telemetry.getGeneralTimer().stop();
 
-            return System.currentTimeMillis() - migrationStartTime;
+            return telemetry;
         }
 
         private void insertDataToCassandra(List<Object[]> existingData)
@@ -529,13 +596,15 @@ public class DataMigrator {
             long recordCount = 0;
             for (String table : getRawDataTables()) {
                 String countQuery = String.format(MigrationQuery.COUNT_RAW.toString(), table);
-                Query nativeQuery = entityManager.createNativeQuery(countQuery);
-                recordCount += Long.parseLong(nativeQuery.getSingleResult().toString());
+                recordCount += this.getRowCount(countQuery);
             }
 
-            long estimatedTimeToMigrate = this.performMigration(Task.Estimate);
-            long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / NUMBER_OF_BATCHES_FOR_ESTIMATION)
+            Telemetry telemetry = this.performMigration(Task.Estimate);
+            long estimatedTimeToMigrate = telemetry.getMigrationTime();
+            long estimation = (recordCount / (long) MAX_RECORDS_TO_LOAD_FROM_SQL / (long) NUMBER_OF_BATCHES_FOR_ESTIMATION)
                 * estimatedTimeToMigrate;
+            estimation += telemetry.getNonMigrationTime();
+
             return estimation;
         }
 
@@ -543,23 +612,40 @@ public class DataMigrator {
             performMigration(Task.Migrate);
         }
 
-        private long performMigration(Task task) throws Exception {
-            long migrationStartTime = System.currentTimeMillis();
+        private long getRowCount(String countQuery) {
+            StatelessSession session = ((org.hibernate.Session) entityManager.getDelegate()).getSessionFactory()
+                .openStatelessSession();
+
+            org.hibernate.Query query = session.createSQLQuery(countQuery);
+            query.setReadOnly(true);
+            query.setTimeout(SQL_TIMEOUT);
+
+            return Long.parseLong(query.uniqueResult().toString());
+        }
+
+        private Telemetry performMigration(Task task) throws Exception {
+            Telemetry telemetry = new Telemetry();
+            telemetry.getGeneralTimer().start();
+
             long numberOfBatchesMigrated = 0;
 
             List<Object[]> existingData;
             int failureCount;
+
+            telemetry.getMigrationTimer().start();
+            telemetry.getMigrationTimer().suspend();
 
             while (!tablesNotProcessed.isEmpty()) {
                 String table = tablesNotProcessed.peek();
 
                 String selectQuery = String.format(MigrationQuery.SELECT_RAW_DATA.toString(), table);
 
-                ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery);
+                ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery, task);
                 dataSource.initialize();
 
                 log.info("Start migrating raw table: " + table);
 
+                telemetry.getMigrationTimer().resume();
                 int lastMigratedRecord = 0;
                 while (true) {
                     existingData = dataSource.getData(lastMigratedRecord, MAX_RECORDS_TO_LOAD_FROM_SQL);
@@ -595,6 +681,7 @@ public class DataMigrator {
                         break;
                     }
                 }
+                telemetry.getMigrationTimer().suspend();
 
                 if (Task.Migrate.equals(task)) {
                     log.info("Done migrating raw table" + table + "---------------------");
@@ -610,7 +697,8 @@ public class DataMigrator {
                 tablesNotProcessed.poll();
             }
 
-            return System.currentTimeMillis() - migrationStartTime;
+            telemetry.getGeneralTimer().stop();
+            return telemetry;
         }
 
         private void deleteTableData(String table) throws Exception {

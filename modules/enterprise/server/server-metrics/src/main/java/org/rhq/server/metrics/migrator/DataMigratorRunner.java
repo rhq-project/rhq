@@ -70,10 +70,7 @@ import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 @SuppressWarnings({ "static-access", "deprecation" })
 public class DataMigratorRunner {
 
-    private static final int SQL_TIMEOUT = 40000;
-
     private final Log log = LogFactory.getLog(DataMigratorRunner.class);
-
 
     //Cassandra
     private Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg().withType(String.class)
@@ -578,8 +575,8 @@ public class DataMigratorRunner {
         properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
         properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
         properties.put("hibernate.connection.password", (String) configuration.get(sqlPasswordOption));
-        properties.put("javax.persistence.query.timeout", SQL_TIMEOUT);
-        properties.put("hibernate.c3p0.timeout", SQL_TIMEOUT);
+        properties.put("javax.persistence.query.timeout", DataMigrator.SQL_TIMEOUT);
+        properties.put("hibernate.c3p0.timeout", DataMigrator.SQL_TIMEOUT);
 
         if ("oracle".equals(configuration.get(sqlServerType))) {
             String driverClassName = "oracle.jdbc.driver.OracleDriver";
@@ -598,7 +595,7 @@ public class DataMigratorRunner {
             properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
                 + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
             properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
-            properties.put("hibernate.connection.oracle.jdbc.ReadTimeout", SQL_TIMEOUT);
+            properties.put("hibernate.connection.oracle.jdbc.ReadTimeout", DataMigrator.SQL_TIMEOUT);
         } else {
             String driverClassName = "org.postgresql.Driver";
 

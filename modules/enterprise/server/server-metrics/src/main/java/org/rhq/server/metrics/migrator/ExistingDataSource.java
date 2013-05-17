@@ -26,6 +26,8 @@ import java.util.List;
  */
 public interface ExistingDataSource {
 
+    static final int TIMEOUT = 6000000;
+
     List<Object[]> getData(int fromIndex, int maxResults) throws Exception;
 
     void initialize() throws Exception;

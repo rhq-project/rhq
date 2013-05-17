@@ -104,6 +104,12 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     };
 
     @Override
+    public void stop() {
+        log.info("Shutting down");
+        cassandraSession.getCluster().shutdown();
+    }
+
+    @Override
     public AvailabilityType getAvailability() {
         ResourceContext<?> context = getResourceContext();
         ProcessInfo processInfo = context.getNativeProcess();

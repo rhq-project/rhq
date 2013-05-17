@@ -131,7 +131,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         addMember(graphDateTimeRangeEditor);
 
         if (showAvailabilityGraph) {
-            availabilityGraph = new AvailabilityD3GraphView(new AvailabilityOverUnderGraphWithSliderType(resource.getId()));
+            availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphWithSliderType>(new AvailabilityOverUnderGraphWithSliderType(resource.getId()));
             // first step in 2 step to create d3 chart
             // create a placeholder for avail graph
             availabilityGraph.createGraphMarker();

@@ -34,11 +34,11 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author Mike Thompson
  */
-public class AvailabilityD3GraphView extends EnhancedVLayout {
+public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends EnhancedVLayout {
 
-    protected AvailabilityGraphType availabilityGraphType;
+    protected T availabilityGraphType;
 
-    public AvailabilityD3GraphView(AvailabilityGraphType availabilityGraphType) {
+    public AvailabilityD3GraphView(T availabilityGraphType) {
         super();
         this.availabilityGraphType = availabilityGraphType;
         setHeight(65);

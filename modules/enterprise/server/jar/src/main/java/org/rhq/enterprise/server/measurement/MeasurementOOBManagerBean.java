@@ -235,7 +235,7 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
                     oob.setScheduleId(metric.getScheduleId());
                     oob.setTimestamp(metric.getTimestamp());
                     oob.setOobFactor(oobFactor);
-                    entityManager.persist(oob);
+                    entityManager.merge(oob);
                 }
             } catch (Exception e) {
                 log.error("An error occurred while calculating OOBs for " + metric, e);

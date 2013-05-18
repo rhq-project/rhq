@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
@@ -26,7 +26,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
- * Component to allow selection of Date/Time range for graphs.
+ * Component to allow selection of Date/Time range for graphs using a button group from bootstrap.
  *
  * @author Mike Thompson
  */
@@ -67,7 +67,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 "                        <button id=\"radioMonth\" type=\"button\" class=\"btn \">Month</button>\n" +
                 "                        <button id=\"radioYear\" type=\"button\" class=\"btn \">Year</button>\n" +
                 "                    </span>\n" +
-                "                   <input id=\"dateRange\" style=\"margin-left:30px;width:280px;\" type=\"text\"/>\n" +
+                "                   <input id=\"dateRange\" style=\"margin-left:30px;width:280px;\" type=\"text\" readonly=\"readonly\" />\n" +
                 "                </div>\n" +
                 "            </div>\n" +
                 "        </div>\n" +
@@ -88,7 +88,6 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
     public native void attachGraphDateRangeEditorButtonGroupHandlers() /*-{
         console.log("Draw GraphDateTimeRangeEditor");
-        console.warn("Registering Handlers");
 
         function updateDateDisplay(startDate, endDate ) {
             var formattedDateRange;
@@ -116,7 +115,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
 
         $wnd.jQuery("#radioMin").bind('click', function (event) {
-            console.warn("minute selected");
+            console.log("minute selected");
             graphDateContext.startDate = $wnd.moment().startOf('hour');
             updateDateDisplay(graphDateContext);
         });
@@ -144,6 +143,10 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         // initially populate
         updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
         $wnd.jQuery("#radioHour").click();
+
+    }-*/;
+
+    public native void refreshGraphs() /*-{
 
     }-*/;
 

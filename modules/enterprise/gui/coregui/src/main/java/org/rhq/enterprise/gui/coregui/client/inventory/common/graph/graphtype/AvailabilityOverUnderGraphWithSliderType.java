@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
 
 import java.util.Date;
 import java.util.List;
@@ -27,6 +27,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AvailabilityGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
@@ -37,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
  *
  * @author Mike Thompson
  */
-public class AvailabilityOverUnderGraphType implements AvailabilityGraphType{
+public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGraphType {
 
     private static Messages MSG = CoreGUI.getMessages();
     private List<Availability> availabilityList;
@@ -48,18 +49,21 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType{
      * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
      * for all cases but the dashboard portlet).
      */
-    public AvailabilityOverUnderGraphType(Integer entityId) {
+    public AvailabilityOverUnderGraphWithSliderType(Integer entityId) {
         this.entityId = entityId;
     }
 
+    @Override
     public void setAvailabilityList(List<Availability> availabilityList) {
         this.availabilityList = availabilityList;
     }
 
+    @Override
     public void setGroupAvailabilityList(List<ResourceGroupAvailability> groupAvailabilityList) {
         this.groupAvailabilityList = groupAvailabilityList;
     }
 
+    @Override
     public String getAvailabilityJson() {
         StringBuilder sb = new StringBuilder("[");
         if (null != availabilityList) {
@@ -113,24 +117,25 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType{
     /**
      * The magic JSNI to draw the charts with d3.
      */
+    @Override
     public native void drawJsniChart() /*-{
         console.log("Draw Enhanced Availability chart");
 
         var global = this,
         // tidy up all of our interactions with java (via JSNI) thru AvailChartContext class
         // NOTE: rhq.js has the javascript object constructors in it.
-                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getAvailabilityJson()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartDateLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartTimeLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverStartLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverBarLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverAvailabilityLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getChartHoverDateFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getAvailChartTitleLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getAvailChartUpLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType::getAvailChartDownLabel()()
+                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartId()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getAvailabilityJson()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartDateLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartTimeLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartHoverStartLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartHoverBarLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartHoverAvailabilityLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartHoverTimeFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getChartHoverDateFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getAvailChartTitleLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getAvailChartUpLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType::getAvailChartDownLabel()()
                 );
 
 

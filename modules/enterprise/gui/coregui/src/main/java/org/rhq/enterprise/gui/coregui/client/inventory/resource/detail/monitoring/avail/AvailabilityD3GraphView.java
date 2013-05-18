@@ -24,7 +24,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityGraphType;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AvailabilityGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 

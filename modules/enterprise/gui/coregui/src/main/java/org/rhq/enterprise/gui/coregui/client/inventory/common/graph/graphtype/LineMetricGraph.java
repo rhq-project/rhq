@@ -16,7 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
+
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 
 /**
  * Contains the javascript chart definition for a d3 Line graph chart.
@@ -41,16 +44,16 @@ public final class LineMetricGraph extends AbstractGraph {
     public native void drawJsniChart() /*-{
        console.log("Draw Metric Line jsni chart");
        var global = this,
-       chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
+       chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getChartId()(),
        chartHandle = "#rChart-"+chartId,
        chartSelection = chartHandle + " svg",
-       json = $wnd.jQuery.parseJSON(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()()),
-       yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitle()(),
-       yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
-       xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()();
+       json = $wnd.jQuery.parseJSON(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getJsonMetrics()()),
+       yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getChartTitle()(),
+       yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getYAxisUnits()(),
+       xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getXAxisTitle()();
 
        console.log("chart id: "+chartSelection );
-       console.log(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()());
+       console.log(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getJsonMetrics()());
 
 
        function draw(data){

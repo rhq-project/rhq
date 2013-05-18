@@ -36,12 +36,12 @@
         </any>
     </replace-with>
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
     </replace-with>
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphIE8Impl">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphIE8Impl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
             <when-property-is name="user.agent" value="ie8"/>
     </replace-with>
 

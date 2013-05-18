@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2013 Red Hat, Inc.
+ * Copyright (C) 2005-2012 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,27 +16,31 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
 
 /**
- * Interface for AvailabilityGraphs. Implementations of this interface
- * always need to define the capability of creating a graph marker
- * - some kind of div with an id that d3 can bind to and able to
- * drawJsniChart to actually draw(render) the d3 graph.
+ * Contains the javascript chart definition for an IE8 d3 Stacked Bar graph chart.
+ * Curr
  *
  * @author Mike Thompson
  */
-@Deprecated
-public interface AvailabilityGraph {
+public final class StackedBarMetricGraphIE8Impl extends StackedBarMetricGraphImpl {
 
     /**
-     * Step 1 create the graph marker to allow d3 to bind.
+     * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
+     * for all cases but the dashboard portlet).
      */
-    void createGraphMarker();
+    public StackedBarMetricGraphIE8Impl() {
+        super();
+    }
+
 
     /**
-     * Step 2 bind to the above div#id and render the chart.
+     * Empty implementation for IE8.
      */
-    void drawJsniChart();
+    @Override
+    public native void drawJsniChart() /*-{
+        // no-op implementation for ie8
+    }-*/;
 
 }

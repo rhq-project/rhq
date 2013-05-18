@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -16,125 +16,41 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
-import java.util.Date;
-import java.util.List;
-
-import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
- * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
- * just a line that changes color based on availability type: up=green, down=red, orange=disabled, unknown=grey,
- * empty=grey, warn=yellow.  This version of the availability graph shows continuous intervals.
+ * An implementation using JQuery UI components because smartGWT doesn't contain buttonsets or dual range sliders.
  *
  * @author Mike Thompson
  */
-public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGraphType {
-
+@Deprecated
+public class JQueryDateTimeRangeEditor {
     private static Messages MSG = CoreGUI.getMessages();
-    private List<Availability> availabilityList;
-    private List<ResourceGroupAvailability> groupAvailabilityList;
-    private Integer entityId;
-
-    /**
-     * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
-     * for all cases but the dashboard portlet).
-     */
-    public AvailabilityOverUnderGraphWithSliderType(Integer entityId) {
-        this.entityId = entityId;
-    }
-
-    @Override
-    public void setAvailabilityList(List<Availability> availabilityList) {
-        this.availabilityList = availabilityList;
-    }
-
-    @Override
-    public void setGroupAvailabilityList(List<ResourceGroupAvailability> groupAvailabilityList) {
-        this.groupAvailabilityList = groupAvailabilityList;
-    }
-
-    @Override
-    public String getAvailabilityJson() {
-        StringBuilder sb = new StringBuilder("[");
-        if (null != availabilityList) {
-            // loop through the avail intervals
-            for (Availability availability : availabilityList) {
-                sb.append("{ \"availType\":\"" + availability.getAvailabilityType() + "\", ");
-                sb.append(" \"availTypeMessage\":\"" + availability.getAvailabilityType() + "\", ");
-                sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
-                // last record will be null
-                long endTime = availability.getEndTime() != null ? availability.getEndTime() : (new Date()).getTime();
-                sb.append(" \"availEnd\":" + endTime + ", ");
-
-                long availDuration = endTime - availability.getStartTime();
-                String availDurationString = MeasurementConverterClient.format((double) availDuration,
-                    MeasurementUnits.MILLISECONDS, true);
-                sb.append(" \"availDuration\": \"" + availDurationString + "\" },");
-
-            }
-            sb.setLength(sb.length() - 1);
-
-        } else if (null != groupAvailabilityList) {
-            // loop through the group avail down intervals
-            for (ResourceGroupAvailability groupAvailability : groupAvailabilityList) {
-                // allows substitution for situations like WARN=MIXED for easier terminology
-                String availabilityTypeMessage = (groupAvailability.getGroupAvailabilityType()
-                    .equals(ResourceGroupComposite.GroupAvailabilityType.WARN)) ? MSG
-                    .chart_hover_availability_type_warn() : groupAvailability.getGroupAvailabilityType().name();
-
-                sb.append("{ \"availType\":\"" + groupAvailability.getGroupAvailabilityType() + "\", ");
-                sb.append(" \"availTypeMessage\":\"" + availabilityTypeMessage + "\", ");
-                sb.append(" \"availStart\":" + groupAvailability.getStartTime() + ", ");
-                // last record will be null
-                long endTime = groupAvailability.getEndTime() != null ? groupAvailability.getEndTime() : (new Date())
-                    .getTime();
-                sb.append(" \"availEnd\":" + endTime + ", ");
-
-                long availDuration = endTime - groupAvailability.getStartTime();
-                String availDurationString = MeasurementConverterClient.format((double) availDuration,
-                    MeasurementUnits.MILLISECONDS, true);
-                sb.append(" \"availDuration\": \"" + availDurationString + "\" },");
-
-            }
-            sb.setLength(sb.length() - 1);
-        }
-
-        sb.append("]");
-        Log.debug(sb.toString());
-        return sb.toString();
-    }
 
     /**
      * The magic JSNI to draw the charts with d3.
      */
-    @Override
     public native void drawJsniChart() /*-{
-        console.log("Draw Enhanced Availability chart");
+        console.log("Draw GraphDateTimeRangeEditor");
 
         var global = this,
         // tidy up all of our interactions with java (via JSNI) thru AvailChartContext class
         // NOTE: rhq.js has the javascript object constructors in it.
-                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailabilityJson()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartDateLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartTimeLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverStartLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverBarLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverAvailabilityLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getChartHoverDateFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailChartTitleLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailChartUpLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphWithSliderType::getAvailChartDownLabel()()
+                availChartContext = new $wnd.AvailChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartId()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailabilityJson()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartDateLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartTimeLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverStartLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverBarLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverAvailabilityLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverTimeFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverDateFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartTitleLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartUpLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartDownLabel()()
                 );
 
 
@@ -315,10 +231,10 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                         availStart = new Date(+d.availStart);
 
                 return '<div class="chartHoverEnclosingDiv">' +
-                                '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + d.availTypeMessage + '</span></div>' +
-                                '<div class="chartHoverAlignLeft"><span>' + dateFormatter(availStart) + ' ' + timeFormatter(availStart) + '</span></div>' +
-                                '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + d.availDuration + '</span></div>' +
-                                '</div>';
+                        '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + d.availTypeMessage + '</span></div>' +
+                        '<div class="chartHoverAlignLeft"><span>' + dateFormatter(availStart) + ' ' + timeFormatter(availStart) + '</span></div>' +
+                        '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + d.availDuration + '</span></div>' +
+                        '</div>';
 
             }
 
@@ -339,49 +255,7 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
             availabilityGraph.draw(availChartContext);
         }
 
-                                       }-*/;
+    }-*/;
 
-    public String getChartId() {
-        return String.valueOf(entityId);
-    }
 
-    public String getChartTimeLabel() {
-        return MSG.chart_time_label();
-    }
-
-    public String getChartDateLabel() {
-        return MSG.chart_date_label();
-    }
-
-    public String getChartHoverAvailabilityLabel() {
-        return MSG.chart_hover_availability_label();
-    }
-
-    public String getChartHoverStartLabel() {
-        return MSG.chart_hover_start_label();
-    }
-
-    public String getAvailChartDownLabel() {
-        return MSG.avail_chart_down_label();
-    }
-
-    public String getAvailChartUpLabel() {
-        return MSG.avail_chart_up_label();
-    }
-
-    public String getAvailChartTitleLabel() {
-        return MSG.avail_chart_title_label();
-    }
-
-    public String getChartHoverBarLabel() {
-        return MSG.chart_hover_bar_label();
-    }
-
-    public String getChartHoverTimeFormat() {
-        return MSG.chart_hover_time_format();
-    }
-
-    public String getChartHoverDateFormat() {
-        return MSG.chart_hover_date_format();
-    }
 }

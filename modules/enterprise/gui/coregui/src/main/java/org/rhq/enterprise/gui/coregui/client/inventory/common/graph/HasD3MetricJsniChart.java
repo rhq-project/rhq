@@ -16,31 +16,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
+
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 
 /**
- * Contains the javascript chart definition for an IE8 d3 Stacked Bar graph chart.
- * Curr
+ * Defines GWT JSNI charting capability. Indicator of a class producing
+ * d3 (javascript) charts. Allows us to quickly find, in a standard
+ * way JSNI charts like d3. Finding implementations of this class
+ * will reveal all the d3 charting implementations.
  *
  * @author Mike Thompson
  */
-public final class StackedBarMetricGraphIE8Impl extends StackedBarMetricGraphImpl {
-
-    /**
-     * General constructor for stacked bar graph when you have all the data needed to produce the graph. (This is true
-     * for all cases but the dashboard portlet).
-     */
-    public StackedBarMetricGraphIE8Impl() {
-        super();
-    }
-
-
-    /**
-     * Empty implementation for IE8.
-     */
-    @Override
-    public native void drawJsniChart() /*-{
-        // no-op implementation for ie8
-    }-*/;
+public interface HasD3MetricJsniChart
+{
+    void drawJsniChart();
+    void setEntityId(int entityId) ;
+    void setEntityName(String entityName) ;
+    void setDefinition(MeasurementDefinition measurementDefinition) ;
 
 }

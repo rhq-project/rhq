@@ -16,7 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
+
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 
 /**
  * Contains the chart definition for a MultiLine Graph.
@@ -41,14 +44,14 @@ public final class MetricNvd3MultiLineGraph extends AbstractGraph
         console.log("Draw NVD3 Bar jsni chart");
         console.time("multiChart");
         var global = this,
-            chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartId()(),
+            chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getChartId()(),
             chartHandle = "#rChart-"+chartId,
             chartSelection = chartHandle + " svg",
-            json = $wnd.jQuery.parseJSON(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getJsonMetrics()()),
-            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getChartTitle()(),
-            yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getYAxisUnits()(),
-            xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::getXAxisTitle()(),
-            displayDayOfWeek = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData::shouldDisplayDayOfWeekInXAxisLabel()(),
+            json = $wnd.jQuery.parseJSON(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getJsonMetrics()()),
+            yAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getChartTitle()(),
+            yAxisUnits = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getYAxisUnits()(),
+            xAxisLabel = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::getXAxisTitle()(),
+            displayDayOfWeek = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData::shouldDisplayDayOfWeekInXAxisLabel()(),
             xAxisTimeFormat = (displayDayOfWeek) ? "%a %I %p" : "%I : %M %p",
 
         // nvd3 defines their json models a standard way (same model for other graphs)

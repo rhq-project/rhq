@@ -60,7 +60,7 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public Iterable<AggregateNumericMetric> calculateAggregates() {
         MetricsServer metricsServer = getMetricsServer();
-        return metricsServer.calculateAggregates();
+        return metricsServer.calculateAggregates(System.currentTimeMillis());
     }
 
     @Override

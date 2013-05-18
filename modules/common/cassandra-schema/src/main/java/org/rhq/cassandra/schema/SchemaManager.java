@@ -217,7 +217,7 @@ public class SchemaManager {
                     "bucket varchar, " +
                     "time timestamp, " +
                     "schedule_id int, " +
-                    "PRIMARY KEY (bucket, time, schedule_id) " +
+                    "PRIMARY KEY ((bucket, time), schedule_id) " +
                 ") WITH COMPACT STORAGE;"
             );
         } catch (NoHostAvailableException e) {

@@ -26,6 +26,8 @@
 package org.rhq.server.metrics;
 
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -67,7 +69,6 @@ public class MetricsServer {
 
     public void setSession(Session session) {
         this.session = session;
-        //dao = new MetricsDAO(session);
     }
 
     public void setDAO(MetricsDAO dao) {
@@ -250,47 +251,74 @@ public class MetricsServer {
             updates.put(rawMetric.getScheduleId(), dateTimeService.getTimeSlice(
                 new DateTime(rawMetric.getTimestamp()), configuration.getRawTimeSliceDuration()).getMillis());
         }
+        Set<Date> dates = new HashSet<Date>();
+        for (Long ts : updates.values()) {
+            dates.add(new Date(ts));
+        }
+        log.info("Updating one hour index wtih time slices " + dates);
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 
-    public Iterable<AggregateNumericMetric> calculateAggregates() {
+    /**
+     * Computes and stores aggregate for all time slices that are ready to be aggregated.
+     * This is includes raw, 1hr, 6hr, and 24hr data.
+     *
+     * @param startTime A timestamp that the determines the period over which data will be
+     *                  aggregated. Aggregation is normally run hourly as part of the data
+     *                  purge job; so, this timestamp is rounded down to the hour and then
+     *                  an hour is subtracted to get the actual starting time over which
+     *                  data will be aggregated. Suppose the argument has a value (time) of
+     *                  02:00:34. This means that raw data that has been stored between
+     *                  01:00 and 02:00 will be aggregated.
+     *
+     * @return One hour aggregates. That is, any raw data that has been rolled up into onr
+     * one hour aggregates. The one hour aggregates are returned because they are needed
+     * for subsequently computing baselines.
+     */
+    public Iterable<AggregateNumericMetric> calculateAggregates(long startTime) {
+        DateTime dt = new DateTime(startTime);
+        DateTime currentHour = dateTimeService.getTimeSlice(dt, configuration.getRawTimeSliceDuration());
+        DateTime lastHour = currentHour.minusHours(1);
+
+        long hourTimeSlice = lastHour.getMillis();
+
+        long sixHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
+            configuration.getOneHourTimeSliceDuration()).getMillis();
+
+        long twentyFourHourTimeSlice = dateTimeService.getTimeSlice(lastHour,
+            configuration.getSixHourTimeSliceDuration()).getMillis();
+
         // We first query the metrics index table to determine which schedules have data to
         // be aggregated. Then we retrieve the metric data and aggregate or compress the
         // data, writing the compressed values into the next wider (i.e., longer life span
         // for data) bucket/table. At this point we remove the index entries for the data
-        // that has already been processed. We currently purge the entire row in the index
-        // table. We can safely do this entire work flow is single threaded. It might make
-        // sense to perform the deletes in a more granular fashion to avoid concurrency
-        // issues in the future. The last step in the work flow is to update the metrics
+        // that has already been processed. We purge the entire row in the index table.
+        // We can safely do this because the row wi..
+        //
+        // The last step in the work flow is to update the metrics
         // index for the newly persisted aggregates.
-
-        // TODO deleteMetricsIndexEntries should take a list of schedule ids
-        // MetricsDAO.deleteMetricsIndexEntries deletes the entire row, but we probably do
-        // not want to delete each column unless and until we verify that the data for the
-        // schedule id in that column has in fact been aggregated. It might be better for
-        // deleteMetricsIndexEntries to take a list of schedule ids to purge.
 
         Iterable<AggregateNumericMetric> newOneHourAggregates = null;
 
-        List<AggregateNumericMetric> updatedSchedules = aggregateRawData();
+        List<AggregateNumericMetric> updatedSchedules = aggregateRawData(hourTimeSlice);
         newOneHourAggregates = updatedSchedules;
         if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);
+            dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, hourTimeSlice);
             updateMetricsIndex(MetricsTable.SIX_HOUR, updatedSchedules, configuration.getOneHourTimeSliceDuration());
         }
 
-        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR,
+        updatedSchedules = calculateAggregates(MetricsTable.ONE_HOUR, MetricsTable.SIX_HOUR, sixHourTimeSlice,
             configuration.getOneHourTimeSliceDuration());
         if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR);
+            dao.deleteMetricsIndexEntries(MetricsTable.SIX_HOUR, sixHourTimeSlice);
             updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, updatedSchedules,
                 configuration.getSixHourTimeSliceDuration());
         }
 
         updatedSchedules = calculateAggregates(MetricsTable.SIX_HOUR, MetricsTable.TWENTY_FOUR_HOUR,
-            configuration.getSixHourTimeSliceDuration());
+            twentyFourHourTimeSlice, configuration.getSixHourTimeSliceDuration());
         if (!updatedSchedules.isEmpty()) {
-            dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR);
+            dao.deleteMetricsIndexEntries(MetricsTable.TWENTY_FOUR_HOUR, twentyFourHourTimeSlice);
         }
 
         return newOneHourAggregates;
@@ -305,8 +333,8 @@ public class MetricsServer {
         dao.updateMetricsIndex(bucket, updates);
     }
 
-    private List<AggregateNumericMetric> aggregateRawData() {
-        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR);
+    private List<AggregateNumericMetric> aggregateRawData(long theHour) {
+        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR, theHour);
         List<AggregateNumericMetric> oneHourMetrics = new ArrayList<AggregateNumericMetric>();
 
         for (MetricsIndexEntry indexEntry : indexEntries) {
@@ -356,9 +384,9 @@ public class MetricsServer {
     }
 
     private List<AggregateNumericMetric> calculateAggregates(MetricsTable fromTable,
-        MetricsTable toTable, Duration nextDuration) {
+        MetricsTable toTable, long timeSlice, Duration nextDuration) {
 
-        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toTable);
+        Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toTable, timeSlice);
         List<AggregateNumericMetric> toMetrics = new ArrayList<AggregateNumericMetric>();
 
         DateTime currentHour = getCurrentHour();

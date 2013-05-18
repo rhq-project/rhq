@@ -136,9 +136,9 @@ public class MetricsDAO {
             MetricsTable.TWENTY_FOUR_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
 
         findIndexEntries = session.prepare("SELECT time, schedule_id FROM " + MetricsTable.INDEX +
-            " WHERE bucket = ? ORDER BY time");
+            " WHERE bucket = ? AND time = ?");
 
-        deleteIndexEntries = session.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ?");
+        deleteIndexEntries = session.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND time = ?");
     }
 
     public ResultSet insertRawData(MeasurementDataNumeric data) {
@@ -288,8 +288,8 @@ public class MetricsDAO {
             new AggregateNumericMetricMapper(), session);
     }
 
-    public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table) {
-        BoundStatement statement = findIndexEntries.bind(table.toString());
+    public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table, long timestamp) {
+        BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
         return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), session);
     }
 
@@ -301,8 +301,8 @@ public class MetricsDAO {
             }
     }
 
-    public void deleteMetricsIndexEntries(MetricsTable table) {
-        BoundStatement statement = deleteIndexEntries.bind(table.getTableName());
+    public void deleteMetricsIndexEntries(MetricsTable table, long timestamp) {
+        BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
         session.execute(statement);
     }
 }

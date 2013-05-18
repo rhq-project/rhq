@@ -271,7 +271,8 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         updates.put(scheduleId2, hour0.getMillis());
 
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
-        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR));
+        List<MetricsIndexEntry> actual = Lists.newArrayList(dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR,
+            hour0.getMillis()));
 
         List<MetricsIndexEntry> expected = asList(new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId1),
             new MetricsIndexEntry(MetricsTable.ONE_HOUR, hour0, scheduleId2));
@@ -285,13 +286,12 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         Map<Integer, Long> updates = new HashMap<Integer, Long>();
         updates.put(scheduleId1, hour0().getMillis());
         updates.put(scheduleId2, hour0().getMillis());
-        updates.put(scheduleId1, hour0().plusHours(1).getMillis());
-        updates.put(scheduleId2, hour0().plusHours(1).getMillis());
 
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
-        dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR);
+        dao.deleteMetricsIndexEntries(MetricsTable.ONE_HOUR, hour0().getMillis());
 
-        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR));
+        List<MetricsIndexEntry> index = Lists.newArrayList(dao.findMetricsIndexEntries(MetricsTable.ONE_HOUR,
+            hour0().getMillis()));
         assertEquals(index.size(), 0, "Expected index for " + MetricsTable.ONE_HOUR + " to be empty but found " +
             index);
     }

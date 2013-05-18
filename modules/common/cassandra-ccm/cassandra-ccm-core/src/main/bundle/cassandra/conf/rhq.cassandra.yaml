@@ -342,7 +342,7 @@ native_transport_max_threads: ${rhq.cassandra.native_transport_max_threads}
 
 
 # Whether to start the thrift rpc server.
-start_rpc: false
+start_rpc: ${rhq.cassandra.start_rpc}
 # The address to bind the Thrift RPC service to -- clients connect
 # here. Unlike ListenAddress above, you *can* specify 0.0.0.0 here if
 # you want Thrift to listen on all interfaces.

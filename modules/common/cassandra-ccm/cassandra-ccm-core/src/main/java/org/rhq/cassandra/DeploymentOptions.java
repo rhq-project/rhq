@@ -366,7 +366,7 @@ public class DeploymentOptions {
      * @param startRpc whether the Thrift-based RPC should be started
      */
     public void setStartRpc(Boolean startRpc) {
-        if (startRpc == null) {
+        if (this.startRpc == null) {
             this.startRpc = startRpc;
         }
     }

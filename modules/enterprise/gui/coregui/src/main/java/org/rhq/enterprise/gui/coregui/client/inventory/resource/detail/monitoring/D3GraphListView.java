@@ -112,7 +112,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     }
 
     private void commonConstructorSettings() {
-        graphDateTimeRangeEditor = new GraphDateTimeRangeEditor(measurementUserPrefs);
+        graphDateTimeRangeEditor = new GraphDateTimeRangeEditor(measurementUserPrefs,this);
         setOverflow(Overflow.HIDDEN);
     }
 

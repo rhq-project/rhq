@@ -54,7 +54,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     public AbstractD3GraphListView() {
         super();
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-        graphDateTimeRangeEditor = new GraphDateTimeRangeEditor(measurementUserPrefs);
+        graphDateTimeRangeEditor = new GraphDateTimeRangeEditor(measurementUserPrefs,this);
         startRefreshCycle();
     }
 

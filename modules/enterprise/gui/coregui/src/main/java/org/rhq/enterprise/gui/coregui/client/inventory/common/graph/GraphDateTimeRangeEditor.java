@@ -21,6 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -34,10 +36,12 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
     private JQueryDateTimeRangeEditor graphDateTimeRangeEditor;
     private MeasurementUserPreferences measurementUserPreferences;
+    private AbstractD3GraphListView d3GraphListView;
 
 
-    public GraphDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs) {
+    public GraphDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,AbstractD3GraphListView d3GraphListView) {
         this.measurementUserPreferences = measurementUserPrefs;
+        this.d3GraphListView = d3GraphListView;
         this.graphDateTimeRangeEditor = new JQueryDateTimeRangeEditor();
     }
 
@@ -88,6 +92,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
     public native void attachGraphDateRangeEditorButtonGroupHandlers() /*-{
         console.log("Draw GraphDateTimeRangeEditor");
+        var global = this;
 
         function updateDateDisplay(startDate, endDate ) {
             var formattedDateRange;
@@ -99,6 +104,10 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + ' - ' + endDate.format('MM/DD/YYYY h:mm a');
             }
             $wnd.jQuery('#dateRange').val(formattedDateRange);
+
+            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::changeDateRange(Ljava/lang/Double;Ljava/lang/Double;)(D,D)(new Double(startDate.toString(), new Double(endDate.toString() )));
+            //@todo: fixme
+            //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
         }
 
         function isSameDay(startDate, endDate) {
@@ -113,42 +122,52 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
         var graphDateContext = new $wnd.GraphDateContext($wnd.moment().startOf('day'), $wnd.moment() );
 
-
         $wnd.jQuery("#radioMin").bind('click', function (event) {
-            console.log("minute selected");
+            console.log("Minute selected");
             graphDateContext.startDate = $wnd.moment().startOf('hour');
+            graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext);
         });
         $wnd.jQuery("#radioHour").bind('click', function (event) {
             console.log("Hour selected");
             graphDateContext.startDate = $wnd.moment().startOf('hour');
+            graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioWeek").bind('click', function (event) {
             console.log("Week selected");
             graphDateContext.startDate = $wnd.moment().startOf('week');
+            graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioMonth").bind('click', function (event) {
             console.log("month selected");
             graphDateContext.startDate = $wnd.moment().startOf('month');
+            graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioYear").bind('click', function (event) {
             console.log("year selected");
             graphDateContext.startDate = $wnd.moment().startOf('year');
+            graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
         });
 
         // initially populate
         updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
-        $wnd.jQuery("#radioHour").click();
+        //@todo: fixme
+        //$wnd.jQuery("#radioHour").click();
 
     }-*/;
 
     public native void refreshGraphs() /*-{
-
+        this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::redrawGraphs()();
     }-*/;
+
+
+    public void redrawGraphs(){
+        d3GraphListView.redrawGraphs();
+    }
 
     @Override
     protected void onDraw() {
@@ -179,15 +198,14 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         return measurementUserPreferences.getMetricRangePreferences().begin;
     }
 
-//    public void setStartTime(Long startTime) {
-//        this.startTime = startTime;
-//    }
+    public void changeDateRange(Double startTime, Double endTime){
+        measurementUserPreferences.getMetricRangePreferences().begin = new Long(String.valueOf(startTime));
+        measurementUserPreferences.getMetricRangePreferences().end = new Long(String.valueOf(endTime));
+
+    }
 
     public Long getEndTime() {
         return measurementUserPreferences.getMetricRangePreferences().end;
     }
 
-//    public void setEndTime(Long endTime) {
-//        this.endTime = endTime;
-//    }
 }

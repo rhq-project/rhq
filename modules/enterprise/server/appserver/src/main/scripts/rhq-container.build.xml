@@ -779,11 +779,17 @@ rhq.cassandra.cluster.num-nodes=${rhq.cassandra.cluster.num-nodes}
 rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
 </echo>
 
+<!-- We must use forward slashes when writing paths to a properties files. Properties.load()
+     treats the values as Java Strings so backslashes will be parsed as escapes. --> 
+<path id="path.datadir">
+  <pathelement location="${rhq.dev.data.dir}" />
+</path>
+<pathconvert targetos="unix" property="safe.datadir" refid="path.datadir"/>
+
 <echo file="${project.build.outputDirectory}/bin/rhq-storage.properties" append="true"># storage installer options for dev deployment
-hostname=127.0.0.1
-commitlog=${rhq.dev.data.dir}/storage/commit_log
-data=${rhq.dev.data.dir}/storage/data
-saved-caches=${rhq.dev.data.dir}/storage/saved_caches
+commitlog=${safe.datadir}/storage/commit_log
+data=${safe.datadir}/storage/data
+saved-caches=${safe.datadir}/storage/saved_caches
 heap-size=256M
 heap-new-size=64M
 </echo>

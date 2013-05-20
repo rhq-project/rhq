@@ -146,10 +146,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         cancelButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                if (handlerRegistration != null)
-                    handlerRegistration.removeHandler();
-                // enable the back button
-                ((EnhancedVLayout) getParentElement()).getMember("backButton").setDisabled(false);
+                unregisterHandler();
                 setAlertDefinition(getAlertDefinition()); // reverts data back to original
                 makeViewOnly();
             }
@@ -158,6 +155,15 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         setMembersMargin(10);
         addMember(tabSet);
         addMember(buttons);
+    }
+    
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        if (alertDefinition == null || alertDefinition.getId() == 0) {
+            // disable the back button when creating new definition
+            setBackButtonDisabled(true);
+        }
     }
 
     public AlertDefinition getAlertDefinition() {
@@ -197,8 +203,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         recovery.makeEditable();
         dampening.makeEditable();
 
-        if (handlerRegistration != null)
-            handlerRegistration.removeHandler();
+        unregisterHandler();
         handlerRegistration = addVisibilityChangedHandler(new VisibilityChangedHandler() {
             public void onVisibilityChanged(VisibilityChangedEvent event) {
                 if (!event.getIsVisible()) {
@@ -207,15 +212,13 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
                             if (value) {
                                 save();
                             }
-                            if (handlerRegistration != null)
-                                handlerRegistration.removeHandler();
                         }
                     });
                 }
             }
         });
         // disable the back button
-        ((EnhancedVLayout) getParentElement()).getMember("backButton").setDisabled(true);
+        setBackButtonDisabled(true);
     }
 
     public void makeViewOnly() {
@@ -228,6 +231,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         notifications.makeViewOnly();
         recovery.makeViewOnly();
         dampening.makeViewOnly();
+        setBackButtonDisabled(false);
     }
 
     public void saveAlertDefinition() {
@@ -249,25 +253,36 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
                 new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(final AlertDefinition alertDef) {
-                        if (handlerRegistration != null)
-                            handlerRegistration.removeHandler();
                         setAlertDefinition(alertDef);
-                        // enable the back button
-                        ((EnhancedVLayout) getParentElement()).getMember("backButton").setDisabled(false);
+                        unregisterHandler();
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        if (handlerRegistration != null)
-                            handlerRegistration.removeHandler();
-                        // enable the back button
-                        ((EnhancedVLayout) getParentElement()).getMember("backButton").setDisabled(false);
-
+                        unregisterHandler();
                         // no error handling, the notification is done in the subclasses of AbstractAlertDefinitionsView
                     }
                 });
         } else {
             tabSet.selectTab(generalPropertiesTab);
+        }
+    }
+    
+    private void setBackButtonDisabled(boolean enabled) {
+        Canvas layoutCandidate = getParentElement();
+        if (layoutCandidate instanceof EnhancedVLayout) {
+            EnhancedVLayout parentLayout = (EnhancedVLayout) getParentElement();
+            Canvas backButton = parentLayout.getMember("backButton");
+            if (backButton != null) {
+                backButton.setDisabled(enabled);
+            }
+        }
+    }
+    
+    private void unregisterHandler() {
+        if (handlerRegistration != null) {
+            handlerRegistration.removeHandler();
+            handlerRegistration = null;
         }
     }
 }

@@ -66,8 +66,18 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     @Override
     public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException {
         try {
-            int results = alertDefManager.createAlertDefinitionInNewTransaction(getSessionSubject(), alertDefinition, resourceId, true);
-            return results;
+            int result = alertDefManager.createAlertDefinitionInNewTransaction(getSessionSubject(), alertDefinition, resourceId, true);
+            return result;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public AlertDefinition createAlertDefinitionAndReturn(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException {
+        try {
+            AlertDefinition result = alertDefManager.createAlertDefinitionAndRerurnIt(getSessionSubject(), alertDefinition, resourceId, true);
+            return SerialUtility.prepare(result, "createAlertDefinitionAndReturn");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -77,9 +87,9 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     public AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition,
         boolean resetMatching) throws RuntimeException {
         try {
-            AlertDefinition results = alertDefManager.updateAlertDefinition(getSessionSubject(), alertDefinitionId,
+            AlertDefinition result = alertDefManager.updateAlertDefinition(getSessionSubject(), alertDefinitionId,
                 alertDefinition, resetMatching);
-            return SerialUtility.prepare(results, "updateAlertDefinition");
+            return SerialUtility.prepare(result, "updateAlertDefinition");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

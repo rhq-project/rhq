@@ -140,7 +140,7 @@ public class ConditionEditor extends EnhancedVLayout {
     private AlertCondition existingCondition;
 
     public ConditionEditor(HashSet<AlertCondition> conditions, Map<Integer, AlertCondition> modifiedConditions,
-        SelectItem conditionExpression, ResourceType rtype, Runnable closeFunc, AlertCondition existingCondition) {
+        SelectItem conditionExpression, ResourceType rtype, AlertCondition existingCondition, Runnable closeFunc) {
         super();
         this.editMode = existingCondition != null;
         this.existingCondition = existingCondition;

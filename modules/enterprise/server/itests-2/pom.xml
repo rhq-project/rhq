@@ -645,7 +645,7 @@
 
         <dependency>
           <groupId>org.rhq</groupId>
-          <artifactId>rhq-cassandra-ccm-arquiliian</artifactId>
+          <artifactId>rhq-cassandra-ccm-arquillian</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>

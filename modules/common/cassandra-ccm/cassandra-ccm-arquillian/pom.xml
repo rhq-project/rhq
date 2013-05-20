@@ -9,7 +9,7 @@
     <version>4.8.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>rhq-cassandra-ccm-arquiliian</artifactId>
+  <artifactId>rhq-cassandra-ccm-arquillian</artifactId>
   <name>RHQ Cassandra CCM Arquillian</name>
 
   <dependencies>

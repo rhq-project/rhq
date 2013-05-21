@@ -25,17 +25,16 @@
 
 package org.rhq.cassandra;
 
-import static java.util.Arrays.asList;
 import static org.rhq.core.util.StringUtil.collectionToString;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -49,7 +48,6 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
@@ -60,6 +58,7 @@ public class CassandraClusterManager {
 
     private DeploymentOptions deploymentOptions;
     private List<File> installedNodeDirs = new ArrayList<File>();
+    private Map<Integer, Process> nodeProcessMap = new HashMap<Integer, Process>();
 
     public CassandraClusterManager() {
         this(new DeploymentOptionsFactory().newDeploymentOptions());
@@ -85,8 +84,8 @@ public class CassandraClusterManager {
 
     public List<StorageNode> createCluster() {
         if (log.isDebugEnabled()) {
-            log.debug("Installing embedded " + deploymentOptions.getNumNodes() + " node cluster to " +
-                deploymentOptions.getClusterDir());
+            log.debug("Installing embedded " + deploymentOptions.getNumNodes() + " node cluster to "
+                + deploymentOptions.getClusterDir());
         } else {
             log.info("Installing embedded cluster");
         }
@@ -124,6 +123,7 @@ public class CassandraClusterManager {
                 nodeOptions.load();
                 Deployer deployer = new Deployer();
                 deployer.setDeploymentOptions(nodeOptions);
+
                 deployer.unzipDistro();
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
@@ -141,7 +141,7 @@ public class CassandraClusterManager {
             }
         }
         try {
-            FileUtil.writeFile(new ByteArrayInputStream(new byte[]{0}), installedMarker);
+            FileUtil.writeFile(new ByteArrayInputStream(new byte[] { 0 }), installedMarker);
         } catch (IOException e) {
             log.warn("Failed to write installed file marker to " + installedMarker, e);
         }
@@ -150,14 +150,23 @@ public class CassandraClusterManager {
 
     private Set<String> calculateLocalIPAddresses(int numNodes) {
         Set<String> addresses = new HashSet<String>();
+
         for (int i = 1; i <= numNodes; ++i) {
             addresses.add(getLocalIPAddress(i));
         }
+
         return addresses;
     }
 
     private String getLocalIPAddress(int i) {
-        return "127.0.0." + i;
+        Set<String> addresses = new HashSet<String>();
+        String seeds = deploymentOptions.getSeeds();
+
+        if (null == seeds || seeds.isEmpty()) {
+            return "127.0.0." + i;
+        }
+
+        return seeds.split(",")[i - 1];
     }
 
     private List<StorageNode> calculateNodes() {
@@ -199,6 +208,8 @@ public class CassandraClusterManager {
             ProcessExecutionResults results = startNode(nodeDir);
             if (results.getError() != null) {
                 log.warn("An unexpected error occurred while starting the node at " + nodeDir, results.getError());
+            } else {
+                nodeProcessMap.put(nodeId, results.getProcess());
             }
         }
         long end = System.currentTimeMillis();
@@ -220,7 +231,6 @@ public class CassandraClusterManager {
         }
 
         ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
-        startScriptExe.setArguments(asList("-p", "cassandra.pid"));
         startScriptExe.setWaitForCompletion(0);
 
         ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
@@ -251,7 +261,15 @@ public class CassandraClusterManager {
                     log.warn("No shutdown to perform. " + nodeDir + " does not exist.");
                     continue;
                 }
-                killNode(nodeDir);
+
+                Process nodeProcess = nodeProcessMap.get(nodeId);
+                if (null != nodeProcess) {
+                    try {
+                        nodeProcess.destroy();
+                    } catch (Throwable t) {
+                        log.warn("Failed to kill Cassandra node " + nodeDir, t);
+                    }
+                }
             } catch (Exception e) {
                 log.warn("An error occurred trying to shutdown node at " + nodeDir);
             }
@@ -264,19 +282,6 @@ public class CassandraClusterManager {
             nodeIds.add(i);
         }
         return nodeIds;
-    }
-
-    private void killNode(File nodeDir) throws Exception {
-        long pid = getPid(nodeDir);
-        CLibrary.kill((int) pid, 9);
-    }
-
-    private long getPid(File nodeDir) throws IOException {
-        File binDir = new File(nodeDir, "bin");
-        StringWriter writer = new StringWriter();
-        StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
-
-        return Long.parseLong(writer.getBuffer().toString());
     }
 
 }

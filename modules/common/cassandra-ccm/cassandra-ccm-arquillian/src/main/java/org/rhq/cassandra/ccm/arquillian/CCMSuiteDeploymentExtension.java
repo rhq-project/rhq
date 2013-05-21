@@ -39,6 +39,8 @@ import org.jboss.arquillian.container.spi.event.DeployDeployment;
 import org.jboss.arquillian.container.spi.event.DeploymentEvent;
 import org.jboss.arquillian.container.spi.event.UnDeployDeployment;
 import org.jboss.arquillian.container.spi.event.container.AfterStart;
+import org.jboss.arquillian.container.spi.event.container.AfterStop;
+import org.jboss.arquillian.container.spi.event.container.BeforeStart;
 import org.jboss.arquillian.container.spi.event.container.BeforeStop;
 import org.jboss.arquillian.container.test.impl.client.deployment.event.GenerateDeployment;
 import org.jboss.arquillian.core.api.Event;
@@ -75,21 +77,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
         private Class<?> deploymentClass;
         private DeploymentScenario suiteDeploymentScenario;
-
         private CassandraClusterManager ccm;
-
-        public SuiteDeployer() {
-            File basedir = new File("target");
-            File clusterDir = new File(basedir, "cassandra");
-
-            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
-            DeploymentOptions options = factory.newDeploymentOptions();
-            options.setClusterDir(clusterDir.getAbsolutePath());
-            options.setUsername("cassandra");
-            options.setPassword("cassandra");
-
-            ccm = new CassandraClusterManager(options);
-        }
 
         @Inject
         @ClassScoped
@@ -102,29 +90,12 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
         private Event<GenerateDeployment> generateDeploymentEvent;
 
         @Inject
-        // Active some form of ClassContext around our deployments due to assumption bug in AS7 extension.
+        // Active some form of ClassContext around our deployments due to assumption bug in AS7 extension.  
         private Instance<ClassContext> classContext;
 
         public void startup(@Observes(precedence = -100)
         ManagerStarted event, ArquillianDescriptor descriptor) {
             deploymentClass = getDeploymentClass(descriptor);
-
-            List<StorageNode> nodes = ccm.createCluster();
-            ccm.startCluster(false);
-            try {
-                ClusterInitService clusterInitService = new ClusterInitService();
-                clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 5);
-
-                SchemaManager schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
-                if (!schemaManager.schemaExists()) {
-                    schemaManager.createSchema();
-                }
-                schemaManager.updateSchema();
-                schemaManager.shutdown();
-            } catch (Exception e) {
-                ccm.shutdownCluster();
-                throw new RuntimeException("Cassandra cluster initialization failed", e);
-            }
 
             executeInClassScope(new Callable<Void>() {
                 public Void call() throws Exception {
@@ -135,20 +106,79 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
             });
         }
 
+        public void initCassandra(@Observes(precedence = -100)
+        final BeforeStart event, ArquillianDescriptor descriptor) {
+
+            executeInClassScope(new Callable<Void>() {
+                public Void call() throws Exception {
+
+                    SchemaManager schemaManager;
+
+                    if (!Boolean.valueOf(System.getProperty("itest.use-external-storage-node", "false"))) {
+
+                        DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
+                        DeploymentOptions options = factory.newDeploymentOptions();
+                        File basedir = new File("target");
+                        File clusterDir = new File(basedir, "cassandra");
+
+                        options.setUsername("cassandra");
+                        options.setPassword("cassandra");
+                        options.setClusterDir(clusterDir.getAbsolutePath());
+
+                        ccm = new CassandraClusterManager(options);
+                        List<StorageNode> nodes = ccm.createCluster();
+
+                        ccm.startCluster(false);
+
+                        try {
+                            ClusterInitService clusterInitService = new ClusterInitService();
+                            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 5);
+                            schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
+
+                        } catch (Exception e) {
+                            if (null != ccm) {
+                                ccm.shutdownCluster();
+                            }
+                            throw new RuntimeException("Cassandra cluster initialization failed", e);
+                        }
+                    } else {
+                        try {
+                            String seed = System.getProperty("rhq.cassandra.seeds", "127.0.0.1|7199|9042");
+                            schemaManager = new SchemaManager("cassandra", "cassandra", seed);
+
+                        } catch (Exception e) {
+                            throw new RuntimeException("External Cassandra initialization failed", e);
+                        }
+                    }
+
+                    try {
+                        if (!schemaManager.schemaExists()) {
+                            schemaManager.createSchema();
+                        }
+                        schemaManager.updateSchema();
+                        schemaManager.shutdown();
+
+                    } catch (Exception e) {
+                        if (null != ccm) {
+                            ccm.shutdownCluster();
+                        }
+                        throw new RuntimeException("Cassandra schema initialization failed", e);
+                    }
+
+                    return null;
+                }
+            });
+        }
+
         public void deploy(@Observes
         final AfterStart event, final ContainerRegistry registry) {
             executeInClassScope(new Callable<Void>() {
                 public Void call() throws Exception {
-                    try {
-                        for (Deployment d : suiteDeploymentScenario.deployments()) {
-                            deploymentEvent.fire(new DeployDeployment(findContainer(registry,
-                                event.getDeployableContainer()), d));
-                        }
-                        return null;
-                    } catch (Exception e) {
-                        ccm.shutdownCluster();
-                        throw e;
+                    for (Deployment d : suiteDeploymentScenario.deployments()) {
+                        deploymentEvent.fire(new DeployDeployment(findContainer(registry,
+                            event.getDeployableContainer()), d));
                     }
+                    return null;
                 }
             });
         }
@@ -164,12 +194,25 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                     return null;
                 }
             });
-            ccm.shutdownCluster();
+        }
+
+        public void shutdownCassandra(@Observes
+        final AfterStop event, ArquillianDescriptor descriptor) {
+            executeInClassScope(new Callable<Void>() {
+                public Void call() throws Exception {
+
+                    if (null != ccm) {
+                        ccm.shutdownCluster();
+                    }
+
+                    return null;
+                }
+            });
         }
 
         public void overrideBefore(@Observes
         EventContext<BeforeClass> event) {
-            // Don't continue TestClass's BeforeClass context as normal.
+            // Don't continue TestClass's BeforeClass context as normal. 
             // No DeploymentGeneration or Deploy will take place.
 
             classDeploymentScenario.set(suiteDeploymentScenario);
@@ -177,7 +220,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
         public void overrideAfter(@Observes
         EventContext<AfterClass> event) {
-            // Don't continue TestClass's AfterClass context as normal.
+            // Don't continue TestClass's AfterClass context as normal. 
             // No UnDeploy will take place.
         }
 

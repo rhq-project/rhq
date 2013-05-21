@@ -1171,9 +1171,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 // Find the parent resource entity
                 parentResource = entityManager.find(Resource.class, parentId);
             }
-            // if the parent exists, create the parent-child relationship
+            // if the parent exists, create the parent-child relationship and add it to the map
             if (null != parentResource) {
                 parentResource.addChildResource(resource);
+                parentMap.put(parentId, parentResource);
             }
         }
 
@@ -1192,23 +1193,56 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         resource.setItime(System.currentTimeMillis());
         resource.setModifiedBy(overlord.getName());
 
-        // Ensure the new resource has the proper inventory status
-        if ((null != parentResource)
-            && (parentResource.getInventoryStatus() == InventoryStatus.COMMITTED)
-            && ((resource.getResourceType().getCategory() == ResourceCategory.SERVICE) || (parentResource
-                .getResourceType().getCategory() == ResourceCategory.SERVER))) {
-
-            // Auto-commit services whose parent resources have already been imported by the user
-            resource.setInventoryStatus(InventoryStatus.COMMITTED);
-
-        } else {
-            resource.setInventoryStatus(InventoryStatus.NEW);
-        }
+        setInventoryStatus(parentResource, resource);
 
         // Extend implicit (recursive) group membership of the parent to the new child
         if (null != parentResource) {
             groupManager.updateImplicitGroupMembership(overlord, resource);
         }
+    }
+
+    // Resources are set to either NEW or COMMITTED
+    // We autocommit in the following scenarios:
+    // - The parent resource is not a platform and is already committed
+    // - The resource is a platform and has an RHQ Storage Node child
+    // - The resource is an RHQ Storage Node child
+    // Ensure the new resource has the proper inventory status
+    private void setInventoryStatus(Resource parentResource, Resource resource) {
+        // never autocommit a platform
+        if (null == parentResource) {
+            resource.setInventoryStatus(InventoryStatus.NEW);
+            return;
+        }
+
+        ResourceType resourceType = resource.getResourceType();
+        boolean isParentCommitted = InventoryStatus.COMMITTED == parentResource.getInventoryStatus();
+        boolean isService = ResourceCategory.SERVICE == resourceType.getCategory();
+        boolean isParentServer = ResourceCategory.SERVER == parentResource.getResourceType().getCategory();
+
+        // always autocommit non-top-level-server children of committed parents
+        if (isParentCommitted && (isService || isParentServer)) {
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            return;
+        }
+
+        // always autocommit top-level-server if it's an RHQ Storage Node (and the platform, if necessary)
+        boolean isStorageNodePlugin = "RHQStorage".equals(resourceType.getPlugin());
+        boolean isStorageNode = (isStorageNodePlugin && "RHQ Storage Node".equals(resourceType.getName()));
+
+        if (isStorageNode) {
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+
+            if (!isParentCommitted) {
+                parentResource.setInventoryStatus(InventoryStatus.COMMITTED);
+            }
+
+            return;
+        }
+
+        // otherwise, set NEW
+        resource.setInventoryStatus(InventoryStatus.NEW);
+
+        return;
     }
 
     public void importResources(Subject subject, int[] resourceIds) {

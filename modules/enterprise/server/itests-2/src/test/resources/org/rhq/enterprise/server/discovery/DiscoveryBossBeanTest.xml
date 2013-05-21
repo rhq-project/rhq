@@ -56,12 +56,34 @@
                        plugin="DiscoveryBossBeanTest-test"
                        deleted="0"/>
 
+    <rhq_resource_type id="15651"
+                       name="DiscoveryBossBeanTest-test storage platform"
+                       category="PLATFORM"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="1"
+                       singleton="0"
+                       plugin="RHQStorage"
+                       deleted="0"/>
+    <rhq_resource_type id="15652"
+                       name="RHQ Storage Node"
+                       category="SERVER"
+                       creation_data_type="CONFIGURATION"
+                       create_delete_policy="BOTH"
+                       supports_manual_add="1"
+                       singleton="1"
+                       plugin="RHQStorage"
+                       deleted="0"/>
+
     <rhq_resource_type_parents resource_type_id="15642"
                                parent_resource_type_id="15641"/>
     <rhq_resource_type_parents resource_type_id="15643"
                                parent_resource_type_id="15642"/>
     <rhq_resource_type_parents resource_type_id="15644"
                                parent_resource_type_id="15642"/>
+                               
+    <rhq_resource_type_parents resource_type_id="15652"
+                               parent_resource_type_id="15651"/>
 
     <rhq_process_scan/>
     <rhq_event_def/>
@@ -88,11 +110,23 @@
     <rhq_plugin id="15641"
                 deployment="AGENT"
                 name="DiscoveryBossBeanTest-test"
-                display_name="test"
+                display_name="DiscoveryBossBeanTest-test"
                 enabled="1"
                 status="INSTALLED"
                 path="/plugins/test.jar"
                 md5="1234567"
                 ctime="12345"
                 mtime="123456"/>
+                
+    <rhq_plugin id="15651"
+                deployment="AGENT"
+                name="RHQStorage"
+                display_name="DiscoveryBossBeanTest-RHQStorage"
+                enabled="1"
+                status="INSTALLED"
+                path="/plugins/test.jar"
+                md5="1234567"
+                ctime="12345"
+                mtime="123456"/>
+                
 </dataset>

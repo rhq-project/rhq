@@ -280,7 +280,7 @@
                                             self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
                                             username = project.getProperty('rhq.dev.cassandra.username') ?: "cassandra"
                                             password = project.getProperty('rhq.dev.cassandra.password') ?: "cassandra"
-                                            seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|9160|9142"
+                                            seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7199|9142"
 
                                             schemaManager = new SchemaManager(username, password, seeds)
                                             schemaManager.resetSchema()

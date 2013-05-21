@@ -98,6 +98,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     private ResourceType serviceType2;
 
+    private ResourceType storagePlatformType;
+
+    private ResourceType storageServerType;
+
     private Agent agent;
 
     private TestServerCommunicationsService agentServiceContainer;
@@ -116,6 +120,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         serviceType1 = getEntityManager().find(ResourceType.class, 15643);
         serviceType2 = getEntityManager().find(ResourceType.class, 15644);
         agent = getEntityManager().find(Agent.class, 15641);
+
+        storagePlatformType = getEntityManager().find(ResourceType.class, 15651);
+        storageServerType = getEntityManager().find(ResourceType.class, 15652);
 
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.discoveryService = Mockito.mock(DiscoveryAgentService.class);
@@ -454,6 +461,39 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assertEquals(platformSyncInfo.getChildSyncInfos().size(), 0); // notice there are no server children now
     }
 
+    @Test(groups = "integration.ejb3")
+    public void testAutoImportStorageNode() throws Exception {
+
+        // create an inventory report for a storage node
+        InventoryReport inventoryReport = new InventoryReport(agent);
+
+        Resource storagePlatform = new Resource(prefix("storagePlatform"), prefix("storagePlatform"),
+            storagePlatformType);
+        storagePlatform.setUuid(String.valueOf(new Random().nextInt()));
+
+        Resource storageNode = new Resource(prefix("storageNode"), prefix("storageNode"), storageServerType);
+        storageNode.setUuid(String.valueOf(new Random().nextInt()));
+        storagePlatform.addChildResource(storageNode);
+
+        inventoryReport.addAddedRoot(storagePlatform);
+
+        // Merge this inventory report
+        MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert mergeResults != null;
+        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored";
+        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        assert platformSyncInfo != null;
+
+        // Check merge result
+        assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getInventoryStatus());
+        assertEquals(storagePlatform.getChildResources().size(), platformSyncInfo.getChildSyncInfos().size());
+
+        storageNode = resourceManager.getResourceById(subjectManager.getOverlord(), platformSyncInfo
+            .getChildSyncInfos().iterator().next().getId());
+        assertNotNull(storageNode);
+        assertEquals(InventoryStatus.COMMITTED, storageNode.getInventoryStatus());
+    }
+
     /**
      * Use this to fake like your remoting objects. Can be used to keep your own copy of objects locally transient.
      *
@@ -500,8 +540,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
             Query q;
             List<?> doomed;
-            q = em.createQuery("SELECT r FROM Resource r WHERE r.resourceType.name LIKE '" + getPrefix()
-                + "%' ORDER BY r.id DESC");
+            q = em.createQuery("" //
+                + "SELECT r FROM Resource r" //
+                + "    WHERE r.resourceType.name LIKE '" + getPrefix() + "%'" //
+                + "       OR r.resourceType.name = 'RHQ Storage Node'" //
+                + " ORDER BY r.id DESC");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 Resource res = em.getReference(Resource.class, ((Resource) removeMe).getId());

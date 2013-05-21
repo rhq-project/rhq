@@ -143,6 +143,7 @@
            <module>script</module>
            <module>iis</module>
            <module>cassandra</module>
+           <module>rhq-storage</module>
         </modules>
     </profile>
 

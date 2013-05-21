@@ -25,12 +25,15 @@
 
 package org.rhq.enterprise.server.cloud;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
 import javax.persistence.Query;
+import javax.transaction.Transaction;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -46,6 +49,7 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -57,11 +61,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
     private StorageNodeManagerLocal nodeManager;
+    private ResourceTypeManagerLocal typeManager;
     private Subject overlord;
+    private static final String TEST_PREFIX = "test-";
 
     @Override
     protected void beforeMethod() throws Exception {
         nodeManager = LookupUtil.getStorageNodeManager();
+        typeManager = LookupUtil.getResourceTypeManager();
         overlord = LookupUtil.getSubjectManager().getOverlord();
     }
 
@@ -75,36 +82,55 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
                 @Override
                 public void execute() throws Exception {
-                    System.setProperty(cassandraSeedsProperty,
-                        "testhost|123|123,hostWithNoFoundResource|987|987,secondHostWithNoFoundResource|123|123");
-
-                    String testHostName = "testhost";
+                    String testHostName = TEST_PREFIX + "hostname";
+                    List<String> addresses = Arrays.asList(testHostName, TEST_PREFIX + "hostWithNoFoundResource",
+                        TEST_PREFIX + "secondHostWithNoFoundResource");
+                    System.setProperty(cassandraSeedsProperty, addresses.get(0) + "|123|123," + addresses.get(1)
+                        + "|987|987," + addresses.get(2) + "|123|123");
 
                     cleanDatabase();
 
-                    ResourceType testResourceType = createResourceType();
+                    // create the resource type if it doesn't exist
+                    ResourceType testResourceType = typeManager.getResourceTypeByNameAndPlugin("RHQ Storage Node",
+                        "RHQStorage");
+                    if (testResourceType == null) {
+                        testResourceType = createResourceType();
+                    }
                     Resource testResource = createResource(testResourceType, testHostName);
 
+                    // finds the storage nodes and pairs them w/ the associated resources
                     nodeManager.scanForStorageNodes();
 
+                    // get the storage nodes and checks some properties on them
                     List<StorageNode> storageNodes = nodeManager.getStorageNodes();
-                    Assert.assertEquals(storageNodes.size(), 3);
+                    Assert.assertNotNull(storageNodes, "The list of storage nodes shouldn't be null.");
+                    Assert.assertFalse(storageNodes.isEmpty(), "The list of storage nodes shouldn't be empty.");
+                    Assert.assertTrue(storageNodes.size() >= addresses.size(),
+                        "The size of the list of storage nodes should be at least " + addresses.size());
 
+                    List<String> obtainedAddresses = new ArrayList<String>(storageNodes.size());
                     for (StorageNode storageNode : storageNodes) {
-                        Assert.assertNotNull(storageNode.getAddress());
+                        Assert.assertNotNull(storageNode.getAddress(), "Address of storage node cannot be null.");
+                        obtainedAddresses.add(storageNode.getAddress());
                         if (storageNode.getAddress().equals(testHostName)) {
-                            Assert.assertNotNull(storageNode.getResource());
                             Assert.assertEquals(storageNode.getResource().getId(), testResource.getId());
+                            Assert.assertNotNull(storageNode.getResource(), "Associated resource cannot be null.");
                         } else {
-                            Assert.assertNull(storageNode.getResource());
+                            Assert.assertNull(storageNode.getResource(),
+                                "The resource field should be null at this point.");
                         }
-
                     }
 
-                    cleanDatabase();
+                    Assert.assertTrue(obtainedAddresses.containsAll(addresses),
+                        "There are some storage nodes that should be created but were not discovered and returned."
+                            + " The storage nodes that should be returned: " + addresses
+                            + "  The storage nodes that were returned: " + obtainedAddresses
+                            + "  (the second should be a super-set (not necessarily strict) of the first.)");
+
                 }
             });
         } finally {
+            cleanDatabase();
             System.setProperty(cassandraSeedsProperty, originalSeedValue);
         }
     }
@@ -145,7 +171,8 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
                 StorageNodeCriteria criteria = new StorageNodeCriteria();
                 criteria.addFilterAddress(prefix);
-                criteria.addSortAddress(PageOrdering.DESC); // use DESC just to make sure sorting on name is different than insert order
+                // use DESC just to make sure sorting on name is different than insert order
+                criteria.addSortAddress(PageOrdering.DESC);
                 PageList<StorageNode> list = nodeManager.findStorageNodesByCriteria(overlord, criteria);
 
                 assertTrue("The number of found storage nodes should be " + storageNodeCount + ". Was: " + list.size(),
@@ -159,7 +186,8 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
                 String prevAddress = null;
                 for (StorageNode s : list) {
-                    assert null == prevAddress || s.getAddress().compareTo(prevAddress) < 0 : "Results should be sorted by address DESC, something is out of order";
+                    assert null == prevAddress || s.getAddress().compareTo(prevAddress) < 0 : "Results should be"
+                        + "sorted by address DESC, something is out of order";
                     prevAddress = s.getAddress();
                     nodeAddresses.remove(s.getAddress());
                 }
@@ -172,22 +200,37 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void cleanDatabase() throws Exception {
-        Query query = getEntityManager().createQuery("DELETE from StorageNode");
+        // this method is still needed, because tests calls SLSB methods that are executed in their own transaction
+        // and the  rollback performed once the TransactionCallback is finished just wont clean everything
+
+        // pause the currently running TX
+        Transaction runningTransaction = getTransactionManager().suspend();
+        getTransactionManager().begin();
+
+        Query query = getEntityManager().createQuery("DELETE FROM StorageNode s WHERE s.address LIKE (:prefix || '%')")
+            .setParameter("prefix", TEST_PREFIX);
+
         query.executeUpdate();
 
-        query = getEntityManager().createQuery("DELETE from Availability");
+        // perhaps this could be restricted by resouce ids as well not to delete all the table with existing data
+        query = getEntityManager().createQuery("DELETE FROM Availability");
         query.executeUpdate();
 
-        query = getEntityManager().createQuery("DELETE from Resource");
+        query = getEntityManager().createQuery("DELETE FROM Resource r WHERE r.resourceKey LIKE (:prefix || '%')")
+            .setParameter("prefix", TEST_PREFIX);
         query.executeUpdate();
 
-        query = getEntityManager().createQuery("DELETE from ResourceType r WHERE r.name = :name").setParameter(
+        query = getEntityManager().createQuery("DELETE FROM ResourceType rt WHERE rt.name = :name").setParameter(
             "name", "Cassandra Daemon");
         query.executeUpdate();
+        getTransactionManager().commit();
+
+        // resume the currently running TX
+        getTransactionManager().resume(runningTransaction);
     }
 
     private ResourceType createResourceType() throws Exception {
-        ResourceType resourceType = new ResourceType("Cassandra Daemon", "Cassandra", ResourceCategory.SERVER, null);
+        ResourceType resourceType = new ResourceType("RHQ Storage Node", "RHQStorage", ResourceCategory.SERVER, null);
         ConfigurationDefinition pluginConfigurationDefinition = new ConfigurationDefinition("config", null);
         pluginConfigurationDefinition.put(new PropertyDefinitionSimple("host", null, true, PropertySimpleType.STRING));
         resourceType.setPluginConfigurationDefinition(pluginConfigurationDefinition);
@@ -197,10 +240,11 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
     }
 
     private Resource createResource(ResourceType resourceType, String host) throws Exception {
-        Resource resource = new Resource("CassandraDaemon", "CassandraDaemon (testhost)", resourceType);
+        Resource resource = new Resource(TEST_PREFIX + "CassandraDaemon", TEST_PREFIX + "CassandraDaemon", resourceType);
         resource.setUuid(UUID.randomUUID().toString());
         resource.getPluginConfiguration().setSimpleValue("host", host);
         getEntityManager().persist(resource);
+        getEntityManager().flush();
 
         return resource;
     }

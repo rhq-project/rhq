@@ -67,8 +67,8 @@ public final class CriteriaQueryGenerator {
     private static final Log LOG = LogFactory.getLog(CriteriaQueryGenerator.class);
 
     public enum AuthorizationTokenType {
-        RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking 
-        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking 
+        RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking
+        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
     }
 
     private Criteria criteria;
@@ -333,8 +333,8 @@ public final class CriteriaQueryGenerator {
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
 
         if (countQuery == false) {
-            /* 
-             * don't fetch in the count query to avoid: "query specified join fetching, 
+            /*
+             * don't fetch in the count query to avoid: "query specified join fetching,
              * but the owner of the fetched association was not present in the select list"
              */
             for (String fetchField : getFetchFields(criteria)) {
@@ -383,7 +383,7 @@ public final class CriteriaQueryGenerator {
 
             /*
              * do not prefix the alias when:
-             * 
+             *
              *    1) if the suffix is numerical, which allows us to sort by column ordinal
              *    2) if the user wants full control and has explicitly chosen to disable alias prepending
              */
@@ -655,7 +655,7 @@ public final class CriteriaQueryGenerator {
         } catch (RuntimeException re) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
                 + ThrowableUtil.getAllMessages(re, true));
-            throw re; // don't wrap exceptions that are already RuntimeExceptions in another RuntimeException 
+            throw re; // don't wrap exceptions that are already RuntimeExceptions in another RuntimeException
         } catch (Exception e) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
                 + ThrowableUtil.getAllMessages(e, true));
@@ -694,7 +694,7 @@ public final class CriteriaQueryGenerator {
             Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
             persistentBagFields.add(field);
         } catch (NoSuchFieldException e) {
-            LOG.warn("Failed to add persistent bag collection.", e);
+            LOG.warn("Failed to add persistent bag collection on class [" + criteria.getPersistentClass().getName() +"]: ", e);
         }
     }
 
@@ -703,7 +703,7 @@ public final class CriteriaQueryGenerator {
             Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
             joinFetchFields.add(field);
         } catch (NoSuchFieldException e) {
-            LOG.warn("Failed to add join fetch field.", e);
+            LOG.warn("Failed to add join fetch field on class [" + criteria.getPersistentClass().getName() + "]: ", e);
         }
     }
 
@@ -741,7 +741,7 @@ public final class CriteriaQueryGenerator {
 
     /**
      * The groupBy clause can be set if and only if the projection is altered.  The passed argument should not be
-     * prefixed with 'group by'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * prefixed with 'group by'; that part of the query will be auto-generated if the argument is non-null.  The
      * new projection must follow standard rules as they apply to statements with groupBy clauses.
      */
     public void setGroupByClause(String groupByClause) {
@@ -753,7 +753,7 @@ public final class CriteriaQueryGenerator {
 
     /**
      * The having clause can be set if and only if the groupBy clause is set.  The passed argument should not be
-     * prefixed with 'having'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * prefixed with 'having'; that part of the query will be auto-generated if the argument is non-null.  The
      * having clause must follow standard rules as they apply to statements with groupBy clauses.
      */
     public void setHavingClause(String havingClause) {

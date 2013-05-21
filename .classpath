@@ -248,6 +248,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-beanutils/commons-beanutils/1.7.0/commons-beanutils-1.7.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/taglibs/standard/1.1.2/standard-1.1.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-common-core/2.2.17.GA/jboss-common-core-2.2.17.GA.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/logging/jboss-logging/3.1.2.GA/jboss-logging-3.1.2.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/javax/servlet/jstl/1.1.2/jstl-1.1.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/struts-menu/struts-menu/2.3/struts-menu-2.3.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/junit/junit/3.8.2/junit-3.8.2.jar"/>

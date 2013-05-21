@@ -30,6 +30,7 @@ import com.jayway.restassured.response.Response;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.CreateCBRRequest;
+import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -40,6 +41,8 @@ import static org.hamcrest.Matchers.isOneOf;
  * @author Heiko W. Rupp
  */
 public class ContentTest extends AbstractBase {
+
+    private static final String DEPLOYED_WAR_NAME = "test-simple.war";
 
     @Test
     public void testUpload() throws Exception {
@@ -144,6 +147,8 @@ public class ContentTest extends AbstractBase {
     @Test
     public void testCreatePackageBasedResource() throws Exception {
 
+        wipeWarArchiveIfNecessary();
+
         InputStream in =
             getClass().getClassLoader().getResourceAsStream("test-simple.war");
 
@@ -187,7 +192,7 @@ public class ContentTest extends AbstractBase {
 
         assert resources.size()>0;
 
-        int as7Id = Integer.valueOf((String)resources.get(0).get("resourceId"));
+        int as7Id = (Integer)resources.get(0).get("resourceId");
         int createdResourceId=-1;
 
         // create child of eap6 as deployment
@@ -203,7 +208,7 @@ public class ContentTest extends AbstractBase {
 
             // set plugin config (path) and deploy config (runtime-name)
             resource.getPluginConfig().put("path","deployment");
-            resource.getResourceConfig().put("runtimeName","test-simple.war");
+            resource.getResourceConfig().put("runtimeName", DEPLOYED_WAR_NAME);
 
             Response response =
             given()
@@ -283,6 +288,34 @@ public class ContentTest extends AbstractBase {
 
         }
 
+    }
+
+
+    private void wipeWarArchiveIfNecessary() {
+
+        @SuppressWarnings("unchecked")
+        List<Resource> resources =
+        given()
+            .queryParam("q",DEPLOYED_WAR_NAME)
+            .queryParam("category", "SERVICE")
+            .header(acceptJson)
+        .expect()
+            .log().everything()
+        .when()
+            .get("/resource")
+        .as(List.class);
+
+        if (resources!=null && resources.size()>0) {
+            int resourceId = resources.get(0).getResourceId();
+
+            given()
+                .pathParam("id", resourceId)
+                .queryParam("physical", "true") // Also remove target on the EAP instance
+            .expect()
+                .statusCode(200)
+            .when()
+                .delete("/resource/{id}");
+        }
     }
 
     @Test

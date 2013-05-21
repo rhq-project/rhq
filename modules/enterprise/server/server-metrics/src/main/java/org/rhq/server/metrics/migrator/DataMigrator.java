@@ -314,7 +314,7 @@ public class DataMigrator {
     private ExistingDataSource getExistingDataSource(EntityManager entityManager, String query, Task task) {
 
         if (Task.Migrate.equals(task)) {
-            if (this.databaseType == DatabaseType.Oracle) {
+            if (DatabaseType.Oracle.equals(this.databaseType)) {
                 return new ScrollableDataSource(entityManager, query);
             } else {
                 if (!experimentalDataSource) {
@@ -326,7 +326,7 @@ public class DataMigrator {
         } else if (Task.Estimate.equals(task)) {
             int limit = MAX_RECORDS_TO_LOAD_FROM_SQL * (NUMBER_OF_BATCHES_FOR_ESTIMATION + 1);
 
-            if (this.databaseType == DatabaseType.Oracle) {
+            if (DatabaseType.Oracle.equals(this.databaseType)) {
                 return new ScrollableDataSource(entityManager, query, limit);
             } else {
                 if (!experimentalDataSource) {
@@ -338,6 +338,16 @@ public class DataMigrator {
         }
 
         return new ScrollableDataSource(entityManager, query);
+    }
+
+    private void prepareSQLSession(StatelessSession session) {
+        if (DatabaseType.Postgres.equals(this.databaseType)) {
+            log.debug("Preparing SQL connection with timeout: " + SQL_TIMEOUT);
+
+            org.hibernate.Query query = session.createSQLQuery("SET LOCAL statement_timeout = " + SQL_TIMEOUT);
+            query.setReadOnly(true);
+            query.executeUpdate();
+        }
     }
 
     private enum Task {
@@ -420,6 +430,7 @@ public class DataMigrator {
         @Override
         public long estimate() throws Exception {
             long recordCount = this.getRowCount(this.countQuery);
+            log.debug("Retrieved record count for table " + metricsTable.toString() + " -- " + recordCount);
 
             Telemetry telemetry = this.performMigration(Task.Estimate);
             long estimatedTimeToMigrate = telemetry.getMigrationTime();
@@ -443,9 +454,12 @@ public class DataMigrator {
             StatelessSession session = ((org.hibernate.Session) entityManager.getDelegate())
                 .getSessionFactory().openStatelessSession();
 
+            prepareSQLSession(session);
+
             org.hibernate.Query query = session.createSQLQuery(countQuery);
             query.setReadOnly(true);
             query.setTimeout(SQL_TIMEOUT);
+
 
             return Long.parseLong(query.uniqueResult().toString());
         }
@@ -596,7 +610,11 @@ public class DataMigrator {
             long recordCount = 0;
             for (String table : getRawDataTables()) {
                 String countQuery = String.format(MigrationQuery.COUNT_RAW.toString(), table);
-                recordCount += this.getRowCount(countQuery);
+                long tableRecordCount = this.getRowCount(countQuery);
+
+                log.debug("Retrieved record count for table " + table + " -- " + tableRecordCount);
+
+                recordCount += tableRecordCount;
             }
 
             Telemetry telemetry = this.performMigration(Task.Estimate);
@@ -615,6 +633,8 @@ public class DataMigrator {
         private long getRowCount(String countQuery) {
             StatelessSession session = ((org.hibernate.Session) entityManager.getDelegate()).getSessionFactory()
                 .openStatelessSession();
+
+            prepareSQLSession(session);
 
             org.hibernate.Query query = session.createSQLQuery(countQuery);
             query.setReadOnly(true);

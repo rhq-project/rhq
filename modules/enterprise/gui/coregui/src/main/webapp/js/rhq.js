@@ -124,9 +124,4 @@ GraphDateContext = function (startDate, endDate){
     this.endDate = endDate;
 };
 
-function brushed() {
-    x.domain(brush.empty() ? x2.domain() : brush.extent());
-    focus.select("path").attr("d", area);
-    focus.select(".x.axis").call(xAxis);
-}
 

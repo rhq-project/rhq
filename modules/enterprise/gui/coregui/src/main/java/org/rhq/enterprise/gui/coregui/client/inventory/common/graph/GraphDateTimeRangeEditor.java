@@ -67,7 +67,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 "                    <span class=\"btn-group\" data-toggle=\"buttons-radio\">\n" +
                 "                        <button id=\"radioMin\" type=\"button\" class=\"btn \" >Min</button>\n" +
                 "                        <button id=\"radioHour\" type=\"button\" class=\"btn \">Hour</button>\n" +
-                "                        <button id=\"radioWeek\" type=\"button\" class=\"btn \">Week</button>\n" +
+                "                        <button id=\"radioDay\" type=\"button\" class=\"btn \">Day</button>\n" +
                 "                        <button id=\"radioMonth\" type=\"button\" class=\"btn \">Month</button>\n" +
                 "                        <button id=\"radioYear\" type=\"button\" class=\"btn \">Year</button>\n" +
                 "                    </span>\n" +
@@ -104,7 +104,9 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + ' - ' + endDate.format('MM/DD/YYYY h:mm a');
             }
             $wnd.jQuery('#dateRange').val(formattedDateRange);
+        }
 
+        function saveDateRange(startDate, endDate){
             global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::changeDateRange(Ljava/lang/Double;Ljava/lang/Double;)(D,D)(new Double(startDate.toString(), new Double(endDate.toString() )));
             //@todo: fixme
             //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
@@ -126,7 +128,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             console.log("Minute selected");
             graphDateContext.startDate = $wnd.moment().startOf('hour');
             graphDateContext.endDate = $wnd.moment();
-            updateDateDisplay(graphDateContext);
+            updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioHour").bind('click', function (event) {
             console.log("Hour selected");
@@ -134,8 +136,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
         });
-        $wnd.jQuery("#radioWeek").bind('click', function (event) {
-            console.log("Week selected");
+        $wnd.jQuery("#radioDay").bind('click', function (event) {
+            console.log("Day selected");
             graphDateContext.startDate = $wnd.moment().startOf('week');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
@@ -155,8 +157,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
         // initially populate
         updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
-        //@todo: fixme
-        //$wnd.jQuery("#radioHour").click();
+        $wnd.jQuery("#radioHour").click();
 
     }-*/;
 

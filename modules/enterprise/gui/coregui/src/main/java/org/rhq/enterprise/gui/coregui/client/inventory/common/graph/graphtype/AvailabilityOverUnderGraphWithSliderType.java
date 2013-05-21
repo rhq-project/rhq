@@ -179,7 +179,7 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                                     STRADDLE = -5,
                                     offset;
 
-                            if (d.availType === 'DOWN') {
+                            if (d.availType === 'DOWN'){
                                 offset = BELOW;
                             }
                             else if (d.availType === 'DISABLED') {
@@ -292,6 +292,48 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                         .attr("fill", "#50505a")
                         .style("text-anchor", "end")
                         .text(availChartContext.chartDownLabel);
+
+                var brush = $wnd.d3.svg.brush()
+                        .x(timeScale)
+                        .extent([1369033200, 1369084807])
+                        .on("brushstart", brushstart)
+                        .on("brush", brushmove)
+                        .on("brushend", brushend);
+
+                var arc = $wnd.d3.svg.arc()
+                        .outerRadius(30 / 2)
+                        .startAngle(0)
+                        .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
+
+                var brushg = svg.append("g")
+                        .attr("class", "brush")
+                        .call(brush);
+
+                brushg.selectAll(".resize").append("path")
+                        .attr("transform", "translate(0," +  height / 2 + ")")
+                        .attr("d", arc);
+
+                brushg.selectAll("rect")
+                        .attr("height", height);
+
+                brushstart();
+                brushmove();
+
+                function brushstart() {
+                    svg.classed("selecting", true);
+                }
+
+                function brushmove() {
+                    var s = brush.extent();
+                    //circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
+                    console.log("Move start: "+s[0] + "Move End: "+ s[1]);
+                }
+
+                function brushend() {
+                    var s = brush.extent();
+                    svg.classed("selecting", !d3.event.target.empty());
+                    console.log("End start: "+s[0] + "End End: "+ s[1]);
+                }
 
             }
 

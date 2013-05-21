@@ -119,7 +119,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                 String[] jmxPortArg = arg.split("=");
                 jmxPort = jmxPortArg[1];
             }
-            if (arg.startsWith("-cp")) {
+            if (arg.startsWith("-cp") || (arg.startsWith("-classpath"))) {
                 classpathIndex = i;
             }
 
@@ -130,7 +130,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         pluginConfig.put(new PropertySimple("commandLine", commandLineBuilder.toString()));
 
         if (classpathIndex != -1 && classpathIndex + 1 < arguments.length) {
-            String[] classpathEntries = arguments[classpathIndex + 1].split(":");
+            String[] classpathEntries = arguments[classpathIndex + 1].split(File.pathSeparator);
 
             File yamlConfigurationPath = null;
             for (String classpathEntry : classpathEntries) {

@@ -25,18 +25,10 @@ package org.rhq.enterprise.server.rest.domain;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementRef;
-import javax.xml.bind.annotation.XmlID;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
-
-import org.jboss.resteasy.spi.touri.URITemplate;
 
 /**
  * A (partial) resource with some type information
@@ -69,7 +61,6 @@ public class ResourceWithType {
     }
 
     @ApiProperty("Name of the resource")
-    @XmlElement
     public String getResourceName() {
         return resourceName;
     }
@@ -79,17 +70,15 @@ public class ResourceWithType {
     }
 
     @ApiProperty("ID of the resource")
-    @XmlID
-    public String getResourceId() {
-        return String.valueOf(resourceId);
+    public int getResourceId() {
+        return resourceId;
     }
 
     public void setResourceId(int resourceId) {
         this.resourceId = resourceId;
     }
 
-    @ApiProperty("Name of the resource type of teh resource")
-    @XmlElement
+    @ApiProperty("Name of the resource type of the resource")
     public String getTypeName() {
         return typeName;
     }
@@ -99,7 +88,6 @@ public class ResourceWithType {
     }
 
     @ApiProperty("Id of the resource type of the resource")
-    @XmlElement
     public Integer getTypeId() {
         return typeId;
     }
@@ -109,7 +97,6 @@ public class ResourceWithType {
     }
 
     @ApiProperty("Name of the plugin defining the resource type")
-    @XmlElement
     public String getPluginName() {
         return pluginName;
     }
@@ -136,7 +123,6 @@ public class ResourceWithType {
         this.status = status;
     }
 
-    @XmlElementRef
     public List<Link> getLinks() {
         return links;
     }

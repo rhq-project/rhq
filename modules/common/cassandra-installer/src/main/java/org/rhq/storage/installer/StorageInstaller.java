@@ -442,7 +442,7 @@ public class StorageInstaller {
             File basedir = new File(deploymentOptions.getBasedir());
             File binDir = new File(basedir, "bin");
 
-            cmdLine = new org.apache.commons.exec.CommandLine(new File(binDir, "cassandra"));
+            cmdLine = new org.apache.commons.exec.CommandLine("./cassandra");
             cmdLine.addArgument("-p");
             cmdLine.addArgument(new File(binDir, "cassandra.pid").getAbsolutePath());
             errOutput = exec(binDir, cmdLine);

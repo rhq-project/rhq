@@ -111,8 +111,8 @@ AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverSta
 
 /**
  * GraphDateContext object constructor.
- * @param startDate
- * @param endDate
+ * @param startDate moment object representing startDate range
+ * @param endDate moment object representing endDate range
  * @constructor
  */
 GraphDateContext = function (startDate, endDate){

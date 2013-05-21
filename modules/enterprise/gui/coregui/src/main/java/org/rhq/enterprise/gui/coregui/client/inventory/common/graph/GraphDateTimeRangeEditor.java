@@ -21,7 +21,8 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -37,6 +38,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     private JQueryDateTimeRangeEditor graphDateTimeRangeEditor;
     private MeasurementUserPreferences measurementUserPreferences;
     private AbstractD3GraphListView d3GraphListView;
+    private static final Messages MSG = CoreGUI.getMessages();
 
 
     public GraphDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,AbstractD3GraphListView d3GraphListView) {
@@ -65,11 +67,11 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 "            <div id=\"graphDateTimeEditorCollapse\" class=\"accordion-body collapse in\">\n" +
                 "                <div class=\"accordion-inner\">\n" +
                 "                    <span class=\"btn-group\" data-toggle=\"buttons-radio\">\n" +
-                "                        <button id=\"radioMin\" type=\"button\" class=\"btn \" >Min</button>\n" +
-                "                        <button id=\"radioHour\" type=\"button\" class=\"btn \">Hour</button>\n" +
-                "                        <button id=\"radioDay\" type=\"button\" class=\"btn \">Day</button>\n" +
-                "                        <button id=\"radioMonth\" type=\"button\" class=\"btn \">Month</button>\n" +
-                "                        <button id=\"radioYear\" type=\"button\" class=\"btn \">Year</button>\n" +
+                "                        <button id=\"radioMin\" type=\"button\" class=\"btn \" >"+MSG.chart_slider_button_bar_minute()+"</button>\n" +
+                "                        <button id=\"radioHour\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_hour()+"</button>\n" +
+                "                        <button id=\"radioDay\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_day()+"</button>\n" +
+                "                        <button id=\"radioMonth\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_month()+"</button>\n" +
+                "                        <button id=\"radioYear\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_year()+"</button>\n" +
                 "                    </span>\n" +
                 "                   <input id=\"dateRange\" style=\"margin-left:30px;width:280px;\" type=\"text\" readonly=\"readonly\" />\n" +
                 "                </div>\n" +
@@ -107,7 +109,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         }
 
         function saveDateRange(startDate, endDate){
-            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::changeDateRange(Ljava/lang/Double;Ljava/lang/Double;)(D,D)(new Double(startDate.toString(), new Double(endDate.toString() )));
+            var start = startDate | 0, end = endDate | 0;
+            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::changeDateRange(DD)(start,end);
             //@todo: fixme
             //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
         }
@@ -127,32 +130,37 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         $wnd.jQuery("#radioMin").bind('click', function (event) {
             console.log("Minute selected");
             graphDateContext.startDate = $wnd.moment().startOf('hour');
-            graphDateContext.endDate = $wnd.moment();
+            graphDateContext.endDate = $wnd.moment().unix();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate.unix(), graphDateContext.endDate.unix());
         });
         $wnd.jQuery("#radioHour").bind('click', function (event) {
             console.log("Hour selected");
             graphDateContext.startDate = $wnd.moment().startOf('hour');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioDay").bind('click', function (event) {
             console.log("Day selected");
             graphDateContext.startDate = $wnd.moment().startOf('week');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioMonth").bind('click', function (event) {
             console.log("month selected");
             graphDateContext.startDate = $wnd.moment().startOf('month');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioYear").bind('click', function (event) {
             console.log("year selected");
             graphDateContext.startDate = $wnd.moment().startOf('year');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
         });
 
         // initially populate
@@ -199,9 +207,9 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         return measurementUserPreferences.getMetricRangePreferences().begin;
     }
 
-    public void changeDateRange(Double startTime, Double endTime){
-        measurementUserPreferences.getMetricRangePreferences().begin = new Long(String.valueOf(startTime));
-        measurementUserPreferences.getMetricRangePreferences().end = new Long(String.valueOf(endTime));
+    public void changeDateRange(double startTime, double endTime){
+        //measurementUserPreferences.getMetricRangePreferences().begin = new Long(startTime);
+        //measurementUserPreferences.getMetricRangePreferences().end = new Long(String.valueOf(endTime));
 
     }
 

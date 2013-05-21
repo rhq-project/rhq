@@ -559,6 +559,10 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @ApiOperation("Get a list of links to the alerts for the passed resource")
     public List<Link> getAlertsForResource(@ApiParam("Id of the resource to query") @PathParam("id") int resourceId) {
         AlertCriteria criteria = new AlertCriteria();
+
+        // Check for resource existence
+        fetchResource(resourceId);
+
         criteria.addFilterResourceIds(resourceId);
 
         List<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);

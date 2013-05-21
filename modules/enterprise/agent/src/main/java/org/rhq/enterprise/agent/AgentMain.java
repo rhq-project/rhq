@@ -1376,6 +1376,7 @@ public class AgentMain {
                                 try {
                                     AgentRegistrationResults results = remote_pojo.registerAgent(request);
                                     failover_list = results.getFailoverList();
+                                    token = results.getAgentToken(); // make sure our finally block gets this - BZ 963982
 
                                     // Try to do a simple connect to each server in the failover list
                                     // If only some of the servers are unreachable, just keep going;
@@ -1407,7 +1408,6 @@ public class AgentMain {
                                     m_registration = results;
                                     got_registered = true;
                                     retry = false;
-                                    token = results.getAgentToken();
                                     LOG.info(AgentI18NResourceKeys.AGENT_REGISTRATION_RESULTS, results);
                                 } finally {
                                     // stores the new one if successful; restores the old one if we failed for some reason to register

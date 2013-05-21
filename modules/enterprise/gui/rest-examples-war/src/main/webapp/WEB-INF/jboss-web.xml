@@ -2,4 +2,6 @@
 
 <jboss-web>
     <security-domain>RHQRESTSecurityDomain</security-domain>
+    <!-- see https://community.jboss.org/wiki/JBossAS7SecurityAuditing for the next tag -->
+    <!--<disable-audit>false</disable-audit>-->
 </jboss-web>

@@ -40,6 +40,7 @@
        
        <!-- These classes are overriden for GWT because their original form doesn't gwt-compile. -->
        <exclude name="**/ObfuscatedPropertySimple.*"/>
+       <exclude name="**/JoinFetchReporting*.*" />
     </source>
     
     <!--<generate-with class="org.rhq.core.rebind.RecordBuilderGenerator">

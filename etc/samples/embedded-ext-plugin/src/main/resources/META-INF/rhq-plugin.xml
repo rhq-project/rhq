@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<plugin name="EmbeddedExtPlugin"
+        displayName="Embedded Extension Plugin"
+        version="1.0"
+        package="org.rhq.sample.embeddedextplugin"
+        description="Defines a resource type that uses the embedded extension model."
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+   <depends plugin="SkeletonPlugin" useClasses="true" />
+
+   <server name="Embedded Extension Resource"
+           discovery="EmbeddedExtensionDiscoveryComponent"
+           class="org.rhq.sample.skeletonplugin.SamplePluginServerComponent"
+           description="A resource that embeds the skeleton plugin type"
+           sourcePlugin="SkeletonPlugin"
+           sourceType="Sample Plugin Server">
+   </server>
+
+</plugin>

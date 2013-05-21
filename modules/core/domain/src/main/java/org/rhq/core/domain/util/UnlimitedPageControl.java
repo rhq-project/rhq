@@ -30,6 +30,11 @@ public class UnlimitedPageControl extends PageControl {
     }
 
     @Override
+    public boolean isUnlimited() {
+        return true;
+    }
+
+    @Override
     public void reset() {
         getOrderingFields().clear();
     }

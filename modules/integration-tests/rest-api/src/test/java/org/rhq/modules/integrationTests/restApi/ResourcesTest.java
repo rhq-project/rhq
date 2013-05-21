@@ -593,6 +593,17 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testAlertsForUnknownResource() throws Exception {
+        given()
+            .header("Accept", "application/json")
+            .pathParam("id", 12345)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/resource/{id}/alerts");
+    }
+
+    @Test
     public void testSchedulesForResource() throws Exception {
         given()
             .header("Accept", "application/json")

@@ -18,10 +18,17 @@
  */
 package org.rhq.enterprise.agent;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
 
+import mazz.i18n.Logger;
+
+import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.agent.i18n.AgentI18NFactory;
+import org.rhq.enterprise.agent.i18n.AgentI18NResourceKeys;
+import org.rhq.enterprise.communications.ServiceContainerConfigurationConstants;
 import org.rhq.enterprise.communications.util.prefs.PreferencesUpgrade;
 import org.rhq.enterprise.communications.util.prefs.PreferencesUpgradeStep;
 
@@ -31,6 +38,8 @@ import org.rhq.enterprise.communications.util.prefs.PreferencesUpgradeStep;
  * @author John Mazzitelli
  */
 public class AgentConfigurationUpgrade extends PreferencesUpgrade {
+    private static final Logger LOG = AgentI18NFactory.getLogger(AgentConfigurationUpgrade.class);
+
     /**
      * This is a convenience method that upgrades the given agent preferences to the latest configuration schema
      * version.
@@ -58,7 +67,8 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
         list.add(new Step2to3()); // goes from v2 to v3
         list.add(new Step3to4()); // goes from v3 to v4
         list.add(new Step4to5()); // goes from v4 to v5
-        list.add(new Step5to6());
+        list.add(new Step5to6()); // goes from v5 to v6
+        list.add(new Step6to7()); // goes from v6 to v7
         return list;
     }
 
@@ -137,6 +147,57 @@ public class AgentConfigurationUpgrade extends PreferencesUpgrade {
             // This new schema version added rhq.server.alias - to support backwards compatibility, we want
             // to set this to "rhqserver" which will cause the same behavior that was exhibited in previous versions
             preferences.put(AgentConfigurationConstants.SERVER_ALIAS, "rhqserver");
+        }
+    }
+
+    static class Step6to7 extends PreferencesUpgradeStep {
+        public int getSupportedConfigurationSchemaVersion() {
+            return 7;
+        }
+
+        public void upgrade(Preferences preferences) {
+            // This new schema version indicates when we changed the default locations for our keystore/truststore
+            // files. Before if these comm settings weren't set, we assumed a default of "data" directory, but now
+            // we assume a default of "conf" directory (if that directory exists). See BZ 951382.
+            File confDir = new File("conf");
+            if (!confDir.exists()) {
+                return; // conf/ doesn't exist (perhaps we are running in a test?) - do nothing and just fallback to the standard defaults
+            }
+
+            String dataDir = preferences.get(AgentConfigurationConstants.DATA_DIRECTORY,
+                AgentConfigurationConstants.DEFAULT_DATA_DIRECTORY);
+
+            String prefNamesFileNames[][] = {
+                { ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_FILE,
+                    ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_SECURITY_KEYSTORE_FILE_NAME },
+                { ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
+                    ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_SECURITY_TRUSTSTORE_FILE_NAME },
+                { AgentConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_FILE,
+                    AgentConfigurationConstants.DEFAULT_CLIENT_SENDER_SECURITY_KEYSTORE_FILE_NAME },
+                { AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE,
+                    AgentConfigurationConstants.DEFAULT_CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE_NAME } };
+
+            for (String[] prefNameFileName : prefNamesFileNames) {
+                String value = preferences.get(prefNameFileName[0], null);
+                if (value == null) {
+                    File newFile = new File(confDir, prefNameFileName[1]);
+                    value = newFile.getAbsolutePath();
+                    preferences.put(prefNameFileName[0], value);
+
+                    File oldFile = new File(dataDir, prefNameFileName[1]);
+                    if (oldFile.exists()) {
+                        try {
+                            FileUtil.copyFile(oldFile, newFile);
+                            oldFile.delete();
+                        } catch (Exception e) {
+                            LOG.error(e, AgentI18NResourceKeys.CERT_FILE_COPY_ERROR, oldFile, newFile);
+                        }
+                    }
+                    LOG.debug(AgentI18NResourceKeys.CERT_FILE_LOCATION, prefNameFileName[0], value);
+                }
+            }
+
+            return;
         }
     }
 }

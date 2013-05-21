@@ -464,7 +464,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
             }
         } else if (property == SystemSetting.AGENT_MAX_QUIET_TIME_ALLOWED) {
             long time = Long.parseLong(value);
-            // minimum should be 3 * the agent ping interval, any less risks unwanted backfilling 
+            // minimum should be 3 * the agent ping interval, any less risks unwanted backfilling
             if (time < 1000L * 60 * 3) {
                 throw new InvalidSystemConfigurationException("Agent Max Quiet Time Allowed must be at least 3 minutes");
             }

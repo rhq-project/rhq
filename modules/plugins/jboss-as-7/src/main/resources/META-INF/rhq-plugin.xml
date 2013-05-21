@@ -1337,6 +1337,10 @@
         <value-context>pluginConfiguration</value-context>
         <value-name>homeDir</value-name>
       </destination-base-dir>
+      <destination-base-dir name="Base Directory" description="The base directory for server content, such as '[install-dir]/standalone' (i.e. the value found in the 'Base Directory' connection property)">
+        <value-context>pluginConfiguration</value-context>
+        <value-name>baseDir</value-name>
+      </destination-base-dir>
       <destination-base-dir name="Deploy Directory" description="The deployment directory for a standalone server">
         <value-context>measurementTrait</value-context>
         <value-name>deployDir</value-name>
@@ -7214,8 +7218,8 @@
           <c:simple-property name="includeRuntime" readOnly="true" default="true"/>
         </plugin-configuration>
 
-        <metric property="collection-count" description="The total number of collections that have occurred."/>
-        <metric property="collection-time" description="The approximate accumulated collection elapsed time in milliseconds."/>
+        <metric property="collection-count" description="The total number of collections that have occurred." measurementType="trendsup"/>
+        <metric property="collection-time" description="The approximate accumulated collection elapsed time in milliseconds." measurementType="trendsup"/>
         <metric property="name" dataType="trait" description="The name representing this garbage collector"/>
         <metric property="valid" dataType="trait" description="Whether this this memory manager is valid in the Java virtual machine."/>
 

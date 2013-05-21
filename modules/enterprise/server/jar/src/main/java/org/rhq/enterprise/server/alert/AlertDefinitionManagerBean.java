@@ -201,19 +201,30 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int createDependentAlertDefinition(Subject subject, AlertDefinition alertDefinition, int resourceId)
         throws InvalidAlertDefinitionException {
-
-        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, false, false);
+        AlertDefinition newAlertDefinition = createAlertDefinitionInternal(subject, alertDefinition, resourceId, false,
+            false);
+        return newAlertDefinition.getId();
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean validateNotificationConfiguration)
-        throws InvalidAlertDefinitionException {
-
-        return createAlertDefinitionInternal(subject, alertDefinition, resourceId, true, validateNotificationConfiguration);
+    public int createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition,
+        Integer resourceId, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
+        AlertDefinition newAlertDefinition = createAlertDefinitionInternal(subject, alertDefinition, resourceId, true,
+            validateNotificationConfiguration);
+        return newAlertDefinition.getId();
+    }
+    
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public AlertDefinition createAlertDefinitionAndRerurnIt(Subject subject, AlertDefinition alertDefinition,
+        Integer resourceId, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
+        AlertDefinition newAlertDefinition = createAlertDefinitionInternal(subject, alertDefinition, resourceId, true,
+            validateNotificationConfiguration);
+        return newAlertDefinition;
     }
 
-    private int createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean checkPerms, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
+    private AlertDefinition createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean checkPerms, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
         checkAlertDefinition(subject, null, alertDefinition, resourceId, validateNotificationConfiguration);
 
         // if this is an resource alert definition, set up the link to a resource
@@ -279,7 +290,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                 AlertDefinitionEvent.CREATED);
         }
 
-        return alertDefinition.getId();
+        return alertDefinition;
     }
 
     private void fixRecoveryId(AlertDefinition definition) {

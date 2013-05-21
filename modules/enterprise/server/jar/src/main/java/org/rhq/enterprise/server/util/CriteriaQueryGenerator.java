@@ -67,8 +67,8 @@ public final class CriteriaQueryGenerator {
     private static final Log LOG = LogFactory.getLog(CriteriaQueryGenerator.class);
 
     public enum AuthorizationTokenType {
-        RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking 
-        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking 
+        RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking
+        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
     }
 
     private Criteria criteria;
@@ -308,7 +308,11 @@ public final class CriteriaQueryGenerator {
 
     public String getQueryString(boolean countQuery) {
         StringBuilder results = new StringBuilder();
+
+        PageControl pc = getPageControl(criteria);
+
         results.append("SELECT ");
+
         if (countQuery) {
             if (groupByClause == null) { // non-grouped method
                 // use count(*) instead of count(alias) due to https://bugzilla.redhat.com/show_bug.cgi?id=699842
@@ -325,10 +329,12 @@ public final class CriteriaQueryGenerator {
                 results.append(projection).append(NL);
             }
         }
+
         results.append("FROM ").append(className).append(' ').append(alias).append(NL);
+
         if (countQuery == false) {
-            /* 
-             * don't fetch in the count query to avoid: "query specified join fetching, 
+            /*
+             * don't fetch in the count query to avoid: "query specified join fetching,
              * but the owner of the fetched association was not present in the select list"
              */
             for (String fetchField : getFetchFields(criteria)) {
@@ -336,19 +342,28 @@ public final class CriteriaQueryGenerator {
                     addPersistentBag(fetchField);
                 } else {
                     if (this.projection == null) {
-                        /* 
+                        /*
                          * if not altering the projection, join fetching can be using
                          * to retrieve the associated instance in the same SELECT
+                         *
+                         * We further avoid a JOIN FETCH when executing queries with limits.
+                         * Such execution has performance problems that we solve by initializing the fields
+                         * "manually" in the CriteriaQueryRunner and by defining a default batch fetch size in the
+                         * persistence.xml.
                          */
-                        results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchField).append(NL);
+                        if (pc.isUnlimited()) {
+                            results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchField).append(NL);
+                        } else {
+                            addJoinFetch(fetchField);
+                        }
                     } else {
-                        /* 
+                        /*
                          * if the projection is altered (perhaps converting it into a constructor query), then all
                          * fields specified in the fetch must be in the explicit return list.  this is not possible
                          * today with constructor queries, so any altered projection will implicitly disable fetching.
                          * instead, we'll record which fields need to be explicitly fetched after the primary query
                          * returns the bulk of the data, and use a similar methodology at the SLSB layer to eagerly
-                         * load those before returning the PageList back to the caller. 
+                         * load those before returning the PageList back to the caller.
                          */
                         addJoinFetch(fetchField);
                     }
@@ -357,7 +372,6 @@ public final class CriteriaQueryGenerator {
         }
 
         // figure out the 'LEFT JOIN's needed for 'ORDER BY' tokens
-        PageControl pc = getPageControl(criteria);
         List<String> orderingFieldRequiredJoins = new ArrayList<String>();
         List<String> orderingFieldTokens = new ArrayList<String>();
 
@@ -369,7 +383,7 @@ public final class CriteriaQueryGenerator {
 
             /*
              * do not prefix the alias when:
-             * 
+             *
              *    1) if the suffix is numerical, which allows us to sort by column ordinal
              *    2) if the user wants full control and has explicitly chosen to disable alias prepending
              */
@@ -641,7 +655,7 @@ public final class CriteriaQueryGenerator {
         } catch (RuntimeException re) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
                 + ThrowableUtil.getAllMessages(re, true));
-            throw re; // don't wrap exceptions that are already RuntimeExceptions in another RuntimeException 
+            throw re; // don't wrap exceptions that are already RuntimeExceptions in another RuntimeException
         } catch (Exception e) {
             LOG.error("Could not get JPQL translation for '" + searchExpression + "': "
                 + ThrowableUtil.getAllMessages(e, true));
@@ -680,7 +694,7 @@ public final class CriteriaQueryGenerator {
             Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
             persistentBagFields.add(field);
         } catch (NoSuchFieldException e) {
-            LOG.warn("Failed to add persistent bag collection.", e);
+            LOG.warn("Failed to add persistent bag collection on class [" + criteria.getPersistentClass().getName() +"]: ", e);
         }
     }
 
@@ -689,7 +703,7 @@ public final class CriteriaQueryGenerator {
             Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
             joinFetchFields.add(field);
         } catch (NoSuchFieldException e) {
-            LOG.warn("Failed to add join fetch field.", e);
+            LOG.warn("Failed to add join fetch field on class [" + criteria.getPersistentClass().getName() + "]: ", e);
         }
     }
 
@@ -727,7 +741,7 @@ public final class CriteriaQueryGenerator {
 
     /**
      * The groupBy clause can be set if and only if the projection is altered.  The passed argument should not be
-     * prefixed with 'group by'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * prefixed with 'group by'; that part of the query will be auto-generated if the argument is non-null.  The
      * new projection must follow standard rules as they apply to statements with groupBy clauses.
      */
     public void setGroupByClause(String groupByClause) {
@@ -739,7 +753,7 @@ public final class CriteriaQueryGenerator {
 
     /**
      * The having clause can be set if and only if the groupBy clause is set.  The passed argument should not be
-     * prefixed with 'having'; that part of the query will be auto-generated if the argument is non-null.  The 
+     * prefixed with 'having'; that part of the query will be auto-generated if the argument is non-null.  The
      * having clause must follow standard rules as they apply to statements with groupBy clauses.
      */
     public void setHavingClause(String havingClause) {

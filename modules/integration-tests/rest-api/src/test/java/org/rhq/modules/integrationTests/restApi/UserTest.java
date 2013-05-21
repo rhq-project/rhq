@@ -94,7 +94,7 @@ public class UserTest extends AbstractBase {
             .when()
                 .get("/user/favorites/resource");
             JsonPath jp = r.jsonPath();
-            assert jp.getList("resourceId").contains(String.valueOf(_platformId));
+            assert jp.getList("resourceId").contains(_platformId);
         }
         finally {
             given()
@@ -131,7 +131,7 @@ public class UserTest extends AbstractBase {
             .when()
                 .get("/user/favorites/resource");
             JsonPath jp = r.jsonPath();
-            assert jp.getList("resourceId").contains(String.valueOf(_platformId));
+            assert jp.getList("resourceId").contains(_platformId);
         }
         finally {
             given()

@@ -15,7 +15,7 @@
    <description>A template for building a custom RHQ Agent plugin</description>
 
    <properties>
-      <rhq.version>4.3.0</rhq.version>
+      <rhq.version>4.8.0-SNAPSHOT</rhq.version>
    </properties>
 
    <dependencies>
@@ -39,30 +39,6 @@
          <groupId>org.rhq</groupId>
          <artifactId>rhq-core-native-system</artifactId>
          <version>${rhq.version}</version>
-         <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-      </dependency>
-
-      <!-- Fix for the Javac bug requiring annotations to be available when compiling classes. (fixed in JDK 6) -->
-      <dependency>
-         <groupId>javax.persistence</groupId>
-         <artifactId>persistence-api</artifactId>
-         <version>1.0</version>
-         <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-      </dependency>
-
-      <!-- Fix for the Javac bug requiring annotations to be available when compiling classes. (fixed in JDK 6) -->
-      <dependency>
-         <groupId>hibernate-annotations</groupId>
-         <artifactId>hibernate-annotations</artifactId>
-         <version>3.2.1.GA</version>
-         <scope>provided</scope> <!-- provided by the agent/plugin-container -->
-      </dependency>
-
-      <!-- Fix for the Javac bug requiring annotations to be available when compiling classes. (fixed in JDK 6) -->
-      <dependency>
-         <groupId>javax.xml.bind</groupId>
-         <artifactId>jaxb-api</artifactId>
-         <version>2.1</version>
          <scope>provided</scope> <!-- provided by the agent/plugin-container -->
       </dependency>
 
@@ -142,79 +118,6 @@
 
       </plugins>
    </build>
-
-   <profiles>
-      <profile>
-         <id>dev</id>
-         <properties>
-            <!-- define the location of your RHQ root directory - typically rhq.rootDir is overridden in Maven's settings.xml -->
-            <rhq.rootDir>/rhq/trunk</rhq.rootDir>
-            <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
-            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-            <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
-         </properties>
-         <build>
-            <plugins>
-               <plugin>
-                  <artifactId>maven-antrun-plugin</artifactId>
-                  <executions>
-                     <execution>
-                        <id>deploy</id>
-                        <phase>compile</phase>
-                        <configuration>
-                           <target>
-                              <mkdir dir="${rhq.deploymentDir}" />
-                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                              <echo>*** Updating ${deployment.file}...</echo>
-                              <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-                     <execution>
-                        <id>deploy-jar-meta-inf</id>
-                        <phase>package</phase>
-                        <configuration>
-                           <target>
-                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                              <echo>*** Updating META-INF dir in ${deployment.file}...</echo>
-                              <unjar src="${project.build.directory}/${project.build.finalName}.jar" dest="${project.build.outputDirectory}">
-                                 <patternset>
-                                    <include name="META-INF/**" />
-                                 </patternset>
-                              </unjar>
-                              <jar destfile="${deployment.file}"
-                                   manifest="${project.build.outputDirectory}/META-INF/MANIFEST.MF"
-                                   update="true">
-                              </jar>
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-                     <execution>
-                        <id>undeploy</id>
-                        <phase>clean</phase>
-                        <configuration>
-                           <target>
-                              <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                              <echo>*** Deleting ${deployment.file}...</echo>
-                              <delete file="${deployment.file}" />
-                           </target>
-                        </configuration>
-                        <goals>
-                           <goal>run</goal>
-                        </goals>
-                     </execution>
-                  </executions>
-               </plugin>
-            </plugins>
-         </build>
-      </profile>
-   </profiles>
 
    <repositories>
       <repository>

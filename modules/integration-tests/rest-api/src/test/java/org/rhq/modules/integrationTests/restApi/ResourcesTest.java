@@ -69,8 +69,11 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(200)
             .contentType(ContentType.JSON)
-            .log().ifError()
+            .log().everything()
             .body("links.self", notNullValue())
+            .body("resourceId",is(_platformId))
+            .body("typeId",is(_platformTypeId))
+            .body("parentId",is(0))
         .when()
             .get("/resource/{id}");
 
@@ -101,9 +104,9 @@ public class ResourcesTest extends AbstractBase {
             .log().everything()
         .expect()
             .statusCode(200)
-            .body("id",is(typeId))
-            .body("name",is("Linux"))
-            .body("pluginName",is("Platforms"))
+            .body("id", is(typeId))
+            .body("name", is("Linux"))
+            .body("pluginName", is("Platforms"))
             .log().everything()
         .when()
             .get("/resource/type/{typeId}");
@@ -187,7 +190,7 @@ public class ResourcesTest extends AbstractBase {
         given()
             .header("Accept", "application/json")
         .with()
-            .queryParam("status","NeW")
+            .queryParam("status", "NeW")
         .expect()
             .statusCode(200)
         .when()
@@ -203,7 +206,7 @@ public class ResourcesTest extends AbstractBase {
             .header("Accept", "application/json")
         .with()
             .queryParam("q", platformName)
-            .queryParam("status","Frobnitz")
+            .queryParam("status", "Frobnitz")
             .queryParam("category", "platform")
         .expect()
             .statusCode(406)
@@ -316,6 +319,26 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(201)
             .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+    }
+
+    @Test
+    public void testCreatePlatformJson() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().everything()
+            .body("resourceId",instanceOf(Number.class))
         .when()
             .post("/resource/platforms");
 
@@ -588,6 +611,17 @@ public class ResourcesTest extends AbstractBase {
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+        .when()
+            .get("/resource/{id}/alerts");
+    }
+
+    @Test
+    public void testAlertsForUnknownResource() throws Exception {
+        given()
+            .header("Accept", "application/json")
+            .pathParam("id", 12345)
+        .expect()
+            .statusCode(404)
         .when()
             .get("/resource/{id}/alerts");
     }

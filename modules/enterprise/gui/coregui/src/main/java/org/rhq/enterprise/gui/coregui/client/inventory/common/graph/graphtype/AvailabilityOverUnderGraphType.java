@@ -170,9 +170,9 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                                 .orient("bottom"),
 
                         calcBarY = function (d) {
-                            var ABOVE = -10,
+                            var ABOVE = -6,
                                     BELOW = 0,
-                                    STRADDLE = -5,
+                                    STRADDLE = -3,
                                     offset;
 
                             if (d.availType === 'DOWN') {
@@ -199,19 +199,19 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
                         calcBarFill = function (d) {
                             if (d.availType === 'DOWN') {
-                                return "#FF1919"; // red
+                                return "#c5888b"; // red
                             }
                             else if (d.availType === 'DISABLED') {
                                 return "url(#diagonalHatchFill)"; // grey diagonal hatches
                             }
                             else if (d.availType === 'UNKNOWN') {
-                                return "#CCC"; // gray
+                                return "#d8d8d8"; // gray
                             }
                             else if (d.availType === 'UP') {
-                                return "#198C19"; // green
+                                return "#8cbe89"; // green
                             }
                             else if (d.availType === 'WARN') {
-                                return "#FFA500"; // orange
+                                return "#e1b36b"; // orange
                             }
                             else if (d.availType === 'EMPTY') {
                                 return "#CCC"; // gray
@@ -239,12 +239,12 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                             return calcBarY(d);
                         })
                         .attr("height", function (d) {
-                            return 10;
+                            return 6;
                         })
                         .attr("width", function (d) {
                             return timeScale(+d.availEnd) - timeScale(+d.availStart);
                         })
-                        .attr("opacity", ".9")
+                        .attr("opacity", ".75")
                         .attr("fill", function (d) {
                             return calcBarFill(d);
                         });
@@ -252,7 +252,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                 // create x-axis
                 svg.append("g")
                         .attr("class", "x axis")
-                        .attr("fill", "#50505a")
+                        .attr("fill", "#b0b0b0")
                         .attr("stroke-width", "0.5")
                         .attr("transform", "translate(0," + height + ")")
                         .attr("letter-spacing", "3")
@@ -266,7 +266,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         .style("font-size", "12px")
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-weight", "bold")
-                        .attr("fill", "#003168")
+                        .attr("fill", "#545454")
                         .text(availChartContext.chartTitle);
 
                 svg.append("text")
@@ -275,7 +275,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         .attr("y", 28)
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-size", "9px")
-                        .attr("fill", "#50505a")
+                        .attr("fill", "#545454")
                         .style("text-anchor", "end")
                         .text(availChartContext.chartUpLabel);
 
@@ -285,7 +285,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         .attr("y", 39)
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-size", "9px")
-                        .attr("fill", "#50505a")
+                        .attr("fill", "#545454")
                         .style("text-anchor", "end")
                         .text(availChartContext.chartDownLabel);
 

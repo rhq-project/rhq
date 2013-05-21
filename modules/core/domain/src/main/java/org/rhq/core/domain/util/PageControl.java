@@ -276,6 +276,10 @@ public class PageControl implements Serializable, Cloneable {
         orderingFields = new LinkedList<OrderingField>();
     }
 
+    public boolean isUnlimited() {
+        return getPageNumber() == 0 && getPageSize() == SIZE_UNLIMITED;
+    }
+
     // TODO (ips, 10/12/11): Incorporate firstRecord field into equals() and hashCode().
 
     @Override

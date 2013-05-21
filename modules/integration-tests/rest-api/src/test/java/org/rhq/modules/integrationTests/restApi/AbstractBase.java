@@ -98,8 +98,7 @@ public abstract class AbstractBase {
 
         if (res!=null && res.get(0)!=null) {
 
-            String tmp = ((Map <String,String>)res.get(0)).get("resourceId");
-            int pid =Integer.valueOf(tmp);
+            Integer pid  = ((Map <String,Integer>)res.get(0)).get("resourceId");
 
             given()
                 .pathParam("id", pid)
@@ -125,9 +124,9 @@ public abstract class AbstractBase {
         assert res != null;
         for (Object entry : res) {
             if (entry instanceof Map) {
-                Map<String,String> map = (Map<String, String>) entry;
+                Map<String,Object> map = (Map<String, Object>) entry;
                 if (!map.get("resourceName").equals(REST_TEST_DUMMY)) {
-                    return Integer.valueOf(map.get("resourceId"));
+                    return (Integer)map.get("resourceId");
                 }
             }
         }

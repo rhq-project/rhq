@@ -197,15 +197,14 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals,
         final AsyncCallback<AlertDefinition> resultReceiver) {
         if (alertDefinition.getId() == 0) {
-            GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(alertDefinition,
-                Integer.valueOf(resource.getId()), new AsyncCallback<Integer>() {
+            GWTServiceLookup.getAlertDefinitionService().createAlertDefinitionAndReturn(alertDefinition,
+                Integer.valueOf(resource.getId()), new AsyncCallback<AlertDefinition>() {
                     @Override
-                    public void onSuccess(Integer result) {
+                    public void onSuccess(AlertDefinition result) {
                         CoreGUI.getMessageCenter().notify(
                             new Message(MSG.view_alert_definitions_create_success(), Severity.Info));
-                        alertDefinition.setId(result.intValue());
                         ResourceAlertDefinitionsView.this.refresh();
-                        resultReceiver.onSuccess(alertDefinition);
+                        resultReceiver.onSuccess(result);
                     }
 
                     @Override

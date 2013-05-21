@@ -25,6 +25,7 @@ package org.rhq.enterprise.server.util;
 
 import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -46,7 +47,7 @@ public class CriteriaQueryRunner<T> {
     private Criteria criteria;
     private CriteriaQueryGenerator queryGenerator;
     private EntityManager entityManager;
-    private boolean automaticFetching;;
+    private boolean automaticFetching;
 
     public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager) {
         this(criteria, queryGenerator, entityManager, true);
@@ -61,7 +62,7 @@ public class CriteriaQueryRunner<T> {
     }
 
     public PageList<T> execute() {
-        PageList<T> results = null;
+        PageList<T> results;
         PageControl pageControl = CriteriaQueryGenerator.getPageControl(criteria);
 
         Restriction criteriaRestriction = criteria.getRestriction();
@@ -109,7 +110,7 @@ public class CriteriaQueryRunner<T> {
                     initPersistentBags(entity);
                 }
             }
-            if (queryGenerator.isProjectionAltered() && !queryGenerator.getJoinFetchFields().isEmpty()) {
+            if (!queryGenerator.getJoinFetchFields().isEmpty()) {
                 for (T entity : results) {
                     initJoinFetchFields(entity);
                 }
@@ -148,7 +149,15 @@ public class CriteriaQueryRunner<T> {
     private void initialize(Object entity, Field field) {
         try {
             field.setAccessible(true);
-            Hibernate.initialize(field.get(entity));
+
+            Object instance = field.get(entity);
+
+            Hibernate.initialize(instance);
+
+            if (instance instanceof Iterable) {
+                Iterator<?> it = ((Iterable<?>)instance).iterator();
+                while(it.hasNext()) it.next();
+            }
         } catch (Exception e) {
             LOG.warn("Could not initialize " + field);
         }

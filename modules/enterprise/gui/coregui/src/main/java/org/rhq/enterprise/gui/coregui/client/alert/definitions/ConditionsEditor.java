@@ -196,7 +196,7 @@ public class ConditionsEditor extends EnhancedVLayout {
                 }
             });
 
-            table.addTableAction(MSG.common_button_edit(), null, new AbstractTableAction(TableActionEnablement.SINGLE) {
+            table.addTableAction(MSG.view_alert_definition_editCondition(), null, new AbstractTableAction(TableActionEnablement.SINGLE) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     AlertCondition condition = getDataSource().copyValues(selection[0]);
                     showConditionEditor(condition);
@@ -252,7 +252,7 @@ public class ConditionsEditor extends EnhancedVLayout {
                         final int numConditions = conditions.size();
                         final ConditionEditor newConditionEditor = new ConditionEditor(conditions, modifiedConditions,
                             ConditionsEditor.this.conditionExpression, ConditionsEditor.this.resourceType,
-                            new Runnable() {
+                            existingCondition, new Runnable() {
                                 @Override
                                 public void run() {
                                     updated = updated || numConditions != conditions.size()
@@ -260,7 +260,7 @@ public class ConditionsEditor extends EnhancedVLayout {
                                     winModal.markForDestroy();
                                     refresh();
                                 }
-                            }, existingCondition);
+                            });
                         winModal.addItem(newConditionEditor);
                         winModal.show();
                     }

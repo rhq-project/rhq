@@ -251,11 +251,11 @@ public class MetricsServer {
             updates.put(rawMetric.getScheduleId(), dateTimeService.getTimeSlice(
                 new DateTime(rawMetric.getTimestamp()), configuration.getRawTimeSliceDuration()).getMillis());
         }
-        Set<Date> dates = new HashSet<Date>();
-        for (Long ts : updates.values()) {
-            dates.add(new Date(ts));
+
+        if (log.isDebugEnabled()) {
+            log.debug("Updating one hour index with time slices " + StringUtil.collectionToString(updates.values()));
         }
-        log.info("Updating one hour index with time slices " + dates);
+
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 

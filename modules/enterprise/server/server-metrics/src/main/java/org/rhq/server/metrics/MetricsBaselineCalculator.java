@@ -27,6 +27,9 @@ package org.rhq.server.metrics;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
@@ -37,11 +40,9 @@ import org.rhq.server.metrics.domain.AggregateType;
  */
 public class MetricsBaselineCalculator {
 
-    private MetricsDAO metricsDAO;
+    private final Log log = LogFactory.getLog(MetricsServer.class);
 
-//    public MetricsBaselineCalculator(Session session) {
-//        this.metricsDAO = new MetricsDAO(session);
-//    }
+    private MetricsDAO metricsDAO;
 
     public MetricsBaselineCalculator(MetricsDAO metricsDAO) {
         this.metricsDAO = metricsDAO;
@@ -104,6 +105,10 @@ public class MetricsBaselineCalculator {
             baseline.setMin(min);
             baseline.setMean(mean.getArithmeticMean());
             baseline.setSchedule(schedule);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Calculated baseline: " + baseline.toString());
+            }
 
             return baseline;
         }

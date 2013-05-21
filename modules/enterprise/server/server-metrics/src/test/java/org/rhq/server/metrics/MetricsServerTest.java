@@ -101,7 +101,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     @BeforeMethod
     public void initServer() throws Exception {
         metricsServer = new MetricsServerStub();
-        metricsServer.setSession(session);
         metricsServer.setConfiguration(configuration);
 
         dateTimeService = new DateTimeService();

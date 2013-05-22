@@ -29,8 +29,11 @@ import static org.rhq.core.util.StringUtil.collectionToString;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -48,6 +51,7 @@ import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
@@ -159,14 +163,14 @@ public class CassandraClusterManager {
     }
 
     private String getLocalIPAddress(int i) {
-        Set<String> addresses = new HashSet<String>();
         String seeds = deploymentOptions.getSeeds();
 
-        if (null == seeds || seeds.isEmpty()) {
+        if (null == seeds || seeds.isEmpty() || "localhost".equals(seeds)) {
             return "127.0.0." + i;
         }
 
-        return seeds.split(",")[i - 1];
+        String[] seedsArray = seeds.split(",");
+        return i <= seedsArray.length ? seedsArray[i - 1] : ("127.0.0." + i);
     }
 
     private List<StorageNode> calculateNodes() {
@@ -223,14 +227,17 @@ public class CassandraClusterManager {
         File binDir = new File(basedir, "bin");
         File startScript;
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+        ProcessExecution startScriptExe;
 
         if (systemInfo.getOperatingSystemType() == OperatingSystemType.WINDOWS) {
             startScript = new File(binDir, "cassandra.bat");
+            startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
         } else {
             startScript = new File(binDir, "cassandra");
+            startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+            startScriptExe.addArguments(Arrays.asList("-p", "cassandra.pid"));
         }
 
-        ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
         startScriptExe.setWaitForCompletion(0);
 
         ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
@@ -262,6 +269,18 @@ public class CassandraClusterManager {
                     continue;
                 }
 
+                try {
+                    killNode(nodeDir);
+                } catch (Throwable t) {
+                    log.warn("Unable to kill nodeDir [" + nodeDir + "]", t);
+                }
+
+                // This nodeProcess stuff is unlikely to be useful. I added it for Windows
+                // support but we don't actually use this code anymore for Windows, we
+                // use an external storage node.  I'll leave it on the very off chance that
+                // it kills some hanging around process.  On Linux it will not kill
+                // the cassandra process (see killNode above) because this is the launching
+                // process, not the cassandra process itself.
                 Process nodeProcess = nodeProcessMap.get(nodeId);
                 if (null != nodeProcess) {
                     try {
@@ -284,4 +303,16 @@ public class CassandraClusterManager {
         return nodeIds;
     }
 
+    private void killNode(File nodeDir) throws Exception {
+        long pid = getPid(nodeDir);
+        CLibrary.kill((int) pid, 9);
+    }
+
+    private long getPid(File nodeDir) throws IOException {
+        File binDir = new File(nodeDir, "bin");
+        StringWriter writer = new StringWriter();
+        StreamUtil.copy(new FileReader(new File(binDir, "cassandra.pid")), writer);
+
+        return Long.parseLong(writer.getBuffer().toString());
+    }
 }

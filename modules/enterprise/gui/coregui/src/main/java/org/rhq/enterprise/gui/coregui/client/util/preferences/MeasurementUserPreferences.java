@@ -134,18 +134,18 @@ public class MeasurementUserPreferences {
         return prefs;
     }
 
-    public void setMetricViews(MetricViewsPreferences prefs, String key) {
-        StringBuilder builder = new StringBuilder();
-        int index = 0;
-        for (String viewName : prefs.views) {
-            if (index != 0) {
-                builder.append(UserPreferences.PREF_LIST_DELIM);
-            }
-            builder.append(viewName);
-            index++;
-        }
-        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + key, builder.toString());
-    }
+//    public void setMetricViews(MetricViewsPreferences prefs, String key) {
+//        StringBuilder builder = new StringBuilder();
+//        int index = 0;
+//        for (String viewName : prefs.views) {
+//            if (index != 0) {
+//                builder.append(UserPreferences.PREF_LIST_DELIM);
+//            }
+//            builder.append(viewName);
+//            index++;
+//        }
+//        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + key, builder.toString());
+//    }
 
     public String getSelectedView(String key) {
         String value = userPrefs.getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + "selected." + key,
@@ -153,49 +153,49 @@ public class MeasurementUserPreferences {
         return value;
     }
 
-    public void setSelectedView(String key, String viewName) {
-        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + "selected." + key, viewName);
-    }
+//    public void setSelectedView(String key, String viewName) {
+//        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + "selected." + key, viewName);
+//    }
+//
+//    public static class MetricViewData {
+//        public List<String> charts;
+//    }
 
-    public static class MetricViewData {
-        public List<String> charts;
-    }
-
-    public MetricViewData getMetricViewData(String context, String viewName) {
-        //TODO: jmarques - externalize default view name
-        // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
-        // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
-        if (viewName == null || "".equals(viewName)) {
-            viewName = PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME;
-        }
-        MetricViewData chartPreferences = new MetricViewData();
-        // important to let IllegalArgumentException bubble out of here, so the caller can persist the default set
-        String data = userPrefs.getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
-        chartPreferences.charts = StringUtility.explode(data, UserPreferences.PREF_LIST_DELIM);
-        return chartPreferences;
-    }
-
-    public void setMetricViewData(String context, String viewName, MetricViewData prefs) {
-        //TODO: jmarques - externalize default view name
-        // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
-        // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
-        if (viewName == null || "".equals(viewName)) {
-            viewName = PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME;
-        }
-        StringBuilder builder = new StringBuilder();
-        int index = 0;
-        for (String chart : prefs.charts) {
-            if (index != 0) {
-                builder.append(UserPreferences.PREF_LIST_DELIM);
-            }
-            builder.append(chart);
-            index++;
-        }
-        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName, builder.toString());
-    }
-
-    public void deleteMetricViewData(String context, String viewName) {
-        userPrefs.unsetPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
-    }
+//    public MetricViewData getMetricViewData(String context, String viewName) {
+//        //TODO: jmarques - externalize default view name
+//        // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
+//        // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
+//        if (viewName == null || "".equals(viewName)) {
+//            viewName = PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME;
+//        }
+//        MetricViewData chartPreferences = new MetricViewData();
+//        // important to let IllegalArgumentException bubble out of here, so the caller can persist the default set
+//        String data = userPrefs.getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
+//        chartPreferences.charts = StringUtility.explode(data, UserPreferences.PREF_LIST_DELIM);
+//        return chartPreferences;
+//    }
+//
+//    public void setMetricViewData(String context, String viewName, MetricViewData prefs) {
+//        //TODO: jmarques - externalize default view name
+//        // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
+//        // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
+//        if (viewName == null || "".equals(viewName)) {
+//            viewName = PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME;
+//        }
+//        StringBuilder builder = new StringBuilder();
+//        int index = 0;
+//        for (String chart : prefs.charts) {
+//            if (index != 0) {
+//                builder.append(UserPreferences.PREF_LIST_DELIM);
+//            }
+//            builder.append(chart);
+//            index++;
+//        }
+//        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName, builder.toString());
+//    }
+//
+//    public void deleteMetricViewData(String context, String viewName) {
+//        userPrefs.unsetPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
+//    }
 
 }

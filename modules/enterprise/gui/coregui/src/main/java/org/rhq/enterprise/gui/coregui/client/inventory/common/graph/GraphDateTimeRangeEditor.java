@@ -23,9 +23,11 @@ import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
@@ -61,19 +63,20 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         // append the bootstrap buttongroup since smartGWT doesn't have one
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"graphDateTimeRangeEditor\">" +
-                "<div class=\"accordion\" id=\"graphDateTimeEditorAccordion\" style=\"width:875px;>\n" +
+                "<div class=\"accordion\" id=\"graphDateTimeEditorAccordion\" style=\"width:895px;\">\n" +
                 "        <div class=\"accordion-group\">\n" +
                 "            \n" +
                 "            <div id=\"graphDateTimeEditorCollapse\" class=\"accordion-body collapse in\">\n" +
                 "                <div class=\"accordion-inner\">\n" +
-                "                    <span class=\"btn-group\" data-toggle=\"buttons-radio\">\n" +
-                "                        <button id=\"radioMin\" type=\"button\" class=\"btn \" >"+MSG.chart_slider_button_bar_minute()+"</button>\n" +
-                "                        <button id=\"radioHour\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_hour()+"</button>\n" +
-                "                        <button id=\"radioDay\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_day()+"</button>\n" +
-                "                        <button id=\"radioMonth\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_month()+"</button>\n" +
-                "                        <button id=\"radioYear\" type=\"button\" class=\"btn \">"+MSG.chart_slider_button_bar_year()+"</button>\n" +
+                "                    <span id=\"timeRange\" class=\"btn-group\" data-toggle=\"buttons-radio\">\n" +
+                "                        <button id=\"radioMin\" type=\"button\" class=\"btn btn-mini\" >"+MSG.chart_slider_button_bar_minute()+"</button>\n" +
+                "                        <button id=\"radioHour\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_hour()+"</button>\n" +
+                "                        <button id=\"radioDay\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_day()+"</button>\n" +
+                "                        <button id=\"radioMonth\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_month()+"</button>\n" +
+                "                        <button id=\"radioYear\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_year()+"</button>\n" +
                 "                    </span>\n" +
-                "                   <input id=\"dateRange\" style=\"margin-left:30px;width:280px;\" type=\"text\" readonly=\"readonly\" />\n" +
+                "                    <input id=\"dateRange\" style=\"margin-left:30px;margin-top:5px;width:280px;\" type=\"text\" readonly=\"readonly\" />\n" +
+                "                    <button id=\"expandCollapseButton\" style=\"margin-left:202px;\" type=\"button\" class=\"btn btn-mini\">+/-</button>\n" +
                 "                </div>\n" +
                 "            </div>\n" +
                 "        </div>\n" +
@@ -130,13 +133,13 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         $wnd.jQuery("#radioMin").bind('click', function (event) {
             console.log("Minute selected");
             graphDateContext.startDate = $wnd.moment().startOf('hour');
-            graphDateContext.endDate = $wnd.moment().unix();
+            graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioHour").bind('click', function (event) {
             console.log("Hour selected");
-            graphDateContext.startDate = $wnd.moment().startOf('hour');
+            graphDateContext.startDate = $wnd.moment().startOf('day');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
@@ -162,6 +165,11 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
         });
+        $wnd.jQuery("#expandCollapseButton").bind('click', function (event) {
+            console.log("expand/collapse selected");
+            $wnd.jQuery("#timeRange").toggle();
+
+        });
 
         // initially populate
         updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
@@ -170,7 +178,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     }-*/;
 
     public native void refreshGraphs() /*-{
-        console.log(" ** Calling GraphDateTimeRangeEditor.refreshGraphs");
+        console.log("Calling GraphDateTimeRangeEditor.refreshGraphs");
         this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::redrawGraphs()();
     }-*/;
 
@@ -210,8 +218,16 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
     public void changeDateRange(double startTime, double endTime){
 
-        measurementUserPreferences.getMetricRangePreferences().begin = new Long(String.valueOf(startTime));
-        measurementUserPreferences.getMetricRangePreferences().end = new Long(String.valueOf(endTime));
+        final boolean advanced = true;
+        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
+        prefs.explicitBeginEnd = advanced;
+        prefs.begin = new Long(String.valueOf(startTime));
+        prefs.end = new Long(String.valueOf(endTime));
+        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
+        } else {
+            measurementUserPreferences.setMetricRangePreferences(prefs);
+        }
 
     }
 

@@ -32,7 +32,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -72,7 +71,6 @@ import org.rhq.enterprise.server.rest.domain.*;
  * Deal with alert related stuff
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/html"})
 @Path("/alert")
 @Api(value = "Deal with Alerts",description = "This api deals with alerts that have fired.")
 @Stateless
@@ -148,16 +146,21 @@ public class AlertHandlerBean extends AbstractRestBean {
         }
 
         MediaType type = headers.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(type);
 
         if (type.equals(MediaType.TEXT_HTML_TYPE)) {
-            builder = Response.ok(renderTemplate("listAlerts.ftl",ret),type);
+            builder.entity(renderTemplate("listAlerts.ftl",ret));
         } else {
-            GenericEntity<List<AlertRest>> entity = new GenericEntity<List<AlertRest>>(ret) {};
-            builder = Response.ok(entity);
+            if (type.equals(wrappedCollectionJsonType)) {
+                wrapForPaging(builder,uriInfo,alerts,ret);
+            }
+            else {
+                GenericEntity<List<AlertRest>> entity = new GenericEntity<List<AlertRest>>(ret) {};
+                builder.entity(entity);
+                createPagingHeader(builder,uriInfo,alerts);
+            }
         }
-
-        createPagingHeader(builder,uriInfo,alerts);
 
         return builder.build();
     }

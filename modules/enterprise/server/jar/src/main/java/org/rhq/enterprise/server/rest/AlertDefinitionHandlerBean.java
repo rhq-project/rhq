@@ -46,6 +46,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -98,7 +99,6 @@ import org.rhq.enterprise.server.rest.domain.Link;
  * AlertHandlerBean
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
 @Path("/alert")
 @Api(value = "Deal with Alert Definitions",description = "This api deals with alert definitions. Everything " +
     " is purely experimental at the moment and can change without notice at any time.")
@@ -149,6 +149,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
             @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
             @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status, // TODO
+            @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
@@ -163,10 +164,17 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             ret.add(adr);
         }
 
-        Response.ResponseBuilder builder = Response.ok(ret);
-        createPagingHeader(builder,uriInfo,defs);
+        Response.ResponseBuilder builder = Response.ok();
 
-        // TODO media type etc
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        builder.type(mediaType);
+
+        if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder,uriInfo,defs,ret);
+        } else {
+            createPagingHeader(builder,uriInfo,defs);
+            builder.entity(ret); // TODO generic entity for XML
+        }
 
         return builder.build();
     }

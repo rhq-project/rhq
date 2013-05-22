@@ -114,7 +114,6 @@ import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
  * Class that deals with getting data about resources
  * @author Heiko W. Rupp
  */
-@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 @Path("/resource")
 @Api(value="Resource related", description = "This endpoint deals with individual resources, not resource groups")
 @Interceptors(SetCallerInterceptor.class)
@@ -263,15 +262,19 @@ public class ResourceHandlerBean extends AbstractRestBean {
         Response.ResponseBuilder builder = Response.ok();
         builder.type(mediaType);
 
-        createPagingHeader(builder,uriInfo,resources);
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder.entity(renderTemplate("listResourceWithType", rwtList));
 
         } else {
-            GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList) {
+            if (mediaType.equals(wrappedCollectionJsonType)) {
+                wrapForPaging(builder,uriInfo,resources,rwtList);
+            } else {
+                GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList) {
             };
-            builder.entity(list);
+                builder.entity(list);
+                createPagingHeader(builder,uriInfo,resources);
+            }
         }
         return builder;
     }

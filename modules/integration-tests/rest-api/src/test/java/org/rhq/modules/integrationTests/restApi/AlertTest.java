@@ -39,6 +39,7 @@ import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.instanceOf;
@@ -116,6 +117,22 @@ public class AlertTest extends AbstractBase {
             .get("/alert");
     }
 
+    @Test
+    public void testListAlertsWithPagingAndWrapped() throws Exception {
+
+        given()
+            .header(acceptWrappedJson)
+            .queryParam("ps", 2)
+            .queryParam("page", 0)
+        .expect()
+            .statusCode(200)
+            .header("Link", nullValue())
+            .body("totalSize", notNullValue())
+            .log().ifError()
+        .when()
+            .get("/alert");
+    }
+
 
     @Test
     public void testGetAlertCountJson() throws Exception {
@@ -187,6 +204,21 @@ public class AlertTest extends AbstractBase {
 
         expect()
             .statusCode(200)
+        .when()
+            .get("/alert/definitions");
+    }
+
+    @Test
+    public void testListAllAlertDefinitionsWithWrapping() throws Exception {
+
+        given()
+            .header(acceptWrappedJson)
+            .log().everything()
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("currentPage", Matchers.notNullValue())
+            .body("totalSize", Matchers.notNullValue())
         .when()
             .get("/alert/definitions");
     }

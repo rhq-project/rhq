@@ -82,6 +82,27 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testGetPlatformJsonWrapping() {
+
+        // Actually this object should not be wrapped
+        // as it is no list
+        given()
+            .header(acceptWrappedJson)
+            .pathParam("id",_platformId)
+        .expect()
+            .statusCode(200)
+            .contentType(WRAPPED_JSON)
+            .log().everything()
+            .body("links.self", notNullValue())
+            .body("resourceId",is(_platformId))
+            .body("typeId",is(_platformTypeId))
+            .body("parentId",is(0))
+        .when()
+            .get("/resource/{id}");
+
+    }
+
+    @Test
     public void testGetPlatformAndTypeJson() {
 
         Integer typeId =
@@ -258,7 +279,26 @@ public class ResourcesTest extends AbstractBase {
            // .header("Link", allOf(containsString("page=2"), containsString("current")))
             .header("Link",not(containsString("prev")))
             .body("links.self", notNullValue())
-        .when().get("/resource");
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndWrapping() throws Exception {
+
+        given()
+            .header("Accept", "application/vnd.rhq.wrapped+json")
+        .with()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+            .body("pageSize",is(2))
+            .body("currentPage",is(1))
+        .when()
+            .get("/resource");
     }
 
     @Test

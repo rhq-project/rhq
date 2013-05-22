@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,7 +36,9 @@ import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -66,6 +69,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.PagingCollection;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -77,11 +81,15 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * @author Heiko W. Rupp
  * @author Jay Shaughnessy
  */
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML,"application/vnd.rhq.wrapped+json"})
 @javax.annotation.Resource(name = "ISPN", mappedName = "java:jboss/infinispan/rhq")
 @SuppressWarnings("unchecked")
 public class AbstractRestBean {
 
     protected Log log = LogFactory.getLog(getClass().getName());
+
+    protected final MediaType wrappedCollectionJsonType = new MediaType("application","vnd.rhq.wrapped+json");
+    protected final String wrappedCollectionJson = "application/vnd.rhq.wrapped+json";
 
     private static final CacheKey META_KEY = new CacheKey("rhq.rest.resourceMeta", 0);
 
@@ -465,6 +473,52 @@ public class AbstractRestBean {
 
         // Create a total size header
         builder.header("X-collection-size",resultList.getTotalSize());
+    }
+
+    /**
+     * Wrap the passed collection #resultList in an object with paging information
+     * @param builder ResonseBuilder to add the entity to
+     * @param uriInfo UriInfo to construct paging links
+     * @param originalList The original list to obtain the paging info from
+     * @param resultList The list of result items
+     */
+    protected void wrapForPaging(Response.ResponseBuilder builder, UriInfo uriInfo, final PageList<?> originalList, final Collection resultList) {
+
+        PagingCollection pColl = new PagingCollection(resultList);
+        pColl.setTotalSize(originalList.getTotalSize());
+        PageControl pageControl = originalList.getPageControl();
+        pColl.setPageSize(pageControl.getPageSize());
+        int page = pageControl.getPageNumber();
+        pColl.setCurrentPage(page);
+        pColl.setLastPage(originalList.getTotalSize()/pageControl.getPageSize());
+
+        UriBuilder uriBuilder;
+        if (originalList.getTotalSize() > (page +1 ) * pageControl.getPageSize()) {
+            int nextPage = page +1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",nextPage);
+            pColl.addLink(new Link("next",uriBuilder.build().toString()));
+        }
+        if (page > 0) {
+            int prevPage = page -1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",prevPage);
+            pColl.addLink(new Link("prev",uriBuilder.build().toString()));
+        }
+
+        // A link to the last page
+        if (!pageControl.isUnlimited()) {
+            int lastPage = originalList.getTotalSize() / pageControl.getPageSize();
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",lastPage);
+            pColl.addLink( new Link("last",uriBuilder.build().toString()));
+        }
+
+        // A link to the current page
+        uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+        pColl.addLink(new Link("current",uriBuilder.build().toString()));
+
+        builder.entity(pColl);
     }
 
     /**

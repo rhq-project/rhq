@@ -37,9 +37,11 @@ import org.yaml.snakeyaml.Yaml;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
@@ -208,6 +210,13 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);
+    }
+
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+
+        // don't use super's impl because the resource key is not a JvmResourceKey
+        return null;
     }
 
 }

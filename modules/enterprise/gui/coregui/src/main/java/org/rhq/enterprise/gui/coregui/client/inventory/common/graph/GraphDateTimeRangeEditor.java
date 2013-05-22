@@ -112,7 +112,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             var start = startDate | 0, end = endDate | 0;
             global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::changeDateRange(DD)(start,end);
             //@todo: fixme
-            //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
+            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
         }
 
         function isSameDay(startDate, endDate) {
@@ -132,7 +132,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.startDate = $wnd.moment().startOf('hour');
             graphDateContext.endDate = $wnd.moment().unix();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
-            saveDateRange(graphDateContext.startDate.unix(), graphDateContext.endDate.unix());
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioHour").bind('click', function (event) {
             console.log("Hour selected");
@@ -165,11 +165,12 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
         // initially populate
         updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
-        $wnd.jQuery("#radioHour").click();
+        //$wnd.jQuery("#radioHour").click();
 
     }-*/;
 
     public native void refreshGraphs() /*-{
+        console.log(" ** Calling GraphDateTimeRangeEditor.refreshGraphs");
         this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::redrawGraphs()();
     }-*/;
 
@@ -208,8 +209,9 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     }
 
     public void changeDateRange(double startTime, double endTime){
-        //measurementUserPreferences.getMetricRangePreferences().begin = new Long(startTime);
-        //measurementUserPreferences.getMetricRangePreferences().end = new Long(String.valueOf(endTime));
+
+        measurementUserPreferences.getMetricRangePreferences().begin = new Long(String.valueOf(startTime));
+        measurementUserPreferences.getMetricRangePreferences().end = new Long(String.valueOf(endTime));
 
     }
 

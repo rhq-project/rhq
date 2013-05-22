@@ -174,9 +174,9 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                                 .orient("bottom"),
 
                         calcBarY = function (d) {
-                            var ABOVE = -10,
+                            var ABOVE = -6,
                                     BELOW = 0,
-                                    STRADDLE = -5,
+                                    STRADDLE = -3,
                                     offset;
 
                             if (d.availType === 'DOWN'){
@@ -203,19 +203,19 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
 
                         calcBarFill = function (d) {
                             if (d.availType === 'DOWN') {
-                                return "#FF1919"; // red
+                                return "#c5888b"; // red
                             }
                             else if (d.availType === 'DISABLED') {
                                 return "url(#diagonalHatchFill)"; // grey diagonal hatches
                             }
                             else if (d.availType === 'UNKNOWN') {
-                                return "#CCC"; // gray
+                                return "#d8d8d8"; // gray
                             }
                             else if (d.availType === 'UP') {
-                                return "#198C19"; // green
+                                return "#8cbe89"; // green
                             }
                             else if (d.availType === 'WARN') {
-                                return "#FFA500"; // orange
+                                return "#e1b36b"; // orange
                             }
                             else if (d.availType === 'EMPTY') {
                                 return "#CCC"; // gray
@@ -243,12 +243,12 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                             return calcBarY(d);
                         })
                         .attr("height", function (d) {
-                            return 10;
+                            return 6;
                         })
                         .attr("width", function (d) {
                             return timeScale(+d.availEnd) - timeScale(+d.availStart);
                         })
-                        .attr("opacity", ".9")
+                        .attr("opacity", ".75")
                         .attr("fill", function (d) {
                             return calcBarFill(d);
                         });
@@ -256,7 +256,7 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                 // create x-axis
                 svg.append("g")
                         .attr("class", "x axis")
-                        .attr("fill", "#50505a")
+                        .attr("fill", "#b0b0b0")
                         .attr("stroke-width", "0.5")
                         .attr("transform", "translate(0," + height + ")")
                         .attr("letter-spacing", "3")
@@ -270,7 +270,7 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                         .style("font-size", "12px")
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-weight", "bold")
-                        .attr("fill", "#003168")
+                        .attr("fill", "#545454")
                         .text(availChartContext.chartTitle);
 
                 svg.append("text")
@@ -279,7 +279,7 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                         .attr("y", 28)
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-size", "9px")
-                        .attr("fill", "#50505a")
+                        .attr("fill", "#545454")
                         .style("text-anchor", "end")
                         .text(availChartContext.chartUpLabel);
 
@@ -289,10 +289,12 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                         .attr("y", 39)
                         .style("font-family", "Arial, Verdana, sans-serif;")
                         .style("font-size", "9px")
-                        .attr("fill", "#50505a")
+                        .attr("fill", "#545454")
                         .style("text-anchor", "end")
                         .text(availChartContext.chartDownLabel);
 
+
+                // here is all the brush related stuff
                 var brush = $wnd.d3.svg.brush()
                         .x(timeScale)
                         .extent([1369033200, 1369084807])
@@ -300,10 +302,10 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                         .on("brush", brushmove)
                         .on("brushend", brushend);
 
-                var arc = $wnd.d3.svg.arc()
-                        .outerRadius(30 / 2)
-                        .startAngle(0)
-                        .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
+//                var arc = $wnd.d3.svg.arc()
+//                        .outerRadius(30 / 2)
+//                        .startAngle(0)
+//                        .endAngle(function(d, i) { return i ? -Math.PI : Math.PI; });
 
                 var brushg = svg.append("g")
                         .attr("class", "brush")
@@ -311,10 +313,10 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
 
                 brushg.selectAll(".resize").append("path")
                         .attr("transform", "translate(0," +  height / 2 + ")")
-                        .attr("d", arc);
+                        .attr("d", resizePath);
 
                 brushg.selectAll("rect")
-                        .attr("height", height);
+                        .attr("height", 30);
 
                 brushstart();
                 brushmove();
@@ -334,6 +336,22 @@ public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGra
                     svg.classed("selecting", !d3.event.target.empty());
                     console.log("End start: "+s[0] + "End End: "+ s[1]);
                 }
+                // Taken from crossfilter (http://square.github.com/crossfilter/)
+                function resizePath(d) {
+                    var e = +(d == 'e'),
+                            x = e ? 1 : -1,
+                            y = height / 3;
+                    return 'M' + (.5 * x) + ',' + y
+                            + 'A6,6 0 0 ' + e + ' ' + (6.5 * x) + ',' + (y + 6)
+                            + 'V' + (2 * y - 6)
+                            + 'A6,6 0 0 ' + e + ' ' + (.5 * x) + ',' + (2 * y)
+                            + 'Z'
+                            + 'M' + (2.5 * x) + ',' + (y + 8)
+                            + 'V' + (2 * y - 8)
+                            + 'M' + (4.5 * x) + ',' + (y + 8)
+                            + 'V' + (2 * y - 8);
+                }
+
 
             }
 

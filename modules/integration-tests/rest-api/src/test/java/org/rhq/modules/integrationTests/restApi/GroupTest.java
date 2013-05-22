@@ -35,6 +35,8 @@ import org.rhq.modules.integrationTests.restApi.d.GroupDef;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.hasItem;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.iterableWithSize;
 
@@ -69,17 +71,37 @@ public class GroupTest extends AbstractBase {
 
     @Test
     public void testGetGroups() throws Exception {
-        expect().statusCode(200)
-                .when().get("/group");
+        expect()
+            .statusCode(200)
+        .when()
+            .get("/group");
     }
 
     @Test
     public void testGetGroupsWithPaging() throws Exception {
         given()
+            .header(acceptJson)
             .queryParam("page",0)
             .queryParam("ps",2)
         .expect()
             .statusCode(200)
+            .header("Link", notNullValue())
+        .when()
+            .get("/group");
+    }
+
+    @Test
+    public void testGetGroupsWithPagingWrapped() throws Exception {
+        given()
+            .header(acceptWrappedJson)
+            .queryParam("page",0)
+            .queryParam("ps",2)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .header("Link",nullValue())
+            .body("pageSize",is(2))
+            .body("currentPage",is(0))
         .when()
             .get("/group");
     }
@@ -87,10 +109,11 @@ public class GroupTest extends AbstractBase {
     @Test
     public void testGetGroupsQuery() throws Exception {
         given()
-                .queryParam("q","lala")
+            .queryParam("q", "lala")
         .expect()
-                .statusCode(200)
-                .when().get("/group");
+            .statusCode(200)
+        .when()
+            .get("/group");
     }
 
     @Test

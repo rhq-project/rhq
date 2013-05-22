@@ -306,13 +306,13 @@ public class ContentTest extends AbstractBase {
         .as(List.class);
 
         if (resources!=null && resources.size()>0) {
-            int resourceId = resources.get(0).getResourceId();
+            int resourceId = (Integer) ((Map < String,Object>)resources.get(0)).get("resourceId");
 
             given()
                 .pathParam("id", resourceId)
                 .queryParam("physical", "true") // Also remove target on the EAP instance
             .expect()
-                .statusCode(200)
+                .statusCode(204)
             .when()
                 .delete("/resource/{id}");
         }

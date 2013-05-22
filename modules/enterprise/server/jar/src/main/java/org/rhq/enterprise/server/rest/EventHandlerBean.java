@@ -37,13 +37,11 @@ import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
@@ -76,7 +74,6 @@ import org.rhq.enterprise.server.rest.domain.EventSourceRest;
  */
 @Path("/event")
 @Api("Api that deals with Events (e.g snmp traps, logfile lines)")
-@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
 public class EventHandlerBean extends AbstractRestBean {
@@ -348,16 +345,19 @@ public class EventHandlerBean extends AbstractRestBean {
         }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
         if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
             GenericEntity<List<EventRest>> list = new GenericEntity<List<EventRest>>(restEvents) {};
-            builder = Response.ok(list, mediaType);
+            builder.entity(list);
+            createPagingHeader(builder,uriInfo,eventList);
+        } else if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+            builder.entity(restEvents);
+            createPagingHeader(builder,uriInfo,eventList);
         }
-        else {
-            builder = Response.ok(restEvents, mediaType);
+        else  {
+            wrapForPaging(builder,uriInfo,eventList,restEvents);
         }
-
-        createPagingHeader(builder,uriInfo,eventList);
 
         return builder;
     }

@@ -420,15 +420,18 @@ public class OperationsHandlerBean extends AbstractRestBean  {
         }
 
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
+
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
-            builder = Response.ok(renderTemplate("listOperationHistory.ftl", result));
+            builder.entity(renderTemplate("listOperationHistory.ftl", result));
+        } else if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder,uriInfo,histories,result);
         } else {
             GenericEntity<List<OperationHistoryRest>> res = new GenericEntity<List<OperationHistoryRest>>(result) {};
-            builder = Response.ok(res);
+            builder.entity(res);
+            createPagingHeader(builder,uriInfo,histories);
         }
-
-        createPagingHeader(builder,uriInfo,histories);
 
         return builder.build();
     }

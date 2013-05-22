@@ -703,7 +703,7 @@ public class ConfigurationHelperTest {
 
     }
 
-    @Test(enabled = false)
+    @Test
     public void testConfigToMapComplexMapWithBadSetupLenient() throws Exception {
 
         Configuration config = new Configuration();

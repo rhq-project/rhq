@@ -74,6 +74,17 @@ public class GroupTest extends AbstractBase {
     }
 
     @Test
+    public void testGetGroupsWithPaging() throws Exception {
+        given()
+            .queryParam("page",0)
+            .queryParam("ps",2)
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/group");
+    }
+
+    @Test
     public void testGetGroupsQuery() throws Exception {
         given()
                 .queryParam("q","lala")

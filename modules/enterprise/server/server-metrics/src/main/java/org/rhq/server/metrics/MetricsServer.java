@@ -255,7 +255,7 @@ public class MetricsServer {
         for (Long ts : updates.values()) {
             dates.add(new Date(ts));
         }
-        log.info("Updating one hour index wtih time slices " + dates);
+        log.info("Updating one hour index with time slices " + dates);
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 

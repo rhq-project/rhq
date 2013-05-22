@@ -37,43 +37,6 @@
         </dependency>
    </dependencies>
 
-   <build>
-      <plugins>
-         <plugin>
-            <artifactId>maven-dependency-plugin</artifactId>
-            <executions>
-               <execution>
-                  <id>copy-deps</id>
-                  <phase>process-resources</phase>
-                  <goals>
-                     <goal>copy</goal>
-                  </goals>
-                  <configuration>
-                     <artifactItems>
-                        <artifactItem>
-                           <groupId>${rhq.groupId}</groupId>
-                           <artifactId>rhq-cassandra-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>${rhq.groupId}</groupId>
-                           <artifactId>rhq-jmx-plugin</artifactId>
-                           <version>${project.version}</version>
-                        </artifactItem>
-                        <artifactItem>
-                           <groupId>mc4j</groupId>
-                           <artifactId>org-mc4j-ems</artifactId>
-                           <version>${ems.version}</version>
-                        </artifactItem>
-                     </artifactItems>
-                     <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
-                  </configuration>
-               </execution>
-            </executions>
-         </plugin>
-      </plugins>
-   </build>
-
    <profiles>
       <profile>
          <id>integration-tests</id>

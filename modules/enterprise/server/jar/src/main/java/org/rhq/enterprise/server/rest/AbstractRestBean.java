@@ -59,6 +59,8 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
@@ -416,6 +418,53 @@ public class AbstractRestBean {
                 }
         */
         return res;
+    }
+
+    /**
+     * Create the paging headers for collections and attach them to the passed builder. Those are represented as
+     * <i>Link:</i> http headers that carry the URL for the pages and the respective relation.
+     * <br/>In addition a <i>X-total-size</i> header is created that contains the whole collection size.
+     * @param builder The ResponseBuilder that receives the headers
+     * @param uriInfo The uriInfo of the incoming request to build the urls
+     * @param resultList The collection with its paging information
+     */
+    protected void createPagingHeader(final Response.ResponseBuilder builder, final UriInfo uriInfo, final PageList<?> resultList) {
+
+        UriBuilder uriBuilder;
+
+        PageControl pc = resultList.getPageControl();
+        int page = pc.getPageNumber();
+
+        if (resultList.getTotalSize()> (pc.getPageNumber() +1 ) * pc.getPageSize()) {
+            int nextPage = page+1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",nextPage);
+
+            builder.header("Link",new Link("next",uriBuilder.build().toString()));
+        }
+
+        if (page>0) {
+            int prevPage = page -1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",prevPage);
+            builder.header("Link", new Link("prev",uriBuilder.build().toString()));
+        }
+
+        // A link to the last page
+        if (!pc.isUnlimited()) {
+            int lastPage = resultList.getTotalSize() / pc.getPageSize();
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",lastPage);
+            builder.header("Link", new Link("last",uriBuilder.build().toString()));
+        }
+
+        // A link to the current page
+        uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+        builder.header("Link", new Link("current",uriBuilder.build().toString()));
+
+
+        // Create a total size header
+        builder.header("X-collection-size",resultList.getTotalSize());
     }
 
     /**

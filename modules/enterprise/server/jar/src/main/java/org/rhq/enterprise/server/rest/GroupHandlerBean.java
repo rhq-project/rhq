@@ -116,11 +116,16 @@ public class GroupHandlerBean extends AbstractRestBean  {
     @Path("/")
     @ApiOperation(value = "List all groups", multiValueResponse = true, responseClass = "GroupRest")
     public Response getGroups(@ApiParam("String to search in the group name") @QueryParam("q") String q,
+                              @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+                              @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
                               @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         if (q!=null) {
             criteria.addFilterName(q);
+        }
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
         }
 
         PageList<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
@@ -141,6 +146,8 @@ public class GroupHandlerBean extends AbstractRestBean  {
             GenericEntity<List<GroupRest>> ret = new GenericEntity<List<GroupRest>>(list) {};
             builder.entity(ret);
         }
+
+        createPagingHeader(builder,uriInfo,groups);
 
         return builder.build();
 

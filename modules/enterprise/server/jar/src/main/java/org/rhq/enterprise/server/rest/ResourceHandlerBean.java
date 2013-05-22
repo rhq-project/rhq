@@ -211,7 +211,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
         PageList<Resource> ret = resMgr.findResourcesByCriteria(caller,criteria);
 
-        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers,uriInfo,ret, page, pageSize);
+        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers,uriInfo,ret);
 
         return builder.build();
     }
@@ -221,13 +221,22 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @Path("/platforms")
     @Cache(isPrivate = true,maxAge = 300)
     @ApiOperation(value = "List all platforms in the system", multiValueResponse = true, responseClass = "ResourceWithType")
-    public Response getPlatforms(@Context HttpHeaders headers,
-                                 @Context UriInfo uriInfo) {
+    public Response getPlatforms(
+        @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+        @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+        @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
-        PageControl pc = new PageControl();
+        PageControl pc;
+        if (page!=null) {
+            pc = new PageControl(page,pageSize);
+        }
+        else {
+            pc = PageControl.getUnlimitedInstance();
+        }
+
         PageList<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,
             InventoryStatus.COMMITTED, pc);
-        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers, uriInfo, ret, null, 20);
+        Response.ResponseBuilder builder = getResponseBuilderForResourceList(headers, uriInfo, ret);
 
         return builder.build();
     }
@@ -239,13 +248,10 @@ public class ResourceHandlerBean extends AbstractRestBean {
      * @param headers HttpHeaders from the request
      * @param uriInfo Uri from the request
      * @param resources List of resources
-     * @param page Page of pageSize. If null, paging is ignored
-     * @param pageSize number of elements on a page
      * @return An initialized ResponseBuilder
      */
     private Response.ResponseBuilder getResponseBuilderForResourceList(HttpHeaders headers, UriInfo uriInfo,
-                                                                       PageList<Resource> resources, Integer page,
-                                                                       int pageSize) {
+                                                                       PageList<Resource> resources) {
         List<ResourceWithType> rwtList = new ArrayList<ResourceWithType>(resources.size());
         for (Resource r : resources) {
             putToCache(r.getId(), Resource.class, r);
@@ -256,25 +262,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         Response.ResponseBuilder builder = Response.ok();
         builder.type(mediaType);
-        UriBuilder uriBuilder;
-        if (page!=null) {
 
-            // TODO look a the page control and check if there is a next page at all
-            if (resources.getTotalSize()> page*pageSize) {
-                int nextPage = page+1;
-                uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
-                uriBuilder.replaceQueryParam("page",nextPage);
-
-                builder.header("Link",new Link("next",uriBuilder.build().toString()));
-            }
-
-            if (page>1) {
-                int prevPage = page -1;
-                uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
-                uriBuilder.replaceQueryParam("page",prevPage);
-                builder.header("prev",uriBuilder.build().toString());
-            }
-        }
+        createPagingHeader(builder,uriInfo,resources);
 
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder.entity(renderTemplate("listResourceWithType", rwtList));
@@ -294,7 +283,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
     public ResourceWithChildren getHierarchy(@ApiParam("Id of the resource to start with") @PathParam("id")int baseResourceId) {
         // TODO optimize to do less recursion
-        Resource start = obtainResource(baseResourceId);
+        Resource start = fetchResource(baseResourceId);
         return getHierarchy(start);
     }
 
@@ -425,7 +414,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         if (avail.getResourceId() != resourceId)
             throw new IllegalArgumentException("Resource Ids do not match");
 
-        Resource resource = obtainResource(resourceId);
+        Resource resource = fetchResource(resourceId);
 
         AvailabilityType at;
         at = AvailabilityType.valueOf(avail.getType());
@@ -541,15 +530,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     }
 
-    private Resource obtainResource(int resourceId) {
-        Resource resource = resMgr.getResource(caller, resourceId);
-        if (resource == null) {
-            resource = resMgr.getResource(caller, resourceId);
-            if (resource != null)
-                putToCache(resourceId, Resource.class, resource);
-        }
-        return resource;
-    }
 
     @GZIP
     @AddLinks
@@ -565,7 +545,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         criteria.addFilterResourceIds(resourceId);
 
-        List<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);
+        PageList<Alert> alerts = alertManager.findAlertsByCriteria(caller, criteria);
         List<Link> links = new ArrayList<Link>(alerts.size());
         for (Alert al : alerts) {
             Link link = new Link();

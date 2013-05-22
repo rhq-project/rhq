@@ -77,6 +77,7 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -143,21 +144,31 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @GZIP
     @GET
     @Path("/definitions")
-    @ApiOperation("List all Alert Definition")
-    public List<AlertDefinitionRest> listAlertDefinitions(
-            @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status,
+    @ApiOperation(value = "List all Alert Definition", responseClass = "AlertDefinitionRest", multiValueResponse = true)
+    public Response listAlertDefinitions(
+            @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
+            @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
+            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status, // TODO
             @Context UriInfo uriInfo) {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-        criteria.setPaging(page,20); // TODO add link to next page
-        List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
+        }
+
+        PageList<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
         List<AlertDefinitionRest> ret = new ArrayList<AlertDefinitionRest>(defs.size());
         for (AlertDefinition def : defs) {
             AlertDefinitionRest adr = definitionToDomain(def, false, uriInfo);
             ret.add(adr);
         }
-        return ret;
+
+        Response.ResponseBuilder builder = Response.ok(ret);
+        createPagingHeader(builder,uriInfo,defs);
+
+        // TODO media type etc
+
+        return builder.build();
     }
 
     @GET

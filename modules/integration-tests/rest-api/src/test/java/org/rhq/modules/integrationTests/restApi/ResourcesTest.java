@@ -44,6 +44,8 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test the resources part
@@ -242,7 +244,7 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testPaging() throws Exception {
+    public void testGetResourcesWithPaging() throws Exception {
 
         given()
             .header("Accept", "application/json")
@@ -252,9 +254,28 @@ public class ResourcesTest extends AbstractBase {
             .queryParam("category", "service")
         .expect()
             .statusCode(200)
-            .header("Link", containsString("page=2"))
+            .log().everything()
+           // .header("Link", allOf(containsString("page=2"), containsString("current")))
+            .header("Link",not(containsString("prev")))
             .body("links.self", notNullValue())
         .when().get("/resource");
+    }
+
+    @Test
+    public void testGetPlatformsWithPaging() throws Exception {
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("page", 0)
+            .queryParam("ps", 5)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("links.self", notNullValue())
+            .header("Link", not(containsString("prev=")))
+            .header("Link", anyOf(containsString("current"),containsString("last")))
+        .when().get("/resource/platforms");
     }
 
     @Test

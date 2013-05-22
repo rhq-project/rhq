@@ -23,6 +23,7 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.response.Response;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.AlertCondition;
@@ -34,7 +35,10 @@ import org.rhq.modules.integrationTests.restApi.d.Group;
 import static com.jayway.restassured.RestAssured.delete;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.instanceOf;
@@ -54,6 +58,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
         .expect()
             .statusCode(200)
+            .log().ifError()
         .when()
             .get("/alert");
 
@@ -66,6 +71,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptXml)
         .expect()
             .statusCode(200)
+            .log().ifError()
         .when()
             .get("/alert");
     }
@@ -93,6 +99,23 @@ public class AlertTest extends AbstractBase {
             .get("/alert");
 
     }
+
+    @Test
+    public void testListAlertsWithPaging() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .queryParam("ps", 2)
+            .queryParam("page", 0)
+        .expect()
+            .statusCode(200)
+            .header("Link", anyOf(containsString("current"), Matchers.containsString("last")))
+            .header("X-collection-size", notNullValue())
+            .log().ifError()
+        .when()
+            .get("/alert");
+    }
+
 
     @Test
     public void testGetAlertCountJson() throws Exception {

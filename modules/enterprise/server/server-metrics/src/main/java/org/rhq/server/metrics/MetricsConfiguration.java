@@ -150,4 +150,17 @@ public class MetricsConfiguration {
     public void setSixHourTimeSliceDuration(Duration sixHourTimeSliceDuration) {
         this.sixHourTimeSliceDuration = sixHourTimeSliceDuration;
     }
+
+    public Duration getTimeSliceDuration(MetricsTable table) {
+        if (MetricsTable.RAW.equals(table)) {
+            return this.getRawTimeSliceDuration();
+        } else if (MetricsTable.ONE_HOUR.equals(table)) {
+            return this.getOneHourTimeSliceDuration();
+        } else if (MetricsTable.SIX_HOUR.equals(table)) {
+            return this.getSixHourTimeSliceDuration();
+        }
+
+        throw new IllegalArgumentException("Time slice duration for " + table.getTableName()
+            + " table is not supported");
+    }
 }

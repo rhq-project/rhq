@@ -32,6 +32,8 @@ import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
 
+import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
+
 /**
  * @author Stefan Negrea
  */
@@ -40,6 +42,7 @@ public class ScrollableDataSource implements ExistingDataSource {
     private static final Log log = LogFactory.getLog(ScrollableDataSource.class);
 
     private final EntityManager entityManager;
+    private final DatabaseType databaseType;
     private final String selectNativeQuery;
     private final int maxResults;
 
@@ -48,12 +51,15 @@ public class ScrollableDataSource implements ExistingDataSource {
     private int lastMigratedItemIndex;
 
 
-    public ScrollableDataSource(EntityManager entityManager, String selectNativeQuery) {
-        this(entityManager, selectNativeQuery, -1);
+    public ScrollableDataSource(EntityManager entityManager, DatabaseType databaseType,
+        String selectNativeQuery) {
+        this(entityManager, databaseType, selectNativeQuery, -1);
     }
 
-    public ScrollableDataSource(EntityManager entityManager, String selectNativeQuery, int maxResults) {
+    public ScrollableDataSource(EntityManager entityManager, DatabaseType databaseType, String selectNativeQuery,
+        int maxResults) {
         this.entityManager = entityManager;
+        this.databaseType = databaseType;
         this.selectNativeQuery = selectNativeQuery;
         this.maxResults = maxResults;
     }
@@ -95,12 +101,18 @@ public class ScrollableDataSource implements ExistingDataSource {
 
         session = ((Session) entityManager.getDelegate()).getSessionFactory().openStatelessSession();
 
+        this.prepareSQLSession();
+
         if (log.isDebugEnabled()) {
-            log.debug("Preparing the query with " + maxResults + " results.");
+            if (maxResults >= 0) {
+                log.debug("Preparing the query with " + maxResults + " results.");
+            } else {
+                log.debug("Preparing the query with all the results.");
+            }
         }
 
         Query query = session.createSQLQuery(selectNativeQuery);
-        if (maxResults > 0) {
+        if (maxResults >= 0) {
             query.setMaxResults(maxResults);
         }
         query.setFetchSize(30000);
@@ -111,7 +123,11 @@ public class ScrollableDataSource implements ExistingDataSource {
         lastMigratedItemIndex = -1;
 
         if (log.isDebugEnabled()) {
-            log.debug("Query prepared with " + maxResults + " results.");
+            if (maxResults >= 0) {
+                log.debug("Query prepared with " + maxResults + " results.");
+            } else {
+                log.debug("Query prepared with all the results.");
+            }
         }
     }
 
@@ -125,6 +141,16 @@ public class ScrollableDataSource implements ExistingDataSource {
         if (session != null) {
             session.close();
             session = null;
+        }
+    }
+
+    private void prepareSQLSession() {
+        if (DatabaseType.Postgres.equals(this.databaseType)) {
+            log.debug("Preparing SQL connection with timeout: " + DataMigrator.SQL_TIMEOUT);
+
+            Query query = session.createSQLQuery("SET LOCAL statement_timeout = " + DataMigrator.SQL_TIMEOUT);
+            query.setReadOnly(true);
+            query.executeUpdate();
         }
     }
 }

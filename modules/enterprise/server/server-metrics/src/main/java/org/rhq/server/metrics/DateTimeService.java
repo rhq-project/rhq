@@ -51,6 +51,10 @@ public class DateTimeService {
         this.configuration = configuration;
     }
 
+    public DateTime getTimeSlice(long timestamp, Minutes interval) {
+        return getTimeSlice(new DateTime(timestamp), interval);
+    }
+
     public DateTime getTimeSlice(DateTime dateTime, Minutes interval) {
         Chronology chronology = GregorianChronology.getInstance();
         DateTimeField hourField = chronology.hourOfDay();
@@ -59,6 +63,10 @@ public class DateTimeService {
         long timestamp = dividedField.roundFloor(dateTime.getMillis());
 
         return new DateTime(timestamp);
+    }
+
+    public DateTime getTimeSlice(long timestamp, Duration duration) {
+        return getTimeSlice(new DateTime(timestamp), duration);
     }
 
     public DateTime getTimeSlice(DateTime dt, Duration duration) {

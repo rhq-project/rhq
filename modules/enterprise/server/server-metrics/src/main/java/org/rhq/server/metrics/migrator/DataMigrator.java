@@ -25,13 +25,18 @@ import static com.datastax.driver.core.querybuilder.QueryBuilder.ttl;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
-import javax.persistence.Query;
 
+import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.querybuilder.Batch;
@@ -40,8 +45,13 @@ import com.datastax.driver.core.querybuilder.QueryBuilder;
 import org.apache.commons.lang.time.StopWatch;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hibernate.Query;
 import org.hibernate.StatelessSession;
+import org.joda.time.DateTime;
+import org.joda.time.Duration;
 
+import org.rhq.server.metrics.DateTimeService;
+import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
 
@@ -80,6 +90,11 @@ public class DataMigrator {
         COUNT_1H_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
         COUNT_6H_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
         COUNT_1D_DATA("SELECT COUNT(*) FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
+
+        MAX_TIMESTAMP_1H_DATA("SELECT MAX(time_stamp) FROM RHQ_MEASUREMENT_DATA_NUM_1H"),
+        MAX_TIMESTAMP_6H_DATA("SELECT MAX(time_stamp) FROM RHQ_MEASUREMENT_DATA_NUM_6H"),
+        MAX_TIMESTAMP_1D_DATA("SELECT MAX(time_stamp) FROM RHQ_MEASUREMENT_DATA_NUM_1D"),
+
 
         COUNT_RAW("SELECT COUNT(*) FROM %s"),
         SELECT_RAW_DATA("SELECT schedule_id, time_stamp, value FROM %s ORDER BY schedule_id, time_stamp"),
@@ -311,33 +326,32 @@ public class DataMigrator {
         return tables;
     }
 
-    private ExistingDataSource getExistingDataSource(EntityManager entityManager, String query, Task task) {
-
+    private ExistingDataSource getExistingDataSource(String query, Task task) {
         if (Task.Migrate.equals(task)) {
             if (DatabaseType.Oracle.equals(this.databaseType)) {
-                return new ScrollableDataSource(entityManager, query);
+                return new ScrollableDataSource(this.entityManager, this.databaseType, query);
             } else {
                 if (!experimentalDataSource) {
-                    return new ScrollableDataSource(entityManager, query);
+                    return new ScrollableDataSource(this.entityManager, this.databaseType, query);
                 } else {
-                    return new ExistingPostgresDataBulkExportSource(entityManager, query);
+                    return new ExistingPostgresDataBulkExportSource(this.entityManager, query);
                 }
             }
         } else if (Task.Estimate.equals(task)) {
             int limit = MAX_RECORDS_TO_LOAD_FROM_SQL * (NUMBER_OF_BATCHES_FOR_ESTIMATION + 1);
 
             if (DatabaseType.Oracle.equals(this.databaseType)) {
-                return new ScrollableDataSource(entityManager, query, limit);
+                return new ScrollableDataSource(this.entityManager, this.databaseType, query, limit);
             } else {
                 if (!experimentalDataSource) {
-                    return new ScrollableDataSource(entityManager, query, limit);
+                    return new ScrollableDataSource(this.entityManager, this.databaseType, query, limit);
                 } else {
-                    return new ExistingPostgresDataBulkExportSource(entityManager, query, limit);
+                    return new ExistingPostgresDataBulkExportSource(this.entityManager, query, limit);
                 }
             }
         }
 
-        return new ScrollableDataSource(entityManager, query);
+        return new ScrollableDataSource(this.entityManager, this.databaseType, query);
     }
 
     private void prepareSQLSession(StatelessSession session) {
@@ -349,6 +363,26 @@ public class DataMigrator {
             query.executeUpdate();
         }
     }
+
+    private StatelessSession getSQLSession() {
+        StatelessSession session = ((org.hibernate.Session) this.entityManager.getDelegate()).getSessionFactory()
+            .openStatelessSession();
+
+        prepareSQLSession(session);
+
+        return session;
+    }
+
+    private void closeSQLSession(StatelessSession session) {
+        try {
+            if (session != null) {
+                session.close();
+            }
+        } catch (Exception e) {
+            log.debug("Unable to close SQL stateless session. " + e);
+        }
+    }
+
 
     private enum Task {
         Migrate, Estimate
@@ -384,8 +418,119 @@ public class DataMigrator {
         }
     }
 
-    private interface CallableMigrationWorker {
+    private class MetricsIndexUpdateAccumulator {
+        private static final int MAX_SIZE = 3000;
 
+        private final DateTimeService dateTimeService = new DateTimeService();
+        private final MetricsConfiguration configuration = new MetricsConfiguration();
+
+        private final Map<Integer, Set<Long>> accumulator = new HashMap<Integer, Set<Long>>();
+        private final long timeLimit;
+        private final MetricsTable table;
+        private final PreparedStatement updateMetricsIndex;
+        private final Duration sliceDuration;
+        private final boolean validAccumulatorTable;
+
+        private int currentCount = 0;
+
+        public MetricsIndexUpdateAccumulator(MetricsTable table) {
+            this.table = table;
+
+            if (MetricsTable.RAW.equals(table) || MetricsTable.ONE_HOUR.equals(table)
+                || MetricsTable.SIX_HOUR.equals(table)) {
+                this.sliceDuration = configuration.getTimeSliceDuration(table);
+                this.timeLimit = this.getLastAggregationTime(table) - this.sliceDuration.getMillis();
+                this.updateMetricsIndex = session.prepare("INSERT INTO " + MetricsTable.INDEX.getTableName()
+                    + " (bucket, time, schedule_id) VALUES (?, ?, ?)");
+                this.validAccumulatorTable = true;
+            } else {
+                this.timeLimit = Integer.MAX_VALUE;
+                this.updateMetricsIndex = null;
+                this.sliceDuration = null;
+                this.validAccumulatorTable = false;
+            }
+        }
+
+        public void add(int scheduleId, long timestamp) throws Exception {
+            if (validAccumulatorTable && timeLimit <= timestamp) {
+                long alignedTimeSlice = dateTimeService.getTimeSlice(timestamp, sliceDuration).getMillis();
+
+                if (accumulator.containsKey(scheduleId)) {
+                    Set<Long> timestamps = accumulator.get(scheduleId);
+                    if (!timestamps.contains(alignedTimeSlice)) {
+                        timestamps.add(alignedTimeSlice);
+
+                        currentCount++;
+                    }
+                } else {
+                    Set<Long> timestamps = new HashSet<Long>();
+                    timestamps.add(timestamp);
+                    accumulator.put(scheduleId, timestamps);
+
+                    currentCount++;
+                }
+            }
+
+            if (currentCount > MAX_SIZE) {
+                drain();
+            }
+        }
+
+        public void drain() throws Exception {
+            if (log.isDebugEnabled()) {
+                log.debug("Draining metrics index accumulator with " + currentCount + " entries");
+            }
+
+            List<ResultSetFuture> resultSetFutures = new ArrayList<ResultSetFuture>();
+
+            for (Map.Entry<Integer, Set<Long>> entry : accumulator.entrySet()) {
+                for (Long timestamp : entry.getValue()) {
+                    BoundStatement statement = updateMetricsIndex.bind(this.table.getTableName(), new Date(timestamp),
+                        entry.getKey());
+                    resultSetFutures.add(session.executeAsync(statement));
+                }
+            }
+
+            for (ResultSetFuture future : resultSetFutures) {
+                future.get();
+            }
+
+            accumulator.clear();
+            currentCount = 0;
+        }
+
+        private long getLastAggregationTime(MetricsTable migratedTable) {
+            StatelessSession session = getSQLSession();
+
+            long aggregationSlice = -1;
+            Duration duration = null;
+            String queryString = null;
+
+            if (MetricsTable.RAW.equals(migratedTable)) {
+                duration = configuration.getRawTimeSliceDuration();
+                queryString = MigrationQuery.MAX_TIMESTAMP_1H_DATA.toString();
+            } else if (MetricsTable.ONE_HOUR.equals(migratedTable)) {
+                duration = configuration.getOneHourTimeSliceDuration();
+                queryString = MigrationQuery.MAX_TIMESTAMP_6H_DATA.toString();
+            } else if (MetricsTable.SIX_HOUR.equals(migratedTable)) {
+                duration = configuration.getSixHourTimeSliceDuration();
+                queryString = MigrationQuery.MAX_TIMESTAMP_1D_DATA.toString();
+            }
+
+            if (duration != null && queryString != null) {
+                Query query = session.createSQLQuery(queryString);
+                String queryResult = query.uniqueResult().toString();
+                Long timestamp = Long.parseLong(queryResult);
+                aggregationSlice = dateTimeService.getTimeSlice(new DateTime(timestamp), duration).getMillis();
+            }
+
+            closeSQLSession(session);
+
+            return aggregationSlice;
+        }
+    }
+
+    private interface CallableMigrationWorker {
 
         long estimate() throws Exception;
 
@@ -402,6 +547,7 @@ public class DataMigrator {
         private final String deleteQuery;
         private final String countQuery;
         private final MetricsTable metricsTable;
+        private final MetricsIndexUpdateAccumulator metricsIndexAccumulator;
 
         /**
          * @param query
@@ -425,6 +571,8 @@ public class DataMigrator {
             } else {
                 throw new Exception("MetricsTable " + metricsTable.toString() + " not supported by this migrator.");
             }
+
+            metricsIndexAccumulator = new MetricsIndexUpdateAccumulator(metricsTable);
         }
 
         @Override
@@ -451,27 +599,28 @@ public class DataMigrator {
         }
 
         private long getRowCount(String countQuery) {
-            StatelessSession session = ((org.hibernate.Session) entityManager.getDelegate())
-                .getSessionFactory().openStatelessSession();
-
-            prepareSQLSession(session);
+            StatelessSession session = getSQLSession();
 
             org.hibernate.Query query = session.createSQLQuery(countQuery);
             query.setReadOnly(true);
             query.setTimeout(SQL_TIMEOUT);
+            long count = Long.parseLong(query.uniqueResult().toString());
 
+            closeSQLSession(session);
 
-            return Long.parseLong(query.uniqueResult().toString());
+            return count;
         }
 
         private void deleteTableData() throws Exception {
             int failureCount = 0;
             while (failureCount < MAX_NUMBER_OF_FAILURES) {
                 try {
-                    entityManager.getTransaction().begin();
-                    Query nativeQuery = entityManager.createNativeQuery(this.deleteQuery);
+                    StatelessSession session = getSQLSession();
+                    session.getTransaction().begin();
+                    org.hibernate.Query nativeQuery = session.createSQLQuery(this.deleteQuery);
                     nativeQuery.executeUpdate();
-                    entityManager.getTransaction().commit();
+                    session.getTransaction().commit();
+                    closeSQLSession(session);
                     log.info("- " + metricsTable.toString() + " - Cleaned -");
                 } catch (Exception e) {
                     log.error("Failed to delete " + metricsTable.toString()
@@ -495,7 +644,7 @@ public class DataMigrator {
             int failureCount;
 
             int lastMigratedRecord = 0;
-            ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery, task);
+            ExistingDataSource dataSource = getExistingDataSource(selectQuery, task);
             dataSource.initialize();
 
             telemetry.getMigrationTimer().start();
@@ -532,6 +681,9 @@ public class DataMigrator {
                     break;
                 }
             }
+
+            metricsIndexAccumulator.drain();
+
             telemetry.getMigrationTimer().stop();
 
             dataSource.close();
@@ -560,28 +712,33 @@ public class DataMigrator {
                 itemTTLSeconds = (expectedTTLMillis - currentTimeMillis + creationTimeMillis) / 1000l;
 
                 if(itemTTLSeconds > 0 ){
+                    int scheduleId = Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString());
+                    Date time = new Date(creationTimeMillis);
+
                     batch.add(QueryBuilder.insertInto(metricsTable.toString())
-                        .value("schedule_id",Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString()))
-                        .value("time", new Date(creationTimeMillis))
+                        .value("schedule_id", scheduleId)
+                        .value("time", time)
                         .value("type", AggregateType.AVG.ordinal())
                         .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
 
                     batch.add(QueryBuilder.insertInto(metricsTable.toString())
-                        .value("schedule_id", Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString()))
-                        .value("time", new Date(creationTimeMillis))
+                        .value("schedule_id", scheduleId)
+                        .value("time", time)
                         .value("type", AggregateType.MIN.ordinal())
                         .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.MIN_VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
 
                     batch.add(QueryBuilder.insertInto(metricsTable.toString())
-                        .value("schedule_id", Integer.parseInt(rawMeasurement[MigrationQuery.SCHEDULE_INDEX].toString()))
-                        .value("time", new Date(creationTimeMillis))
+                        .value("schedule_id", scheduleId)
+                        .value("time", time)
                         .value("type", AggregateType.MAX.ordinal())
                         .value("value", Double.parseDouble(rawMeasurement[MigrationQuery.MAX_VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
 
                     batchSize += 3;
+
+                    metricsIndexAccumulator.add(scheduleId, creationTimeMillis);
                 }
 
                 if (batchSize >= MAX_AGGREGATE_BATCH_TO_CASSANDRA) {
@@ -604,7 +761,12 @@ public class DataMigrator {
 
     private class RawDataMigrator implements CallableMigrationWorker {
 
-        Queue<String> tablesNotProcessed = new LinkedList<String>(Arrays.asList(getRawDataTables()));
+        private final Queue<String> tablesNotProcessed = new LinkedList<String>(Arrays.asList(getRawDataTables()));
+        private final MetricsIndexUpdateAccumulator metricsIndexAccumulator;
+
+        public RawDataMigrator() {
+            this.metricsIndexAccumulator = new MetricsIndexUpdateAccumulator(MetricsTable.RAW);
+        }
 
         public long estimate() throws Exception {
             long recordCount = 0;
@@ -631,16 +793,17 @@ public class DataMigrator {
         }
 
         private long getRowCount(String countQuery) {
-            StatelessSession session = ((org.hibernate.Session) entityManager.getDelegate()).getSessionFactory()
-                .openStatelessSession();
-
-            prepareSQLSession(session);
+            StatelessSession session = getSQLSession();
 
             org.hibernate.Query query = session.createSQLQuery(countQuery);
             query.setReadOnly(true);
             query.setTimeout(SQL_TIMEOUT);
 
-            return Long.parseLong(query.uniqueResult().toString());
+            long count = Long.parseLong(query.uniqueResult().toString());
+
+            closeSQLSession(session);
+
+            return count;
         }
 
         private Telemetry performMigration(Task task) throws Exception {
@@ -660,7 +823,7 @@ public class DataMigrator {
 
                 String selectQuery = String.format(MigrationQuery.SELECT_RAW_DATA.toString(), table);
 
-                ExistingDataSource dataSource = getExistingDataSource(entityManager, selectQuery, task);
+                ExistingDataSource dataSource = getExistingDataSource(selectQuery, task);
                 dataSource.initialize();
 
                 log.info("Start migrating raw table: " + table);
@@ -717,6 +880,10 @@ public class DataMigrator {
                 tablesNotProcessed.poll();
             }
 
+            telemetry.getMigrationTimer().resume();
+            metricsIndexAccumulator.drain();
+            telemetry.getMigrationTimer().suspend();
+
             telemetry.getGeneralTimer().stop();
             return telemetry;
         }
@@ -726,10 +893,12 @@ public class DataMigrator {
             int failureCount = 0;
             while (failureCount < MAX_NUMBER_OF_FAILURES) {
                 try {
-                    entityManager.getTransaction().begin();
-                    Query nativeQuery = entityManager.createNativeQuery(deleteQuery);
+                    StatelessSession session = getSQLSession();
+                    session.getTransaction().begin();
+                    org.hibernate.Query nativeQuery = session.createSQLQuery(deleteQuery);
                     nativeQuery.executeUpdate();
-                    entityManager.getTransaction().commit();
+                    session.getTransaction().commit();
+                    closeSQLSession(session);
                     log.info("- " + table + " - Cleaned -");
                 } catch (Exception e) {
                     log.error("Failed to delete " + table + " data. Attempting to delete data one more time...");
@@ -761,12 +930,17 @@ public class DataMigrator {
                 itemTTLSeconds = (expectedTTLMillis - currentTimeMillis + creationTimeMillis) / 1000l;
 
                 if (itemTTLSeconds > 0) {
+                    int scheduleId = Integer.parseInt(rawDataPoint[MigrationQuery.SCHEDULE_INDEX].toString());
+                    Date creationTime = new Date(creationTimeMillis);
+
                     batch.add(QueryBuilder.insertInto(MetricsTable.RAW.toString())
-                        .value("schedule_id", Integer.parseInt(rawDataPoint[MigrationQuery.SCHEDULE_INDEX].toString()))
-                        .value("time", new Date(creationTimeMillis))
+                        .value("schedule_id", scheduleId)
+                        .value("time", creationTime)
                         .value("value", Double.parseDouble(rawDataPoint[MigrationQuery.VALUE_INDEX].toString()))
                         .using(ttl((int) itemTTLSeconds)));
                     batchSize++;
+
+                    metricsIndexAccumulator.add(scheduleId, creationTimeMillis);
                 }
 
                 if (batchSize >= MAX_RAW_BATCH_TO_CASSANDRA) {
@@ -790,42 +964,46 @@ public class DataMigrator {
     private class DeleteAllData implements CallableMigrationWorker {
 
         public void migrate() {
-            Query nativeQuery;
+            org.hibernate.Query nativeQuery;
+
+            StatelessSession session = getSQLSession();
 
             if (run1HAggregateDataMigration) {
-                entityManager.getTransaction().begin();
-                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1H_DATA.toString());
+                session.getTransaction().begin();
+                nativeQuery = session.createSQLQuery(MigrationQuery.DELETE_1H_DATA.toString());
                 nativeQuery.executeUpdate();
-                entityManager.getTransaction().commit();
+                session.getTransaction().commit();
                 log.info("- RHQ_MEASUREMENT_DATA_NUM_1H - Cleaned -");
             }
 
             if (run6HAggregateDataMigration) {
-                entityManager.getTransaction().begin();
-                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_6H_DATA.toString());
+                session.getTransaction().begin();
+                nativeQuery = session.createSQLQuery(MigrationQuery.DELETE_6H_DATA.toString());
                 nativeQuery.executeUpdate();
-                entityManager.getTransaction().commit();
+                session.getTransaction().commit();
                 log.info("- RHQ_MEASUREMENT_DATA_NUM_6H - Cleaned -");
             }
 
             if (run1DAggregateDataMigration) {
-                entityManager.getTransaction().begin();
-                nativeQuery = entityManager.createNativeQuery(MigrationQuery.DELETE_1D_DATA.toString());
+                session.getTransaction().begin();
+                nativeQuery = session.createSQLQuery(MigrationQuery.DELETE_1D_DATA.toString());
                 nativeQuery.executeUpdate();
-                entityManager.getTransaction().commit();
+                session.getTransaction().commit();
                 log.info("- RHQ_MEASUREMENT_DATA_NUM_1D - Cleaned -");
             }
 
             if (runRawDataMigration) {
                 for (String table : getRawDataTables()) {
-                    entityManager.getTransaction().begin();
+                    session.getTransaction().begin();
                     String deleteAllData = String.format(MigrationQuery.DELETE_RAW_ALL_DATA.toString(), table);
-                    nativeQuery = entityManager.createNativeQuery(deleteAllData);
+                    nativeQuery = session.createSQLQuery(deleteAllData);
                     nativeQuery.executeUpdate();
-                    entityManager.getTransaction().commit();
+                    session.getTransaction().commit();
                     log.info("- " + table + " - Cleaned -");
                 }
             }
+
+            closeSQLSession(session);
         }
 
         @Override

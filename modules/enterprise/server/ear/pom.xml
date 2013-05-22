@@ -421,7 +421,7 @@
                                 </artifactItem>
                                 <artifactItem>
                                     <groupId>${project.groupId}</groupId>
-                                    <artifactId>rhq-storage-plugin</artifactId>
+                                    <artifactId>rhq-rhqstorage-plugin</artifactId>
                                     <version>${project.version}</version>
                                 </artifactItem>
                             </artifactItems>

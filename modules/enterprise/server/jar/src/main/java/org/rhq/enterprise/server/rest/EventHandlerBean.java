@@ -62,6 +62,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.rest.domain.EventDefinitionRest;
@@ -243,6 +244,7 @@ public class EventHandlerBean extends AbstractRestBean {
         EventSource source = findEventSourceById(sourceId);
 
         EventCriteria criteria = new EventCriteria();
+        criteria.addSortId(PageOrdering.ASC);
         criteria.addFilterSourceId(source.getId());
         if (startTime>0) {
             criteria.addFilterStartTime(startTime);
@@ -291,6 +293,8 @@ public class EventHandlerBean extends AbstractRestBean {
         }
 
         EventCriteria criteria = new EventCriteria();
+        criteria.addSortId(PageOrdering.ASC);
+
         criteria.addFilterResourceId(resourceId);
         if (startTime>0) {
             criteria.addFilterStartTime(startTime);

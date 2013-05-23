@@ -188,6 +188,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
                                         @Context UriInfo uriInfo) {
 
         ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addSortName(PageOrdering.ASC);
+        criteria.addSortId(PageOrdering.ASC);
         if (!status.toLowerCase().equals("all")) {
             try {
                 criteria.addFilterInventoryStatus(InventoryStatus.valueOf(status.toUpperCase()));
@@ -206,7 +208,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
         }
         if (page!=null) {
             criteria.setPaging(page,pageSize);
-            criteria.addSortName(PageOrdering.ASC);
         }
         PageList<Resource> ret = resMgr.findResourcesByCriteria(caller,criteria);
 
@@ -232,6 +233,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
         else {
             pc = PageControl.getUnlimitedInstance();
         }
+        pc.setPrimarySort("id",PageOrdering.ASC);
 
         PageList<Resource> ret = resMgr.findResourcesByCategory(caller, ResourceCategory.PLATFORM,
             InventoryStatus.COMMITTED, pc);

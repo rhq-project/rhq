@@ -24,11 +24,16 @@ package org.rhq.modules.integrationTests.restApi;
 
 
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
+import com.jayway.restassured.response.ResponseBody;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
@@ -73,8 +78,8 @@ public class ResourcesTest extends AbstractBase {
             .contentType(ContentType.JSON)
             .log().everything()
             .body("links.self", notNullValue())
-            .body("resourceId",is(_platformId))
-            .body("typeId",is(_platformTypeId))
+            .body("resourceId", is(_platformId))
+            .body("typeId", is(_platformTypeId))
             .body("parentId",is(0))
         .when()
             .get("/resource/{id}");
@@ -94,8 +99,8 @@ public class ResourcesTest extends AbstractBase {
             .contentType(WRAPPED_JSON)
             .log().everything()
             .body("links.self", notNullValue())
-            .body("resourceId",is(_platformId))
-            .body("typeId",is(_platformTypeId))
+            .body("resourceId", is(_platformId))
+            .body("typeId", is(_platformTypeId))
             .body("parentId",is(0))
         .when()
             .get("/resource/{id}");
@@ -277,10 +282,47 @@ public class ResourcesTest extends AbstractBase {
             .statusCode(200)
             .log().everything()
            // .header("Link", allOf(containsString("page=2"), containsString("current")))
-            .header("Link",not(containsString("prev")))
+            .header("Link", not(containsString("prev")))
             .body("links.self", notNullValue())
         .when()
             .get("/resource");
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndUniquenessCheck() throws Exception {
+
+        int currentPage = 0;
+        Set<Integer> seen = new HashSet<Integer>();
+
+        for(;;) {
+            JsonPath path =
+            given()
+                .header("Accept", "application/vnd.rhq.wrapped+json")
+            .with()
+                .queryParam("page", currentPage)
+                .queryParam("ps", 5)  // Unusually small to provoke having more than 1 page
+                .queryParam("status","COMMITTED")
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+            .when()
+                .get("/resource")
+            .jsonPath();
+
+            List<Integer> ids = path.getList("data.resourceId");
+
+            for (Integer id : ids ) {
+                assert !seen.contains(id);
+                seen.add(id);
+            }
+
+            currentPage++;
+            if (currentPage > path.getInt("lastPage")) {
+                break;
+            }
+            System.out.print("+");
+        }
+        System.out.println();
     }
 
     @Test
@@ -314,7 +356,7 @@ public class ResourcesTest extends AbstractBase {
             .log().ifError()
             .body("links.self", notNullValue())
             .header("Link", not(containsString("prev=")))
-            .header("Link", anyOf(containsString("current"),containsString("last")))
+            .header("Link", anyOf(containsString("current"), containsString("last")))
         .when().get("/resource/platforms");
     }
 

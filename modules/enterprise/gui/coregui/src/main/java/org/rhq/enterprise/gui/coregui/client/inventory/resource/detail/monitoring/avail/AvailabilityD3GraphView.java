@@ -97,8 +97,10 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
      */
     private static String getSvgDefs() {
         return " <defs>"+
-                "<pattern id=\"diagonalHatch\" patternUnits=\"userSpaceOnUse\" width=\"4\" height=\"4\">  <path d=\"M-1,1 l2,-2           M0,4 l4,-4           M3,5 l2,-2\" /> </pattern>"
-                + "</defs>";
+                "<pattern id=\"diagonalHatch\" patternUnits=\"userSpaceOnUse\" width=\"4\" height=\"4\">" +
+                "<path d=\"M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2\" />" +
+                "</pattern>" +
+                 "</defs>";
     }
 
     @Override

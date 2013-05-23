@@ -129,6 +129,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         destroyMembers();
 
         addMember(graphDateTimeRangeEditor);
+        graphDateTimeRangeEditor.createDateSliderMarker();
 
         if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphWithSliderType>(new AvailabilityOverUnderGraphWithSliderType(resource.getId()));
@@ -153,6 +154,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     public void redrawGraphs() {
         this.onDraw();
         availabilityGraph.drawJsniChart();
+        graphDateTimeRangeEditor.drawJsniDateSlider();
     }
 
     @Override

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
+import java.util.List;
+
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
@@ -25,9 +27,9 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.DateSliderGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
@@ -37,16 +39,23 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  */
 public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
-    private JQueryDateTimeRangeEditor graphDateTimeRangeEditor;
     private MeasurementUserPreferences measurementUserPreferences;
     private AbstractD3GraphListView d3GraphListView;
     private static final Messages MSG = CoreGUI.getMessages();
+    private DateSliderGraphType dateSliderGraphType;
 
 
-    public GraphDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,AbstractD3GraphListView d3GraphListView) {
+    public GraphDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
+                                    AbstractD3GraphListView d3GraphListView) {
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
-        this.graphDateTimeRangeEditor = new JQueryDateTimeRangeEditor();
+
+
+        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
+
+        // initialize with saved begin/end times
+        List<Long> beginEndTimes = prefs.getBeginEndTimes();
+        this.dateSliderGraphType = new DateSliderGraphType(beginEndTimes.get(0), beginEndTimes.get(1));
     }
 
     /**
@@ -57,32 +66,32 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
      * NOTE: auxiliary javascript functions in rhq.js
      *
      */
-    public void createGraphMarker() {
+    public void createDateSliderMarker() {
         Log.debug("drawGraph marker in AvailabilityD3Graph for: graphDateTimeRangeEditor" );
 
         // append the bootstrap buttongroup since smartGWT doesn't have one
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"graphDateTimeRangeEditor\">" +
-                "<div class=\"accordion\" id=\"graphDateTimeEditorAccordion\" style=\"width:895px;\">\n" +
-                "        <div class=\"accordion-group\">\n" +
-                "            \n" +
-                "            <div id=\"graphDateTimeEditorCollapse\" class=\"accordion-body collapse in\">\n" +
-                "                <div class=\"accordion-inner\">\n" +
-                "                    <span id=\"timeRange\" class=\"btn-group\" data-toggle=\"buttons-radio\">\n" +
-                "                        <button id=\"radioMin\" type=\"button\" class=\"btn btn-mini\" >"+MSG.chart_slider_button_bar_minute()+"</button>\n" +
-                "                        <button id=\"radioHour\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_hour()+"</button>\n" +
-                "                        <button id=\"radioDay\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_day()+"</button>\n" +
-                "                        <button id=\"radioMonth\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_month()+"</button>\n" +
-                "                        <button id=\"radioYear\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_year()+"</button>\n" +
-                "                    </span>\n" +
-                "                    <input id=\"dateRange\" style=\"margin-left:30px;margin-top:5px;width:280px;\" type=\"text\" readonly=\"readonly\" />\n" +
-                "                    <button id=\"expandCollapseButton\" style=\"margin-left:202px;\" type=\"button\" class=\"btn btn-mini\">+/-</button>\n" +
-                "                </div>\n" +
-                "            </div>\n" +
-                "        </div>\n" +
-                "    </div>\n"+
-                "<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:65px;\">");
-        divAndSvgDefs.append("</svg></div>");
+                "<div class=\"accordion\" id=\"graphDateTimeEditorAccordion\" style=\"width:895px;\">" +
+                "        <div class=\"accordion-group\">" +
+                "            <div id=\"graphDateTimeEditorCollapse\" class=\"accordion-body collapse in\">" +
+                "                <div class=\"accordion-inner\">" +
+                "                    <span id=\"timeRangeButtons\" class=\"btn-group\" data-toggle=\"buttons-radio\">" +
+                "                        <button id=\"radioMin\" type=\"button\" class=\"btn btn-mini\" >"+MSG.chart_slider_button_bar_minute()+"</button>" +
+                "                        <button id=\"radioHour\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_hour()+"</button>" +
+                "                        <button id=\"radioDay\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_day()+"</button>" +
+                "                        <button id=\"radioMonth\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_month()+"</button>" +
+                "                        <button id=\"radioYear\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_year()+"</button>" +
+                "                    </span>" +
+                "                    <input id=\"dateRange\" style=\"margin-left:30px;margin-top:5px;width:280px;\" type=\"text\" readonly=\"readonly\" />" +
+                "                    <button id=\"expandCollapseButton\" style=\"float:right;\" type=\"button\" class=\"btn btn-mini\">+/-</button>" +
+                "                </div>" +
+                "            </div>" +
+                "            <div id=\"dateSlider\">" +
+                "                 <svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:65px;\"></svg></div>"+
+                "            </div>" +
+                "        </div>" +
+                "    </div>");
         HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
         graph.setWidth100();
         graph.setHeight(65);
@@ -90,6 +99,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         new Timer(){
             @Override
             public void run() {
+                changeDateRange(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
+                dateSliderGraphType.drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
                 attachGraphDateRangeEditorButtonGroupHandlers();
             }
         }.schedule(400);
@@ -100,14 +111,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         var global = this;
 
         function updateDateDisplay(startDate, endDate ) {
-            var formattedDateRange;
-
-            if (isSameDay(startDate, endDate) && isSameMonth(startDate, endDate) && isSameYear(startDate, endDate)) {
-                // no need to display date only time
-                formattedDateRange = startDate.format('ddd') + ': ' + startDate.format('h:mm a') + ' - ' + endDate.format('h:mm a');
-            } else {
-                formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + ' - ' + endDate.format('MM/DD/YYYY h:mm a');
-            }
+            var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + ' - ' + endDate.format('MM/DD/YYYY h:mm a');
             $wnd.jQuery('#dateRange').val(formattedDateRange);
         }
 
@@ -115,17 +119,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             var start = startDate | 0, end = endDate | 0;
             global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::changeDateRange(DD)(start,end);
             //@todo: fixme
-            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
-        }
-
-        function isSameDay(startDate, endDate) {
-            return (startDate.date() === endDate.date());
-        }
-        function isSameMonth(startDate, endDate) {
-            return (startDate.month() === endDate.month());
-        }
-        function isSameYear(startDate, endDate) {
-            return (startDate.year() === endDate.year());
+            //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
         }
 
         var graphDateContext = new $wnd.GraphDateContext($wnd.moment().startOf('day'), $wnd.moment() );
@@ -167,7 +161,13 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         });
         $wnd.jQuery("#expandCollapseButton").bind('click', function (event) {
             console.log("expand/collapse selected");
-            $wnd.jQuery("#timeRange").toggle();
+            //$wnd.jQuery("#timeRange").toggle();
+            var buttonBarVisibility = $wnd.jQuery("#timeRangeButtons").attr("visibility");
+            if(buttonBarVisibility === 'none'){
+                $wnd.jQuery("#timeRangeButtons").attr("visibility","visible");
+            }else {
+                $wnd.jQuery("#timeRangeButtons").attr("visibility","none");
+            }
 
         });
 
@@ -183,6 +183,10 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     }-*/;
 
 
+    public void drawJsniDateSlider(){
+        dateSliderGraphType.drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
+    }
+
     public void redrawGraphs(){
         d3GraphListView.redrawGraphs();
     }
@@ -191,24 +195,15 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     protected void onDraw() {
         super.onDraw();
         removeMembers(getMembers());
-        createGraphMarker();
+        createDateSliderMarker();
     }
 
     @Override
     public void parentResized() {
         super.parentResized();
         removeMembers(getMembers());
-        createGraphMarker();
-        drawJsniChart();
-    }
-
-
-    /**
-     * Delegate the call to rendering the JSNI chart.
-     * This way the chart type can be swapped out at any time.
-     */
-    public void drawJsniChart() {
-        graphDateTimeRangeEditor.drawJsniChart();
+        //createDateSliderMarker();
+        //drawJsniChart();
     }
 
 
@@ -216,23 +211,34 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         return measurementUserPreferences.getMetricRangePreferences().begin;
     }
 
-    public void changeDateRange(double startTime, double endTime){
-
-        final boolean advanced = true;
-        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
-        prefs.explicitBeginEnd = advanced;
-        prefs.begin = new Long(String.valueOf(startTime));
-        prefs.end = new Long(String.valueOf(endTime));
-        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
-            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
-        } else {
-            measurementUserPreferences.setMetricRangePreferences(prefs);
-        }
-
-    }
-
     public Long getEndTime() {
         return measurementUserPreferences.getMetricRangePreferences().end;
     }
+    /**
+     * Whenever we make a change to the date range save it here so it gets propogated to
+     * the correct places.
+     * @param startTime double because JSNI doesnt support long
+     * @param endTime  double because JSNI doesnt support long
+     */
+    public void changeDateRange(double startTime, double endTime){
+
+        this.dateSliderGraphType.setStartDateTime((long)startTime);
+        this.dateSliderGraphType.setEndDateTime((long)endTime);
+
+        //@todo: uncomment when ready
+//        final boolean advanced = true;
+//        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
+//        prefs.explicitBeginEnd = advanced;
+//        prefs.begin = (long) startTime;
+//        prefs.end = (long) endTime;
+//        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+//            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
+//        } else {
+//            measurementUserPreferences.setMetricRangePreferences(prefs);
+//        }
+
+    }
+
+
 
 }

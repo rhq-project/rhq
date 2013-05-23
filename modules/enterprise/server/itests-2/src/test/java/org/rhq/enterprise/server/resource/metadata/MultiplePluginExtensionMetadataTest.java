@@ -52,7 +52,7 @@ public class MultiplePluginExtensionMetadataTest extends MetadataBeanTest {
         doTheTest(true);
     }
 
-    public void doTheTest(boolean ignoreTypes) throws Exception {
+    private void doTheTest(boolean ignoreTypes) throws Exception {
         subjectMgr = LookupUtil.getSubjectManager();
         resourceTypeMgr = LookupUtil.getResourceTypeManager();
 

@@ -356,8 +356,13 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
                     value = lookupAttributeProperty(value, fullProperty);
                 }
 
-                if ((request.getDataType() == DataType.MEASUREMENT) && (value instanceof Number)) {
-                    report.addData(new MeasurementDataNumeric(request, ((Number) value).doubleValue()));
+                if (request.getDataType() == DataType.MEASUREMENT) {
+                    if (value instanceof Number) {
+                        report.addData(new MeasurementDataNumeric(request, ((Number) value).doubleValue()));
+                    } else if ((value instanceof List<?>)) {
+                        // add the number of elements
+                        report.addData(new MeasurementDataNumeric(request, Double.valueOf(((List<?>) value).size())));
+                    }
                 } else if (request.getDataType() == DataType.TRAIT) {
                     String displayValue = null;
                     if ((value != null) && value.getClass().isArray()) {

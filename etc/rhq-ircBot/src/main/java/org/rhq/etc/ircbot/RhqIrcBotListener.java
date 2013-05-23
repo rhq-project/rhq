@@ -93,6 +93,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
 
     private final String server;
     private final String channel;
+    private final boolean isRedHatChannel;
     private String docspaceLogin;
     private String docspacePassword;
     private BugzillaConnector bzConnector = new BugzillaConnector();
@@ -103,6 +104,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     public RhqIrcBotListener(String server, String channel) {
         this.server = server;
         this.channel = channel;
+        isRedHatChannel = "irc.devel.redhat.com".equals(channel);
         StringBuilder commandRegExp = new StringBuilder();
         commandRegExp.append("(?i)\\").append(Command.PREFIX).append("[ ]*(");
         for (Command command : Command.values()) {
@@ -176,7 +178,9 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         while (commandMatcher.find()) {
             Command command = Command.valueOf(commandMatcher.group(1).toUpperCase());
             String response = prepareResponseForCommand(command);
-            bot.sendMessage(event.getChannel(), event.getUser().getNick() + ": " + response);
+            if (response != null) {
+                bot.sendMessage(event.getChannel(), event.getUser().getNick() + ": " + response);
+            }
         }
 
         // ping JON devs
@@ -215,9 +219,12 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
             // react to commands included in the messages
             Matcher commandMatcher = commandPattern.matcher(message);
             while (commandMatcher.find()) {
+                isCommand = true;
                 Command command = Command.valueOf(commandMatcher.group(1).toUpperCase());
                 String response = prepareResponseForCommand(command);
-                bot.sendMessage(privateMessageEvent.getUser(), response);
+                if (response != null) {
+                    bot.sendMessage(privateMessageEvent.getUser(), response);
+                }
             }
             if (!isCommand) {
                 bot.sendMessage(privateMessageEvent.getUser(), "Hi, I am " + bot.getFinger() + ".\n"
@@ -271,8 +278,10 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         }
         switch (command) {
         case SUPPORT:
+            if (isRedHatChannel)
             return whoIsOnSupport(SUPPORT_LINK);
         case PTO:
+            if (isRedHatChannel)
             return whoIsOnPto(PTO_LINK);
         default:
             System.err.println("Unknown command:" + command);

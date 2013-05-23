@@ -1434,6 +1434,8 @@ public class AlertTest extends AbstractBase {
 
         int definitionId = createEmptyAlertDefinition(true);
 
+        int alertId;
+
         // Now add a condition
         try {
 
@@ -1481,7 +1483,7 @@ public class AlertTest extends AbstractBase {
             // wait a little
             Thread.sleep(5000);
 
-            int alertId =
+            alertId =
             given()
                 .header(acceptJson)
                 .queryParam("definitionId",definitionId)
@@ -1543,9 +1545,32 @@ public class AlertTest extends AbstractBase {
             .when()
                 .get("/resource/{resourceId}/alerts");
 
-        }
+            if (alertId>0) {
+                // Acknowledge the alert
+                given()
+                    .header(acceptWrappedJson)
+                    .pathParam("id", alertId)
+                .expect()
+                    .statusCode(200)
+                    .log().ifError()
+                .when()
+                    .put("/alert/{id}");
 
+                Thread.sleep(500);
+
+                // purge the alert
+                given()
+                    .header(acceptJson)
+                    .pathParam("id", alertId)
+                .expect()
+                    .statusCode(204)
+                    .log().ifError()
+                .when()
+                    .delete("/alert/{id}");
+            }
+        }
         finally {
+
             // delete the definition again
             cleanupDefinition(definitionId);
         }

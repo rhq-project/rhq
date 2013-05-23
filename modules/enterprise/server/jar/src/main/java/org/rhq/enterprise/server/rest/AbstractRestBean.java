@@ -25,12 +25,9 @@ package org.rhq.enterprise.server.rest;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -251,89 +248,8 @@ public class AbstractRestBean {
         return result;
     }
 
-    protected void putResourceToCache(Resource res) {
-        putToCache(res.getId(), Resource.class, res);
 
-        CacheKey callerKey = new CacheKey("rhq.rest.caller", caller.getId());
 
-        try {
-            Set<Integer> visibleResources = (Set<Integer>) cache.get(callerKey);
-
-            if (null == visibleResources) {
-                visibleResources = new HashSet<Integer>();
-            }
-
-            visibleResources.add(res.getId());
-            cache.put(callerKey, visibleResources);
-
-            Map<Integer, Integer> childParentMap = (Map<Integer, Integer>) cache.get(META_KEY);
-
-            if (null == childParentMap) {
-                childParentMap = new HashMap<Integer, Integer>();
-            }
-            int pid = res.getParentResource() == null ? 0 : res.getParentResource().getId();
-            childParentMap.put(res.getId(), pid);
-            cache.put(META_KEY, childParentMap);
-
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-        }
-    }
-
-    protected List<Resource> getResourcesFromCacheByParentId(int pid) {
-        List<Integer> candidateIds = new ArrayList<Integer>();
-        List<Resource> ret = new ArrayList<Resource>();
-
-        // First determine candidate children
-        Map<Integer, Integer> childParentMap = (Map<Integer, Integer>) cache.get(META_KEY);
-
-        if (null != childParentMap) {
-            try {
-                for (Map.Entry<Integer, Integer> entry : childParentMap.entrySet()) {
-                    if (entry.getValue() == pid)
-                        candidateIds.add(entry.getKey());
-                }
-                // then see if the current user can see them
-                CacheKey callerKey = new CacheKey("rhq.rest.caller", caller.getId());
-                Set<Integer> visibleResources = (Set<Integer>) cache.get(callerKey);
-                Iterator<Integer> iter = candidateIds.iterator();
-                while (iter.hasNext()) {
-                    Integer resId = iter.next();
-                    if (!visibleResources.contains(resId)) {
-                        iter.remove();
-                    }
-                }
-
-                // Last but not least, get the resources and return them
-                for (Integer resId : candidateIds) {
-                    ret.add(getFromCache(resId, Resource.class));
-                }
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-            }
-
-        }
-        return ret;
-    }
-
-    protected Resource getResourceFromCache(int resourceid) {
-
-        Resource res = null;
-        // check if the current user can see the resource
-        CacheKey callerKey = new CacheKey("rhq.rest.caller", caller.getId());
-        Set<Integer> visibleResources = (Set<Integer>) cache.get(callerKey);
-        if (null != visibleResources) {
-            try {
-                if (visibleResources.contains(resourceid)) {
-                    res = getFromCache(resourceid, Resource.class);
-                }
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-            }
-        }
-
-        return res;
-    }
 
     /**
      * Remove an item from the cache
@@ -393,6 +309,7 @@ public class AbstractRestBean {
         uriBuilder.path("/resource/{id}/children");
         uri = uriBuilder.build(res.getId());
         link = new Link("children", uri.toString());
+        rwt.addLink(link);
         uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/resource/{id}/alerts");
         uri = uriBuilder.build(res.getId());

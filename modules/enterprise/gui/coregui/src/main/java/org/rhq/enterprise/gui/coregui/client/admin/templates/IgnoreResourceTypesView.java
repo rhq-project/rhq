@@ -182,6 +182,13 @@ public class IgnoreResourceTypesView extends ResourceTypeTreeView {
                 super(composite, plugin);
                 setAttribute(ATTR_ENABLED, ImageManager.getAvailabilityIcon(!composite.getType().isIgnored()));
             }
+
+            @Override
+            public ResourceTypeTreeNode copy() {
+                ResourceTypeTreeNode dup = super.copy();
+                dup.setAttribute(ATTR_ENABLED, this.getAttribute(ATTR_ENABLED));
+                return dup;
+            }
         }
     }
 }

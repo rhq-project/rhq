@@ -197,13 +197,18 @@ public class AlertDefinitionTemplateTypeView extends ResourceTypeTreeView {
         }
 
         public static class TreeNode extends ResourceTypeTreeNode {
-
             public TreeNode(ResourceTypeTemplateCountComposite composite, String plugin) {
-
                 super(composite, plugin);
-
                 setAttribute(ATTR_ENABLED_TEMPLATES, composite.getEnabledAlertCount());
                 setAttribute(ATTR_DISABLED_TEMPLATES, composite.getDisabledAlertCount());
+            }
+
+            @Override
+            public ResourceTypeTreeNode copy() {
+                ResourceTypeTreeNode dup = super.copy();
+                dup.setAttribute(ATTR_ENABLED_TEMPLATES, this.getAttributeAsLong(ATTR_ENABLED_TEMPLATES));
+                dup.setAttribute(ATTR_DISABLED_TEMPLATES, this.getAttributeAsLong(ATTR_DISABLED_TEMPLATES));
+                return dup;
             }
         }
 

@@ -448,14 +448,14 @@ public class AbstractRestBean {
             uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
             uriBuilder.replaceQueryParam("page",nextPage);
 
-            builder.header("Link",new Link("next",uriBuilder.build().toString()));
+            builder.header("Link",new Link("next",uriBuilder.build().toString()).rfc5988String());
         }
 
         if (page>0) {
             int prevPage = page -1;
             uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
             uriBuilder.replaceQueryParam("page",prevPage);
-            builder.header("Link", new Link("prev",uriBuilder.build().toString()));
+            builder.header("Link", new Link("prev",uriBuilder.build().toString()).rfc5988String());
         }
 
         // A link to the last page
@@ -463,12 +463,12 @@ public class AbstractRestBean {
             int lastPage = resultList.getTotalSize() / pc.getPageSize();
             uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
             uriBuilder.replaceQueryParam("page",lastPage);
-            builder.header("Link", new Link("last",uriBuilder.build().toString()));
+            builder.header("Link", new Link("last",uriBuilder.build().toString()).rfc5988String());
         }
 
         // A link to the current page
         uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
-        builder.header("Link", new Link("current",uriBuilder.build().toString()));
+        builder.header("Link", new Link("current",uriBuilder.build().toString()).rfc5988String());
 
 
         // Create a total size header

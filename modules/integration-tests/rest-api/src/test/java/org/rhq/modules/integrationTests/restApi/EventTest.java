@@ -366,13 +366,13 @@ public class EventTest extends AbstractBase {
             Headers headers = response.getHeaders();
             int found = 0;
             for (String link: headers.getValues("Link")) {
-                if (link.contains("rel='last'"))
+                if (link.contains("rel=\"last\""))
                     found++;
-                if (link.contains("rel='prev'"))
+                if (link.contains("rel=\"prev\""))
                     found++;
-                if (link.contains("rel='current'"))
+                if (link.contains("rel=\"current\""))
                     found++;
-                assert !link.contains("rel='next");
+                assert !link.contains("rel=\"next\"");
             }
             assert found == 3;
 

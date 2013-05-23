@@ -59,4 +59,20 @@ public class Link {
             href + "; "  +
                 "rel='" + rel + '\'' ;
     }
+
+    /**
+     * Return the link in the format of RFC 5988 Web Linking.
+     *
+     * See <a href="http://tools.ietf.org/html/rfc5988#page-7">RFC 5988 Web Linking</a>
+     * @return String that contains the link with href and rel
+     */
+    public String rfc5988String() {
+        StringBuilder builder = new StringBuilder();
+        builder.append("<")
+            .append(href)
+            .append(">; rel=\"")
+            .append(rel)
+            .append("\"");
+        return builder.toString();
+    }
 }

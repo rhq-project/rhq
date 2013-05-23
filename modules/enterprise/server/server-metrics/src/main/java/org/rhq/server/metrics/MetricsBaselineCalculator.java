@@ -113,6 +113,12 @@ public class MetricsBaselineCalculator {
             return baseline;
         }
 
-        return null;
+        MeasurementBaseline baseline = new MeasurementBaseline();
+        baseline.setMax(Double.NaN);
+        baseline.setMin(Double.NaN);
+        baseline.setMean(Double.NaN);
+        baseline.setSchedule(schedule);
+
+        return baseline;
     }
 }

@@ -45,7 +45,28 @@ public interface MeasurementOOBManagerLocal {
      */
     void computeOOBsFromHourBeginingAt(Subject subject, long begin);
 
+    /**
+     * Computes OOBs using the provided 1 hr data which should be the most recent 1 hr
+     * aggregates. These metrics are provided as an argument as opposed to querying for
+     * them because we already have the 1 hr aggregates load in memory when metrics
+     * aggregation runs prior to calculating OOBs.
+     *
+     * @param subject
+     * @param metrics The most recent 1 hr aggregates
+     */
     void computeOOBsForLastHour(Subject subject, Iterable<AggregateNumericMetric> metrics);
+
+    /**
+     * Determines and calculates an OOB if necessary, If an OOB is generated, this method
+     * saves it to the database.
+     * <br/><br/>
+     * <strong>Note</strong> This method exists only for transaction demarcation.
+     *
+     * @param metric The 1 hr metric that is used to determine whether or not an OOB should
+     *               be generated
+     * @return 1 if an OOB is generated, 0 otherwise
+     */
+    int calculateOOB(AggregateNumericMetric metric);
 
     /**
      * Return OOB Composites that contain all information about the OOBs in a given time as aggregates.

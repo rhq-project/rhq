@@ -39,10 +39,6 @@ public class MetricsBaselineCalculator {
 
     private MetricsDAO metricsDAO;
 
-//    public MetricsBaselineCalculator(Session session) {
-//        this.metricsDAO = new MetricsDAO(session);
-//    }
-
     public MetricsBaselineCalculator(MetricsDAO metricsDAO) {
         this.metricsDAO = metricsDAO;
     }
@@ -108,6 +104,12 @@ public class MetricsBaselineCalculator {
             return baseline;
         }
 
-        return null;
+        MeasurementBaseline baseline = new MeasurementBaseline();
+        baseline.setMax(Double.NaN);
+        baseline.setMin(Double.NaN);
+        baseline.setMean(Double.NaN);
+        baseline.setSchedule(schedule);
+
+        return baseline;
     }
 }

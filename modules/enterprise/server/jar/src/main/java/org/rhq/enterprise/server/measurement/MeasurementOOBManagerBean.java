@@ -82,6 +82,9 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     @EJB
     AuthorizationManagerLocal authMangager;
 
+    @EJB
+    MeasurementOOBManagerLocal oobManager;
+
     /**
      * Compute oobs from the values in the 1h measurement table that just got added.
      * For the total result, this is an incremental computation. The idea is that
@@ -191,56 +194,15 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
     }
 
     @SuppressWarnings("unchecked")
+    @TransactionAttribute(value = TransactionAttributeType.NOT_SUPPORTED)
     public void computeOOBsForLastHour(Subject subject, Iterable<AggregateNumericMetric> metrics) {
+        log.info("Computing OOBs");
         int count = 0;
         long startTime = System.currentTimeMillis();
         try {
             for (AggregateNumericMetric metric : metrics) {
                 try {
-                    List<MeasurementBaseline> baselines = entityManager.createQuery(
-                        "select baseline from MeasurementBaseline baseline where baseline.schedule.id = :scheduleId")
-                        .setParameter("scheduleId", metric.getScheduleId())
-                        .getResultList();
-                    if (baselines.isEmpty()) {
-                        continue;
-                    }
-                    MeasurementBaseline baseline = baselines.get(0);
-                    Long upperDelta = null;
-                    Long lowerDelta = null;
-
-                    if (isPastUpperBound(baseline, metric)) {
-                        upperDelta =
-                            Math.round(((metric.getMax() - baseline.getMax()) / (baseline.getMax() - baseline.getMin())) * 100);
-                    }
-
-                    if (isPastLowerBound(baseline, metric)) {
-                        lowerDelta =
-                            Math.round(((baseline.getMin() - metric.getMin()) / (baseline.getMax() - baseline.getMin())) * 100);
-                    }
-
-                    Integer oobFactor;
-                    if (upperDelta != null && lowerDelta == null) {
-                        oobFactor = upperDelta.intValue();
-                    } else if (upperDelta == null && lowerDelta != null) {
-                        oobFactor = lowerDelta.intValue();
-                    } else if (upperDelta != null && lowerDelta != null) {
-                        if (upperDelta > lowerDelta) {
-                            oobFactor = upperDelta.intValue();
-                        } else {
-                            oobFactor = lowerDelta.intValue();
-                        }
-                    } else { // both are null
-                        oobFactor = null;
-                    }
-
-                    if (oobFactor != null) {
-                        MeasurementOOB oob = new MeasurementOOB();
-                        oob.setScheduleId(metric.getScheduleId());
-                        oob.setTimestamp(metric.getTimestamp());
-                        oob.setOobFactor(oobFactor);
-                        entityManager.merge(oob);
-                        ++count;
-                    }
+                    count += oobManager.calculateOOB(metric);
                 } catch (Exception e) {
                     log.error("An error occurred while calculating OOBs for " + metric, e);
                     throw new RuntimeException(e);
@@ -248,10 +210,66 @@ public class MeasurementOOBManagerBean implements MeasurementOOBManagerLocal {
             }
         } finally {
             long endTime = System.currentTimeMillis();
-            if (log.isDebugEnabled()) {
-                log.debug("Finished calculating " + count + " OOBs in " + (endTime - startTime) + " ms");
+            if (log.isInfoEnabled()) {
+                log.info("Finished calculating " + count + " OOBs in " + (endTime - startTime) + " ms");
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(value = TransactionAttributeType.REQUIRES_NEW)
+    public int calculateOOB(AggregateNumericMetric metric) {
+        List<MeasurementBaseline> baselines = entityManager.createQuery(
+            "select baseline from MeasurementBaseline baseline where baseline.schedule.id = :scheduleId")
+            .setParameter("scheduleId", metric.getScheduleId())
+            .getResultList();
+        if (baselines.isEmpty()) {
+            return 0;
+        }
+        MeasurementBaseline baseline = baselines.get(0);
+        Long upperDelta = null;
+        Long lowerDelta = null;
+
+        if (isPastUpperBound(baseline, metric)) {
+            upperDelta =
+                Math.round(((metric.getMax() - baseline.getMax()) / (baseline.getMax() - baseline.getMin())) * 100);
+        }
+
+        if (isPastLowerBound(baseline, metric)) {
+            lowerDelta =
+                Math.round(((baseline.getMin() - metric.getMin()) / (baseline.getMax() - baseline.getMin())) * 100);
+        }
+
+        Integer oobFactor;
+        if (upperDelta != null && lowerDelta == null) {
+            oobFactor = upperDelta.intValue();
+        } else if (upperDelta == null && lowerDelta != null) {
+            oobFactor = lowerDelta.intValue();
+        } else if (upperDelta != null && lowerDelta != null) {
+            if (upperDelta > lowerDelta) {
+                oobFactor = upperDelta.intValue();
+            } else {
+                oobFactor = lowerDelta.intValue();
+            }
+        } else { // both are null
+            oobFactor = null;
+        }
+
+        if (oobFactor != null) {
+            MeasurementOOB oob = new MeasurementOOB();
+            oob.setScheduleId(metric.getScheduleId());
+            oob.setTimestamp(metric.getTimestamp());
+            oob.setOobFactor(oobFactor);
+
+            if (log.isDebugEnabled()) {
+                log.debug("Generated OOB " + oob + " for 1 hr metric " + metric + " with baseline " + baseline);
+            }
+
+            entityManager.merge(oob);
+            return 1;
+        }
+
+        return 0;
     }
 
     private boolean isPastUpperBound(MeasurementBaseline baseline, AggregateNumericMetric metric) {

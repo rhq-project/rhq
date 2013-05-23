@@ -20,6 +20,8 @@ package org.rhq.enterprise.server.measurement;
 
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -88,7 +90,8 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private SessionManagerBean sessionManager;
 
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
-    private static final int BASELINE_PROCESSING_LIMIT = 50000;
+
+    private static final int BASELINE_PROCESSING_LIMIT = 100;
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void calculateAutoBaselines() {
@@ -185,11 +188,14 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                  * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
                  * needs to replace the limits in the query today.
                  */
-                int schedulesWithoutBaselines = measurementBaselineManager
-                    ._calculateAutoBaselinesINSERT(amountOfData);
-                totalProcessed += schedulesWithoutBaselines;
+//                int schedulesWithoutBaselines = measurementBaselineManager
+//                    ._calculateAutoBaselinesINSERT(amountOfData);
+                List<MeasurementSchedule> schedulesWithoutBaselines =
+                    measurementBaselineManager.getSchedulesWithoutBaselines();
+                 measurementBaselineManager.calculateBaselines(schedulesWithoutBaselines, now, amountOfData);
+                totalProcessed += schedulesWithoutBaselines.size();
 
-                if (schedulesWithoutBaselines < BASELINE_PROCESSING_LIMIT) {
+                if (schedulesWithoutBaselines.size() < BASELINE_PROCESSING_LIMIT) {
                     break;
                 }
             }
@@ -213,6 +219,62 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         query.setParameter("timestamp", olderThanTime);
         int rowsAffected = query.executeUpdate();
         return rowsAffected;
+    }
+
+    @SuppressWarnings("unchecked")
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public List<MeasurementSchedule> getSchedulesWithoutBaselines() {
+        Query query = this.entityManager
+            .createNamedQuery(MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES);
+        query.setMaxResults(BASELINE_PROCESSING_LIMIT);
+        List<MeasurementSchedule> scheduleIdsWithoutBaselines = query.getResultList();
+
+        return scheduleIdsWithoutBaselines;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void calculateBaselines(List<MeasurementSchedule> schedules, long olderThan, long amountOfData) {
+        long endTime = olderThan;
+        long startTime = endTime - amountOfData;
+
+        log.debug("Computing baselines for " + schedules.size() + " schedules");
+        MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(sessionManager.getMetricsDAO());
+        long calcStartTime = System.currentTimeMillis();
+        List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(schedules, startTime, endTime);
+        long calcEndTime = System.currentTimeMillis();
+        int count = results.size();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Finished computing " + count + " new baselines in " + (calcEndTime - calcStartTime) + " ms");
+        }
+
+        log.debug("Persisting baselines calculations");
+        long saveStartTime = System.currentTimeMillis();
+        Iterator<MeasurementBaseline> iterator = results.iterator();
+        List<MeasurementBaseline> queue = new LinkedList<MeasurementBaseline>();
+        while (iterator.hasNext()) {
+            if (queue.size() == 10) {
+                measurementBaselineManager.saveNewBaselines(queue);
+                queue = new LinkedList<MeasurementBaseline>();
+            }
+            queue.add(iterator.next());
+        }
+        if (!queue.isEmpty()) {
+            measurementBaselineManager.saveNewBaselines(queue);
+        }
+
+        long saveEndTime = System.currentTimeMillis();
+        if (log.isDebugEnabled()) {
+            log.debug("Finished persisting " + count + " baselines in " + (saveEndTime - saveStartTime) + " ms");
+        }
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void saveNewBaselines(List<MeasurementBaseline> baselines) {
+        for (MeasurementBaseline baseline : baselines) {
+            entityManager.merge(baseline);
+        }
     }
 
     @SuppressWarnings("unchecked")

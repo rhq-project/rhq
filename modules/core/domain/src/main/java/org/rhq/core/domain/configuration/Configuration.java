@@ -271,7 +271,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             }
         }
 
-        public static class MapInList<Parent extends AbstractPropertyListBuilder> extends AbstractPropertyMapBuilder<PropertyMap, MapInList<Parent>> {
+        public static class MapInList<Parent extends AbstractPropertyListBuilder<?>> extends AbstractPropertyMapBuilder<PropertyMap, MapInList<Parent>> {
             private Parent parent;
 
             public MapInList(Parent parent, String name) {
@@ -307,7 +307,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             }
         }
 
-        public static class ListInList<Parent extends AbstractPropertyListBuilder> extends AbstractPropertyListBuilder<ListInList<Parent>>  {
+        public static class ListInList<Parent extends AbstractPropertyListBuilder<?>> extends AbstractPropertyListBuilder<ListInList<Parent>>  {
             private Parent parent;
 
             private ListInList(Parent parent, String name, String memberName) {

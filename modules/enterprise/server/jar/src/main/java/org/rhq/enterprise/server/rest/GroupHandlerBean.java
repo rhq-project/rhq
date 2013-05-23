@@ -27,8 +27,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -67,6 +65,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -105,9 +104,6 @@ public class GroupHandlerBean extends AbstractRestBean  {
     @EJB
     GroupDefinitionManagerLocal definitionManager;
 
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    EntityManager em;
-
 
     @GZIP
     @GET
@@ -119,6 +115,8 @@ public class GroupHandlerBean extends AbstractRestBean  {
                               @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addSortId(PageOrdering.ASC);
+
         if (q!=null) {
             criteria.addFilterName(q);
         }

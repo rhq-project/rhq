@@ -79,6 +79,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -148,11 +149,11 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     public Response listAlertDefinitions(
             @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
             @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status, // TODO
             @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addSortId(PageOrdering.ASC);
         if (page!=null) {
             criteria.setPaging(page,pageSize);
         }

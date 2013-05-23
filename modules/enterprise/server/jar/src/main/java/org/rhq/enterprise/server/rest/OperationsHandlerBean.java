@@ -401,12 +401,12 @@ public class OperationsHandlerBean extends AbstractRestBean  {
             @Context HttpHeaders httpHeaders) {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        criteria.addSortStartTime(PageOrdering.ASC);
         if (resourceId>0) {
             criteria.addFilterResourceIds(resourceId);
         }
         if (page!=null) {
             criteria.setPaging(page,pageSize);
-            criteria.addSortStartTime(PageOrdering.ASC);
         }
 
         criteria.addSortEndTime(PageOrdering.DESC);

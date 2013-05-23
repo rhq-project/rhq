@@ -240,17 +240,16 @@ public class StreamUtil {
             throw new IllegalArgumentException("Output stream is null.");
         }
 
-        BufferedInputStream bufInput = null;
         long numBytesCopied = 0;
         int bufferSize = 32768;
 
         try {
             // make sure we buffer the input
-            bufInput = new BufferedInputStream(input, bufferSize);
+            input = new BufferedInputStream(input, bufferSize);
 
             byte[] buffer = new byte[bufferSize];
 
-            for (int bytesRead = bufInput.read(buffer); bytesRead != -1; bytesRead = bufInput.read(buffer)) {
+            for (int bytesRead = input.read(buffer); bytesRead != -1; bytesRead = input.read(buffer)) {
                 if (htmlEscape) {
                     String htmlEncodedStr = forHTMLTag(new String(buffer, 0, bytesRead));
                     bytesRead = htmlEncodedStr.length();
@@ -267,23 +266,15 @@ public class StreamUtil {
         } finally {
             if (closeStreams) {
                 try {
-                    if (null != bufInput) {
-                        bufInput.close();
-                    }
+                    output.close();
                 } catch (IOException ioe2) {
-                    LOG.warn("Buffered Input Stream could not be closed", ioe2);
+                    LOG.warn("Streams could not be closed", ioe2);
                 }
 
                 try {
                     input.close();
                 } catch (IOException ioe2) {
-                    LOG.warn("Input Stream could not be closed", ioe2);
-                }
-
-                try {
-                    output.close();
-                } catch (IOException ioe2) {
-                    LOG.warn("Output Stream could not be closed", ioe2);
+                    LOG.warn("Streams could not be closed", ioe2);
                 }
             }
         }

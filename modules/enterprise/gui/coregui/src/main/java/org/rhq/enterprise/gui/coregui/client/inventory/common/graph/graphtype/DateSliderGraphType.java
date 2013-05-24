@@ -100,7 +100,7 @@ public class DateSliderGraphType {
                         .attr("d", resizePath);
 
                 brushg.selectAll("rect")
-                        .attr("height", 20);
+                        .attr("height", 29);
 
                 brushstart();
                 brushmove();

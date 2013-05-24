@@ -26,6 +26,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
  *
  * @author Mike Thompson
  */
+@Deprecated
 public class DateSliderGraphType {
 
     private Long startDateTime;

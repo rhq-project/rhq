@@ -45,7 +45,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphWithSliderType;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
@@ -132,7 +132,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         graphDateTimeRangeEditor.createDateSliderMarker();
 
         if (showAvailabilityGraph) {
-            availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphWithSliderType>(new AvailabilityOverUnderGraphWithSliderType(resource.getId()));
+            availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));
             // first step in 2 step to create d3 chart
             // create a placeholder for avail graph
             availabilityGraph.createGraphMarker();
@@ -154,7 +154,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     public void redrawGraphs() {
         this.onDraw();
         availabilityGraph.drawJsniChart();
-        graphDateTimeRangeEditor.drawJsniDateSlider();
+        //graphDateTimeRangeEditor.drawJsniDateSlider();
     }
 
     @Override

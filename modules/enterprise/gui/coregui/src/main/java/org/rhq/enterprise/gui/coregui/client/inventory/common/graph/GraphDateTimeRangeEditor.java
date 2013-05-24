@@ -42,7 +42,9 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     private MeasurementUserPreferences measurementUserPreferences;
     private AbstractD3GraphListView d3GraphListView;
     private static final Messages MSG = CoreGUI.getMessages();
-    private DateSliderGraphType dateSliderGraphType;
+    //private DateSliderGraphType dateSliderGraphType;
+    private Long startDateTime;
+    private Long endDateTime;
 
 
     public GraphDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
@@ -55,7 +57,9 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
         // initialize with saved begin/end times
         List<Long> beginEndTimes = prefs.getBeginEndTimes();
-        this.dateSliderGraphType = new DateSliderGraphType(beginEndTimes.get(0), beginEndTimes.get(1));
+        startDateTime = beginEndTimes.get(0);
+        endDateTime = beginEndTimes.get(1);
+     //   this.dateSliderGraphType = new DateSliderGraphType(beginEndTimes.get(0), beginEndTimes.get(1));
     }
 
     /**
@@ -72,23 +76,25 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         // append the bootstrap buttongroup since smartGWT doesn't have one
         StringBuilder divAndSvgDefs = new StringBuilder();
         divAndSvgDefs.append("<div id=\"graphDateTimeRangeEditor\">" +
-                "<div class=\"accordion\" id=\"graphDateTimeEditorAccordion\" style=\"width:895px;\">" +
+                "<div class=\"accordion\" id=\"graphDateTimeEditorAccordion\" style=\"width:758px;\">" +
                 "        <div class=\"accordion-group\">" +
                 "            <div id=\"graphDateTimeEditorCollapse\" class=\"accordion-body collapse in\">" +
                 "                <div class=\"accordion-inner\">" +
+                "<div>"+
                 "                    <span id=\"timeRangeButtons\" class=\"btn-group\" data-toggle=\"buttons-radio\">" +
-                "                        <button id=\"radioMin\" type=\"button\" class=\"btn btn-mini\" >"+MSG.chart_slider_button_bar_minute()+"</button>" +
-                "                        <button id=\"radioHour\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_hour()+"</button>" +
-                "                        <button id=\"radioDay\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_day()+"</button>" +
-                "                        <button id=\"radioMonth\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_month()+"</button>" +
-                "                        <button id=\"radioYear\" type=\"button\" class=\"btn btn-mini\">"+MSG.chart_slider_button_bar_year()+"</button>" +
+                "                        <button id=\"radio1h\" type=\"button\" class=\"btn btn-mini\" >1h</button>" +
+                "                        <button id=\"radio6h\" type=\"button\" class=\"btn btn-mini\">6h</button>" +
+                "                        <button id=\"radio12h\" type=\"button\" class=\"btn btn-mini\">12h</button>" +
+                "                        <button id=\"radio1d\" type=\"button\" class=\"btn btn-mini\">1d</button>" +
+                "                        <button id=\"radio5d\" type=\"button\" class=\"btn btn-mini\">5d</button>" +
+                "                        <button id=\"radio1m\" type=\"button\" class=\"btn btn-mini\">1m</button>" +
+                "                        <button id=\"radio3m\" type=\"button\" class=\"btn btn-mini\">3m</button>" +
+                "                        <button id=\"radio1y\" type=\"button\" class=\"btn btn-mini\">1y</button>" +
                 "                    </span>" +
                 "                    <input id=\"dateRange\" style=\"margin-left:30px;margin-top:5px;width:280px;\" type=\"text\" readonly=\"readonly\" />" +
-                "                    <button id=\"expandCollapseButton\" style=\"float:right;\" type=\"button\" class=\"btn btn-mini\">+/-</button>" +
+                "</div>"+
+                "                    <button id=\"buttonCustom\" type=\"button\" class=\"btn btn-mini btn-link\">Custom...</button>" +
                 "                </div>" +
-                "            </div>" +
-                "            <div id=\"dateSlider\">" +
-                "                 <svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:65px;\"></svg></div>"+
                 "            </div>" +
                 "        </div>" +
                 "    </div>");
@@ -99,8 +105,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         new Timer(){
             @Override
             public void run() {
-                changeDateRange(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
-                dateSliderGraphType.drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
+                changeDateRange(getStartTime(), getEndTime());
+                //drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
                 attachGraphDateRangeEditorButtonGroupHandlers();
             }
         }.schedule(400);
@@ -130,7 +136,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioHour").bind('click', function (event) {
             console.log("Hour selected");
@@ -138,7 +144,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioDay").bind('click', function (event) {
             console.log("Day selected");
@@ -146,7 +152,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioMonth").bind('click', function (event) {
             console.log("month selected");
@@ -154,7 +160,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioYear").bind('click', function (event) {
             console.log("year selected");
@@ -162,7 +168,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#expandCollapseButton").bind('click', function (event) {
             console.log("expand/collapse selected");
@@ -188,13 +194,13 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     }-*/;
 
 
-    public void drawJsniDateSlider(){
-        dateSliderGraphType.drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
-    }
-
-    public void drawJsniDateSlider(Long startTime, Long endTime){
-        dateSliderGraphType.drawJsniChart(startTime, endTime);
-    }
+//    public void drawJsniDateSlider(){
+//        dateSliderGraphType.drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
+//    }
+//
+//    public void drawJsniDateSlider(Long startTime, Long endTime){
+//        dateSliderGraphType.drawJsniChart(startTime, endTime);
+//    }
 
     public void redrawGraphs(){
         d3GraphListView.redrawGraphs();
@@ -231,8 +237,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
      */
     public void changeDateRange(double startTime, double endTime){
 
-        this.dateSliderGraphType.setStartDateTime((long)startTime);
-        this.dateSliderGraphType.setEndDateTime((long)endTime);
+        startDateTime = (long)startTime;
+        endDateTime = (long)endTime;
 
         //@todo: uncomment when ready
 //        final boolean advanced = true;

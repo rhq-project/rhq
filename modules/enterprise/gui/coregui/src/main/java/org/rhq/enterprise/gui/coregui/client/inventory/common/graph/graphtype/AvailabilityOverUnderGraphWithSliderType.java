@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
  *
  * @author Mike Thompson
  */
+@Deprecated
 public class AvailabilityOverUnderGraphWithSliderType implements AvailabilityGraphType {
 
     private static Messages MSG = CoreGUI.getMessages();

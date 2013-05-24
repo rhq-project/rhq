@@ -59,19 +59,29 @@ public class TimeoutTest extends CassandraIntegrationTest {
         metricsServer.setDAO(dao);
 
         long time = hour0().getMillis();
-        Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
-        for (int i = 0; i < 10000; ++i) {
-            data.add(new MeasurementDataNumeric(time, i, (double) i));
+        Set<MeasurementDataNumeric> data1 = new HashSet<MeasurementDataNumeric>();
+        for (int i = 0; i < 500000; ++i) {
+            data1.add(new MeasurementDataNumeric(time, i, (double) i));
         }
 
-        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
-        long start = System.currentTimeMillis();
-        metricsServer.addNumericData(data, waitForRawInserts);
+        Set<MeasurementDataNumeric> data2 = new HashSet<MeasurementDataNumeric>();
+        for (int i = 0; i < 500000; ++i) {
+            data2.add(new MeasurementDataNumeric(time, i + data1.size(), (double) i));
+        }
 
-        waitForRawInserts.await("Failed to insert raw metrics");
+        WaitForRawInserts waitForRawInserts1 = new WaitForRawInserts(data1.size());
+        WaitForRawInserts waitForRawInserts2 = new WaitForRawInserts(data2.size());
+        long start = System.currentTimeMillis();
+        metricsServer.addNumericData(data1, waitForRawInserts1);
+        waitForRawInserts1.await("Failed to insert raw metrics");
+
+        log.info("Sleep before second round of inserts...");
+        Thread.sleep(3000);
+
+        metricsServer.addNumericData(data2, waitForRawInserts2);
         long end = System.currentTimeMillis();
 
-        log.info("Inserted " + data.size() + " raw metrics in " + (end - start) + " ms");
+        log.info("Inserted " + data1.size() + " raw metrics in " + (end - start) + " ms");
     }
 
     private static class WaitForRawInserts implements RawDataInsertedCallback {

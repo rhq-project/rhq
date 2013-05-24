@@ -303,7 +303,6 @@ public class MetricsServer {
                 }
             });
         }
-            updateMetricsIndex(dataSet);
         } catch (Exception e) {
             log.error("An error occurred while inserting raw numeric data", e);
             throw new RuntimeException(e);

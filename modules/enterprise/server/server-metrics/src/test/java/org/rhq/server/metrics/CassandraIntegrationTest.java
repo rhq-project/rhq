@@ -58,7 +58,7 @@ public class CassandraIntegrationTest {
     private static DateTimeService dateTimeService;
 
     @BeforeSuite
-    @DeployCluster(numNodes = 1, username = "cassandra", password = "cassandra")
+    @DeployCluster(numNodes = 2, username = "cassandra", password = "cassandra")
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
 

@@ -61,7 +61,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         SUPPORT, 
         WIKI("Our wiki is available from https://docs.jboss.org/author/display/RHQ/Home", true);
 
-        public static final char PREFIX = '!';
+        public static final String PREFIX = "!";
         private final String staticRespond;
         private final boolean includeInHelp;
 
@@ -106,7 +106,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         this.channel = channel;
         isRedHatChannel = "irc.devel.redhat.com".equals(channel);
         StringBuilder commandRegExp = new StringBuilder();
-        commandRegExp.append("(?i)\\").append(Command.PREFIX).append("[ ]*(");
+        commandRegExp.append("^(?i)[ ]*").append(Command.PREFIX).append("(");
         for (Command command : Command.values()) {
             commandRegExp.append(command.name()).append('|');
         }
@@ -173,6 +173,11 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
             bot.sendMessage(event.getChannel(), event.getUser().getNick() + ": " + response);
         }
         
+        if (message.startsWith(event.getBot().getNick())) {
+    		// someone asked bot directly, we have to remove that from message
+            	message = message.substring(event.getBot().getNick().length());
+    		message = message.replaceFirst("[^ ]*", "");
+        }
         // react to commands included in the messages
         Matcher commandMatcher = commandPattern.matcher(message);
         while (commandMatcher.find()) {
@@ -204,8 +209,12 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         String message = privateMessageEvent.getMessage();
         Matcher echoMatcher = ECHO_PATTERN.matcher(message);
         if (echoMatcher.matches()) {
-            String echoMessage = echoMatcher.group(1);
-            bot.sendMessage(this.channel, echoMessage);
+	    if (!JON_DEVS.contains(privateMessageEvent.getUser().getNick())) {
+		privateMessageEvent.respond("You're not my master, I am your master, go away");
+	    } else {
+		String echoMessage = echoMatcher.group(1);
+		bot.sendMessage(this.channel, echoMessage);
+	    }
         } else if (message.equalsIgnoreCase(Command.PREFIX + "listrenames")) {
             //Generate a list of renames in the form of old1 changed to new1, old2 changed to new2, etc
             StringBuilder users = new StringBuilder();

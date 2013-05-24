@@ -30,6 +30,7 @@ import java.util.Set;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;

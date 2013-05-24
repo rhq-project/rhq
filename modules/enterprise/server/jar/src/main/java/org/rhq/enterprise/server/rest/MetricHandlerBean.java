@@ -69,6 +69,7 @@ import org.jboss.resteasy.annotations.GZIP;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
@@ -81,7 +82,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cassandra.SessionManagerBean;
-import org.rhq.enterprise.server.measurement.MeasurementAggregate;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;

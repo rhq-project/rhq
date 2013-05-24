@@ -63,13 +63,14 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     private Log log = LogFactory.getLog(CassandraNodeComponent.class);
 
     private Session cassandraSession;
+    private String host;
 
     @SuppressWarnings("rawtypes")
     @Override
     public void start(ResourceContext context) throws Exception {
         super.start(context);
 
-        String host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
+        host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
         String clusterName = context.getPluginConfiguration().getSimpleValue("clusterName", "unknown");
         String username = context.getPluginConfiguration().getSimpleValue("username", "cassandra");
         String password = context.getPluginConfiguration().getSimpleValue("password", "cassandra");
@@ -227,5 +228,9 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     public Session getCassandraSession() {
         return this.cassandraSession;
+    }
+
+    public String getHost() {
+        return host;
     }
 }

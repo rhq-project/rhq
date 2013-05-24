@@ -32,7 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
@@ -78,6 +80,32 @@ public class MetricsServer {
     private ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
         Executors.newFixedThreadPool(5));
 
+    private ConcurrentLinkedQueue<MeasurementDataNumeric> rawDataQueue =
+        new ConcurrentLinkedQueue<MeasurementDataNumeric>();
+
+    private Semaphore semaphore = new Semaphore(100);
+
+    private boolean shutdown = false;
+
+    public MetricsServer() {
+//        listeningExecutorService.submit(new Runnable() {
+//            @Override
+//            public void run() {
+//                while (!shutdown) {
+//                    try {
+//                        if (!rawDataQueue.isEmpty()) {
+//                            semaphore.acquire();
+//                            MeasurementDataNumeric rawData = rawDataQueue.poll();
+//                            persistRawData();
+//                        }
+//                    } catch (InterruptedException e) {
+//
+//                    }
+//                }
+//            }
+//        });
+    }
+
     public void setSession(Session session) {
         this.session = session;
     }
@@ -92,6 +120,10 @@ public class MetricsServer {
 
     public void setDateTimeService(DateTimeService dateTimeService) {
         this.dateTimeService = dateTimeService;
+    }
+
+    public void shutdown() {
+        shutdown = true;
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
@@ -246,33 +278,58 @@ public class MetricsServer {
 
     public void addNumericData(final Set<MeasurementDataNumeric> dataSet,
         final RawDataInsertedCallback callback) {
-//        try {
+        try {
             if (log.isDebugEnabled()) {
                 log.debug("Inserting " + dataSet.size() + " raw metrics");
             }
-            final long startTime = System.currentTimeMillis();
-            final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
-            for (final MeasurementDataNumeric data : dataSet) {
-                ResultSetFuture resultSetFuture = dao.insertRawData(data);
-                Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
-                    @Override
-                    public void onSuccess(ResultSet rows) {
-                        updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
-                    }
+        final long startTime = System.currentTimeMillis();
+        final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
-                    @Override
-                    public void onFailure(Throwable throwable) {
-                        log.error("An error occurred while inserting raw data " + data, throwable);
-                        callback.onFailure(throwable);
-                    }
-                });
-            }
-//            updateMetricsIndex(dataSet);
-//        } catch (Exception e) {
-//            log.error("An error occurred while inserting raw numeric data", e);
-//            throw new RuntimeException(e);
-//        }
+        for (final MeasurementDataNumeric data : dataSet) {
+            semaphore.acquire();
+            ResultSetFuture resultSetFuture = dao.insertRawData(data);
+            Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(ResultSet rows) {
+                    updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
+                }
+
+                @Override
+                public void onFailure(Throwable throwable) {
+                    log.error("An error occurred while inserting raw data " + data, throwable);
+                    callback.onFailure(throwable);
+                    semaphore.release();
+                }
+            });
+        }
+            updateMetricsIndex(dataSet);
+        } catch (Exception e) {
+            log.error("An error occurred while inserting raw numeric data", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void persistRawData(final Set<MeasurementDataNumeric> dataSet, final RawDataInsertedCallback callback) {
+        final long startTime = System.currentTimeMillis();
+        final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
+
+        for (final MeasurementDataNumeric data : dataSet) {
+            ResultSetFuture resultSetFuture = dao.insertRawData(data);
+            Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
+                @Override
+                public void onSuccess(ResultSet rows) {
+                    updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
+                }
+
+                @Override
+                public void onFailure(Throwable throwable) {
+                    log.error("An error occurred while inserting raw data " + data, throwable);
+                    callback.onFailure(throwable);
+                    semaphore.release();
+                }
+            });
+        }
     }
 
     private void updateMetricsIndex(final MeasurementDataNumeric rawData, final int total,
@@ -293,6 +350,7 @@ public class MetricsServer {
                     }
                     callback.onFinish();
                 }
+                semaphore.release();
             }
 
             @Override
@@ -300,6 +358,7 @@ public class MetricsServer {
                 log.error("An error occurred while trying to update " + MetricsTable.INDEX + " for raw data " +
                     rawData);
                 callback.onFailure(throwable);
+                semaphore.release();
             }
         });
     }

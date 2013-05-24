@@ -41,6 +41,8 @@ import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 
 public class TimeoutTest extends CassandraIntegrationTest {
 
+    private final Log log = LogFactory.getLog(TimeoutTest.class);
+
     @Test
     public void generateTimeout() throws Exception {
         MetricsConfiguration configuration = new MetricsConfiguration();
@@ -58,14 +60,18 @@ public class TimeoutTest extends CassandraIntegrationTest {
 
         long time = hour0().getMillis();
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>();
-        for (int i = 0; i < 5000; ++i) {
+        for (int i = 0; i < 10000; ++i) {
             data.add(new MeasurementDataNumeric(time, i, (double) i));
         }
 
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+        long start = System.currentTimeMillis();
         metricsServer.addNumericData(data, waitForRawInserts);
 
         waitForRawInserts.await("Failed to insert raw metrics");
+        long end = System.currentTimeMillis();
+
+        log.info("Inserted " + data.size() + " raw metrics in " + (end - start) + " ms");
     }
 
     private static class WaitForRawInserts implements RawDataInsertedCallback {

@@ -84,7 +84,7 @@ public class DelegatingLoginModule extends UsernamePasswordLoginModule {
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
                            Map<String, ?> options) {
 
-        debugEnabled = log.isDebugEnabled();
+        debugEnabled = LOG.isDebugEnabled();
 
         super.initialize(subject, callbackHandler, sharedState, options);
 
@@ -101,14 +101,14 @@ public class DelegatingLoginModule extends UsernamePasswordLoginModule {
         }
 
         if (debugEnabled) {
-            log.debug("Delegating to " + delegateTo + " with roles " + additionalRoles);
+            LOG.debug("Delegating to " + delegateTo + " with roles " + additionalRoles);
         }
 
         // Now create the context for later use
         try {
             loginContext = new LoginContext(delegateTo, new DelegateCallbackHandler());
         } catch (LoginException e) {
-            log.warn("Initialize failed : " + e.getMessage());
+            LOG.warn("Initialize failed : " + e.getMessage());
         }
     }
 
@@ -123,7 +123,7 @@ public class DelegatingLoginModule extends UsernamePasswordLoginModule {
     @Override
     public boolean login() throws LoginException {
         try {
-            // Get the username / password the user entred and save if for later use
+            // Get the username / password the user entered and save if for later use
             usernamePassword = super.getUsernameAndPassword();
 
             // Try to log in via the delegate
@@ -141,7 +141,7 @@ public class DelegatingLoginModule extends UsernamePasswordLoginModule {
             loginOk = true;
 
             if (debugEnabled) {
-                log.debug("Login ok for " + usernamePassword[0]);
+                LOG.debug("Login ok for " + usernamePassword[0]);
             }
 
             return true;

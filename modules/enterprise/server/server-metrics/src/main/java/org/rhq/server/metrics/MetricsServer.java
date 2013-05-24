@@ -26,8 +26,6 @@
 package org.rhq.server.metrics;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -234,26 +232,34 @@ public class MetricsServer {
     }
 
     public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
+        if (log.isDebugEnabled()) {
+            log.debug("Persisting " + dataSet.size() + " raw metrics");
+        }
+        long startTime = System.currentTimeMillis();
+        int count = 0;
         try {
             for (MeasurementDataNumeric data : dataSet) {
                 dao.insertRawData(data);
+                ++count;
             }
             updateMetricsIndex(dataSet);
         } catch (Exception e) {
             log.error("An error occurred while inserting raw numeric data", e);
             throw new RuntimeException(e);
+        } finally {
+            long endTime = System.currentTimeMillis();
+            if (log.isDebugEnabled()) {
+                log.debug("Persisted " + count + " raw metrics in " + (endTime - startTime) + " ms");
+            }
         }
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
+
         Map<Integer, Long> updates = new TreeMap<Integer, Long>();
         for (MeasurementDataNumeric rawMetric : rawMetrics) {
             updates.put(rawMetric.getScheduleId(), dateTimeService.getTimeSlice(
                 new DateTime(rawMetric.getTimestamp()), configuration.getRawTimeSliceDuration()).getMillis());
-        }
-
-        if (log.isDebugEnabled()) {
-            log.debug("Updating one hour index with time slices " + StringUtil.collectionToString(updates.values()));
         }
 
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);

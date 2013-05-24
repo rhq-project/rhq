@@ -40,7 +40,7 @@ import org.rhq.server.metrics.domain.AggregateType;
  */
 public class MetricsBaselineCalculator {
 
-    private final Log log = LogFactory.getLog(MetricsServer.class);
+    private final Log log = LogFactory.getLog(MetricsBaselineCalculator.class);
 
     private MetricsDAO metricsDAO;
 

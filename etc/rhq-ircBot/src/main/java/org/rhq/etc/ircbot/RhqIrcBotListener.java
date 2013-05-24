@@ -209,8 +209,12 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         String message = privateMessageEvent.getMessage();
         Matcher echoMatcher = ECHO_PATTERN.matcher(message);
         if (echoMatcher.matches()) {
-            String echoMessage = echoMatcher.group(1);
-            bot.sendMessage(this.channel, echoMessage);
+	    if (!JON_DEVS.contains(privateMessageEvent.getUser().getNick())) {
+		privateMessageEvent.respond("You're not my master, I am your master, go away");
+	    } else {
+		String echoMessage = echoMatcher.group(1);
+		bot.sendMessage(this.channel, echoMessage);
+	    }
         } else if (message.equalsIgnoreCase(Command.PREFIX + "listrenames")) {
             //Generate a list of renames in the form of old1 changed to new1, old2 changed to new2, etc
             StringBuilder users = new StringBuilder();

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.testng.Assert.assertEquals;
 
 import java.io.File;
 import java.util.Arrays;
@@ -37,8 +40,6 @@ import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractServerComponentTest;
 import org.rhq.test.arquillian.RunDiscovery;
-
-import static org.testng.Assert.assertEquals;
 
 /**
  * Test discovery and facets of the "JBossAS7 Standalone Server" Resource type.
@@ -105,20 +106,20 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
     }
 
     // TODO: Re-enable once fixed.
-    @Test(priority = 5, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
+    @Test(priority = 6, dependsOnMethods = "testStandaloneServerShutdownAndStartOperations", enabled = false)
     public void testRestartOperation() throws Exception {
         // First make sure the server is up.
         AvailabilityType avail = getAvailability(getServerResource());
-        assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, UP);
 
         // Make sure the server is back up.
         // TODO (ips): Check that the server is a different process now.
         invokeOperationAndAssertSuccess(getServerResource(), RESTART_OPERATION_NAME, null);
         avail = getAvailability(getServerResource());
-        assertEquals(avail, AvailabilityType.UP);
+        assertEquals(avail, UP);
     }
 
-    @Test(priority = 6, enabled = true)
+    @Test(priority = 7, enabled = true)
     public void testSystemPropertiesSettings() throws Exception {
 
         Configuration config = loadResourceConfiguration(getServerResource());
@@ -150,6 +151,11 @@ public class StandaloneServerComponentTest extends AbstractServerComponentTest {
             }
         }
 
+    }
+
+    @Test(priority = 8)
+    public void testStandaloneServerAsynchronousAvailabilityCheck() throws Exception {
+        testAsynchronousAvailabilityCheck(getServerResource());
     }
 
     protected String getExpectedStartScriptFileName() {

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7.itest.domain;
+
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNotNull;
 
 import org.testng.annotations.Test;
 
@@ -32,9 +35,6 @@ import org.rhq.core.pc.inventory.InventoryManager;
 import org.rhq.modules.plugins.jbossas7.itest.AbstractJBossAS7PluginTest;
 import org.rhq.test.arquillian.RunDiscovery;
 
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertNotNull;
-
 /**
  * Test dealing with managed servers
  * @author Heiko W. Rupp
@@ -45,7 +45,7 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
    public static final ResourceType RESOURCE_TYPE = new ResourceType("Managed Server", PLUGIN_NAME, ResourceCategory.SERVER, null);
    private static final String RESOURCE_KEY = "master/server-one";
 
-   @Test(priority = 1020, groups = "discovery", enabled = false)
+   @Test(priority = 1020, groups = "discovery", enabled = true)
    @RunDiscovery(discoverServices = true, discoverServers = true)
    public void runDiscovery() throws Exception {
        Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
@@ -91,6 +91,11 @@ public class ManagedServerTest extends AbstractJBossAS7PluginTest {
 
         AvailabilityType avail = getAvailability(getResource());
         assertEquals(avail, AvailabilityType.UP);
+    }
+
+    @Test(priority = 1022)
+    public void testManagedServerAsynchronousAvailabilityCheck() throws Exception {
+        testAsynchronousAvailabilityCheck(getResource());
     }
 
    private Resource getResource() {

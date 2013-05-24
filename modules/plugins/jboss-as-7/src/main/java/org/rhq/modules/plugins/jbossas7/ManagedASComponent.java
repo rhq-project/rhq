@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
+
+import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.Property.AVAIL_CHECK_PERIOD_CONFIG_PROP;
 
 import java.util.Collections;
 import java.util.Date;
@@ -30,6 +33,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
@@ -51,6 +56,7 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
 
     private static final String MANAGED_SERVER_TYPE_NAME = "Managed Server";
     private LogFileEventResourceComponentHelper logFileEventDelegate;
+    private AvailabilityCollectorRunnable availabilityCollector;
 
     @Override
     public void start(ResourceContext<HostControllerComponent<?>> hostControllerComponentResourceContext)
@@ -59,13 +65,34 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
 
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
+
+        Integer availabilityCheckPeriod = null;
+        try {
+            availabilityCheckPeriod = pluginConfiguration.getSimple(AVAIL_CHECK_PERIOD_CONFIG_PROP).getIntegerValue();
+        } catch (NumberFormatException e) {
+            log.error("Avail check period config prop was not a valid number. Cause: " + e);
+        }
+        if (availabilityCheckPeriod != null) {
+            long availCheckMillis = availabilityCheckPeriod * 1000L;
+            this.availabilityCollector = hostControllerComponentResourceContext.getAvailabilityContext()
+                    .createAvailabilityCollectorRunnable(new AvailabilityFacet() {
+                        public AvailabilityType getAvailability() {
+                            return getAvailabilityNow();
+                        }
+                    }, availCheckMillis);
+            this.availabilityCollector.start();
+        }
+
     }
 
     @Override
     public void stop() {
         super.stop();
-
         logFileEventDelegate.stopLogFileEventPollers();
+        if (this.availabilityCollector != null) {
+            this.availabilityCollector.stop();
+            this.availabilityCollector = null;
+        }
     }
 
     /**
@@ -76,6 +103,14 @@ public class ManagedASComponent extends BaseComponent<HostControllerComponent<?>
      */
     @Override
     public AvailabilityType getAvailability() {
+        if (this.availabilityCollector != null) {
+            return this.availabilityCollector.getLastKnownAvailability();
+        } else {
+            return getAvailabilityNow();
+        }
+    }
+
+    private AvailabilityType getAvailabilityNow() {
         if (context.getResourceType().getName().equals(MANAGED_SERVER_TYPE_NAME)) {
             Address theAddress = new Address();
             String host = pluginConfiguration.getSimpleValue("domainHost", "local");

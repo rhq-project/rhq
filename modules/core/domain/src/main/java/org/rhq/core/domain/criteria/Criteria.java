@@ -109,6 +109,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
     private List<Permission> requiredPermissions;
     private boolean strict;
     private Restriction restriction = null;
+    private boolean supportsAddSortId = true;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -173,16 +174,54 @@ public abstract class Criteria implements Serializable, BaseCriteria {
     }
 
     public void addSortId(PageOrdering sortId) {
-        addSortField("id");
-        this.sortId = sortId;
+        if (isSupportsAddSortId()) {
+            addSortField("id");
+            this.sortId = sortId;
+
+        } else {
+            throw new UnsupportedOperationException("ID sort is not supported by " + this.getClass().getSimpleName());
+        }
     }
 
     public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
+        if (isSupportsAddFilterId()) {
+            this.filterId = filterId;
+
+        } else {
+            throw new UnsupportedOperationException("ID filter is not supported by " + this.getClass().getSimpleName());
+        }
     }
 
     public void addFilterIds(Integer... filterIds) {
-        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
+        if (isSupportsAddFilterIds()) {
+            this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
+
+        } else {
+            throw new UnsupportedOperationException("IDS filter is not supported by " + this.getClass().getSimpleName());
+        }
+    }
+
+    /**
+     * By default all Criteria support sort on ID.  And this sort is applied implicitly to criteria
+     * queries involving paging, to ensure consistent ordering of query results. If for some unlikely reason
+     * the caller needs to disable the implicit ID sort then call this, setting the value to false.
+     *  
+     * @param supportsAddSortId
+     */
+    public void setSupportsAddSortId(boolean supportsAddSortId) {
+        this.supportsAddSortId = supportsAddSortId;
+    }
+
+    public boolean isSupportsAddSortId() {
+        return supportsAddSortId;
+    }
+
+    public boolean isSupportsAddFilterId() {
+        return true;
+    }
+
+    public boolean isSupportsAddFilterIds() {
+        return true;
     }
 
     protected void addSortField(String fieldName) {

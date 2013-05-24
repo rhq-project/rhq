@@ -178,6 +178,7 @@
       <metric property="LocalHostId" dataType="trait" displayType="summary" description="Local Host Id"/>
       <metric property="Load" dataType="measurement" units="bytes" displayType="summary" description="Amount of load in disk usage on the node being queried"/>
       <metric property="OperationMode" dataType="trait" displayType="summary" description="Current operation mode"/>
+      <metric property="Ownership" displayName="Owns" dataType="measurement"  units="percentage" displayType="summary" description="Token range ownership (percentual amount of the whole keyspace)"/>
       <metric property="NativeTransportRunning" dataType="trait" displayType="summary" description="Native Transport Running"/>
       <metric property="ReleaseVersion" dataType="trait" displayType="summary" description="Cassandra version"/>
       <metric property="RPCServerRunning" dataType="trait" displayType="summary" displayName="RPC Service Running" description="RPC Service Running"/>
@@ -186,7 +187,7 @@
                in the system.schema_* column families. This value is used in an algorithm to compare schema versions
                between nodes and apply updates as necessary. This value should be the same for all fully initialized
                nodes in the cluster."/>
-      <metric property="Tokens" dataType="measurement" displayType="summary" description="Number of Tokens"/>
+      <metric property="Tokens" dataType="measurement" displayType="summary" description="Number of tokens belonging to this node"/>
 
 
       <resource-configuration>

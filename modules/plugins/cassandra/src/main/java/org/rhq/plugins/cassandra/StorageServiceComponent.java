@@ -29,6 +29,11 @@ import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -37,16 +42,35 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jmx.JMXComponent;
 
 /**
  * @author John Sanda
  */
 public class StorageServiceComponent extends ComplexConfigurationResourceComponent {
-
+    
+    private static final String OWNERSHIP_METRIC_NAME = "Ownership";
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
-
+    private InetAddress host;
+    
+    @Override
+    public void start(ResourceContext<JMXComponent<?>> context) {
+        super.start(context);
+        CassandraNodeComponent parrent = (CassandraNodeComponent) context.getParentResourceComponent();
+        try {
+            host = InetAddress.getByName(parrent.getHost());
+        } catch (UnknownHostException e) {
+            log.error(
+                "Unable to convert hostname[" + parrent.getHost() + "] into IP address for " + context.getResourceKey(),
+                e);
+        }
+    }
+    
     @Override
     public AvailabilityType getAvailability() {
         ResourceContext<?> context = getResourceContext();
@@ -120,5 +144,38 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
         operation.invoke(classQualifier, level);
 
         return new OperationResult();
+    }
+    
+    @Override
+    protected void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests, EmsBean bean) {
+        super.getValues(report, requests, bean);
+        for (MeasurementScheduleRequest request : requests) {
+            if (OWNERSHIP_METRIC_NAME.equals(request.getName()) && host != null) {
+                EmsAttribute attribute = bean.getAttribute(OWNERSHIP_METRIC_NAME);
+                Object valueObject = attribute.refresh();
+                if (valueObject instanceof Map<?, ?>) {
+                    Map<InetAddress, Float> ownership = (Map<InetAddress, Float>) valueObject;
+                    Float value = ownership.get(host);
+                    if (value == null) {
+                        // the inet address wasn't probably resolved, scan the map
+                        for (Map.Entry<InetAddress, Float> entry : ownership.entrySet()) {
+                            if (entry.getKey().getHostAddress().equals(host.getHostAddress())) {
+                                value = entry.getValue();
+                                break;
+                            }
+                        }
+                    }
+                    if (value > 1) {
+                        value = 1f;
+                    }
+                    report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
+                }
+                break;
+            }
+        }
+    }
+    
+    public static boolean kindOfIP(final String addr) {
+        return addr.matches("^\\d{1,3}\\.\\d{1,3\\.\\d{1,3\\.\\d{1,3$"); // || addr.indexOf(":") >= 0) or IPv6
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,11 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7.itest;
 
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 
 import java.util.Set;
@@ -31,8 +34,10 @@ import org.rhq.core.domain.util.ResourceFilter;
 import org.rhq.core.domain.util.ResourceUtility;
 import org.rhq.core.domain.util.TypeAndKeyResourceFilter;
 import org.rhq.core.pc.inventory.InventoryManager;
+import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.plugin.testutil.AbstractAgentPluginTest;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration;
 import org.rhq.modules.plugins.jbossas7.itest.domain.DomainServerComponentTest;
 import org.rhq.modules.plugins.jbossas7.itest.standalone.StandaloneServerComponentTest;
 import org.rhq.test.arquillian.AfterDiscovery;
@@ -150,6 +155,28 @@ public abstract class AbstractJBossAS7PluginTest extends AbstractAgentPluginTest
                     }
                 }));
         return serverResource;
+    }
+
+    protected void testAsynchronousAvailabilityCheck(Resource resource) throws Exception {
+        // Activate asynchronous availability checking
+        ServerPluginConfiguration serverPluginConfig = new ServerPluginConfiguration(resource.getPluginConfiguration());
+        int availabilityCheckPeriod = 65;
+        serverPluginConfig.setAvailabilityCheckPeriod(availabilityCheckPeriod);
+        restartResourceComponent(resource);
+
+        Thread.sleep((3 * availabilityCheckPeriod * 1000L) / 2);
+        assertEquals(getAvailability(resource), UP);
+
+        // Deactivate asynchronous availability checking as subsequent tests may rely on immediate availabilty checking
+        serverPluginConfig.setAvailabilityCheckPeriod(null);
+        restartResourceComponent(resource);
+    }
+
+    private void restartResourceComponent(Resource resource) throws PluginContainerException {
+        InventoryManager inventoryManager = this.pluginContainer.getInventoryManager();
+        inventoryManager.deactivateResource(resource);
+        ResourceContainer serverContainer = inventoryManager.getResourceContainer(resource);
+        inventoryManager.activateResource(resource, serverContainer, true);
     }
 
 }

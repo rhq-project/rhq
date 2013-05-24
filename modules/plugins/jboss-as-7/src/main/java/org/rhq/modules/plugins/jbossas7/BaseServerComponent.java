@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import java.io.File;
@@ -40,6 +41,8 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
+import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
+import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -81,7 +84,8 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
     private LogFileEventResourceComponentHelper logFileEventDelegate;
     private StartScriptConfiguration startScriptConfig;
     private ServerPluginConfiguration serverPluginConfig;
-    private AvailabilityType lastAvail;
+    private AvailabilityType previousAvailabilityType;
+    private AvailabilityCollectorRunnable availabilityCollector;
 
     @Override
     public void start(ResourceContext<T> resourceContext) throws InvalidPluginConfigurationException, Exception {
@@ -89,38 +93,69 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         serverPluginConfig = new ServerPluginConfiguration(pluginConfiguration);
         connection = ASConnection.newInstanceForServerPluginConfiguration(serverPluginConfig);
+        // The availabilityCollector is still null at this point. So this call will always perform a real availability
+        // check and throw InvalidPluginConfigurationException as needed.
         getAvailability();
         logFileEventDelegate = new LogFileEventResourceComponentHelper(context);
         logFileEventDelegate.startLogFileEventPollers();
         startScriptConfig = new StartScriptConfiguration(pluginConfiguration);
+
+        Integer availabilityCheckPeriod = null;
+        try {
+            availabilityCheckPeriod = serverPluginConfig.getAvailabilityCheckPeriod();
+        } catch (NumberFormatException e) {
+            log.error("Avail check period config prop was not a valid number. Cause: " + e);
+        }
+        if (availabilityCheckPeriod != null) {
+            long availCheckMillis = availabilityCheckPeriod * 1000L;
+            this.availabilityCollector = resourceContext.getAvailabilityContext().createAvailabilityCollectorRunnable(
+                    new AvailabilityFacet() {
+                        public AvailabilityType getAvailability() {
+                            return getAvailabilityNow();
+                        }
+                    }, availCheckMillis);
+            this.availabilityCollector.start();
+        }
     }
 
     @Override
     public void stop() {
         logFileEventDelegate.stopLogFileEventPollers();
-        lastAvail = null;
+        previousAvailabilityType = null;
+        if (this.availabilityCollector != null) {
+            this.availabilityCollector.stop();
+            this.availabilityCollector = null;
+        }
     }
 
     @Override
     public AvailabilityType getAvailability() {
-        AvailabilityType avail;
+        if (this.availabilityCollector != null) {
+            return this.availabilityCollector.getLastKnownAvailability();
+        } else {
+            return getAvailabilityNow();
+        }
+    }
+
+    private AvailabilityType getAvailabilityNow() {
+        AvailabilityType availabilityType;
         try {
             readAttribute("launch-type");
-            avail = AvailabilityType.UP;
+            availabilityType = AvailabilityType.UP;
         } catch (Exception e) {
-            avail = AvailabilityType.DOWN;
+            availabilityType = AvailabilityType.DOWN;
         }
 
         try {
-            if ((avail == AvailabilityType.UP) && (lastAvail != AvailabilityType.UP)) {
+            if ((availabilityType == AvailabilityType.UP) && (previousAvailabilityType != AvailabilityType.UP)) {
                 validateServerAttributes();
                 log.info(getResourceDescription() + " has just come UP.");
             }
         } finally {
-            lastAvail = avail;
+            previousAvailabilityType = availabilityType;
         }
 
-        return avail;
+        return availabilityType;
     }
 
     private void validateServerAttributes() throws InvalidPluginConfigurationException {

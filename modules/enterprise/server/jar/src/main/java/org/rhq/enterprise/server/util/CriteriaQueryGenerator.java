@@ -951,6 +951,7 @@ public final class CriteriaQueryGenerator {
             } else {
                 pc = new PageControl(criteria.getPageNumber(), criteria.getPageSize());
             }
+
             for (String fieldName : criteria.getOrderingFieldNames()) {
                 for (Field sortField : getFields(criteria, Criteria.Type.SORT)) {
                     if (sortField.getName().equals(fieldName) == false) {
@@ -969,6 +970,15 @@ public final class CriteriaQueryGenerator {
                 }
             }
         }
+
+        // Unless paging is unlimited or it's not supported, add a sort on ID.  This ensures that when paging
+        // we always have a consistent ordering. In other words, if the data set is unchanged between pages, there
+        // will no overlap/repetition of rows. Note that this applies even if other sort fields have been
+        // set, because they may still not have unique values. See https://bugzilla.redhat.com/show_bug.cgi?id=966665.
+        if (!pc.isUnlimited() && criteria.isSupportsAddSortId()) {
+            pc.addDefaultOrderingField("id");
+        }
+
         return pc;
     }
 

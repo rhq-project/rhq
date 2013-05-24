@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -18,10 +18,7 @@
  */
 package org.rhq.enterprise.server.cloud;
 
-import java.util.Collection;
-import java.util.List;
-
-import javax.ejb.Local;
+import javax.ejb.Remote;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -29,15 +26,14 @@ import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.util.PageList;
 
-@Local
-public interface StorageNodeManagerLocal {
+/**
+ * Remote interface to the manager responsible for creating and managing storage nodes.
+ *  
+ * @author Jirka Kremser
+ */
+@Remote
+public interface StorageNodeManagerRemote {
 
-    void scanForStorageNodes();
-
-    List<StorageNode> getStorageNodes();
-
-    void updateStorageNodeList(Collection<StorageNode> storageNodes);
-    
     StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
 
     /**
@@ -45,9 +41,10 @@ public interface StorageNodeManagerLocal {
      *
      * the subject needs to have MANAGE_SETTINGS permissions.
      *
-     * @param subject caller
+     * @param subject user that must have proper permissions
      * @param criteria the criteria
      * @return list of nodes
      */
     PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
+
 }

@@ -26,9 +26,11 @@ package org.rhq.enterprise.server.cloud;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
@@ -44,22 +46,33 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.CQLException;
 
 @Stateless
-public class StorageNodeManagerBean implements StorageNodeManagerLocal {
+public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageNodeManagerRemote {
 
     private static final String RESOURCE_TYPE_NAME = "RHQ Storage Node";
     private static final String PLUGIN_NAME = "RHQStorage";
@@ -68,7 +81,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal {
     private EntityManager entityManager;
 
     @EJB
-    ResourceManagerLocal resourceManager;
+    private MeasurementDataManagerLocal measurementManager;
+
+    @EJB
+    private MeasurementScheduleManagerLocal scheduleManager;
+
+    @EJB
+    private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
     @PostConstruct
     @Override
@@ -142,7 +161,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal {
                 StorageNode storageNode = storageNodeMap.get(host);
 
                 storageNode.setResource(resource);
-                if(resource.getInventoryStatus() == InventoryStatus.NEW){
+                if (resource.getInventoryStatus() == InventoryStatus.NEW) {
                     storageNode.setOperationMode(OperationMode.INSTALLED);
                 } else if (resource.getInventoryStatus() == InventoryStatus.COMMITTED
                     && resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP) {
@@ -152,9 +171,79 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal {
         }
     }
 
+    public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
+        //TODO: check the rights of subject
+        StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
+
+        StorageNode mergedNode = entityManager.merge(node);
+        Set<ResourceType> childResourceTypes = mergedNode.getResource().getResourceType().getChildResourceTypes();
+
+        //        ResourceType memorySubsystemType = typeManager.getResourceTypeByNameAndPlugin(subject, "RHQ Storage Node",
+        //            PLUGIN_NAME);
+        //        ResourceType storageServiceType = typeManager.getResourceTypeByNameAndPlugin(subject, "RHQ Storage Node",
+        //            PLUGIN_NAME);
+
+        Set<Resource> childResources = mergedNode.getResource().getChildResources();
+        int storageServiceResourceId = -1;
+        int memorySubsystemResourceId = -1;
+        for (Resource res : childResources) {
+            if ("Storage Service".equals(res.getName())) {
+                storageServiceResourceId = res.getId();
+            } else if ("Cassandra Server JVM".equals(res.getName())) {
+                Set<Resource> childJVMResources = res.getChildResources();
+                for (Resource resJVM : childJVMResources) {
+                    if ("Memory Subsystem".equals(resJVM.getName())) {
+                        memorySubsystemResourceId = resJVM.getId();
+                        break;
+                    }
+                }
+            }
+        }
+
+        // TODO: perhaps crating a new named query will be more efficient than this
+        if (storageServiceResourceId != -1) {
+            MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
+            criteria.addFilterName("Tokens");
+            criteria.addFilterResourceTypeName("StorageService");
+            PageList<MeasurementDefinition> measDefinition1 = measurementDefinitionManager
+                .findMeasurementDefinitionsByCriteria(subject, criteria);
+
+            criteria = new MeasurementDefinitionCriteria();
+            criteria.addFilterName("Ownership");
+            criteria.addFilterResourceTypeName("StorageService");
+            PageList<MeasurementDefinition> measDefinition2 = measurementDefinitionManager
+                .findMeasurementDefinitionsByCriteria(subject, criteria);
+
+            if (!measDefinition1.isEmpty() && !measDefinition2.isEmpty()) {
+                List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionIds(
+                    new int[] { storageServiceResourceId }, new int[] { measDefinition1.get(1).getId(),
+                        measDefinition2.get(1).getId() });
+                if (!schedules.isEmpty()) {
+                    MeasurementAggregate tokensAggregate = measurementManager.getAggregate(subject, schedules.get(0)
+                        .getId(), beginTime, endTime);
+                    result.setTokens(tokensAggregate);
+                    MeasurementAggregate ovnershipAggregate = measurementManager.getAggregate(subject, schedules.get(1)
+                        .getId(), beginTime, endTime);
+                    StorageNodeLoadComposite.MeasurementAggregateWithUnits ovnershipAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                        ovnershipAggregate, MeasurementUnits.PERCENTAGE);
+                    result.setActuallyOwns(ovnershipAggregateWithUnits);
+                }
+            }
+        }
+
+        //        private MeasurementAggregateWithUnits heapCommited; // cassandra server jvm / memory subsystem resource
+        //        private MeasurementAggregateWithUnits heapUsed; // cassandra server jvm / memory subsystem resource
+        //        private MeasurementAggregateWithUnits load; // database management services / storage service
+        //        DONE -- private MeasurementAggregate tokens; // ~ jmx op - getTokens(hostname).size() or jmx attribute (StorageService/tokens).size() 
+        //        DONE --private MeasurementAggregate actuallyOwns; // up to date value (tokenToEndpointMap) can be taken from the associated resource's configuration
+
+        return result;
+    }
+
     @Nullable
     public List<StorageNode> getStorageNodes() {
-        TypedQuery<StorageNode> query = entityManager.<StorageNode>createNamedQuery(StorageNode.QUERY_FIND_ALL, StorageNode.class);
+        TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_ALL,
+            StorageNode.class);
         return query.getResultList();
     }
 

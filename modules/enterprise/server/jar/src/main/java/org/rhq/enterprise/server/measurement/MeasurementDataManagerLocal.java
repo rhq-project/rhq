@@ -140,4 +140,6 @@ public interface MeasurementDataManagerLocal extends MeasurementDataManagerRemot
 
     MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime, long endTime);
 
+    void updateAlertConditionCache(String callingMethod, MeasurementData[] data);
+
 }

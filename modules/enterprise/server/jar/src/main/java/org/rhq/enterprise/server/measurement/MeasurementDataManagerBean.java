@@ -34,6 +34,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
+import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -87,12 +88,15 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.server.metrics.MetricsServer;
+import org.rhq.server.metrics.RawDataInsertedCallback;
 
 /**
  * A manager for {@link MeasurementData}s.
@@ -150,6 +154,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @EJB
     private MetricsManagerLocal metricsManager;
+
+    @EJB
+    private SessionManagerBean sessionManagerBean;
 
     @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;
@@ -214,13 +221,31 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      * @param data the actual data points
      */
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void addNumericData(Set<MeasurementDataNumeric> data) {
+    public void addNumericData(final Set<MeasurementDataNumeric> data) {
         if ((data == null) || (data.isEmpty())) {
             return;
         }
 
-        metricsManager.addNumericData(data);
-        notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
+        MetricsServer metricsServer = sessionManagerBean.getMetricsServer();
+        metricsServer.addNumericData(data, new RawDataInsertedCallback() {
+
+            private List<MeasurementData> insertedData = new ArrayList<MeasurementData>();
+
+            @Override
+            public void onFinish() {
+                measurementDataManager.updateAlertConditionCache("mergeMeasurementReport",
+                    insertedData.toArray(new MeasurementData[insertedData.size()]));
+            }
+
+            @Override
+            public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
+                insertedData.add(measurementDataNumeric);
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+            }
+        });
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -546,6 +571,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @Nullable
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
         return metricsManager.findLatestValueForResource(scheduleId);
+    }
+
+    @Asynchronous
+    @Override
+    public void updateAlertConditionCache(String callingMethod, MeasurementData[] data) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(data);
+        log.debug(callingMethod + ": " + stats.toString());
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, MeasurementData[] data) {

@@ -31,6 +31,7 @@ import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.fail;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -39,7 +40,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
+import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 
 import org.apache.commons.logging.Log;
@@ -137,8 +140,12 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId, 3.9));
         data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
 
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
         long timestamp = System.currentTimeMillis();
-        metricsServer.addNumericData(data);
+        metricsServer.addNumericData(data, waitForRawInserts);
+
+        waitForRawInserts.await("Failed to insert raw data");
 
         List<RawNumericMetric> actual = Lists.newArrayList(dao.findRawMetrics(scheduleId, hour0.plusHours(4)
             .getMillis(), hour0.plusHours(5).getMillis()));
@@ -161,7 +168,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test//(enabled = ENABLED)
-    public void calculateAggregatesForOneScheduleWhenDBIsEmpty() {
+    public void calculateAggregatesForOneScheduleWhenDBIsEmpty() throws Exception {
         int scheduleId = 123;
 
         DateTime hour0 = hour0();
@@ -176,9 +183,13 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, 3.9));
         data.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, 2.6));
 
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
         metricsServer.setCurrentHour(hour6);
-        metricsServer.addNumericData(data);
+        metricsServer.addNumericData(data, waitForRawInserts);
         metricsServer.calculateAggregates(hour6.getMillis());
+
+        waitForRawInserts.await("Failed to insert raw data");
 
         // verify that one hour metric data is updated
         List<AggregateNumericMetric> expected = asList(new AggregateNumericMetric(scheduleId,
@@ -349,7 +360,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test//(enabled = ENABLED)
-    public void findRawDataCompositesForResource() {
+    public void findRawDataCompositesForResource() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
         Buckets buckets = new Buckets(beginTime, endTime);
@@ -368,9 +379,13 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId,
             4.56));
 
-        metricsServer.addNumericData(data);
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
+        metricsServer.addNumericData(data, waitForRawInserts);
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
             scheduleId, beginTime.getMillis(), endTime.getMillis()));
+
+        waitForRawInserts.await("Faile to insert raw data");
 
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
@@ -390,7 +405,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
-    public void findLatestValueForResource() {
+    public void findLatestValueForResource() throws Exception {
         int scheduleId = 123;
 
         DateTime fifteenMinutesAgo = now().minusMinutes(15);
@@ -402,7 +417,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(tenMinutesAgo.getMillis(), scheduleId, 2.2));
         data.add(new MeasurementDataNumeric(fiveMinutesAgo.getMillis(), scheduleId, 3.3));
 
-        metricsServer.addNumericData(data);
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
+        metricsServer.addNumericData(data, waitForRawInserts);
+
+        waitForRawInserts.await("Failed to insert raw data");
 
         RawNumericMetric actual = metricsServer.findLatestValueForResource(scheduleId);
         RawNumericMetric expected = new RawNumericMetric(scheduleId, fiveMinutesAgo.getMillis(), 3.3);
@@ -411,7 +430,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
-    public void getSummaryRawAggregateForResource() {
+    public void getSummaryRawAggregateForResource() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
         Buckets buckets = new Buckets(beginTime, endTime);
@@ -430,7 +449,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId,
             4.56));
 
-        metricsServer.addNumericData(data);
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
+        metricsServer.addNumericData(data, waitForRawInserts);
+
+        waitForRawInserts.await("Failed to insert raw data");
 
         AggregateNumericMetric actual = metricsServer.getSummaryAggregate(scheduleId, beginTime.getMillis(),
             endTime.getMillis());
@@ -511,7 +534,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
-    public void getSummaryRawAggregateForGroup() {
+    public void getSummaryRawAggregateForGroup() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
         Buckets buckets = new Buckets(beginTime, endTime);
@@ -545,7 +568,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId2,
             4.56));
 
-        metricsServer.addNumericData(data);
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
+        metricsServer.addNumericData(data, waitForRawInserts);
+
+        waitForRawInserts.await("Failed to insert raw data");
 
         AggregateNumericMetric actual = metricsServer.getSummaryAggregate(asList(scheduleId1, scheduleId2),
             beginTime.getMillis(), endTime.getMillis());
@@ -559,7 +586,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test
-    public void findRawDataCompositesForGroup() {
+    public void findRawDataCompositesForGroup() throws Exception {
         DateTime beginTime = now().minusHours(4);
         DateTime endTime = now();
         Buckets buckets = new Buckets(beginTime, endTime);
@@ -593,7 +620,11 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(buckets.get(59).getStartTime() + buckets.getInterval() + 50, scheduleId2,
             4.56));
 
-        metricsServer.addNumericData(data);
+        WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
+
+        metricsServer.addNumericData(data, waitForRawInserts);
+
+        waitForRawInserts.await("Failed to insert raw data");
 
         List<MeasurementDataNumericHighLowComposite> actualData = metricsServer.findDataForGroup(
             asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis());
@@ -828,5 +859,41 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             "FROM " + MetricsTable.RAW + " " +
             "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime + " AND time < " + endTime;
         return new SimplePagedResult<RawNumericMetric>(cql, new RawNumericMetricMapper(true), session);
+    }
+
+    private static class WaitForRawInserts implements RawDataInsertedCallback {
+
+        private final Log log = LogFactory.getLog(WaitForRawInserts.class);
+
+        private CountDownLatch latch;
+
+        private Throwable throwable;
+
+        public WaitForRawInserts(int numInserts) {
+            latch = new CountDownLatch(numInserts);
+        }
+
+        @Override
+        public void onFinish() {
+        }
+
+        @Override
+        public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
+            latch.countDown();
+        }
+
+        @Override
+        public void onFailure(Throwable throwable) {
+            latch.countDown();
+            this.throwable = throwable;
+            log.error("An async operation failed", throwable);
+        }
+
+        public void await(String errorMsg) throws InterruptedException {
+            latch.await();
+            if (throwable != null) {
+                fail(errorMsg, Throwables.getRootCause(throwable));
+            }
+        }
     }
 }

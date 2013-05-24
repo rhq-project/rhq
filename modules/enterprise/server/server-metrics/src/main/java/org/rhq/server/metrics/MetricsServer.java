@@ -32,8 +32,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,6 +74,9 @@ public class MetricsServer {
     private MetricsDAO dao;
 
     private MetricsConfiguration configuration;
+
+    private ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(
+        Executors.newFixedThreadPool(5));
 
     public void setSession(Session session) {
         this.session = session;
@@ -233,16 +244,64 @@ public class MetricsServer {
         return data;
     }
 
-    public void addNumericData(Set<MeasurementDataNumeric> dataSet) {
-        try {
-            for (MeasurementDataNumeric data : dataSet) {
-                dao.insertRawData(data);
+    public void addNumericData(final Set<MeasurementDataNumeric> dataSet,
+        final RawDataInsertedCallback callback) {
+//        try {
+            if (log.isDebugEnabled()) {
+                log.debug("Inserting " + dataSet.size() + " raw metrics");
             }
-            updateMetricsIndex(dataSet);
-        } catch (Exception e) {
-            log.error("An error occurred while inserting raw numeric data", e);
-            throw new RuntimeException(e);
-        }
+            final long startTime = System.currentTimeMillis();
+            final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
+
+            for (final MeasurementDataNumeric data : dataSet) {
+                ResultSetFuture resultSetFuture = dao.insertRawData(data);
+                Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
+                    @Override
+                    public void onSuccess(ResultSet rows) {
+                        updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        log.error("An error occurred while inserting raw data " + data, throwable);
+                        callback.onFailure(throwable);
+                    }
+                });
+            }
+//            updateMetricsIndex(dataSet);
+//        } catch (Exception e) {
+//            log.error("An error occurred while inserting raw numeric data", e);
+//            throw new RuntimeException(e);
+//        }
+    }
+
+    private void updateMetricsIndex(final MeasurementDataNumeric rawData, final int total,
+        final AtomicInteger remainingInserts, final long startTime, final RawDataInsertedCallback callback) {
+
+        long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
+            configuration.getRawTimeSliceDuration()).getMillis();
+        ResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
+            timeSlice);
+        Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
+            @Override
+            public void onSuccess(ResultSet rows) {
+                callback.onSuccess(rawData);
+                if (remainingInserts.decrementAndGet() == 0) {
+                    long endTime = System.currentTimeMillis();
+                    if (log.isDebugEnabled()) {
+                        log.debug("Finished inserting " + total + " raw metrics in " + (endTime - startTime) + " ms");
+                    }
+                    callback.onFinish();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable throwable) {
+                log.error("An error occurred while trying to update " + MetricsTable.INDEX + " for raw data " +
+                    rawData);
+                callback.onFailure(throwable);
+            }
+        });
     }
 
     void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
@@ -255,7 +314,7 @@ public class MetricsServer {
         for (Long ts : updates.values()) {
             dates.add(new Date(ts));
         }
-        log.info("Updating one hour index wtih time slices " + dates);
+        log.debug("Updating one hour index wtih time slices " + dates);
         dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 

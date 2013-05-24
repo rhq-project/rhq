@@ -51,9 +51,9 @@ public class MetricsManagerBean implements MetricsManagerLocal {
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void addNumericData(Set<MeasurementDataNumeric> data) {
+    public void addNumericData(Set<MeasurementDataNumeric> data, Runnable callback) {
         MetricsServer metricsServer = getMetricsServer();
-        metricsServer.addNumericData(data);
+        metricsServer.addNumericData(data, null);
     }
 
     @Override

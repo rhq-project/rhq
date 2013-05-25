@@ -26,8 +26,6 @@
 package org.rhq.server.metrics;
 
 import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -309,29 +307,7 @@ public class MetricsServer {
         }
     }
 
-    private void persistRawData(final Set<MeasurementDataNumeric> dataSet, final RawDataInsertedCallback callback) {
-        final long startTime = System.currentTimeMillis();
-        final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
-
-        for (final MeasurementDataNumeric data : dataSet) {
-            ResultSetFuture resultSetFuture = dao.insertRawData(data);
-            Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
-                @Override
-                public void onSuccess(ResultSet rows) {
-                    updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
-                }
-
-                @Override
-                public void onFailure(Throwable throwable) {
-                    log.error("An error occurred while inserting raw data " + data, throwable);
-                    callback.onFailure(throwable);
-                    semaphore.release();
-                }
-            });
-        }
-    }
-
-    private void updateMetricsIndex(final MeasurementDataNumeric rawData, final int total,
+    void updateMetricsIndex(final MeasurementDataNumeric rawData, final int total,
         final AtomicInteger remainingInserts, final long startTime, final RawDataInsertedCallback callback) {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
@@ -360,20 +336,6 @@ public class MetricsServer {
                 semaphore.release();
             }
         });
-    }
-
-    void updateMetricsIndex(Set<MeasurementDataNumeric> rawMetrics) {
-        Map<Integer, Long> updates = new TreeMap<Integer, Long>();
-        for (MeasurementDataNumeric rawMetric : rawMetrics) {
-            updates.put(rawMetric.getScheduleId(), dateTimeService.getTimeSlice(
-                new DateTime(rawMetric.getTimestamp()), configuration.getRawTimeSliceDuration()).getMillis());
-        }
-        Set<Date> dates = new HashSet<Date>();
-        for (Long ts : updates.values()) {
-            dates.add(new Date(ts));
-        }
-        log.debug("Updating one hour index wtih time slices " + dates);
-        dao.updateMetricsIndex(MetricsTable.ONE_HOUR, updates);
     }
 
     /**

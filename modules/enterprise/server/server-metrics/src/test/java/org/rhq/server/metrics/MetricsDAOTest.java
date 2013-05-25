@@ -29,7 +29,6 @@ import static java.util.Arrays.asList;
 import static org.rhq.test.AssertUtils.assertCollectionMatchesNoOrder;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
-import static org.testng.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,12 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.CountDownLatch;
 
 import com.datastax.driver.core.ResultSetFuture;
-import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
 import org.apache.commons.logging.Log;
@@ -670,39 +666,6 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             assertNotNull(metric.getMaxColumnMetadata().getTtl(), "The TTL for maximum column of " + metric +
                 " is not set.");
         }
-    }
-
-    private static class WaitForResults<ResultSetFuture> implements FutureCallback<ResultSetFuture> {
-
-        private final Log log = LogFactory.getLog(WaitForResults.class);
-
-        private CountDownLatch latch;
-
-        private Throwable throwable;
-
-        public WaitForResults(int numResults) {
-            latch = new CountDownLatch(numResults);
-        }
-
-        @Override
-        public void onSuccess(ResultSetFuture resultSetFuture) {
-            latch.countDown();
-        }
-
-        @Override
-        public void onFailure(Throwable throwable) {
-            latch.countDown();
-            this.throwable = throwable;
-            log.error("An async operation failed", throwable);
-        }
-
-        public void await(String errorMsg) throws InterruptedException {
-            latch.await();
-            if (throwable != null) {
-                fail(errorMsg, Throwables.getRootCause(throwable));
-            }
-        }
-
     }
 
 }

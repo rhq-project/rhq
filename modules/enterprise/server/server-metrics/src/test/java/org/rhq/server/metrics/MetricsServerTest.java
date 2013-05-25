@@ -41,9 +41,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.Futures;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -187,9 +190,9 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         metricsServer.setCurrentHour(hour6);
         metricsServer.addNumericData(data, waitForRawInserts);
-        metricsServer.calculateAggregates(hour6.getMillis());
-
         waitForRawInserts.await("Failed to insert raw data");
+
+        metricsServer.calculateAggregates(hour6.getMillis());
 
         // verify that one hour metric data is updated
         List<AggregateNumericMetric> expected = asList(new AggregateNumericMetric(scheduleId,
@@ -205,7 +208,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
     }
 
     @Test//(enabled = ENABLED)
-    public void aggregateRawDataDuring9thHour() {
+    public void aggregateRawDataDuring9thHour() throws Exception {
         int scheduleId = 123;
 
         DateTime hour0 = hour0();
@@ -225,10 +228,21 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         rawMetrics.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, secondValue));
         rawMetrics.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, thirdValue));
 
+        WaitForResults waitForRawInserts = new WaitForResults(rawMetrics.size());
+
         for (MeasurementDataNumeric raw : rawMetrics) {
-            dao.insertRawData(raw);
+            ResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            Futures.addCallback(resultSetFuture, waitForRawInserts);
         }
-        metricsServer.updateMetricsIndex(rawMetrics);
+        waitForRawInserts.await("Failed to insert raw data");
+
+        WaitForRawInserts waitForIndexUpdates = new WaitForRawInserts(rawMetrics.size());
+        AtomicInteger remainingUpdates = new AtomicInteger(rawMetrics.size());
+        for (MeasurementDataNumeric raw : rawMetrics) {
+            metricsServer.updateMetricsIndex(raw, rawMetrics.size(), remainingUpdates, hour8.getMillis(),
+                waitForIndexUpdates);
+        }
+        waitForIndexUpdates.await("Failed to update metrics index for raw data");
 
         metricsServer.setCurrentHour(hour9);
         metricsServer.calculateAggregates(hour9.getMillis());
@@ -382,10 +396,10 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         WaitForRawInserts waitForRawInserts = new WaitForRawInserts(data.size());
 
         metricsServer.addNumericData(data, waitForRawInserts);
+        waitForRawInserts.await("Failed to insert raw data");
+
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
             scheduleId, beginTime.getMillis(), endTime.getMillis()));
-
-        waitForRawInserts.await("Faile to insert raw data");
 
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 

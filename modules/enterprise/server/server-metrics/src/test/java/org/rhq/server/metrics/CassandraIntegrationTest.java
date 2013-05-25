@@ -25,14 +25,21 @@
 
 package org.rhq.server.metrics;
 
+import static org.testng.Assert.fail;
+
 import java.util.Date;
+import java.util.concurrent.CountDownLatch;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
+import com.google.common.base.Throwables;
+import com.google.common.util.concurrent.FutureCallback;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
@@ -58,7 +65,7 @@ public class CassandraIntegrationTest {
     private static DateTimeService dateTimeService;
 
     @BeforeSuite
-    @DeployCluster(numNodes = 2, username = "cassandra", password = "cassandra")
+    @DeployCluster(numNodes = 1, username = "cassandra", password = "cassandra")
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
 
@@ -107,5 +114,38 @@ public class CassandraIntegrationTest {
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
+    }
+
+    protected static class WaitForResults<ResultSetFuture> implements FutureCallback<ResultSetFuture> {
+
+        private final Log log = LogFactory.getLog(WaitForResults.class);
+
+        private CountDownLatch latch;
+
+        private Throwable throwable;
+
+        public WaitForResults(int numResults) {
+            latch = new CountDownLatch(numResults);
+        }
+
+        @Override
+        public void onSuccess(ResultSetFuture resultSetFuture) {
+            latch.countDown();
+        }
+
+        @Override
+        public void onFailure(Throwable throwable) {
+            latch.countDown();
+            this.throwable = throwable;
+            log.error("An async operation failed", throwable);
+        }
+
+        public void await(String errorMsg) throws InterruptedException {
+            latch.await();
+            if (throwable != null) {
+                fail(errorMsg, Throwables.getRootCause(throwable));
+            }
+        }
+
     }
 }

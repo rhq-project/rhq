@@ -179,7 +179,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
             this.sortId = sortId;
 
         } else {
-            throw new UnsupportedOperationException("ID sort is not supported by " + this.getClass().getSimpleName());
+            throw new UnsupportedOperationException("ID sort is not supported by supported by this class");
         }
     }
 
@@ -188,7 +188,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
             this.filterId = filterId;
 
         } else {
-            throw new UnsupportedOperationException("ID filter is not supported by " + this.getClass().getSimpleName());
+            throw new UnsupportedOperationException("ID filter is not supported by this class");
         }
     }
 
@@ -197,7 +197,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
             this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
 
         } else {
-            throw new UnsupportedOperationException("IDS filter is not supported by " + this.getClass().getSimpleName());
+            throw new UnsupportedOperationException("IDS filter is not supported by this class");
         }
     }
 

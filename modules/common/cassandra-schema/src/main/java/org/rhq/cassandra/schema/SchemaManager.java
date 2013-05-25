@@ -115,8 +115,23 @@ public class SchemaManager {
                 log.debug("Creating user [rhqadmin]");
                 session.execute("CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER");
                 log.debug("Creating keyspace [" + RHQ_KEYSPACE + "]");
-                session
-                    .execute("CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': 1};");
+
+                int replicationFactor = 1;
+                if (nodes.size() == 1) {
+                    log.debug("Setting replication_factor to 1 for rhq keyspace since this is a single node cluster.");
+                    replicationFactor = 1;
+                } else if (nodes.size() < 4) {
+                    log.debug("Setting replication_factor to 2 for rhq keyspace since this is a " + nodes.size() +
+                        " node cluster");
+                    replicationFactor = 2;
+                } else {
+                    log.debug("Setting replication_factor to 3 for rhq keyspace since this is a " + nodes.size() +
+                        " node cluster");
+                    replicationFactor = 3;
+                }
+
+                session.execute("CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', " +
+                    "'replication_factor': " + replicationFactor + "};");
 
                 // Note that once we have a schema management tool back in place, the call
                 // to createTables will be moved back to the updateSchema method as it
@@ -171,7 +186,20 @@ public class SchemaManager {
     }
 
     private void createTables() {
+        int gcGraceSeconds = 864000;
+        if (nodes.size() == 1) {
+            gcGraceSeconds = 0;
+        } else {
+            gcGraceSeconds = 691200;  // 8 days
+        }
+
         try {
+            log.debug("Setting system_auth keyspace replication_factor to " + nodes.size());
+            session.execute(
+                "ALTER KEYSPACE system_auth WITH replication = " +
+                "{'class' : 'SimpleStrategy', 'replication_factor' : " + nodes.size() + "};"
+            );
+
             log.debug("Creating table raw_metrics");
             session.execute(
                 "CREATE TABLE rhq.raw_metrics (" +
@@ -179,7 +207,7 @@ public class SchemaManager {
                     "time timestamp, " +
                     "value double, " +
                     "PRIMARY KEY (schedule_id, time) " +
-                    ") WITH COMPACT STORAGE"
+                    ") WITH COMPACT STORAGE AND gc_grace_seconds = " + gcGraceSeconds + ";"
             );
             log.debug("Creating table one_hour_metrics");
             session.execute(
@@ -189,7 +217,7 @@ public class SchemaManager {
                     "type int, " +
                     "value double, " +
                     "PRIMARY KEY (schedule_id, time, type) " +
-                ") WITH COMPACT STORAGE"
+                ") WITH COMPACT STORAGE AND gc_grace_seconds = " + gcGraceSeconds + ";"
             );
             log.debug("Creating table six_hour_metrics");
             session.execute(
@@ -199,7 +227,7 @@ public class SchemaManager {
                     "type int, " +
                     "value double, " +
                     "PRIMARY KEY (schedule_id, time, type) " +
-                ") WITH COMPACT STORAGE;"
+                ") WITH COMPACT STORAGE AND gc_grace_seconds = " + gcGraceSeconds + ";"
             );
             log.debug("Creating table twenty_four_hour_metrics");
             session.execute(
@@ -209,7 +237,7 @@ public class SchemaManager {
                     "type int, " +
                     "value double, " +
                     "PRIMARY KEY (schedule_id, time, type) " +
-                ") WITH COMPACT STORAGE;"
+                ") WITH COMPACT STORAGE AND gc_grace_seconds = " + gcGraceSeconds + ";"
             );
             log.debug("Creating table metrics_index");
             session.execute(
@@ -218,7 +246,7 @@ public class SchemaManager {
                     "time timestamp, " +
                     "schedule_id int, " +
                     "PRIMARY KEY ((bucket, time), schedule_id) " +
-                ") WITH COMPACT STORAGE;"
+                ") WITH COMPACT STORAGE AND gc_grace_seconds = " + gcGraceSeconds + ";"
             );
         } catch (NoHostAvailableException e) {
             throw new RuntimeException(e);

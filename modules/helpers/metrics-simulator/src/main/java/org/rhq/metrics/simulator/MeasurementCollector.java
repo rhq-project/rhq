@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.metrics.simulator.stats.Stats;
 import org.rhq.server.metrics.MetricsServer;
+import org.rhq.server.metrics.RawDataInsertedCallback;
 
 /**
  * @author John Sanda
@@ -55,6 +56,8 @@ public class MeasurementCollector implements Runnable {
     private ShutdownManager shutdownManager;
 
     private int batchSize = 500;
+
+    private NoOpCallback rawInsertsCallback = new NoOpCallback();
 
     public void setQueue(PriorityQueue<Schedule> queue) {
         this.queue = queue;
@@ -113,7 +116,7 @@ public class MeasurementCollector implements Runnable {
             }
             metricsCollected = data.size();
             try {
-                metricsServer.addNumericData(data);
+                metricsServer.addNumericData(data, rawInsertsCallback);
             } catch (Exception e) {
                 log.error("An error occurred while trying to store raw metrics", e);
                 log.error("Requesting simulation shutdown...");
@@ -133,6 +136,20 @@ public class MeasurementCollector implements Runnable {
             long totalTime = endTime - startTime;
             stats.addRawInsertTime(totalTime);
             log.info("Finished collecting and storing " + metricsCollected + " raw metric in " +totalTime + " ms.");
+        }
+    }
+
+    private static class NoOpCallback implements RawDataInsertedCallback {
+        @Override
+        public void onFinish() {
+        }
+
+        @Override
+        public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
+        }
+
+        @Override
+        public void onFailure(Throwable throwable) {
         }
     }
 }

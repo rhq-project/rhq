@@ -33,6 +33,8 @@ import javax.ejb.EJB;
 import javax.ejb.Singleton;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.HostDistance;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.Session;
 
 import org.rhq.cassandra.util.ClusterBuilder;
@@ -90,6 +92,9 @@ public class SessionManagerBean {
                 .withCredentials(username, password)
                 .withPort(port)
                 .build();
+            PoolingOptions poolingOptions = cluster.getConfiguration().getPoolingOptions();
+            poolingOptions.setMaxConnectionsPerHost(HostDistance.LOCAL, 16);
+            poolingOptions.setMaxConnectionsPerHost(HostDistance.REMOTE, 16);
             session = cluster.connect("rhq");
 
             metricsDAO = new MetricsDAO(session, metricsConfiguration);

@@ -46,7 +46,7 @@ import org.rhq.server.metrics.domain.AggregateNumericMetric;
 @Local
 public interface MetricsManagerLocal {
 
-    void addNumericData(Set<MeasurementDataNumeric> data);
+    void addNumericData(Set<MeasurementDataNumeric> data, Runnable callback);
 
     Iterable<AggregateNumericMetric> calculateAggregates();
 

@@ -37,6 +37,7 @@ import java.util.Set;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -141,10 +142,10 @@ public class MetricsDAO {
         deleteIndexEntries = session.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND time = ?");
     }
 
-    public ResultSet insertRawData(MeasurementDataNumeric data) {
+    public ResultSetFuture insertRawData(MeasurementDataNumeric data) {
         BoundStatement statement = insertRawData.bind(data.getScheduleId(), new Date(data.getTimestamp()),
             data.getValue());
-        return session.execute(statement);
+        return session.executeAsync(statement);
     }
 
     public List<MetricResultFuture<MeasurementDataNumeric>> insertRawMetricsAsync(Set<MeasurementDataNumeric> dataSet,
@@ -299,6 +300,11 @@ public class MetricsDAO {
                     new Date(updates.get(scheduleId)), scheduleId);
                 session.execute(statement);
             }
+    }
+
+    public ResultSetFuture updateMetricsIndex(MetricsTable table, int scheduleId, long timestamp) {
+        BoundStatement statement = updateMetricsIndex.bind(table.getTableName(), new Date(timestamp), scheduleId);
+        return session.executeAsync(statement);
     }
 
     public void deleteMetricsIndexEntries(MetricsTable table, long timestamp) {

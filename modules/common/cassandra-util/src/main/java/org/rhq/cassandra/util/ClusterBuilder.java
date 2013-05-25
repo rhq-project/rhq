@@ -26,6 +26,7 @@
 package org.rhq.cassandra.util;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
 
 /**
@@ -47,6 +48,13 @@ public class ClusterBuilder {
     public ClusterBuilder addContactPoints(String... addresses) {
         builder.addContactPoints(addresses);
         return this;
+    }
+
+    /**
+     * @see com.datastax.driver.core.Cluster.Builder#poolingOptions()
+     */
+    public PoolingOptions poolingOptions() {
+        return builder.poolingOptions();
     }
 
     /**

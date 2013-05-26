@@ -33,6 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -230,7 +231,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         MetricsServer metricsServer = sessionManagerBean.getMetricsServer();
         metricsServer.addNumericData(data, new RawDataInsertedCallback() {
 
-            private List<MeasurementData> insertedData = new ArrayList<MeasurementData>();
+            private ReentrantLock lock = new ReentrantLock();
+
+            private List<MeasurementData> insertedData = new ArrayList<MeasurementData>(data.size());
 
             @Override
             public void onFinish() {
@@ -240,7 +243,12 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
             @Override
             public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
-                insertedData.add(measurementDataNumeric);
+                try {
+                    lock.lock();
+                    insertedData.add(measurementDataNumeric);
+                }  finally {
+                    lock.unlock();
+                }
             }
 
             @Override

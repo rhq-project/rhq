@@ -25,12 +25,11 @@
 package org.rhq.enterprise.server.cloud;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
@@ -48,13 +47,9 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.MeasurementDefinitionCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
-import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -65,8 +60,7 @@ import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.CQLException;
@@ -171,71 +165,85 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
-        //TODO: check the rights of subject
         StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
+        final String tokensMetric = "Tokens", ownershipMetric = "Ownership", loadMetric = "Load";
+        final String heapComittedMetric = "{HeapMemoryUsage.committed}", heapUsedMetric = "{HeapMemoryUsage.used}";
 
-        StorageNode mergedNode = entityManager.merge(node);
-        Set<ResourceType> childResourceTypes = mergedNode.getResource().getResourceType().getChildResourceTypes();
-
-        //        ResourceType memorySubsystemType = typeManager.getResourceTypeByNameAndPlugin(subject, "RHQ Storage Node",
-        //            PLUGIN_NAME);
-        //        ResourceType storageServiceType = typeManager.getResourceTypeByNameAndPlugin(subject, "RHQ Storage Node",
-        //            PLUGIN_NAME);
-
-        Set<Resource> childResources = mergedNode.getResource().getChildResources();
-        int storageServiceResourceId = -1;
-        int memorySubsystemResourceId = -1;
-        for (Resource res : childResources) {
-            if ("Storage Service".equals(res.getName())) {
-                storageServiceResourceId = res.getId();
-            } else if ("Cassandra Server JVM".equals(res.getName())) {
-                Set<Resource> childJVMResources = res.getChildResources();
-                for (Resource resJVM : childJVMResources) {
-                    if ("Memory Subsystem".equals(resJVM.getName())) {
-                        memorySubsystemResourceId = resJVM.getId();
-                        break;
-                    }
-                }
-            }
+        int resourceId;
+        if (node.getResource() == null) {
+            resourceId = entityManager.merge(node).getResource().getId();
+        } else {
+            resourceId = node.getResource().getId();
         }
 
-        // TODO: perhaps crating a new named query will be more efficient than this
-        if (storageServiceResourceId != -1) {
-            MeasurementDefinitionCriteria criteria = new MeasurementDefinitionCriteria();
-            criteria.addFilterName("Tokens");
-            criteria.addFilterResourceTypeName("StorageService");
-            PageList<MeasurementDefinition> measDefinition1 = measurementDefinitionManager
-                .findMeasurementDefinitionsByCriteria(subject, criteria);
-
-            criteria = new MeasurementDefinitionCriteria();
-            criteria.addFilterName("Ownership");
-            criteria.addFilterResourceTypeName("StorageService");
-            PageList<MeasurementDefinition> measDefinition2 = measurementDefinitionManager
-                .findMeasurementDefinitionsByCriteria(subject, criteria);
-
-            if (!measDefinition1.isEmpty() && !measDefinition2.isEmpty()) {
-                List<MeasurementSchedule> schedules = scheduleManager.findSchedulesByResourceIdsAndDefinitionIds(
-                    new int[] { storageServiceResourceId }, new int[] { measDefinition1.get(1).getId(),
-                        measDefinition2.get(1).getId() });
-                if (!schedules.isEmpty()) {
-                    MeasurementAggregate tokensAggregate = measurementManager.getAggregate(subject, schedules.get(0)
-                        .getId(), beginTime, endTime);
-                    result.setTokens(tokensAggregate);
-                    MeasurementAggregate ovnershipAggregate = measurementManager.getAggregate(subject, schedules.get(1)
-                        .getId(), beginTime, endTime);
-                    StorageNodeLoadComposite.MeasurementAggregateWithUnits ovnershipAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
-                        ovnershipAggregate, MeasurementUnits.PERCENTAGE);
-                    result.setActuallyOwns(ovnershipAggregateWithUnits);
-                }
-            }
+        // get the schedule ids for Storage Service resource
+        TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
+            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
+        query.setParameter("parrentId", resourceId).setParameter("metricNames",
+            Arrays.asList(tokensMetric, ownershipMetric, loadMetric));
+        List<Object[]> scheduleIds = query.getResultList();
+        Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>(4);
+        for (Object[] pair : scheduleIds) {
+            scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
         }
 
-        //        private MeasurementAggregateWithUnits heapCommited; // cassandra server jvm / memory subsystem resource
-        //        private MeasurementAggregateWithUnits heapUsed; // cassandra server jvm / memory subsystem resource
-        //        private MeasurementAggregateWithUnits load; // database management services / storage service
-        //        DONE -- private MeasurementAggregate tokens; // ~ jmx op - getTokens(hostname).size() or jmx attribute (StorageService/tokens).size() 
-        //        DONE --private MeasurementAggregate actuallyOwns; // up to date value (tokenToEndpointMap) can be taken from the associated resource's configuration
+        // get the schedule ids for Memory Subsystem resource
+        query = entityManager.<Object[]> createNamedQuery(
+            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
+            Object[].class);
+        query.setParameter("grandparrentId", resourceId).setParameter("metricNames",
+            Arrays.asList(heapComittedMetric, heapUsedMetric));
+        scheduleIds = query.getResultList();
+        for (Object[] pair : scheduleIds) {
+            scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
+        }
+
+        // find the aggregates and enrich the result instance
+        if (!scheduleIdsMap.isEmpty()) {
+            if (scheduleIdsMap.get(tokensMetric) != null) {
+                MeasurementAggregate tokensAggregate = measurementManager.getAggregate(subject,
+                    scheduleIdsMap.get(tokensMetric), beginTime, endTime);
+                result.setTokens(tokensAggregate);
+            }
+            if (scheduleIdsMap.get(ownershipMetric) != null) {
+                MeasurementAggregate ownershipAggregate = measurementManager.getAggregate(subject,
+                    scheduleIdsMap.get(ownershipMetric), beginTime, endTime);
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits ovnershipAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                    ownershipAggregate, MeasurementUnits.PERCENTAGE);
+                ovnershipAggregateWithUnits.setFormattedValue(getSummaryString(ownershipAggregate,
+                    MeasurementUnits.PERCENTAGE));
+                result.setActuallyOwns(ovnershipAggregateWithUnits);
+            }
+            if (scheduleIdsMap.get(loadMetric) != null) {
+                MeasurementAggregate loadAggregate = measurementManager.getAggregate(subject,
+                    scheduleIdsMap.get(loadMetric), beginTime, endTime);
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits loadAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                    loadAggregate, MeasurementUnits.BYTES);
+                loadAggregateWithUnits.setFormattedValue(getSummaryString(loadAggregate, MeasurementUnits.BYTES));
+                result.setLoad(loadAggregateWithUnits);
+            }
+
+            if (scheduleIdsMap.get(heapComittedMetric) != null) {
+                MeasurementAggregate heapCommitedAggregate = measurementManager.getAggregate(subject,
+                    scheduleIdsMap.get(heapComittedMetric), beginTime, endTime);
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits heapCommitedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                    heapCommitedAggregate, MeasurementUnits.BYTES);
+                heapCommitedAggregateWithUnits.setFormattedValue(getSummaryString(heapCommitedAggregate,
+                    MeasurementUnits.BYTES));
+                result.setHeapCommited(heapCommitedAggregateWithUnits);
+            }
+            if (scheduleIdsMap.get(heapUsedMetric) != null) {
+                MeasurementAggregate heapUsedAggregate = measurementManager.getAggregate(subject,
+                    scheduleIdsMap.get(heapUsedMetric), beginTime, endTime);
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                    heapUsedAggregate, MeasurementUnits.BYTES);
+                heapUsedAggregateWithUnits
+                    .setFormattedValue(getSummaryString(heapUsedAggregate, MeasurementUnits.BYTES));
+                result.setHeapUsed(heapUsedAggregateWithUnits);
+            }
+        }
 
         return result;
     }
@@ -260,5 +268,15 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         CriteriaQueryRunner<StorageNode> runner = new CriteriaQueryRunner<StorageNode>(criteria, generator,
             entityManager);
         return runner.execute();
+    }
+    
+    private String getSummaryString(MeasurementAggregate aggregate, MeasurementUnits units) {
+        String formattedValue = "Min: "
+            + MeasurementConverter.format(aggregate.getMin(), units, true)
+            + ", Max: "
+            + MeasurementConverter.format(aggregate.getMax(), units, true)
+            + ", Avg: "
+            + MeasurementConverter.format(aggregate.getAvg(), units, true);
+        return formattedValue;
     }
 }

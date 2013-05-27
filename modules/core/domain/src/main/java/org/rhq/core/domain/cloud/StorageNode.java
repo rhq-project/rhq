@@ -40,6 +40,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -59,7 +60,26 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NOT_INSTALLED, query = "SELECT s FROM StorageNode s WHERE NOT s.operationMode = 'INSTALLED'"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NORMAL, query = "SELECT s FROM StorageNode s WHERE s.operationMode = 'NORMAL'"),
     @NamedQuery(name = StorageNode.QUERY_DELETE_BY_ID, query = "" //
-        + "DELETE FROM StorageNode s WHERE s.id = :storageNodeId ") })
+        + "DELETE FROM StorageNode s WHERE s.id = :storageNodeId "),
+
+    @NamedQuery(name = StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, query = "" //
+        + "   SELECT def.name, ms.id  FROM MeasurementSchedule ms   " //
+        + "     JOIN ms.definition def " //
+        + "     JOIN ms.resource res  " //
+        + "    WHERE ms.definition = def    " //
+        + "      AND res.parentResource.id = :parrentId    " //
+        + "      AND ms.enabled = true" //
+        + "      AND def.name IN (:metricNames)"), //
+
+    @NamedQuery(name = StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, query = "" //
+        + "   SELECT def.name, ms.id  FROM MeasurementSchedule ms   " //
+        + "     JOIN ms.definition def " //
+        + "     JOIN ms.resource res  " //
+        + "    WHERE ms.definition = def    " //
+        + "      AND res.parentResource.parentResource.id = :grandparrentId    " //
+        + "      AND ms.enabled = true" //
+        + "      AND def.name IN (:metricNames)") //
+})
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_STORAGE_NODE_ID_SEQ", sequenceName = "RHQ_STORAGE_NODE_ID_SEQ")
 @Table(name = "RHQ_STORAGE_NODE")
 public class StorageNode implements Serializable {
@@ -71,6 +91,8 @@ public class StorageNode implements Serializable {
     public static final String QUERY_FIND_ALL_NOT_INSTALLED = "StorageNode.findAllCloudMembers";
     public static final String QUERY_DELETE_BY_ID = "StorageNode.deleteById";
     public static final String QUERY_FIND_ALL_NORMAL = "StorageNode.findAllNormalCloudMembers";
+    public static final String QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES = "StorageNode.findScheduleIdsByParentResourceIdAndMeasurementDefinitionNames";
+    public static final String QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES = "StorageNode.findScheduleIdsByGrandparentResourceIdAndMeasurementDefinitionNames";
 
     private static final String JMX_CONNECTION_STRING = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
 

@@ -23,7 +23,6 @@
 package org.rhq.core.domain.cloud;
 
 import java.io.Serializable;
-import java.util.concurrent.TimeUnit;
 
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
@@ -38,15 +37,11 @@ public class StorageNodeLoadComposite implements Serializable {
     private long beginTime;
     private long endTime;
     
-    private MeasurementAggregateWithUnits heapCommited; // cassandra server jvm / memory subsystem resource
-    
-    private MeasurementAggregateWithUnits heapUsed; // cassandra server jvm / memory subsystem resource
-    
-    private MeasurementAggregateWithUnits load; // database management services / storage service resource
-    
-    private MeasurementAggregate tokens; // ~ jmx op - getTokens(hostname).size() or jmx attribute (StorageService/tokens).size() 
-    
-    private MeasurementAggregateWithUnits actuallyOwns; // up to date # of tokens for this node (tokenToEndpointMap jmx attr.) can be taken from the associated resource's configuration or I can provide this as a metric in C* plugin
+    private MeasurementAggregateWithUnits heapCommited;
+    private MeasurementAggregateWithUnits heapUsed;
+    private MeasurementAggregateWithUnits load;
+    private MeasurementAggregate tokens; 
+    private MeasurementAggregateWithUnits actuallyOwns;
 
     public StorageNodeLoadComposite() {
         // GWT needs this
@@ -150,6 +145,7 @@ public class StorageNodeLoadComposite implements Serializable {
         
         private final MeasurementAggregate aggregate;
         private final MeasurementUnits units;
+        private String formattedValue;
 
         public MeasurementAggregateWithUnits(MeasurementAggregate aggregate, MeasurementUnits units) {
             this.aggregate = aggregate;
@@ -164,8 +160,15 @@ public class StorageNodeLoadComposite implements Serializable {
             return units;
         }
         
+        public void setFormattedValue(String formattedValue) {
+            this.formattedValue = formattedValue;
+        }
+
         @Override
         public String toString() {
+            if (formattedValue != null) {
+                return formattedValue;
+            }
             return aggregate.toString() + " (" + units.toString() + ")";
         }
     }

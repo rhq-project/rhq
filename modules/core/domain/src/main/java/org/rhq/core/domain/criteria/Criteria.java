@@ -179,7 +179,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
             this.sortId = sortId;
 
         } else {
-            throw new UnsupportedOperationException("ID sort is not supported by supported by this class");
+            throw new UnsupportedOperationException("ID sort is not supported by this class");
         }
     }
 

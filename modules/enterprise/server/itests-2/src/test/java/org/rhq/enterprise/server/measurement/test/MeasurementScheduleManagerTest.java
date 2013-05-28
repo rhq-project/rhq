@@ -342,10 +342,15 @@ public class MeasurementScheduleManagerTest extends AbstractMeasurementScheduleM
         try {
             if (null != em) {
                 em.flush();
-                getTransactionManager().commit();
             }
         } catch (Throwable t) {
-
+            // best effort
+        }
+        try {
+            getTransactionManager().commit();
+        } catch (Throwable t) {
+            // best effort                
         }
     }
+
 }

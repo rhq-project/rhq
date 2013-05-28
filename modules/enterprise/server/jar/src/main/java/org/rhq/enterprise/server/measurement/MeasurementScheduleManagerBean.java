@@ -820,6 +820,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
      */
     private void markResources(EntityContext context, int agentId) {
         ResourceCriteria criteria = new ResourceCriteria();
+        criteria.clearPaging(); //important to avoid setting the ordering in the generated query
         if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterId(context.resourceId);
         } else if (context.type == EntityContext.Type.ResourceGroup) {
@@ -832,7 +833,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
 
         try {
             CriteriaQueryGenerator generator = new CriteriaQueryGenerator(criteria);
-            ;
+
             generator.alterProjection("resource.id");
             String resourceSubQuery = generator.getParameterReplacedQuery(false);
 
@@ -848,7 +849,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
             markResourceQuery.setParameter("now", System.currentTimeMillis());
             int affectedRows = markResourceQuery.executeUpdate();
             if (log.isDebugEnabled()) {
-                log.debug("Marked " + affectedRows + " for future measurement scheudle update");
+                log.debug("Marked " + affectedRows + " for future measurement schedule update");
             }
         } catch (Throwable t) {
             log.error("Could not notify agents of updates", t);
@@ -877,6 +878,7 @@ public class MeasurementScheduleManagerBean implements MeasurementScheduleManage
         }
 
         MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.clearPaging(); //important to avoid setting the ordering in the generated query
         if (context.type == EntityContext.Type.Resource) {
             criteria.addFilterResourceId(context.resourceId);
         } else if (context.type == EntityContext.Type.ResourceGroup) {

@@ -40,9 +40,30 @@ public class CoreJBossASClient extends JBossASClient {
     public static final String SCANNER = "scanner";
     public static final String EXTENSION = "extension";
     public static final String MODULE = "module";
+    public static final String CORE_SERVICE_MGMT = "management";
+    public static final String MGMT_INTERFACE = "management-interface";
+    public static final String MGMT_INTERFACE_HTTP = "http-interface";
 
     public CoreJBossASClient(ModelControllerClient client) {
         super(client);
+    }
+
+    /**
+     * Allows the caller to turn on or off complete access for the app server's admin console.
+     *
+     * @param enableFlag true if the admin console enabled and visible; false if you want to prohibit all access to the admin console
+     * @throws Exception 
+     */
+    public void setEnableAdminConsole(boolean enableFlag) throws Exception {
+        // /core-service=management/management-interface=http-interface/:write-attribute(name=console-enabled,value=false)
+        final Address address = Address.root()
+            .add(CORE_SERVICE, CORE_SERVICE_MGMT, MGMT_INTERFACE, MGMT_INTERFACE_HTTP);
+        final ModelNode req = createWriteAttributeRequest("console-enabled", Boolean.toString(enableFlag), address);
+        final ModelNode response = execute(req);
+        if (!isSuccess(response)) {
+            throw new FailureException(response);
+        }
+        return;
     }
 
     /**

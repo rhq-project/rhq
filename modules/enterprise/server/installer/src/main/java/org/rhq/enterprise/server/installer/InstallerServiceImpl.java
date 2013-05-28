@@ -1034,6 +1034,9 @@ public class InstallerServiceImpl implements InstallerService {
             // we don't want to the JBossAS welcome screen; turn it off
             new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
 
+            // we don't want users to access the admin console
+            new CoreJBossASClient(mcc).setEnableAdminConsole(false);
+
         } catch (Exception e) {
             log("deployServices failed", e);
             throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));

@@ -27,6 +27,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
+import static org.rhq.test.AssertUtils.assertPropertiesMatch;
+import static org.testng.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -75,7 +77,7 @@ public class MetricsBaselineCalculatorTest {
             .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(1), eq(0),
-                eq(1))).thenReturn(new ArrayList<AggregateSimpleNumericMetric>());
+            eq(1))).thenReturn(new ArrayList<AggregateSimpleNumericMetric>());
 
         MeasurementSchedule mockSchedule = mock(MeasurementSchedule.class);
         when(mockSchedule.getId()).thenReturn(0);
@@ -88,13 +90,20 @@ public class MetricsBaselineCalculatorTest {
         List<MeasurementBaseline> result = objectUnderTest.calculateBaselines(Arrays.asList(mockSchedule), 0, 1);
 
         //verify the results (Assert and mock verification)
-        Assert.assertEquals(result.size(), 0);
+        assertEquals(result.size(), 1, "Expected to get back one baseline");
+        MeasurementBaseline expected = new MeasurementBaseline();
+        expected.setSchedule(mockSchedule);
+        expected.setMax(Double.NaN);
+        expected.setMin(Double.NaN);
+        expected.setMean(Double.NaN);
+
+        assertPropertiesMatch("", expected, result.get(0), "computeTime");
+
         verify(mockMetricsDAO, times(1)).findAggregatedSimpleOneHourMetric(any(Integer.class), any(Integer.class),
             any(Integer.class));
         verifyNoMoreInteractions(mockMetricsDAO);
 
         verify(mockSchedule, times(1)).getId();
-        verifyNoMoreInteractions(mockSchedule);
     }
 
     @Test
@@ -177,7 +186,7 @@ public class MetricsBaselineCalculatorTest {
             eq(expectedStartTime), eq(expectedEndTime));
         verifyNoMoreInteractions(mockMetricsDAO);
 
-        verify(mockSchedule, times(1)).getId();
+        verify(mockSchedule, times(2)).getId();
         verify(mockSchedule, times(1)).setBaseline(eq(baselineResult));
         verifyNoMoreInteractions(mockSchedule);
     }
@@ -238,7 +247,7 @@ public class MetricsBaselineCalculatorTest {
             eq(expectedStartTime), eq(expectedEndTime));
         verifyNoMoreInteractions(mockMetricsDAO);
 
-        verify(mockSchedule, times(1)).getId();
+        verify(mockSchedule, times(2)).getId();
         verify(mockSchedule, times(1)).setBaseline(eq(baselineResult));
         verifyNoMoreInteractions(mockSchedule);
     }

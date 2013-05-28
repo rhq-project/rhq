@@ -241,6 +241,10 @@ public class StorageInstaller {
             deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
             deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
 
+            // The out of box default for native_transport_max_threads is 128. We default
+            // to 64 for dev/test environments so we need to update it here.
+            deploymentOptions.setNativeTransportMaxThreads(128);
+
             if (cmdLine.hasOption("heap-size")) {
                 deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size"));
             }

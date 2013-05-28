@@ -29,14 +29,26 @@ import java.net.URI;
  * <p>
  * Implementations of this interface can be located using the {@link ScriptSourceProviderFactory}
  * if they are registered in META-INF/services.
- * 
+ * <p/>
+ * Note that instances of this class can be created and called in an access control context with limited privileges.
+ * If you need to make safe calls that require privileges not granted to a script run in the RHQ server (by default this
+ * is determined by the {@code org.rhq.bindings.StandardScriptPermissions} class), make sure to call such actions with
+ * elevated permissions through
+ * {@link java.security.AccessController#doPrivileged(java.security.PrivilegedExceptionAction)} or any of its
+ * derivatives.
+ * <p/>
+ * For example JNDI look-ups are not allowed by default for the scripts, so if your provider needs to perform some
+ * JNDI lookups to locate the script to include, you need to wrap any code that does a JNDI look-up as above.
+ *
  * @author Lukas Krejci
  */
 public interface ScriptSourceProvider {
 
     /**
      * Returns the reader of the source of the script specified by given location.
-     * 
+     * <p/>
+     * Review the class description for the security considerations.
+     *
      * @param location the location of the script
      * @return the reader of the script source or null if it could not be found
      */

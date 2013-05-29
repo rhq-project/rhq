@@ -48,6 +48,8 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
 
 /**
  * @author Joseph Marques
@@ -183,12 +185,16 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
         List<AlertDefinition> unappliedTemplates = query.getResultList();
 
         for (AlertDefinition template : unappliedTemplates) {
-            // construct the child
+            // construct the child, note that the proxy will pull in lazy data during the copy
             AlertDefinition childAlertDefinition = new AlertDefinition(template);
             childAlertDefinition.setParentId(template.getId());
 
             // persist the child, user is known to be overlord at this point for this system side-effect
             try {
+                // convert the childAlertDef to a pojo, remove all proxies left over from the copy. We can't
+                // pass entities across a Tx boundary and the call to create the alert def is executed in a new trans.
+                HibernateDetachUtility
+                    .nullOutUninitializedFields(childAlertDefinition, SerializationType.SERIALIZATION);
                 alertDefinitionManager.createAlertDefinitionInNewTransaction(user, childAlertDefinition, resourceId,
                     false);
             } catch (Throwable t) {

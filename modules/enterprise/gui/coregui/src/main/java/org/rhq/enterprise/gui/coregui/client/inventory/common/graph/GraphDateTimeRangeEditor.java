@@ -27,7 +27,6 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.DateSliderGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -42,7 +41,6 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     private MeasurementUserPreferences measurementUserPreferences;
     private AbstractD3GraphListView d3GraphListView;
     private static final Messages MSG = CoreGUI.getMessages();
-    //private DateSliderGraphType dateSliderGraphType;
     private Long startDateTime;
     private Long endDateTime;
 
@@ -59,7 +57,6 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         List<Long> beginEndTimes = prefs.getBeginEndTimes();
         startDateTime = beginEndTimes.get(0);
         endDateTime = beginEndTimes.get(1);
-     //   this.dateSliderGraphType = new DateSliderGraphType(beginEndTimes.get(0), beginEndTimes.get(1));
     }
 
     /**
@@ -74,8 +71,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         Log.debug("drawGraph marker in AvailabilityD3Graph for: graphDateTimeRangeEditor" );
 
         // append the bootstrap buttongroup since smartGWT doesn't have one
-        StringBuilder divAndSvgDefs = new StringBuilder();
-        divAndSvgDefs.append("<div id=\"graphDateTimeRangeEditor\">" +
+        StringBuilder buttonBarDiv = new StringBuilder();
+        buttonBarDiv.append("<div id=\"graphDateTimeRangeEditor\">" +
                 "<div class=\"accordion\" id=\"graphDateTimeEditorAccordion\" style=\"width:758px;\">" +
                 "        <div class=\"accordion-group\">" +
                 "            <div id=\"graphDateTimeEditorCollapse\" class=\"accordion-body collapse in\">" +
@@ -97,10 +94,10 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 "            </div>" +
                 "        </div>" +
                 "    </div>");
-        HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
-        graph.setWidth100();
-        graph.setHeight(50);
-        addMember(graph);
+        HTMLFlow buttonBarDivFlow = new HTMLFlow(buttonBarDiv.toString());
+        buttonBarDivFlow.setWidth100();
+        buttonBarDivFlow.setHeight(50);
+        addMember(buttonBarDivFlow);
         new Timer(){
             @Override
             public void run() {
@@ -203,9 +200,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         });
 
 
-        // initially populate
-        updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
-        //$wnd.jQuery("#radioHour").click();
+        // initially populate with default click
+        $wnd.jQuery("#radio12h").click();
 
     }-*/;
 
@@ -238,7 +234,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     public void parentResized() {
         super.parentResized();
         removeMembers(getMembers());
-        //createDateSliderMarker();
+        createDateSliderMarker();
         //drawJsniChart();
     }
 

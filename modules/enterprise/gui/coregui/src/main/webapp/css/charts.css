@@ -46,7 +46,7 @@
  /* Brush related css rules */
 .brush rect.extent {
     fill: #0757ff;
-    fill-opacity: .09;
+    fill-opacity: .15;
     shape-rendering: crispEdges;
 }
 

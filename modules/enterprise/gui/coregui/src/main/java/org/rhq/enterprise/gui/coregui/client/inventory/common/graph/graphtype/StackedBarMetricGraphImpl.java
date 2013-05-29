@@ -558,7 +558,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                         .attr("transform", "translate(0," + height / 2 + ")")
                         .attr("opacity", ".3")
                         .attr("fill",  "#49F9FE")
-                        .attr("d", resizePath());
+                        .attr("d", resizePath);
 
                 brushg.selectAll("rect")
                         .attr("height", 135);
@@ -585,7 +585,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                 function updateDateRangeDisplay(startDate, endDate ) {
                     //@todo: i18n the date format
                     var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + '  -  ' + endDate.format('MM/DD/YYYY h:mm a');
-                    $wnd.jQuery('#dateRange').val(formattedDateRange);
+                    $wnd.jQuery('#dateRange').text(formattedDateRange);
                 }
 
                 // Taken from crossfilter (http://square.github.com/crossfilter/)

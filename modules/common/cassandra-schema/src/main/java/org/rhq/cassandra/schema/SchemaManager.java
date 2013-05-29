@@ -58,6 +58,8 @@ public class SchemaManager {
 
     private List<StorageNode> nodes = new ArrayList<StorageNode>();
 
+    private Integer systemAuthRF = null;
+
     public SchemaManager(String username, String password, String... nodes) {
         try {
             this.username = username;
@@ -118,17 +120,13 @@ public class SchemaManager {
 
                 int replicationFactor = 1;
                 if (nodes.size() == 1) {
-                    log.debug("Setting replication_factor to 1 for rhq keyspace since this is a single node cluster.");
                     replicationFactor = 1;
                 } else if (nodes.size() < 4) {
-                    log.debug("Setting replication_factor to 2 for rhq keyspace since this is a " + nodes.size() +
-                        " node cluster");
                     replicationFactor = 2;
                 } else {
-                    log.debug("Setting replication_factor to 3 for rhq keyspace since this is a " + nodes.size() +
-                        " node cluster");
                     replicationFactor = 3;
                 }
+                log.debug("Setting replication_factor to " + replicationFactor + " for rhq keyspace");
 
                 session.execute("CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', " +
                     "'replication_factor': " + replicationFactor + "};");
@@ -194,11 +192,14 @@ public class SchemaManager {
         }
 
         try {
-            log.debug("Setting system_auth keyspace replication_factor to " + nodes.size());
-            session.execute(
-                "ALTER KEYSPACE system_auth WITH replication = " +
-                "{'class' : 'SimpleStrategy', 'replication_factor' : " + nodes.size() + "};"
-            );
+            // Update the system_auth RF from server code. That makes more sense since we
+            // need run repair on each node after the schema change.
+
+//            log.debug("Setting system_auth keyspace replication_factor to " + nodes.size());
+//            session.execute(
+//                "ALTER KEYSPACE system_auth WITH replication = " +
+//                "{'class' : 'SimpleStrategy', 'replication_factor' : " + nodes.size() + "};"
+//            );
 
             log.debug("Creating table raw_metrics");
             session.execute(

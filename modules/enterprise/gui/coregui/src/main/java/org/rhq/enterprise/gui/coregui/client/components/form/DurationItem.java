@@ -38,6 +38,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
@@ -238,26 +239,17 @@ public class DurationItem extends CanvasItem {
             this.form.setValue(FIELD_VALUE, formattedOutput);
             setValue(formattedOutput);
         } else {
-            String valueWithUnits = MeasurementConverterClient.format((double) longValue,
-                MeasurementUnits.MILLISECONDS, true);
-            String[] chunks = valueWithUnits.split(" ");
-            String value = chunks[0];
-            if (value.endsWith(".0")) {
-                value = value.substring(0, value.indexOf(".0"));
+            MeasurementNumericValueAndUnits valueWithUnits;
+            if (longValue % HOUR_IN_MILLIS == 0) {
+                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.MILLISECONDS,
+                    MeasurementUnits.HOURS, MeasurementUnits.HOURS);
+            } else {
+                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.MILLISECONDS,
+                    MeasurementUnits.MINUTES, MeasurementUnits.MINUTES);
             }
-            this.form.setValue(FIELD_VALUE, value);
-            String units = chunks[1];
             SelectItem unitsItem = (SelectItem) this.form.getItem(FIELD_UNITS);
-            if (MeasurementConverterClient.getMeasurementUnitAbbreviation(MeasurementUnits.SECONDS).equals(units)) {
-                unitsItem.setValue(TimeUnit.SECONDS.name().toLowerCase());
-            } else if (MeasurementConverterClient.getMeasurementUnitAbbreviation(MeasurementUnits.MINUTES)
-                .equals(units)) {
-                unitsItem.setValue(TimeUnit.MINUTES.name().toLowerCase());
-            } else if (MeasurementConverterClient.getMeasurementUnitAbbreviation(MeasurementUnits.HOURS).equals(units)) {
-                unitsItem.setValue(TimeUnit.HOURS.name().toLowerCase());
-            } else if (MeasurementConverterClient.getMeasurementUnitAbbreviation(MeasurementUnits.DAYS).equals(units)) {
-                unitsItem.setValue(TimeUnit.DAYS.name().toLowerCase());
-            }
+            this.form.setValue(FIELD_VALUE, valueWithUnits.getValue().intValue());
+            unitsItem.setValue(valueWithUnits.getUnits().name().toLowerCase());
         }
     }
 

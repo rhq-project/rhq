@@ -60,35 +60,13 @@ public interface AlertDefinitionManagerLocal {
      * This would then cause the validation to fail every time you created a copy of a definition and tried
      * to persist it. Note that passing false AND having new, unpersisted notifications in the alert definition can
      * lead to invalid configuration being stored for the notifications.
-     * @return the id of the newly persisted alert definition
+     * @return the newly persisted alert definition
      * @throws InvalidAlertDefinitionException
      */
-    int createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean finalizeNotificationConfiguration)
+    AlertDefinition createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition,
+        Integer resourceId, boolean finalizeNotificationConfiguration)
         throws InvalidAlertDefinitionException;
     
-    /**
-     * Creates a new alert definition. Note that the suject is checked to have necessary authz, which might not
-     * be what you want in all use cases. See {@link #createDependentAlertDefinition(Subject, AlertDefinition, int)}
-     * for further discussion of this. The only difference between 
-     * {@link GroupAlertDefinitionManagerLocal#createAlertDefinitionInNewTransaction(Subject, AlertDefinition, Integer, boolean)}
-     *  and this method is the return type.
-     *
-     * @param subject the user creating the alert definition
-     * @param alertDefinition the new alert definition to persist
-     * @param resourceId the resource id for which the def is being created
-     * @param finalizeNotificationConfiguration if true, the configuration of the def's notifications is validated.
-     * This is NOT what you want if, for example, you are merely creating a copy of an existing definition.
-     * Some notifications might require more input when creating the notification than is then persisted in their configs
-     * (prominent example being the CLI alert sender).
-     * This would then cause the validation to fail every time you created a copy of a definition and tried
-     * to persist it. Note that passing false AND having new, unpersisted notifications in the alert definition can
-     * lead to invalid configuration being stored for the notifications.
-     * @return the instance of newly created alert definition
-     * @throws InvalidAlertDefinitionException
-     */
-    AlertDefinition createAlertDefinitionAndRerurnIt(Subject subject, AlertDefinition alertDefinition,
-        Integer resourceId, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException;
-
     /**
      * This is exactly the same as {@link #createAlertDefinitionInNewTransaction(Subject, AlertDefinition, Integer, boolean)} but
      * assumes the resource is part of a group (or has given resource type for templates) for which

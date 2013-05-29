@@ -197,7 +197,7 @@ public class ResourceAlertDefinitionsView extends AbstractAlertDefinitionsView {
     protected void commitAlertDefinition(final AlertDefinition alertDefinition, boolean purgeInternals,
         final AsyncCallback<AlertDefinition> resultReceiver) {
         if (alertDefinition.getId() == 0) {
-            GWTServiceLookup.getAlertDefinitionService().createAlertDefinitionAndReturn(alertDefinition,
+            GWTServiceLookup.getAlertDefinitionService().createAlertDefinition(alertDefinition,
                 Integer.valueOf(resource.getId()), new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(AlertDefinition result) {

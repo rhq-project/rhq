@@ -334,10 +334,10 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         alertDefinition.setConditionExpression(BooleanExpression.ANY);
         alertDefinition.setRecoveryId(0);
         alertDefinition.setEnabled(enabled);
-        int alertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(),
+        alertDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(),
             alertDefinition, testData.getResource().getId(), true);
-        testData.getAlertDefinitionIds().add(alertDefinitionId);
-        return alertDefinitionId;
+        testData.getAlertDefinitionIds().add(alertDefinition.getId());
+        return alertDefinition.getId();
     }
 
     private int createGroupAlertDefinitionAndGetId(String name) {
@@ -349,7 +349,7 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         alertDefinition.setRecoveryId(0);
         alertDefinition.setGroup(testData.getResourceGroup());
         alertDefinition.setEnabled(true);
-        
+
         // We need a threshold alert condition to recreate the issue in bug 949048 
         AlertCondition ac = new AlertCondition();
         ac.setCategory(AlertConditionCategory.THRESHOLD);
@@ -357,11 +357,11 @@ public class AlertDefinitionManagerBeanTest extends AbstractEJB3Test {
         ac.setComparator("<");
         ac.setThreshold(0.5);
         alertDefinition.addCondition(ac);
-        
-        int alertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(),
-            alertDefinition, null, true);
-        testData.getAlertDefinitionIds().add(alertDefinitionId);
-        return alertDefinitionId;
+
+        AlertDefinition newAlertDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(
+            testData.getSubject(), alertDefinition, null, true);
+        testData.getAlertDefinitionIds().add(newAlertDefinition.getId());
+        return newAlertDefinition.getId();
     }
 
     private static final class TestData {

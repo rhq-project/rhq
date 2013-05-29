@@ -279,9 +279,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
                 throw new StuffNotFoundException("Recovery alert with id " + adr.getRecoveryId());
         }
 
-        int definitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(caller, alertDefinition, resourceId, false);
-
-        AlertDefinition updatedDefinition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
+        AlertDefinition updatedDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(caller,
+            alertDefinition, resourceId, false);
+        int definitionId = updatedDefinition.getId();
         AlertDefinitionRest uadr = definitionToDomain(updatedDefinition,true, uriInfo) ; // TODO param 'full' ?
 
         uadr.setId(definitionId);

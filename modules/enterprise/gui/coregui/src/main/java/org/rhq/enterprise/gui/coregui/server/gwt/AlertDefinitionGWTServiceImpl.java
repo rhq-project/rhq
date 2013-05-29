@@ -29,7 +29,6 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertDefinitionGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
-import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertNotificationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -64,20 +63,12 @@ public class AlertDefinitionGWTServiceImpl extends AbstractGWTServiceImpl implem
     }
 
     @Override
-    public int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException {
+    public AlertDefinition createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId)
+        throws RuntimeException {
         try {
-            int result = alertDefManager.createAlertDefinitionInNewTransaction(getSessionSubject(), alertDefinition, resourceId, true);
-            return result;
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-    
-    @Override
-    public AlertDefinition createAlertDefinitionAndReturn(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException {
-        try {
-            AlertDefinition result = alertDefManager.createAlertDefinitionAndRerurnIt(getSessionSubject(), alertDefinition, resourceId, true);
-            return SerialUtility.prepare(result, "createAlertDefinitionAndReturn");
+            AlertDefinition result = alertDefManager.createAlertDefinitionInNewTransaction(getSessionSubject(),
+                alertDefinition, resourceId, true);
+            return SerialUtility.prepare(result, "createAlertDefinition");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

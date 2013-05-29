@@ -123,7 +123,7 @@ public class DateSliderGraphType {
                 }
 
                 function updateDateRangeDisplay(startDate, endDate ) {
-                    var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + ' - ' + endDate.format('MM/DD/YYYY h:mm a');
+                    var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + '  -  ' + endDate.format('MM/DD/YYYY h:mm a');
                     $wnd.jQuery('#dateRange').val(formattedDateRange);
                 }
 

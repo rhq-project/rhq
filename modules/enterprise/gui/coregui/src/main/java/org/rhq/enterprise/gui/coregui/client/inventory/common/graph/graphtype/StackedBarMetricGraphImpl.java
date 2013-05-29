@@ -97,16 +97,6 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                     chart,
                     svg;
 
-            function isIEBrowserGreaterThanOrEqualTo(targetIEVersion){
-                var myUserAgent = $wnd.navigator.userAgent;
-                if (/MSIE (\d+\.\d+);/.test(myUserAgent)){ //test for MSIE x.x;
-                    var ieVersion=new Number(RegExp.$1); // capture x.x portion and store as a number
-                    if (ieVersion>=targetIEVersion){
-                        return true;
-                    }
-                }
-                return false;
-            }
 
             function getChartWidth() {
                 return $wnd.jQuery("#" + chartContext.chartHandle).width();
@@ -490,7 +480,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                                         return yScale(d.y);
                                     }
                                     else {
-                                        return yScale(0);
+                                        return NaN;
                                     }
                                 });
 
@@ -547,6 +537,72 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                         .attr("stroke-opacity", ".7")
                         .attr("d", maxBaselineLine);
 
+            }
+
+            function createBrush(){
+
+                // here is all the brush related stuff
+                var brush = $wnd.d3.svg.brush()
+                        .x(timeScale)
+                        .extent($wnd.d3.extent(chartData, function (d) {
+                            return d.x;
+                        }))
+                        .on("brushstart", brushstart)
+                        .on("brush", brushmove)
+                        .on("brushend", brushend),
+                brushg = svg.append("g")
+                        .attr("class", "brush")
+                        .call(brush);
+
+                brushg.selectAll(".resize").append("path")
+                        .attr("transform", "translate(0," + height / 2 + ")")
+                        .attr("opacity", ".3")
+                        .attr("fill",  "#49F9FE")
+                        .attr("d", resizePath());
+
+                brushg.selectAll("rect")
+                        .attr("height", 135);
+
+                brushstart();
+                brushmove();
+
+                function brushstart() {
+                    svg.classed("selecting", true);
+                }
+
+                function brushmove() {
+                    var s = brush.extent();
+                    //circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
+                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
+                }
+
+                function brushend() {
+                    var s = brush.extent();
+                    svg.classed("selecting", !$wnd.d3.event.target.empty());
+                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
+                }
+
+                function updateDateRangeDisplay(startDate, endDate ) {
+                    //@todo: i18n the date format
+                    var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + '  -  ' + endDate.format('MM/DD/YYYY h:mm a');
+                    $wnd.jQuery('#dateRange').val(formattedDateRange);
+                }
+
+                // Taken from crossfilter (http://square.github.com/crossfilter/)
+                function resizePath(d) {
+                    var e = +(d == 'e'),
+                            x = e ? 1 : -1,
+                            y = height / 3;
+                    return 'M' + (.5 * x) + ',' + y
+                            + 'A6,6 0 0 ' + e + ' ' + (6.5 * x) + ',' + (y + 6)
+                            + 'V' + (2 * y - 6)
+                            + 'A6,6 0 0 ' + e + ' ' + (.5 * x) + ',' + (2 * y)
+                            + 'Z'
+                            + 'M' + (2.5 * x) + ',' + (y + 8)
+                            + 'V' + (2 * y - 8)
+                            + 'M' + (4.5 * x) + ',' + (y + 8)
+                            + 'V' + (2 * y - 8);
+                }
             }
 
             function formatHovers(chartContext, d) {
@@ -624,6 +680,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                             createOOBLines();
                         }
                         createHovers(chartContext);
+                        createBrush();
                     }
                 }
             }; // end public closure

@@ -80,7 +80,6 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 "        <div class=\"accordion-group\">" +
                 "            <div id=\"graphDateTimeEditorCollapse\" class=\"accordion-body collapse in\">" +
                 "                <div class=\"accordion-inner\">" +
-                "<div>"+
                 "                    <span id=\"timeRangeButtons\" class=\"btn-group\" data-toggle=\"buttons-radio\">" +
                 "                        <button id=\"radio1h\" type=\"button\" class=\"btn btn-mini\" >1h</button>" +
                 "                        <button id=\"radio6h\" type=\"button\" class=\"btn btn-mini\">6h</button>" +
@@ -90,17 +89,17 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 "                        <button id=\"radio1m\" type=\"button\" class=\"btn btn-mini\">1m</button>" +
                 "                        <button id=\"radio3m\" type=\"button\" class=\"btn btn-mini\">3m</button>" +
                 "                        <button id=\"radio1y\" type=\"button\" class=\"btn btn-mini\">1y</button>" +
+                "                        <button id=\"radioCustom\" type=\"button\" class=\"btn btn-mini\">Custom...</button>" +
                 "                    </span>" +
-                "                    <input id=\"dateRange\" style=\"margin-left:30px;margin-top:5px;width:280px;\" type=\"text\" readonly=\"readonly\" />" +
-                "</div>"+
-                "                    <button id=\"buttonCustom\" type=\"button\" class=\"btn btn-mini btn-link\">Custom...</button>" +
+                "                    <span id=\"dateRange\" class=\"\" style=\"margin-left:30px;margin-top:7px;width:270px;\"  /></span>" +
+                "                    <button id=\"buttonReset\" type=\"button\" style=\"float:right;margin-right:10px;\" class=\"btn btn-mini\">Reset Manual Zoom</button>" +
                 "                </div>" +
                 "            </div>" +
                 "        </div>" +
                 "    </div>");
         HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
         graph.setWidth100();
-        graph.setHeight(65);
+        graph.setHeight(50);
         addMember(graph);
         new Timer(){
             @Override
@@ -109,7 +108,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
                 //drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
                 attachGraphDateRangeEditorButtonGroupHandlers();
             }
-        }.schedule(400);
+        }.schedule(200);
     }
 
     public native void attachGraphDateRangeEditorButtonGroupHandlers() /*-{
@@ -117,8 +116,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
         var global = this;
 
         function updateDateDisplay(startDate, endDate ) {
-            var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + ' - ' + endDate.format('MM/DD/YYYY h:mm a');
-            $wnd.jQuery('#dateRange').val(formattedDateRange);
+            var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + '  -  ' + endDate.format('MM/DD/YYYY h:mm a');
+            $wnd.jQuery('#dateRange').text(formattedDateRange);
         }
 
         function saveDateRange(startDate, endDate){
@@ -130,57 +129,79 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
         var graphDateContext = new $wnd.GraphDateContext($wnd.moment().startOf('day'), $wnd.moment() );
 
-        $wnd.jQuery("#radioMin").bind('click', function (event) {
-            console.log("Minute selected");
-            graphDateContext.startDate = $wnd.moment().startOf('hour');
+        $wnd.jQuery("#radio1h").bind('click', function (event) {
+            console.log("1h selected");
+            graphDateContext.startDate = $wnd.moment().subtract(1, 'hours');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
             //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
-        $wnd.jQuery("#radioHour").bind('click', function (event) {
-            console.log("Hour selected");
-            graphDateContext.startDate = $wnd.moment().startOf('day');
+        $wnd.jQuery("#radio6h").bind('click', function (event) {
+            console.log(" 6h selected");
+            graphDateContext.startDate = $wnd.moment().subtract(6, 'hours');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
             //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
-        $wnd.jQuery("#radioDay").bind('click', function (event) {
-            console.log("Day selected");
-            graphDateContext.startDate = $wnd.moment().startOf('week');
+        $wnd.jQuery("#radio12h").bind('click', function (event) {
+            console.log("12h selected");
+            graphDateContext.startDate = $wnd.moment().subtract(12, 'hours');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
             //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
-        $wnd.jQuery("#radioMonth").bind('click', function (event) {
-            console.log("month selected");
-            graphDateContext.startDate = $wnd.moment().startOf('month');
+        $wnd.jQuery("#radio1d").bind('click', function (event) {
+            console.log("1d selected");
+            graphDateContext.startDate = $wnd.moment().subtract(24, 'hours');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
             //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
-        $wnd.jQuery("#radioYear").bind('click', function (event) {
-            console.log("year selected");
-            graphDateContext.startDate = $wnd.moment().startOf('year');
+        $wnd.jQuery("#radio5d").bind('click', function (event) {
+            console.log("5d selected");
+            graphDateContext.startDate = $wnd.moment().subtract(5, 'days');
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
             //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
-        $wnd.jQuery("#expandCollapseButton").bind('click', function (event) {
-            console.log("expand/collapse selected");
-            //$wnd.jQuery("#timeRange").toggle();
-            var buttonBarVisibility = $wnd.jQuery("#timeRangeButtons").attr("visibility");
-            if(buttonBarVisibility === 'none'){
-                $wnd.jQuery("#timeRangeButtons").attr("visibility","visible");
-            }else {
-                $wnd.jQuery("#timeRangeButtons").attr("visibility","none");
-            }
+        $wnd.jQuery("#radio1m").bind('click', function (event) {
+            console.log("1m selected");
+            graphDateContext.startDate = $wnd.moment().subtract(1, 'months');
+            graphDateContext.endDate = $wnd.moment();
+            updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+        });
+        $wnd.jQuery("#radio3m").bind('click', function (event) {
+            console.log("3m selected");
+            graphDateContext.startDate = $wnd.moment().subtract(3, 'months');
+            graphDateContext.endDate = $wnd.moment();
+            updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+        });
+        $wnd.jQuery("#radio1y").bind('click', function (event) {
+            console.log("1y selected");
+            graphDateContext.startDate = $wnd.moment().subtract(1, 'years');
+            graphDateContext.endDate = $wnd.moment();
+            updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+        });
+        $wnd.jQuery("#radioCustom").bind('click', function (event) {
+            console.log("Custom Range selected");
+            graphDateContext.startDate = $wnd.moment().subtract(2, 'years');
+            graphDateContext.endDate = $wnd.moment();
+            updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
+            saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
+            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
+        });
 
-        });
 
         // initially populate
         updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);

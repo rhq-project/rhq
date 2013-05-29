@@ -44,27 +44,18 @@
     stroke: #50505a;
 }
  /* Brush related css rules */
-.brush .extent {
-    stroke: #fff;
-    fill-opacity: .125;
+.brush rect.extent {
+    fill: #0757ff;
+    fill-opacity: .09;
     shape-rendering: crispEdges;
 }
-.selecting circle {
-    fill-opacity: .2;
-}
 
-.selecting circle.selected {
-    stroke: #f00;
-}
-
-.resize path {
+.brush .resize path {
     fill: #666;
     fill-opacity: .8;
     stroke: #000;
     stroke-width: 1.5px;
 }
-
-
 
 .minLabel, .avgLabel, .highLabel {
     font-family: Arial, Verdana, sans-serif;

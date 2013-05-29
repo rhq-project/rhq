@@ -120,13 +120,6 @@
                   </goals>
                   <configuration>
                      <skip>${maven.test.skip}</skip>
-                    <excludes>
-                      <!--
-                        Disabled to due a NPE that the test hits in vmUtility.attachToVirtualMachine on line 107 which
-                        may be due to this Sigar bug, https://jira.hyperic.com/browse/SIGAR-231.
-                      -->
-                      <exclude>**/JMXPluginTest.java</exclude>
-                    </excludes>
                      <excludedGroups>${rhq.testng.excludedGroups}</excludedGroups>
                      <useSystemClassLoader>true</useSystemClassLoader>
                      <argLine>${jacoco.integration-test.args} -Dorg.hyperic.sigar.path=${basedir}/target/itest/lib</argLine>

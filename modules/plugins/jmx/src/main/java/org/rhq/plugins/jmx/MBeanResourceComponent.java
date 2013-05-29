@@ -89,6 +89,8 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
     private static final Pattern PROPERTY_PATTERN = Pattern.compile("^\\{(?:\\{([^\\}]*)\\})?([^\\}]*)\\}$");
     private static final Pattern TEMPLATE_PATTERN = Pattern.compile("%([^%]+)%");
 
+    private static final String CALCULATED_METRIC_HEAP_USAGE_PERCENTAGE = "Calculated.HeapUsagePercentage";
+
     // these two should be private - subclasses need to override the getter/setter/load methods to affect these
     /**
      * @deprecated do not use this - use {@link #getEmsBean()} instead
@@ -262,10 +264,13 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
      * @param bean     the EmsBean on which to collect the metrics
      */
     protected void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests, EmsBean bean) {
-        // First we split the requests into their respective beans
+        // First we split the requests into their respective beans, and handle calculated values
         Set<MeasurementScheduleRequest> defaultBeanRequests = new HashSet<MeasurementScheduleRequest>();
         Map<String, Set<MeasurementScheduleRequest>> beansMap = new HashMap<String, Set<MeasurementScheduleRequest>>();
         for (MeasurementScheduleRequest request : requests) {
+            if (getCalculatedProperty(report, request, bean)) {
+                continue;
+            }
             Matcher m = PROPERTY_PATTERN.matcher(request.getName());
             if (m.matches() && (m.group(1) != null)) {
                 // Custom bean
@@ -293,6 +298,50 @@ public class MBeanResourceComponent<T extends JMXComponent<?>> implements Measur
                 getBeanProperties(report, otherBean, beansMap.get(beanNameTemplate));
             }
         }
+    }
+
+    private boolean getCalculatedProperty(MeasurementReport report, MeasurementScheduleRequest request, EmsBean bean) {
+        boolean result = false;
+        String metricName = request.getName();
+
+        if (CALCULATED_METRIC_HEAP_USAGE_PERCENTAGE.equals(request.getName())) {
+            result = true;
+
+            MeasurementReport calculationPropsReport = new MeasurementReport();
+            Set<MeasurementScheduleRequest> calculationPropsSchedules = new HashSet(2);
+
+            MeasurementScheduleRequest heapUsedRequest = new MeasurementScheduleRequest(0, "{HeapMemoryUsage.used}",
+                0L, true, DataType.MEASUREMENT);
+            MeasurementScheduleRequest heapComittedRequest = new MeasurementScheduleRequest(0,
+                "{HeapMemoryUsage.committed}", 0L, true, DataType.MEASUREMENT);
+            calculationPropsSchedules.add(heapUsedRequest);
+            calculationPropsSchedules.add(heapComittedRequest);
+
+            getBeanProperties(calculationPropsReport, bean, calculationPropsSchedules);
+            Set<MeasurementDataNumeric> values = calculationPropsReport.getNumericData();
+            Double heapUsed = Double.NaN;
+            Double heapCommitted = Double.NaN;
+            if (null != values && values.size() == 2) {
+                for (MeasurementDataNumeric v : values) {
+                    if (v.getName().equals("{HeapMemoryUsage.used}")) {
+                        heapUsed = v.getValue();
+                    } else {
+                        heapCommitted = v.getValue();
+                    }
+                }
+            }
+
+            Double value = Double.NaN;
+            try {
+                value = heapUsed / heapCommitted;
+            } catch (Throwable t) {
+                // leave as NaN
+            }
+
+            report.addData(new MeasurementDataNumeric(request, value));
+        }
+
+        return result;
     }
 
     protected String transformBeanName(String beanTemplate) {

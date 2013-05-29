@@ -250,6 +250,12 @@
                  property="{HeapMemoryUsage.used}"
                  description="Current heap memory usage"
                  units="bytes"/>
+         <!-- Heap Usage Percentage is calculated and is not an mbean property -->
+         <metric displayName="Heap Usage Percentage"
+                 property="Calculated.HeapUsagePercentage"
+                 displayType="summary"
+                 description="Current heap memory usage as percentage of committed heap"
+                 units="percentage"/>
          <metric displayName="Heap Committed"
                  property="{HeapMemoryUsage.committed}"
                  displayType="summary"

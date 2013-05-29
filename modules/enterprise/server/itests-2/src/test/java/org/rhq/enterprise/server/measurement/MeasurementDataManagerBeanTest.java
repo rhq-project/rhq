@@ -166,6 +166,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
 
         dataManager.mergeMeasurementReport(report);
+        waitForRawInserts();
 
         List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(overlord,
             EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(), endTime.getMillis());
@@ -210,6 +211,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
 
         dataManager.mergeMeasurementReport(report);
+        waitForRawInserts();
 
         MeasurementAggregate actual = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
             beginTime.getMillis(), endTime.getMillis());
@@ -391,6 +393,21 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             return Collections.emptyList();
         }
         return data.get(0);
+    }
+
+    /**
+     * Raw data is inserted asynchronously so it is possible that
+     * MeasurementDataManagerBean.mergeMeasurementReport will return before all raw data in
+     * the report has been inserted. There currently is not a good way for tests in the
+     * itests-2 module to block or to get notified when raw data inserts have finished. As
+     * a (hopefully temporary) hack we will sleep for a somewhat arbitrary amount of time
+     * to allow for the inserts to complete.
+     */
+    private void waitForRawInserts() {
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+        }
     }
 
 }

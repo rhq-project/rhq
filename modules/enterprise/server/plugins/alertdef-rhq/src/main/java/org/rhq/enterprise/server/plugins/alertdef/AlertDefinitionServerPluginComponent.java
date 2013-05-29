@@ -27,8 +27,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampening.TimeUnits;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
@@ -38,8 +38,10 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
+import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
@@ -58,17 +60,17 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
     private final Log log = LogFactory.getLog(AlertDefinitionServerPluginComponent.class);
 
     static private final List<InjectedTemplate> injectedTemplates;
-    static private final InjectedTemplate testTemplate;
+    static private final InjectedTemplate storageNodeHighHeapTemplate;
 
     static {
-        testTemplate = new InjectedTemplate( //
-            "RHQAgent", //
-            "RHQ Agent", //
-            "TestTemplate", //            
-            "A test template injection");
+        storageNodeHighHeapTemplate = new InjectedTemplate(
+            "RHQStorage", //
+            "VM Memory System", //
+            "StorageNodeHighHeapTemplate", //
+            "An alert template to notify users of excessive heap use by an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
 
         injectedTemplates = new ArrayList<InjectedTemplate>();
-        injectedTemplates.add(testTemplate);
+        injectedTemplates.add(storageNodeHighHeapTemplate);
     }
 
     private ServerPluginContext context;
@@ -177,6 +179,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         ResourceTypeCriteria rtc = new ResourceTypeCriteria();
         rtc.addFilterPluginName(injectedAlertDef.getPluginName());
         rtc.addFilterName(injectedAlertDef.getResourceTypeName());
+        rtc.fetchMetricDefinitions(true);
         List<ResourceType> resourceTypes = typeManager.findResourceTypesByCriteria(subjectManager.getOverlord(), rtc);
 
         if (resourceTypes.isEmpty()) {
@@ -206,8 +209,8 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
 
         int newAlertDefId = 0;
 
-        if (testTemplate.equals(injectedAlertDef)) {
-            newAlertDefId = injectTestTemplate(resourceType);
+        if (storageNodeHighHeapTemplate.equals(injectedAlertDef)) {
+            newAlertDefId = injectStorageNodeHighHeapTemplate(resourceType);
         }
 
         adc.addFilterId(newAlertDefId);
@@ -218,27 +221,41 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         return result;
     }
 
-    private int injectTestTemplate(ResourceType resourceType) {
-        AlertDefinitionManagerLocal alertDefManager = LookupUtil.getAlertDefinitionManager();
+    private int injectStorageNodeHighHeapTemplate(ResourceType resourceType) {
+        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
         AlertDefinition newTemplate = new AlertDefinition();
-        newTemplate.setName(testTemplate.getName());
+        newTemplate.setName(storageNodeHighHeapTemplate.getName());
         newTemplate.setResourceType(resourceType);
         newTemplate.setPriority(AlertPriority.MEDIUM);
-        newTemplate.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
         newTemplate.setConditionExpression(BooleanExpression.ANY);
         newTemplate.setRecoveryId(0);
         newTemplate.setEnabled(true);
 
         AlertCondition ac = new AlertCondition();
-        ac.setCategory(AlertConditionCategory.AVAILABILITY);
-        ac.setName(AlertConditionOperator.AVAIL_GOES_DOWN.name());
-
+        ac.setCategory(AlertConditionCategory.THRESHOLD);
+        ac.setComparator(">");
+        ac.setThreshold(0.75D);
+        for (MeasurementDefinition d : resourceType.getMetricDefinitions()) {
+            if ("Calculated.HeapUsagePercentage".equals(d.getName())) {
+                ac.setMeasurementDefinition(d);
+                ac.setName(d.getDisplayName());
+                break;
+            }
+        }
+        assert null != ac.getMeasurementDefinition() : "Did not find expected measurement definition [Calculated.HeapUsagePercentage] for "
+            + resourceType;
         newTemplate.addCondition(ac);
 
-        int newTemplateId = alertDefManager.createAlertDefinitionInNewTransaction(subjectManager.getOverlord(),
-            newTemplate, null, true);
+        AlertDampening dampener = new AlertDampening(AlertDampening.Category.PARTIAL_COUNT);
+        dampener.setPeriod(15);
+        dampener.setPeriodUnits(TimeUnits.MINUTES);
+        dampener.setValue(10);
+        newTemplate.setAlertDampening(dampener);
+
+        int newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
+            resourceType.getId());
 
         return newTemplateId;
     }

@@ -43,6 +43,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.ControlFacet;
 import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
@@ -256,6 +257,14 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
 
         int newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
             resourceType.getId());
+
+        // additionally, we want to ensure that the metric is enabled and collecting at a more frequent interval than
+        // is set by default.
+        MeasurementScheduleManagerLocal measurementManager = LookupUtil.getMeasurementScheduleManager();
+        int[] measurementDefinitionIds = new int[1];
+        measurementDefinitionIds[0] = ac.getMeasurementDefinition().getId();
+        measurementManager.updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(
+            subjectManager.getOverlord(), measurementDefinitionIds, 60000L, true, true);
 
         return newTemplateId;
     }

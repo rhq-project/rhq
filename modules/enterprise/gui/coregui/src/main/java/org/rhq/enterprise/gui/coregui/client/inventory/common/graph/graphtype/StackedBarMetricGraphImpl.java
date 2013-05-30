@@ -540,9 +540,23 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
             }
 
             function createBrush(){
-
-                // here is all the brush related stuff
-                var brush = $wnd.d3.svg.brush()
+                // slightly modified but originally from crossfilter (http://square.github.com/crossfilter/)
+              var resizePath = function (d) {
+                      var e1 = +(d === "e"),
+                           e = e1 ? 1 : 0 ,
+                            x = e ? 1 : -1,
+                            y = height / 3;
+                    return "M" + (.5 * x) + "," + y
+                            + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
+                            + "V" + (2 * y - 6)
+                            + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
+                            + "Z"
+                            + "M" + (2.5 * x) + "," + (y + 8)
+                            + "V" + (2 * y - 8)
+                            + "M" + (4.5 * x) + "," + (y + 8)
+                            + "V" + (2 * y - 8);
+                },
+                brush = $wnd.d3.svg.brush()
                         .x(timeScale)
                         .extent($wnd.d3.extent(chartData, function (d) {
                             return d.x;
@@ -555,13 +569,10 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                         .call(brush);
 
                 brushg.selectAll(".resize").append("path")
-                        .attr("transform", "translate(0," + height / 2 + ")")
-                        .attr("opacity", ".3")
-                        .attr("fill",  "#49F9FE")
                         .attr("d", resizePath);
 
                 brushg.selectAll("rect")
-                        .attr("height", 135);
+                        .attr("height", height);
 
                 brushstart();
                 brushmove();
@@ -572,7 +583,6 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
 
                 function brushmove() {
                     var s = brush.extent();
-                    //circle.classed("selected", function(d) { return s[0] <= d && d <= s[1]; });
                     updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
                 }
 
@@ -588,21 +598,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                     $wnd.jQuery('#dateRange').text(formattedDateRange);
                 }
 
-                // Taken from crossfilter (http://square.github.com/crossfilter/)
-                function resizePath(d) {
-                    var e = +(d == 'e'),
-                            x = e ? 1 : -1,
-                            y = height / 3;
-                    return 'M' + (.5 * x) + ',' + y
-                            + 'A6,6 0 0 ' + e + ' ' + (6.5 * x) + ',' + (y + 6)
-                            + 'V' + (2 * y - 6)
-                            + 'A6,6 0 0 ' + e + ' ' + (.5 * x) + ',' + (2 * y)
-                            + 'Z'
-                            + 'M' + (2.5 * x) + ',' + (y + 8)
-                            + 'V' + (2 * y - 8)
-                            + 'M' + (4.5 * x) + ',' + (y + 8)
-                            + 'V' + (2 * y - 8);
-                }
+
             }
 
             function formatHovers(chartContext, d) {

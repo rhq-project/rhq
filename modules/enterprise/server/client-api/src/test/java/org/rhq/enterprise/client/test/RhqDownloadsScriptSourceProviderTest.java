@@ -85,8 +85,8 @@ public class RhqDownloadsScriptSourceProviderTest {
         try {
             String contents = StreamUtil.slurp(rdr);
             assertEquals(contents, EXPECTED_CONTENTS, "Unexpected script loaded");
-        } finally {        
-            rdr.close();
+        } finally {
+            StreamUtil.safeClose(rdr);
         }
     }
 }

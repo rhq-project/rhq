@@ -14,7 +14,7 @@
     <property name="default.rhq.server.database.port"               value="5432" />
     <property name="default.rhq.server.database.db-name"            value="rhq" />
     <property name="default.rhq.server.quartz.driverDelegateClass"  value="org.quartz.impl.jdbcjobstore.PostgreSQLDelegate" />
-    <property name="default.rhq.server.quartz.selectWithLockSQL"    value="SELECT * FROM {0}LOCKS WHERE LOCK_NAME = ? FOR UPDATE" />
+    <property name="default.rhq.server.quartz.selectWithLockSQL"    value="SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE" />
     <property name="default.rhq.server.quartz.lockHandlerClass"     value="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore" />
 
     <property name="rhq.sync.endpoint-address" value="false"/>
@@ -581,9 +581,13 @@ rhq.communications.multicast-detector.port=16162
 # [Due to issue https://issues.jboss.org/browse/WFLY-1177, you cannot change
 # rhq.server.tomcat.security.keystore.file or rhq.server.tomcat.security.truststore.file
 # after you install RHQ. If you need to change those again, you must manually do so in standalone-full.xml.]
+# Note that security algorithm settings are commented out - the defaults will be determined at runtime
+# based on the JVM the server is running in (for IBM JVMs, the algorithm will default to "IbmX509",
+# for all other JVMs, the algorithm will default to "SunX509"). If you need a specific algorithm value,
+# you may hardcode it here in this file by uncommenting the lines and setting the values explicitly.
 rhq.server.tomcat.security.client-auth-mode=false
 rhq.server.tomcat.security.secure-socket-protocol=TLS
-rhq.server.tomcat.security.algorithm=SunX509
+#rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ
 rhq.server.tomcat.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
 rhq.server.tomcat.security.keystore.password=RHQManagement
@@ -596,13 +600,13 @@ rhq.server.tomcat.security.truststore.type=JKS
 # These are used when secure transports other than sslservlet are used
 rhq.communications.connector.security.secure-socket-protocol=TLS
 rhq.communications.connector.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
-rhq.communications.connector.security.keystore.algorithm=SunX509
+#rhq.communications.connector.security.keystore.algorithm=SunX509
 rhq.communications.connector.security.keystore.type=JKS
 rhq.communications.connector.security.keystore.password=RHQManagement
 rhq.communications.connector.security.keystore.key-password=RHQManagement
 rhq.communications.connector.security.keystore.alias=RHQ
 rhq.communications.connector.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
-rhq.communications.connector.security.truststore.algorithm=SunX509
+#rhq.communications.connector.security.truststore.algorithm=SunX509
 rhq.communications.connector.security.truststore.type=JKS
 rhq.communications.connector.security.truststore.password=RHQManagement
 rhq.communications.connector.security.client-auth-mode=none
@@ -610,13 +614,13 @@ rhq.communications.connector.security.client-auth-mode=none
 # Client-side SSL Security Configuration (for outgoing messages to agents)
 rhq.server.client.security.secure-socket-protocol=TLS
 rhq.server.client.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
-rhq.server.client.security.keystore.algorithm=SunX509
+#rhq.server.client.security.keystore.algorithm=SunX509
 rhq.server.client.security.keystore.type=JKS
 rhq.server.client.security.keystore.password=RHQManagement
 rhq.server.client.security.keystore.key-password=RHQManagement
 rhq.server.client.security.keystore.alias=RHQ
 rhq.server.client.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
-rhq.server.client.security.truststore.algorithm=SunX509
+#rhq.server.client.security.truststore.algorithm=SunX509
 rhq.server.client.security.truststore.type=JKS
 rhq.server.client.security.truststore.password=RHQManagement
 rhq.server.client.security.server-auth-mode-enabled=false

@@ -820,6 +820,9 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                 // allow ${var} notation in the values so we can provide variable replacements in the values
                 value = replaceProperties(value);
 
+                // there are a few settings that normally aren't set but can be set at runtime - set them now
+                value = determineSecurityAlgorithm(value);
+
                 preferences_node.put(key, value);
                 LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCE_OVERRIDE, key, value);
             }
@@ -849,13 +852,19 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                     .valueOf(bindPort));
             }
         } catch (Exception e) {
-            LOG.error("Unable to set explicit connector address/port, using defaults: ", e);
+            LOG.error(ServerI18NResourceKeys.ERROR_SETTING_CONNECTOR_COMM_PREFS, e);
 
             ServiceContainerConfiguration scConfig = new ServiceContainerConfiguration(config.getPreferences());
             preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, scConfig
                 .getConnectorBindAddress());
             preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, String.valueOf(scConfig
                 .getConnectorBindPort()));
+        } finally {
+            try {
+                preferences_node.flush();
+            } catch (Exception e) {
+                LOG.error(ServerI18NResourceKeys.ERROR_FLUSHING_SERVER_PREFS, e);
+            }
         }
 
         // let's make sure our configuration is upgraded to the latest schema
@@ -864,6 +873,23 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCES, config);
 
         return config;
+    }
+
+    private String determineSecurityAlgorithm(String value) {
+        String[] algorithmPropNames = new String[] {
+            ServerConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_ALGORITHM,
+            ServerConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_ALGORITHM,
+            ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_ALGORITHM,
+            ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_ALGORITHM };
+
+        for (String algorithmPropName : algorithmPropNames) {
+            // if the value is still the ${x} token, it means that setting was not set - let's set it now
+            if (value.startsWith("${" + algorithmPropName)) {
+                return System.getProperty("java.vendor", "").contains("IBM") ? "IbmX509" : "SunX509";
+            }
+        }
+
+        return value;
     }
 
     /**

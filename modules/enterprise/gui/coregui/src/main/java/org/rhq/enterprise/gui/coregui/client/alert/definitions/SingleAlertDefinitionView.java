@@ -28,6 +28,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Button;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.events.VisibilityChangedEvent;
@@ -145,7 +146,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         cancelButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent event) {
-                handlerRegistration.removeHandler();
+                unregisterHandler();
                 setAlertDefinition(getAlertDefinition()); // reverts data back to original
                 makeViewOnly();
             }
@@ -154,6 +155,15 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         setMembersMargin(10);
         addMember(tabSet);
         addMember(buttons);
+    }
+    
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        if (alertDefinition == null || alertDefinition.getId() == 0) {
+            // disable the back button when creating new definition
+            setBackButtonDisabled(true);
+        }
     }
 
     public AlertDefinition getAlertDefinition() {
@@ -193,6 +203,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         recovery.makeEditable();
         dampening.makeEditable();
 
+        unregisterHandler();
         handlerRegistration = addVisibilityChangedHandler(new VisibilityChangedHandler() {
             public void onVisibilityChanged(VisibilityChangedEvent event) {
                 if (!event.getIsVisible()) {
@@ -200,13 +211,16 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
                         public void execute(Boolean value) {
                             if (value) {
                                 save();
+                            } else {
+                                unregisterHandler();
                             }
-                            handlerRegistration.removeHandler();
                         }
                     });
                 }
             }
         });
+        // disable the back button
+        setBackButtonDisabled(true);
     }
 
     public void makeViewOnly() {
@@ -219,6 +233,7 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
         notifications.makeViewOnly();
         recovery.makeViewOnly();
         dampening.makeViewOnly();
+        setBackButtonDisabled(false);
     }
 
     public void saveAlertDefinition() {
@@ -240,17 +255,36 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
                 new AsyncCallback<AlertDefinition>() {
                     @Override
                     public void onSuccess(final AlertDefinition alertDef) {
-                        handlerRegistration.removeHandler();
                         setAlertDefinition(alertDef);
+                        unregisterHandler();
                     }
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        // nothing, the notification is done in the subclasses of AbstractAlertDefinitionsView
+                        unregisterHandler();
+                        // no error handling, the notification is done in the subclasses of AbstractAlertDefinitionsView
                     }
                 });
         } else {
             tabSet.selectTab(generalPropertiesTab);
+        }
+    }
+    
+    private void setBackButtonDisabled(boolean enabled) {
+        Canvas layoutCandidate = getParentElement();
+        if (layoutCandidate instanceof EnhancedVLayout) {
+            EnhancedVLayout parentLayout = (EnhancedVLayout) getParentElement();
+            Canvas backButton = parentLayout.getMember("backButton");
+            if (backButton != null) {
+                backButton.setDisabled(enabled);
+            }
+        }
+    }
+    
+    private void unregisterHandler() {
+        if (handlerRegistration != null) {
+            handlerRegistration.removeHandler();
+            handlerRegistration = null;
         }
     }
 }

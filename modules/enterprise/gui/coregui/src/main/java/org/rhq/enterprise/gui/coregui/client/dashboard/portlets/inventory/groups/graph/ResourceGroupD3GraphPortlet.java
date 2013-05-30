@@ -80,7 +80,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements Au
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceGroupMetricD3";
     // A default displayed, persisted name for the portlet
-    public static final String NAME = "d3-" + MSG.view_portlet_defaultName_groupMetric();
+    public static final String NAME = MSG.view_portlet_defaultName_groupMetric();
 
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;

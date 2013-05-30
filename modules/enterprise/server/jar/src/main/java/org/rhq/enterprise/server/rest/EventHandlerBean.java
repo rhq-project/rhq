@@ -32,18 +32,18 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
@@ -61,6 +61,8 @@ import org.rhq.core.domain.event.EventSource;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.event.EventManagerLocal;
 import org.rhq.enterprise.server.rest.domain.EventDefinitionRest;
@@ -73,7 +75,6 @@ import org.rhq.enterprise.server.rest.domain.EventSourceRest;
  */
 @Path("/event")
 @Api("Api that deals with Events (e.g snmp traps, logfile lines)")
-@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
 public class EventHandlerBean extends AbstractRestBean {
@@ -227,12 +228,23 @@ public class EventHandlerBean extends AbstractRestBean {
                                        @QueryParam("endTime")  long endTime,
                                        @ApiParam(value="Select the severity to display. Default is to show all",
                                                                        allowableValues = "DEBUG, INFO, WARN, ERROR, FATAL") @QueryParam("severity") String severity,
-                                       @Context Request request,
+                                       @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+                                       @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+                                       @Context UriInfo uriInfo,
                                        @Context HttpHeaders headers) {
+
+        if (severity!=null) {
+            try {
+                EventSeverity.valueOf(severity.toUpperCase());
+            } catch (Exception e) {
+                throw new BadArgumentException("severity",severity + " is bad. Allowed values are DEBUG, INFO, WARN, ERROR, FATAL");
+            }
+        }
 
         EventSource source = findEventSourceById(sourceId);
 
         EventCriteria criteria = new EventCriteria();
+        criteria.addSortId(PageOrdering.ASC);
         criteria.addFilterSourceId(source.getId());
         if (startTime>0) {
             criteria.addFilterStartTime(startTime);
@@ -240,13 +252,19 @@ public class EventHandlerBean extends AbstractRestBean {
         if (endTime>0) {
             criteria.addFilterEndTime(endTime);
         }
-        if (startTime==0 && endTime==0) {
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
+        }
+        else if (startTime==0 && endTime==0) {
             PageControl pageControl = new PageControl();
             pageControl.setPageSize(200);
             criteria.setPageControl(pageControl);
         }
+        if (severity!=null) {
+            criteria.addFilterSeverities(EventSeverity.valueOf(severity.toUpperCase()));
+        }
 
-        Response.ResponseBuilder builder = getEventsAsBuilderForCriteria(headers, criteria);
+        Response.ResponseBuilder builder = getEventsAsBuilderForCriteria(headers, criteria, uriInfo);
 
         return builder.build();
     }
@@ -259,11 +277,24 @@ public class EventHandlerBean extends AbstractRestBean {
     public Response getEventsForResource(@PathParam("id")  int resourceId,
                                          @QueryParam("startTime") long startTime,
                                          @QueryParam("endTime")  long endTime,
-                                         @QueryParam("severity") String severity,
-                                         @Context Request request,
+                                         @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+                                         @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+                                         @ApiParam(value="Select the severity to display. Default is to show all",
+                                                                         allowableValues = "DEBUG, INFO, WARN, ERROR, FATAL") @QueryParam("severity") String severity,
+                                         @Context UriInfo uriInfo,
                                          @Context HttpHeaders headers) {
 
+        if (severity!=null) {
+            try {
+                EventSeverity.valueOf(severity.toUpperCase());
+            } catch (Exception e) {
+                throw new BadArgumentException("severity",severity + " is bad. Allowed values are DEBUG, INFO, WARN, ERROR, FATAL");
+            }
+        }
+
         EventCriteria criteria = new EventCriteria();
+        criteria.addSortId(PageOrdering.ASC);
+
         criteria.addFilterResourceId(resourceId);
         if (startTime>0) {
             criteria.addFilterStartTime(startTime);
@@ -271,13 +302,19 @@ public class EventHandlerBean extends AbstractRestBean {
         if (endTime>0) {
             criteria.addFilterEndTime(endTime);
         }
-        if (startTime==0 && endTime==0) {
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
+        }
+        else if (startTime==0 && endTime==0) {
             PageControl pageControl = new PageControl();
             pageControl.setPageSize(200);
             criteria.setPageControl(pageControl);
         }
+        if (severity!=null) {
+            criteria.addFilterSeverities(EventSeverity.valueOf(severity.toUpperCase()));
+        }
 
-        Response.ResponseBuilder builder = getEventsAsBuilderForCriteria(headers, criteria);
+        Response.ResponseBuilder builder = getEventsAsBuilderForCriteria(headers, criteria, uriInfo);
 
         return builder.build();
 
@@ -304,22 +341,28 @@ public class EventHandlerBean extends AbstractRestBean {
     }
 
 
-    private Response.ResponseBuilder getEventsAsBuilderForCriteria(HttpHeaders headers, EventCriteria criteria) {
-        List<Event> eventList = eventManager.findEventsByCriteria(caller, criteria);
+    private Response.ResponseBuilder getEventsAsBuilderForCriteria(HttpHeaders headers, EventCriteria criteria, UriInfo uriInfo) {
+        PageList<Event> eventList = eventManager.findEventsByCriteria(caller, criteria);
         List<EventRest> restEvents = new ArrayList<EventRest>(eventList.size());
         for (Event event : eventList) {
             restEvents.add(convertEvent(event));
         }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
         if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
             GenericEntity<List<EventRest>> list = new GenericEntity<List<EventRest>>(restEvents) {};
-            builder = Response.ok(list, mediaType);
+            builder.entity(list);
+            createPagingHeader(builder,uriInfo,eventList);
+        } else if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+            builder.entity(restEvents);
+            createPagingHeader(builder,uriInfo,eventList);
         }
-        else {
-            builder = Response.ok(restEvents, mediaType);
+        else  {
+            wrapForPaging(builder,uriInfo,eventList,restEvents);
         }
+
         return builder;
     }
 

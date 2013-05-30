@@ -41,8 +41,9 @@ public class AlertDefinition {
     List<AlertCondition> conditions = new ArrayList<AlertCondition>();
     List<AlertNotification> notifications = new ArrayList<AlertNotification>();
     String dampeningCategory = "NONE";
-    String dampeningCount;
-    String dampeningPeriod;
+    int dampeningCount;
+    int dampeningPeriod;
+    String dampeningUnit;
     List<Link> links;
 
 
@@ -121,20 +122,28 @@ public class AlertDefinition {
         this.dampeningCategory = dampeningCategory;
     }
 
-    public String getDampeningCount() {
+    public int getDampeningCount() {
         return dampeningCount;
     }
 
-    public void setDampeningCount(String dampeningCount) {
+    public void setDampeningCount(int dampeningCount) {
         this.dampeningCount = dampeningCount;
     }
 
-    public String getDampeningPeriod() {
+    public int getDampeningPeriod() {
         return dampeningPeriod;
     }
 
-    public void setDampeningPeriod(String dampeningPeriod) {
+    public void setDampeningPeriod(int dampeningPeriod) {
         this.dampeningPeriod = dampeningPeriod;
+    }
+
+    public String getDampeningUnit() {
+        return dampeningUnit;
+    }
+
+    public void setDampeningUnit(String dampeningUnit) {
+        this.dampeningUnit = dampeningUnit;
     }
 
     public List<Link> getLinks() {

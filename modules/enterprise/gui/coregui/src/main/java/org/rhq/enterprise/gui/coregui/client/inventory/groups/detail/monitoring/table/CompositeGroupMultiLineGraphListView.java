@@ -40,7 +40,6 @@ public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3
         var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
             chartHandle = "#mChart-"+chartId,
             chartSelection = chartHandle + " svg",
-    //        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisTitle()(),
             yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
             xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
             displayDayOfWeek = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::shouldDisplayDayOfWeekInXAxisLabel()(),

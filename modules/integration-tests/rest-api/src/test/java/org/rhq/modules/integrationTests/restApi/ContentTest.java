@@ -30,6 +30,7 @@ import com.jayway.restassured.response.Response;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.CreateCBRRequest;
+import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
@@ -40,6 +41,8 @@ import static org.hamcrest.Matchers.isOneOf;
  * @author Heiko W. Rupp
  */
 public class ContentTest extends AbstractBase {
+
+    private static final String DEPLOYED_WAR_NAME = "test-simple.war";
 
     @Test
     public void testUpload() throws Exception {
@@ -144,6 +147,8 @@ public class ContentTest extends AbstractBase {
     @Test
     public void testCreatePackageBasedResource() throws Exception {
 
+        wipeWarArchiveIfNecessary();
+
         InputStream in =
             getClass().getClassLoader().getResourceAsStream("test-simple.war");
 
@@ -176,7 +181,7 @@ public class ContentTest extends AbstractBase {
         List<Map<String,Object>> resources =
         given()
             .header(acceptJson)
-            .queryParam("q","EAP (127.0.0.1:9990)")  // TODO fragile -- better search for it?
+            .queryParam("q","EAP (127.0.0.1:6990)")  // TODO Can we identify the RHQ server itself better?
             .queryParam("category","SERVER")
         .expect()
             .statusCode(200)
@@ -187,7 +192,8 @@ public class ContentTest extends AbstractBase {
 
         assert resources.size()>0;
 
-        int as7Id = Integer.valueOf((String)resources.get(0).get("resourceId"));
+        int as7Id = (Integer)resources.get(0).get("resourceId");
+        int createdResourceId=-1;
 
         // create child of eap6 as deployment
         try {
@@ -202,7 +208,7 @@ public class ContentTest extends AbstractBase {
 
             // set plugin config (path) and deploy config (runtime-name)
             resource.getPluginConfig().put("path","deployment");
-            resource.getResourceConfig().put("runtimeName","test-simple.war");
+            resource.getResourceConfig().put("runtimeName", DEPLOYED_WAR_NAME);
 
             Response response =
             given()
@@ -223,24 +229,32 @@ public class ContentTest extends AbstractBase {
             int status = response.getStatusCode();
             String location = response.getHeader("Location");
 
-            System.out.println("Location " + location + "\n\n");
+            System.out.println("\nLocation " + location + "\n\n");
             assert location!=null;
 
             // We need to check what we got. A 302 means the deploy is still
             // in progress, so we need to wait a little longer
             while (status==302) {
 
-                status =
+                response =
                 given()
                     .header(acceptJson)
                     .log().everything()
                 .expect()
-                    .statusCode(isOneOf(200,201,302))
+                    .statusCode(isOneOf(200, 201, 302))
                     .log().everything()
                 .when()
-                    .get(location)
-                .getStatusCode();
+                    .get(location);
+
+                status = response.getStatusCode();
             }
+
+            createdResourceId = response.jsonPath().getInt("resourceId");
+
+            System.out.println("\n  Deploy is done, resource Id = " + createdResourceId + " \n");
+            System.out.flush();
+
+            assert  createdResourceId != -1;
 
         } finally {
 
@@ -254,50 +268,54 @@ public class ContentTest extends AbstractBase {
             .when()
                 .delete("/content/{handle}");
 
+            System.out.println("\n  Content removed \n");
+            System.out.flush();
 
-            // try to remove the created resource
-            Response response =
+
+            // We need to wait here a little, as the machinery is not used to
+            // quick create-delete-cycles
+            Thread.sleep(20*1000L);
+
             given()
-                .queryParam("q", "test-simple.war")
                 .header(acceptJson)
+                .queryParam("physical", "true") // Also remove target on the EAP instance
+                .pathParam("id",createdResourceId)
+                .log().everything()
             .expect()
                 .log().everything()
             .when()
-                .get("/resource");
-
-            List links = response.body().jsonPath().getList("links");
-
-            System.out.println(links);
-            assert links!=null;
-
-            if (links.size()>0) {
-
-                String link = null;
-                @SuppressWarnings("unchecked")
-                List<Map<String,Map<String,String>>> listOfMaps = (List<Map<String, Map<String, String>>>) links.get(0);
-
-                for (Map<String,Map<String,String>>  map : listOfMaps) {
-                    if (map.containsKey("self")) {
-                        link = map.get("self").get("href");
-                        break;
-                    }
-                }
-
-                assert link != null;
-
-                System.out.println("Link: " + link);
-
-                given()
-                    .header(acceptJson)
-                    .queryParam("physical","true") // Also remove target on the EAP instance
-                .expect()
-                    .log().everything()
-                .when()
-                    .delete(link);
-            }
+                .delete("/resource/{id}");
 
         }
 
+    }
+
+
+    private void wipeWarArchiveIfNecessary() {
+
+        @SuppressWarnings("unchecked")
+        List<Resource> resources =
+        given()
+            .queryParam("q",DEPLOYED_WAR_NAME)
+            .queryParam("category", "SERVICE")
+            .header(acceptJson)
+        .expect()
+            .log().everything()
+        .when()
+            .get("/resource")
+        .as(List.class);
+
+        if (resources!=null && resources.size()>0) {
+            int resourceId = (Integer) ((Map < String,Object>)resources.get(0)).get("resourceId");
+
+            given()
+                .pathParam("id", resourceId)
+                .queryParam("physical", "true") // Also remove target on the EAP instance
+            .expect()
+                .statusCode(204)
+            .when()
+                .delete("/resource/{id}");
+        }
     }
 
     @Test

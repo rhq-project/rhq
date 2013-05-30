@@ -137,7 +137,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public BundleAgentService getBundleAgentService(long timeout) {
+    public BundleAgentService getBundleAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(BundleAgentService.class, timeout);
     }
 
@@ -147,7 +147,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public ContentAgentService getContentAgentService(long timeout) {
+    public ContentAgentService getContentAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(ContentAgentService.class, timeout);
     }
 
@@ -157,7 +157,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public ResourceFactoryAgentService getResourceFactoryAgentService(long timeout) {
+    public ResourceFactoryAgentService getResourceFactoryAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(ResourceFactoryAgentService.class, timeout);
     }
 
@@ -167,7 +167,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public DiscoveryAgentService getDiscoveryAgentService(long timeout) {
+    public DiscoveryAgentService getDiscoveryAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(DiscoveryAgentService.class, timeout);
     }
 
@@ -177,7 +177,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public MeasurementAgentService getMeasurementAgentService(long timeout) {
+    public MeasurementAgentService getMeasurementAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(MeasurementAgentService.class, timeout);
     }
 
@@ -187,7 +187,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public OperationAgentService getOperationAgentService(long timeout) {
+    public OperationAgentService getOperationAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(OperationAgentService.class, timeout);
     }
 
@@ -197,7 +197,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public ConfigurationAgentService getConfigurationAgentService(long timeout) {
+    public ConfigurationAgentService getConfigurationAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(ConfigurationAgentService.class, timeout);
     }
 
@@ -207,7 +207,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public SupportAgentService getSupportAgentService(long timeout) {
+    public SupportAgentService getSupportAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(SupportAgentService.class, timeout);
     }
 
@@ -217,7 +217,7 @@ public class AgentClientImpl implements AgentClient {
     }
 
     @Override
-    public DriftAgentService getDriftAgentService(long timeout) {
+    public DriftAgentService getDriftAgentService(Long timeout) {
         return clientRemotePojoFactory.getRemotePojo(DriftAgentService.class, timeout);
     }
 

@@ -82,14 +82,22 @@ public class PageControl implements Serializable, Cloneable {
         return new PageControl(0, 1);
     }
 
+    /**
+     * Equivalent to initDefaultOrderingField(defaultField, PageOrdering.ASC). 
+     * 
+     * @param defaultField
+     * @see #initDefaultOrderingField(String, PageOrdering)
+     */
     public void initDefaultOrderingField(String defaultField) {
         initDefaultOrderingField(defaultField, PageOrdering.ASC);
     }
 
-    public void addDefaultOrderingField(String defaultField) {
-        addDefaultOrderingField(defaultField, PageOrdering.ASC);
-    }
-
+    /**
+     * Sets initial sort.  If sorting is already defined this call will have no effect.
+     * 
+     * @param defaultField
+     * @param defaultPageOrdering
+     */
     public void initDefaultOrderingField(String defaultField, PageOrdering defaultPageOrdering) {
         if (orderingFields.size() > 0) {
             return;
@@ -98,6 +106,24 @@ public class PageControl implements Serializable, Cloneable {
         addDefaultOrderingField(defaultField, defaultPageOrdering);
     }
 
+    /**
+     * Equivalent to addDefaultOrderingField(defaultField, PageOrdering.ASC). 
+     * 
+     * @param defaultField
+     * @see #addDefaultOrderingField(String, PageOrdering)
+     */
+    public void addDefaultOrderingField(String defaultField) {
+        addDefaultOrderingField(defaultField, PageOrdering.ASC);
+    }
+
+    /**
+     * Add a default ordering field.  If the maximum number of sort fields (currently 3) are already
+     * defined this call will have no effect.  If the field is already a sort field this call will have no
+     * effect.  Otherwise, the ordering field will be appended to the existing ordering fields.  
+     * 
+     * @param defaultField
+     * @param defaultPageOrdering
+     */
     public void addDefaultOrderingField(String defaultField, PageOrdering defaultPageOrdering) {
         if (orderingFields.size() >= MAX_ORDERING_FIELD_COUNT) {
             return; // only need to add defaults if there are less than 3 sort orders
@@ -274,6 +300,10 @@ public class PageControl implements Serializable, Cloneable {
         pageNumber = 0;
         firstRecord = null;
         orderingFields = new LinkedList<OrderingField>();
+    }
+
+    public boolean isUnlimited() {
+        return getPageNumber() == 0 && getPageSize() == SIZE_UNLIMITED;
     }
 
     // TODO (ips, 10/12/11): Incorporate firstRecord field into equals() and hashCode().

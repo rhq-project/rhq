@@ -41,4 +41,12 @@ public interface CustomJaasDeploymentServiceMBean {
      * Installs the JAAS Modules that JON Server uses to allow users to log in.
      */
     void installJaasModules();
+
+    /**
+     * Called from the startup bean and will upgrade an existing
+     * RHQUserSecurityDomain if needed - that is if the system
+     * settings say that LDAP support is enabled, but the underlying
+     * modules are not present
+     */
+    void upgradeRhqUserSecurityDomainIfNeeded();
 }

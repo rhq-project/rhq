@@ -43,9 +43,9 @@ import org.rhq.enterprise.server.rest.domain.RHQErrorWrapper;
 public class CustomExceptionMapper implements ExceptionMapper<Exception> {
 
     @Context
-    HttpHeaders httpHeaders;
+    private HttpHeaders httpHeaders;
 
-    Log log = LogFactory.getLog(getClass().getName());
+    private Log log = LogFactory.getLog(getClass().getName());
 
     @Override
     public Response toResponse(Exception e) {
@@ -53,24 +53,25 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
         Response.ResponseBuilder builder;
         Response.Status status;
 
-        if (e instanceof StuffNotFoundException)
+        if (e instanceof StuffNotFoundException) {
             status =Response.Status.NOT_FOUND;
-        else if (e instanceof ResourceNotFoundException)
+        } else if (e instanceof ResourceNotFoundException) {
             status = Response.Status.NOT_FOUND;
-        else if (e instanceof ResourceGroupNotFoundException)
+        } else if (e instanceof ResourceGroupNotFoundException) {
             status = Response.Status.NOT_FOUND;
-        else if (e instanceof ResourceTypeNotFoundException)
+        } else if (e instanceof ResourceTypeNotFoundException) {
             status = Response.Status.NOT_FOUND;
-        else if (e instanceof ParameterMissingException)
+        } else if (e instanceof ParameterMissingException) {
             status = Response.Status.NOT_ACCEPTABLE;
-        else if (e instanceof BadArgumentException)
+        } else if (e instanceof BadArgumentException) {
             status = Response.Status.NOT_ACCEPTABLE;
-        else if (e instanceof PermissionException)
+        } else if (e instanceof PermissionException) {
             status = Response.Status.FORBIDDEN;
-        else if (e instanceof EJBException && e.getCause()!=null && e.getCause() instanceof IllegalArgumentException)
+        } else if (e instanceof EJBException && e.getCause()!=null && e.getCause() instanceof IllegalArgumentException) {
             status = Response.Status.NOT_ACCEPTABLE;
-        else
+        } else {
             status = Response.Status.SERVICE_UNAVAILABLE;
+        }
 
         builder = Response.status(status);
         String message = e.getMessage();
@@ -93,8 +94,9 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
             log.debug(e.getMessage());
             mediaType = MediaType.TEXT_PLAIN_TYPE;
         }
-        if (mediaType.getType().equals("text") && mediaType.getSubtype().equals("csv"))
+        if (mediaType.getType().equals("text") && mediaType.getSubtype().equals("csv")) {
             mediaType = MediaType.TEXT_PLAIN_TYPE;
+        }
 
 
         if (mediaType.equals(MediaType.TEXT_PLAIN_TYPE)) {

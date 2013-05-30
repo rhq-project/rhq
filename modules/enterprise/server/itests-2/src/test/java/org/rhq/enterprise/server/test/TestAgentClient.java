@@ -94,7 +94,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public BundleAgentService getBundleAgentService(long timeout) {
+    public BundleAgentService getBundleAgentService(Long timeout) {
         return getBundleAgentService();
     }
 
@@ -104,7 +104,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public ContentAgentService getContentAgentService(long timeout) {
+    public ContentAgentService getContentAgentService(Long timeout) {
         return getContentAgentService();
     }
 
@@ -114,7 +114,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public ResourceFactoryAgentService getResourceFactoryAgentService(long timeout) {
+    public ResourceFactoryAgentService getResourceFactoryAgentService(Long timeout) {
         return getResourceFactoryAgentService();
     }
 
@@ -124,7 +124,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public ConfigurationAgentService getConfigurationAgentService(long timeout) {
+    public ConfigurationAgentService getConfigurationAgentService(Long timeout) {
         return getConfigurationAgentService();
     }
 
@@ -134,7 +134,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public DiscoveryAgentService getDiscoveryAgentService(long timeout) {
+    public DiscoveryAgentService getDiscoveryAgentService(Long timeout) {
         return getDiscoveryAgentService();
     }
 
@@ -144,7 +144,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public MeasurementAgentService getMeasurementAgentService(long timeout) {
+    public MeasurementAgentService getMeasurementAgentService(Long timeout) {
         return getMeasurementAgentService();
     }
 
@@ -154,7 +154,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public OperationAgentService getOperationAgentService(long timeout) {
+    public OperationAgentService getOperationAgentService(Long timeout) {
         return getOperationAgentService();
     }
 
@@ -164,7 +164,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public SupportAgentService getSupportAgentService(long timeout) {
+    public SupportAgentService getSupportAgentService(Long timeout) {
         return getSupportAgentService();
     }
 
@@ -174,7 +174,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public DriftAgentService getDriftAgentService(long timeout) {
+    public DriftAgentService getDriftAgentService(Long timeout) {
         return getDriftAgentService();
     }
 

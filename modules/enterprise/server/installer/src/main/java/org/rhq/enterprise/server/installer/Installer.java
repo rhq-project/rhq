@@ -47,7 +47,7 @@ public class Installer {
     private InstallerConfiguration installerConfig;
 
     private enum WhatToDo {
-        DISPLAY_USAGE, DO_NOTHING, RECONFIGURE, TEST, SETUPDB, LIST_SERVERS, INSTALL
+        DISPLAY_USAGE, DO_NOTHING, TEST, SETUPDB, LIST_SERVERS, INSTALL
     }
 
     public static void main(String[] args) {
@@ -108,20 +108,6 @@ public class Installer {
                 }
                 continue;
             }
-            case RECONFIGURE: {
-                try {
-                    final InstallerService installerService = new InstallerServiceImpl(installerConfig);
-                    final HashMap<String, String> serverProperties = installerService.getServerProperties();
-                    final boolean reconfigured = installerService.reconfigure(serverProperties);
-                    if (reconfigured) {
-                        LOG.info("Reconfiguration is complete.");
-                    }
-                } catch (Exception e) {
-                    LOG.error(ThrowableUtil.getAllMessages(e));
-                    System.exit(EXIT_CODE_INSTALLATION_ERROR);
-                }
-                continue;
-            }
             case INSTALL: {
                 try {
                     final InstallerService installerService = new InstallerServiceImpl(installerConfig);
@@ -159,28 +145,25 @@ public class Installer {
         usage.append("\t--force, -f: force the installer to try to install everything").append("\n");
         usage.append("\t--listservers, -l: show list of known installed servers (install not performed)").append("\n");
         usage.append("\t--setupdb, -b: only perform database schema creation or update").append("\n");
-        usage.append("\t--reconfig, -r: resets some configuration settings in an installed server").append("\n");
         usage.append("\t--dbpassword, -d: encodes a DB password for rhq-server.properties (install not performed)")
             .append("\n");
         LOG.info(usage);
     }
 
     private WhatToDo[] processArguments(String[] args) throws Exception {
-        String sopts = "-:HD:h:p:d:bflrt";
+        String sopts = "-:HD:h:p:d:bflt";
         LongOpt[] lopts = { new LongOpt("help", LongOpt.NO_ARGUMENT, null, 'H'),
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
             new LongOpt("dbpassword", LongOpt.REQUIRED_ARGUMENT, null, 'd'),
             new LongOpt("setupdb", LongOpt.NO_ARGUMENT, null, 'b'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
-            new LongOpt("reconfig", LongOpt.NO_ARGUMENT, null, 'r'),
             new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f'),
             new LongOpt("test", LongOpt.NO_ARGUMENT, null, 't') };
 
         boolean test = false;
         boolean listservers = false;
         boolean setupdb = false;
-        boolean reconfig = false;
         String dbpassword = null;
 
         Getopt getopt = new Getopt("installer", args, sopts, lopts);
@@ -267,11 +250,6 @@ public class Installer {
                 break; // don't return, we need to allow more args to be processed, like -p or -h
             }
 
-            case 'r': {
-                reconfig = true;
-                break; // don't return, we need to allow more args to be processed, like -p or -h
-            }
-
             case 't': {
                 test = true;
                 break; // don't return, we need to allow more args to be processed, like -p or -h
@@ -284,10 +262,6 @@ public class Installer {
             String pw = new InstallerServiceImpl(installerConfig).obfuscatePassword(dbpassword);
             LOG.info("*** Encoded Password: " + pw);
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
-        }
-
-        if (reconfig) {
-            return new WhatToDo[] { WhatToDo.RECONFIGURE };
         }
 
         if (test || setupdb || listservers) {

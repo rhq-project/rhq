@@ -1,163 +1,63 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.etc.ircbot;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
+import java.util.Properties;
 
-import com.j2bugzilla.base.Bug;
-import com.j2bugzilla.base.BugzillaConnector;
-import com.j2bugzilla.base.BugzillaException;
-import com.j2bugzilla.rpc.GetBug;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 
-import org.apache.xmlrpc.XmlRpcException;
 import org.pircbotx.PircBotX;
-import org.pircbotx.User;
-import org.pircbotx.hooks.Listener;
-import org.pircbotx.hooks.ListenerAdapter;
-import org.pircbotx.hooks.events.DisconnectEvent;
-import org.pircbotx.hooks.events.MessageEvent;
-import org.pircbotx.hooks.events.PrivateMessageEvent;
 
 /**
- * An IRC bot for doing helpful stuff on the Freenode #rhq channel.
+ * @author Jirka Kremser
  *
- * @author Ian Springer
  */
-public class RhqIrcBot extends ListenerAdapter {
+public class RhqIrcBot extends PircBotX {
+    
+    private static final String TRUSTSTORE_NAME = "cacerts.jks";
+    
+    public RhqIrcBot(RhqIrcBotListener rhqBot) {
+        setName("rhq-bot");
+        setVersion("1.1");
+        setFinger("RHQ IRC bot (source code in RHQ git under etc/rhq-ircBot/)");
 
-    private static final Pattern BUG_PATTERN = Pattern.compile("(?i)(bz|bug)[ ]*(\\d{6,7})");
-    private static final Pattern ECHO_PATTERN = Pattern.compile("(?i)echo[ ]+(.+)");
+        setVerbose(true);
+        setAutoNickChange(true);
 
-    private static final Set<String> JON_DEVS = new HashSet<String>();
-    static {
-        JON_DEVS.add("ccrouch");
-        JON_DEVS.add("ips");
-        JON_DEVS.add("jkremser");
-        JON_DEVS.add("jsanda");
-        JON_DEVS.add("jshaughn");
-        JON_DEVS.add("lkrejci");
-        JON_DEVS.add("mazz");
-        JON_DEVS.add("mtho11");
-        JON_DEVS.add("pilhuhn");
-        JON_DEVS.add("spinder");
-        JON_DEVS.add("stefan_n");
+        getListenerManager().addListener(rhqBot);
+        setSocketTimeout(1 * 60 * 1000); // 1 minute
     }
-
-    private String server;
-    private String channel;
-    private BugzillaConnector bzConnector = new BugzillaConnector();
-    private Map<Integer, Long> bugLogTimestamps = new HashMap<Integer, Long>();
-
-    public RhqIrcBot(String server, String channel) {
-        this.server = server;
-        this.channel = channel;
-    }
-
-    @Override
-    public void onMessage(MessageEvent event) throws Exception {
-        PircBotX bot = event.getBot();
-        if (!bot.getNick().equals(bot.getName())) {
-            bot.changeNick(bot.getName());
-        }
-
-        String message = event.getMessage();
-        Matcher bugMatcher = BUG_PATTERN.matcher(message);
-        while (bugMatcher.find()) {
-            int bugId = Integer.valueOf(bugMatcher.group(2));
-            GetBug getBug = new GetBug(bugId);
-            try {
-                bzConnector.executeMethod(getBug);
-            } catch (Exception e) {
-                bzConnector = new BugzillaConnector();
-                bzConnector.connectTo("https://bugzilla.redhat.com");
-                try {
-                    bzConnector.executeMethod(getBug);
-                } catch (BugzillaException e1) {
-                    //e1.printStackTrace();
-                    Throwable cause = e1.getCause();
-                    String details = (cause instanceof XmlRpcException) ? cause.getMessage() : e1.getMessage();
-                    bot.sendMessage(event.getChannel(), "Failed to access BZ " + bugId + ": " + details);
-                    continue;
-                }
-            }
-            Bug bug = getBug.getBug();
-            if (bug != null) {
-                String product = bug.getProduct();
-                if (product.equals("RHQ Project")) {
-                    product = "RHQ";
-                } else if (product.equals("JBoss Operations Network")) {
-                    product = "JON";
-                }
-                Long timestamp = bugLogTimestamps.get(bugId);
-                if ((timestamp == null) || ((System.currentTimeMillis() - timestamp) > (5 * 60 * 1000L))) {
-                    bot.sendMessage(event.getChannel(), "BZ " + bugId + " [product=" + product
-                            + ", priority=" + bug.getPriority() + ", status=" + bug.getStatus() + "] "
-                            + bug.getSummary() + " [ https://bugzilla.redhat.com/" + bugId + " ]");
-                }
-                bugLogTimestamps.put(bugId, System.currentTimeMillis());
-            } else {
-                bot.sendMessage(event.getChannel(), "BZ " + bugId + " does not exist.");
-            }
-        }
-
-        if (message.matches(".*\\b(jon-team|jboss-on-team)\\b.*")) {
-            Set<User> users = bot.getUsers(event.getChannel());
-            StringBuilder presentJonDevs = new StringBuilder();
-            for (User user : users) {
-                String nick = user.getNick();
-                if (JON_DEVS.contains(nick) && !nick.equals(event.getUser().getNick())) {
-                    presentJonDevs.append(nick).append(' ');
-                }
-            }
-            bot.sendMessage(event.getChannel(), presentJonDevs + ": see message from "
-                    + event.getUser().getNick() + " above");
-        }
-    }
-
-    @Override
-    public void onPrivateMessage(PrivateMessageEvent privateMessageEvent) throws Exception {
-        PircBotX bot = privateMessageEvent.getBot();
-        String message = privateMessageEvent.getMessage();
-        Matcher echoMatcher = ECHO_PATTERN.matcher(message);
-        if (echoMatcher.matches()) {
-            String echoMessage = echoMatcher.group(1);
-            bot.sendMessage(this.channel, echoMessage);
-        } else {
-            bot.sendMessage(privateMessageEvent.getUser(), "Hi, I am " + bot.getFinger() + ".");
-        }
-        // TODO: Implement a HELP command.
-    }
-
-    @Override
-    public void onDisconnect(DisconnectEvent disconnectEvent) throws Exception {
-        boolean connected = false;
-        while (!connected) {
-            Thread.sleep(60 * 1000L); // 1 minute
-            try {
-                PircBotX newBot = createBot(this);
-                newBot.connect(this.server);
-                newBot.joinChannel(this.channel);
-
-                connected = true;
-            } catch (Exception e) {
-                System.err.println("Failed to reconnect to " + disconnectEvent.getBot().getServer() + " IRC server: " + e);
-            }
-        }
-
-        // Try to clean up the old bot, so it can release any memory, sockets, etc. it's using.
-        PircBotX oldBot = disconnectEvent.getBot();
-        Set<Listener> oldListeners = new HashSet<Listener>(oldBot.getListenerManager().getListeners());
-        for (Listener oldListener : oldListeners) {
-            oldBot.getListenerManager().removeListener(oldListener);
-        }
-    }
-
+    
     public static void main(String[] args) throws Exception {
-        if (args.length != 2) {
-            System.err.println("Usage: RhqIrcBot IRC_SERVER IRC_CHANNEL");
+        if (args.length != 2 && args.length != 3) {
+            System.err.println("Usage: RhqIrcBot IRC_SERVER IRC_CHANNEL [rhq-ircBot.properties]");
             System.err.println(" e.g.: RhqIrcBot irc.freenode.net '#rhq'");
             System.exit(1);
         }
@@ -167,26 +67,62 @@ public class RhqIrcBot extends ListenerAdapter {
             channel = '#' + channel;
         }
 
-        RhqIrcBot rhqBot = new RhqIrcBot(server, channel);
+        RhqIrcBotListener rhqBotListener = new RhqIrcBotListener(server, channel);
+        if (args.length == 3) {
+            File propertyFile = new File(args[2]);
+            if (!propertyFile.exists()) {
+                System.err.println("Provided property file [" + args[2] +  "] does not exist");
+                System.exit(2);
+            }
+            Properties properties = new Properties();
+            FileInputStream fis = new FileInputStream(propertyFile);
+            properties.load(fis);
+            String docspaceLogin = properties.getProperty("docspace_login");
+            String docspacePassword = properties.getProperty("docspace_password");
+            if (docspaceLogin == null || docspaceLogin.isEmpty() || docspacePassword == null || docspacePassword.isEmpty()) {
+                System.err.println("The property format has bad format");
+                System.err.println("It must contain following key-value pairs\n");
+                System.err.println("docspace_login=X");
+                System.err.println("docspace_password=Y");
+                System.exit(3);
+            }
+            fis.close();
+            
+            setupTrustStore();
+            
+            rhqBotListener.setDocspaceLogin(docspaceLogin);
+            rhqBotListener.setDocspacePassword(docspacePassword);
+        }
 
-        PircBotX bot = createBot(rhqBot);
+        PircBotX bot = new RhqIrcBot(rhqBotListener);
         bot.connect(server);
         bot.joinChannel(channel);
     }
+    
+    private static void setupTrustStore() {
+        TrustManagerFactory trustManagerFactory;
+        try {
+            trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            KeyStore keystore;
+            keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+            InputStream keystoreStream = RhqIrcBot.class.getResourceAsStream(TRUSTSTORE_NAME);
+            keystore.load(keystoreStream, "rhqirc".toCharArray());
+            trustManagerFactory.init(keystore);
+            TrustManager[] trustManagers = trustManagerFactory.getTrustManagers();
+            SSLContext ctx = SSLContext.getInstance("SSL");
+            ctx.init(null, trustManagers, null);
 
-    private static PircBotX createBot(RhqIrcBot rhqBot) {
-        PircBotX bot = new PircBotX();
-
-        bot.setName("rhq-bot");
-        bot.setVersion("1.0");
-        bot.setFinger("RHQ IRC bot (source code in RHQ git under etc/rhq-ircBot/)");
-
-        bot.setVerbose(true);
-        bot.setAutoNickChange(true);
-
-        bot.getListenerManager().addListener(rhqBot);
-        bot.setSocketTimeout(1 * 60 * 1000); // 1 minute
-        return bot;
+            SSLContext.setDefault(ctx);
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (KeyStoreException e) {
+            e.printStackTrace();
+        } catch (CertificateException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (KeyManagementException e) {
+            e.printStackTrace();
+        }
     }
-
 }

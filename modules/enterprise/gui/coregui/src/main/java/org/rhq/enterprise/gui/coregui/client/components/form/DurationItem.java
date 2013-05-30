@@ -29,17 +29,20 @@ import java.util.TreeSet;
 
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.ComboBoxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.IntegerItem;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.validator.IntegerRangeValidator;
 
+import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.util.FormUtility;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.TypeConversionUtility;
 
 /**
@@ -142,7 +145,7 @@ public class DurationItem extends CanvasItem {
                 }
             });
 
-            ComboBoxItem unitsItem = new ComboBoxItem(FIELD_UNITS);
+            SelectItem unitsItem = new SelectItem(FIELD_UNITS);
             unitsItem.setShowTitle(false);
 
             LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
@@ -230,10 +233,24 @@ public class DurationItem extends CanvasItem {
         if (longValue < 0) {
             throw new IllegalArgumentException("negative time period " + longValue);
         }
-        String formattedOutput = formatMilliseconds(longValue);
-        this.unitType = UnitType.TIME;
-        this.form.setValue(FIELD_VALUE, formattedOutput);
-        setValue(formattedOutput);
+        if (isReadOnly) {
+            String formattedOutput = formatMilliseconds(longValue);
+            this.unitType = UnitType.TIME;
+            this.form.setValue(FIELD_VALUE, formattedOutput);
+            setValue(formattedOutput);
+        } else {
+            MeasurementNumericValueAndUnits valueWithUnits;
+            if (longValue % HOUR_IN_MILLIS == 0) {
+                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.MILLISECONDS,
+                    MeasurementUnits.HOURS, MeasurementUnits.HOURS);
+            } else {
+                valueWithUnits = MeasurementConverterClient.fit((double) longValue, MeasurementUnits.MILLISECONDS,
+                    MeasurementUnits.MINUTES, MeasurementUnits.MINUTES);
+            }
+            SelectItem unitsItem = (SelectItem) this.form.getItem(FIELD_UNITS);
+            this.form.setValue(FIELD_VALUE, valueWithUnits.getValue().intValue());
+            unitsItem.setValue(valueWithUnits.getUnits().name().toLowerCase());
+        }
     }
 
     /**
@@ -474,7 +491,7 @@ public class DurationItem extends CanvasItem {
     }
 
     private TimeUnit getInputTimeUnit() {
-        ComboBoxItem unitsItem = (ComboBoxItem) this.form.getItem(FIELD_UNITS);
+        SelectItem unitsItem = (SelectItem) this.form.getItem(FIELD_UNITS);
         String unitString = unitsItem.getValueAsString(); // this will always be non-null
         TimeUnit unit;
         try {

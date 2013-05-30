@@ -348,7 +348,8 @@ fi
 
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_JAVA_OPTS.
 # Note that the double equals for the policy file specification IS INTENTIONAL
-RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server ${RHQ_SERVER_JAVA_OPTS} -Drhq.server.home=${RHQ_SERVER_HOME} -Djboss.server.log.dir=${_LOG_DIR_PATH} -Djava.awt.headless=true -Dsun.lang.ClassLoader.allowArraySyntax=true -Djboss.server.default.config=standalone-full.xml -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.security.manager -Djava.security.policy==${RHQ_SERVER_HOME}/bin/rhq-server.security-policy ${_JBOSS_DEBUG_LOGGING}"
+_HTTP_COMPRESSION="-Dorg.apache.coyote.http11.Http11Protocol.COMPRESSION=on -Dorg.apache.coyote.http11.Http11Protocol.COMPRESSION_MIME_TYPES=text/javascript,text/css,text/html"
+RHQ_SERVER_JAVA_OPTS="-Dapp.name=rhq-server ${RHQ_SERVER_JAVA_OPTS} -Drhq.server.home=${RHQ_SERVER_HOME} -Djboss.server.log.dir=${_LOG_DIR_PATH} -Djava.awt.headless=true -Dsun.lang.ClassLoader.allowArraySyntax=true -Djboss.server.default.config=standalone-full.xml -Djboss.modules.system.pkgs=org.jboss.byteman -Djava.security.manager -Djava.security.policy==${RHQ_SERVER_HOME}/bin/rhq-server.security-policy ${_HTTP_COMPRESSION} ${_JBOSS_DEBUG_LOGGING}"
 
 debug_msg "RHQ_SERVER_JAVA_OPTS: $RHQ_SERVER_JAVA_OPTS"
 debug_msg "RHQ_SERVER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_ADDITIONAL_JAVA_OPTS"

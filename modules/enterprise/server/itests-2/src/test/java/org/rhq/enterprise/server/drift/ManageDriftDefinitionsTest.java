@@ -57,6 +57,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
+import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility.SerializationType;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.test.AssertUtils;
 
@@ -91,7 +92,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
         deleteEntity(ResourceType.class, DRIFT_NOT_SUPPORTED_TYPE);
     }
 
-    public void createDefinitionFromUnpinnedTemplate() {
+    public void createDefinitionFromUnpinnedTemplate() throws Exception {
         // first create a template
         final DriftDefinition templateDef = new DriftDefinition(new Configuration());
         templateDef.setName(NAME_PREFIX + "createUnpinnedDefinition");
@@ -114,6 +115,7 @@ public class ManageDriftDefinitionsTest extends AbstractDriftServerTest {
         DriftDefinitionComparator comparator = new DriftDefinitionComparator(
             BOTH_BASE_INFO_AND_DIRECTORY_SPECIFICATIONS);
 
+        HibernateDetachUtility.nullOutUninitializedFields(newDef, SerializationType.SERIALIZATION);
         assertEquals("The drift definition was not persisted correctly", 0, comparator.compare(definition, newDef));
         assertEquals("The template association was not set on the definition", template, newDef.getTemplate());
     }

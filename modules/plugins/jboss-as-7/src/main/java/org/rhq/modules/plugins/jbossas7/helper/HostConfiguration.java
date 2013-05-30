@@ -233,6 +233,14 @@ public class HostConfiguration {
         return securityPropertyFile;
     }
 
+    public String getDomainApiVersion() {
+
+        String version = document.getFirstChild().getAttributes().getNamedItem("xmlns").getTextContent();
+
+        version = version.substring(version.lastIndexOf(':')+1);
+        return version;
+    }
+
     /**
      * Run the passed xpathExpression on the prepopulated hostXml document and
      * return the target element or attribute as a String.

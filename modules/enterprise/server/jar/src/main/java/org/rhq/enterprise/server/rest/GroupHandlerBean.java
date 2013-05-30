@@ -27,8 +27,6 @@ import java.util.Set;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
@@ -37,7 +35,6 @@ import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.GenericEntity;
@@ -68,6 +65,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -93,7 +91,6 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 @Interceptors(SetCallerInterceptor.class)
 @Path("/group")
 @Api(value="Deal with groups and DynaGroups", description = "Api that deals with resource groups and group definitions")
-@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
 public class GroupHandlerBean extends AbstractRestBean  {
 
     private final Log log = LogFactory.getLog(GroupHandlerBean.class);
@@ -107,20 +104,24 @@ public class GroupHandlerBean extends AbstractRestBean  {
     @EJB
     GroupDefinitionManagerLocal definitionManager;
 
-    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
-    EntityManager em;
-
 
     @GZIP
     @GET
     @Path("/")
     @ApiOperation(value = "List all groups", multiValueResponse = true, responseClass = "GroupRest")
     public Response getGroups(@ApiParam("String to search in the group name") @QueryParam("q") String q,
+                              @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+                              @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
                               @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addSortId(PageOrdering.ASC);
+
         if (q!=null) {
             criteria.addFilterName(q);
+        }
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
         }
 
         PageList<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(caller, criteria);
@@ -137,10 +138,15 @@ public class GroupHandlerBean extends AbstractRestBean  {
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
             builder.entity(renderTemplate("listGroup", list));
         }
+        else if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder,uriInfo,groups,list);
+        }
         else {
             GenericEntity<List<GroupRest>> ret = new GenericEntity<List<GroupRest>>(list) {};
             builder.entity(ret);
+            createPagingHeader(builder,uriInfo,groups);
         }
+
 
         return builder.build();
 

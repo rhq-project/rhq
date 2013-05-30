@@ -12,7 +12,6 @@ modules/enterprise/gui/coregui/build/classes/
 modules/enterprise/gui/content_http-war/build/classes/
 #created by rhq-enterprise-server's unit tests
 modules/enterprise/server/jar/transaction.log
-
 .idea/
 .metadata/
 *cache.html
@@ -27,6 +26,7 @@ modules/enterprise/server/jar/transaction.log
 .*.jsfdia
 .wtpmodules
 *~
+*.DS_Store
 
 #these are created by the python script engine during the tests
 cachedir/

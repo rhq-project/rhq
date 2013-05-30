@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.auth.test;
 
@@ -41,6 +41,8 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.SubjectCriteria;
+import org.rhq.core.domain.search.SavedSearch;
+import org.rhq.core.domain.search.SearchSubsystem;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -50,6 +52,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RoleManagerLocal;
+import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -70,12 +73,14 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
     private SubjectManagerLocal subjectManager;
     private AuthorizationManagerLocal authorizationManager;
     private RoleManagerLocal roleManager;
+    private SavedSearchManagerLocal savedSearchManager;
 
     @Override
     protected void beforeMethod() {
         subjectManager = LookupUtil.getSubjectManager();
         authorizationManager = LookupUtil.getAuthorizationManager();
         roleManager = LookupUtil.getRoleManager();
+        savedSearchManager = LookupUtil.getSavedSearchManager();
         createITestSubject();
     }
 
@@ -756,4 +761,24 @@ public class SubjectManagerBeanTest extends AbstractEJB3Test {
             }
         });
     }
+
+    public void shouldBeAbleToDeleteASubjectWhoOwnsASavedSearch() {
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=952652
+        SavedSearch savedSearch = new SavedSearch(SearchSubsystem.GROUP, "fake saved search", "pipo", subjectManager.getSubjectByName(ITEST_USER));
+        Integer savedSearchId = savedSearchManager.createSavedSearch(subjectManager.getOverlord(), savedSearch);
+        boolean subjectDeleted = false;
+        try {
+            deleteITestSubject();
+            subjectDeleted = true;
+        } catch (Exception e) {
+            LOG.error("Failed to delete a subject who owns a saved search", e);
+            fail("Failed to delete a subject who owns a saved search");
+        } finally {
+            // This is only necessary if we failed to delete subject
+            if (!subjectDeleted) {
+                savedSearchManager.deleteSavedSearch(subjectManager.getOverlord(), savedSearchId);
+            }
+        }
+    }
+
 }

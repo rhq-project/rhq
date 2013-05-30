@@ -55,9 +55,9 @@ public class StatusHandlerBean extends AbstractRestBean {
 
 
     @EJB
-    SystemInfoManagerLocal infoMgr;
+    private SystemInfoManagerLocal infoMgr;
     @EJB
-    ServerManagerLocal serverManager;
+    private ServerManagerLocal serverManager;
 
     @GZIP
     @ApiOperation(value="Retrieve the current configured state of the server along with some runtime information." +

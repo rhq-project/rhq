@@ -419,7 +419,7 @@ public class HibernateDetachUtility {
                         String assistNameDelimiter = assistClassName.contains("javassist") ? "_$$_" : "$$";
 
                         assistClassName = assistClassName.substring(0, assistClassName.indexOf(assistNameDelimiter));
-                        if (!replacement.getClass().getName().contains("hibernate")) {
+                        if (replacement != null && !replacement.getClass().getName().contains("hibernate")) {
                             nullOutUninitializedFields(replacement, checkedObjects, checkedObjectCollisionMap,
                                 depth + 1, serializationType);
 

@@ -135,17 +135,17 @@ public class MeasurementDataTraitCriteria extends Criteria {
     }
 
     @Override
-    public void addSortId(PageOrdering sortId) {
-        throw new UnsupportedOperationException("The id column is not defined on this entity.");
+    public boolean isSupportsAddSortId() {
+        return false;
     }
 
     @Override
-    public void addFilterId(Integer filterId) {
-        throw new UnsupportedOperationException("The id column is not defined on this entity.");
+    public boolean isSupportsAddFilterId() {
+        return false;
     }
 
     @Override
-    public void addFilterIds(Integer... filterIds) {
-        throw new UnsupportedOperationException("The id column is not defined on this entity.");
+    public boolean isSupportsAddFilterIds() {
+        return false;
     }
 }

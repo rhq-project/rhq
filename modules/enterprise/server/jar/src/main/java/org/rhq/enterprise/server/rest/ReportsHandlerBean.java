@@ -76,25 +76,25 @@ import org.rhq.enterprise.server.rest.reporting.SuspectMetricLocal;
 public class ReportsHandlerBean extends AbstractRestBean {
 
     @EJB
-    AlertDefinitionLocal alertDefinitionLocal;
+    private AlertDefinitionLocal alertDefinitionLocal;
     @EJB
-    ConfigurationHistoryLocal configurationHistoryLocal;
+    private ConfigurationHistoryLocal configurationHistoryLocal;
     @EJB
-    DriftComplianceLocal driftComplianceLocal;
+    private DriftComplianceLocal driftComplianceLocal;
     @EJB
-    InventorySummaryLocal inventorySummaryLocal;
+    private InventorySummaryLocal inventorySummaryLocal;
     @EJB
-    PlatformUtilizationLocal platformUtilizationLocal;
+    private PlatformUtilizationLocal platformUtilizationLocal;
     @EJB
-    RecentAlertLocal recentAlertLocal;
+    private RecentAlertLocal recentAlertLocal;
     @EJB
-    RecentDriftLocal recentDriftLocal;
+    private RecentDriftLocal recentDriftLocal;
     @EJB
-    RecentOperationsLocal recentOperationsLocal;
+    private RecentOperationsLocal recentOperationsLocal;
     @EJB
-    SuspectMetricLocal suspectMetricLocal;
+    private SuspectMetricLocal suspectMetricLocal;
 
-    String[] reports = {
+    private String[] reports = {
         "alertDefinitions",
         "configurationHistory",
         "driftCompliance",

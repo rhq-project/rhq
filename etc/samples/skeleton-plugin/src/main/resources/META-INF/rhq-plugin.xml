@@ -15,6 +15,7 @@
 <plugin name="SkeletonPlugin"
         displayName="Skeleton Plugin"
         version="1.0"
+        description="This is a skeleton plugin that can be used to start your own custom plugin."
         package="org.rhq.sample.skeletonplugin"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin"
@@ -110,5 +111,24 @@
       <resource-configuration>
          <c:simple-property name="port" type="integer" displayName="Port on which to listen" />
       </resource-configuration>
+      
+      <!--
+         CHANGE: You can optionally define children resource types to represent internal services within your
+                 server resource type.
+      -->
+      <service name="Sample Plugin Child Service"
+               discovery="SamplePluginChildDiscoveryComponent"
+               class="SamplePluginChildServiceComponent"
+               description="This is a child service found under the main, top-level server resource type.">
+
+         <plugin-configuration>
+            <c:simple-property name="SamplePluginChildProperty" displayName="Sample Plugin Child Property" default="Value" />
+         </plugin-configuration>
+
+         <metric property="ChildMeasurementName"
+                 displayName="The Child Measurement Name"
+                 description="Describes what this child measurement is actually telling you" />
+
+      </service>
    </server>
 </plugin>

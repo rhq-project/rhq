@@ -26,10 +26,12 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.UUID;
@@ -70,20 +72,25 @@ import org.rhq.core.util.updater.DeploymentsMetadata;
 
 @Test
 public class AntBundlePluginComponentTest {
+    private static final boolean ENABLE_TESTS = true;
+
     private static final String DEST_BASE_DIR_NAME = "Root File System"; // just mimics the real platform plugin types' name
 
     private AntBundlePluginComponent plugin;
+    private File testFilesBaseDir; // under here will go all our test files: tmpDir, bundleFilesDir and destDir
     private File tmpDir;
     private File bundleFilesDir;
     private File destDir;
 
     @BeforeClass
     public void initDirs() throws Exception {
-        this.tmpDir = new File("target/antbundletest/tmp");
+        this.testFilesBaseDir = new File("target/antbundletest");
+
+        this.tmpDir = new File(this.testFilesBaseDir, "tmp");
         FileUtil.purge(this.tmpDir, true);
-        this.bundleFilesDir = new File("target/antbundletest/bundlefiles");
+        this.bundleFilesDir = new File(this.testFilesBaseDir, "bundlefiles");
         FileUtil.purge(this.bundleFilesDir, true);
-        this.destDir = new File("target/antbundletest/destination");
+        this.destDir = new File(this.testFilesBaseDir, "destination");
         FileUtil.purge(this.destDir, true);
     }
 
@@ -117,7 +124,7 @@ public class AntBundlePluginComponentTest {
         FileUtil.purge(this.destDir, true);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAntBundleRevert() throws Exception {
         // install then upgrade a bundle first
         testAntBundleUpgrade();
@@ -227,17 +234,17 @@ public class AntBundlePluginComponentTest {
         assert previousProps.getBundleVersion().equals("3.0"); // testAntBundleUpgrade deployed version 3.0
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAntBundleUpgrade() throws Exception {
         upgrade(false);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAntBundleCleanUpgrade() throws Exception {
         upgrade(true);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAntBundleInitialInstall() throws Exception {
         doAntBundleInitialInstall(true);
     }
@@ -348,7 +355,7 @@ public class AntBundlePluginComponentTest {
     /**
      * Test deployment of an RHQ bundle recipe.
      */
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAntBundle() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -412,9 +419,162 @@ public class AntBundlePluginComponentTest {
     }
 
     /**
+     * Test raw files whose destination locations have ".." in their paths.
+     */
+    @Test(enabled = ENABLE_TESTS)
+    public void testRawFilesWithDotDotPaths() throws Exception {
+        // our test bundle's relative raw file paths that resolve above dest dir will resolve to here
+        final File externalDir = new File(this.testFilesBaseDir, "ext");
+
+        ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
+        BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
+        Repo repo = new Repo("testSimpleBundle");
+        PackageType packageType = new PackageType("testSimpleBundle", resourceType);
+        Bundle bundle = new Bundle("testSimpleBundle", bundleType, repo, packageType);
+        BundleVersion bundleVersion = new BundleVersion("testSimpleBundle", "1.0", bundle,
+            getRecipeFromFile("test-bundle-dotdot.xml"));
+        BundleDestination destination = new BundleDestination(bundle, "testSimpleBundle", new ResourceGroup(
+            "testSimpleBundle"), DEST_BASE_DIR_NAME, this.destDir.getAbsolutePath());
+        Configuration config = new Configuration();
+
+        BundleDeployment deployment = new BundleDeployment();
+        deployment.setId(0);
+        deployment.setName("test bundle deployment name");
+        deployment.setBundleVersion(bundleVersion);
+        deployment.setConfiguration(config);
+        deployment.setDestination(destination);
+
+        // create test files (see bundle recipe for why these files are created)
+        final String TEST1 = "test1.txt";
+        File file1 = new File(this.bundleFilesDir, TEST1);
+        writeFile(TEST1, file1);
+
+        final String TEST2 = "test2.txt";
+        File file2 = new File(this.bundleFilesDir, TEST2);
+        writeFile(TEST2, file2);
+
+        final String TEST3 = "test3.txt";
+        File file3 = new File(this.bundleFilesDir, TEST3);
+        writeFile(TEST3, file3);
+
+        final String TEST4 = "test4.txt";
+        File file4 = new File(this.bundleFilesDir, TEST4);
+        writeFile(TEST4, file4);
+
+        // ----- initial deployment -----
+        BundleDeployRequest request = new BundleDeployRequest();
+        request.setBundleFilesLocation(this.bundleFilesDir);
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
+        BundleDeployResult results = plugin.deployBundle(request);
+        assertResultsSuccess(results);
+
+        // test that the files were put where we expected them to be
+        File file1Dest = new File(this.destDir, "subdir/" + TEST1);
+        File file2Dest = new File(this.destDir, TEST2);
+        File file3Dest = new File(externalDir, TEST3);
+        File file4Dest = new File(externalDir, TEST4);
+        assert TEST1.equals(readFile(file1Dest)); // inside dest dir
+        assert TEST2.equals(readFile(file2Dest)); // inside dest dir
+        assert TEST3.equals(readFile(file3Dest)); // outside dest dir
+        assert TEST4.equals(readFile(file4Dest)); // outside dest dir
+
+        // ----- prepare to update the bundle ----
+        cleanPluginDirs(); // clean everything but the dest dir - we want to keep the metadata (this should not purge ext/ dir)
+        prepareBeforeTestMethod(); // prepare for our new test
+        // our src files will have different content for this bundle deployment compared to the initial deployment
+        writeFile(TEST1 + "update", file1);
+        writeFile(TEST2 + "update", file2);
+        writeFile(TEST3 + "update", file3);
+        writeFile(TEST4 + "update", file4);
+        // change our initial deployment files, RHQ should see the changes and back these files up
+        writeFile(TEST1 + "modified", file1Dest);
+        writeFile(TEST2 + "modified", file2Dest);
+        writeFile(TEST3 + "modified", file3Dest);
+        writeFile(TEST4 + "modified", file4Dest);
+
+        // ----- update deployment -----
+        deployment.setId(1);
+        request = new BundleDeployRequest();
+        request.setBundleFilesLocation(this.bundleFilesDir);
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
+        results = plugin.deployBundle(request);
+        assertResultsSuccess(results);
+
+        // test that all files were updated
+        assert (TEST1 + "update").equals(readFile(file1Dest)); // inside dest dir
+        assert (TEST2 + "update").equals(readFile(file2Dest)); // inside dest dir
+        assert (TEST3 + "update").equals(readFile(file3Dest)); // outside dest dir
+        assert (TEST4 + "update").equals(readFile(file4Dest)); // outside dest dir
+
+        // test that our changed files that were under dest dir were properly backed up
+        DeploymentsMetadata metadata = new DeploymentsMetadata(this.destDir);
+        File backupDir = metadata.getDeploymentBackupDirectory(deployment.getId());
+        File file1Backup = new File(backupDir, "subdir/" + TEST1);
+        File file2Backup = new File(backupDir, TEST2);
+        assert file1Backup.isFile() : "should have been backed up: " + file1Backup;
+        assert file2Backup.isFile() : "should have been backed up: " + file2Backup;
+        assert (TEST1 + "modified").equals(readFile(file1Backup)) : "bad backup file: " + file1Backup;
+        assert (TEST2 + "modified").equals(readFile(file2Backup)) : "bad backup file: " + file2Backup;
+
+        // test that our changed files that were above dest dir were properly backed up
+        Map<String, File> winDirs = metadata.getDeploymentExternalBackupDirectoriesForWindows(deployment.getId());
+        if (winDirs == null) {
+            // we are running on non-windows platform
+            backupDir = metadata.getDeploymentExternalBackupDirectory(deployment.getId());
+        } else {
+            // we are on windows, our test only uses a single drive root, so we can grab the only item in the map
+            assert winDirs.size() == 1 : "should only have 1 ext backup dir on windows: " + winDirs;
+            backupDir = winDirs.values().iterator().next().getAbsoluteFile();
+        }
+
+        File file3Backup;
+        File file4Backup;
+        boolean isWindows = (File.separatorChar == '\\');
+        if (isWindows) {
+            StringBuilder file3AbsPath = new StringBuilder(file3Dest.getAbsolutePath());
+            StringBuilder file4AbsPath = new StringBuilder(file4Dest.getAbsolutePath());
+            FileUtil.stripDriveLetter(file3AbsPath);
+            FileUtil.stripDriveLetter(file4AbsPath);
+            file3Backup = new File(backupDir, file3AbsPath.toString());
+            file4Backup = new File(backupDir, file4AbsPath.toString());
+        } else {
+            file3Backup = new File(backupDir, file3Dest.getAbsolutePath());
+            file4Backup = new File(backupDir, file4Dest.getAbsolutePath());
+        }
+        assert file3Backup.isFile() : "should have been backed up: " + file3Backup;
+        assert file4Backup.isFile() : "should have been backed up: " + file4Backup;
+        assert (TEST3 + "modified").equals(readFile(file3Backup)) : "bad backup file: " + file3Backup;
+        assert (TEST4 + "modified").equals(readFile(file4Backup)) : "bad backup file: " + file4Backup;
+
+        // ----- revert to last deployment, restoring backed up files
+        deployment.setId(2);
+        request = new BundleDeployRequest();
+        request.setBundleFilesLocation(this.bundleFilesDir);
+        request.setResourceDeployment(createNewBundleDeployment(deployment));
+        request.setBundleManagerProvider(new MockBundleManagerProvider());
+        request.setAbsoluteDestinationDirectory(this.destDir);
+        request.setRevert(true);
+        results = plugin.deployBundle(request);
+        assertResultsSuccess(results);
+
+        // make sure our files were reverted, giving us back the files that were backed up
+        assert readFile(file1Backup).equals(readFile(file1Dest)); // inside dest dir
+        assert readFile(file2Backup).equals(readFile(file2Dest)); // inside dest dir
+        assert readFile(file3Backup).equals(readFile(file3Dest)); // outside dest dir
+        assert readFile(file4Backup).equals(readFile(file4Dest)); // outside dest dir
+
+        // ----- clean up our test -----
+        FileUtil.purge(externalDir, true);
+    }
+
+    /**
      * Test realizing of replacement tokens of resource tags.
      */
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testTags() throws Exception {
         ResourceType resourceType = new ResourceType("testSimpleBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testSimpleBundle", resourceType);
@@ -484,7 +644,7 @@ public class AntBundlePluginComponentTest {
     /**
      * Test deployment of an RHQ bundle recipe where the deploy directory is not to be fully managed.
      */
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAntBundleNoManageRootDir() throws Exception {
         ResourceType resourceType = new ResourceType("testNoManageRootDirBundle", "plugin", ResourceCategory.SERVER,
             null);
@@ -618,7 +778,7 @@ public class AntBundlePluginComponentTest {
      * Test deployment of an RHQ bundle recipe where the deploy directory is to be fully managed.
      * This is the typical use-case and the default behavior.
      */
-    @Test(enabled = true)
+    @Test(enabled = ENABLE_TESTS)
     public void testAntBundleManageRootDir() throws Exception {
         ResourceType resourceType = new ResourceType("testManageRootDirBundle", "plugin", ResourceCategory.SERVER, null);
         BundleType bundleType = new BundleType("testManageRootDirBundle", resourceType);
@@ -876,6 +1036,10 @@ public class AntBundlePluginComponentTest {
 
     private String readFile(File file) throws Exception {
         return new String(StreamUtil.slurp(new FileInputStream(file)));
+    }
+
+    private void writeFile(final String content, final File file) throws IOException {
+        FileUtil.writeFile(new ByteArrayInputStream(content.getBytes()), file);
     }
 
     private void loadProperties(Properties realizedProps, FileInputStream fileInputStream) throws Exception {

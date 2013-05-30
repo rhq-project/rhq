@@ -70,6 +70,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
 
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
+    private static final String WILDFLY_PREFIX = "wildfly-";
 
     private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
 
@@ -192,7 +193,8 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         serverPluginConfig.setHostname(managementHostPort.host);
         serverPluginConfig.setPort(managementHostPort.port);
         pluginConfig.setSimpleValue("realm", hostConfig.getManagementSecurityRealm());
-        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir);
+        String apiVersion = hostConfig.getDomainApiVersion();
+        JBossProductType productType = JBossProductType.determineJBossProductType(homeDir, apiVersion);
         serverPluginConfig.setProductType(productType);
         pluginConfig.setSimpleValue("hostXmlFileName", getHostXmlFileName(commandLine));
 
@@ -467,14 +469,14 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         return detail;
     }
 
-    private String getServerAttribute(ASConnection connection, String attributeName) {
+    private <T>T getServerAttribute(ASConnection connection, String attributeName) {
         Operation op = new ReadAttribute(null, attributeName);
         Result res = connection.execute(op);
         if (!res.isSuccess()) {
             throw new InvalidPluginConfigurationException("Could not connect to remote server ["
                 + res.getFailureDescription() + "]. Did you enable management?");
         }
-        return (String) res.getResult();
+        return (T) res.getResult();
     }
 
     // never returns null
@@ -563,7 +565,9 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
     protected String determineServerVersionFromHomeDir(File homeDir) {
         String version;
         String homeDirName = homeDir.getName();
-        if (homeDirName.startsWith(JBOSS_AS_PREFIX)) {
+        if (homeDirName.startsWith(WILDFLY_PREFIX)) {
+            version = homeDirName.substring(WILDFLY_PREFIX.length());
+        } else if (homeDirName.startsWith(JBOSS_AS_PREFIX)) {
             version = homeDirName.substring(JBOSS_AS_PREFIX.length());
         } else if (homeDirName.startsWith(JBOSS_EAP_PREFIX)) {
             version = homeDirName.substring(JBOSS_EAP_PREFIX.length());
@@ -606,8 +610,17 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             ASConnection connection = new ASConnection(hostname, port, user, pass);
             try {
                 String productName = getServerAttribute(connection, "product-name");
-                productType = ((productName != null) && !productName.isEmpty()) ?
-                        JBossProductType.getValueByProductName(productName) : JBossProductType.AS;
+                if ((productName != null) && !productName.isEmpty())
+                    productType = JBossProductType.getValueByProductName(productName);
+                else {
+                    Integer apiVersion = getServerAttribute(connection,"management-major-version");
+                    if (apiVersion==1) {
+                        productType = JBossProductType.AS;
+                    } else {
+                        // In the future also check for other versions of WildFly via the release-version
+                        productType = JBossProductType.WILDFLY8;
+                    }
+                }
                 releaseVersion = getServerAttribute(connection, "release-version");
                 releaseCodeName = getServerAttribute(connection, "release-codename");
                 serverName = getServerAttribute(connection, "name");

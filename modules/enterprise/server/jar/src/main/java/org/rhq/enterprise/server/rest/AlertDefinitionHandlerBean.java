@@ -46,6 +46,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -77,6 +78,8 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -97,7 +100,6 @@ import org.rhq.enterprise.server.rest.domain.Link;
  * AlertHandlerBean
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
 @Path("/alert")
 @Api(value = "Deal with Alert Definitions",description = "This api deals with alert definitions. Everything " +
     " is purely experimental at the moment and can change without notice at any time.")
@@ -106,22 +108,22 @@ import org.rhq.enterprise.server.rest.domain.Link;
 public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @EJB
-    AlertDefinitionManagerLocal alertDefinitionManager;
+    private AlertDefinitionManagerLocal alertDefinitionManager;
 
     @EJB
-    AlertNotificationManagerLocal notificationMgr;
+    private AlertNotificationManagerLocal notificationMgr;
 
     @EJB
-    AlertConditionManagerLocal conditionMgr;
+    private AlertConditionManagerLocal conditionMgr;
 
     @EJB
-    AlertManagerLocal alertManager;
+    private AlertManagerLocal alertManager;
 
     @EJB
-    ResourceGroupManagerLocal resourceGroupMgr;
+    private ResourceGroupManagerLocal resourceGroupMgr;
 
     @EJB
-    ResourceTypeManagerLocal resourceTypeMgr;
+    private ResourceTypeManagerLocal resourceTypeMgr;
 
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -143,21 +145,39 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @GZIP
     @GET
     @Path("/definitions")
-    @ApiOperation("List all Alert Definition")
-    public List<AlertDefinitionRest> listAlertDefinitions(
-            @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status,
+    @ApiOperation(value = "List all Alert Definition", responseClass = "AlertDefinitionRest", multiValueResponse = true)
+    public Response listAlertDefinitions(
+            @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
+            @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
+            @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-        criteria.setPaging(page,20); // TODO add link to next page
-        List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
+        criteria.addSortId(PageOrdering.ASC);
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
+        }
+
+        PageList<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
         List<AlertDefinitionRest> ret = new ArrayList<AlertDefinitionRest>(defs.size());
         for (AlertDefinition def : defs) {
             AlertDefinitionRest adr = definitionToDomain(def, false, uriInfo);
             ret.add(adr);
         }
-        return ret;
+
+        Response.ResponseBuilder builder = Response.ok();
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        builder.type(mediaType);
+
+        if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder,uriInfo,defs,ret);
+        } else {
+            createPagingHeader(builder,uriInfo,defs);
+            builder.entity(ret); // TODO generic entity for XML
+        }
+
+        return builder.build();
     }
 
     @GET
@@ -169,8 +189,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             @Context Request request, @Context UriInfo uriInfo) {
 
         AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller, definitionId);
-        if (def==null)
+        if (def==null) {
             throw new StuffNotFoundException("AlertDefinition with id " + definitionId );
+        }
 
         EntityTag eTag = new EntityTag(Integer.toHexString(def.hashCode()));
         Response.ResponseBuilder builder = request.evaluatePreconditions(eTag);
@@ -285,8 +306,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             @Context UriInfo uriInfo) {
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
-        if (definition==null)
+        if (definition==null) {
             throw new StuffNotFoundException("AlertDefinition with id " + definitionId);
+        }
 
         definition = new AlertDefinition(definition); // detach
 
@@ -302,10 +324,12 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         // Set the recovery id if such a definition exists at all
         if (definitionRest.getRecoveryId()>0) {
             AlertDefinition recoveryDef = alertDefinitionManager.getAlertDefinition(caller,definitionRest.getRecoveryId());
-            if (recoveryDef!=null)
+            if (recoveryDef!=null) {
                 definition.setRecoveryId(definitionRest.getRecoveryId());
-            else
+            }
+            else {
                 throw new StuffNotFoundException("Alert to recover with id " + definitionRest.getRecoveryId());
+            }
         }
 
 
@@ -348,34 +372,24 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             StringBuilder builder = new StringBuilder();
             for (int i = 0; i < vals.length ; i++) {
                 builder.append(vals[i].name());
-                if (i < vals.length-1)
+                if (i < vals.length-1) {
                     builder.append(", ");
+                }
             }
             throw new BadArgumentException("dampening category","Allowed values are: " + builder.toString());
         }
         AlertDampening dampening = new AlertDampening(dampeningCategory);
-        if (adr.getDampeningCount()!=null) {
-            if (adr.getDampeningCount().contains(" ")) {
-                String tmp = adr.getDampeningCount().trim();
-                int num = Integer.parseInt(tmp.substring(0,tmp.indexOf(' ')));
-                tmp = tmp.substring(tmp.lastIndexOf(' ')).trim();
-                dampening.setValue(num);
-                dampening.setValueUnits(AlertDampening.TimeUnits.valueOf(tmp.toUpperCase()));
-            }
-            else {
-                dampening.setValue(Integer.parseInt(adr.getDampeningCount()));
-            }
+        if (adr.getDampeningCount()>-1) {
+            dampening.setValue(adr.getDampeningCount());
         }
-        if (adr.getDampeningPeriod()!=null) {
-            if (adr.getDampeningPeriod().contains(" ")) {
-                String tmp = adr.getDampeningPeriod().trim();
-                int num = Integer.parseInt(tmp.substring(0,tmp.indexOf(' ')));
-                tmp = tmp.substring(tmp.lastIndexOf(' ')).trim();
-                dampening.setPeriod(num);
-                dampening.setPeriodUnits(AlertDampening.TimeUnits.valueOf(tmp.toUpperCase()));
-            }
-            else {
-                dampening.setPeriod(Integer.parseInt(adr.getDampeningPeriod()));
+        if (adr.getDampeningPeriod()>0) {
+            dampening.setPeriod(adr.getDampeningPeriod());
+            try {
+                if (adr.getDampeningUnit()!=null) {
+                    dampening.setPeriodUnits(AlertDampening.TimeUnits.valueOf(adr.getDampeningUnit().toUpperCase()));
+                }
+            } catch (Exception e) {
+                throw new BadArgumentException("dampenign unit", "Allowed values are MINUTES,HOURS,DAYS, WEEKS");
             }
         }
 
@@ -439,8 +453,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         definition2 = entityManager.find(AlertDefinition.class,definitionId);
         AlertCondition condition=null;
         for (AlertCondition c: definition2.getConditions()) {
-            if (c.getId() == conditionId)
+            if (c.getId() == conditionId) {
                 condition=c;
+            }
         }
 
         definition2.getConditions().remove(condition);
@@ -522,8 +537,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         @ApiParam("The id of the condition to retrieve") @PathParam("cid") int conditionId) {
 
         AlertCondition condition = conditionMgr.getAlertConditionById(conditionId);
-        if (condition==null)
+        if (condition==null) {
             throw new StuffNotFoundException("No condition with id " + conditionId);
+        }
         AlertConditionRest acr = conditionToConditionRest(condition);
 
         return Response.ok(acr).build();
@@ -565,8 +581,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         AlertConditionRest result = conditionToConditionRest(createdCondition);
 
         Response.ResponseBuilder builder;
-        if (isCreate)
+        if (isCreate) {
             builder = Response.created(uri);
+        }
         else  {
             builder = Response.ok();
             builder.location(uri);
@@ -583,8 +600,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         @ApiParam("The id of the notification definition to retrieve") @PathParam("nid") int notificationId) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
-        if (notification==null)
+        if (notification==null) {
             throw new StuffNotFoundException("No notification with id " + notificationId);
+        }
         AlertNotificationRest anr = notificationToNotificationRest(notification);
 
         return Response.ok(anr).build();
@@ -618,8 +636,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         @ApiParam("The updated notification definition to use") AlertNotificationRest notificationRest) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
-        if (notification==null)
+        if (notification==null) {
             throw new StuffNotFoundException("No notification with id " + notificationId);
+        }
 
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,notification.getAlertDefinition().getId());
 
@@ -634,8 +653,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         List<AlertNotification> notifications = definition.getAlertNotifications();
         int newNotifId = 0;
         for (AlertNotification n : notifications) {
-            if (n.getSenderName().equals(notification.getSenderName()))
+            if (n.getSenderName().equals(notification.getSenderName())) {
                 newNotifId = n.getId();
+            }
         }
 
         AlertNotification result = notificationMgr.getAlertNotification(caller,newNotifId);
@@ -667,8 +687,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
         // Now check if the definition exists as well
         AlertDefinition definition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
-        if (definition==null)
+        if (definition==null) {
             throw new StuffNotFoundException("AlertDefinition with id " + definitionId);
+        }
 
         // definition and sender are valid, continue
         int existingNotificationCount = definition.getAlertNotifications().size();
@@ -816,10 +837,13 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         adr.setDampeningCategory(dampening.getCategory().name());
         AlertDampening.TimeUnits units = dampening.getValueUnits();
         String s = units != null ? " " + units.name() : "";
-        adr.setDampeningCount(dampening.getValue()  + s);
+        adr.setDampeningCount(dampening.getValue());
         units = dampening.getPeriodUnits();
         s = units != null ? " " + units.name() : "";
-        adr.setDampeningPeriod(dampening.getPeriod() + s);
+        adr.setDampeningPeriod(dampening.getPeriod());
+        if (dampening.getPeriodUnits()!=null) {
+            adr.setDampeningUnit(dampening.getPeriodUnits().name());
+        }
 
         if (def.getResource()!=null) {
             adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.RESOURCE_ALERT_DEF,def.getResource().getId(),adr.getId()));

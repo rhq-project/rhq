@@ -278,6 +278,9 @@ public class InstallerServiceImpl implements InstallerService {
             // Set up the logging subsystem
             ServerInstallUtil.configureLogging(mcc, serverProperties);
 
+            ServerInstallUtil.createUserSecurityDomain(mcc);
+            ServerInstallUtil.createRestSecurityDomain(mcc);
+
             // create a keystore whose cert has a CN of this server's public endpoint address
             File keystoreFile = ServerInstallUtil.createKeystore(serverDetails != null ? serverDetails
                 : getServerDetailsFromPropertiesOnly(serverProperties), appServerConfigDir);
@@ -563,81 +566,6 @@ public class InstallerServiceImpl implements InstallerService {
         return map;
     }
 
-    // This is here only to help users workaround https://issues.jboss.org/browse/AS7-6120.
-    // It will go away once all the issues with expression support in AS7 are fixed.
-    // Notice in this method we only reconfigure some things - only the subsystems/services
-    // that didn't support expressions in their attributes are reconfigured here since it
-    // is those whose values are hardcoded and we must alter to pick up changes to
-    // rhq-server.properties. All other services can pick up the property value changes
-    // make to rhq-server.properties on restart (since rhq-server.properties are system
-    // properties set in the AS7 instance via -P option to AS7).
-    @Override
-    public boolean reconfigure(HashMap<String, String> serverProperties) throws Exception {
-
-        // make sure we can connect using our configuration
-        testModelControllerClient(serverProperties, 30);
-
-        if (null == getInstallationResults()) {
-            log("Run the installer on this server.");
-            return false;
-        }
-
-        String appServerConfigDir = getAppServerConfigDir();
-        ModelControllerClient mcc = null;
-
-        try {
-            mcc = getModelControllerClient();
-
-            // Before we do anything, let's first make sure we really do need to reconfigure something.
-            // Check to see if everything that didn't use expressions is still the same. If so,
-            // just skip everything else and return immediate since there is nothing to do. We don't
-            // even need to reload/restart the server in this case.
-            try {
-                if (ServerInstallUtil.isSameDatasourceSecurityDomainExisting(mcc, serverProperties)) {
-                    if (ServerInstallUtil.isSameMailServiceExisting(mcc, serverProperties)) {
-                        if (ServerInstallUtil.isSameWebConnectorsExisting(mcc, appServerConfigDir, serverProperties)) {
-                            if (ServerInstallUtil.isSameLoggingExisting(mcc, serverProperties)) {
-                                log("Nothing in the configuration changed that requires a reconfig - everything looks OK");
-                                return true; // nothing to do, return immediately
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                log("Cannot determine if the config is the same, will reconfigure just in case", e);
-            }
-
-            // first, put the server in admin-only mode so we can start changing things around
-            CoreJBossASClient coreClient = new CoreJBossASClient(mcc);
-            coreClient.reload(true);
-
-            // not sure if we have to, but see if we need to wait for the reload to finish
-            testModelControllerClient(30);
-
-            mcc = getModelControllerClient(); // get a new controller
-
-            // create the security domain needed by the datasources
-            ServerInstallUtil.createDatasourceSecurityDomain(mcc, serverProperties);
-
-            // setup the email service
-            ServerInstallUtil.setupMailService(mcc, serverProperties);
-
-            // setup the secure Tomcat web connectors
-            ServerInstallUtil.setupWebConnectors(mcc, appServerConfigDir, serverProperties);
-
-            // setup the logging level
-            ServerInstallUtil.configureLogging(mcc, serverProperties);
-
-            // now restart - don't just reload, some of our stuff won't restart properly if we just reload
-            coreClient = new CoreJBossASClient(mcc);
-            coreClient.restart();
-        } finally {
-            safeClose(mcc);
-        }
-
-        return true;
-    }
-
     /**
      * Makes sure the data is at least in the correct format (booleans are true/false, integers are valid numbers).
      *
@@ -676,7 +604,7 @@ public class InstallerServiceImpl implements InstallerService {
      * Save the given properties to the server's .properties file.
      *
      * Note that this is private - it is not exposed to the installer UI. It should have no need to save
-     * this data outside of the normal installation process (see {@link #install()}).
+     * this data outside of the normal installation process (see {@link #install}).
      *
      * @param serverProperties the server properties to save
      * @throws Exception if failed to save the properties to the .properties file
@@ -1088,9 +1016,6 @@ public class InstallerServiceImpl implements InstallerService {
             // create the security domain needed by the datasources
             ServerInstallUtil.createDatasourceSecurityDomain(mcc, serverProperties);
 
-            // create the security domain needed by REST
-            ServerInstallUtil.createRESTSecurityDomain(mcc, serverProperties);
-
             // set up REST cache
             ServerInstallUtil.createNewCaches(mcc, serverProperties);
 
@@ -1108,6 +1033,9 @@ public class InstallerServiceImpl implements InstallerService {
 
             // we don't want to the JBossAS welcome screen; turn it off
             new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
+
+            // we don't want users to access the admin console
+            new CoreJBossASClient(mcc).setEnableAdminConsole(false);
 
         } catch (Exception e) {
             log("deployServices failed", e);

@@ -55,7 +55,6 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.monitoring.IFrameWithMeasurementRangeEditorView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.event.EventCompositeHistoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.HistoryGroupResourceConfigurationView;
@@ -101,7 +100,6 @@ public class ResourceGroupDetailView extends
     // subtabs
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
-    private SubTab monitorGraphs;
     private SubTab monitorNewGraphs;
     private SubTab monitorTables;
     private SubTab monitorTraits;
@@ -193,14 +191,13 @@ public class ResourceGroupDetailView extends
 
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
-        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
-        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", "d3 Graphs"), null);
+        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
         monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
 
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorNewGraphs, monitorTables, monitorTraits, monitorSched,
+        monitoringTab.registerSubTabs( monitorNewGraphs, monitorTables, monitorTraits, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 
@@ -273,25 +270,19 @@ public class ResourceGroupDetailView extends
         if (updateTab(this.monitoringTab, visible, true)) {
             final EntityContext groupContext = EntityContext.forGroup(groupComposite.getResourceGroup());
             visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
-            viewFactory = (!visible) ? null : new ViewFactory() {
-                @Override
-                public Canvas createView() {
-                    String url = "/rhq/group/monitor/graphs-plain.xhtml?groupId=" + groupId;
+            boolean showOnPage;
 
-                    if (groupContext.isAutoGroup()) {
-                        url += "&parent=" + groupContext.parentResourceId + "&type=" + groupContext.resourceTypeId
-                            + "&groupType=auto";
-                    } else if (groupContext.isAutoCluster()) {
-                        url += "&groupType=cluster";
-                    }
-                    return new IFrameWithMeasurementRangeEditorView(url);
+            if(BrowserUtility.isBrowserPreIE9()){
+                showOnPage = false;
+            }else{
+                if(visible) {
+                    showOnPage = true;
+                }else {
+                    showOnPage = false;
                 }
-            };
-            updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
+            }
 
-            boolean visibleToIE8 = BrowserUtility.isBrowserPreIE9();
-
-            viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
+            viewFactory = (!showOnPage) ? null : new ViewFactory() {
                 @Override
                 public Canvas createView() {
                     return createD3GraphListView();
@@ -493,10 +484,8 @@ public class ResourceGroupDetailView extends
 
                                     @Override
                                     public void onSuccess(Subject result) {
-                                        if (Log.isDebugEnabled()) {
-                                            Log.debug("Updated recently viewed resource groups for " + result
+                                        Log.debug("Updated recently viewed resource groups for " + result
                                                 + " with resourceGroupId [" + groupId + "]");
-                                        }
                                     }
                                 });
                         }

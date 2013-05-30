@@ -52,10 +52,10 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 public class SetCallerInterceptor {
 
     @Resource
-    EJBContext ejbContext;
+    private EJBContext ejbContext;
 
     @EJB
-    SubjectManagerLocal subjectManager;
+    private SubjectManagerLocal subjectManager;
 
     private SessionManager sessionManager = SessionManager.getInstance();
 
@@ -76,8 +76,9 @@ public class SetCallerInterceptor {
             caller = subjectManager.getSubjectByName(p.getName());
         }
 
-        if (caller==null)
+        if (caller==null) {
             throw new IllegalAccessException("No calling principal provided");
+        }
 
         // Get Subject with a session
         caller = sessionManager.put(caller);

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.plugins.alertSnmp;
 
@@ -72,6 +72,7 @@ import org.snmp4j.util.PDUFactory;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.util.StringUtil;
 
 /**
  * @author Ian Springer
@@ -135,12 +136,13 @@ public class SnmpTrapSender implements PDUFactory {
     }
 
     private void checkTrapVariables(List<VariableBinding> vbs) {
-
+        // Only on SNMP v2c or v3 trap
         if ((pduType == PDU.INFORM) || (pduType == PDU.TRAP)) {
+            // Insert sysUpTime OID if not already present
             if ((vbs.size() == 0) || ((vbs.size() >= 1) && (!(vbs.get(0)).getOid().equals(SnmpConstants.sysUpTime)))) {
                 vbs.add(0, new VariableBinding(SnmpConstants.sysUpTime, sysUpTime));
             }
-
+            // Insert trap OID if not already present
             if ((vbs.size() == 1) || ((vbs.size() >= 2) && (!(vbs.get(1)).getOid().equals(SnmpConstants.snmpTrapOID)))) {
                 vbs.add(1, new VariableBinding(SnmpConstants.snmpTrapOID, trapOID));
             }
@@ -469,27 +471,28 @@ public class SnmpTrapSender implements PDUFactory {
             return "SNMP is not enabled.";
         }
 
-        String baseOid = alertParameters.getSimpleValue("oid",null);
+        String variableBindingPrefix = alertParameters.getSimpleValue(SnmpInfo.PARAM_VARIABLE_BINDING_PREFIX, null);
 
         // TODO add a request id and a timestamp
 
         this.address = createAddress(alertParameters);
         // bind the alert definitions name on the oid set in the alert
-        getVariableBindings(baseOid + ".1" + "={s}" + alert.getAlertDefinition().getName());
+        getVariableBindings(variableBindingPrefix + ".1" + "={s}" + alert.getAlertDefinition().getName());
         // the resource the alert was defined on
-        getVariableBindings(baseOid + ".2" + "={s}" + alert.getAlertDefinition().getResource().getName());
+        getVariableBindings(variableBindingPrefix + ".2" + "={s}" + alert.getAlertDefinition().getResource().getName());
         // the platform this resource is on
-        getVariableBindings(baseOid + ".3" + "={s}" + platformName);
+        getVariableBindings(variableBindingPrefix + ".3" + "={s}" + platformName);
         // the conditions of this alert
-        getVariableBindings(baseOid + ".4" + "={s}" + conditions);
+        getVariableBindings(variableBindingPrefix + ".4" + "={s}" + conditions);
         // severity of the alert
-        getVariableBindings(baseOid + ".5" + "={s}" + alert.getAlertDefinition().getPriority().toString().toLowerCase());
+        getVariableBindings(variableBindingPrefix + ".5" + "={s}" + alert.getAlertDefinition().getPriority().toString().toLowerCase());
         // url of the alert detail
-        getVariableBindings(baseOid + ".6" + "={s}" + alertUrl);
+        getVariableBindings(variableBindingPrefix + ".6" + "={s}" + alertUrl);
         // hierarchy of the resource on alert
-        getVariableBindings(baseOid + ".7" + "={s}" + hierarchy);
+        getVariableBindings(variableBindingPrefix + ".7" + "={s}" + hierarchy);
 
         setSysUpTimeFromBootTime(bootTime); // needs to be called before checkTrapVariables();
+        setTrapOIDFromAlertParameters(alertParameters); // needs to be called before checkTrapVariables();
         checkTrapVariables(this.vbs);
         try {
             PDU response = send();
@@ -531,6 +534,13 @@ public class SnmpTrapSender implements PDUFactory {
             delta = 0;
         setSysUpTime(new TimeTicks(delta / 1000)); // TT is 100th of a second TODO : fix this !!!
 
+    }
+
+    private void setTrapOIDFromAlertParameters(Configuration alertParameters) {
+        String trapOid = alertParameters.getSimpleValue(SnmpInfo.PARAM_TRAP_OID, null);
+        if (StringUtil.isNotBlank(trapOid)) {
+            setTrapOID(new OID(trapOid));
+        }
     }
 
     private boolean init() {

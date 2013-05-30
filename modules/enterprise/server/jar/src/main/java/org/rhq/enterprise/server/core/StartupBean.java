@@ -95,12 +95,12 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * This startup singleton EJB performs the rest of the RHQ Server startup initialization.
  * In order for it to do its work properly, we must ensure everything has been deployed and started;
  * specifically, all EJBs must have been deployed and available.
- * 
+ *
  * This bean is not meant for client consumption - it is only for startup initialization.
  */
 @Singleton
 //@Startup // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
-public class StartupBean {
+public class StartupBean implements StartupLocal {
     private Log log = LogFactory.getLog(this.getClass());
 
     private boolean initialized = false;
@@ -138,13 +138,16 @@ public class StartupBean {
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
 
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public boolean isInitialized() {
+        return this.initialized;
+    }
+
     /**
      * Modifies the naming subsystem to be able to check for Java security permissions on JNDI lookup.
-     * <p>
-     * Made public so that this can be reused in tests.
      */
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    public void secureNaming() {
+    private void secureNaming() {
         NamingHack.bruteForceInitialContextFactoryBuilder();
     }
 
@@ -192,7 +195,7 @@ public class StartupBean {
         initScheduler(); // make sure this is initialized before starting the plugin deployer
         startPluginDeployer(); // make sure this is initialized before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
-        installJaasModules();
+        upgradeRhqUserSecurityDomainIfNeeded();
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
@@ -393,8 +396,7 @@ public class StartupBean {
      *
      * @throws RuntimeException
      */
-    private void installJaasModules() throws RuntimeException {
-        log.info("Installing JAAS login modules...");
+    private void upgradeRhqUserSecurityDomainIfNeeded() throws RuntimeException {
 
         try {
             CustomJaasDeploymentServiceMBean jaas_mbean;
@@ -403,9 +405,9 @@ public class StartupBean {
             Class<?> iface = CustomJaasDeploymentServiceMBean.class;
             jaas_mbean = (CustomJaasDeploymentServiceMBean) MBeanServerInvocationHandler.newProxyInstance(mbs, name,
                 iface, false);
-            jaas_mbean.installJaasModules();
+            jaas_mbean.upgradeRhqUserSecurityDomainIfNeeded();
         } catch (Exception e) {
-            throw new RuntimeException("Cannot install JAAS login modules!", e);
+            throw new RuntimeException("Cannot upgrade JAAS login modules!", e);
         }
     }
 
@@ -629,7 +631,7 @@ public class StartupBean {
             log.error("Cannot schedule server plugin jobs.", e);
         }
 
-        // Alerting Availability Duration Job (create only, nothing actually scheduled here) 
+        // Alerting Availability Duration Job (create only, nothing actually scheduled here)
         try {
             schedulerBean.scheduleTriggeredJob(AlertAvailabilityDurationJob.class, false, null);
         } catch (Exception e) {
@@ -644,7 +646,7 @@ public class StartupBean {
      * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
      * at a time when the server is ready to accept messages from agents because any guaranteed messages that are
      * delivered might trigger the agents to send messages back to the server.
-     * 
+     *
      * NOTE: we don't need to do this - so far, none of the messages the server sends to the agent are marked
      * with "guaranteed delivery" (this is on purpose and a good thing) so we don't need to start all the agent clients
      * in case they have persisted messages. Since the number of agents could be large this cache could be huge and
@@ -670,7 +672,7 @@ public class StartupBean {
      * Starts the embedded agent, but only if the embedded agent is installed and it is enabled.
      *
      * @throws RuntimeException if the agent is installed and enabled but failed to start
-     * 
+     *
      * @deprecated we don't have an embedded agent anymore, leaving this in case we resurrect it
      */
     private void startEmbeddedAgent() throws RuntimeException {

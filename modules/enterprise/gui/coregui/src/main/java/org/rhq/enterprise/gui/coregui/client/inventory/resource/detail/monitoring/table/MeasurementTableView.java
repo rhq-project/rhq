@@ -146,55 +146,8 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
             }
         });
 
-        //@todo: delete once satisfied with d3 chart verification
-        //add chart selected metric action
+
         addTableAction(MSG.view_measureTable_chartMetricValues(), new TableAction() {
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return selection != null && selection.length > 0;
-            }
-
-            @Override
-            public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                if (selection == null || selection.length == 0) {
-                    return;
-                }
-                // keyed on metric name - string[0] is the metric label, [1] is the units
-                final HashMap<String, String[]> scheduleNamesAndUnits = new HashMap<String, String[]>();
-                int[] definitionIds = new int[selection.length];
-                int i = 0;
-                for (ListGridRecord record : selection) {
-                    Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                    definitionIds[i++] = defId.intValue();
-
-                    String name = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_NAME);
-                    String label = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_LABEL);
-                    String units = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_UNITS);
-                    if (units == null || units.length() < 1) {
-                        units = MeasurementUnits.NONE.name();
-                    }
-
-                    scheduleNamesAndUnits.put(name, new String[] { label, units });
-                }
-
-                //build portal.war chart page to iFrame
-                String destination = "/resource/common/monitor/Visibility.do?mode=chartMultiMetricSingleResource&id="
-                    + resourceId;
-                for (int mId : definitionIds) {
-                    destination += "&m=" + mId;
-                }
-                ChartViewWindow window = new ChartViewWindow("");
-                //generate and include iframed content
-                FullHTMLPane iframe = new FullHTMLPane(destination);
-                window.addItem(iframe);
-                window.show();
-                refreshTableInfo();
-            }
-        });
-
-        // new d3 chart selection
-        //@todo: i18n when we remove gflot graphs
-        addTableAction("d3 Chart Selection", new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return selection != null && selection.length > 0;

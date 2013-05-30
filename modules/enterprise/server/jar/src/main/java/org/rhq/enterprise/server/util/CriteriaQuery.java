@@ -27,7 +27,6 @@ import java.util.NoSuchElementException;
 import org.rhq.core.domain.criteria.BaseCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.PageOrdering;
 
 /** This class provides a way to make PageList results easily iterable with 'for each','while',etc. loops
  *  and importantly automatically handles iteration through all PageControl results.  This 
@@ -62,17 +61,6 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
     public CriteriaQuery(C criteria, CriteriaQueryExecutor<T, C> queryExecutor) {
         this.criteria = criteria;
         this.queryExecutor = queryExecutor;
-
-        // make sure we have at least a default sort, otherwise chunking doesn't work
-        PageControl pageControlOverrides = this.criteria.getPageControlOverrides();
-        if (null != pageControlOverrides) {
-            if (pageControlOverrides.getOrderingFields().isEmpty()) {
-                pageControlOverrides.addDefaultOrderingField("id");
-            }
-
-        } else if (this.criteria.getOrderingFieldNames().isEmpty()) {
-            this.criteria.addSortId(PageOrdering.ASC);
-        }
     }
 
     /** Returns iterator for a single page of results as defined by
@@ -110,7 +98,8 @@ public class CriteriaQuery<T, C extends BaseCriteria> implements Iterable<T> {
         public QueryResultsIterator(PageList<T> firstPage) {
             currentPage = firstPage;
             iterator = currentPage.iterator();
-            count = firstPage == null || firstPage.getPageControl() == null ? 0 : firstPage.getPageControl().getStartRow();
+            count = firstPage == null || firstPage.getPageControl() == null ? 0 : firstPage.getPageControl()
+                .getStartRow();
         }
 
         @Override

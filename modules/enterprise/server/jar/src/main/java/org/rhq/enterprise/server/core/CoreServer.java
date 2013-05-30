@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
@@ -69,6 +71,24 @@ public class CoreServer implements CoreServerMBean {
      */
     private static final String PROP_BUILD_DATE = "Build-Date";
 
+    private static class SecurityActions {
+        private SecurityActions() {
+
+        }
+
+        private static ModelControllerClient getModelControllerClient() {
+            if (System.getSecurityManager() == null) {
+                return ManagementService.getClient();
+            } else {
+                return AccessController.doPrivileged(new PrivilegedAction<ModelControllerClient>() {
+                    @Override
+                    public ModelControllerClient run() {
+                        return ManagementService.getClient();
+                    }
+                });
+            }
+        }
+    }
     private Properties buildProps;
 
     private Date bootTime;
@@ -136,7 +156,10 @@ public class CoreServer implements CoreServerMBean {
 
     @Override
     public File getEarDeploymentDir() {
-        ModelControllerClient mcc = ManagementService.getClient();
+        //Getting model controller client requires privs our callers might not have, but we want to provide this
+        //function even to them.
+        ModelControllerClient mcc = SecurityActions.getModelControllerClient();
+
         try {
             DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
             String earPath = client.getDeploymentPath(RHQConstants.EAR_FILE_NAME);

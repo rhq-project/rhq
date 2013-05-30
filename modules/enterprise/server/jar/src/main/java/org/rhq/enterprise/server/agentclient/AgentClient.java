@@ -72,37 +72,37 @@ public interface AgentClient {
 
     BundleAgentService getBundleAgentService();
 
-    BundleAgentService getBundleAgentService(long timeout);
+    BundleAgentService getBundleAgentService(Long timeout);
 
     ContentAgentService getContentAgentService();
 
-    ContentAgentService getContentAgentService(long timeout);
+    ContentAgentService getContentAgentService(Long timeout);
 
     ResourceFactoryAgentService getResourceFactoryAgentService();
 
-    ResourceFactoryAgentService getResourceFactoryAgentService(long timeout);
+    ResourceFactoryAgentService getResourceFactoryAgentService(Long timeout);
 
     DiscoveryAgentService getDiscoveryAgentService();
 
-    DiscoveryAgentService getDiscoveryAgentService(long timeout);
+    DiscoveryAgentService getDiscoveryAgentService(Long timeout);
 
     MeasurementAgentService getMeasurementAgentService();
 
-    MeasurementAgentService getMeasurementAgentService(long timeout);
+    MeasurementAgentService getMeasurementAgentService(Long timeout);
 
     OperationAgentService getOperationAgentService();
 
-    OperationAgentService getOperationAgentService(long timeout);
+    OperationAgentService getOperationAgentService(Long timeout);
 
     ConfigurationAgentService getConfigurationAgentService();
 
-    ConfigurationAgentService getConfigurationAgentService(long timeout);
+    ConfigurationAgentService getConfigurationAgentService(Long timeout);
 
     SupportAgentService getSupportAgentService();
 
-    SupportAgentService getSupportAgentService(long timeout);
+    SupportAgentService getSupportAgentService(Long timeout);
 
     DriftAgentService getDriftAgentService();
 
-    DriftAgentService getDriftAgentService(long timeout);
+    DriftAgentService getDriftAgentService(Long timeout);
 }

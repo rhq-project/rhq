@@ -41,6 +41,7 @@ public class BackButton extends StretchImgButton {
     public BackButton(String title, final String anchor) {
         this();
         setTitle("<b>" + title + "</b>");
+        setID("backButton");
         addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 CoreGUI.goToView(anchor);

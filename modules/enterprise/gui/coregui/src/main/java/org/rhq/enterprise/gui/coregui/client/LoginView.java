@@ -67,11 +67,10 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -572,6 +571,8 @@ public class LoginView extends Canvas {
     private void handleError(int statusCode) {
         if (statusCode == 401) {
             form.setFieldErrors("login", MSG.view_login_noUser(), true);
+        } else if (statusCode == 503) {
+            form.setFieldErrors("login", MSG.view_core_serverInitializing(), true);
         } else {
             form.setFieldErrors("login", MSG.view_login_noBackend(), true);
         }

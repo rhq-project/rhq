@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+
+<project name="bundle-dotdot" default="main" xmlns:rhq="antlib:org.rhq.bundle">
+
+    <rhq:bundle name="bundle-dotdot" version="1.0"
+                description="testing raw files with .. in their destination paths">
+
+        <rhq:deployment-unit name="bundle">
+            <rhq:file name="test1.txt" destinationFile="nothere/../phantom/../subdir/test1.txt" /> <!-- still under dest dir -->
+            <rhq:file name="test2.txt" destinationDir="nothere/../" /> <!-- still under dest dir -->
+            <rhq:file name="test3.txt" destinationFile="../ext/test3.txt" /> <!-- external location outside dest dir-->
+            <rhq:file name="test4.txt" destinationDir="../ext" /> <!-- external location outside dest dir-->
+        </rhq:deployment-unit>
+
+    </rhq:bundle>
+
+    <target name="main"/>
+
+</project>

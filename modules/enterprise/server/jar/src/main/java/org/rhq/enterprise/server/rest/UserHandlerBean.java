@@ -74,8 +74,6 @@ import org.rhq.enterprise.server.rest.domain.UserRest;
 @Stateless
 public class UserHandlerBean extends AbstractRestBean {
 
-    //    private final Log log = LogFactory.getLog(UserHandlerBean.class);
-
     /**
      * List of favorite {@link org.rhq.core.domain.resource.Resource} id's, delimited by '|' characters. Default is "".
      */
@@ -88,10 +86,10 @@ public class UserHandlerBean extends AbstractRestBean {
     public static final String GROUP_HEALTH_GROUPS = ".dashContent.grouphealth.groups";
 
     @EJB
-    SubjectManagerLocal subjectManager;
+    private SubjectManagerLocal subjectManager;
 
     @EJB
-    ResourceManagerLocal resourceManager;
+    private ResourceManagerLocal resourceManager;
 
     @GZIP
     @GET
@@ -112,10 +110,12 @@ public class UserHandlerBean extends AbstractRestBean {
                 ResourceWithType rwt = fillRWT(res, uriInfo);
                 ret.add(rwt);
             } catch (Exception e) {
-                if (e instanceof ResourceNotFoundException)
+                if (e instanceof ResourceNotFoundException) {
                     log.debug("Favorite resource with id " + id + " not found - not returning to the user");
-                else
+                }
+                else {
                     log.warn("Retrieving resource with id " + id + " failed: " + e.getLocalizedMessage());
+                }
             }
         }
         Response.ResponseBuilder builder;
@@ -151,11 +151,12 @@ public class UserHandlerBean extends AbstractRestBean {
                 ResourceGroup res = resourceGroupManager.getResourceGroup(caller, id);
                 GroupRest rwt = fillGroup(res, uriInfo);
                 ret.add(rwt);
-            } catch (Exception e) {
-                if (e instanceof ResourceGroupNotFoundException)
-                    log.debug("Favorite group with id " + id + " not found - not returning to the user");
-                else
-                    log.warn("Retrieving group with id " + id + " failed: " + e.getLocalizedMessage());
+            }
+            catch (ResourceGroupNotFoundException e) {
+                log.debug("Favorite group with id " + id + " not found - not returning to the user");
+            }
+            catch (Exception e) {
+                log.warn("Retrieving group with id " + id + " failed: " + e.getLocalizedMessage());
             }
         }
         Response.ResponseBuilder builder;
@@ -222,8 +223,8 @@ public class UserHandlerBean extends AbstractRestBean {
     @Path("favorites/group/{id}")
     @ApiOperation(value = "Remove a group from favorites")
     public void removeResourceGroupFromFavorites(@ApiParam(name = "id", value = "Id of the group")
-    @PathParam("id")
-    int id) {
+            @PathParam("id") int id) {
+
         Set<Integer> favIds = getGroupIdsForFavorites();
         if (favIds.contains(id)) {
             favIds.remove(id);
@@ -242,8 +243,9 @@ public class UserHandlerBean extends AbstractRestBean {
     HttpHeaders headers) {
 
         Subject subject = subjectManager.getSubjectByName(loginName);
-        if (subject == null)
+        if (subject == null) {
             throw new StuffNotFoundException("User with login " + loginName);
+        }
 
         EntityTag eTag = new EntityTag(Long.toOctalString(subject.hashCode()));
         Response.ResponseBuilder builder = request.evaluatePreconditions(eTag);
@@ -273,7 +275,8 @@ public class UserHandlerBean extends AbstractRestBean {
         PropertySimple prop = conf.getSimple(RESOURCE_HEALTH_RESOURCES);
         if (prop == null) {
             conf.put(new PropertySimple(RESOURCE_HEALTH_RESOURCES, builder.toString()));
-        } else {
+        }
+        else {
             prop.setStringValue(builder.toString());
         }
         caller.setUserConfiguration(conf);
@@ -290,7 +293,8 @@ public class UserHandlerBean extends AbstractRestBean {
         PropertySimple prop = conf.getSimple(GROUP_HEALTH_GROUPS);
         if (prop == null) {
             conf.put(new PropertySimple(GROUP_HEALTH_GROUPS, builder.toString()));
-        } else {
+        }
+        else {
             prop.setStringValue(builder.toString());
         }
         caller.setUserConfiguration(conf);
@@ -308,13 +312,22 @@ public class UserHandlerBean extends AbstractRestBean {
 
     private Set<Integer> getGroupIdsForFavorites() {
         Configuration conf = caller.getUserConfiguration();
-        if (conf==null)
+        if (conf==null) {
             return  new HashSet<Integer>();
+        }
         String favsString = conf.getSimpleValue(GROUP_HEALTH_GROUPS, "");
         Set<Integer> favIds = getIdsFromFavString(favsString);
         return favIds;
     }
 
+    /**
+     * Parse the String with favorites.
+     * The list of favorites is stored in the server as a list
+     * of ids separated by a pipe '|' character.
+     *
+     * @param favsString String as stored in for the user
+     * @return Set of ids of the favorites
+     */
     private Set<Integer> getIdsFromFavString(String favsString) {
         Set<Integer> favIds = new TreeSet<Integer>();
         if (!favsString.isEmpty()) {
@@ -326,13 +339,21 @@ public class UserHandlerBean extends AbstractRestBean {
         return favIds;
     }
 
+    /**
+     * Create the String with favorites to store for the user
+     * The list of favorites is stored in the server as a list
+     * of ids separated by a pipe '|' character
+     * @param favIds Set of favorite ids
+     * @return String representation
+     */
     private StringBuilder buildFavStringFromSet(Set<Integer> favIds) {
         StringBuilder builder = new StringBuilder();
         Iterator<Integer> iter = favIds.iterator();
         while (iter.hasNext()) {
             builder.append(iter.next());
-            if (iter.hasNext())
+            if (iter.hasNext()) {
                 builder.append('|');
+            }
         }
         return builder;
     }

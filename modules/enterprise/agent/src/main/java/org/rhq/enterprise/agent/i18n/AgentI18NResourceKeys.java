@@ -28,6 +28,12 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "agent-messages", defaultLocale = "en")
 public interface AgentI18NResourceKeys {
+    @I18NMessage("Failed to move old cert file [{0}] to new default location [{1}] - agent communication may fail!")
+    String CERT_FILE_COPY_ERROR = "AgentConfiguration.cert-file-copy-error";
+
+    @I18NMessage("Explicitly setting file location [{0}] to [{1}]")
+    String CERT_FILE_LOCATION = "AgentConfiguration.cert-file-location";
+
     @I18NMessage("The configured server alias [{0}] cannot be resolved - will use localhost address. Cause: {1}")
     String SERVER_ALIAS_UNKNOWN = "AgentConfiguration.server-alias-unknown";
 

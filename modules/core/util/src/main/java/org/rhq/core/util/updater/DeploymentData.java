@@ -30,6 +30,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 import org.rhq.core.template.TemplateEngine;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * Data that describes a particular deployment. In effect, this provides the
@@ -114,7 +115,7 @@ public class DeploymentData {
         this.deploymentProps = deploymentProps;
         this.zipFiles = zipFiles;
         this.rawFiles = rawFiles;
-        this.destinationDir = destinationDir;
+        this.destinationDir = getCanonicalFile(destinationDir);
         this.sourceDir = sourceDir;
         this.ignoreRegex = ignoreRegex;
         this.manageRootDir = manageRootDir;
@@ -129,6 +130,69 @@ public class DeploymentData {
             this.zipEntriesToRealizeRegex = zipEntriesToRealizeRegex;
             this.rawFilesToRealize = rawFilesToRealize;
             this.templateEngine = templateEngine;
+        }
+
+        // We need to "normalize" all raw file paths that have ".." in them to ensure everything works properly.
+        // Any raw file pathname (the values in this.rawFiles) that needs to be normalized will be converted to
+        // a canonical path. Note that any pathname that is relative but have ".." paths that end up taking the file
+        // above the destination directory needs to be normalized and will end up being an absolute path
+        // (so all log messages will indicate the full absolute path and if the file
+        // needs to be backed up it will be backed up as if it was an external file that was specified with an absolute path).
+        // If the relative path has ".." but does not take the file above the destination directory will simply have its ".."
+        // normalized out but will still be a relative path (relative to destination directory) (we can't make it absolute
+        // otherwise Deployer's update will run into errors while backing up and scanning for deleted files).
+        // See BZ 917085.
+        for (Map.Entry<File, File> entry : this.rawFiles.entrySet()) {
+            File rawFile = entry.getValue();
+            String rawFilePath = rawFile.getPath();
+
+            boolean doubledot = rawFilePath.replace('\\', '/').matches(".*((/\\.\\.)|(\\.\\./)).*"); // finds "/.." or "../" in the string
+
+            if (doubledot) {
+                File fileToCanonicalize;
+
+                if (rawFile.isAbsolute()) {
+                    fileToCanonicalize = rawFile;
+                } else {
+                    boolean isWindows = (File.separatorChar == '\\');
+                    if (isWindows) {
+                        // of course, Windows has to make it enormously difficult to do this right...
+
+                        // determine if the windows rawFile relative path specified a drive (e.g. C:foobar.txt)
+                        StringBuilder rawFilePathBuilder = new StringBuilder(rawFilePath);
+                        String rawFileDriveLetter = FileUtil.stripDriveLetter(rawFilePathBuilder); // rawFilePathBuilder now has drive letter stripped
+
+                        // determine what, if any, drive letter is specified in the destination directory
+                        StringBuilder destDirAbsPathBuilder = new StringBuilder(this.destinationDir.getAbsolutePath());
+                        String destDirDriveLetter = FileUtil.stripDriveLetter(destDirAbsPathBuilder);
+
+                        // figure out what the absolute, normalized path is for the raw file
+                        if ((destDirDriveLetter == null || rawFileDriveLetter == null)
+                            || rawFileDriveLetter.equals(destDirDriveLetter)) {
+                            fileToCanonicalize = new File(this.destinationDir, rawFilePathBuilder.toString());
+                        } else {
+                            throw new IllegalArgumentException("Cannot normalize relative path [" + rawFilePath
+                                + "]; its drive letter is different than the destination directory ["
+                                + this.destinationDir.getAbsolutePath() + "]");
+                        }
+                    } else {
+                        fileToCanonicalize = new File(this.destinationDir, rawFilePath);
+                    }
+                }
+
+                fileToCanonicalize = getCanonicalFile(fileToCanonicalize);
+
+                if (isPathUnderBaseDir(this.destinationDir, fileToCanonicalize)) {
+                    // we can keep rawFile path relative, but we need to normalize out the ".." paths
+                    String baseDir = this.destinationDir.getAbsolutePath();
+                    String absRawFilePath = fileToCanonicalize.getAbsolutePath();
+                    String canonicalRelativePath = absRawFilePath.substring(baseDir.length() + 1); // should always return a valid path; if not, let it throw exception (which likely means there is a bug here)
+                    entry.setValue(new File(canonicalRelativePath));
+                } else {
+                    // raw file path has ".." such that the file is really above destination dir - use an absolute, canonical path
+                    entry.setValue(fileToCanonicalize);
+                }
+            }
         }
 
         return;
@@ -176,5 +240,31 @@ public class DeploymentData {
 
     public Map<File, Boolean> getZipsExploded() {
         return zipsExploded;
+    }
+
+    private File getCanonicalFile(File file) {
+        try {
+            file = file.getCanonicalFile();
+        } catch (Exception e) {
+            // ignore this - this really should never happen, but if it does,
+            // we want to continue and hope using the non-normalized file is ok;
+            file = file.getAbsoluteFile();
+        }
+        return file;
+    }
+
+    private boolean isPathUnderBaseDir(File base, File path) {
+        // this method assumes base and path are absolute and canonical
+        if (base == null) {
+            return false;
+        }
+
+        while (path != null) {
+            if (base.equals(path)) {
+                return true;
+            }
+            path = path.getParentFile();
+        }
+        return false;
     }
 }

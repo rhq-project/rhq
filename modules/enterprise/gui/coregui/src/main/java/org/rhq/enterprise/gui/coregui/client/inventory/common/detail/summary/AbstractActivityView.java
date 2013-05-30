@@ -634,7 +634,7 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
             setIsModal(true);
             setShowModalMask(true);
             setWidth(950);
-            setHeight(350);
+            setHeight(370);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();

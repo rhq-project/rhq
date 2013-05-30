@@ -40,6 +40,7 @@ import static com.jayway.restassured.RestAssured.given;
 public abstract class AbstractBase {
 
     static final String APPLICATION_JSON = "application/json";
+    static final String WRAPPED_JSON = "application/vnd.rhq.wrapped+json";
     private static final String APPLICATION_XML = "application/xml";
     private static final String TEXT_CSV = "text/csv";
     private static final String TEXT_HTML = "text/html";
@@ -48,6 +49,7 @@ public abstract class AbstractBase {
     static Header acceptXml = new Header("Accept", APPLICATION_XML);
     static Header acceptHtml = new Header("Accept", TEXT_HTML);
     static Header acceptCsv = new Header("Accept", TEXT_CSV);
+    static Header acceptWrappedJson = new Header("Accept",WRAPPED_JSON);
 
     int _platformId ;
     int _platformTypeId;
@@ -98,8 +100,7 @@ public abstract class AbstractBase {
 
         if (res!=null && res.get(0)!=null) {
 
-            String tmp = ((Map <String,String>)res.get(0)).get("resourceId");
-            int pid =Integer.valueOf(tmp);
+            Integer pid  = ((Map <String,Integer>)res.get(0)).get("resourceId");
 
             given()
                 .pathParam("id", pid)
@@ -125,9 +126,9 @@ public abstract class AbstractBase {
         assert res != null;
         for (Object entry : res) {
             if (entry instanceof Map) {
-                Map<String,String> map = (Map<String, String>) entry;
+                Map<String,Object> map = (Map<String, Object>) entry;
                 if (!map.get("resourceName").equals(REST_TEST_DUMMY)) {
-                    return Integer.valueOf(map.get("resourceId"));
+                    return (Integer)map.get("resourceId");
                 }
             }
         }

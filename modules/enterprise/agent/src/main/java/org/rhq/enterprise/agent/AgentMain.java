@@ -1376,6 +1376,7 @@ public class AgentMain {
                                 try {
                                     AgentRegistrationResults results = remote_pojo.registerAgent(request);
                                     failover_list = results.getFailoverList();
+                                    token = results.getAgentToken(); // make sure our finally block gets this - BZ 963982
 
                                     // Try to do a simple connect to each server in the failover list
                                     // If only some of the servers are unreachable, just keep going;
@@ -1407,7 +1408,6 @@ public class AgentMain {
                                     m_registration = results;
                                     got_registered = true;
                                     retry = false;
-                                    token = results.getAgentToken();
                                     LOG.info(AgentI18NResourceKeys.AGENT_REGISTRATION_RESULTS, results);
                                 } finally {
                                     // stores the new one if successful; restores the old one if we failed for some reason to register
@@ -2313,6 +2313,9 @@ public class AgentMain {
      * @throws Exception if any error causes the startup to fail
      */
     private void startCommServices(BootstrapLatchCommandListener listener) throws Exception {
+        // BZ 951382 - if any locations for keystore/truststore are not configured, set our own defaults to the conf/ directory
+        assignDefaultLocationToKeystoreTruststoreFiles();
+
         // create our client sender so we can send commands to our server
         // do this before we create our auto-discovery listener and start the server-side services
         // since it will be needed by the listener very quickly if the server is already online
@@ -2343,6 +2346,41 @@ public class AgentMain {
         if (!isAutoDiscoveryEnabled()) {
             LOG.info(AgentI18NResourceKeys.NO_AUTO_DETECT);
             m_clientSender.startServerPolling();
+        }
+
+        return;
+    }
+
+    private void assignDefaultLocationToKeystoreTruststoreFiles() {
+        File confDir = new File("conf");
+        if (!confDir.exists()) {
+            return; // conf/ doesn't exist (perhaps we are running in a test?) - do nothing and just fallback to the standard defaults
+        }
+
+        String prefNamesFileNames[][] = {
+            { ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_FILE,
+                ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_SECURITY_KEYSTORE_FILE_NAME },
+            { ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_FILE,
+                ServiceContainerConfigurationConstants.DEFAULT_CONNECTOR_SECURITY_TRUSTSTORE_FILE_NAME },
+            { AgentConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_FILE,
+                AgentConfigurationConstants.DEFAULT_CLIENT_SENDER_SECURITY_KEYSTORE_FILE_NAME },
+            { AgentConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE,
+                AgentConfigurationConstants.DEFAULT_CLIENT_SENDER_SECURITY_TRUSTSTORE_FILE_NAME } };
+
+        Preferences prefs = m_configuration.getPreferences();
+        for (String[] prefNameFileName : prefNamesFileNames) {
+            String value = prefs.get(prefNameFileName[0], null);
+            if (value == null) {
+                value = new File(confDir, prefNameFileName[1]).getAbsolutePath();
+                prefs.put(prefNameFileName[0], value);
+                LOG.debug(AgentI18NResourceKeys.CERT_FILE_LOCATION, prefNameFileName[0], value);
+            }
+        }
+
+        try {
+            prefs.flush();
+        } catch (Exception e) {
+            LOG.warn(AgentI18NResourceKeys.CANNOT_STORE_PREFERENCES, "keystore/truststore files", e);
         }
 
         return;

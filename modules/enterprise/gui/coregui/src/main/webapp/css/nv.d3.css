@@ -18,8 +18,8 @@
 .nvtooltip {
   position: absolute;
   background-color: rgba(255,255,255,1);
-  padding: 10px;
-  border: 1px solid #ddd;
+  padding: 1px;
+  border: 1px solid rgba(0,0,0,.2);
   z-index: 10000;
 
   font-family: Arial;
@@ -33,12 +33,13 @@
   -moz-transition-delay: 500ms;
   -webkit-transition-delay: 500ms;
 
-  -moz-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-  -webkit-box-shadow: 4px 4px 8px rgba(0,0,0,.5);
-  box-shadow: 4px 4px 8px rgba(0,0,0,.5);
+  -moz-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  -webkit-box-shadow: 0 5px 10px rgba(0,0,0,.2);
+  box-shadow: 0 5px 10px rgba(0,0,0,.2);
 
-  -moz-border-radius: 10px;
-  border-radius: 10px;
+  -webkit-border-radius: 6px;
+  -moz-border-radius: 6px;
+  border-radius: 6px;
 
   pointer-events: none;
 
@@ -50,15 +51,29 @@
   user-select: none;
 }
 
+.nvtooltip.x-nvtooltip,
+.nvtooltip.y-nvtooltip {
+  padding: 8px;
+}
+
 .nvtooltip h3 {
   margin: 0;
-  padding: 0;
+  padding: 4px 14px;
+  line-height: 18px;
+  font-weight: normal;
+  background-color: #f7f7f7;
   text-align: center;
+
+  border-bottom: 1px solid #ebebeb;
+
+  -webkit-border-radius: 5px 5px 0 0;
+  -moz-border-radius: 5px 5px 0 0;
+  border-radius: 5px 5px 0 0;
 }
 
 .nvtooltip p {
   margin: 0;
-  padding: 0;
+  padding: 5px 14px;
   text-align: center;
 }
 
@@ -93,7 +108,7 @@ svg {
 
 
 svg text {
-  font: normal 12px sans-serif;
+  font: normal 12px Arial;
 }
 
 svg .title {
@@ -101,7 +116,8 @@ svg .title {
 }
 
 .nvd3 .nv-background {
-  fill: none;
+  fill: white;
+  fill-opacity: 0;
   /*
   pointer-events: none;
   */
@@ -109,7 +125,7 @@ svg .title {
 
 .nvd3.nv-noData {
   font-size: 18px;
-  font-weight: bolf;
+  font-weight: bold;
 }
 
 
@@ -197,12 +213,10 @@ svg .title {
 
 .nvd3 .nv-bars .negative rect {
     zfill: brown;
-    cursor: pointer;
 }
 
 .nvd3 .nv-bars rect {
   zfill: steelblue;
-  cursor: pointer;
   fill-opacity: .75;
 
   transition: fill-opacity 250ms linear;
@@ -224,10 +238,6 @@ svg .title {
 
 .nvd3 .nv-bars .hover text {
   fill: rgba(0,0,0,1);
-}
-
-.nvd3 .nv-x.nv-axis text {
-  transform: rotate(90);
 }
 
 
@@ -302,10 +312,10 @@ svg .title {
 .nvd3 .nv-groups path.nv-line {
   fill: none;
   stroke-width: 2.5px;
+  /*
   stroke-linecap: round;
   shape-rendering: geometricPrecision;
 
-  /*
   transition: stroke-width 250ms linear;
   -moz-transition: stroke-width 250ms linear;
   -webkit-transition: stroke-width 250ms linear;
@@ -318,10 +328,10 @@ svg .title {
 
 .nvd3 .nv-groups path.nv-area {
   stroke: none;
+  /*
   stroke-linecap: round;
   shape-rendering: geometricPrecision;
 
-  /*
   stroke-width: 2.5px;
   transition: stroke-width 250ms linear;
   -moz-transition: stroke-width 250ms linear;
@@ -350,8 +360,8 @@ svg .title {
 }
 
 .nvd3.nv-scatter.nv-single-point .nv-groups .nv-point {
-  fill-opacity: .5;
-  stroke-opacity: .5;
+  fill-opacity: .5 !important;
+  stroke-opacity: .5 !important;
 }
 
 
@@ -397,9 +407,11 @@ svg .title {
 *  Scatter
 */
 
+/* **Attempting to remove this for useVoronoi(false), need to see if it's required anywhere
 .nvd3 .nv-groups .nv-point {
   pointer-events: none;
 }
+*/
 
 .nvd3 .nv-groups .nv-point.hover {
   stroke-width: 20px;
@@ -485,20 +497,26 @@ svg .title {
 *  Bullet
 */
 
-.nvd3.nv-bullet { font: 10px sans-serif; cursor: pointer; }
-.nvd3.nv-bullet rect { fill-opacity: .6; }
-.nvd3.nv-bullet rect:hover { fill-opacity: 1; }
+.nvd3.nv-bullet { font: 10px sans-serif; }
+.nvd3.nv-bullet .nv-measure { fill-opacity: .8; }
+.nvd3.nv-bullet .nv-measure:hover { fill-opacity: 1; }
 .nvd3.nv-bullet .nv-marker { stroke: #000; stroke-width: 2px; }
 .nvd3.nv-bullet .nv-markerTriangle { stroke: #000; fill: #fff; stroke-width: 1.5px; }
 .nvd3.nv-bullet .nv-tick line { stroke: #666; stroke-width: .5px; }
 .nvd3.nv-bullet .nv-range.nv-s0 { fill: #eee; }
 .nvd3.nv-bullet .nv-range.nv-s1 { fill: #ddd; }
 .nvd3.nv-bullet .nv-range.nv-s2 { fill: #ccc; }
-.nvd3.nv-bullet .nv-measure.nv-s0 { fill: steelblue; }
-.nvd3.nv-bullet .nv-measure.nv-s1 { fill: darkblue; }
 .nvd3.nv-bullet .nv-title { font-size: 14px; font-weight: bold; }
 .nvd3.nv-bullet .nv-subtitle { fill: #999; }
 
+
+.nvd3.nv-bullet .nv-range {
+  fill: #999;
+  fill-opacity: .4;
+}
+.nvd3.nv-bullet .nv-range:hover {
+  fill-opacity: .7;
+}
 
 
 
@@ -515,7 +533,7 @@ svg .title {
 }
 
 .nvd3.nv-sparklineplus .nv-hoverValue line {
-  stroke: #f44;
+  stroke: #333;
   stroke-width: 1.5px;
  }
 
@@ -531,8 +549,11 @@ svg .title {
 
 .nvd3.nv-sparklineplus .nv-xValue,
 .nvd3.nv-sparklineplus .nv-yValue {
+  /*
   stroke: #666;
-  font-size: .5em;
+  */
+  stroke-width: 0;
+  font-size: .9em;
   font-weight: normal;
 }
 
@@ -540,6 +561,24 @@ svg .title {
   stroke: #f66;
 }
 
+.nvd3.nv-sparklineplus .nv-maxValue {
+  stroke: #2ca02c;
+  fill: #2ca02c;
+}
+
+.nvd3.nv-sparklineplus .nv-minValue {
+  stroke: #d62728;
+  fill: #d62728;
+}
+
+.nvd3.nv-sparklineplus .nv-currentValue {
+  /*
+  stroke: #444;
+  fill: #000;
+  */
+  font-weight: bold;
+  font-size: 1.1em;
+}
 
 /**********
 * historical stock
@@ -629,4 +668,35 @@ svg .title {
   */
 }
 
+/**********
+* Parallel Coordinates
+*/
 
+.nvd3 .background path {
+  fill: none;
+  stroke: #ccc;
+  stroke-opacity: .4;
+  shape-rendering: crispEdges;
+}
+
+.nvd3 .foreground path {
+  fill: none;
+  stroke: steelblue;
+  stroke-opacity: .7;
+}
+
+.nvd3 .brush .extent {
+  fill-opacity: .3;
+  stroke: #fff;
+  shape-rendering: crispEdges;
+}
+
+.nvd3 .axis line, .axis path {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.nvd3 .axis text {
+  text-shadow: 0 1px 0 #fff;
+}

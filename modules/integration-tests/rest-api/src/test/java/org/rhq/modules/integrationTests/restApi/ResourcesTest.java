@@ -24,11 +24,16 @@ package org.rhq.modules.integrationTests.restApi;
 
 
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
+import com.jayway.restassured.response.ResponseBody;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
@@ -44,6 +49,8 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test the resources part
@@ -69,8 +76,32 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(200)
             .contentType(ContentType.JSON)
-            .log().ifError()
+            .log().everything()
             .body("links.self", notNullValue())
+            .body("resourceId", is(_platformId))
+            .body("typeId", is(_platformTypeId))
+            .body("parentId",is(0))
+        .when()
+            .get("/resource/{id}");
+
+    }
+
+    @Test
+    public void testGetPlatformJsonWrapping() {
+
+        // Actually this object should not be wrapped
+        // as it is no list
+        given()
+            .header(acceptWrappedJson)
+            .pathParam("id",_platformId)
+        .expect()
+            .statusCode(200)
+            .contentType(WRAPPED_JSON)
+            .log().everything()
+            .body("links.self", notNullValue())
+            .body("resourceId", is(_platformId))
+            .body("typeId", is(_platformTypeId))
+            .body("parentId",is(0))
         .when()
             .get("/resource/{id}");
 
@@ -101,9 +132,9 @@ public class ResourcesTest extends AbstractBase {
             .log().everything()
         .expect()
             .statusCode(200)
-            .body("id",is(typeId))
-            .body("name",is("Linux"))
-            .body("pluginName",is("Platforms"))
+            .body("id", is(typeId))
+            .body("name", is("Linux"))
+            .body("pluginName", is("Platforms"))
             .log().everything()
         .when()
             .get("/resource/type/{typeId}");
@@ -113,7 +144,6 @@ public class ResourcesTest extends AbstractBase {
     @Test
     public void testGetPlatformUILink() {
 
-        Response response =
         given()
             .header(acceptJson)
             .pathParam("id", _platformId)
@@ -140,6 +170,74 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(200)
             .body("links.self", notNullValue())
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryAllStatus() throws Exception {
+        String json = get("/resource/platforms.json").asString();
+        String platformName = JsonPath.with(json).get("[0].resourceName");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("q", platformName)
+            .queryParam("status","all")
+            .queryParam("category", "platform")
+        .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryCommittedStatus() throws Exception {
+        String json = get("/resource/platforms.json").asString();
+        String platformName = JsonPath.with(json).get("[0].resourceName");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("q", platformName)
+            .queryParam("status","committed")
+            .queryParam("category", "platform")
+        .expect()
+            .statusCode(200)
+            .body("links.self", notNullValue())
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryNewStatus() throws Exception {
+
+        // Unfortunately we can not assume that there are
+        // any resources in other states than COMMITTED
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("status", "NeW")
+        .expect()
+            .statusCode(200)
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testResourceQueryBadStatus() throws Exception {
+        String json = get("/resource/platforms.json").asString();
+        String platformName = JsonPath.with(json).get("[0].resourceName");
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("q", platformName)
+            .queryParam("status", "Frobnitz")
+            .queryParam("category", "platform")
+        .expect()
+            .statusCode(406)
         .when()
             .get("/resource");
     }
@@ -172,7 +270,7 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testPaging() throws Exception {
+    public void testGetResourcesWithPaging() throws Exception {
 
         given()
             .header("Accept", "application/json")
@@ -182,9 +280,84 @@ public class ResourcesTest extends AbstractBase {
             .queryParam("category", "service")
         .expect()
             .statusCode(200)
-            .header("Link", containsString("page=2"))
+            .log().everything()
+           // .header("Link", allOf(containsString("page=2"), containsString("current")))
+            .header("Link", not(containsString("prev")))
             .body("links.self", notNullValue())
-        .when().get("/resource");
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndUniquenessCheck() throws Exception {
+
+        int currentPage = 0;
+        Set<Integer> seen = new HashSet<Integer>();
+
+        for(;;) {
+            JsonPath path =
+            given()
+                .header("Accept", "application/vnd.rhq.wrapped+json")
+            .with()
+                .queryParam("page", currentPage)
+                .queryParam("ps", 5)  // Unusually small to provoke having more than 1 page
+                .queryParam("status","COMMITTED")
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+            .when()
+                .get("/resource")
+            .jsonPath();
+
+            List<Integer> ids = path.getList("data.resourceId");
+
+            for (Integer id : ids ) {
+                assert !seen.contains(id);
+                seen.add(id);
+            }
+
+            currentPage++;
+            if (currentPage > path.getInt("lastPage")) {
+                break;
+            }
+            System.out.print("+");
+        }
+        System.out.println();
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndWrapping() throws Exception {
+
+        given()
+            .header("Accept", "application/vnd.rhq.wrapped+json")
+        .with()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+            .body("pageSize",is(2))
+            .body("currentPage",is(1))
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testGetPlatformsWithPaging() throws Exception {
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("page", 0)
+            .queryParam("ps", 5)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("links.self", notNullValue())
+            .header("Link", not(containsString("prev=")))
+            .header("Link", anyOf(containsString("current"), containsString("last")))
+        .when().get("/resource/platforms");
     }
 
     @Test
@@ -249,6 +422,26 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(201)
             .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+    }
+
+    @Test
+    public void testCreatePlatformJson() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().everything()
+            .body("resourceId",instanceOf(Number.class))
         .when()
             .post("/resource/platforms");
 
@@ -499,12 +692,39 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testCreateChildForUnknownParent() throws Exception {
+
+        given()
+            .body("{\"value\":\"CPU\"}") // Type of new resource
+            .header("Content-Type", "application/json")
+            .header("Accept", "application/json")
+            .pathParam("name", "test")
+            .queryParam("plugin", "Platforms")
+            .queryParam("parentId", 321)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when().post("/resource/{name}");
+    }
+
+    @Test
     public void testAlertsForResource() throws Exception {
         given()
             .header("Accept", "application/json")
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+        .when()
+            .get("/resource/{id}/alerts");
+    }
+
+    @Test
+    public void testAlertsForUnknownResource() throws Exception {
+        given()
+            .header("Accept", "application/json")
+            .pathParam("id", 12345)
+        .expect()
+            .statusCode(404)
         .when()
             .get("/resource/{id}/alerts");
     }
@@ -521,12 +741,34 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testSchedulesForUnknownResource() throws Exception {
+        given()
+            .header("Accept", "application/json")
+            .pathParam("id", 123)
+        .expect()
+            .statusCode(404)
+        .when()
+            .get("/resource/{id}/schedules");
+    }
+
+    @Test
     public void testAvailabilityForResourceJson() throws Exception {
         given()
             .header(acceptJson)
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability");
+    }
+
+    @Test
+    public void testAvailabilityForUnknownResource() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id", 532)
+        .expect()
+            .statusCode(404)
         .when()
             .get("/resource/{id}/availability");
     }
@@ -549,6 +791,17 @@ public class ResourcesTest extends AbstractBase {
             .pathParam("id", _platformId)
         .expect()
             .statusCode(200)
+        .when()
+            .get("/resource/{id}/availability/history");
+    }
+
+    @Test
+    public void testAvailabilityHistoryForUnknownResource() throws Exception {
+        given()
+            .header(acceptJson)
+            .pathParam("id", -42)
+        .expect()
+            .statusCode(404)
         .when()
             .get("/resource/{id}/availability/history");
     }

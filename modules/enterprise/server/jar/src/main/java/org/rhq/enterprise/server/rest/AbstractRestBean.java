@@ -25,17 +25,17 @@ package org.rhq.enterprise.server.rest;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.CacheControl;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
@@ -52,8 +52,6 @@ import org.infinispan.Cache;
 import org.infinispan.manager.CacheContainer;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
@@ -61,11 +59,14 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.GroupRest;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
+import org.rhq.enterprise.server.rest.domain.PagingCollection;
 import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
@@ -77,25 +78,29 @@ import org.rhq.enterprise.server.rest.domain.ResourceWithType;
  * @author Heiko W. Rupp
  * @author Jay Shaughnessy
  */
+@Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML,"application/vnd.rhq.wrapped+json"})
 @javax.annotation.Resource(name = "ISPN", mappedName = "java:jboss/infinispan/rhq")
 @SuppressWarnings("unchecked")
 public class AbstractRestBean {
 
-    Log log = LogFactory.getLog(getClass().getName());
+    protected Log log = LogFactory.getLog(getClass().getName());
 
-    static private final CacheKey META_KEY = new CacheKey("rhq.rest.resourceMeta", 0);
+    protected final MediaType wrappedCollectionJsonType = new MediaType("application","vnd.rhq.wrapped+json");
+    protected final String wrappedCollectionJson = "application/vnd.rhq.wrapped+json";
+
+    private static final CacheKey META_KEY = new CacheKey("rhq.rest.resourceMeta", 0);
 
     @javax.annotation.Resource( name = "ISPN")
-    protected CacheContainer container;
+    private CacheContainer container;
     protected Cache<CacheKey, Object> cache;
 
     /** Subject of the caller that gets injected via {@link SetCallerInterceptor} */
     protected Subject caller;
 
     @EJB
-    ResourceManagerLocal resMgr;
+    protected ResourceManagerLocal resMgr;
     @EJB
-    ResourceGroupManagerLocal resourceGroupManager;
+    protected ResourceGroupManagerLocal resourceGroupManager;
 
     @PostConstruct
     public void start() {
@@ -116,15 +121,15 @@ public class AbstractRestBean {
             freemarker.template.Configuration config = new freemarker.template.Configuration();
 
             // XXX fall-over to ClassTL after failure in FTL seems not to work
-            // FileTemplateLoader ftl = new FileTemplateLoader(new File("src/main/resources"));
             ClassTemplateLoader ctl = new ClassTemplateLoader(getClass(), "/rest_templates/");
             TemplateLoader[] loaders = new TemplateLoader[] { ctl };
             MultiTemplateLoader mtl = new MultiTemplateLoader(loaders);
 
             config.setTemplateLoader(mtl);
 
-            if (!templateName.endsWith(".ftl"))
+            if (!templateName.endsWith(".ftl")) {
                 templateName = templateName + ".ftl";
+            }
             Template template = config.getTemplate(templateName);
 
             StringWriter out = new StringWriter();
@@ -171,8 +176,9 @@ public class AbstractRestBean {
 
         CacheValue value = (CacheValue) cache.get(key);
 
+        boolean debugEnabled = log.isDebugEnabled();
         if (null != value) {
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug("Cache Hit for " + key);
             }
 
@@ -180,12 +186,12 @@ public class AbstractRestBean {
                 o = value.getValue();
 
             } else {
-                if (log.isDebugEnabled()) {
+                if (debugEnabled) {
                     log.debug("Cache Hit ignored, caller " + caller.toString() + " not found");
                 }
             }
         } else {
-            if (log.isDebugEnabled()) {
+            if (debugEnabled) {
                 log.debug("Cache Miss for " + key);
             }
         }
@@ -242,89 +248,8 @@ public class AbstractRestBean {
         return result;
     }
 
-    protected void putResourceToCache(Resource res) {
-        putToCache(res.getId(), Resource.class, res);
 
-        CacheKey callerKey = new CacheKey("rhq.rest.caller", caller.getId());
 
-        try {
-            Set<Integer> visibleResources = (Set<Integer>) cache.get(callerKey);
-
-            if (null == visibleResources) {
-                visibleResources = new HashSet<Integer>();
-            }
-
-            visibleResources.add(res.getId());
-            cache.put(callerKey, visibleResources);
-
-            Map<Integer, Integer> childParentMap = (Map<Integer, Integer>) cache.get(META_KEY);
-
-            if (null == childParentMap) {
-                childParentMap = new HashMap<Integer, Integer>();
-            }
-            int pid = res.getParentResource() == null ? 0 : res.getParentResource().getId();
-            childParentMap.put(res.getId(), pid);
-            cache.put(META_KEY, childParentMap);
-
-        } catch (Exception e) {
-            log.warn(e.getMessage());
-        }
-    }
-
-    protected List<Resource> getResourcesFromCacheByParentId(int pid) {
-        List<Integer> candidateIds = new ArrayList<Integer>();
-        List<Resource> ret = new ArrayList<Resource>();
-
-        // First determine candidate children
-        Map<Integer, Integer> childParentMap = (Map<Integer, Integer>) cache.get(META_KEY);
-
-        if (null != childParentMap) {
-            try {
-                for (Map.Entry<Integer, Integer> entry : childParentMap.entrySet()) {
-                    if (entry.getValue() == pid)
-                        candidateIds.add(entry.getKey());
-                }
-                // then see if the current user can see them
-                CacheKey callerKey = new CacheKey("rhq.rest.caller", caller.getId());
-                Set<Integer> visibleResources = (Set<Integer>) cache.get(callerKey);
-                Iterator<Integer> iter = candidateIds.iterator();
-                while (iter.hasNext()) {
-                    Integer resId = iter.next();
-                    if (!visibleResources.contains(resId)) {
-                        iter.remove();
-                    }
-                }
-
-                // Last but not least, get the resources and return them
-                for (Integer resId : candidateIds) {
-                    ret.add(getFromCache(resId, Resource.class));
-                }
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-            }
-
-        }
-        return ret;
-    }
-
-    protected Resource getResourceFromCache(int resourceid) {
-
-        Resource res = null;
-        // check if the current user can see the resource
-        CacheKey callerKey = new CacheKey("rhq.rest.caller", caller.getId());
-        Set<Integer> visibleResources = (Set<Integer>) cache.get(callerKey);
-        if (null != visibleResources) {
-            try {
-                if (visibleResources.contains(resourceid)) {
-                    res = getFromCache(resourceid, Resource.class);
-                }
-            } catch (Exception e) {
-                log.warn(e.getMessage());
-            }
-        }
-
-        return res;
-    }
 
     /**
      * Remove an item from the cache
@@ -348,11 +273,13 @@ public class AbstractRestBean {
         rwt.setTypeName(resourceType.getName());
         rwt.setTypeId(resourceType.getId());
         rwt.setPluginName(resourceType.getPlugin());
+        rwt.setStatus(res.getInventoryStatus().name());
         Resource parent = res.getParentResource();
         if (parent != null) {
             rwt.setParentId(parent.getId());
-        } else
+        } else {
             rwt.setParentId(0);
+        }
 
         rwt.setAncestry(res.getAncestry());
 
@@ -382,6 +309,7 @@ public class AbstractRestBean {
         uriBuilder.path("/resource/{id}/children");
         uri = uriBuilder.build(res.getId());
         link = new Link("children", uri.toString());
+        rwt.addLink(link);
         uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/resource/{id}/alerts");
         uri = uriBuilder.build(res.getId());
@@ -418,6 +346,99 @@ public class AbstractRestBean {
     }
 
     /**
+     * Create the paging headers for collections and attach them to the passed builder. Those are represented as
+     * <i>Link:</i> http headers that carry the URL for the pages and the respective relation.
+     * <br/>In addition a <i>X-total-size</i> header is created that contains the whole collection size.
+     * @param builder The ResponseBuilder that receives the headers
+     * @param uriInfo The uriInfo of the incoming request to build the urls
+     * @param resultList The collection with its paging information
+     */
+    protected void createPagingHeader(final Response.ResponseBuilder builder, final UriInfo uriInfo, final PageList<?> resultList) {
+
+        UriBuilder uriBuilder;
+
+        PageControl pc = resultList.getPageControl();
+        int page = pc.getPageNumber();
+
+        if (resultList.getTotalSize()> (pc.getPageNumber() +1 ) * pc.getPageSize()) {
+            int nextPage = page+1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",nextPage);
+
+            builder.header("Link",new Link("next",uriBuilder.build().toString()).rfc5988String());
+        }
+
+        if (page>0) {
+            int prevPage = page -1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",prevPage);
+            builder.header("Link", new Link("prev",uriBuilder.build().toString()).rfc5988String());
+        }
+
+        // A link to the last page
+        if (!pc.isUnlimited()) {
+            int lastPage = resultList.getTotalSize() / pc.getPageSize();
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",lastPage);
+            builder.header("Link", new Link("last",uriBuilder.build().toString()).rfc5988String());
+        }
+
+        // A link to the current page
+        uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+        builder.header("Link", new Link("current",uriBuilder.build().toString()).rfc5988String());
+
+
+        // Create a total size header
+        builder.header("X-collection-size",resultList.getTotalSize());
+    }
+
+    /**
+     * Wrap the passed collection #resultList in an object with paging information
+     * @param builder ResonseBuilder to add the entity to
+     * @param uriInfo UriInfo to construct paging links
+     * @param originalList The original list to obtain the paging info from
+     * @param resultList The list of result items
+     */
+    protected void wrapForPaging(Response.ResponseBuilder builder, UriInfo uriInfo, final PageList<?> originalList, final Collection resultList) {
+
+        PagingCollection pColl = new PagingCollection(resultList);
+        pColl.setTotalSize(originalList.getTotalSize());
+        PageControl pageControl = originalList.getPageControl();
+        pColl.setPageSize(pageControl.getPageSize());
+        int page = pageControl.getPageNumber();
+        pColl.setCurrentPage(page);
+        pColl.setLastPage(originalList.getTotalSize()/pageControl.getPageSize());
+
+        UriBuilder uriBuilder;
+        if (originalList.getTotalSize() > (page +1 ) * pageControl.getPageSize()) {
+            int nextPage = page +1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",nextPage);
+            pColl.addLink(new Link("next",uriBuilder.build().toString()));
+        }
+        if (page > 0) {
+            int prevPage = page -1;
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",prevPage);
+            pColl.addLink(new Link("prev",uriBuilder.build().toString()));
+        }
+
+        // A link to the last page
+        if (!pageControl.isUnlimited()) {
+            int lastPage = originalList.getTotalSize() / pageControl.getPageSize();
+            uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+            uriBuilder.replaceQueryParam("page",lastPage);
+            pColl.addLink( new Link("last",uriBuilder.build().toString()));
+        }
+
+        // A link to the current page
+        uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
+        pColl.addLink(new Link("current",uriBuilder.build().toString()));
+
+        builder.entity(pColl);
+    }
+
+    /**
      * Fetch the group with the passed id
      *
      * @param groupId id of the resource group
@@ -429,8 +450,9 @@ public class AbstractRestBean {
     protected ResourceGroup fetchGroup(int groupId, boolean requireCompatible) {
         ResourceGroup resourceGroup;
         resourceGroup = resourceGroupManager.getResourceGroup(caller, groupId);
-        if (resourceGroup == null)
+        if (resourceGroup == null) {
             throw new StuffNotFoundException("Group with id " + groupId);
+        }
         if (requireCompatible) {
             if (resourceGroup.getGroupCategory() != GroupCategory.COMPATIBLE) {
                 throw new BadArgumentException("Group with id " + groupId,"it is no compatible group");
@@ -445,8 +467,9 @@ public class AbstractRestBean {
         gr.setId(group.getId());
         gr.setCategory(group.getGroupCategory());
         gr.setRecursive(group.isRecursive());
-        if (group.getGroupDefinition()!=null)
+        if (group.getGroupDefinition()!=null) {
             gr.setDynaGroupDefinitionId(group.getGroupDefinition().getId());
+        }
         gr.setExplicitCount(group.getExplicitResources().size());
         gr.setImplicitCount(group.getImplicitResources().size());
         UriBuilder uriBuilder = uriInfo.getBaseUriBuilder();
@@ -524,16 +547,6 @@ public class AbstractRestBean {
         Link link = new Link("resource", uri.toString());
         ms.addLink(link);
         return ms;
-    }
-
-    Configuration mapToConfiguration(Map<String,Object> in) {
-        Configuration config = new Configuration();
-        for (Map.Entry<String,Object> entry : in.entrySet()) {
-            config.put(new PropertySimple(entry.getKey(),entry.getValue())); // TODO honor more types
-        }
-
-        return config;
-
     }
 
     /**

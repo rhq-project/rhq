@@ -146,7 +146,7 @@ function _restartFunction(asResourceType) {
         (asResourceType.name == "JBossAS7 Standalone Server" ||
          asResourceType.name == "Managed Server")) {
         
-    	return _restartAS7);
+    	return _restartAS7;
     } else {
     	throw "The resource group the destination targets doesn't seem to be a JBoss AS server group.";
     }

@@ -237,7 +237,7 @@ public class JBossInstanceInfo {
         for (String pathElement : this.classPath) {
             if (pathElement.endsWith("run.jar")) {
                 runJar = new File(pathElement);
-                if (!runJar.isAbsolute()) {
+                if (!runJar.isAbsolute() && !runJar.exists()) {
                     runJar = new File(this.processInfo.getExecutable().getCwd(), runJar.getPath());
                 }
                 if (!runJar.exists()) {

@@ -2,29 +2,9 @@
  * Charting Javascript Functions.
  */
 
-// Avoid `console` errors in browsers that lack a console.
-(function() {
-        var method;
-        var noop = function () {};
-        var methods = [
-        'assert', 'clear', 'count', 'debug', 'dir', 'dirxml', 'error',
-        'exception', 'group', 'groupCollapsed', 'groupEnd', 'info', 'log',
-        'markTimeline', 'profile', 'profileEnd', 'table', 'time', 'timeEnd',
-        'timeStamp', 'trace', 'warn'
-        ];
-        var length = methods.length;
-        var console = (window.console = window.console || {});
-
-        while (length--) {
-                method = methods[length];
-
-            // Only stub undefined methods.
-                if (!console[method]) {
-                console[method] = noop;
-                }
-        }
-} ());
-
+// Handle browsers not supporting console object
+if (!window.console) window.console = {};
+if (!window.console.log) window.console.log = function () { };
 
 /**
  * ChartContext Constructor Object
@@ -68,7 +48,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.chartSelection = this.chartHandle + " svg";
 
 },
-AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverEndLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat) {
+AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel) {
     "use strict";
     if (!(this instanceof AvailChartContext)) {
         throw new Error("AvailChartContext function cannot be called as a function.")
@@ -80,10 +60,12 @@ AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverSta
     this.dateLabel = dateLabel;
     this.timeLabel = timeLabel;
     this.hoverStartLabel = hoverStartLabel;
-    this.hoverEndLabel = hoverEndLabel;
     this.hoverBarLabel = hoverBarLabel;
     this.hoverBarAvailabilityLabel = availabilityLabel;
     this.chartHoverTimeFormat = chartHoverTimeFormat;
     this.chartHoverDateFormat = chartHoverDateFormat;
+    this.chartTitle = chartTitle;
+    this.chartDownLabel = chartDownLabel;
+    this.chartUpLabel = chartUpLabel;
 
 };

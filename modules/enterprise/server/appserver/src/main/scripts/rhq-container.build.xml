@@ -220,6 +220,7 @@
             <fileset dir="${jboss.home}/standalone/configuration">
                 <include name="standalone-ha.xml" />
                 <include name="standalone.xml" />
+                <include name="standalone-osgi.xml" />
                 <include name="standalone-full-ha.xml" />
             </fileset>
         </delete>
@@ -495,16 +496,17 @@ rhq.communications.multicast-detector.port=16162
 # Server-side SSL Security Configuration for HTTPS thru Tomcat
 # These are used for browser https access and
 # for incoming messages from agents over sslservlet transport.
-# Relative filenames are relative to jboss.server.config.dir.
-# [you cannot use ${x} variables in these rhq.server.tomcat settings]
+# [Due to issue https://issues.jboss.org/browse/WFLY-1177, you cannot change
+# rhq.server.tomcat.security.keystore.file or rhq.server.tomcat.security.truststore.file
+# after you install RHQ. If you need to change those again, you must manually do so in standalone-full.xml.]
 rhq.server.tomcat.security.client-auth-mode=false
 rhq.server.tomcat.security.secure-socket-protocol=TLS
 rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ
-rhq.server.tomcat.security.keystore.file=rhq.keystore
+rhq.server.tomcat.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
 rhq.server.tomcat.security.keystore.password=RHQManagement
 rhq.server.tomcat.security.keystore.type=JKS
-rhq.server.tomcat.security.truststore.file=rhq.truststore
+rhq.server.tomcat.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
 rhq.server.tomcat.security.truststore.password=RHQManagement
 rhq.server.tomcat.security.truststore.type=JKS
 
@@ -637,32 +639,11 @@ rhq.sync.endpoint-address=false
         </replace>
     </target>
 
-    <!-- This is so we can work around all the issues due to https://issues.jboss.org/browse/AS7-6120
-         so once that is fixed, we don't have to run the installer "reconfig" automatically on startup of the server.
-         Note that if we predeploy (i.e. are doing a dev build), rather than jump through more hoops for this,
-         just assume the developer knows that if they change rhq-server.properties, they have to reconfig the server.
-         We don't do anything in this target if we are building a dev build. -->
-    <target name="add-auto-reconfig" unless="predeploy">
-        <echo>Add auto-reconfig to rhq-server scripts so users don't have to when changing rhq-server.properties</echo>
-        <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
-            <replacefilter>
-                <replacetoken># START SERVER</replacetoken>
-                <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-installer.sh --reconfig &]]></replacevalue>
-            </replacefilter>
-        </replace>
-        <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
-            <replacefilter>
-    	        <replacetoken>rem START SERVER</replacetoken>
-                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-installer.bat --reconfig < nul > nul]]></replacevalue>
-            </replacefilter>
-        </replace>
-    </target>
     <target name="prepare-release"
             description="If this is a release build, make sure it is properly prepared."
             depends="initialize,
                      developer-release-message,
                      copy-dev-resources,
-                     add-auto-reconfig,
                      fix-perms,
                      deploy-postgres-ds,
                      deploy-oracle-ds">

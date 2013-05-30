@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7.itest;
 
@@ -205,14 +205,6 @@ public abstract class AbstractServerComponentTest extends AbstractJBossAS7Plugin
         String[] pathElements = path.split(File.pathSeparator);
         Assert.assertTrue(pathElements.length >= 1);
         Assert.assertTrue(new File(pathElements[0]).isDirectory());
-
-        if (File.separatorChar == '/') {
-            String ldLibraryPath = env.get("LD_LIBRARY_PATH");
-            Assert.assertNotNull(ldLibraryPath);
-            String[] ldLibraryPathElements = ldLibraryPath.split(File.pathSeparator);
-            Assert.assertTrue(ldLibraryPathElements.length >= 1);
-            Assert.assertTrue(new File(ldLibraryPathElements[0]).isDirectory());
-        }
     }
 
     protected abstract String getBindAddressSystemPropertyName();

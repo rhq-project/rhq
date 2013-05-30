@@ -170,17 +170,22 @@ public class MetricTemplateTypeView extends ResourceTypeTreeView {
         }
 
         public static class TreeNode extends ResourceTypeTreeNode {
-
             public TreeNode(ResourceTypeTemplateCountComposite composite, String plugin) {
-
                 super(composite, plugin);
-
                 setAttribute(ATTR_ENABLED_TEMPLATES, composite.getEnabledMetricCount());
                 setAttribute(ATTR_DISABLED_TEMPLATES, composite.getDisabledMetricCount());
                 // If the type has no metrics then metric templates are enabled for the type
                 if (0 == (composite.getEnabledMetricCount() + composite.getDisabledMetricCount())) {
                     setAttribute(ATTRIB_EDIT, ImageManager.getEditDisabledIcon());
                 }
+            }
+
+            @Override
+            public ResourceTypeTreeNode copy() {
+                ResourceTypeTreeNode dup = super.copy();
+                dup.setAttribute(ATTR_ENABLED_TEMPLATES, this.getAttributeAsLong(ATTR_ENABLED_TEMPLATES));
+                dup.setAttribute(ATTR_DISABLED_TEMPLATES, this.getAttributeAsLong(ATTR_DISABLED_TEMPLATES));
+                return dup;
             }
         }
 

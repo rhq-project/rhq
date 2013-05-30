@@ -24,11 +24,15 @@ import static org.testng.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.testng.AssertJUnit;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.criteria.Criteria;
+import org.rhq.core.domain.criteria.JPADriftCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 
 public class CriteriaQueryTest {
 
@@ -228,5 +232,23 @@ public class CriteriaQueryTest {
         } catch (RuntimeException e) {
             assert e.getMessage().contains("NonUniqueResultException");
         }
+    }
+
+    @Test
+    public void testAddSort() {
+        try {
+            JPADriftCriteria c = new JPADriftCriteria();
+            c.addSortId(PageOrdering.ASC);
+            AssertJUnit.fail("Should have thrown exception");
+        } catch (UnsupportedOperationException e) {
+            //expected
+        }
+
+        ResourceCriteria c = new ResourceCriteria();
+        c.addSortName(PageOrdering.ASC);
+
+        assertEquals(2, CriteriaQueryGenerator.getPageControl(c).getOrderingFields().size());
+        assertEquals("name", CriteriaQueryGenerator.getPageControl(c).getOrderingFields().get(0).getField());
+        assertEquals("id", CriteriaQueryGenerator.getPageControl(c).getOrderingFields().get(1).getField());
     }
 }

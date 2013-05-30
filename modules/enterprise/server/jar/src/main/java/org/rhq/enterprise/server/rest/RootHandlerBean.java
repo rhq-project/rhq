@@ -51,7 +51,7 @@ import org.rhq.enterprise.server.rest.domain.Link;
 @Stateless
 public class RootHandlerBean extends AbstractRestBean  {
 
-    String[] roots = { // rel, target
+    private String[] roots = { // rel, target
             "platforms","resource/platforms",
             "groups","group",
             "dynaGroups","group/definitions",

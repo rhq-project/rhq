@@ -55,8 +55,11 @@ public abstract class BaseRhqSchemeScriptSourceProvider implements ScriptSourceP
      * The base implementation of the {@link #getScriptSource(URI)} method
      * only checks that the scheme of the URI is "rhq" and that the scheme
      * specific part starts with "//".
-     * 
-     * @param scriptUri
+     * <p/>
+     * Please follow the general suggestions mentioned in {@link ScriptSourceProvider#getScriptSource(java.net.URI)}
+     * docs.
+     *
+     * @param scriptUri the URI to load the script from
      * @return the reader of the script or null if the script could not be 
      * found using the URI
      * 

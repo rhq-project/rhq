@@ -52,7 +52,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
          * Use this to get the global fields for this Criteria field type. Don't use inspection as the field names
          * for this abstract base class do not conform (for legacy reasons) to the prefix convention help by the
          * subclasses.
-         *  
+         *
          * @return The set of global fields for this Criteria field type. Meaning, usable by all subclasses.
          */
         public List<String> getGlobalFields() {
@@ -76,7 +76,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      *    private NonBindingOverrideFilter filterResourceOnly; // requires overrides - finds only those associated with a resource
      *    ...
      *    filterOverrides.put("resourceTypeOnly", "resourceType IS NOT NULL"); // notice no ? parameter
-     * 
+     *
      * Note: Typically a null value is analogous to OFF.
      */
     public enum NonBindingOverrideFilter {
@@ -87,12 +87,12 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      * Apply a restriction to reduce the cost of the {@link Criteria}-based query generation and execution routines.
      */
     public enum Restriction {
-        /** 
+        /**
          * This returns an empty {@link PageList} result whose {@link PageList#getTotalSize()} method otherwise
          * contains the correct value.
          */
         COUNT_ONLY,
-        /** 
+        /**
          * This will return the {@link PageList} result whose {@link PageList#isUnbounded()} returned true, meaning
          * that the value contained within {@link PageList#getTotalSize()} is invalid / undefined.
          */
@@ -109,6 +109,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
     private List<Permission> requiredPermissions;
     private boolean strict;
     private Restriction restriction = null;
+    private boolean supportsAddSortId = true;
 
     protected Map<String, String> filterOverrides;
     protected Map<String, String> sortOverrides;
@@ -121,10 +122,10 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     // All Criteria support sorting on ID
     protected PageOrdering sortId;
-    
+
     // All Criteria support filtering on ID
     protected Integer filterId;
-    
+
     // All Criteria support filtering on IDs
     protected List<Integer> filterIds;
 
@@ -173,22 +174,67 @@ public abstract class Criteria implements Serializable, BaseCriteria {
     }
 
     public void addSortId(PageOrdering sortId) {
-        addSortField("id");
-        this.sortId = sortId;
+        if (isSupportsAddSortId()) {
+            addSortField("id");
+            this.sortId = sortId;
+
+        } else {
+            throw new UnsupportedOperationException("ID sort is not supported by supported by this class");
+        }
     }
-    
+
     public void addFilterId(Integer filterId) {
-        this.filterId = filterId;
+        if (isSupportsAddFilterId()) {
+            this.filterId = filterId;
+
+        } else {
+            throw new UnsupportedOperationException("ID filter is not supported by this class");
+        }
     }
 
     public void addFilterIds(Integer... filterIds) {
-        this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
+        if (isSupportsAddFilterIds()) {
+            this.filterIds = CriteriaUtils.getListIgnoringNulls(filterIds);
+
+        } else {
+            throw new UnsupportedOperationException("IDS filter is not supported by this class");
+        }
+    }
+
+    /**
+     * By default all Criteria support sort on ID.  And this sort is applied implicitly to criteria
+     * queries involving paging, to ensure consistent ordering of query results. If for some unlikely reason
+     * the caller needs to disable the implicit ID sort then call this, setting the value to false.
+     *  
+     * @param supportsAddSortId
+     */
+    public void setSupportsAddSortId(boolean supportsAddSortId) {
+        this.supportsAddSortId = supportsAddSortId;
+    }
+
+    public boolean isSupportsAddSortId() {
+        return supportsAddSortId;
+    }
+
+    public boolean isSupportsAddFilterId() {
+        return true;
+    }
+
+    public boolean isSupportsAddFilterIds() {
+        return true;
     }
 
     protected void addSortField(String fieldName) {
         orderingFieldNames.add("sort" + Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1));
     }
 
+    /**
+     * Sets the paging constraints to return items [pageNumber * pageSize , ((pageNumber+1) * pageSize) -1 ].
+     * For this to work correctly, you also need to set the sort
+     * criteria (do not rely on implicit id-sorting to work correctly.
+     * @param pageNumber The page to fetch. This is 0-based.
+     * @param pageSize The number of items to return.
+     */
     public void setPaging(int pageNumber, int pageSize) {
         this.pageNumber = pageNumber;
         this.pageSize = pageSize;
@@ -196,7 +242,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     /**
      * If the pageControl is set, then this criteria object will completely ignore any
-     * calls made to setPaging(pageNumber, pageSize) as well as addSortField(fieldName), 
+     * calls made to setPaging(pageNumber, pageSize) as well as addSortField(fieldName),
      * which is useful from a server-side calling context where the PageControl object
      * will already have been created for you by the extensions at the JSF layer.
      */
@@ -248,7 +294,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
 
     /**
      * If set to true, string-based filters will use exact string matches;
-     * Default is 'false', which means we'll fuzzy match 
+     * Default is 'false', which means we'll fuzzy match
      */
     public void setStrict(boolean strict) {
         this.strict = strict;
@@ -262,9 +308,9 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      * By default, two queries will be generated for this Criteria: one which fetches the requested page/subset of
      * entity results, and one which fetches the total cardinality of the result set.  If you wish to only retrieve one
      * of those pieces of data, you can do so by setting a restriction on the query generation and execution routines.
-     * 
+     *
      * The restriction, once set, can be removed by passing NULL to this method.
-     * 
+     *
      * @see Restriction
      */
     public void setRestriction(Restriction restriction) {
@@ -325,7 +371,7 @@ public abstract class Criteria implements Serializable, BaseCriteria {
      * Somewhat analogous to JPA's Query.getSingleResult. Wrap a CriteriaQuery result with this method when
      * expecting a single result from the fetch.  If the result set has only one entry it is returned. Otherwise
      * a RuntimeException is thrown, indicating whether no results, or multiple results were found.
-     *    
+     *
      * @param result
      * @return
      * @throws RuntimeException In not exactly one result is found.  The message will include either the String

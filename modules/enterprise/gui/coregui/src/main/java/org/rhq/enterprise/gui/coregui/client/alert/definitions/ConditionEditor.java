@@ -65,7 +65,6 @@ import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.NumberWithUnitsValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
-import org.rhq.enterprise.gui.coregui.client.components.form.UnitType;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -140,7 +139,7 @@ public class ConditionEditor extends EnhancedVLayout {
     private AlertCondition existingCondition;
 
     public ConditionEditor(HashSet<AlertCondition> conditions, Map<Integer, AlertCondition> modifiedConditions,
-        SelectItem conditionExpression, ResourceType rtype, Runnable closeFunc, AlertCondition existingCondition) {
+        SelectItem conditionExpression, ResourceType rtype, AlertCondition existingCondition, Runnable closeFunc) {
         super();
         this.editMode = existingCondition != null;
         this.existingCondition = existingCondition;
@@ -959,7 +958,7 @@ public class ConditionEditor extends EnhancedVLayout {
         durationValue.setTooltip(MSG.view_alert_definition_condition_editor_availabilityDuration_tooltip_duration());
         durationValue.setHoverWidth(200);
         if (editMode) {
-            durationValue.setValue(Integer.parseInt(existingCondition.getOption()), UnitType.TIME);
+            durationValue.setAndFormatValue(Integer.parseInt(existingCondition.getOption()) * 1000L);
         }
         durationValue.setShowIfCondition(ifFunc);
         formItems.add(durationValue);

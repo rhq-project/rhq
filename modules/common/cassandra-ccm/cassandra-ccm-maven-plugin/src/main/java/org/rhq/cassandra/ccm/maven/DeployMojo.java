@@ -71,10 +71,12 @@ public class DeployMojo extends AbstractMojo {
         getLog().info("Installing RHQ schema");
         SchemaManager schemaManager = new SchemaManager(deploymentOptions.getUsername(),
             deploymentOptions.getPassword(), nodes);
-        if (!schemaManager.schemaExists()) {
-            schemaManager.createSchema();
+
+        try {
+            schemaManager.install();
+        } catch (Exception e) {
+            throw new MojoExecutionException("Schema installation failed.", e);
         }
-        schemaManager.updateSchema();
 
         long end = System.currentTimeMillis();
         getLog().info("Finished cluster deployment in " + (end - start) + " ms");

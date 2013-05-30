@@ -162,7 +162,7 @@
             </plugin>
         </plugins>
     </build>
-    
+
     <profiles>
         <profile>
             <id>db.dev</id>
@@ -172,7 +172,7 @@
                     <value>dev</value>
                 </property>
             </activation>
-            
+
             <!-- these are defined in the dev profile also - see below in that profile for why -->
             <properties>
                 <rhq.ds.type-mapping>${rhq.dev.ds.type-mapping}</rhq.ds.type-mapping>
@@ -185,7 +185,7 @@
                 <rhq.ds.driver-class>${rhq.dev.ds.driver-class}</rhq.ds.driver-class>
             </properties>
         </profile>
-        
+
         <profile>
             <id>latest</id>
             <activation>
@@ -283,7 +283,14 @@
                                             seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7199|9142"
 
                                             schemaManager = new SchemaManager(username, password, seeds)
-                                            schemaManager.resetSchema()
+
+                                            if (project.getProperty('dbreset') == 'true') {
+                                              self.log('Dropping schema')
+                                              schemaManager.drop()
+                                            }
+
+                                            self.log('Install schema')
+                                            schemaManager.install()
                                           } else {
                                             self.log('SKIPPING SCHEMA SETUP FOR STORAGE NODE')
                                           }
@@ -369,7 +376,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>jon.release</id>
             <activation>
@@ -416,7 +423,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>dev</id>
             <properties>
@@ -476,7 +483,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>ojdbc-driver</id>
             <dependencies>
@@ -489,7 +496,7 @@
                     <scope>compile</scope>
                 </dependency>
             </dependencies>
-            
+
             <!-- TODO: defer to root pom version when we can agree on a version -->
             <build>
                 <plugins>
@@ -501,7 +508,7 @@
             </build>
         </profile>
     </profiles>
-    
+
     <pluginRepositories>
         <pluginRepository>
             <id>codehaus-snapshots</id>

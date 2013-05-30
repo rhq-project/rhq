@@ -1,19 +1,14 @@
-<databaseChangeLog
-    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext"
-    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
-    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.0.xsd">
-
-  <changeSet id="1" author="jsanda" runInTransaction="false">
-    <sql>
+<updatePlan>
+    <step>
       CREATE TABLE rhq.raw_metrics (
         schedule_id int,
         time timestamp,
         value double,
         PRIMARY KEY (schedule_id, time)
       ) WITH COMPACT STORAGE;
+    </step>
 
+    <step>
       CREATE TABLE rhq.one_hour_metrics (
         schedule_id int,
         time timestamp,
@@ -21,7 +16,9 @@
         value double,
         PRIMARY KEY (schedule_id, time, type)
       ) WITH COMPACT STORAGE;
+    </step>
 
+    <step>
       CREATE TABLE rhq.six_hour_metrics (
         schedule_id int,
         time timestamp,
@@ -29,7 +26,9 @@
         value double,
         PRIMARY KEY (schedule_id, time, type)
       ) WITH COMPACT STORAGE;
+    </step>
 
+    <step>
       CREATE TABLE rhq.twenty_four_hour_metrics (
         schedule_id int,
         time timestamp,
@@ -37,15 +36,14 @@
         value double,
         PRIMARY KEY (schedule_id, time, type)
       ) WITH COMPACT STORAGE;
+    </step>
 
+    <step>
       CREATE TABLE rhq.metrics_index (
         bucket varchar,
         time timestamp,
         schedule_id int,
-        null_col boolean,
-        PRIMARY KEY (bucket, time, schedule_id)
+        PRIMARY KEY ((bucket, time), schedule_id)
       ) WITH COMPACT STORAGE;
-    </sql>
-  </changeSet>
-
-</databaseChangeLog>
+    </step>
+</updatePlan>

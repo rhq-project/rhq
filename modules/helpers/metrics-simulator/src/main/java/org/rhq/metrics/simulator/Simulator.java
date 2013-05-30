@@ -219,8 +219,7 @@ public class Simulator implements ShutdownManager {
         try {
             log.info("Creating schema");
             SchemaManager schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
-            schemaManager.createSchema();
-            schemaManager.updateSchema();
+            schemaManager.install();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);
         }

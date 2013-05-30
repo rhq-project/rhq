@@ -479,23 +479,13 @@ public class InstallerServiceImpl implements InstallerService {
         try {
             cassandraSchemaManager = createCassandraSchemaManager(serverProperties);
             if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
-                if (cassandraSchemaManager.schemaExists()) {
-                    log("Cassandra schema exists.");
-                    if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
-                        log("Cassandra schema exists but installer was told to overwrite it - a new schema will be "
-                            + "created now.");
-                        cassandraSchemaManager.dropSchema();
-                        cassandraSchemaManager.createSchema();
-
-                    }
-                    log("Updating Cassandra schema.");
-                    cassandraSchemaManager.updateSchema();
-                } else {
-                    log("Cassandra schema does not exist. It will be created now.");
-                    cassandraSchemaManager.createSchema();
-                    log("Applying schema updates to Cassandra.");
-                    cassandraSchemaManager.updateSchema();
+                if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
+                    log("Cassandra schema exists but installer was told to overwrite it - a the existing  schema will be "
+                        + "created now.");
+                    cassandraSchemaManager.drop();
                 }
+                log("Install RHQ schema along with updates to Cassandra.");
+                cassandraSchemaManager.install();
             } else {
                 log("Ignoring Cassandra schema - installer will assume it exists and is already up-to-date.");
             }
@@ -503,10 +493,6 @@ public class InstallerServiceImpl implements InstallerService {
             String msg = "Could not complete Cassandra schema installation: " + ThrowableUtil.getRootMessage(e);
             log.error(msg, e);
             throw new Exception(msg, e);
-        } finally {
-            if (cassandraSchemaManager != null) {
-                cassandraSchemaManager.shutdown();
-            }
         }
 
         // ensure the server info is up to date and stored in the DB

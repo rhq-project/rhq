@@ -90,7 +90,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
         private Event<GenerateDeployment> generateDeploymentEvent;
 
         @Inject
-        // Active some form of ClassContext around our deployments due to assumption bug in AS7 extension.  
+        // Active some form of ClassContext around our deployments due to assumption bug in AS7 extension.
         private Instance<ClassContext> classContext;
 
         public void startup(@Observes(precedence = -100)
@@ -152,11 +152,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                     }
 
                     try {
-                        if (!schemaManager.schemaExists()) {
-                            schemaManager.createSchema();
-                        }
-                        schemaManager.updateSchema();
-                        schemaManager.shutdown();
+                        schemaManager.install();
 
                     } catch (Exception e) {
                         if (null != ccm) {
@@ -212,7 +208,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
         public void overrideBefore(@Observes
         EventContext<BeforeClass> event) {
-            // Don't continue TestClass's BeforeClass context as normal. 
+            // Don't continue TestClass's BeforeClass context as normal.
             // No DeploymentGeneration or Deploy will take place.
 
             classDeploymentScenario.set(suiteDeploymentScenario);
@@ -220,7 +216,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
         public void overrideAfter(@Observes
         EventContext<AfterClass> event) {
-            // Don't continue TestClass's AfterClass context as normal. 
+            // Don't continue TestClass's AfterClass context as normal.
             // No UnDeploy will take place.
         }
 

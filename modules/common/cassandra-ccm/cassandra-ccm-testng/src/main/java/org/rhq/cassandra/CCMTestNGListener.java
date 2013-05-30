@@ -53,7 +53,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         if (method.isAnnotationPresent(DeployCluster.class)) {
             try {
                 deployCluster(method.getAnnotation(DeployCluster.class));
-            } catch (CassandraException e) {
+            } catch (Exception e) {
                 log.warn("Failed to deploy cluster", e);
             }
         }
@@ -75,7 +75,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         }
     }
 
-    private void deployCluster(DeployCluster annotation) throws CassandraException {
+    private void deployCluster(DeployCluster annotation) throws Exception {
         boolean deploy = Boolean.valueOf(System.getProperty("rhq.cassandra.cluster.deploy", "true"));
         if (!deploy) {
             return;
@@ -123,11 +123,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
-        if (!schemaManager.schemaExists()) {
-            schemaManager.createSchema();
-            schemaManager.updateSchema();
-        }
-        schemaManager.shutdown();
+        schemaManager.install();
 
         if (annotation.waitForSchemaAgreement()) {
             // TODO do not hard code cluster name

@@ -550,11 +550,15 @@ public class InstallerServiceImpl implements InstallerService {
         final PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
         final Properties props = propsFile.loadExistingProperties();
 
-        // force some hardcoded defaults for IBM JVMs that must have specific values
+        // the default algorithm that RHQ will use in the comm layer will be defined at runtime based on the VM
+        // but if the user mistakenly set the algorithm to the Sun value while using IBM JVM, then force
+        // some hardcoded defaults so it can more likely work for IBM JVMs.
         final boolean isIBM = System.getProperty("java.vendor", "").contains("IBM");
         if (isIBM) {
             for (String algPropName : ServerProperties.IBM_ALGOROTHM_SETTINGS) {
-                props.setProperty(algPropName, "IbmX509");
+                if (props.getProperty(algPropName, "").equalsIgnoreCase("SunX509")) {
+                    props.setProperty(algPropName, "IbmX509");
+                }
             }
         }
 

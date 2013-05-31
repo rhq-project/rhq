@@ -347,7 +347,8 @@ public class ResourceD3GraphPortlet extends MetricD3GraphView implements AutoRef
     //Custom refresh operation as we are not directly extending Table
     @Override
     public void refresh() {
-        if (isVisible() && !isRefreshing()) {
+        if (isVisible() && !isRefreshing() ){
+            //if (isVisible() && !isRefreshing() && (null != graph.getMetricGraphData().getJsonMetrics()) ) {
             drawGraph();
         }
     }

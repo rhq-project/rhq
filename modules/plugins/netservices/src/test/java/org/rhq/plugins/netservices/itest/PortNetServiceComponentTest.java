@@ -25,6 +25,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -33,8 +34,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
@@ -54,13 +53,16 @@ import org.rhq.plugins.netservices.PortNetServiceComponent.ConfigKeys;
 /**
  * @author Thomas Segismont
  */
+@Test(singleThreaded = true)
 public class PortNetServiceComponentTest extends NetServiceComponentTest {
-
-    private static final Log LOG = LogFactory.getLog(PortNetServiceComponentTest.class);
 
     private static final String SERVICE_NAME = "PortService";
 
     private static final InetAddress LOOPBACK_ADDRESS = InetAddress.getLoopbackAddress();
+
+    private static final int MIN_DYNAMIC_PORT = 49152;
+
+    private static final int MAX_PORT_NUMBER = 65535;
 
     private PortNetServiceComponent portNetServiceComponent;
 
@@ -74,32 +76,37 @@ public class PortNetServiceComponentTest extends NetServiceComponentTest {
 
     @BeforeClass
     public void startSocketServer() throws Exception {
-        LOG.info("Setting up a socket server");
-        // Let's bind a server socket to any available port
-        serverSocket = new ServerSocket(0, 50, LOOPBACK_ADDRESS);
-        // Do not block indefinitely on call to #accept
-        serverSocket.setSoTimeout(1000);
-        serverSocketLocalPort = serverSocket.getLocalPort();
-        LOG.info("Using port " + serverSocketLocalPort + " for socket server");
-        acceptorThread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                while (!stopListening) {
-                    try {
-                        Socket socket = serverSocket.accept();
-                        socket.close();
-                    } catch (IOException ignore) {
+        // Loop until the Server Socket binds to an available port
+        for (int port = MIN_DYNAMIC_PORT; port <= MAX_PORT_NUMBER; port++) {
+            try {
+                serverSocket = new ServerSocket(port, 50, LOOPBACK_ADDRESS);
+                // Do not block indefinitely on calls to #accept
+                serverSocket.setSoTimeout(1000);
+                serverSocketLocalPort = serverSocket.getLocalPort();
+                acceptorThread = new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        while (!stopListening) {
+                            try {
+                                Socket socket = serverSocket.accept();
+                                socket.close();
+                            } catch (IOException ignore) {
+                            }
+                        }
                     }
-                }
+                });
+                acceptorThread.setDaemon(true);
+                acceptorThread.start();
+                return;
+            } catch (BindException e) {
+                // Port already in use
             }
-        });
-        acceptorThread.setDaemon(true);
-        acceptorThread.start();
+        }
+        throw new RuntimeException("Could not find an available port");
     }
 
     @AfterClass
     public void stopSocketServer() {
-        LOG.info("Shutting down socket server");
         stopListening = true;
         try {
             serverSocket.close();

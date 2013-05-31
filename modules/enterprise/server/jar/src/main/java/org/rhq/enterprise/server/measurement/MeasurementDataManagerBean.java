@@ -22,7 +22,6 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,7 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.locks.ReentrantLock;
 
+import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -53,14 +54,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jboss.ejb3.annotation.TransactionTimeout;
 import org.jboss.remoting.CannotConnectException;
 
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.Postgresql83DatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
+import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -77,6 +77,7 @@ import org.rhq.core.domain.resource.composite.ResourceIdWithAgentComposite;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.OrderingField;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.collection.ArrayUtils;
@@ -89,12 +90,15 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.server.metrics.MetricsServer;
+import org.rhq.server.metrics.RawDataInsertedCallback;
 
 /**
  * A manager for {@link MeasurementData}s.
@@ -149,6 +153,15 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     @EJB
     //@IgnoreDependency
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
+
+    @EJB
+    private MetricsManagerLocal metricsManager;
+
+    @EJB
+    private SessionManagerBean sessionManagerBean;
+
+    @EJB
+    private MeasurementScheduleManagerLocal measurementScheduleManager;
 
     // doing a bulk delete in here, need to be in its own tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -209,87 +222,39 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
      *
      * @param data the actual data points
      */
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void addNumericData(Set<MeasurementDataNumeric> data) {
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void addNumericData(final Set<MeasurementDataNumeric> data) {
         if ((data == null) || (data.isEmpty())) {
             return;
         }
 
-        int expectedCount = data.size();
+        MetricsServer metricsServer = sessionManagerBean.getMetricsServer();
+        metricsServer.addNumericData(data, new RawDataInsertedCallback() {
 
-        Connection conn = null;
-        DatabaseType dbType = null;
+            private ReentrantLock lock = new ReentrantLock();
 
-        Map<String, PreparedStatement> statements = new HashMap<String, PreparedStatement>();
+            private List<MeasurementData> insertedData = new ArrayList<MeasurementData>(data.size());
 
-        try {
-            conn = rhqDs.getConnection();
-            dbType = DatabaseTypeFactory.getDatabaseType(conn);
+            @Override
+            public void onFinish() {
+                measurementDataManager.updateAlertConditionCache("mergeMeasurementReport",
+                    insertedData.toArray(new MeasurementData[insertedData.size()]));
+            }
 
-            if (dbType instanceof Postgresql83DatabaseType) {
-                Statement st = null;
+            @Override
+            public void onSuccess(MeasurementDataNumeric measurementDataNumeric) {
                 try {
-                    // Take advantage of async commit here
-                    st = conn.createStatement();
-                    st.execute("SET synchronous_commit = off");
-                } finally {
-                    JDBCUtil.safeClose(st);
+                    lock.lock();
+                    insertedData.add(measurementDataNumeric);
+                }  finally {
+                    lock.unlock();
                 }
             }
 
-            for (MeasurementDataNumeric aData : data) {
-                Double value = aData.getValue();
-                if ((value == null) || Double.isNaN(value) || Double.isInfinite(value)) {
-                    expectedCount--;
-                    continue;
-                }
-
-                String table = MeasurementDataManagerUtility.getTable(aData.getTimestamp());
-
-                PreparedStatement ps = statements.get(table);
-
-                if (ps == null) {
-                    String insertSql = "INSERT  /*+ APPEND */ INTO " + table
-                        + "(schedule_id,time_stamp,value) VALUES(?,?,?)";
-                    ps = conn.prepareStatement(insertSql);
-                    statements.put(table, ps);
-                }
-
-                ps.setInt(1, aData.getScheduleId());
-                ps.setLong(2, aData.getTimestamp());
-                ps.setDouble(3, value);
-                ps.addBatch();
+            @Override
+            public void onFailure(Throwable throwable) {
             }
-
-            int count = 0;
-            for (PreparedStatement ps : statements.values()) {
-                int[] res = ps.executeBatch();
-                for (int updates : res) {
-                    if ((updates != 1) && (updates != -2)) // oracle returns -2 on success
-                    {
-                        throw new MeasurementStorageException("Unexpected batch update size [" + updates + "]");
-                    }
-
-                    count++;
-                }
-            }
-
-            if (count != expectedCount) {
-                throw new MeasurementStorageException("Failure to store measurement data.");
-            }
-
-            notifyAlertConditionCacheManager("mergeMeasurementReport", data.toArray(new MeasurementData[data.size()]));
-        } catch (SQLException e) {
-            log.warn("Failure saving measurement numeric data:\n" + ThrowableUtil.getAllMessages(e));
-        } catch (Exception e) {
-            log.error("Error persisting numeric data", e);
-        } finally {
-            for (PreparedStatement ps : statements.values()) {
-                JDBCUtil.safeClose(ps);
-            }
-
-            JDBCUtil.safeClose(conn);
-        }
+        });
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -614,7 +579,14 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @Nullable
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
-        return getConnectedUtilityInstance().getLatestValueForSchedule(scheduleId);
+        return metricsManager.findLatestValueForResource(scheduleId);
+    }
+
+    @Asynchronous
+    @Override
+    public void updateAlertConditionCache(String callingMethod, MeasurementData[] data) {
+        AlertConditionCacheStats stats = alertConditionCacheManager.checkConditions(data);
+        log.debug(callingMethod + ": " + stats.toString());
     }
 
     private void notifyAlertConditionCacheManager(String callingMethod, MeasurementData[] data) {
@@ -642,9 +614,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByScheduleId(startTime, endTime,
-            schedule.getId());
-        return aggregate;
+        return metricsManager.getSummaryAggregate(scheduleId, startTime, endTime);
     }
 
     public MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime,
@@ -665,9 +635,14 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        MeasurementAggregate aggregate = getConnectedUtilityInstance().getAggregateByDefinitionAndContext(startTime,
-            endTime, definitionId, EntityContext.forGroup(groupId));
-        return aggregate;
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.addFilterResourceGroupId(groupId);
+        criteria.addFilterDefinitionIds(definitionId);
+        criteria.setPageControl(PageControl.getUnlimitedInstance());
+        PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(subject,
+            criteria);
+
+        return metricsManager.getSummaryAggregate(map(schedules), startTime, endTime);
     }
 
     /**
@@ -734,43 +709,82 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints) {
 
         if (context.type == EntityContext.Type.Resource) {
-            if (authorizationManager.canViewResource(subject, context.resourceId) == false) {
+            if (!authorizationManager.canViewResource(subject, context.resourceId)) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for resource[id=" + context.resourceId + "]");
             }
+            MeasurementSchedule schedule = measurementScheduleManager.getSchedule(subject, context.getResourceId(),
+                definitionId, false);
+            List<List<MeasurementDataNumericHighLowComposite>> data =
+                new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
+
+            List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
+            for (MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResource(schedule.getId(),
+                beginTime, endTime)) {
+                tempList.add(object);
+            }
+            data.add(tempList);
+
+            return data;
         } else if (context.type == EntityContext.Type.ResourceGroup) {
-            if (authorizationManager.canViewGroup(subject, context.groupId) == false) {
+            if (!authorizationManager.canViewGroup(subject, context.groupId)) {
                 throw new PermissionException("User [" + subject.getName()
                     + "] does not have permission to view measurement data for resourceGroup[id=" + context.groupId
                     + "]");
             }
-        } else if (context.type == EntityContext.Type.AutoGroup) {
-            if (authorizationManager.canViewAutoGroup(subject, context.parentResourceId, context.resourceTypeId) == false) {
-                throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to view measurement data for autoGroup[parentResourceId="
-                    + context.parentResourceId + ", resourceTypeId=" + context.resourceTypeId + "]");
-            }
-        }
+            MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+            criteria.addFilterResourceGroupId(context.getGroupId());
+            criteria.addFilterDefinitionIds(definitionId);
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(subject,
+                criteria);
+            List<List<MeasurementDataNumericHighLowComposite>> data =
+                new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
 
-        List<List<MeasurementDataNumericHighLowComposite>> results = getConnectedUtilityInstance()
-            .getMeasurementDataAggregatesForContext(beginTime, endTime, context, definitionId, numDataPoints);
-        return results;
+            List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
+            for (MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResourceGroup(
+                map(schedules), beginTime, endTime)) {
+                tempList.add(object);
+            }
+            data.add(tempList);
+
+            return data;
+        } else {
+            throw new UnsupportedOperationException("The findDataForContext method does not support " +
+                context);
+        }
+    }
+
+    private List<Integer> map(List<MeasurementSchedule> schedules) {
+        List<Integer> scheduleIds = new ArrayList<Integer>(schedules.size());
+        for (MeasurementSchedule schedule : schedules) {
+            scheduleIds.add(schedule.getId());
+        }
+        return scheduleIds;
     }
 
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numDataPoints) {
 
-        if (authorizationManager.canViewResource(subject, resourceId) == false) {
+        if (!authorizationManager.canViewResource(subject, resourceId)) {
             throw new PermissionException("User[" + subject.getName()
                 + "] does not have permission to view measurement data for resource[id=" + resourceId + "]");
         }
 
-        List<List<MeasurementDataNumericHighLowComposite>> results = new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
-        EntityContext context = EntityContext.forResource(resourceId);
+        List<List<MeasurementDataNumericHighLowComposite>> results =
+            new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
         for (int nextDefinitionId : definitionIds) {
-            results.addAll(getConnectedUtilityInstance().getMeasurementDataAggregatesForContext(beginTime, endTime,
-                context, nextDefinitionId, numDataPoints));
+            MeasurementSchedule schedule = measurementScheduleManager.getSchedule(subject, resourceId, nextDefinitionId,
+                false);
+
+            List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
+            for(MeasurementDataNumericHighLowComposite object :metricsManager.findDataForResource(schedule.getId(), beginTime, endTime) ){
+                tempList.add(object);
+            }
+
+            results.add(tempList);
         }
+
         return results;
     }
 

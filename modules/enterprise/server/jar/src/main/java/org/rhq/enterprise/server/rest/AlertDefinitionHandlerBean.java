@@ -46,6 +46,7 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Request;
 import javax.ws.rs.core.Response;
@@ -77,6 +78,8 @@ import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -97,7 +100,6 @@ import org.rhq.enterprise.server.rest.domain.Link;
  * AlertHandlerBean
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/plain"})
 @Path("/alert")
 @Api(value = "Deal with Alert Definitions",description = "This api deals with alert definitions. Everything " +
     " is purely experimental at the moment and can change without notice at any time.")
@@ -143,21 +145,39 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @GZIP
     @GET
     @Path("/definitions")
-    @ApiOperation("List all Alert Definition")
-    public List<AlertDefinitionRest> listAlertDefinitions(
-            @ApiParam(value = "Page number", defaultValue = "0") @QueryParam("page") int page,
-            @ApiParam(value = "Limit to status, UNUSED AT THE MOMENT ") @QueryParam("status") String status,
+    @ApiOperation(value = "List all Alert Definition", responseClass = "AlertDefinitionRest", multiValueResponse = true)
+    public Response listAlertDefinitions(
+            @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
+            @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
+            @Context HttpHeaders headers,
             @Context UriInfo uriInfo) {
 
         AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
-        criteria.setPaging(page,20); // TODO add link to next page
-        List<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
+        criteria.addSortId(PageOrdering.ASC);
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
+        }
+
+        PageList<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
         List<AlertDefinitionRest> ret = new ArrayList<AlertDefinitionRest>(defs.size());
         for (AlertDefinition def : defs) {
             AlertDefinitionRest adr = definitionToDomain(def, false, uriInfo);
             ret.add(adr);
         }
-        return ret;
+
+        Response.ResponseBuilder builder = Response.ok();
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        builder.type(mediaType);
+
+        if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder,uriInfo,defs,ret);
+        } else {
+            createPagingHeader(builder,uriInfo,defs);
+            builder.entity(ret); // TODO generic entity for XML
+        }
+
+        return builder.build();
     }
 
     @GET
@@ -259,9 +279,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
                 throw new StuffNotFoundException("Recovery alert with id " + adr.getRecoveryId());
         }
 
-        int definitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(caller, alertDefinition, resourceId, false);
-
-        AlertDefinition updatedDefinition = alertDefinitionManager.getAlertDefinition(caller,definitionId);
+        AlertDefinition updatedDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(caller,
+            alertDefinition, resourceId, false);
+        int definitionId = updatedDefinition.getId();
         AlertDefinitionRest uadr = definitionToDomain(updatedDefinition,true, uriInfo) ; // TODO param 'full' ?
 
         uadr.setId(definitionId);

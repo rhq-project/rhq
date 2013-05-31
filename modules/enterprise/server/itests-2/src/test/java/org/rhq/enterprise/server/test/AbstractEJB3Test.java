@@ -130,6 +130,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-assist-color-number.txt");
         testClassesJar.addAsResource("test-ldap.properties");
         testClassesJar.addAsResource("test-scheduler.properties");
+        testClassesJar.addAsResource("cassandra-test.properties");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
         testClassesJar
@@ -308,8 +309,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // create test ear by starting with rhq.ear and thinning it
         String projectVersion = System.getProperty("project.version");
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
-        earResolver.offline();
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
+        earResolver.offline();
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
         EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:" + projectVersion)
             .withoutTransitivity().asSingle(EnterpriseArchive.class);

@@ -172,6 +172,13 @@
     <mockito-core.version>1.9.0</mockito-core.version>
     <el.version>1.0</el.version>
 
+    <!-- cassandra dependency versions -->
+    <cassandra.version>1.2.4</cassandra.version>
+    <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
+    <cassandra.driver.version>1.0.0-rhq-1.2.4</cassandra.driver.version>
+    <cassandra.driver.netty.version>3.6.3.Final</cassandra.driver.netty.version>
+    <cassandra.driver.snappy.version>1.0.5-M3-p1</cassandra.driver.snappy.version>
+
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
 
@@ -1511,7 +1518,6 @@
   </build>
 
   <repositories>
-
 <!--
     <repository>
        <id>jboss-deprecated-repository</id>

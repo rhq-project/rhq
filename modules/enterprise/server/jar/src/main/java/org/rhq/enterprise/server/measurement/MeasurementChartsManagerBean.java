@@ -39,6 +39,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.MeasurementScheduleCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -512,7 +513,12 @@ public class MeasurementChartsManagerBean implements MeasurementChartsManagerLoc
                 log.warn("No metric schedules found for def=[" + definition + "] and " + context
                     + ", using empty aggregate");
             } else {
-                aggregate = dataUtil.getAggregateByDefinitionAndContext(begin, end, definitionId, context);
+                if (context.type == EntityContext.Type.ResourceGroup &&
+                    definition.getDataType() == DataType.MEASUREMENT) {
+                    aggregate = dataManager.getAggregate(subject, context.getGroupId(), definitionId, begin, end);
+                } else {
+                    aggregate = dataUtil.getAggregateByDefinitionAndContext(begin, end, definitionId, context);
+                }
             }
             if (aggregate.isEmpty()) {
                 if (log.isTraceEnabled()) {

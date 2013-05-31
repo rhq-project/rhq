@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="modules/common/ant-bundle/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/plugins/alertdef-rhq/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-util/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-maven-plugin/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-core/src/test/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-arquillian/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-installer/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/server-control/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/jar/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/itests-2/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/scripting/javascript/src/main/java"/>
@@ -194,11 +201,22 @@
 	<classpathentry kind="src" path="etc/samples/custom-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/samples/simplereport-serverplugin/src/main/java"/>
 	<classpathentry kind="src" path="etc/agentspawn/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-common/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-common-itests/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/cassandra/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/cassandra/src/test/java"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/comm/src/test/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/main/resources"/>
 	<classpathentry excluding="**" kind="src" path="modules/enterprise/agent/src/test/resources"/>
+	<classpathentry kind="src" path="modules/enterprise/server/server-metrics/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-common-itests/src/main/java"/>
+	<classpathentry kind="src" path="modules/enterprise/server/server-metrics/src/test/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-schema/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-core/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-testng/src/main/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-testng/src/test/java"/>
+	<classpathentry kind="src" path="modules/common/cassandra-jmx/src/main/java"/>
+	<classpathentry kind="src" path="modules/plugins/rhq-storage/src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2-sources.jar"/>
@@ -256,7 +274,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/postgresql/postgresql/9.2-1002.jdbc4/postgresql-9.2-1002.jdbc4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/jboss/jboss-cache/1.4.1.SP9/jboss-cache-1.4.1.SP9.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hyperic/sigar/1.6.5.132-5/sigar-1.6.5.132-5.jar" sourcepath="/M2_REPO/org/hyperic/sigar/1.6.5.132-5/sigar-1.6.5.132-5-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossts/jbossjts/4.16.2.Final/jbossjts-4.16.2.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jbossts/jbossjts/4.16.4.Final/jbossjts-4.16.4.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-project/2.0.8/maven-project-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/maven/maven-plugin-api/2.0.8/maven-plugin-api-2.0.8.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/swizzle/swizzle-confluence/1.6.1/swizzle-confluence-1.6.1.jar"/>
@@ -291,31 +309,31 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-dbunit/3.1/unitils-dbunit-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-orm/3.1/unitils-orm-3.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/unitils/unitils-testng/3.1/unitils-testng-3.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-core-asl/1.8.5/jackson-core-asl-1.8.5.jar" sourcepath="/M2_REPO/org/codehaus/jackson/jackson-core-asl/1.8.5/jackson-core-asl-1.8.5-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.8.5/jackson-mapper-asl-1.8.5.jar" sourcepath="/M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.8.5/jackson-mapper-asl-1.8.5-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-core-asl/1.9.9/jackson-core-asl-1.9.9.jar" sourcepath="/M2_REPO/org/codehaus/jackson/jackson-core-asl/1.8.5/jackson-core-asl-1.8.5-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.9.9/jackson-mapper-asl-1.9.9.jar" sourcepath="/M2_REPO/org/codehaus/jackson/jackson-mapper-asl/1.8.5/jackson-mapper-asl-1.8.5-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.6.5/mongo-java-driver-2.6.5.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/googlecode/java-diff-utils/diffutils/1.2.1/diffutils-1.2.1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/google/code/morphia/morphia/0.99/morphia-0.99.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-annotations/3.5.6-Final/hibernate-annotations-3.5.6-Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-core/4.0.1.Final/hibernate-core-4.0.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-entitymanager/4.0.1.Final/hibernate-entitymanager-4.0.1.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-annotations/3.5.0-Beta-2/hibernate-annotations-3.5.0-Beta-2.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-core/4.2.0.CR1/hibernate-core-4.2.0.CR1.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-entitymanager/4.2.0.CR1/hibernate-entitymanager-4.2.0.CR1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/hibernate-validator/4.2.0.Final/hibernate-validator-4.2.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/hibernate/javax/persistence/hibernate-jpa-2.0-api/1.0.1.Final/hibernate-jpa-2.0-api-1.0.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/infinispan/infinispan-core/5.1.2.FINAL/infinispan-core-5.1.2.FINAL.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/servlet/jboss-servlet-api_3.0_spec/1.0.1.Final/jboss-servlet-api_3.0_spec-1.0.1.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/spec/javax/servlet/jboss-servlet-api_3.0_spec/1.0.2.Final/jboss-servlet-api_3.0_spec-1.0.2.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/msc/jboss-msc/1.0.2.GA/jboss-msc-1.0.2.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/jboss-dmr/1.1.1.Final/jboss-dmr-1.1.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.1.1.Final/jboss-as-naming-7.1.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.1.1.Final/jboss-as-server-7.1.1.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-naming/7.2.0.Alpha1-redhat-4/jboss-as-naming-7.2.0.Alpha1-redhat-4.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-server/7.2.0.Alpha1-redhat-4/jboss-as-server-7.2.0.Alpha1-redhat-4.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/staxmapper/1.1.0.Final/staxmapper-1.1.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/modules/jboss-modules/1.1.1.GA/jboss-modules-1.1.1.GA.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-subsystem-test/7.1.1.Final/jboss-as-subsystem-test-7.1.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller/7.1.1.Final/jboss-as-controller-7.1.1.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/as/jboss-as-controller-client/7.1.1.Final/jboss-as-controller-client-7.1.1.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.4.Final/resteasy-links-2.3.4.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.4.Final/resteasy-jaxrs-2.3.4.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.4.Final/resteasy-jackson-provider-2.3.4.Final.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.3.4.Final/jaxrs-api-2.3.4.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-links/2.3.5.Final/resteasy-links-2.3.5.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jaxrs/2.3.5.Final/resteasy-jaxrs-2.3.5.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/resteasy-jackson-provider/2.3.5.Final/resteasy-jackson-provider-2.3.5.Final.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/resteasy/jaxrs-api/2.3.5.Final/jaxrs-api-2.3.5.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/sasl/jboss-sasl/1.0.0.Final/jboss-sasl-1.0.0.Final.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/mockito/mockito-all/1.9.0/mockito-all-1.9.0.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/powermock/powermock-api-mockito/1.4.12/powermock-api-mockito-1.4.12.jar"/>
@@ -352,17 +370,23 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final.jar" sourcepath="/M2_REPO/org/picketbox/picketbox/4.0.7.Final/picketbox-4.0.7.Final-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/python/jython-standalone/2.5.2/jython-standalone-2.5.2.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/com/wordnik/swagger-annotations_2.9.1/1.1.1-SNAPSHOT/swagger-annotations_2.9.1-1.1.1-20121031.024335-6.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/org/yaml/snakeyaml/1.12/snakeyaml-1.12.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/joda-time/joda-time/2.1/joda-time-2.1.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.1.5/cassandra-thrift-1.1.5.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/hectorclient/hector-core/1.1-1/hector-core-1.1-1.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-install/1.5.2/byteman-install-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2-sources.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106.jar" sourcepath="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106-sources.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.2/cassandra-all-1.2.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.0-rhq-1.2.4/cassandra-driver-core-1.0.0-rhq-1.2.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/google/guava/guava/12.0/guava-12.0.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-thrift/1.2.2/cassandra-thrift-1.2.2.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/eclipse/jetty/aggregate/jetty-all/8.1.8.v20121106/jetty-all-8.1.8.v20121106.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry exported="true" kind="var" path="JDK_HOME/lib/tools.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlgraphics/batik-transcoder/1.7/batik-transcoder-1.7.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlgraphics/batik-util/1.7/batik-util-1.7.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlgraphics/batik-svg-dom/1.7/batik-svg-dom-1.7.jar"/>
-	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/xmlgraphics/batik-dom/1.7/batik-dom-1.7.jar"/>
+	<classpathentry exported="true" kind="var" path="JDK_HOME/jre/lib/rt.jar"/>
+	<classpathentry kind="var" path="M2_REPO/commons-configuration/commons-configuration/1.6/commons-configuration-1.6.jar"/>
+	<classpathentry kind="var" path="M2_REPO/org/apache/maven/plugin-tools/maven-plugin-annotations/3.2/maven-plugin-annotations-3.2.jar"/>
 	<classpathentry kind="output" path="eclipse-classes"/>
 </classpath>

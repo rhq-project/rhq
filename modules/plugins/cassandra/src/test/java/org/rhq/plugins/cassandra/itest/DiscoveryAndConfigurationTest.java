@@ -58,8 +58,10 @@ import org.rhq.core.pluginapi.operation.OperationResult;
  * @author Stefan Negrea
  *
  */
-@Test(groups = { "integration" }, singleThreaded = true, enabled = false)
+@Test(groups = { "integration" }, singleThreaded = true, enabled = DiscoveryAndConfigurationTest.ENABLED)
 public class DiscoveryAndConfigurationTest {
+
+    public static final boolean ENABLED = false;
 
     private static final int TYPE_HIERARCHY_DEPTH = 6;
     protected static final String PLUGIN_NAME = "Cassandra";
@@ -76,7 +78,7 @@ public class DiscoveryAndConfigurationTest {
         return PLUGIN_NAME;
     }
 
-    @BeforeSuite
+    @BeforeSuite(enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void setupTestResources() {
         try {
             File pluginDir = new File("target/testsetup/plugins");
@@ -101,12 +103,12 @@ public class DiscoveryAndConfigurationTest {
         }
     }
 
-    @AfterSuite
+    @AfterSuite(enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void stopTestResources() {
         PluginContainer.getInstance().shutdown();
     }
 
-    @Test(enabled = false)
+    @Test(enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void pluginLoad() {
         PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
         PluginEnvironment pluginEnvironment = pluginManager.getPlugin(PLUGIN_NAME);
@@ -114,13 +116,13 @@ public class DiscoveryAndConfigurationTest {
         assert (pluginEnvironment.getPluginName().equals(PLUGIN_NAME));
     }
 
-    @Test(dependsOnMethods = "pluginLoad", enabled = false)
+    @Test(dependsOnMethods = "pluginLoad", enabled = DiscoveryAndConfigurationTest.ENABLED)
     public void discoverResources() throws Exception {
         InventoryReport report = PluginContainer.getInstance().getInventoryManager().executeServerScanImmediately();
         Assert.assertNotNull(report);
         log.info("Discovery took: " + (report.getEndTime() - report.getStartTime()) + "ms");
 
-        Thread.sleep(1000);
+        Thread.sleep(4000);
 
         report = PluginContainer.getInstance().getInventoryManager().executeServiceScanImmediately();
         Assert.assertNotNull(report);
@@ -187,10 +189,15 @@ public class DiscoveryAndConfigurationTest {
                 ((MeasurementFacet) resourceComponent).getValues(report, metricList);
 
                 if (def.getDataType().equals(DataType.TRAIT)) {
+                    Assert.assertTrue(report.getTraitData().iterator().hasNext(),
+                        "Unable to collect trait [" + def.getName()
+                        + "] on " + resource);
                     MeasurementData data = report.getTraitData().iterator().next();
                     Assert.assertNotNull(data, "Unable to collect trait [" + def.getName() + "] on " + resource);
                     log.info("Measurement: " + def.getName() + "=" + data.getValue());
                 } else if (def.getDataType().equals(DataType.MEASUREMENT)) {
+                    Assert.assertTrue(report.getNumericData().iterator().hasNext(),
+                        "Unable to collect measurement [" + def.getName() + "] on " + resource);
                     MeasurementData data = report.getNumericData().iterator().next();
                     Assert.assertNotNull(data, "Unable to collect measurement [" + def.getName() + "] on " + resource);
                     log.info("Measurement: " + def.getName() + "=" + data.getValue());

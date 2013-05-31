@@ -412,7 +412,8 @@ public interface AgentConfigurationConstants {
     /**
      * Default algorithm for the keystore.
      */
-    String DEFAULT_CLIENT_SENDER_SECURITY_KEYSTORE_ALGORITHM = "SunX509";
+    String DEFAULT_CLIENT_SENDER_SECURITY_KEYSTORE_ALGORITHM = (System.getProperty("java.vendor", "").contains("IBM") ? "IbmX509"
+        : "SunX509");
 
     /**
      * The type of keystore file.
@@ -454,7 +455,8 @@ public interface AgentConfigurationConstants {
     /**
      * Default algorithm for the truststore.
      */
-    String DEFAULT_CLIENT_SENDER_SECURITY_TRUSTSTORE_ALGORITHM = "SunX509";
+    String DEFAULT_CLIENT_SENDER_SECURITY_TRUSTSTORE_ALGORITHM = (System.getProperty("java.vendor", "").contains("IBM") ? "IbmX509"
+        : "SunX509");
 
     /**
      * The type of truststore file.

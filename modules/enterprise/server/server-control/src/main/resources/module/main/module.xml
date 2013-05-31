@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.0" name="${moduleName}">
+  <main-class name="org.rhq.server.control.RHQControl"/>
+
+  <resources>
+    <resource-root path="${project.build.finalName}.jar"/>
+    <resource-root path="rhq-core-util-${project.version}.jar"/>
+  </resources>
+
+  <dependencies>
+    <module name="javax.api"/>
+    <module name="org.apache.commons.logging"/>
+    <module name="org.apache.commons.cli"/>
+    <module name="org.apache.commons.exec"/>
+    <module name="org.apache.commons.configuration"/>
+    <module name="org.apache.log4j"/>
+    <module name="sun.jdk"/>
+    <module name="org.jboss.logmanager" services="import"/>
+    <module name="org.jboss.logging"/>
+  </dependencies>
+</module>

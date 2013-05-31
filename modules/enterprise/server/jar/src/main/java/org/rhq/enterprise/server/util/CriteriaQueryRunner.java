@@ -129,9 +129,7 @@ public class CriteriaQueryRunner<T> {
 
     public void initFetchFields(Object entity) {
         initPersistentBags(entity);
-        if (queryGenerator.isProjectionAltered()) {
-            initJoinFetchFields(entity);
-        }
+        initJoinFetchFields(entity);
     }
 
     private void initPersistentBags(Object entity) {

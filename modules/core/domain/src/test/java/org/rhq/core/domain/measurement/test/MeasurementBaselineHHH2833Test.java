@@ -154,7 +154,7 @@ public class MeasurementBaselineHHH2833Test extends AbstractEJB3Test {
 
     private String getDeleteQueryThatFails() {
         // only the SELECT clause is different - the FROM on down is the same as the getSelectQueryThatSucceeds query
-        return "DELETE MeasurementBaseline AS doomed WHERE doomed.scheduleId IN " //
+        return "DELETE MeasurementBaseline AS doomed WHERE doomed.schedule.id IN " //
             + "( " //
             + "   SELECT d.id.scheduleId AS scheduleId " //
             + "     FROM MeasurementDataNumeric1H d " //

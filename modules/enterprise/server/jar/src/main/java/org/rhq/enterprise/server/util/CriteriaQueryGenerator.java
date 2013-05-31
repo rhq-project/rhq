@@ -343,7 +343,7 @@ public final class CriteriaQueryGenerator {
                 } else {
                     if (this.projection == null) {
                         /*
-                         * if not altering the projection, join fetching can be using
+                         * if not altering the projection, join fetching can be used
                          * to retrieve the associated instance in the same SELECT
                          *
                          * We further avoid a JOIN FETCH when executing queries with limits.
@@ -664,14 +664,9 @@ public final class CriteriaQueryGenerator {
     }
 
     private boolean isPersistentBag(String fieldName) {
-        try {
-            Class<?> persistentClass = criteria.getPersistentClass();
-            Field field = persistentClass.getDeclaredField(fieldName);
+        Field field = findField(fieldName);
 
-            return isAList(field) && !field.isAnnotationPresent(IndexColumn.class);
-        } catch (NoSuchFieldException e) {
-            return false;
-        }
+        return field != null && isAList(field) && !field.isAnnotationPresent(IndexColumn.class);
     }
 
     private boolean isAList(Field field) {
@@ -690,21 +685,38 @@ public final class CriteriaQueryGenerator {
     }
 
     private void addPersistentBag(String fieldName) {
-        try {
-            Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
-            persistentBagFields.add(field);
-        } catch (NoSuchFieldException e) {
-            LOG.warn("Failed to add persistent bag collection on class [" + criteria.getPersistentClass().getName() +"]: ", e);
+        Field f = findField(fieldName);
+        if (f == null) {
+            LOG.warn(
+                "Failed to add persistent bag collection [" + fieldName + "] on class [" + criteria.getPersistentClass().getName() +
+                    "]. There doesn't seem to be a field of that name on the class or any of its superclasses.");
+        } else {
+            persistentBagFields.add(f);
         }
     }
 
     private void addJoinFetch(String fieldName) {
-        try {
-            Field field = criteria.getPersistentClass().getDeclaredField(fieldName);
-            joinFetchFields.add(field);
-        } catch (NoSuchFieldException e) {
-            LOG.warn("Failed to add join fetch field on class [" + criteria.getPersistentClass().getName() + "]: ", e);
+        Field f = findField(fieldName);
+        if (f == null) {
+            LOG.warn(
+                "Failed to add join fetch field [" + fieldName + "] on class [" + criteria.getPersistentClass().getName() +
+                    "]. There doesn't seem to be a field of that name on the class or any of its superclasses.");
+        } else {
+            joinFetchFields.add(f);
         }
+    }
+
+    private Field findField(String fieldName) {
+        Class<?> cls = criteria.getPersistentClass();
+        while (cls != null) {
+            try {
+                return cls.getDeclaredField(fieldName);
+            } catch (NoSuchFieldException e) {
+                cls = cls.getSuperclass();
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -718,6 +730,21 @@ public final class CriteriaQueryGenerator {
         return persistentBagFields;
     }
 
+    /**
+     * <strong>Note:</strong> This method should only be called after {@link #getQueryString(boolean)}} because it is
+     * that method where the persistentBagFields property is initialized.
+     * <p/>
+     * The elements of the returned list are a (sub)set of the fields that the criteria object specified to be fetched
+     * (using the fetchXXX() methods). If the {@link CriteriaQueryRunner} is not set to automatically fetch all the
+     * fields, you need to manually initialize these fields by for example using
+     * {@link CriteriaQueryRunner#initFetchFields(Object)} method on each of the results.
+     *
+     * @see #alterProjection(String) <code>alterProjection(String)</code> for special attention you need to make when
+     * mixing fetching fields and altered projection.
+     *
+     * @return Returns a list of fields from the persistent class to which the criteria class corresponds. The fields in
+     *         the list are fields specified by the criteria to be fetched (using the fetchXXX() methods).
+     */
     public List<Field> getJoinFetchFields() {
         return joinFetchFields;
     }
@@ -728,8 +755,11 @@ public final class CriteriaQueryGenerator {
      * only affect the ResultSet for the data query, not the count query.
      * <p/>
      * If you are projecting a composite object that does not directly extend the entity your Criteria object
-     * represents, then you will need to manually initialize the persistent bags using the methods exposed on
-     * {@link CriteriaQueryRunner}
+     * represents, then you will need to manually initialize the persistent bags and fetch fields using the
+     * {@link CriteriaQueryRunner#initFetchFields(Object)} method for each object in the results (for which you need
+     * to instantiate the {@link CriteriaQueryRunner} with automatic fetching switched OFF). <b>Note</b> that this will
+     * NOT work on the composite object itself. You need to pass an instance of the entity class to the
+     *{@link CriteriaQueryRunner#initFetchFields(Object)} method.
      */
     public void alterProjection(String projection) {
         this.projection = projection;
@@ -921,6 +951,7 @@ public final class CriteriaQueryGenerator {
             } else {
                 pc = new PageControl(criteria.getPageNumber(), criteria.getPageSize());
             }
+
             for (String fieldName : criteria.getOrderingFieldNames()) {
                 for (Field sortField : getFields(criteria, Criteria.Type.SORT)) {
                     if (sortField.getName().equals(fieldName) == false) {
@@ -939,6 +970,15 @@ public final class CriteriaQueryGenerator {
                 }
             }
         }
+
+        // Unless paging is unlimited or it's not supported, add a sort on ID.  This ensures that when paging
+        // we always have a consistent ordering. In other words, if the data set is unchanged between pages, there
+        // will no overlap/repetition of rows. Note that this applies even if other sort fields have been
+        // set, because they may still not have unique values. See https://bugzilla.redhat.com/show_bug.cgi?id=966665.
+        if (!pc.isUnlimited() && criteria.isSupportsAddSortId()) {
+            pc.addDefaultOrderingField("id");
+        }
+
         return pc;
     }
 

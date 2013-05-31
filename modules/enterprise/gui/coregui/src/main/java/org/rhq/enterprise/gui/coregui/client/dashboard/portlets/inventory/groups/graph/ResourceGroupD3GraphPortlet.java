@@ -85,6 +85,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements Au
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
+
     public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
     public static final String CFG_DEFINITION_ID = "definitionId";
 

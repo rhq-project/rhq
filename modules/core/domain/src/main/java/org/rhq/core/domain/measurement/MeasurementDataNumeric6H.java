@@ -36,14 +36,21 @@ import javax.persistence.Table;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( { @NamedQuery(name = MeasurementDataNumeric6H.GET_NUM_AGGREGATE, query = "SELECT min(nmd.min), avg(nmd.value), max(nmd.max) "
-    + "FROM MeasurementDataNumeric6H nmd "
-    + "WHERE nmd.id.scheduleId = :schedId AND nmd.id.timestamp BETWEEN :start AND :end") })
+@NamedQueries({
+    @NamedQuery(name = MeasurementDataNumeric6H.GET_NUM_AGGREGATE, query = "SELECT min(nmd.min), avg(nmd.value), max(nmd.max) "
+        + "FROM MeasurementDataNumeric6H nmd "
+        + "WHERE nmd.id.scheduleId = :schedId AND nmd.id.timestamp BETWEEN :start AND :end"),
+    @NamedQuery(name = MeasurementDataNumeric6H.QUERY_FIND_ALL, query = "SELECT m From MeasurementDataNumeric6H m"),
+    @NamedQuery(name = MeasurementDataNumeric6H.QUERY_DELETE_ALL, query = "DELETE FROM MeasurementDataNumeric6H m ") })
 @Table(name = "RHQ_MEASUREMENT_DATA_NUM_6H")
-public class MeasurementDataNumeric6H extends MeasurementData implements Serializable {
+public class MeasurementDataNumeric6H extends MeasurementData implements Serializable,
+    MeasurementDataNumericAggregateInterface {
+
     private static final long serialVersionUID = 1L;
 
     public static final String GET_NUM_AGGREGATE = "MeasurementDataNumeric6H.getNumAggregate";
+    public static final String QUERY_FIND_ALL = "MeasurementDataNumeric6H.findAll";
+    public static final String QUERY_DELETE_ALL = "MeasurementDataNumeric6H.deleteAll";
 
     @Column(precision = 24, scale = 3)
     private Double value;

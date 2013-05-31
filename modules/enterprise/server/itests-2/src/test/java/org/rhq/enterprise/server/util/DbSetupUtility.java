@@ -29,16 +29,18 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.tools.ant.Project;
+import org.apache.tools.ant.helper.ProjectHelper2;
+
+import org.rhq.core.db.setup.DBSetup;
+import org.rhq.enterprise.server.test.AbstractEJB3Test;
+
 import liquibase.Liquibase;
 import liquibase.database.Database;
 import liquibase.database.DatabaseFactory;
 import liquibase.exception.LiquibaseException;
 import liquibase.integration.commandline.CommandLineUtils;
 import liquibase.resource.ClassLoaderResourceAccessor;
-import org.apache.tools.ant.Project;
-import org.apache.tools.ant.helper.ProjectHelper2;
-import org.rhq.core.db.setup.DBSetup;
-import org.rhq.enterprise.server.test.AbstractEJB3Test;
 
 /**
  * Provides utility methods for doing dbresets, dbsetups, and dbupgrades.

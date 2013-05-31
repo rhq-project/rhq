@@ -211,6 +211,8 @@ public class SingleAlertDefinitionView extends EnhancedVLayout {
                         public void execute(Boolean value) {
                             if (value) {
                                 save();
+                            } else {
+                                unregisterHandler();
                             }
                         }
                     });

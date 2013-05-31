@@ -303,10 +303,10 @@ public class AlertManagerTest extends AbstractEJB3Test {
         alertDefinition.setConditionExpression(BooleanExpression.ANY);
         alertDefinition.setRecoveryId(0);
         alertDefinition.setEnabled(true);
-        int alertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(), alertDefinition,
-            testData.getResource().getId(), true);
-        testData.setAlertDefinitionId(alertDefinitionId);
-        return alertDefinitionId;
+        alertDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(testData.getSubject(),
+            alertDefinition, testData.getResource().getId(), true);
+        testData.setAlertDefinitionId(alertDefinition.getId());
+        return alertDefinition.getId();
     }
 
     private static final class TestData {

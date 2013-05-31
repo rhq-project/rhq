@@ -245,13 +245,12 @@ public class JPADriftCriteria extends Criteria implements DriftCriteria {
     }
 
     @Override
-    public void addFilterIds(Integer... filterIds) {
-        throw new UnsupportedOperationException("The filter is not supported by DriftCriteria.");
+    public boolean isSupportsAddSortId() {
+        return false;
     }
 
     @Override
-    public void addSortId(PageOrdering pageOrdering) {
-        throw new UnsupportedOperationException("The sort is not supported by DriftCriteria.");
+    public boolean isSupportsAddFilterIds() {
+        return false;
     }
-
 }

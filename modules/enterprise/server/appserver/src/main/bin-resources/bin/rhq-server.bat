@@ -23,16 +23,14 @@ rem    RHQ_SERVER_JAVA_HOME - The location of the JRE that the Server will
 rem                           use. This will be ignored if
 rem                           RHQ_SERVER_JAVA_EXE_FILE_PATH is set.
 rem                           If this and RHQ_SERVER_JAVA_EXE_FILE_PATH are
-rem                           not set, the Server's embedded JRE will be used.
+rem                           not set, JAVA_HOME will be used.
 rem
 rem    RHQ_SERVER_JAVA_EXE_FILE_PATH - Defines the full path to the Java
 rem                                    executable to use. If this is set,
 rem                                    RHQ_SERVER_JAVA_HOME is ignored.
 rem                                    If this is not set, then
 rem                                    %RHQ_SERVER_JAVA_HOME%\bin\java.exe
-rem                                    is used. If this and
-rem                                    RHQ_SERVER_JAVA_HOME are not set, the
-rem                                    Server's embedded JRE will be used.
+rem                                    is used.
 rem
 rem    RHQ_SERVER_INSTANCE_NAME - The name of the Windows Service; it must
 rem                               conform to the Windows Service naming
@@ -55,9 +53,6 @@ rem
 rem Note that you cannot define custom Java VM parameters or command line
 rem arguments to pass to the RHQ Server standalone.sh.  If you wish to pass in 
 rem specific arguments, modify the rhq-server-wrapper.conf file.
-rem
-rem If the embedded JRE is to be used but is not available, the fallback
-rem JRE to be used will be determined by the JAVA_HOME environment variable.
 rem
 rem This script does not use the built-in JBossAS run.bat. 
 rem ===========================================================================
@@ -89,17 +84,21 @@ set RHQ_SERVER_HOME=%CD%
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_HOME: %RHQ_SERVER_HOME%
 
 rem ----------------------------------------------------------------------
-rem Find the Java executable and verify we have a VM available.
+rem Find the Java executable and verify we have a VM available
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
-   if not defined RHQ_SERVER_JAVA_HOME call :prepare_embedded_jre
+   if not defined RHQ_SERVER_JAVA_HOME (
+      if defined RHQ_STORAGE_DEBUG echo No JRE found - will try to use JAVA_HOME: %JAVA_HOME%
+      set RHQ_SERVER_JAVA_HOME=%JAVA_HOME%
+   )
+)
+if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH (
+   set RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_HOME%\bin\java.exe
 )
 
-if not defined RHQ_SERVER_JAVA_EXE_FILE_PATH set RHQ_SERVER_JAVA_EXE_FILE_PATH=%RHQ_SERVER_JAVA_HOME%\bin\java.exe
-
-if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_JAVA_HOME: %RHQ_SERVER_JAVA_HOME%
-if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_JAVA_EXE_FILE_PATH: %RHQ_SERVER_JAVA_EXE_FILE_PATH%
+if defined RHQ_STORAGE_DEBUG echo RHQ_SERVER_JAVA_HOME: %RHQ_SERVER_JAVA_HOME%
+if defined RHQ_STORAGE_DEBUG echo RHQ_SERVER_JAVA_EXE_FILE_PATH: %RHQ_SERVER_JAVA_EXE_FILE_PATH%
 
 if not exist "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" (
    echo There is no JVM available.
@@ -112,7 +111,7 @@ rem Define the name used for the name of the Windows Service.
 rem If this is not defined, the name of the computer is used.
 rem ----------------------------------------------------------------------
 
-if "%RHQ_SERVER_INSTANCE_NAME%"=="" (
+if not defined RHQ_SERVER_INSTANCE_NAME (
    set RHQ_SERVER_INSTANCE_NAME=rhqserver-%COMPUTERNAME%
 )
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_INSTANCE_NAME: %RHQ_SERVER_INSTANCE_NAME%
@@ -149,12 +148,13 @@ rem ----------------------------------------------------------------------
 rem Create and configure the wrapper log directory.
 rem ----------------------------------------------------------------------
 
-if "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" == "" (
-   if not exist "%RHQ_SERVER_HOME%\logs" (
-      mkdir "%RHQ_SERVER_HOME%\logs"
-   )
+if not defined RHQ_SERVER_WRAPPER_LOG_DIR_PATH (
    set RHQ_SERVER_WRAPPER_LOG_DIR_PATH=%RHQ_SERVER_HOME%\logs
 )
+if not exist "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%" (
+   mkdir "%RHQ_SERVER_WRAPPER_LOG_DIR_PATH%"
+)
+
 if defined RHQ_SERVER_DEBUG echo RHQ_SERVER_WRAPPER_LOG_DIR_PATH: %RHQ_SERVER_WRAPPER_LOG_DIR_PATH%
 
 rem ----------------------------------------------------------------------
@@ -204,18 +204,6 @@ if /i "%1"=="status" (
 echo Usage: %0 { install ^| start ^| stop ^| remove ^| status ^| console }
 goto :done
 
-rem ----------------------------------------------------------------------
-rem CALL subroutine that prepares to use the embedded JRE
-rem ----------------------------------------------------------------------
-
-:prepare_embedded_jre
-set RHQ_SERVER_JAVA_HOME=%RHQ_SERVER_HOME%\jre
-if defined RHQ_SERVER_DEBUG echo Using the embedded JRE
-if not exist "%RHQ_SERVER_JAVA_HOME%" (
-   if defined RHQ_SERVER_DEBUG echo No embedded JRE found - will try to use JAVA_HOME: %JAVA_HOME%
-   set RHQ_SERVER_JAVA_HOME=%JAVA_HOME%
-)
-goto :eof
 
 rem ----------------------------------------------------------------------
 rem CALL subroutine that exits this script normally

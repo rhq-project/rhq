@@ -22,10 +22,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -73,6 +69,7 @@ import org.jboss.resteasy.annotations.GZIP;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
@@ -83,13 +80,11 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.measurement.MeasurementAggregate;
+import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Baseline;
@@ -100,6 +95,8 @@ import org.rhq.enterprise.server.rest.domain.MetricDefinitionAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 import org.rhq.enterprise.server.rest.domain.StringValue;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * Deal with metrics
@@ -127,6 +124,10 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     ResourceManagerLocal resMgr;
     @EJB
     ResourceGroupManagerLocal groupMgr;
+
+    @EJB
+    private SessionManagerBean sessionManager;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     EntityManager em;
 
@@ -658,7 +659,6 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         so.startTime = startTime;
         so.endTime = endTime;
         so.mediaType = mediaType;
-        so.now = now-1; // pass this so that the for the 7days case is still handled from raw tables.
 
         return so;
     }
@@ -866,107 +866,73 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         int scheduleId;
         long startTime;
         long endTime;
-        long now;
         MediaType mediaType;
 
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+            MetricsDAO metricsDAO = sessionManager.getMetricsDAO();
+            Iterable<RawNumericMetric> resultSet = metricsDAO.findRawMetrics(scheduleId, startTime, endTime);
 
-            String[] tables = MeasurementDataManagerUtility.getTables(startTime,endTime,now);
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0 ; i < tables.length ; i ++) {
-                sb.append("SELECT time_stamp,value FROM ");
-                sb.append(tables[i]);
-                sb.append(" WHERE schedule_id = ? AND time_stamp BETWEEN ? AND ?");
-                if (i < tables.length-1)
-                    sb.append(" UNION ALL ");
+            PrintWriter pw = new PrintWriter(outputStream);
+
+            if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+                boolean needsComma = false;
+                pw.println("[");
+                for (RawNumericMetric metric : resultSet) {
+                    if (needsComma) {
+                        pw.print(",\n");
+                    }
+                    needsComma = true;
+                    pw.print("{");
+                    pw.print("\"scheduleId\":");
+                    pw.print(scheduleId);
+                    pw.print(", ");
+                    pw.print("\"timeStamp\":");
+                    pw.print(metric.getTimestamp());
+                    pw.print(", ");
+                    pw.print("\"value\":");
+                    pw.print(metric.getValue());
+                    pw.print("}");
+                }
+                pw.println("]");
+            } else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
+                pw.println("<collection>");
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print("  <numericDataPoint scheduleId=\"");
+                    pw.print(scheduleId);
+                    pw.print("\" timeStamp=\"");
+                    pw.print(metric.getTimestamp());
+                    pw.print("\" value=\"");
+                    pw.print(metric.getValue());
+                    pw.println("\"/>");
+                }
+                pw.println("</collection>");
+            } else if (mediaType.toString().equals("text/csv")) {
+                pw.println("#schedule,timestamp,value");
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print(scheduleId);
+                    pw.print(',');
+                    pw.print(metric.getTimestamp());
+                    pw.print(',');
+                    pw.println(metric.getValue());
+                }
+            } else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+                pw.println("<table>");
+                pw.print("<tr><th>time</th><th>value</th></tr>\n");
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print("  <tr>");
+                    pw.print("<td>");
+                    pw.print(new Date(metric.getTimestamp()));
+                    pw.print("</td><td>");
+                    pw.print(metric.getValue());
+                    pw.print("</td>");
+                    pw.println("</tr>");
+                }
+                pw.println("</table>");
+
             }
-
-            sb.append(" ORDER BY time_stamp ASC");
-
-
-
-            Connection connection = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-            try {
-                connection = rhqDs.getConnection();
-                ps = connection.prepareStatement( sb.toString() );
-                for (int i = 0; i < tables.length ; i++) {
-                    ps.setInt(i * 3 + 1, scheduleId);
-                    ps.setLong(i*3+2,startTime);
-                    ps.setLong(i*3+3,endTime);
-                }
-                rs = ps.executeQuery();
-
-                PrintWriter pw = new PrintWriter(outputStream);
-
-                if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-                    boolean needsComma = false;
-                    pw.println("[");
-                    while (rs.next()) {
-                        if (needsComma) {
-                            pw.print(",\n");
-                        }
-                        needsComma = true;
-                        pw.print("{");
-                        pw.print("\"scheduleId\":");
-                        pw.print(scheduleId);
-                        pw.print(", ");
-                        pw.print("\"timeStamp\":");
-                        pw.print(rs.getLong(1));
-                        pw.print(", ");
-                        pw.print("\"value\":");
-                        pw.print(rs.getDouble(2));
-                        pw.print("}");
-                    }
-                    pw.println("]");
-                }
-                else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
-                    pw.println("<collection>");
-                    while(rs.next()) {
-                        pw.print("  <numericDataPoint scheduleId=\"");
-                        pw.print(scheduleId);
-                        pw.print("\" timeStamp=\"");
-                        pw.print(rs.getLong(1));
-                        pw.print("\" value=\"");
-                        pw.print(rs.getDouble(2));
-                        pw.println("\"/>");
-                    }
-                    pw.println("</collection>");
-                }
-                else if (mediaType.toString().equals("text/csv")) {
-                    pw.println("#schedule,timestamp,value");
-                    while (rs.next()) {
-                        pw.print(scheduleId);
-                        pw.print(',');
-                        pw.print(rs.getLong(1));
-                        pw.print(',');
-                        pw.println(rs.getDouble(2));
-                    }
-                }
-                else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
-                    pw.println("<table>");
-                    pw.print("<tr><th>time</th><th>value</th></tr>\n");
-                    while (rs.next()) {
-                        pw.print("  <tr>");
-                        pw.print("<td>");
-                        pw.print(new Date(rs.getLong(1)));
-                        pw.print("</td><td>");
-                        pw.print(rs.getDouble(2));
-                        pw.print("</td>");
-                        pw.println("</tr>");
-                    }
-                    pw.println("</table>");
-
-                }
-                pw.flush();
-                pw.close();
-            } catch (SQLException e) {
-                log.error(e);
-            } finally {
-                JDBCUtil.safeClose(connection, ps, rs);
-            }
+            pw.flush();
+            pw.close();
         }
     }
 }

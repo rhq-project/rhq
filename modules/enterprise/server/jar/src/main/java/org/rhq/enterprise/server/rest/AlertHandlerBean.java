@@ -32,7 +32,6 @@ import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
@@ -72,7 +71,6 @@ import org.rhq.enterprise.server.rest.domain.*;
  * Deal with alert related stuff
  * @author Heiko W. Rupp
  */
-@Produces({"application/json","application/xml","text/html"})
 @Path("/alert")
 @Api(value = "Deal with Alerts",description = "This api deals with alerts that have fired.")
 @Stateless
@@ -90,10 +88,10 @@ public class AlertHandlerBean extends AbstractRestBean {
     @ApiErrors({
         @ApiError(code = 406, reason = "There are 'resourceId' and 'definitionId' passed as query parameters"),
         @ApiError(code = 406, reason = "Page size was 0"),
-        @ApiError(code = 406, reason = "Page number was < 1")
+        @ApiError(code = 406, reason = "Page number was < 0")
     })
     public Response listAlerts(
-        @ApiParam(value = "Page number") @QueryParam("page") @DefaultValue("1") int page,
+        @ApiParam(value = "Page number") @QueryParam("page") @DefaultValue("0") int page,
         @ApiParam(value = "Page size; use -1 for 'unlimited'") @QueryParam("size") @DefaultValue("100")int size,
         @ApiParam(value = "Limit to priority", allowableValues = "High, Medium, Low, All") @DefaultValue("All") @QueryParam("prio") String prio,
         @ApiParam(value = "Should full resources and definitions be sent") @QueryParam("slim") @DefaultValue("false") boolean slim,
@@ -108,7 +106,7 @@ public class AlertHandlerBean extends AbstractRestBean {
         if (size==0) {
             throw new BadArgumentException("size","Must not be 0");
         }
-        if (page<1) {
+        if (page<0) {
             throw new BadArgumentException("page","Must be >=1");
         }
 
@@ -120,7 +118,7 @@ public class AlertHandlerBean extends AbstractRestBean {
             criteria.setPageControl(pageControl);
         }
         else {
-            criteria.setPaging(page-1, size); // TODO implement linking to next page
+            criteria.setPaging(page, size);
         }
 
         if (since!=null) {
@@ -148,13 +146,20 @@ public class AlertHandlerBean extends AbstractRestBean {
         }
 
         MediaType type = headers.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(type);
 
         if (type.equals(MediaType.TEXT_HTML_TYPE)) {
-            builder = Response.ok(renderTemplate("listAlerts.ftl",ret),type);
+            builder.entity(renderTemplate("listAlerts.ftl",ret));
         } else {
-            GenericEntity<List<AlertRest>> entity = new GenericEntity<List<AlertRest>>(ret) {};
-            builder = Response.ok(entity);
+            if (type.equals(wrappedCollectionJsonType)) {
+                wrapForPaging(builder,uriInfo,alerts,ret);
+            }
+            else {
+                GenericEntity<List<AlertRest>> entity = new GenericEntity<List<AlertRest>>(ret) {};
+                builder.entity(entity);
+                createPagingHeader(builder,uriInfo,alerts);
+            }
         }
 
         return builder.build();
@@ -306,7 +311,7 @@ public class AlertHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(value = "Remove the alert from the lit of alerts")
+    @ApiOperation(value = "Remove the alert from the list of alerts")
     public void purgeAlert(@ApiParam(value = "Id of the alert to remove") @PathParam("id") int id) {
         alertManager.deleteAlerts(caller, new int[]{id});
 

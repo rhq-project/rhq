@@ -532,7 +532,6 @@ public class ServerInstallUtil {
         default:
             throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
         }
-
     }
 
     /**
@@ -558,7 +557,6 @@ public class ServerInstallUtil {
         default:
             throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
         }
-
         LOG.info("Created datasources");
 
         final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);

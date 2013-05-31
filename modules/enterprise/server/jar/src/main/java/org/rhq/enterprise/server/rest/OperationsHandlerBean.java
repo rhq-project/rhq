@@ -29,6 +29,7 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -353,7 +354,6 @@ public class OperationsHandlerBean extends AbstractRestBean  {
     public Response outcome(
             @ApiParam("Name of the submitted job.") @PathParam("id") String jobName,
             @Context UriInfo uriInfo,
-            @Context Request request,
             @Context HttpHeaders httpHeaders) {
 
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
@@ -395,33 +395,44 @@ public class OperationsHandlerBean extends AbstractRestBean  {
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
     public Response listHistory(
             @ApiParam("Id of a resource to limit to") @QueryParam("resourceId") int resourceId,
+            @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+            @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
             @Context UriInfo uriInfo,
-            @Context Request request,
             @Context HttpHeaders httpHeaders) {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        criteria.addSortStartTime(PageOrdering.ASC);
         if (resourceId>0) {
             criteria.addFilterResourceIds(resourceId);
+        }
+        if (page!=null) {
+            criteria.setPaging(page,pageSize);
         }
 
         criteria.addSortEndTime(PageOrdering.DESC);
 
-        PageList<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller, criteria);
+        PageList<ResourceOperationHistory> histories = opsManager.findResourceOperationHistoriesByCriteria(caller, criteria);
 
         List<OperationHistoryRest> result = new ArrayList<OperationHistoryRest>();
-        for (ResourceOperationHistory roh : list) {
+        for (ResourceOperationHistory roh : histories) {
             OperationHistoryRest historyRest = historyToHistoryRest(roh,uriInfo);
             result.add(historyRest);
         }
 
         MediaType mediaType = httpHeaders.getAcceptableMediaTypes().get(0);
-        Response.ResponseBuilder builder;
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
+
         if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
-            builder = Response.ok(renderTemplate("listOperationHistory.ftl", result));
+            builder.entity(renderTemplate("listOperationHistory.ftl", result));
+        } else if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder,uriInfo,histories,result);
         } else {
             GenericEntity<List<OperationHistoryRest>> res = new GenericEntity<List<OperationHistoryRest>>(result) {};
-            builder = Response.ok(res);
+            builder.entity(res);
+            createPagingHeader(builder,uriInfo,histories);
         }
+
         return builder.build();
     }
 

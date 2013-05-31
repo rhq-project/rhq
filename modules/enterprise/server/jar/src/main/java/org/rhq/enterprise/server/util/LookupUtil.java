@@ -68,6 +68,8 @@ import org.rhq.enterprise.server.cloud.PartitionEventManagerBean;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.StatusManagerBean;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerBean;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerBean;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerBean;
@@ -144,6 +146,8 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
+import org.rhq.enterprise.server.measurement.MetricsManagerBean;
+import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
@@ -383,6 +387,10 @@ public final class LookupUtil {
         return lookupLocal(GroupDefinitionExpressionBuilderManagerBean.class);
     }
 
+    public static MetricsManagerLocal getMetricsManager() {
+        return lookupLocal(MetricsManagerBean.class);
+    }
+
     public static MeasurementDefinitionManagerLocal getMeasurementDefinitionManager() {
         return lookupLocal(MeasurementDefinitionManagerBean.class);
     }
@@ -473,6 +481,10 @@ public final class LookupUtil {
 
     public static TopologyManagerLocal getTopologyManager() {
         return lookupLocal(TopologyManagerBean.class);
+    }
+    
+    public static StorageNodeManagerLocal getStorageNodeManager() {
+        return lookupLocal(StorageNodeManagerBean.class);
     }
 
     public static ClusterManagerLocal getClusterManager() {

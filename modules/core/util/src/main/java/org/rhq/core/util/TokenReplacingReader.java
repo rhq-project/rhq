@@ -84,7 +84,8 @@ public class TokenReplacingReader extends Reader {
         
         if (data == '\\') {
             escaping = true;
-            return data;       
+            return pushbackReader.read();
+//            return data;
         }
 
         if (data != '$')

@@ -15,9 +15,19 @@
 
   <dependencies>
     <dependency>
-      <groupId>commons-logging</groupId>
-      <artifactId>commons-logging</artifactId>
-      <scope>provided</scope>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>${cassandra.driver.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+      <version>1.12</version>
+    </dependency>
+    <dependency>
+      <groupId>org.xerial.snappy</groupId>
+      <artifactId>snappy-java</artifactId>
+      <version>1.0.5-M3-p1</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -44,24 +54,18 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
-      <groupId>org.apache.cassandra</groupId>
-      <artifactId>cassandra-all</artifactId>
-      <version>1.1.5</version>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-plugin-test-api</artifactId>
+      <version>${project.version}</version>
+      <type>pom</type>
+      <scope>test</scope>
     </dependency>
+
     <dependency>
-      <groupId>org.apache.thrift</groupId>
-      <artifactId>libthrift</artifactId>
-      <version>0.7.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.hectorclient</groupId>
-      <artifactId>hector-core</artifactId>
-      <version>1.1-1</version>
-    </dependency>
-    <dependency>
-      <groupId>org.yaml</groupId>
-      <artifactId>snakeyaml</artifactId>
-      <version>1.10</version>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-plugin-test-util</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
     </dependency>
   </dependencies>
 
@@ -72,7 +76,7 @@
         <executions>
           <execution>
             <id>copy-libs</id>
-            <phase>package</phase>
+            <phase>process-resources</phase>
             <goals>
               <goal>copy</goal>
             </goals>
@@ -80,55 +84,69 @@
               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
               <artifactItems>
                 <artifactItem>
-                  <groupId>org.hectorclient</groupId>
-                  <artifactId>hector-core</artifactId>
+                    <groupId>com.datastax.cassandra</groupId>
+                    <artifactId>cassandra-driver-core</artifactId>
+                    <version>${cassandra.driver.version}</version>
+                </artifactItem>
+                <artifactItem>
+                    <groupId>org.yaml</groupId>
+                    <artifactId>snakeyaml</artifactId>
+                    <version>1.12</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>io.netty</groupId>
+                  <artifactId>netty</artifactId>
+                  <version>${cassandra.driver.netty.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.apache.cassandra</groupId>
                   <artifactId>cassandra-all</artifactId>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.apache.thrift</groupId>
-                  <artifactId>libthrift</artifactId>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.yaml</groupId>
-                  <artifactId>snakeyaml</artifactId>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.slf4j</groupId>
-                  <artifactId>slf4j-api</artifactId>
-                  <version>1.6.0</version>
-                </artifactItem>
-                <artifactItem>
-                  <groupId>org.slf4j</groupId>
-                  <artifactId>slf4j-log4j12</artifactId>
-                  <version>1.6.0</version>
+                  <version>${cassandra.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.apache.cassandra</groupId>
                   <artifactId>cassandra-thrift</artifactId>
-                  <version>1.1.5</version>
+                  <version>${cassandra.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.apache.thrift</groupId>
+                  <artifactId>libthrift</artifactId>
+                  <version>${cassandra.thrift.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>com.google.guava</groupId>
                   <artifactId>guava</artifactId>
-                  <version>12.0</version>
+                  <version>14.0.1</version>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>commons-pool</groupId>
-                  <artifactId>commons-pool</artifactId>
-                  <version>1.6</version>
+                  <groupId>com.yammer.metrics</groupId>
+                  <artifactId>metrics-core</artifactId>
+                  <version>2.2.0</version>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>commons-lang</groupId>
-                  <artifactId>commons-lang</artifactId>
-                  <version>2.3</version>
+                  <groupId>org.slf4j</groupId>
+                  <artifactId>slf4j-api</artifactId>
+                  <version>1.7.2</version>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>com.github.stephenc.eaio-uuid</groupId>
-                  <artifactId>uuid</artifactId>
-                  <version>3.2.0</version>
+                  <groupId>org.slf4j</groupId>
+                  <artifactId>slf4j-log4j12</artifactId>
+                  <version>1.7.2</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.xerial.snappy</groupId>
+                  <artifactId>snappy-java</artifactId>
+                  <version>1.0.5-M3-p1</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-core-asl</artifactId>
+                  <version>1.9.2</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.codehaus.jackson</groupId>
+                  <artifactId>jackson-mapper-asl</artifactId>
+                  <version>1.9.2</version>
                 </artifactItem>
               </artifactItems>
             </configuration>
@@ -217,39 +235,6 @@
   </build>
 
   <profiles>
-     <profile>
-	     <!--
-	        This profile has been created to avoid unnecessary resolution of test dependencies during a build that
-	        does not run, compile or need tests.
-	        More test dependencies are to be moved here if the set of sub-dependencies is complex, references project
-	        test jars, or conflicts with changing the container version.
-	       -->
-	     <id>test.dependencies</id>
-	     <activation>
-	        <property>
-	           <name>maven.test.skip</name>
-	           <value>!true</value>
-	        </property>
-	     </activation>
-
-	     <dependencies>
-	       <dependency>
-		       <groupId>${rhq.groupId}</groupId>
-		       <artifactId>rhq-core-plugin-test-api</artifactId>
-		       <version>${project.version}</version>
-		       <type>pom</type>
-		       <scope>test</scope>
-		    </dependency>
-
-		    <dependency>
-		       <groupId>${rhq.groupId}</groupId>
-		       <artifactId>rhq-core-plugin-test-util</artifactId>
-		       <version>${project.version}</version>
-		       <scope>test</scope>
-		    </dependency>
-	     </dependencies>
-    </profile>
-
     <profile>
       <id>dev</id>
 

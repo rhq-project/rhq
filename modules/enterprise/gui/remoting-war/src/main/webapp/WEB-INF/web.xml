@@ -20,7 +20,7 @@
         </init-param>
         <init-param>
             <param-name>invokerName</param-name>
-            <param-value>jboss.remoting:service=invoker,transport=servlet,rhq.communications.connector.rhqtype=server,*</param-value>
+            <param-value>jboss.remoting:service=invoker,rhq.communications.connector.rhqtype=server,*</param-value>
             <description>The servlet server invoker - in RHQ's impl of the servlet, this is a query ObjectName that must find 1 bean</description>
         </init-param>
         <load-on-startup>-1</load-on-startup>

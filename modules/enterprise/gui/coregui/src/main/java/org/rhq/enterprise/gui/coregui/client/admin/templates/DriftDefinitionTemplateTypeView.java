@@ -211,17 +211,22 @@ public class DriftDefinitionTemplateTypeView extends ResourceTypeTreeView {
         }
 
         public static class TreeNode extends ResourceTypeTreeNode {
-
             public TreeNode(ResourceTypeTemplateCountComposite composite, String plugin) {
-
                 super(composite, plugin);
-
                 setAttribute(ATTR_PLUGIN_TEMPLATES, composite.getPluginDriftTemplates());
                 setAttribute(ATTR_USER_TEMPLATES, composite.getUserDriftTemplates());
                 // If the type has no plugin templates then drift monitoring is not enabled for the type
                 if (0 == composite.getPluginDriftTemplates()) {
                     setAttribute(ATTRIB_EDIT, ImageManager.getEditDisabledIcon());
                 }
+            }
+
+            @Override
+            public ResourceTypeTreeNode copy() {
+                ResourceTypeTreeNode dup = super.copy();
+                dup.setAttribute(ATTR_PLUGIN_TEMPLATES, this.getAttributeAsLong(ATTR_PLUGIN_TEMPLATES));
+                dup.setAttribute(ATTR_USER_TEMPLATES, this.getAttributeAsLong(ATTR_USER_TEMPLATES));
+                return dup;
             }
         }
 

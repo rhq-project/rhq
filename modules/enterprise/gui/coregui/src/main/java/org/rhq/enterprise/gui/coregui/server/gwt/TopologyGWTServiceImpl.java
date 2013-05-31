@@ -33,20 +33,27 @@ import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.AgentCriteria;
 import org.rhq.core.domain.criteria.PartitionEventCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ServerCriteria;
+import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.TopologyGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.AffinityGroupManagerLocal;
 import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -59,10 +66,16 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
     private TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
 
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
+    
+    private StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
 
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
+    
+    private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+    
+    private ResourceManagerLocal resourceManager = LookupUtil.getResourceManager();
 
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {
@@ -131,6 +144,16 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
         try {
             return SerialUtility.prepare(agentManager.findAgentsByCriteria(getSessionSubject(), criteria),
                 "TopologyGWTServiceImpl.findAgentsByCriteria");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public PageList<StorageNode> findStorageNodesByCriteria(StorageNodeCriteria criteria) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(storageNodeManager.findStorageNodesByCriteria(getSessionSubject(), criteria),
+                "TopologyGWTServiceImpl.findStorageNodesByCriteria");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -264,6 +287,25 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
     public void updateAffinityGroup(AffinityGroup affinityGroup) throws RuntimeException {
         try {
             affinityGroupManager.update(getSessionSubject(), affinityGroup);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public void invokeOperationOnStorageService(int storageNodeId, String operationName) throws RuntimeException {
+        try {
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterParentResourceId(storageNodeId);
+            criteria.addFilterResourceTypeName("StorageService");
+            List<Resource> resources = resourceManager.findResourcesByCriteria(getSessionSubject(), criteria);
+            if (resources == null || resources.size() != 1) {
+                throw new IllegalStateException(
+                    "There is not just one resources of type StorageService among child resources of resource with id "
+                        + storageNodeId);
+            }
+            operationManager.scheduleResourceOperation(getSessionSubject(), resources.get(0).getId(), operationName, 0,
+                0, 0, 0, null, "Run by Storage Node Administrations UI");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

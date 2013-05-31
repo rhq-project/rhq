@@ -16,10 +16,6 @@
   <name>RHQ Network Services Plugin</name>
   <description>A plugin for monitoring network services.</description>
 
-  <properties>
-    <netservices.itest.http.server.port>31158</netservices.itest.http.server.port>
-  </properties>
-
   <dependencies>
 
     <dependency>
@@ -111,9 +107,6 @@
           </properties>
           <useSystemClassLoader>false</useSystemClassLoader>
           <argLine>${jacoco.integration-test.args}</argLine>
-          <systemPropertyVariables>
-            <netservices.itest.http.server.port>${netservices.itest.http.server.port}</netservices.itest.http.server.port>
-          </systemPropertyVariables>
         </configuration>
         <executions>
           <execution>

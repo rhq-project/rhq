@@ -20,6 +20,10 @@
 
 package org.rhq.enterprise.server.test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 import javax.ejb.Singleton;
 
 import org.rhq.enterprise.server.core.StartupBean;
@@ -38,5 +42,32 @@ public class StrippedDownStartupBean {
 
     public void init() {
         secureNaming();
+        // TODO Find a better way to load system properties
+        // Cassandra connection info is currently obtained from system properties. I have
+        // yet to find a good way to set system properties for the deployment under test.
+        // https://github.com/arquillian/arquillian-showcase/tree/master/extensions/systemproperties
+        // might be worth looking at.
+        //
+        // jsanda
+        loadCassandraConnectionProps();
+    }
+
+    public void loadCassandraConnectionProps() {
+        InputStream stream = null;
+        try {
+            stream = getClass().getResourceAsStream("/cassandra-test.properties");
+            Properties props = new Properties();
+            props.load(stream);
+
+            // DO NOT use System.setProperties(Properties). I previously tried that and it
+            // caused some arquillian deployment exception.
+            //
+            // jsanda
+            System.setProperty("rhq.cassandra.username", props.getProperty("rhq.cassandra.username"));
+            System.setProperty("rhq.cassandra.password", props.getProperty("rhq.cassandra.password"));
+            System.setProperty("rhq.cassandra.seeds", props.getProperty("rhq.cassandra.seeds"));
+        } catch (IOException e) {
+            throw new RuntimeException(("Failed to load cassandra-test.properties"));
+        }
     }
 }

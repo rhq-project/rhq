@@ -25,14 +25,17 @@
 
 package org.rhq.plugins.cassandra;
 
+import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
+import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
 import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
 
 import java.io.File;
 
-import me.prettyprint.hector.api.Cluster;
-import me.prettyprint.hector.api.ddl.ColumnFamilyDefinition;
-import me.prettyprint.hector.api.exceptions.HectorException;
+import com.datastax.driver.core.Query;
+import com.datastax.driver.core.ResultSet;
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,7 +66,7 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
             log.debug("Loading resource context for column family " + context.getResourceKey());
         }
 
-        config.put(new PropertySimple("gc_grace_seconds", this.getColumnFamilyDefinition().getGcGraceSeconds()));
+        config.put(new PropertySimple("gc_grace_seconds", this.getGCGraceSeconds()));
         config.put(this.getSnapshotsWithDetails());
 
         return config;
@@ -78,7 +81,7 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
             String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
             return this.getParentKeyspace().compactKeyspace(columnFamilyName);
         } else if (name.equals("takeSnapshot")) {
-            String columnFamilyName = this.getResourceContext().getPluginConfiguration().getSimpleValue("name");
+            String columnFamilyName = this.getResourceContext().getResourceKey();
             return this.getParentKeyspace().takeSnapshot(parameters, columnFamilyName);
         } else if (name.equals("restoreSnapshot")){
             return this.restoreSnapshot(parameters);
@@ -89,24 +92,18 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
 
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport report) {
-        ResourceContext<?> context = getResourceContext();
-
         if (log.isDebugEnabled()) {
-            log.debug("Updating resource configuration for column family " + context.getResourceKey());
+            log.debug("Updating resource configuration for column family " + getResourceContext().getResourceKey());
         }
 
-        Cluster cluster = this.getThriftConnection();
-        ColumnFamilyDefinition cfDef = getColumnFamilyDefinition();
-        Configuration updatedConfig = report.getConfiguration();
-
-        String gcGraceSeconds = updatedConfig.getSimpleValue("gc_grace_seconds", "864000");
-        cfDef.setGcGraceSeconds(Integer.parseInt(gcGraceSeconds));
-
         try {
-            cluster.updateColumnFamily(cfDef, true);
+            Configuration updatedConfig = report.getConfiguration();
+            String gcGraceSeconds = updatedConfig.getSimpleValue("gc_grace_seconds", "864000");
+            setGCGraceSeconds(gcGraceSeconds);
             report.setStatus(SUCCESS);
-        } catch (HectorException e) {
-            String msg = "Failed to update resource configuration for column family " + context.getResourceKey();
+        } catch (Exception e) {
+            String msg = "Failed to update resource configuration for column family "
+                + getResourceContext().getResourceKey();
             if (log.isDebugEnabled()) {
                 log.debug(msg, e);
             } else if (log.isWarnEnabled()) {
@@ -120,6 +117,27 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
         report.getConfiguration().remove("snapshots");
 
         super.updateResourceConfiguration(report);
+    }
+
+    private void setGCGraceSeconds(String gcGraceSeconds) {
+        Session session = this.getParentKeyspace().getCassandraSession();
+        Query q = QueryBuilder.update("system", "schema_columnfamilies").with(set("gc_grace_seconds", gcGraceSeconds))
+            .where(eq("columnfamily_name", this.getResourceContext().getResourceKey()))
+            .and(eq("keyspace_name", this.getParentKeyspace().getKeyspaceName()));
+        session.execute(q);
+    }
+
+    private Integer getGCGraceSeconds() {
+        Session session = this.getParentKeyspace().getCassandraSession();
+        Query q = QueryBuilder.select("gc_grace_seconds").from("system", "schema_columnfamilies")
+            .where(eq("columnfamily_name", this.getResourceContext().getResourceKey()))
+            .and(eq("keyspace_name", this.getParentKeyspace().getKeyspaceName()));
+        ResultSet resultSet = session.execute(q);
+        if (!resultSet.isExhausted()) {
+            return resultSet.one().getInt("gc_grace_seconds");
+        }
+
+        return null;
     }
 
     private PropertyList getSnapshotsWithDetails() {
@@ -234,33 +252,10 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
         return result;
     }
 
-    private ColumnFamilyDefinition getColumnFamilyDefinition() {
-        Configuration pluginConfig = this.getResourceContext().getPluginConfiguration();
-        String cfName = pluginConfig.getSimpleValue("name");
-        KeyspaceComponent keyspaceComponent = this.getParentKeyspace();
-
-        for (ColumnFamilyDefinition cfDef : keyspaceComponent.getKeyspaceDefinition().getCfDefs()) {
-            if (cfName.equals(cfDef.getName())) {
-                return cfDef;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * @return parent resource component
      */
     private KeyspaceComponent getParentKeyspace() {
         return (KeyspaceComponent) this.getResourceContext().getParentResourceComponent();
-    }
-
-    /**
-     * Retrieves a cluster connection from the parent resource.
-     *
-     * @return the cluster connection.
-     */
-    private Cluster getThriftConnection() {
-        return getParentKeyspace().getThriftConnection();
     }
 }

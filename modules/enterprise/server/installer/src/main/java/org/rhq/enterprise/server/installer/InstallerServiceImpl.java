@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 
+import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
@@ -306,7 +307,13 @@ public class InstallerServiceImpl implements InstallerService {
         // deploy the main EAR app subsystem - this is the thing that contains and actually deploys the EAR
         deployAppSubsystem();
 
-        return;
+        // write a file marker so that rhqctl can easily determine that the server has been
+        // installed.
+        try {
+            writeInstalledFileMarker();
+        } catch (IOException e) {
+            log.warn("An error occurred while creating the installed file marker", e);
+        }
     }
 
     @Override
@@ -468,6 +475,26 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception("Could not complete the database schema installation", e);
         }
 
+        SchemaManager cassandraSchemaManager = null;
+        try {
+            cassandraSchemaManager = createCassandraSchemaManager(serverProperties);
+            if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
+                if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
+                    log("Cassandra schema exists but installer was told to overwrite it - a the existing  schema will be "
+                        + "created now.");
+                    cassandraSchemaManager.drop();
+                }
+                log("Install RHQ schema along with updates to Cassandra.");
+                cassandraSchemaManager.install();
+            } else {
+                log("Ignoring Cassandra schema - installer will assume it exists and is already up-to-date.");
+            }
+        } catch (Exception e) {
+            String msg = "Could not complete Cassandra schema installation: " + ThrowableUtil.getRootMessage(e);
+            log.error(msg, e);
+            throw new Exception(msg, e);
+        }
+
         // ensure the server info is up to date and stored in the DB
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
     }
@@ -550,11 +577,15 @@ public class InstallerServiceImpl implements InstallerService {
         final PropertiesFileUpdate propsFile = new PropertiesFileUpdate(serverPropertiesFile.getAbsolutePath());
         final Properties props = propsFile.loadExistingProperties();
 
-        // force some hardcoded defaults for IBM JVMs that must have specific values
+        // the default algorithm that RHQ will use in the comm layer will be defined at runtime based on the VM
+        // but if the user mistakenly set the algorithm to the Sun value while using IBM JVM, then force
+        // some hardcoded defaults so it can more likely work for IBM JVMs.
         final boolean isIBM = System.getProperty("java.vendor", "").contains("IBM");
         if (isIBM) {
             for (String algPropName : ServerProperties.IBM_ALGOROTHM_SETTINGS) {
-                props.setProperty(algPropName, "IbmX509");
+                if (props.getProperty(algPropName, "").equalsIgnoreCase("SunX509")) {
+                    props.setProperty(algPropName, "IbmX509");
+                }
             }
         }
 
@@ -662,6 +693,18 @@ public class InstallerServiceImpl implements InstallerService {
             mcc = getModelControllerClient();
             final CoreJBossASClient client = new CoreJBossASClient(mcc);
             final String dir = client.getAppServerHomeDir();
+            return dir;
+        } finally {
+            safeClose(mcc);
+        }
+    }
+
+    private String getAppServerDataDir() throws Exception {
+        ModelControllerClient mcc = null;
+        try {
+            mcc = getModelControllerClient();
+            final CoreJBossASClient client = new CoreJBossASClient(mcc);
+            final String dir = client.getAppServerDataDir();
             return dir;
         } finally {
             safeClose(mcc);
@@ -1034,6 +1077,9 @@ public class InstallerServiceImpl implements InstallerService {
             // we don't want to the JBossAS welcome screen; turn it off
             new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
 
+            // we don't want users to access the admin console
+            new CoreJBossASClient(mcc).setEnableAdminConsole(false);
+
         } catch (Exception e) {
             log("deployServices failed", e);
             throw new Exception("Failed to deploy services: " + ThrowableUtil.getAllMessages(e));
@@ -1098,5 +1144,22 @@ public class InstallerServiceImpl implements InstallerService {
         } finally {
             safeClose(mcc);
         }
+    }
+
+    private SchemaManager createCassandraSchemaManager(HashMap<String, String> serverProps) {
+        String[] hosts = serverProps.get("rhq.cassandra.seeds").split(",");
+        String username = serverProps.get("rhq.cassandra.username");
+        String password = serverProps.get("rhq.cassandra.password");
+
+        return new SchemaManager("cassandra", "cassandra", hosts);
+    }
+
+    private void writeInstalledFileMarker() throws Exception {
+        File datadir = new File(getAppServerDataDir());
+        if (!datadir.isDirectory()) {
+            throw new IOException("Directory Not Found: [" + datadir.getPath() + "]");
+        }
+        File markerFile = new File(datadir, "rhq.installed");
+        markerFile.createNewFile();
     }
 }

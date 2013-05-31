@@ -29,6 +29,12 @@ import mazz.i18n.annotation.I18NResourceBundle;
  */
 @I18NResourceBundle(baseName = "server-messages", defaultLocale = "en")
 public interface ServerI18NResourceKeys {
+    @I18NMessages({ @I18NMessage("Failed to flush server preferences to backing store") })
+    String ERROR_FLUSHING_SERVER_PREFS = "ServerCommunicationsService.error-flushing-server-prefs";
+
+    @I18NMessages({ @I18NMessage("Unable to set explicit connector address/port, using defaults") })
+    String ERROR_SETTING_CONNECTOR_COMM_PREFS = "ServerCommunicationsService.error-setting-conn-comm-prefs";
+
     @I18NMessages( { @I18NMessage("Failed to remove remote API invocation handler. Cause: {0}") })
     String REMOTE_API_REMOVAL_FAILURE = "ServerCommunicationsService.remote-api-removal-failure";
 

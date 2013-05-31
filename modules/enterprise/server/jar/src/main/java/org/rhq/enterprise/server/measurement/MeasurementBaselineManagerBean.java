@@ -18,10 +18,10 @@
  */
 package org.rhq.enterprise.server.measurement;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 
@@ -32,19 +32,13 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.db.DatabaseType;
-import org.rhq.core.db.DatabaseTypeFactory;
-import org.rhq.core.db.H2DatabaseType;
-import org.rhq.core.db.OracleDatabaseType;
-import org.rhq.core.db.PostgresqlDatabaseType;
-import org.rhq.core.db.SQLServerDatabaseType;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.NumericType;
@@ -54,10 +48,12 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
+import org.rhq.enterprise.server.cassandra.SessionManagerBean;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
+import org.rhq.server.metrics.MetricsBaselineCalculator;
 
 /**
  * A manager for {@link MeasurementBaseline}s.
@@ -71,9 +67,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     MeasurementBaselineManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
-
-    @javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
-    private DataSource dataSource;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
@@ -94,7 +87,12 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @EJB
     private ResourceManagerLocal resourceManager;
 
+    @EJB
+    private SessionManagerBean sessionManager;
+
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
+
+    private static final int BASELINE_PROCESSING_LIMIT = 100;
 
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void calculateAutoBaselines() {
@@ -150,7 +148,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                 + (System.currentTimeMillis() - now) + ")ms");
 
             now = System.currentTimeMillis();
-            int totalInserted = 0;
+            int totalProcessed = 0;
             while (true) {
                 /*
                  * each call is done in a separate xtn of at most 100K inserted rows; this helps to keep the xtn
@@ -191,14 +189,18 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                  * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
                  * needs to replace the limits in the query today.
                  */
-                int inserted = measurementBaselineManager._calculateAutoBaselinesINSERT(amountOfData);
-                totalInserted += inserted;
-                // since we're batch 100K inserts at a time, we're done if we didn't have that many to insert
-                if (inserted < 100000) {
+//                int schedulesWithoutBaselines = measurementBaselineManager
+//                    ._calculateAutoBaselinesINSERT(amountOfData);
+                List<MeasurementSchedule> schedulesWithoutBaselines =
+                    measurementBaselineManager.getSchedulesWithoutBaselines();
+                 measurementBaselineManager.calculateBaselines(schedulesWithoutBaselines, now, amountOfData);
+                totalProcessed += schedulesWithoutBaselines.size();
+
+                if (schedulesWithoutBaselines.size() < BASELINE_PROCESSING_LIMIT) {
                     break;
                 }
             }
-            log.info("Calculated and inserted [" + totalInserted + "] new baselines. ("
+            log.info("Calculated and inserted [" + totalProcessed + "] new baselines. ("
                 + (System.currentTimeMillis() - now) + ")ms");
 
             MeasurementMonitor.getMBean().incrementBaselineCalculationTime(System.currentTimeMillis() - computeTime);
@@ -213,7 +215,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     }
 
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 60 * 60 )
     public int _calculateAutoBaselinesDELETE(long olderThanTime) throws Exception {
         Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_BY_COMPUTE_TIME);
         query.setParameter("timestamp", olderThanTime);
@@ -221,92 +222,87 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         return rowsAffected;
     }
 
+    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 60 * 60 )
-    public int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception {
-        long now = System.currentTimeMillis();
-        long computeTime = now;
-        long endTime = now;
+    public List<MeasurementSchedule> getSchedulesWithoutBaselines() {
+        Query query = this.entityManager
+            .createNamedQuery(MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES);
+        query.setMaxResults(BASELINE_PROCESSING_LIMIT);
+        List<MeasurementSchedule> scheduleIdsWithoutBaselines = query.getResultList();
+
+        return scheduleIdsWithoutBaselines;
+    }
+
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public void calculateBaselines(List<MeasurementSchedule> schedules, long olderThan, long amountOfData) {
+        long endTime = olderThan;
         long startTime = endTime - amountOfData;
 
-        Connection conn = null;
-        PreparedStatement insertQuery = null;
+        log.debug("Computing baselines for " + schedules.size() + " schedules");
+        MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(sessionManager.getMetricsDAO());
+        long calcStartTime = System.currentTimeMillis();
+        List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(schedules, startTime, endTime);
+        long calcEndTime = System.currentTimeMillis();
+        int count = results.size();
 
-        try {
-            // calculate the baselines for schedules that have no baseline yet (or were just deleted)
-            // do everything via JDBC - our perf testing shows that we hit entity cache locking timeouts
-            // when the entity manager performs native queries under heavy load
-            conn = dataSource.getConnection();
-            DatabaseType dbType = DatabaseTypeFactory.getDatabaseType(conn);
+        if (log.isDebugEnabled()) {
+            log.debug("Finished computing " + count + " new baselines in " + (calcEndTime - calcStartTime) + " ms");
+        }
 
-            if (dbType instanceof PostgresqlDatabaseType || dbType instanceof H2DatabaseType) {
-                insertQuery = conn.prepareStatement(MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES);
-                insertQuery.setLong(1, computeTime);
-                insertQuery.setLong(2, startTime);
-                insertQuery.setLong(3, endTime);
-                insertQuery.setLong(4, startTime);
-            } else if (dbType instanceof OracleDatabaseType) {
-                insertQuery = conn.prepareStatement(MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE);
-                insertQuery.setLong(1, computeTime);
-                insertQuery.setLong(2, startTime);
-                insertQuery.setLong(3, endTime);
-                insertQuery.setLong(4, startTime);
-            } else if (dbType instanceof SQLServerDatabaseType) {
-                insertQuery = conn.prepareStatement(MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_SQLSERVER);
-                insertQuery.setLong(1, computeTime);
-                insertQuery.setLong(2, startTime);
-                insertQuery.setLong(3, endTime);
-                insertQuery.setLong(4, startTime);
-            } else {
-                throw new IllegalArgumentException("Unknown database type, can't continue: " + dbType);
+        log.debug("Persisting baselines calculations");
+        long saveStartTime = System.currentTimeMillis();
+        Iterator<MeasurementBaseline> iterator = results.iterator();
+        List<MeasurementBaseline> queue = new LinkedList<MeasurementBaseline>();
+        while (iterator.hasNext()) {
+            if (queue.size() == 10) {
+                measurementBaselineManager.saveNewBaselines(queue);
+                queue = new LinkedList<MeasurementBaseline>();
             }
+            queue.add(iterator.next());
+        }
+        if (!queue.isEmpty()) {
+            measurementBaselineManager.saveNewBaselines(queue);
+        }
 
-            int inserted = insertQuery.executeUpdate();
-            return inserted;
-        } finally {
-            if (insertQuery != null) {
-                try {
-                    insertQuery.close();
-                } catch (Exception e) {
-                }
-            }
-
-            if (conn != null) {
-                try {
-                    conn.close();
-                } catch (Exception e) {
-                }
-            }
+        long saveEndTime = System.currentTimeMillis();
+        if (log.isDebugEnabled()) {
+            log.debug("Finished persisting " + count + " baselines in " + (saveEndTime - saveStartTime) + " ms");
         }
     }
 
-    @SuppressWarnings("unused")
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 60 * 60 )
-    private int _calculateAutoBaselinesDELETE_HQL(long startTime, long endTime) throws Exception {
-        Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_DELETE_EXISTING_AUTOBASELINES);
-
-        query.setParameter("startTime", startTime);
-        query.setParameter("endTime", endTime);
-
-        int rowsModified = query.executeUpdate();
-
-        return rowsModified;
+    public void saveNewBaselines(List<MeasurementBaseline> baselines) {
+        for (MeasurementBaseline baseline : baselines) {
+            entityManager.merge(baseline);
+        }
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //@TransactionTimeout( 60 * 60 )
-    private int _calculateAutoBaselinesINSERT_HQL(long startTime, long endTime, long computeTime) throws Exception {
-        Query query = entityManager.createNamedQuery(MeasurementBaseline.QUERY_CALC_FIRST_AUTOBASELINE);
+    public int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception {
+        long endTime = System.currentTimeMillis();
+        long startTime = endTime - amountOfData;
 
-        //query.setParameter("computeTime", computeTime);
-        query.setParameter("startTime", startTime);
-        query.setParameter("endTime", endTime);
+        //1. Find dynamic schedule ids that do not have baseline calculated
+        Query query = this.entityManager
+            .createNamedQuery(MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES);
+        query.setMaxResults(BASELINE_PROCESSING_LIMIT);
+        List<MeasurementSchedule> scheduleIdsWithoutBaselines = query.getResultList();
 
-        int rowsModified = query.executeUpdate();
+        //2. calculate the baselines based metrics data
+        MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(sessionManager.getMetricsDAO());
+        List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(scheduleIdsWithoutBaselines,
+            startTime, endTime);
 
-        return rowsModified;
+        //3. persist all calculated baselines to SQL db
+        for (Object result : results) {
+            entityManager.persist(result);
+        }
+        entityManager.flush();
+
+        //4. return the number of schedule ids initially retrieved for calculation
+        return scheduleIdsWithoutBaselines.size();
     }
 
     /**

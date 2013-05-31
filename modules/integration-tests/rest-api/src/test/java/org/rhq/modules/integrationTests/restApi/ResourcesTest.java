@@ -24,11 +24,16 @@ package org.rhq.modules.integrationTests.restApi;
 
 
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
+import com.jayway.restassured.response.ResponseBody;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
@@ -44,6 +49,8 @@ import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.not;
 
 /**
  * Test the resources part
@@ -71,8 +78,29 @@ public class ResourcesTest extends AbstractBase {
             .contentType(ContentType.JSON)
             .log().everything()
             .body("links.self", notNullValue())
-            .body("resourceId",is(_platformId))
-            .body("typeId",is(_platformTypeId))
+            .body("resourceId", is(_platformId))
+            .body("typeId", is(_platformTypeId))
+            .body("parentId",is(0))
+        .when()
+            .get("/resource/{id}");
+
+    }
+
+    @Test
+    public void testGetPlatformJsonWrapping() {
+
+        // Actually this object should not be wrapped
+        // as it is no list
+        given()
+            .header(acceptWrappedJson)
+            .pathParam("id",_platformId)
+        .expect()
+            .statusCode(200)
+            .contentType(WRAPPED_JSON)
+            .log().everything()
+            .body("links.self", notNullValue())
+            .body("resourceId", is(_platformId))
+            .body("typeId", is(_platformTypeId))
             .body("parentId",is(0))
         .when()
             .get("/resource/{id}");
@@ -242,7 +270,7 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
-    public void testPaging() throws Exception {
+    public void testGetResourcesWithPaging() throws Exception {
 
         given()
             .header("Accept", "application/json")
@@ -252,9 +280,84 @@ public class ResourcesTest extends AbstractBase {
             .queryParam("category", "service")
         .expect()
             .statusCode(200)
-            .header("Link", containsString("page=2"))
+            .log().everything()
+           // .header("Link", allOf(containsString("page=2"), containsString("current")))
+            .header("Link", not(containsString("prev")))
             .body("links.self", notNullValue())
-        .when().get("/resource");
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndUniquenessCheck() throws Exception {
+
+        int currentPage = 0;
+        Set<Integer> seen = new HashSet<Integer>();
+
+        for(;;) {
+            JsonPath path =
+            given()
+                .header("Accept", "application/vnd.rhq.wrapped+json")
+            .with()
+                .queryParam("page", currentPage)
+                .queryParam("ps", 5)  // Unusually small to provoke having more than 1 page
+                .queryParam("status","COMMITTED")
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+            .when()
+                .get("/resource")
+            .jsonPath();
+
+            List<Integer> ids = path.getList("data.resourceId");
+
+            for (Integer id : ids ) {
+                assert !seen.contains(id);
+                seen.add(id);
+            }
+
+            currentPage++;
+            if (currentPage > path.getInt("lastPage")) {
+                break;
+            }
+            System.out.print("+");
+        }
+        System.out.println();
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndWrapping() throws Exception {
+
+        given()
+            .header("Accept", "application/vnd.rhq.wrapped+json")
+        .with()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+            .body("pageSize",is(2))
+            .body("currentPage",is(1))
+        .when()
+            .get("/resource");
+    }
+
+    @Test
+    public void testGetPlatformsWithPaging() throws Exception {
+
+        given()
+            .header("Accept", "application/json")
+        .with()
+            .queryParam("page", 0)
+            .queryParam("ps", 5)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("links.self", notNullValue())
+            .header("Link", not(containsString("prev=")))
+            .header("Link", anyOf(containsString("current"), containsString("last")))
+        .when().get("/resource/platforms");
     }
 
     @Test

@@ -25,12 +25,14 @@
       </activation>
       <modules>
         <module>xml-schemas</module>
+        <module>server-metrics</module>
         <module>jar</module>
         <module>sars</module>
         <module>plugins</module>
         <module>ear</module>
         <module>startup-subsystem</module>
         <module>installer</module>
+        <module>server-control</module>
         <module>safe-invoker</module>
         <module>client-api</module>
         <module>itests-2</module>

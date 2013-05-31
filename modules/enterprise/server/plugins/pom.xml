@@ -53,6 +53,7 @@
     <module>alert-subject</module>
     <module>alert-cli</module>
     <module>alert-log4j</module>
+    <module>alertdef-rhq</module>
     <module>cobbler</module>
     <module>drift-rhq</module>
     <!--

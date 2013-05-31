@@ -25,6 +25,8 @@
             <module name="org.jboss.msc" export="true" />
             <module name="org.jboss.as.controller" export="true" />
             <module name="org.jboss.as.server" export="true" />
+            <!-- for Cassandra driver -->
+            <module name="com.datastax.cassandra.cassandra-driver-core" export="true"/>
         </dependencies>
     </sub-deployment>
 

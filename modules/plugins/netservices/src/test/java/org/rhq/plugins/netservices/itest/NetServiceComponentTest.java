@@ -134,7 +134,7 @@ public abstract class NetServiceComponentTest {
     }
 
     @Test
-    public static void testPluginLoad() {
+    public void testPluginLoad() {
         assertNotNull(pluginEnvironment, "Plugin not loaded");
         assertEquals(pluginEnvironment.getPluginName(), PLUGIN_NAME);
     }

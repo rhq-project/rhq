@@ -23,6 +23,7 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.response.Response;
 
+import org.hamcrest.Matchers;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.AlertCondition;
@@ -34,7 +35,11 @@ import org.rhq.modules.integrationTests.restApi.d.Group;
 import static com.jayway.restassured.RestAssured.delete;
 import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
+import static org.hamcrest.CoreMatchers.anyOf;
+import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.notNullValue;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.instanceOf;
@@ -54,6 +59,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptJson)
         .expect()
             .statusCode(200)
+            .log().ifError()
         .when()
             .get("/alert");
 
@@ -66,6 +72,7 @@ public class AlertTest extends AbstractBase {
             .header(acceptXml)
         .expect()
             .statusCode(200)
+            .log().ifError()
         .when()
             .get("/alert");
     }
@@ -93,6 +100,39 @@ public class AlertTest extends AbstractBase {
             .get("/alert");
 
     }
+
+    @Test
+    public void testListAlertsWithPaging() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .queryParam("ps", 2)
+            .queryParam("page", 0)
+        .expect()
+            .statusCode(200)
+            .header("Link", anyOf(containsString("current"), Matchers.containsString("last")))
+            .header("X-collection-size", notNullValue())
+            .log().ifError()
+        .when()
+            .get("/alert");
+    }
+
+    @Test
+    public void testListAlertsWithPagingAndWrapped() throws Exception {
+
+        given()
+            .header(acceptWrappedJson)
+            .queryParam("ps", 2)
+            .queryParam("page", 0)
+        .expect()
+            .statusCode(200)
+            .header("Link", nullValue())
+            .body("totalSize", notNullValue())
+            .log().ifError()
+        .when()
+            .get("/alert");
+    }
+
 
     @Test
     public void testGetAlertCountJson() throws Exception {
@@ -164,6 +204,21 @@ public class AlertTest extends AbstractBase {
 
         expect()
             .statusCode(200)
+        .when()
+            .get("/alert/definitions");
+    }
+
+    @Test
+    public void testListAllAlertDefinitionsWithWrapping() throws Exception {
+
+        given()
+            .header(acceptWrappedJson)
+            .log().everything()
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("currentPage", Matchers.notNullValue())
+            .body("totalSize", Matchers.notNullValue())
         .when()
             .get("/alert/definitions");
     }
@@ -1379,6 +1434,8 @@ public class AlertTest extends AbstractBase {
 
         int definitionId = createEmptyAlertDefinition(true);
 
+        int alertId;
+
         // Now add a condition
         try {
 
@@ -1426,7 +1483,7 @@ public class AlertTest extends AbstractBase {
             // wait a little
             Thread.sleep(5000);
 
-            int alertId =
+            alertId =
             given()
                 .header(acceptJson)
                 .queryParam("definitionId",definitionId)
@@ -1488,9 +1545,32 @@ public class AlertTest extends AbstractBase {
             .when()
                 .get("/resource/{resourceId}/alerts");
 
-        }
+            if (alertId>0) {
+                // Acknowledge the alert
+                given()
+                    .header(acceptWrappedJson)
+                    .pathParam("id", alertId)
+                .expect()
+                    .statusCode(200)
+                    .log().ifError()
+                .when()
+                    .put("/alert/{id}");
 
+                Thread.sleep(500);
+
+                // purge the alert
+                given()
+                    .header(acceptJson)
+                    .pathParam("id", alertId)
+                .expect()
+                    .statusCode(204)
+                    .log().ifError()
+                .when()
+                    .delete("/alert/{id}");
+            }
+        }
         finally {
+
             // delete the definition again
             cleanupDefinition(definitionId);
         }

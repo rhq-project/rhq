@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.0" name="${moduleName}">
+  <main-class name="org.rhq.storage.installer.StorageInstaller"/>
+
+  <resources>
+    <resource-root path="${project.build.finalName}.jar"/>
+    <resource-root path="rhq-cassandra-ccm-core-${project.version}.jar"/>
+    <resource-root path="rhq-core-util-${project.version}.jar"/>
+    <resource-root path="rhq-cassandra-jmx-${project.version}.jar"/>
+  </resources>
+
+  <dependencies>
+    <module name="javax.api"/>
+    <module name="org.apache.commons.logging"/>
+    <module name="org.apache.commons.cli"/>
+    <module name="org.apache.commons.exec"/>
+    <module name="org.apache.commons.io"/>
+    <module name="org.apache.log4j"/>
+    <module name="sun.jdk"/>
+    <module name="org.jboss.logmanager" services="import"/>
+    <module name="org.jboss.logging"/>
+  </dependencies>
+</module>

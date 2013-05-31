@@ -413,14 +413,13 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             false);
         def.setResource(resources.iterator().next());
 
-        int id = adm.createAlertDefinitionInNewTransaction(subject, def, res.getId(), true);
-        def.setId(id);
+        def = adm.createAlertDefinitionInNewTransaction(subject, def, res.getId(), true);
 
-        resourceLevelAlertDefinitionId = id;
+        resourceLevelAlertDefinitionId = def.getId();
 
         junk.add(def);
 
-        testMainAlertDefinition(id);
+        testMainAlertDefinition(resourceLevelAlertDefinitionId);
     }
 
     //@Test(dependsOnMethods = { "testNotificationsCopiedOnAlertTemplateApplication",

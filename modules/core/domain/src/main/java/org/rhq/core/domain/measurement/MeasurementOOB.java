@@ -244,20 +244,31 @@ public class MeasurementOOB {
     @Column(name = "OOB_FACTOR")
     private int oobFactor;
 
-    protected MeasurementOOB() {
-
+    public MeasurementOOB() {
     }
 
     public int getScheduleId() {
         return id;
     }
 
+    public void setScheduleId(int scheduleId) {
+        id = scheduleId;
+    }
+
     public long getTimestamp() {
         return timestamp;
     }
 
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+
     public int getOobFactor() {
         return oobFactor;
+    }
+
+    public void setOobFactor(int oobFactor) {
+        this.oobFactor = oobFactor;
     }
 
     @Override

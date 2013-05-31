@@ -391,3 +391,7 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
     border: none;
     font-weight: bold;
 }
+
+.noOutline {
+  outline:0;
+}

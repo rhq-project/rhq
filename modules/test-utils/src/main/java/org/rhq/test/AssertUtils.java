@@ -167,4 +167,38 @@ public class AssertUtils {
         assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
     }
 
+    /**
+     * <p>
+     * Verifies that the two collections contain the same number of matching elements as is
+     * done in {@link #assertPropertiesMatch(String, Object, Object, String...)}. If the
+     * collections differ in size, an assertion error will be thrown; otherwise, elements
+     * are compared, ignoring order. Note that all element properties are are compared in
+     * this method.
+     * </p>
+     * <p>
+     * This version takes an additional argument that specifies a tolerance for comparing
+     * doubles. When the expected and actual property is a double the absolute difference
+     * between the values has to be within the tolerance.
+     * </p>
+     *
+     * @param msg An error message
+     * @param expected The expected collection to compare against
+     * @param actual The actual collection under test
+     * @param tolerance The absolute tolerance between the expected and actual value of
+     *                  properties that are of type double.
+     * @param ignoredProperties Properties to exclude from comparison
+     * @param <T> The type of elements in the collection
+     */
+    public static <T> void assertCollectionMatchesNoOrder(String msg, Collection<T> expected, Collection<T> actual,
+        Double tolerance, String... ignoredProperties) {
+        CollectionMatchesChecker<T> checker = new CollectionMatchesChecker<T>();
+        checker.setExpected(expected);
+        checker.setActual(actual);
+        checker.setTolerance(tolerance);
+        checker.setIgnoredProperties(ignoredProperties);
+        MatchResult result = checker.execute();
+
+        assertTrue(result.isMatch(), msg + " -- " + result.getDetails());
+    }
+
 }

@@ -17,7 +17,7 @@
     <description>Database schema setup, upgrade and other utilities</description>
 
     <properties>
-        <db.schema.version>2.132</db.schema.version>
+        <db.schema.version>2.133</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.server-name>${rhq.test.ds.server-name}</rhq.ds.server-name>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
@@ -162,7 +162,7 @@
             </plugin>
         </plugins>
     </build>
-    
+
     <profiles>
         <profile>
             <id>db.dev</id>
@@ -172,7 +172,7 @@
                     <value>dev</value>
                 </property>
             </activation>
-            
+
             <!-- these are defined in the dev profile also - see below in that profile for why -->
             <properties>
                 <rhq.ds.type-mapping>${rhq.dev.ds.type-mapping}</rhq.ds.type-mapping>
@@ -185,7 +185,7 @@
                 <rhq.ds.driver-class>${rhq.dev.ds.driver-class}</rhq.ds.driver-class>
             </properties>
         </profile>
-        
+
         <profile>
             <id>latest</id>
             <activation>
@@ -197,8 +197,26 @@
                 <plugins>
                     <plugin>
                         <artifactId>maven-antrun-plugin</artifactId>
+                        <dependencies>
+                          <dependency>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-cassandra-schema</artifactId>
+                            <version>${project.version}</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-core-domain</artifactId>
+                            <version>${project.version}</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>org.codehaus.groovy</groupId>
+                            <artifactId>groovy-all</artifactId>
+                            <version>2.1.3</version>
+                          </dependency>
+                        </dependencies>
                         <executions>
                             <execution>
+                                <id>i18n-generator</id>
                                 <phase>process-classes</phase>
                                 <configuration>
                                     <target>
@@ -216,11 +234,13 @@
                                     <goal>run</goal>
                                 </goals>
                             </execution>
+                            <!-- Note that DBReset, if already run, automatically sets dbsetup  -->
                             <execution>
-                                <id>dbsetup-worker</id>
+                                <id>dbsetup-server</id>
                                 <phase>test</phase>
                                 <configuration>
                                     <target>
+                                        <echo> Performing server db setup</echo>
                                         <property name="settings.localRepository" location="${user.home}/.m2/repository" />
                                         <ant antfile="${basedir}/src/main/scripts/dbsetup-build.xml">
                                             <property name="settings.localRepository" value="${settings.localRepository}" />
@@ -242,6 +262,45 @@
                                             <property name="dbsetup-upgrade" value="${dbsetup-upgrade}" />
                                             <property name="dbsetup-export" value="${dbsetup-export}" />
                                         </ant>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                            <execution>
+                                <id>dbsetup-storage</id>
+                                <phase>test</phase>
+                                <configuration>
+                                    <target>
+                                        <script language="groovy">
+                                          import org.rhq.cassandra.schema.SchemaManager
+
+                                          if (project.getProperty('dbsetup-upgrade') || project.getProperty('dbreset')) {
+                                            if (project.getProperty('storage-schema')) {
+                                              if (project.getProperty('db') == 'dev') {
+                                                self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
+                                                username = project.getProperty('rhq.dev.cassandra.username') ?: "cassandra"
+                                                password = project.getProperty('rhq.dev.cassandra.password') ?: "cassandra"
+                                                seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7199|9142"
+
+                                                schemaManager = new SchemaManager(username, password, seeds)
+
+                                                if (project.getProperty('dbreset') == 'true') {
+                                                  self.log('Dropping schema')
+                                                  schemaManager.drop()
+                                                }
+
+                                                self.log('Install schema')
+                                                schemaManager.install()
+                                              } else {
+                                                self.log('SKIPPING SCHEMA UPDATES FOR STORAGE NODE')
+                                                self.log('Schema updates will only be applied to the dev-container storage node')
+                                                self.log('Run to with -Ddb=dev or -Pdev for to activate storage node schema changes')
+                                              }
+                                            }
+                                          }
+                                        </script>
                                     </target>
                                 </configuration>
                                 <goals>
@@ -323,7 +382,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>jon.release</id>
             <activation>
@@ -370,7 +429,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>dev</id>
             <properties>
@@ -430,7 +489,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>ojdbc-driver</id>
             <dependencies>
@@ -443,7 +502,7 @@
                     <scope>compile</scope>
                 </dependency>
             </dependencies>
-            
+
             <!-- TODO: defer to root pom version when we can agree on a version -->
             <build>
                 <plugins>
@@ -455,7 +514,7 @@
             </build>
         </profile>
     </profiles>
-    
+
     <pluginRepositories>
         <pluginRepository>
             <id>codehaus-snapshots</id>

@@ -69,7 +69,7 @@ public interface BundleManagerRemote {
 
     /**
      * Adds a BundleFile to the BundleVersion and implicitly creates the backing PackageVersion. If the PackageVersion
-     * already exists use {@link addBundleFile(Subject, int, String, int, boolean)} 
+     * already exists use {@link #addBundleFileViaPackageVersion(Subject, int, String, int)}
      *   
      * @param subject user that must have proper permissions
      * @param bundleVersionId id of the BundleVersion incorporating this BundleFile 
@@ -88,7 +88,7 @@ public interface BundleManagerRemote {
      * WARNING: obviously, this requires the entire bundle file to have been loaded fully in memory.
      * For very large files, this could cause OutOfMemoryErrors.
      * 
-     * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
+     * @see {@link #addBundleFile(Subject, int, String, String, Architecture, InputStream)}
      */
     BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, byte[] fileBytes) throws Exception;
@@ -96,7 +96,7 @@ public interface BundleManagerRemote {
     /**
      * A convenience method taking a URL String whose content will be streamed to the server and used for the file bits.
      * 
-     * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
+     * @see #addBundleFile(Subject, int, String, String, Architecture, InputStream)
      */
     BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, String bundleFileUrl) throws Exception;
@@ -104,7 +104,7 @@ public interface BundleManagerRemote {
     /**
      * A convenience method taking an existing PackageVersion as opposed to a stream for the file bits.
      * 
-     * @see {@link addBundleFile(Subject, int, String, String, Architecture, InputStream, boolean)}     
+     * @see {@link #addBundleFile(Subject, int, String, String, Architecture, InputStream)}
      */
     BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name, int packageVersionId)
         throws Exception;
@@ -151,7 +151,7 @@ public interface BundleManagerRemote {
      * bundle the bundle will be implicitly created.  The bundle type is discovered by the bundle server
      * plugin that can parse the recipe.   
      * 
-     * @param subject
+     * @param subject user that must have proper permissions
      * @param recipe the recipe that defines the bundle version to be created
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did.
@@ -165,7 +165,7 @@ public interface BundleManagerRemote {
      * If this is the initial version for the named bundle the bundle will be implicitly created.  The bundle type
      * is discovered by inspecting the distribution file.   
      * 
-     * @param subject
+     * @param subject user that must have proper permissions
      * @param distributionFile a local Bundle Distribution file. It must be read accessible by the RHQ server process.
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
@@ -178,10 +178,10 @@ public interface BundleManagerRemote {
      * bytes of the file as opposed to the file itself.
      * WARNING: obviously, this requires the entire distribution file to have been loaded fully in memory.
      * For very large distribution files, this could cause OutOfMemoryErrors.
-     * 
-     * @param subject
+     *
+     * @param subject user that must have proper permissions
      * @param fileBytes the file bits that make up the entire bundle distribution file
-     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      */
     BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception;
@@ -193,13 +193,13 @@ public interface BundleManagerRemote {
      * If this is the initial version for the named bundle the bundle will be implicitly created.  The bundle type
      * is discovered by inspecting the distribution file.
      * <br/></br>
-     * Note, if the file is local it is more efficient to use {@link createBundleVersionViaFile(Subject,File)}.  
+     * Note, if the file is local it is more efficient to use {@link #createBundleVersionViaFile(Subject,File)}.
      * 
-     * @param subject
+     * @param subject user that must have proper permissions
      * @param distributionFileUrl a URL String to the Bundle Distribution file. It must be live, resolvable and read accessible
      * by the RHQ server process. 
      * 
-     * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
+     * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      */
     BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception;
@@ -209,7 +209,7 @@ public interface BundleManagerRemote {
      * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
      * the deployment of all bundles that have been deleted.
      *    
-     * @param subject
+     * @param subject user that must have proper permissions
      * @param bundleIds IDs of all bundles to be deleted
      * @throws Exception if any part of the removal fails. 
      */
@@ -220,8 +220,8 @@ public interface BundleManagerRemote {
      * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
      * the deployment.
      *    
-     * @param subject
-     * @param bundleId
+     * @param subject user that must have proper permissions
+     * @param bundleId the id of the bundle to remove
      * @throws Exception if any part of the removal fails. 
      */
     void deleteBundle(Subject subject, int bundleId) throws Exception;
@@ -231,8 +231,8 @@ public interface BundleManagerRemote {
      * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
      * the deployment.
      *    
-     * @param subject
-     * @param bundleVersionId
+     * @param subject user that must have proper permissions
+     * @param bundleVersionId the id of the bundle version to remove
      * @param deleteBundleIfEmpty if <code>true</code> and if this method deletes the last bundle version for its
      *                            bundle, then that bundle entity itself will be completely purged
      * @throws Exception if any part of the removal fails. 

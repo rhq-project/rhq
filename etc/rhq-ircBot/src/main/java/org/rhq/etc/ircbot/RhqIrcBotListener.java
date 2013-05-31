@@ -347,7 +347,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         return "404 Developer Not Found, selecting randomly " + doNotNotify(randomDevel) + ". Check the " + SUPPORT_LINK;
     }
     
-    private static String whoIsOnPto(String link) {
+    private String whoIsOnPto(String link) {
         try {
             String onPto = "";
             Document doc = Jsoup.connect(link).ignoreContentType(true).get();
@@ -376,3 +376,5 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     public void setDocspacePassword(String docspacePassword) {
         this.docspacePassword = docspacePassword;
     }
+
+}

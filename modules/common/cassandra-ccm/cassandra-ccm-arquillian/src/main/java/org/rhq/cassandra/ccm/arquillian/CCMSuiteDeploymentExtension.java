@@ -124,6 +124,8 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                         options.setUsername("cassandra");
                         options.setPassword("cassandra");
                         options.setClusterDir(clusterDir.getAbsolutePath());
+                        options.setHeapSize("256M");
+                        options.setHeapNewSize("64M");
 
                         ccm = new CassandraClusterManager(options);
                         List<StorageNode> nodes = ccm.createCluster();

@@ -95,6 +95,8 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         deploymentOptions.setUsername(annotation.username());
         deploymentOptions.setPassword(annotation.password());
         deploymentOptions.setStartRpc(true);
+        deploymentOptions.setHeapSize("256M");
+        deploymentOptions.setHeapNewSize("64M");
 
         // TODO Figure where/when to initialize ccm
         // Ideally I would like to support multiple test/configuration methods using

@@ -37,8 +37,9 @@ public class StorageNodeLoadComposite implements Serializable {
     private long beginTime;
     private long endTime;
     
-    private MeasurementAggregateWithUnits heapCommited;
+    private MeasurementAggregateWithUnits heapCommitted;
     private MeasurementAggregateWithUnits heapUsed;
+    private MeasurementAggregateWithUnits heapPercentageUsed;
     private MeasurementAggregateWithUnits load;
     private MeasurementAggregate tokens; 
     private MeasurementAggregateWithUnits actuallyOwns;
@@ -77,12 +78,12 @@ public class StorageNodeLoadComposite implements Serializable {
         this.endTime = endTime;
     }
 
-    public MeasurementAggregateWithUnits getHeapCommited() {
-        return heapCommited;
+    public MeasurementAggregateWithUnits getHeapCommitted() {
+        return heapCommitted;
     }
 
-    public void setHeapCommited(MeasurementAggregateWithUnits heapCommited) {
-        this.heapCommited = heapCommited;
+    public void setHeapCommitted(MeasurementAggregateWithUnits heapCommitted) {
+        this.heapCommitted = heapCommitted;
     }
     
     public MeasurementAggregateWithUnits getHeapUsed() {
@@ -91,6 +92,14 @@ public class StorageNodeLoadComposite implements Serializable {
 
     public void setHeapUsed(MeasurementAggregateWithUnits heapUsed) {
         this.heapUsed = heapUsed;
+    }
+
+    public MeasurementAggregateWithUnits getHeapPercentageUsed() {
+        return heapPercentageUsed;
+    }
+
+    public void setHeapPercentageUsed(MeasurementAggregateWithUnits heapPercentageUsed) {
+        this.heapPercentageUsed = heapPercentageUsed;
     }
     
     public MeasurementAggregateWithUnits getLoad() {
@@ -131,8 +140,9 @@ public class StorageNodeLoadComposite implements Serializable {
         
         builder.append("storageNode.addresss=").append(storageNode.getAddress()).append(", ");
         builder.append("beginTime=").append(beginTime).append(", ");
-        builder.append("heapCommited=").append(heapCommited).append(", ");
+        builder.append("heapCommitted=").append(heapCommitted).append(", ");
         builder.append("heapUsed=").append(heapUsed).append(", ");
+        builder.append("heapPercentageUsed=").append(heapPercentageUsed).append(", ");
         builder.append("load=").append(load).append(", ");
         builder.append("tokens=").append(tokens).append(", ");
         builder.append("actuallyOwns=").append(actuallyOwns);

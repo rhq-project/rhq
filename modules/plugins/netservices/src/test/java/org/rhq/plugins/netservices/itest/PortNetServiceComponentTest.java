@@ -60,9 +60,9 @@ public class PortNetServiceComponentTest extends NetServiceComponentTest {
 
     private static final InetAddress LOOPBACK_ADDRESS = InetAddress.getLoopbackAddress();
 
-    private static final int MIN_DYNAMIC_PORT = 8080/*49152*/;
+    private static final int MIN_DYNAMIC_PORT = 49152;
 
-    private static final int MAX_PORT_NUMBER = 8081/*65535*/;
+    private static final int MAX_PORT_NUMBER = 65535;
 
     private PortNetServiceComponent portNetServiceComponent;
 

@@ -45,7 +45,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     private static final Pattern ECHO_PATTERN = Pattern.compile("(?i)echo[ ]+(.+)");
     private static final String SUPPORT_LINK = "https://docspace.corp.redhat.com/docs/DOC-124477";
     private static final String COMMIT_LINK = "https://git.fedorahosted.org/cgit/rhq/rhq.git/commit/?id=%s";
-    private static final String PTO_LINK = "https://mail.corp.redhat.com/home/ccrouch@redhat.com/JBoss%20ON%20OOO?fmt=rss&view=day";
+    private static final String PTO_LINK = "https://mail.corp.redhat.com/home/ccrouch@redhat.com/JBoss%20ON%20OOO?fmt=rss&view=day&start=0day&end=0day";
     private static final DateFormat monthFormat = new SimpleDateFormat("MMM");
     private static final DateFormat dayInMonthFormat = new SimpleDateFormat("d");
 
@@ -104,7 +104,8 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     public RhqIrcBotListener(String server, String channel) {
         this.server = server;
         this.channel = channel;
-        isRedHatChannel = "irc.devel.redhat.com".equals(channel);
+        isRedHatChannel = "irc.devel.redhat.com".equals(server);
+        if (isRedHatChannel) System.out.print("Red Hat channel");
         StringBuilder commandRegExp = new StringBuilder();
         commandRegExp.append("^(?i)[ ]*").append(Command.PREFIX).append("(");
         for (Command command : Command.values()) {
@@ -317,21 +318,21 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
                 if (cellText.startsWith(month.toLowerCase())) {
                     monthFound = true;
                     if (cellText.substring(cellText.length() - 1, cellText.length()).equals(dayInMonth)) {
-                        return cell.firstElementSibling().text() + " is on support this week";
+                        return doNotNotify(cell.firstElementSibling().text() + " is on support this week");
                     }
                     continue;
                 }
                 if (monthFound && cellText.equals(dayInMonth)) {
-                    return cell.firstElementSibling().text() + " is on support this week";
+                    return doNotNotify(cell.firstElementSibling().text() + " is on support this week");
                 } else if (monthFound) {
                     if (cell.equals(cell.firstElementSibling()) || cell.equals(cell.lastElementSibling())) {
                         continue; //the first row with name or the last row with a comment
                     }
-                    int day = -1;
+                    int day;
                     try {
                         day = Integer.parseInt(cellText);
                         if (day > dayInMonthInt) {
-                            return cell.parent().previousElementSibling().child(0).text() + " is on support this week";
+                            return doNotNotify(cell.parent().previousElementSibling().child(0).text() + " is on support this week");
                         }
                     } catch (NumberFormatException nfe) {
                         break; // next month
@@ -343,26 +344,29 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
         }
         // fallback solution if SSL is not set correctly
         String randomDevel = JON_DEVS.toArray(new String[JON_DEVS.size()])[new Random().nextInt(JON_DEVS.size())];
-        return "404 Developer Not Found, selecting randomly " + randomDevel + ". Check the " + SUPPORT_LINK;
+        return "404 Developer Not Found, selecting randomly " + doNotNotify(randomDevel) + ". Check the " + SUPPORT_LINK;
     }
     
     private static String whoIsOnPto(String link) {
-        String month = monthFormat.format(new Date());
-        String dayInMonth = dayInMonthFormat.format(new Date());
         try {
             String onPto = "";
             Document doc = Jsoup.connect(link).ignoreContentType(true).get();
-            Elements dates = doc.getElementsContainingOwnText(dayInMonth + " " + month);
-            for (Element date : dates) {
-                onPto += date.firstElementSibling().text() + ", ";
+            Elements titles = doc.select("rss channel item title");
+            for (Element title : titles) {
+                onPto += doNotNotify(title.text()) + ", ";
             }
             if (!onPto.isEmpty()) {
-                return onPto.substring(0, onPto.length() - 2);
+                return doNotNotify(onPto.substring(0, onPto.length() - 2));
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return "noone is on PTO today";
+        return "no one is on PTO today";
+    }
+
+    private String doNotNotify(String nick) {
+        //replace all vowels with unicode chars that look same not to spam users with notifications
+        return nick.toLowerCase().replaceFirst("a", "\u0430").replaceFirst("e", "\u0435").replaceFirst("i", "\u0456").replaceFirst("o", "\u043E").replaceFirst("u", "\u222A").replaceFirst("y", "\u028F");
     }
 
     public void setDocspaceLogin(String docspaceLogin) {
@@ -372,4 +376,3 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
     public void setDocspacePassword(String docspacePassword) {
         this.docspacePassword = docspacePassword;
     }
-}

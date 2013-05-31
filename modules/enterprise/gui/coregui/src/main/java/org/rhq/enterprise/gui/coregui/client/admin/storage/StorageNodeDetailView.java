@@ -186,7 +186,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 //        portItem.setValidators(portValidator);
         jmxPortItem.setValue(storageNode.getJmxPort());
         
-        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl", "td(i18n) JMX Connection URL");
+        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl", MSG.view_adminTopology_storageNode_jmxUrl());
         jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
 
         final TextItem cqlPortItem = new TextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
@@ -201,7 +201,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
         // make clickable link to associated resource
         StaticTextItem resourceItem = new StaticTextItem("associatedResource",
-            "td(i18n) Associated Resource");
+            "Associated Resource");
         String storageNodeItemText = "";
         Resource storageNodeResource = storageNode.getResource();
         if (storageNodeResource != null && storageNodeResource.getName() != null) {
@@ -209,7 +209,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             String formattedValue = StringUtility.escapeHtml(storageNodeResource.getName());
             storageNodeItemText = LinkManager.getHref(detailsUrl, formattedValue);
         } else {
-            storageNodeItemText = "td(i18n) none";
+            storageNodeItemText = MSG.common_label_none();
         }
         resourceItem.setValue(storageNodeItemText);
 

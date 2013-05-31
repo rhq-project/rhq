@@ -63,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class StorageNodeTableView extends
     TableSection<StorageNodeDatasource> implements HasViewName {
 
-    public static final ViewName VIEW_ID = new ViewName("StorageNodes", "td(i18n) Storage Nodes", IconEnum.STORAGE_NODE);
+    public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(), IconEnum.STORAGE_NODE);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
@@ -119,11 +119,11 @@ public class StorageNodeTableView extends
                         try {
                             rawUrl = LinkManager.getResourceLink(record.getAttributeAsInt(FIELD_RESOURCE_ID.propertyName()));
                         } catch (NumberFormatException nfe) {
-                            rawUrl = "td(i18n) none";
+                            rawUrl = MSG.common_label_none();
                         }
                         
                         String formattedValue = StringUtility.escapeHtml(rawUrl);
-                        String label = StringUtility.escapeHtml("td(i18n) Link to Resource");
+                        String label = StringUtility.escapeHtml("Link to Resource");
                         return LinkManager.getHref(formattedValue, label);
                     }
                 });
@@ -181,7 +181,7 @@ public class StorageNodeTableView extends
         operationsMap.put("Start RPC Server", "startRPCServer");
         operationsMap.put("Decommission", "decommission");
 
-        addTableAction("td(i18n) Invoke Operation", null, operationsMap, new AuthorizedTableAction(this,
+        addTableAction(MSG.common_title_operation(), null, operationsMap, new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
 
             @Override
@@ -203,7 +203,7 @@ public class StorageNodeTableView extends
                                 public void execute() {
 //                                    Message msg = new Message(MSG.view_adminTopology_message_setMode(
                                     //                                      String.valueOf(selections.length), mode.name()), Message.Severity.Info);
-                                    Message msg = new Message("td(i18n) Operation" + operationName
+                                    Message msg = new Message("Operation" + operationName
                                         + " was successfully scheduled for resources with ids"
                                         + Arrays.asList(getSelectedIds(selections)), Message.Severity.Info);
                                     CoreGUI.getMessageCenter().notify(msg);
@@ -225,7 +225,7 @@ public class StorageNodeTableView extends
                                             }
                                             public void onFailure(Throwable caught) {
                                                 CoreGUI.getErrorHandler().handleError(
-                                                    "td(i18n) Scheduling operation " + operationName
+                                                    "Scheduling operation " + operationName
                                                         + " failed for resources with ids"
                                                         + Arrays.asList(getSelectedIds(selections)) + " "
                                                         + caught.getMessage(), caught);
@@ -243,7 +243,7 @@ public class StorageNodeTableView extends
 
                                             public void onFailure(Throwable caught) {
                                                 CoreGUI.getErrorHandler().handleError(
-                                                    "td(i18n) Scheduling operation " + operationName
+                                                    "Scheduling operation " + operationName
                                                         + " failed for resources with ids"
                                                         + Arrays.asList(getSelectedIds(selections)) + " "
                                                         + caught.getMessage(), caught);

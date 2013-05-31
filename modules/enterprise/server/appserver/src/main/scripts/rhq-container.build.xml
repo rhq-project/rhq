@@ -796,6 +796,7 @@ data=${safe.datadir}/storage/data
 saved-caches=${safe.datadir}/storage/saved_caches
 heap-size=256M
 heap-new-size=64M
+hostname=127.0.0.1
 </echo>
 
 <echo file="${project.build.outputDirectory}/bin/rhqctl.properties" append="true">rhqctl.install.storage-config=bin/rhq-storage.properties</echo>

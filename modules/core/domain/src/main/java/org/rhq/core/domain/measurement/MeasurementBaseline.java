@@ -42,9 +42,6 @@ import javax.persistence.Table;
 
 @Entity
 @NamedQueries( {
-    @NamedQuery(name = MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES, query = "SELECT schedule FROM MeasurementSchedule schedule "
-        + "WHERE schedule.definition.numericType = 0 AND "
-        + "schedule.id NOT IN (SELECT mb.schedule.id FROM MeasurementBaseline mb)"),
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_RESOURCE, query = "SELECT mb FROM MeasurementBaseline mb WHERE mb.schedule.resource.id = :resourceId"),
     @NamedQuery(name = MeasurementBaseline.QUERY_FIND_BY_RESOURCE_IDS_AND_DEF_IDS, query = "SELECT mb FROM MeasurementBaseline mb "
         + "WHERE mb.schedule.resource.id IN (:resourceIds) AND  mb.schedule.definition.id IN (:definitionIds)"),
@@ -72,7 +69,6 @@ public class MeasurementBaseline implements Serializable {
     public static final String QUERY_DELETE_BY_RESOURCES = "MeasurementBaseline.deleteByResources";
     public static final String QUERY_CALC_FIRST_AUTOBASELINE = "MeasurementBaseline.calcFirstAutoBaseline";
     public static final String QUERY_DELETE_EXISTING_AUTOBASELINES = "MeasurementBaseline.deleteExistingAutoBaseline";
-    public static final String QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES = "MeasurementBaseline.findMetricSchedulesWithoutAutoBaselines";
 
     private static final long serialVersionUID = 1L;
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_MEASUREMENT_BLINE_ID_SEQ")

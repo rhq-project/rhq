@@ -189,8 +189,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                  * In any event, an appropriate chunking solution needs to be found, and that partitioning strategy
                  * needs to replace the limits in the query today.
                  */
-//                int schedulesWithoutBaselines = measurementBaselineManager
-//                    ._calculateAutoBaselinesINSERT(amountOfData);
                 List<MeasurementSchedule> schedulesWithoutBaselines =
                     measurementBaselineManager.getSchedulesWithoutBaselines();
                  measurementBaselineManager.calculateBaselines(schedulesWithoutBaselines, now, amountOfData);
@@ -225,12 +223,13 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<MeasurementSchedule> getSchedulesWithoutBaselines() {
-        Query query = this.entityManager
-            .createNamedQuery(MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES);
+        String sql =
+            "SELECT s.* FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d ON s.definition = d.id " +
+            "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE b.schedule_id IS NULL AND d.numeric_type = 0";
+        Query query = this.entityManager.createNativeQuery(sql, MeasurementSchedule.class);
         query.setMaxResults(BASELINE_PROCESSING_LIMIT);
-        List<MeasurementSchedule> scheduleIdsWithoutBaselines = query.getResultList();
 
-        return scheduleIdsWithoutBaselines;
+        return query.getResultList();
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

@@ -272,27 +272,33 @@
                                 <id>dbsetup-storage</id>
                                 <phase>test</phase>
                                 <configuration>
-                                    <target if="dbsetup">
+                                    <target>
                                         <script language="groovy">
                                           import org.rhq.cassandra.schema.SchemaManager
 
-                                          if (project.getProperty('db') == 'dev') {
-                                            self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
-                                            username = project.getProperty('rhq.dev.cassandra.username') ?: "cassandra"
-                                            password = project.getProperty('rhq.dev.cassandra.password') ?: "cassandra"
-                                            seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7199|9142"
+                                          if (project.getProperty('dbsetup-upgrade') || project.getProperty('dbreset')) {
+                                            if (project.getProperty('storage-schema')) {
+                                              if (project.getProperty('db') == 'dev') {
+                                                self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
+                                                username = project.getProperty('rhq.dev.cassandra.username') ?: "cassandra"
+                                                password = project.getProperty('rhq.dev.cassandra.password') ?: "cassandra"
+                                                seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7199|9142"
 
-                                            schemaManager = new SchemaManager(username, password, seeds)
+                                                schemaManager = new SchemaManager(username, password, seeds)
 
-                                            if (project.getProperty('dbreset') == 'true') {
-                                              self.log('Dropping schema')
-                                              schemaManager.drop()
+                                                if (project.getProperty('dbreset') == 'true') {
+                                                  self.log('Dropping schema')
+                                                  schemaManager.drop()
+                                                }
+
+                                                self.log('Install schema')
+                                                schemaManager.install()
+                                              } else {
+                                                self.log('SKIPPING SCHEMA UPDATES FOR STORAGE NODE')
+                                                self.log('Schema updates will only be applied to the dev-container storage node')
+                                                self.log('Run to with -Ddb=dev or -Pdev for to activate storage node schema changes')
+                                              }
                                             }
-
-                                            self.log('Install schema')
-                                            schemaManager.install()
-                                          } else {
-                                            self.log('SKIPPING SCHEMA SETUP FOR STORAGE NODE')
                                           }
                                         </script>
                                     </target>

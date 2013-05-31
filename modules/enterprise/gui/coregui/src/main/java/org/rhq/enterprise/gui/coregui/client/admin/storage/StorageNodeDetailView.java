@@ -186,7 +186,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 //        portItem.setValidators(portValidator);
         jmxPortItem.setValue(storageNode.getJmxPort());
         
-        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl", MSG.view_adminTopology_storageNode_jmxUrl());
+        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl", MSG.view_adminTopology_storageNode_jmxConnectionUrl());
         jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
 
         final TextItem cqlPortItem = new TextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());

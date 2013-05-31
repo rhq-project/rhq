@@ -37,7 +37,10 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampening.TimeUnits;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
@@ -51,6 +54,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementCategory;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -156,9 +164,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             throw e;
 
         } finally {
-            containerTearDown();
             logout();
             cleanDB();
+            containerTearDown();
         }
     }
 
@@ -169,13 +177,13 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
 
-                universalName = getClass().getName();
+                universalName = getClass().getSimpleName();
 
-                agent = new Agent("localhost", "localhost", 0, "foo", "bar");
+                agent = new Agent(universalName, "localhost", 0, "foo", "bar");
 
                 server = new Server();
                 server.setAddress("localhost");
-                server.setName("localhost");
+                server.setName(universalName);
                 server.setOperationMode(OperationMode.NORMAL);
 
                 server.setAgents(Collections.singletonList(agent));
@@ -189,6 +197,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
                 resourceType = new ResourceTypeBuilder().createPlatformResourceType().withId(0).withName(universalName)
                     .withPlugin(universalName).build();
+                MeasurementDefinition md = new MeasurementDefinition(universalName, MeasurementCategory.PERFORMANCE,
+                    MeasurementUnits.PERCENTAGE, DataType.MEASUREMENT, false, 100000, DisplayType.DETAIL);
+                resourceType.addMetricDefinition(md);
 
                 resourceGroup = new ResourceGroup(universalName, resourceType);
 
@@ -201,13 +212,13 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                     resourceGroup.addExplicitResource(res);
                 }
 
-                templateAlertDefinition = createDefinitionForTest(universalName + " template", true);
+                templateAlertDefinition = createDefinitionForTest("template", true);
                 templateAlertDefinition.setResourceType(resourceType);
 
-                groupAlertDefinition = createDefinitionForTest(universalName + " group", true);
+                groupAlertDefinition = createDefinitionForTest("group", true);
                 groupAlertDefinition.setGroup(resourceGroup);
 
-                resourceAlertDefinition = createDefinitionForTest(universalName + " resource", true);
+                resourceAlertDefinition = createDefinitionForTest("resource", true);
                 resourceAlertDefinition.setResource(resources.iterator().next());
 
                 em.persist(agent);
@@ -247,6 +258,8 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     //@BeforeMethod
     private void containerSetup() {
+        prepareScheduler();
+
         alertSenderService = new TestAlertSenderPluginService(getTempDir());
         prepareCustomServerPluginService(alertSenderService);
         alertSenderService.masterConfig.getPluginDirectory().mkdirs();
@@ -260,6 +273,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
     private void containerTearDown() throws Exception {
         unprepareServerPluginService();
         unprepareForTestAgents();
+        unprepareScheduler();
     }
 
     //@AfterClass(alwaysRun = true)
@@ -271,18 +285,35 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         removeNoExceptions(resourceAlertDefinition);
         removeNoExceptions(groupAlertDefinition);
         removeNoExceptions(templateAlertDefinition);
+
+        LookupUtil.getResourceGroupManager().deleteResourceGroup(LookupUtil.getSubjectManager().getOverlord(),
+            resourceGroup.getId());
+
         executeInTransaction(false, new TransactionCallback() {
             public void execute() throws Exception {
-                em.createQuery("delete from AlertNotification ").executeUpdate();
-                em.createQuery("delete from AlertDefinition ").executeUpdate();               
+                em.createQuery("delete from AlertNotification an where an.senderName like '" + universalName + "%'")
+                    .executeUpdate();
+                em.createQuery("delete from AlertCondition ac where ac.name like '" + universalName + "%'")
+                    .executeUpdate();
+                em.createQuery("delete from AlertDefinition ad where ad.name like '" + universalName + "%'")
+                    .executeUpdate();
             }
         });
-        removeNoExceptions(resourceGroup);
-        for (Resource r : resources) {
-            r.removeExplicitGroup(resourceGroup);
-            r.getAlertDefinitions().clear();
-            removeNoExceptions(r);
-        }
+
+        executeInTransaction(false, new TransactionCallback() {
+            public void execute() throws Exception {
+                em.clear();
+                for (Resource r : resources) {
+                    r = em.find(Resource.class, r.getId());
+                    try {
+                        ResourceTreeHelper.deleteResource(em, r);
+                    } catch (Exception e) {
+                        LOG.error("Failed to DELETE Resource from database: " + r, e);
+                    }
+                }
+            }
+        });
+
         removeNoExceptions(resourceType);
         removeNoExceptions(subject);
         removeNoExceptions(role);
@@ -334,7 +365,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         TestAlertSender.setExpectedSubject(null);
         TestAlertSender.resetValidateMethodCallCount();
 
-        Resource res = getCopyTestsResource();
+        final Resource res = getCopyTestsResource();
 
         //apply the template manually - this is done in server-agent back-and-forth that we 
         //don't test here and which is complex to mock out.
@@ -389,7 +420,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
         AlertDefinition groupOriginatingDef = null;
         for (AlertDefinition d : foundAlertDefs) {
-            if ((universalName + " group").equals(d.getName())) {
+            if ((universalName + ":group").equals(d.getName())) {
                 groupOriginatingDef = d;
                 break;
             }
@@ -665,11 +696,32 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     private AlertDefinition createDefinition(String name) {
         AlertDefinition ret = new AlertDefinition();
-        ret.setName(name);
+        ret.setName(universalName + ":" + name);
         ret.setPriority(AlertPriority.MEDIUM);
-        ret.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
         ret.setConditionExpression(BooleanExpression.ANY);
         ret.setRecoveryId(0);
+
+        AlertCondition ac = new AlertCondition();
+        ac.setName(universalName);
+        ac.setCategory(AlertConditionCategory.THRESHOLD);
+        ac.setComparator(">");
+        ac.setThreshold(0.75D);
+        //for (MeasurementDefinition d : resourceType.getMetricDefinitions()) {
+        //    if ("Calculated.HeapUsagePercentage".equals(d.getName())) {
+        //        ac.setMeasurementDefinition(d);
+        //        ac.setName(d.getDisplayName());
+        //        break;
+        //    }
+        // }
+        //assert null != ac.getMeasurementDefinition() : "Did not find expected measurement definition [Calculated.HeapUsagePercentage] for "
+        //    + resourceType;
+        ret.addCondition(ac);
+
+        AlertDampening dampener = new AlertDampening(AlertDampening.Category.PARTIAL_COUNT);
+        dampener.setPeriod(15);
+        dampener.setPeriodUnits(TimeUnits.MINUTES);
+        dampener.setValue(10);
+        ret.setAlertDampening(dampener);
 
         return ret;
     }

@@ -688,27 +688,6 @@ rhq.cassandra.password=${rhq.cassandra.password}
 #    hostname|jmxPort|nativeTransportPort|
 #
 rhq.cassandra.seeds=
-
-# When a node initializes it contacts a seed and then sleeps for RING_DELAY
-# (milliseconds) to learn about other nodes in the cluster. This defaults to 30
-# seconds.
-# rhq.cassandra.ring.delay
-
-# Defines the number of tokens randomly assigned to a node on the ring. The more
-# tokens, relative to other nodes, the larger the proportion of data that this
-# node will store. You probably want all nodes to have the same number of tokens
-# assuming they have equal hardware capability. Tokens are randomly generated
-# with the expectation of an even distribution. With that said, there can be
-# some variation. Either increasing this value or increasing the number of
-# nodes in the cluster will help even out the distribution.
-rhq.cassandra.num-tokens=${rhq.cassandra.num-tokens}
-
-# The port for the CQL native transport to listen for clients on. Default value
-# is 9042.
-rhq.cassandra.native-transport-port=${rhq.cassandra.native-transport-port}
-
-# The maximum number of threads handling native CQL requests. The default value is 64.
-rhq.casandra.native-transport-max-threads=${rhq.casandra.native-transport-max-threads}
 </echo>
 
     </target>
@@ -755,32 +734,6 @@ rhq.casandra.native-transport-max-threads=${rhq.casandra.native-transport-max-th
         <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
         <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">
 rhq.server.agent-update.nonstrict-version-check=true
-
-# Accepts a value of true or false and specifies whether or not the cluster is embedded.
-# Note that if this property is set to false, the other, remaining cluster configuration
-# properties that are set will be ignored as they are only used with embedded clusters.
-rhq.cassandra.cluster.is-embedded=${rhq.cassandra.cluster.is-embedded}
-
-# The directory in which cluster nodes will be installed.
-rhq.cassandra.cluster.dir=${rhq.cassandra.cluster.dir}
-
-# Used for both the min and max heap sizes for the Cassandra JVM. Defaults to 512 MB. When
-# you change this property you should also change the rhq.cassandra.heap.new.size property
-# accordingly.
-# rhq.cassandra.max.heap.size=
-
-# Heap new size refers to the size of the young generation. Defaults to 128 MB. When
-# you change this property you should also change the rhq.cassandra.max.heap.size property
-# accordingly. Note that this value must be smaller than rhq.cassandra.max.heap.size.
-# rhq.cassandra.heap.new.size=
-
-# The number of nodes in the cluster. This specifies how many nodes to install
-# and configure. The top level or base directory for each node will be nodeN
-# where N is the node number.
-rhq.cassandra.cluster.num-nodes=${rhq.cassandra.cluster.num-nodes}
-
-# The log4j logging level to use on each node.
-rhq.cassandra.logging.level=${rhq.cassandra.logging.level}
 </echo>
 
 <!-- We must use forward slashes when writing paths to a properties files. Properties.load()

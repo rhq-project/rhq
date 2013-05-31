@@ -30,6 +30,7 @@ import static org.rhq.modules.plugins.jbossas7.helper.ServerPluginConfiguration.
 import static org.testng.Assert.assertEquals;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,8 +40,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -59,7 +58,6 @@ import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.system.SystemInfoFactory;
-import org.rhq.core.util.StringUtil;
 import org.rhq.modules.plugins.jbossas7.StandaloneASComponent;
 import org.rhq.modules.plugins.jbossas7.json.Operation;
 import org.rhq.modules.plugins.jbossas7.json.Result;
@@ -72,15 +70,14 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  *
  * @author Thomas Segismont
  */
+@Test(singleThreaded = true)
 public class InterruptibleOperationsTest {
-
-    private static final Log LOG = LogFactory.getLog(InterruptibleOperationsTest.class);
 
     private static final String HTTP_HOST = "localhost";
 
-    private static final int HTTP_PORT = 31159;
+    private static final int MIN_DYNAMIC_PORT = 49152;
 
-    private static final String HTTP_PORT_VARIABLE = "as7.itest.mock.http.management.server.port";
+    private static final int MAX_PORT_NUMBER = 65535;
 
     @Mock
     private ResourceContext resourceContext;
@@ -95,36 +92,29 @@ public class InterruptibleOperationsTest {
     private void setup() throws Exception {
         MockitoAnnotations.initMocks(this);
         serverComponent = new TestStandaloneASComponent();
-        int httpPort = getJettyPort();
+        int httpPort = setupJettyServer();
         setupResourceContext(httpPort);
-        setupJettyServer(httpPort);
-        jettyServer.start();
         executorService = Executors.newSingleThreadExecutor();
         serverComponent.start(resourceContext);
     }
 
-    private void setupJettyServer(int httpPort) {
-        jettyServer = new Server(new InetSocketAddress(HTTP_HOST, httpPort));
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-        jettyServer.setHandler(context);
-        HttpServlet testServlet = new TestServlet();
-        context.addServlet(new ServletHolder(testServlet), "/*");
-    }
-
-    private static int getJettyPort() {
-        String httpPortVariable = System.getProperty(HTTP_PORT_VARIABLE);
-        if (StringUtil.isNotBlank(httpPortVariable)) {
+    private int setupJettyServer() throws Exception {
+        // Loop until Jetty binds to an available port
+        for (int httpPort = MIN_DYNAMIC_PORT; httpPort <= MAX_PORT_NUMBER; httpPort++) {
+            ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+            context.setContextPath("/");
+            HttpServlet testServlet = new TestServlet();
+            context.addServlet(new ServletHolder(testServlet), "/*");
+            jettyServer = new Server(new InetSocketAddress(HTTP_HOST, httpPort));
+            jettyServer.setHandler(context);
             try {
-                int port = Integer.parseInt(httpPortVariable);
-                LOG.info("Using port " + httpPortVariable + " for http server");
-                return port;
-            } catch (NumberFormatException e) {
-                LOG.warn("Invalid port variable: " + httpPortVariable);
+                jettyServer.start();
+                return httpPort;
+            } catch (BindException e) {
+                // Port already in use
             }
         }
-        LOG.info("Using default port " + String.valueOf(HTTP_PORT) + " for http server");
-        return HTTP_PORT;
+        throw new RuntimeException("Could not find an available port");
     }
 
     private void setupResourceContext(int httpPort) {
@@ -147,7 +137,6 @@ public class InterruptibleOperationsTest {
 
     @AfterMethod
     private void tearDown() throws Exception {
-        LOG.info("Shutting down Jetty test server");
         try {
             if (jettyServer != null) {
                 jettyServer.stop();

@@ -25,6 +25,7 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -36,8 +37,6 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -53,7 +52,6 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.util.StringUtil;
 import org.rhq.plugins.netservices.HTTPNetServiceComponent;
 import org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys;
 import org.rhq.plugins.netservices.HTTPNetServiceComponent.HttpMethod;
@@ -61,17 +59,16 @@ import org.rhq.plugins.netservices.HTTPNetServiceComponent.HttpMethod;
 /**
  * @author Thomas Segismont
  */
+@Test(singleThreaded = true)
 public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
-
-    private static final Log LOG = LogFactory.getLog(NetServiceComponentTest.class);
 
     private static final String SERVICE_NAME = "HTTPService";
 
     private static final String HTTP_HOST = "localhost";
 
-    private static final int HTTP_PORT = 31158;
+    private static final int MIN_DYNAMIC_PORT = 49152;
 
-    private static final String HTTP_PORT_VARIABLE = "netservices.itest.http.server.port";
+    private static final int MAX_PORT_NUMBER = 65535;
 
     private static final int SERVLET_SLEEP = 1000;
 
@@ -83,48 +80,26 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
 
     @BeforeClass
     public void startJetty() throws Exception {
-        LOG.info("Setting up Jetty test server");
-        httpPort = getJettyPort();
-        jettyServer = new Server(new InetSocketAddress(HTTP_HOST, httpPort));
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-        jettyServer.setHandler(context);
-        @SuppressWarnings("serial")
-        HttpServlet testServlet = new HttpServlet() {
-            @Override
-            protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-                resp.getWriter().println("Test servlet request: success view");
-                long start = System.currentTimeMillis();
-                do {
-                    try {
-                        Thread.sleep(SERVLET_SLEEP);
-                    } catch (InterruptedException e) {
-                    }
-                } while (System.currentTimeMillis() - start < SERVLET_SLEEP);
-            }
-        };
-        context.addServlet(new ServletHolder(testServlet), "/*");
-        jettyServer.start();
-    }
-
-    private static int getJettyPort() {
-        String httpPortVariable = System.getProperty(HTTP_PORT_VARIABLE);
-        if (StringUtil.isNotBlank(httpPortVariable)) {
+        // Loop until Jetty binds to an available port
+        for (httpPort = MIN_DYNAMIC_PORT; httpPort <= MAX_PORT_NUMBER; httpPort++) {
+            ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+            context.setContextPath("/");
+            HttpServlet testServlet = new TestServlet();
+            context.addServlet(new ServletHolder(testServlet), "/*");
+            jettyServer = new Server(new InetSocketAddress(HTTP_HOST, httpPort));
+            jettyServer.setHandler(context);
             try {
-                int port = Integer.parseInt(httpPortVariable);
-                LOG.info("Using port " + httpPortVariable + " for http server");
-                return port;
-            } catch (NumberFormatException e) {
-                LOG.warn("Invalid port variable: " + httpPortVariable);
+                jettyServer.start();
+                return;
+            } catch (BindException e) {
+                // Port already in use
             }
         }
-        LOG.info("Using default port " + String.valueOf(HTTP_PORT) + " for http server");
-        return HTTP_PORT;
+        throw new RuntimeException("Could not find an available port");
     }
 
     @AfterClass
     public void stopJetty() {
-        LOG.info("Shutting down Jetty test server");
         try {
             if (jettyServer != null) {
                 jettyServer.stop();
@@ -180,4 +155,17 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
         assertTrue(value > 0);
     }
 
+    private static class TestServlet extends HttpServlet {
+        @Override
+        protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+            resp.getWriter().println("Test servlet request: success view");
+            long start = System.currentTimeMillis();
+            do {
+                try {
+                    Thread.sleep(SERVLET_SLEEP);
+                } catch (InterruptedException e) {
+                }
+            } while (System.currentTimeMillis() - start < SERVLET_SLEEP);
+        }
+    }
 }

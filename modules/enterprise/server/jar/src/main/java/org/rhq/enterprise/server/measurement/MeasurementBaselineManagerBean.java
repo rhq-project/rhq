@@ -277,33 +277,6 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
         }
     }
 
-    @SuppressWarnings("unchecked")
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception {
-        long endTime = System.currentTimeMillis();
-        long startTime = endTime - amountOfData;
-
-        //1. Find dynamic schedule ids that do not have baseline calculated
-        Query query = this.entityManager
-            .createNamedQuery(MeasurementBaseline.QUERY_FIND_MEASUREMENT_SCHEDULES_WITHOUT_AUTOBASELINES);
-        query.setMaxResults(BASELINE_PROCESSING_LIMIT);
-        List<MeasurementSchedule> scheduleIdsWithoutBaselines = query.getResultList();
-
-        //2. calculate the baselines based metrics data
-        MetricsBaselineCalculator baselineCalculator = new MetricsBaselineCalculator(sessionManager.getMetricsDAO());
-        List<MeasurementBaseline> results = baselineCalculator.calculateBaselines(scheduleIdsWithoutBaselines,
-            startTime, endTime);
-
-        //3. persist all calculated baselines to SQL db
-        for (Object result : results) {
-            entityManager.persist(result);
-        }
-        entityManager.flush();
-
-        //4. return the number of schedule ids initially retrieved for calculation
-        return scheduleIdsWithoutBaselines.size();
-    }
-
     /**
      * If the measurement baselines for the corresponding resources are the same, that value will be returned;
      * otherwise null will be returned

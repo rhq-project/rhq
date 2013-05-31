@@ -66,18 +66,6 @@ public interface MeasurementBaselineManagerLocal {
     int _calculateAutoBaselinesDELETE(long olderThanTime) throws Exception;
 
     /**
-     * Inserts baselines "as appropriate" for measurements that have at least amountOfData 
-     * @param amountOfData will use amountOfData to compute new min/max/mean for baselines as appropriate
-     * @return number of rows inserted
-     * @deprecated This method is pending removal after peer review. Because 1hr data is
-     * now stored in Cassandra, transaction boundaries needed to change. This method has
-     * been replaced by {@link #getSchedulesWithoutBaselines()}, {@link #calculateBaselines(java.util.List, long)},
-     * and {@link #saveNewBaselines(java.util.List)}.
-     * @throws Exception
-     */
-    int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception;
-
-    /**
      * <strong>Note</strong> This method exists only for transaction demarcation.
      *
      * @return A list of schedules that do not have baselines. This list is not assumed

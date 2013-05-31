@@ -1,0 +1,13 @@
+<updatePlan>
+  <step>
+    UPDATE system.schema_keyspaces SET
+    strategy_options='{"replication_factor":"%s"}'
+    WHERE keyspace_name='rhq'
+  </step>
+
+  <step>
+    UPDATE system.schema_keyspaces SET
+    strategy_options='{"replication_factor":"%s"}'
+    WHERE keyspace_name='system_auth'
+  </step>
+</updatePlan>

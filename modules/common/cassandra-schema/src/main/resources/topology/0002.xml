@@ -1,0 +1,38 @@
+<updatePlan>
+  <step>
+    UPDATE system.schema_columnfamilies
+    SET gc_grace_seconds = %s
+    WHERE keyspace_name='rhq' AND columnfamily_name='metrics_index';
+  </step>
+
+  <step>
+    UPDATE system.schema_columnfamilies
+    SET gc_grace_seconds = %s
+    WHERE keyspace_name='rhq' AND columnfamily_name='raw_metrics';
+  </step>
+
+  <step>
+    UPDATE system.schema_columnfamilies
+    SET gc_grace_seconds = %s
+    WHERE keyspace_name='rhq' AND columnfamily_name='one_hour_metrics';
+  </step>
+
+  <step>
+    UPDATE system.schema_columnfamilies
+    SET gc_grace_seconds = %s
+    WHERE keyspace_name='rhq' AND columnfamily_name='six_hour_metrics';
+  </step>
+
+  <step>
+    UPDATE system.schema_columnfamilies
+    SET gc_grace_seconds = %s
+    WHERE keyspace_name='rhq' AND columnfamily_name='twenty_four_hour_metrics';
+  </step>
+
+   <step>
+    UPDATE system.schema_columnfamilies
+    SET gc_grace_seconds = %s
+    WHERE keyspace_name='rhq' AND columnfamily_name='schema_version';
+   </step>
+
+</updatePlan>

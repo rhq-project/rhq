@@ -649,7 +649,11 @@
                   deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
                   The frequency that this should be run should be less than the gc_grace_period for each column family.
                   This runs a repair on all column families in this keyspace." />
-      <operation name="compact" displayName="Compact Keyspace"
+      <operation name="cleanup" displayName="Clean Keyspace"
+                 description="Goes through each SSTable file on disk fore each column family and removes keys
+                 (i.e., rows) that the node does not own. This should be performed as a routine maintenance task on
+                 existing nodes when new nodes are added to the cluster."/>
+        <operation name="compact" displayName="Compact Keyspace"
                  description="Forces major compaction of the keyspace. Though major compaction can free disk space
                   used during runtime it temporarily doubles disk space usage and is I/O and CPU intensive. Once you
                   run a major compaction, automatic minor compactions are no longer triggered frequently forcing you to

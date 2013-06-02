@@ -63,6 +63,13 @@
     </operation>
     
     <operation name="addNodeMaintenance">
+      <parameters>
+        <c:simple-property name="runRepair" type="boolean" default="true"/>
+        <c:simple-property name="updateSeedsList" type="boolean" default="true"/>
+        <c:list-property name="seedsList">
+          <c:simple-property name="seed" type="string"/>
+        </c:list-property>
+      </parameters>
       <results>
         <c:list-property name="results">
           <c:map-property name="resultsMap">

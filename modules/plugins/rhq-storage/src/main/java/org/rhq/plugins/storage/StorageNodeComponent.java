@@ -46,20 +46,22 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private Log log = LogFactory.getLog(StorageNodeComponent.class);
 
-    private static final String SYSTEM_AUTH_KEYSPACE = " system_auth";
+    private static final String SYSTEM_AUTH_KEYSPACE = "system_auth";
 
     private static final String RHQ_KEYSPACE = "rhq";
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("addNodeMaintenance")) {
-            return nodeAdded();
+            return nodeAdded(parameters);
         } else {
             return super.invokeOperation(name, parameters);
         }
     }
 
-    private OperationResult nodeAdded() {
+    private OperationResult nodeAdded(Configuration params) {
+        boolean runRepair = params.getSimple("runRepair").getBooleanValue();
+
         EmsConnection emsConnection = getEmsConnection();
         KeyspaceService keyspaceService = new KeyspaceService(emsConnection);
         boolean hasErrors = false;
@@ -67,11 +69,14 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         Configuration resultConfig = result.getComplexResults();
         PropertyList resultsList = new PropertyList("results");
 
-        OpResult opResult = repairKeyspace(keyspaceService, SYSTEM_AUTH_KEYSPACE);
-        if (!opResult.succeeded) {
-            hasErrors = true;
+        OpResult opResult = null;
+        if (runRepair) {
+            opResult = repairKeyspace(keyspaceService, SYSTEM_AUTH_KEYSPACE);
+            if (!opResult.succeeded) {
+                hasErrors = true;
+            }
+            resultsList.add(toPropertyMap(opResult));
         }
-        resultsList.add(toPropertyMap(opResult));
 
         opResult = cleanupKeyspace(keyspaceService, SYSTEM_AUTH_KEYSPACE);
         if (!opResult.succeeded) {
@@ -79,11 +84,13 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
         resultsList.add(toPropertyMap(opResult));
 
-        opResult = repairKeyspace(keyspaceService, RHQ_KEYSPACE);
-        if (!opResult.succeeded) {
-            hasErrors = true;
+        if (runRepair) {
+            opResult = repairKeyspace(keyspaceService, RHQ_KEYSPACE);
+            if (!opResult.succeeded) {
+                hasErrors = true;
+            }
+            resultsList.add(toPropertyMap(opResult));
         }
-        resultsList.add(toPropertyMap(opResult));
 
         opResult = cleanupKeyspace(keyspaceService, RHQ_KEYSPACE);
         if (!opResult.succeeded) {

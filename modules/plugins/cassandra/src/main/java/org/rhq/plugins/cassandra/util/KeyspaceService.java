@@ -44,26 +44,30 @@ public class KeyspaceService {
 
     public static final String COMPACT_OPERATION = "forceTableCompaction";
 
+    public static final String SNAPSHOT_OPERATION = "takeSnapshot";
+
+    public static final String CF_SNAPSHOT_OPERATION = "takeColumnFamilySnapshot";
+
     private EmsConnection emsConnection;
 
     public KeyspaceService(EmsConnection emsConnection) {
         this.emsConnection = emsConnection;
     }
 
-    public void repair(String keyspace) {
+    public void repair(String keyspace, String... columnFamilies) {
         EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
         EmsOperation operation = emsBean.getOperation(REPAIR_OPERATION, String.class, boolean.class,
             boolean.class, String[].class);
 
-        operation.invoke(keyspace, new String[] {});
+        operation.invoke(keyspace, true, true, columnFamilies);
     }
 
-    public void repairPrimaryRange(String keyspace) {
+    public void repairPrimaryRange(String keyspace, String... columnFamilies) {
         EmsBean emsBean = loadBean(KeyspaceService.STORAGE_SERVICE_BEAN);
         EmsOperation operation = emsBean.getOperation(REPAIR_PRIMARY_RANGE, String.class, boolean.class, boolean.class,
             String[].class);
 
-        operation.invoke(keyspace);
+        operation.invoke(keyspace, true, true, columnFamilies);
     }
 
     public void cleanup(String keyspace) {
@@ -73,11 +77,18 @@ public class KeyspaceService {
         operation.invoke(keyspace, new String[] {});
     }
 
-    public void compact(String keyspace) {
+    public void compact(String keyspace, String... columnFamilies) {
         EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
         EmsOperation operation = emsBean.getOperation(COMPACT_OPERATION, String.class, String[].class);
 
-        operation.invoke(keyspace, new String[] {});
+        operation.invoke(keyspace, columnFamilies);
+    }
+
+    public void takeSnapshot(String keyspace, String snapshotName) {
+        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsOperation operation = emsBean.getOperation(SNAPSHOT_OPERATION, String.class, String[].class);
+
+        operation.invoke(snapshotName, new String[] {keyspace});
     }
 
     private EmsBean loadBean(String objectName) {

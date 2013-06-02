@@ -144,14 +144,17 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         return failedOperation;
     }
 
-    public OperationResult repairKeyspace() {
+    public OperationResult repairKeyspace(String... columnFamilies) {
         KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
 
         String keyspace = context.getResourceKey();
+        if (columnFamilies == null) {
+            columnFamilies = new String[] {};
+        }
 
         log.info("Executing repair on keyspace [" + keyspace + "]");
         long start = System.currentTimeMillis();
-        keyspaceService.repair(keyspace);
+        keyspaceService.repair(keyspace, columnFamilies);
         long end = System.currentTimeMillis();
         log.info("Finished repair on keyspace [" + keyspace + "] in " + (end - start) + " ms");
 
@@ -172,13 +175,17 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         return new OperationResult();
     }
 
-    public OperationResult compactKeyspace() {
+    public OperationResult compactKeyspace(String... columnFamilies) {
         KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
+
         String keyspace = context.getResourceKey();
+        if (columnFamilies == null) {
+            columnFamilies = new String[] {};
+        }
 
         log.info("Executing compaction on  keyspace [" + keyspace + "]");
         long start = System.currentTimeMillis();
-        keyspaceService.compact(keyspace);
+        keyspaceService.compact(keyspace, columnFamilies);
         long end = System.currentTimeMillis();
         log.info("Finished compaction on keysapce [" + keyspace + "] in " + (end - start) + " ms");
 

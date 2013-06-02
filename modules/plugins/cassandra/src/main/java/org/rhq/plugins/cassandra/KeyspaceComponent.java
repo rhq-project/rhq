@@ -55,6 +55,7 @@ import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.cassandra.util.KeyspaceService;
 import org.rhq.plugins.jmx.JMXComponent;
 
 /**
@@ -64,12 +65,6 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
     JMXComponent<ResourceComponent<?>>, OperationFacet {
 
     private final Log log = LogFactory.getLog(KeyspaceComponent.class);
-
-    private static final String STORAGE_SERVICE_BEAN = "org.apache.cassandra.db:type=StorageService";
-
-    private static final String COMPACT_OPERATION = "forceTableCompaction";
-    private static final String REPAIR_OPERATION = "forceTableRepair";
-    private static final String CLEANUP_OPERATION = "forceTableCleanup";
 
     private ResourceContext<ResourceComponent<?>> context;
 
@@ -149,19 +144,14 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         return failedOperation;
     }
 
-    public OperationResult repairKeyspace(String... columnFamilies) {
-        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
-        EmsOperation operation = emsBean.getOperation(REPAIR_OPERATION, String.class, boolean.class, boolean.class,
-            String[].class);
+    public OperationResult repairKeyspace() {
+        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
 
         String keyspace = context.getResourceKey();
-        if (columnFamilies == null) {
-            columnFamilies = new String[]{};
-        }
 
         log.info("Executing repair on keyspace [" + keyspace + "]");
         long start = System.currentTimeMillis();
-        operation.invoke(keyspace, true, true, columnFamilies);
+        keyspaceService.repair(keyspace);
         long end = System.currentTimeMillis();
         log.info("Finished repair on keyspace [" + keyspace + "] in " + (end - start) + " ms");
 
@@ -169,16 +159,12 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
     }
 
     public OperationResult cleanup() {
-        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
-        EmsOperation operation = emsBean.getOperation(CLEANUP_OPERATION, String.class, String[].class);
-
+        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
         String keyspace = context.getResourceKey();
-        operation.invoke(keyspace, new String[]{});
-
 
         log.info("Executing cleanup on keyspace [" + keyspace + "]");
         long start = System.currentTimeMillis();
-        operation.invoke(keyspace, new String[]{});
+        keyspaceService.cleanup(keyspace);
         long end = System.currentTimeMillis();
 
         log.info("Finished cleanup on keyspace [" + keyspace + "] in " + (end - start) + " ms");
@@ -186,20 +172,14 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         return new OperationResult();
     }
 
-    public OperationResult compactKeyspace(String... columnFamilies) {
-        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
-        EmsOperation operation = emsBean.getOperation(COMPACT_OPERATION, String.class, String[].class);
-
+    public OperationResult compactKeyspace() {
+        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
         String keyspace = context.getResourceKey();
-        if (columnFamilies == null) {
-            columnFamilies = new String[]{};
-        }
 
         log.info("Executing compaction on  keyspace [" + keyspace + "]");
         long start = System.currentTimeMillis();
-        operation.invoke(keyspace, new String[]{});
+        keyspaceService.compact(keyspace);
         long end = System.currentTimeMillis();
-
         log.info("Finished compaction on keysapce [" + keyspace + "] in " + (end - start) + " ms");
 
         return new OperationResult();
@@ -215,7 +195,7 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         log.info("Taking snapshot of keyspace [" + keyspace + "]");
         log.info("Snapshot name set to [" + snapshotName + "]");
         long start = System.currentTimeMillis();
-        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsBean emsBean = loadBean(KeyspaceService.STORAGE_SERVICE_BEAN);
         if (columnFamilies == null || columnFamilies.length == 0) {
             EmsOperation operation = emsBean.getOperation("takeSnapshot", String.class, String[].class);
             operation.invoke(snapshotName, new String[]{keyspace});
@@ -238,7 +218,7 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
     }
 
     public PropertyList getKeySpaceDataFileLocations() {
-        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsBean emsBean = loadBean(KeyspaceService.STORAGE_SERVICE_BEAN);
         EmsAttribute attribute = emsBean.getAttribute("AllDataFileLocations");
 
         PropertyList list = new PropertyList("keyspaceFileLocations");
@@ -255,7 +235,7 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
     }
 
     public PropertySimple getCommitLogProperty() {
-        EmsBean emsBean = loadBean(STORAGE_SERVICE_BEAN);
+        EmsBean emsBean = loadBean(KeyspaceService.STORAGE_SERVICE_BEAN);
         EmsAttribute attribute = emsBean.getAttribute("CommitLogLocation");
         return new PropertySimple("CommitLogLocation", attribute.refresh());
     }

@@ -47,9 +47,11 @@ public class RHQControl {
         HelpFormatter helpFormatter = new HelpFormatter();
         String syntax = "rhqctl <cmd> [options]";
         String header = "\nwhere <cmd> is one of:";
+        String footer = "\n* For help on a specific command: rhqctl <cmd> --help\n" //
+            + "\n* Limit commands to a single component with one of: --storage, --server, --agent";
 
         helpFormatter.setOptPrefix("");
-        helpFormatter.printHelp(syntax, header, commands.getOptions(), null);
+        helpFormatter.printHelp(syntax, header, commands.getOptions(), footer);
     }
 
     public void exec(String[] args) {
@@ -62,7 +64,7 @@ public class RHQControl {
 
                 command.exec(getCommandLine(commandName, args));
             }
-        } catch(UsageException e) {
+        } catch (UsageException e) {
             printUsage();
         } catch (RHQControlException e) {
             log.error(e.getMessage() + " [Cause: " + e.getCause() + "]");

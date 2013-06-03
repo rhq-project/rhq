@@ -40,7 +40,6 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -269,7 +268,8 @@ public class StorageNode implements Serializable {
     public void parseNodeInformation(String s) {
         String[] params = s.split("\\|");
         if (params.length != 3) {
-            throw new IllegalArgumentException("Expected string of the form, hostname|jmxPort|nativeTransportPort");
+            throw new IllegalArgumentException("Expected string of the form, hostname|jmxPort|nativeTransportPort: ["
+                + s + "]");
         }
 
         this.setAddress(params[0]);

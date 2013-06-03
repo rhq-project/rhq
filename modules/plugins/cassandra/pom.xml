@@ -30,6 +30,11 @@
       <version>1.0.5-M3-p1</version>
     </dependency>
     <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra-all</artifactId>
+      <version>${cassandra.version}</version>
+    </dependency>
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-domain</artifactId>
       <version>${project.version}</version>

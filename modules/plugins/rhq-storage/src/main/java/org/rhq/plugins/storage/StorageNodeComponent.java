@@ -98,6 +98,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
         resultsList.add(toPropertyMap(opResult));
 
+        // update seeds list...
+
         resultConfig.put(resultsList);
 
         if (hasErrors) {

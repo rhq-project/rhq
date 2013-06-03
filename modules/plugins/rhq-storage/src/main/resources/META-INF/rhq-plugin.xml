@@ -81,6 +81,14 @@
       </results>
     </operation>
 
+    <operation name="updateSeedsList" description="Updatess the node's seeds property in cassandra.yaml">
+      <parameters>
+        <c:list-property name="seedsList">
+          <c:simple-property name="seed" type="string"/>
+        </c:list-property>
+      </parameters>
+    </operation>
+
     <server name="Cassandra Server JVM"
             sourcePlugin="JMX" sourceType="JMX Server"
             discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"

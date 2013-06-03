@@ -61,15 +61,25 @@
         <c:simple-property name="shutdownResult" description="Shutdown the Cassandra daemon"/>
       </results>
     </operation>
+
     <operation name="start" description="Starts the Cassandra daemon">
       <results>
         <c:simple-property name="startResult" description="Start the Cassandra daemon"/>
       </results>
     </operation>
+
     <operation name="restart" description="Restarts the Cassandra daemon">
       <results>
         <c:simple-property name="startResult" description="Restart the Cassandra daemon"/>
       </results>
+    </operation>
+
+    <operation name="updateSeedsList" description="Updatess the node's seeds property in cassandra.yaml">
+      <parameters>
+        <c:list-property name="seedsList">
+          <c:simple-property name="seed" type="string"/>
+        </c:list-property>
+      </parameters>
     </operation>
 
     <server name="Cassandra Server JVM"

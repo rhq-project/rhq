@@ -8885,8 +8885,8 @@
       </c:group>
     </plugin-configuration>
 
-    <metric property="virtual-host" dataType="trait" displayName="Virtual Host" description="the virtual host this webapp is deployed to"/>
-    <metric property="context-root" dataType="trait" displayName="Context Root" description="the context root of this webapp"/>
+    <metric property="virtual-host" dataType="trait" defaultOn="true" displayName="Virtual Host" description="the virtual host this webapp is deployed to"/>
+    <metric property="context-root" dataType="trait" defaultOn="true" displayName="Context Root" description="the context root of this webapp"/>
     <metric property="responseTime"
             dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
             description="the minimum, maximum, and average response times for requests serviced by this webapp"/>

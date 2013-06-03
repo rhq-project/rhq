@@ -33,7 +33,6 @@ import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
-import com.jayway.restassured.response.ResponseBody;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
@@ -341,6 +340,22 @@ public class ResourcesTest extends AbstractBase {
             .body("currentPage",is(1))
         .when()
             .get("/resource");
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndWrappingByExtension() throws Exception {
+
+        given()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+            .body("pageSize",is(2))
+            .body("currentPage",is(1))
+        .when()
+            .get("/resource.jsonw");
     }
 
     @Test

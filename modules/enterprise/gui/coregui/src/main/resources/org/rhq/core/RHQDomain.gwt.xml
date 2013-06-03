@@ -2,6 +2,7 @@
     "http://google-web-toolkit.googlecode.com/svn/tags/2.5.0/distro-source/core/src/gwt-module.dtd">
 
 <module>
+    <entry-point class='org.rhq.core.client.RHQDomain'/>
 
     <inherits name='com.google.gwt.user.User'/>
 
@@ -25,10 +26,23 @@
          is "ie6,ie8,ie9,gecko,gecko1_8,safari,opera" (i.e. all supported browsers).
          To override this value, specify the user.agent property on the mvn
          command line (e.g. -Duser.agent=gecko1_8) or in your ~/.m2/settings.xml.
-
+    -->    
     <set-property name="user.agent" value="${gwt.userAgent}"/>
-     -->
-    <entry-point class='org.rhq.core.client.RHQDomain'/>
+
+
+    <!--
+         A comma-separated list of the supported locales.
+         Each of the locales, aside from the default locale (en) must have a message
+         bundle properties file suffixed with _<locale>.properties in the same package
+         in which the corresponding GWT i18n interface class resides.
+
+         The gwt.locale property is substituted by the Maven resources plugin
+         during the resources phase. The default value for gwt.locale, defined in
+         coregui/pom.xml, includes all of the locales for which we currently have
+         message bundles. To override this value, specify the gwt.locale property on the
+         mvn command line (e.g. -Dgwt.locale=default) or in your ~/.m2/settings.xml.
+    --> 
+    <extend-property name="locale" values="${gwt.locale}" />
 
     <super-source path="gwtoverrides"/>
     <source path="client"/>

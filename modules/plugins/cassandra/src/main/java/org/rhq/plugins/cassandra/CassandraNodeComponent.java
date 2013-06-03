@@ -29,9 +29,11 @@ import static org.rhq.core.system.OperatingSystemType.WINDOWS;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -39,8 +41,6 @@ import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Session;
 
-import org.apache.cassandra.config.Config;
-import org.apache.cassandra.config.SeedProviderDef;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.SigarException;
@@ -48,9 +48,7 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.representer.Representer;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
@@ -69,6 +67,7 @@ import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.jmx.JMXServerComponent;
 
 /**
@@ -296,15 +295,47 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         Map seedProvider = (Map) seedProviderList.get(0);
         List paramsList = (List) seedProvider.get("parameters");
         Map params = (Map) paramsList.get(0);
-        String seeds = (String) params.get("seeds");
         params.put("seeds", StringUtil.listToString(addresses));
 
-        // remove the original file
-        // TODO create a backup first in case something goes wrong so we can rollback
-        yamlFile.delete();
+        // create a backup of the configuration file in preparation of writing out the changes
+        File yamlFileBackup = new File(yamlProp + ".bak" + new Date().getTime());
+        StreamUtil.copy(new FileInputStream(yamlFile), new FileOutputStream(yamlFileBackup), true);
+
+        if (!yamlFile.delete()) {
+            String msg = "Failed to delete [" + yamlFile + "] in preparation of writing updated configuration. The " +
+                "changes will be aborted.";
+            log.error(msg);
+            deleteYamlBackupFile(yamlFileBackup);
+            throw new IOException(msg);
+        }
+
         FileWriter writer = new FileWriter(yamlFile);
-        yaml.dump(cassandraConfig, writer);
-        writer.close();
+        try {
+            yaml.dump(cassandraConfig, writer);
+            deleteYamlBackupFile(yamlFileBackup);
+        } catch (Exception e) {
+            log.error("An error occurred while trying to write the updated configuration back to " + yamlFile, e);
+            log.error("Reverting changes to " + yamlFile);
+
+            if (yamlFile.delete()) {
+                StreamUtil.copy(new FileInputStream(yamlFileBackup), new FileOutputStream(yamlFile));
+                deleteYamlBackupFile(yamlFileBackup);
+            } else {
+                String msg = "Failed updates to " + yamlFile.getName() + " cannot be rolled back. The file cannot be " +
+                    "deleted. " + yamlFile + " should be replaced by " + yamlFileBackup;
+                log.error(msg);
+                throw new IOException(msg);
+            }
+        } finally {
+            writer.close();
+        }
+    }
+
+    private void deleteYamlBackupFile(File yamlBackup) {
+        if (!yamlBackup.delete()) {
+            log.warn("Failed to delete Cassandra configuration backup file [" + yamlBackup + "]. This file " +
+                "should be deleted.");
+        }
     }
 
     private String getStartScript() {

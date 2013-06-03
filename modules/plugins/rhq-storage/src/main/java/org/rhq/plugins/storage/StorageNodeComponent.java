@@ -63,6 +63,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private OperationResult nodeAdded(Configuration params) {
         boolean runRepair = params.getSimple("runRepair").getBooleanValue();
+        boolean updateSeedsList = params.getSimple("updateSeedsList").getBooleanValue();
 
         EmsConnection emsConnection = getEmsConnection();
         KeyspaceService keyspaceService = new KeyspaceService(emsConnection);
@@ -100,23 +101,24 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
         resultsList.add(toPropertyMap(opResult));
 
-        // update seeds list...
-        List<String> addresses = getAddresses(params.getList("seedsList"));
-        try {
-            opResult = new OpResult();
-            opResult.operation = "Update seeds list";
-            updateSeedsList(addresses);
-            opResult.succeeded = true;
-        } catch (Exception e) {
-            log.error("An error occurred while updating the seeds lists for " + getResourceContext().getResourceKey(),
-                e);
-            opResult.succeeded = false;
+        if (updateSeedsList) {
+            List<String> addresses = getAddresses(params.getList("seedsList"));
+            try {
+                opResult = new OpResult();
+                opResult.operation = "Update seeds list";
+                updateSeedsList(addresses);
+                opResult.succeeded = true;
+            } catch (Exception e) {
+                log.error("An error occurred while updating the seeds lists for " + getResourceContext().getResourceKey(),
+                    e);
+                opResult.succeeded = false;
 
-            Throwable rootCause = ThrowableUtil.getRootCause(e);
-            opResult.details = "An error occurred while updating the seeds list: " +
-                ThrowableUtil.getStackAsString(rootCause);
+                Throwable rootCause = ThrowableUtil.getRootCause(e);
+                opResult.details = "An error occurred while updating the seeds list: " +
+                    ThrowableUtil.getStackAsString(rootCause);
+            }
+            resultsList.add(toPropertyMap(opResult));
         }
-        resultsList.add(toPropertyMap(opResult));
 
         resultConfig.put(resultsList);
 

@@ -274,26 +274,36 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
                 "non-existent file.");
         }
 
-        org.yaml.snakeyaml.constructor.Constructor constructor = new org.yaml.snakeyaml.constructor.Constructor(Config.class);
-        TypeDescription seedDesc = new TypeDescription(SeedProviderDef.class);
-        seedDesc.putMapPropertyType("parameters", String.class, String.class);
-        constructor.addTypeDescription(seedDesc);
+        // Cassandra uses strong typing when reading and parsing cassandra.yaml. The
+        // document is parsed into a org.apache.cassandra.config.Config object. I tried
+        // using the config classes but ran into a couple different problems. When writing
+        // the config back out to cassandra.yaml, the generated yaml is not correct for the
+        // seed_provider property. The snakeyaml parser cannot even load the document
+        // because the SeedProviderDef class cannot be instantiated since it does not define
+        // a no-args constructor. Once I fixed that, I still was not able to get past the
+        // problems with the yaml generated for the seed_provider provider. Subsequent reads
+        // of cassandra.yaml would result in parsing errors. Given these problems, I decided
+        // to go with the untyped approach for updating cassandra.yaml for now.
+        //
+        // jsanda
 
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Yaml yaml = new Yaml(options);
+        Map cassandraConfig = (Map) yaml.load(new FileInputStream(yamlFile));
 
-        Yaml yaml = new Yaml(constructor, new Representer(), options);
-        Config conf = (Config)yaml.load(new FileInputStream(yamlFile));
-
-        SeedProviderDef seedProviderDef = conf.seed_provider;
-        seedProviderDef.parameters.put("seeds", StringUtil.listToString(addresses));
-        Map<String, String> params = seedProviderDef.parameters;
+        List seedProviderList = (List) cassandraConfig.get("seed_provider");
+        Map seedProvider = (Map) seedProviderList.get(0);
+        List paramsList = (List) seedProvider.get("parameters");
+        Map params = (Map) paramsList.get(0);
+        String seeds = (String) params.get("seeds");
+        params.put("seeds", StringUtil.listToString(addresses));
 
         // remove the original file
         // TODO create a backup first in case something goes wrong so we can rollback
         yamlFile.delete();
         FileWriter writer = new FileWriter(yamlFile);
-        yaml.dump(conf, writer);
+        yaml.dump(cassandraConfig, writer);
         writer.close();
     }
 

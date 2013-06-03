@@ -137,7 +137,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "Redirects to /alert/definitions")
     public Response redirectDefinitionToDefinitions(@Context UriInfo uriInfo) {
         UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
-        uriBuilder.replacePath("/rest/alert/definitions"); // TODO there needs to be a better way
+        String path = uriInfo.getPath();
+        path = path.replace("/definition","/definitions");
+        uriBuilder.replacePath("/rest" + path);
         Response.ResponseBuilder builder = Response.seeOther(uriBuilder.build());
         return builder.build();
     }
@@ -174,7 +176,13 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             wrapForPaging(builder,uriInfo,defs,ret);
         } else {
             createPagingHeader(builder,uriInfo,defs);
-            builder.entity(ret); // TODO generic entity for XML
+            if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
+                GenericEntity<List<AlertDefinitionRest>> list = new GenericEntity<List<AlertDefinitionRest>>(ret) {
+                            };
+                builder.entity(list);
+            } else {
+                builder.entity(ret);
+            }
         }
 
         return builder.build();

@@ -25,6 +25,8 @@
 
 package org.rhq.plugins.storage;
 
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
@@ -99,6 +101,22 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         resultsList.add(toPropertyMap(opResult));
 
         // update seeds list...
+        List<String> addresses = getAddresses(params.getList("seedsList"));
+        try {
+            opResult = new OpResult();
+            opResult.operation = "Update seeds list";
+            updateSeedsList(addresses);
+            opResult.succeeded = true;
+        } catch (Exception e) {
+            log.error("An error occurred while updating the seeds lists for " + getResourceContext().getResourceKey(),
+                e);
+            opResult.succeeded = false;
+
+            Throwable rootCause = ThrowableUtil.getRootCause(e);
+            opResult.details = "An error occurred while updating the seeds list: " +
+                ThrowableUtil.getStackAsString(rootCause);
+        }
+        resultsList.add(toPropertyMap(opResult));
 
         resultConfig.put(resultsList);
 

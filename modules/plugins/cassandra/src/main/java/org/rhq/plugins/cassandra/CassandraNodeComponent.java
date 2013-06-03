@@ -234,12 +234,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     }
 
     protected OperationResult updateSeedsList(Configuration params) {
-        List<String> addresses = new ArrayList<String>();
         PropertyList list = params.getList("seedsList");
-        for (Property property : list.getList()) {
-            PropertySimple simple = (PropertySimple) property;
-            addresses.add(simple.getStringValue());
-        }
+        List<String> addresses = getAddresses(list);
 
         OperationResult result = new OperationResult();
         try {
@@ -250,6 +246,15 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             result.setErrorMessage(ThrowableUtil.getStackAsString(rootCause));
         }
         return result;
+    }
+
+    protected List<String> getAddresses(PropertyList seedsList) {
+        List<String> addresses = new ArrayList<String>();
+        for (Property property : seedsList.getList()) {
+            PropertySimple simple = (PropertySimple) property;
+            addresses.add(simple.getStringValue());
+        }
+        return addresses;
     }
 
     protected void updateSeedsList(List<String> addresses) throws IOException {

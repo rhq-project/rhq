@@ -35,6 +35,7 @@ import org.jboss.as.controller.client.ModelControllerClient;
 
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
+import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -1079,6 +1080,9 @@ public class InstallerServiceImpl implements InstallerService {
 
             // we don't want users to access the admin console
             new CoreJBossASClient(mcc).setEnableAdminConsole(false);
+
+            // no need for the example datasource - if it exists, remove it
+            new DatasourceJBossASClient(mcc).removeDatasource("ExampleDS");
 
         } catch (Exception e) {
             log("deployServices failed", e);

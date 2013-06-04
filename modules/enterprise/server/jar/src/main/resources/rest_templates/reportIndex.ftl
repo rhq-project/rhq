@@ -26,7 +26,7 @@
 <ul>
 <#list var as var>
  <li>
-    <a href="/rest/${var.href}.csv">${var.rel}</a>
+    <a href="${var.href}.csv">${var.rel}</a>
  </li>
 </#list>
 </ul>

@@ -130,7 +130,7 @@ public class ResourceDetailView extends
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
     private SubTab monitorNewGraphs;
-    private SubTab monitorTables;
+    private SubTab metricsTables;
     private SubTab monitorTraits;
     private SubTab monitorAvail;
     private SubTab monitorSched;
@@ -198,13 +198,13 @@ public class ResourceDetailView extends
 
         monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
 
-        monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
+        metricsTables = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_tables()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
         monitorAvail = new SubTab(monitoringTab, new ViewName("Availability", MSG.view_tabs_common_availability()),
             null);
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorTables,  monitorNewGraphs, monitorTraits, monitorAvail,
+        monitoringTab.registerSubTabs(metricsTables,  monitorNewGraphs, monitorTraits, monitorAvail,
             monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
@@ -408,7 +408,7 @@ public class ResourceDetailView extends
                 return new MeasurementTableView(resource.getId());
             }
         };
-        updateSubTab(this.monitoringTab, this.monitorTables, visible, true, viewFactory);
+        updateSubTab(this.monitoringTab, this.metricsTables, visible, true, viewFactory);
 
         visible = hasMetricsOfType(this.resourceComposite, DataType.TRAIT);
         viewFactory = (!visible) ? null : new ViewFactory() {

@@ -91,7 +91,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     }
 
-    public static D3GraphListView createSingleGraph(Resource resource, Integer measurementId) {
+    public static D3GraphListView createSingleGraphNoAvail(Resource resource, Integer measurementId) {
         return D3GraphListView.createSingleGraph(resource, measurementId, false);
     }
 
@@ -146,7 +146,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         vLayout.setHeight100();
 
         if (resource != null) {
-            buildGraphs();
+            queryAndBuildGraphs();
         }
         addMember(vLayout);
     }
@@ -154,7 +154,6 @@ public class D3GraphListView extends AbstractD3GraphListView {
     public void redrawGraphs() {
         this.onDraw();
         availabilityGraph.drawJsniChart();
-        //graphDateTimeRangeEditor.drawJsniDateSlider();
     }
 
     @Override
@@ -190,11 +189,13 @@ public class D3GraphListView extends AbstractD3GraphListView {
      * Build whatever graph (summary or not) by grabbing the MeasurementDefinitions
      * that are defined for the resource and then querying the metric and availability data.
      */
-    private void buildGraphs() {
+    private void queryAndBuildGraphs() {
         final long startTimer = System.currentTimeMillis();
 
-        queryAvailability(EntityContext.forResource(resource.getId()), graphDateTimeRangeEditor.getStartTime(),
+        if(null != availabilityGraph){
+            queryAvailability(EntityContext.forResource(resource.getId()), graphDateTimeRangeEditor.getStartTime(),
                 graphDateTimeRangeEditor.getEndTime(), null);
+        }
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -250,7 +251,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                     determineGraphsToBuild(metricsDataList, measurementDefinitions, definitionIds);
                                 }
                                 // There is a weird timing case when availabilityGraph can be null
-                                if (availabilityGraph != null) {
+                                if (null != availabilityGraph) {
                                     // we only need the first metricData since we are only taking the
                                     // availability data set in there for the dropdowns already
                                     availabilityGraph.setAvailabilityList(availabilityList);

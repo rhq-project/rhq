@@ -6,6 +6,7 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
@@ -42,6 +43,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
     public static final String FIELD_METRIC_SCHED_ID = "schedId";
     public static final String FIELD_METRIC_UNITS = "units";
     public static final String FIELD_METRIC_NAME = "name";
+    public static final String FIELD_RESOURCE_ID = "resourceId";
 
     private int resourceId;
 
@@ -61,6 +63,22 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
         ListGridField nameField = new ListGridField(FIELD_METRIC_LABEL, MSG.common_title_name());
         nameField.setWidth("30%");
         fields.add(nameField);
+
+        nameField.setCellFormatter(new CellFormatter() {
+            @Override
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value == null) {
+                    return "";
+                }
+                String commaDelimitedList = "5, 10, 20, 25";
+                //String formattedValue = StringUtility.escapeHtml(value.toString());
+                String contents= "<span id='sparkline_" +  resourceId + "-"+ record.getAttributeAsInt("FIELD_METRIC_DEF_ID")
+                        + "' class='dynamicsparkline' width='0' " + "values='"
+                        + commaDelimitedList + "'>...</span>";
+                return contents;
+
+            }
+        });
 
         ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.common_title_alerts());
         alertsField.setWidth("10%");
@@ -109,6 +127,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
         record.setAttribute(FIELD_METRIC_SCHED_ID, from.getScheduleId());
         record.setAttribute(FIELD_METRIC_UNITS, from.getUnits());
         record.setAttribute(FIELD_METRIC_NAME, from.getMetricName());
+        record.setAttribute(FIELD_RESOURCE_ID, resourceId);
         return record;
     }
 

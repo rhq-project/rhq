@@ -126,6 +126,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         schemaManager.install();
+        schemaManager.updateTopology();
 
         if (annotation.waitForSchemaAgreement()) {
             // TODO do not hard code cluster name

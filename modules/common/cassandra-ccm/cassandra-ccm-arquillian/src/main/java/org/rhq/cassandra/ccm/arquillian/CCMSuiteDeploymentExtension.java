@@ -155,6 +155,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
                     try {
                         schemaManager.install();
+                        schemaManager.updateTopology();
 
                     } catch (Exception e) {
                         if (null != ccm) {

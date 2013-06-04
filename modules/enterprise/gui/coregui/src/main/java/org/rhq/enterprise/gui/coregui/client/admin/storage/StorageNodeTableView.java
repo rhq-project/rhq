@@ -235,7 +235,7 @@ public class StorageNodeTableView extends
                                         });
                                 } else {
                                     // invoke the operation on the storage service resource
-                                    GWTServiceLookup.getTopologyService().invokeOperationOnStorageService(resourceId,
+                                    GWTServiceLookup.getStorageService().invokeOperationOnStorageService(resourceId,
                                         operationName, new AsyncCallback<Void>() {
                                             public void onSuccess(Void result) {
                                                 latch.countDown();

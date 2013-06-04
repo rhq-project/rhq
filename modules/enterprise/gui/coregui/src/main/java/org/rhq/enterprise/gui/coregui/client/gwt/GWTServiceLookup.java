@@ -209,6 +209,10 @@ public class GWTServiceLookup {
     public static TopologyGWTServiceAsync getTopologyService() {
         return secure(TopologyGWTServiceAsync.Util.getInstance());
     }
+    
+    public static StorageGWTServiceAsync getStorageService() {
+        return secure(StorageGWTServiceAsync.Util.getInstance());
+    }
 
     @SuppressWarnings("unchecked")
     private static <T> T secure(Object sdt) {

@@ -19,13 +19,15 @@
 
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
-
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
+
+import java.util.Arrays;
+import java.util.List;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -39,11 +41,16 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
+import org.rhq.core.domain.cloud.StorageNodeLoadComposite.MeasurementAggregateWithUnits;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
@@ -54,9 +61,11 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
  * Shows details of a storage node.
@@ -67,10 +76,11 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
     private final int storageNodeId;
 
-    private static final int SECTION_COUNT = 1;
+    private static final int SECTION_COUNT = 2;
     private final SectionStack sectionStack;
-    private SectionStackSection detailsSection = null;
-    private SectionStackSection agentSection = null;
+    private SectionStackSection detailsSection;
+    private SectionStackSection loadSection;
+    private ListGrid loadDataGrid;
 
     private volatile int initSectionCount = 0;
 
@@ -95,25 +105,28 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         StorageNodeCriteria criteria = new StorageNodeCriteria();
         criteria.addFilterId(storageNodeId);
         criteria.fetchResource(true);
-        GWTServiceLookup.getTopologyService().findStorageNodesByCriteria(criteria, new AsyncCallback<PageList<StorageNode>>() {
-            public void onSuccess(final PageList<StorageNode> storageNodes) {
-                if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)));
-                    initSectionCount = SECTION_COUNT;
-                    return;
-                }
-                prepareDetailsSection(sectionStack, storageNodes.get(0));
-//                prepareAgentSection(sectionStack, storageNodes.get(0));
-            }
+        GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria,
+            new AsyncCallback<PageList<StorageNode>>() {
+                public void onSuccess(final PageList<StorageNode> storageNodes) {
+                    if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)));
+                        initSectionCount = SECTION_COUNT;
+                        return;
+                    }
+                    final StorageNode node = storageNodes.get(0);
+                    prepareDetailsSection(sectionStack, node);
+                    prepareLoadSection(sectionStack, node);
 
-            public void onFailure(Throwable caught) {
-                CoreGUI.getErrorHandler().handleError(
-                    MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
-                        + caught.getMessage(), caught);
-                initSectionCount = SECTION_COUNT;
-            }
-        });
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                            + caught.getMessage(), caught);
+                    initSectionCount = SECTION_COUNT;
+                }
+            });
     }
 
     public boolean isInitialized() {
@@ -134,8 +147,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     if (null != detailsSection) {
                         sectionStack.addSection(detailsSection);
                     }
-                    if (null != agentSection) {
-                        sectionStack.addSection(agentSection);
+                    if (null != loadSection) {
+                        sectionStack.addSection(loadSection);
                     }
 
                     addMember(sectionStack);
@@ -153,17 +166,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         }.run(); // fire the timer immediately
     }
 
-//    private void prepareAgentSection(SectionStack stack, Server server) {
-//        SectionStackSection section = new SectionStackSection(MSG.view_adminTopology_serverDetail_connectedAgents());
-//        section.setExpanded(true);
-//        AgentTableView agentsTable = new AgentTableView(storageNodeId, false);
-//        section.setItems(agentsTable);
-//
-//        agentSection = section;
-//        initSectionCount++;
-//        return;
-//    }
-
     private void prepareDetailsSection(SectionStack stack, final StorageNode storageNode) {
         final DynamicForm form = new DynamicForm();
         form.setMargin(10);
@@ -174,24 +176,15 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         final StaticTextItem nameItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         nameItem.setValue("<b>" + storageNode.getAddress() + "</b>");
 
-//        final TextItem addressItem = new TextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
-//        addressItem.setRequired(true);
-//        addressItem.setValue(server.getAddress());
-
-//        IntegerRangeValidator portValidator = new IntegerRangeValidator();
-//        portValidator.setMin(0);
-//        portValidator.setMax(65535);
         final TextItem jmxPortItem = new TextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
-//        portItem.setRequired(true);
-//        portItem.setValidators(portValidator);
         jmxPortItem.setValue(storageNode.getJmxPort());
-        
-        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl", MSG.view_adminTopology_storageNode_jmxConnectionUrl());
+
+        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",
+            MSG.view_adminTopology_storageNode_jmxConnectionUrl());
         jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
 
         final TextItem cqlPortItem = new TextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
-//        cqlPortItem.setRequired(true);
-//        cqlPortItem.setValidators(portValidator);
+        
         cqlPortItem.setValue(storageNode.getCqlPort());
 
         final SelectItem operationModeItem = new SelectItem(FIELD_OPERATION_MODE.propertyName(),
@@ -200,8 +193,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         operationModeItem.setValue(storageNode.getOperationMode());
 
         // make clickable link to associated resource
-        StaticTextItem resourceItem = new StaticTextItem("associatedResource",
-            "Associated Resource");
+        StaticTextItem resourceItem = new StaticTextItem("associatedResource", "Associated Resource");
         String storageNodeItemText = "";
         Resource storageNodeResource = storageNode.getResource();
         if (storageNodeResource != null && storageNodeResource.getName() != null) {
@@ -229,20 +221,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                 if (form.validate()) {
                     storageNode.setOperationMode(OperationMode.valueOf(operationModeItem.getValueAsString()));
                     SC.say(storageNode.toString());
-//                    GWTServiceLookup.getTopologyService().updateServer(storageNode, new AsyncCallback<Void>() {
-//                        public void onSuccess(Void result) {
-//                            Message msg = new Message(MSG.view_adminTopology_message_serverUpdated(server.getName()),
-//                                Message.Severity.Info);
-//                            CoreGUI.getMessageCenter().notify(msg);
-//
-//                        }
-//
-//                        public void onFailure(Throwable caught) {
-//                            CoreGUI.getErrorHandler().handleError(
-//                                MSG.view_adminTopology_message_serverUpdateFail(server.getName()) + " "
-//                                    + caught.getMessage(), caught);
-//                        }
-//                    });
+                    // TODO: logic
                 }
             }
         });
@@ -264,9 +243,94 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         initSectionCount++;
     }
 
+    private void prepareLoadSection(SectionStack stack, final StorageNode storageNode) {
+        loadDataGrid = new ListGrid();
+        ListGridField nameField = new ListGridField("name", MSG.common_title_metric());
+        ListGridField minField = new ListGridField("min", MSG.view_resource_monitor_table_min());
+        ListGridField avgField = new ListGridField("avg", MSG.view_resource_monitor_table_avg());
+        ListGridField maxField = new ListGridField("max", MSG.view_resource_monitor_table_max());
+        nameField.setWidth("40%");
+        loadDataGrid.setFields(nameField, minField, avgField, maxField);
+
+        IButton refreshButton = new IButton();
+        refreshButton.setOverflow(Overflow.VISIBLE);
+        refreshButton.setTitle(MSG.common_button_refresh());
+        refreshButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                showFreshLoadData(storageNode);
+            }
+        });
+
+        showFreshLoadData(storageNode);
+
+        EnhancedToolStrip footer = new EnhancedToolStrip();
+        footer.setPadding(5);
+        footer.setWidth100();
+        footer.setMembersMargin(15);
+        footer.addMember(refreshButton);
+
+        SectionStackSection section = new SectionStackSection("Load");
+        section.setItems(loadDataGrid, footer);
+        section.setExpanded(true);
+
+        loadSection = section;
+        initSectionCount++;
+    }
+
     @Override
     public void renderView(ViewPath viewPath) {
         Log.debug("StorageNodeDetainView: " + viewPath);
+    }
+
+    private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name) {
+        ListGridRecord record = new ListGridRecord();
+        record.setAttribute("name", name);
+        record.setAttribute("min", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
+            aggregateWithUnits.getUnits(), true));
+        record.setAttribute("avg", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
+            aggregateWithUnits.getUnits(), true));
+        record.setAttribute("max", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
+            aggregateWithUnits.getUnits(), true));
+        return record;
+    }
+
+    private void showFreshLoadData(final StorageNode node) {
+        GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS,
+            new AsyncCallback<StorageNodeLoadComposite>() {
+                @SuppressWarnings("unchecked")
+                public void onSuccess(final StorageNodeLoadComposite loadComposite) {
+                    ListGridRecord[] records = new ListGridRecord[6];
+
+                    List<List<Object>> loadFields = Arrays.<List<Object>> asList(
+                        Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Commited"),
+                        Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used"),
+                        Arrays.<Object> asList(loadComposite.getHeapPercentageUsed(), "Heap Used in Percent"),
+                        Arrays.<Object> asList(loadComposite.getLoad(), "Load (data stored on the node)"),
+                        Arrays.<Object> asList(loadComposite.getActuallyOwns(), "Token Ownership in Percent"));
+                    int i = 0;
+                    for (List<Object> aggregateWithUnitsList : loadFields) {
+                        if (aggregateWithUnitsList.get(0) != null) {
+                            records[i++] = makeListGridRecord(
+                                (MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
+                                (String) aggregateWithUnitsList.get(1));
+                        }
+                    }
+                    records[i] = new ListGridRecord();
+                    records[i].setAttribute("name", "Number of Tokens");
+                    records[i].setAttribute("min", loadComposite.getTokens().getMin());
+                    records[i].setAttribute("avg", loadComposite.getTokens().getAvg());
+                    records[i].setAttribute("max", loadComposite.getTokens().getMax());
+
+                    loadDataGrid.setData(records);
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                            + caught.getMessage(), caught);
+                    initSectionCount = SECTION_COUNT;
+                }
+            });
     }
 
 }

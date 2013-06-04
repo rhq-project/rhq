@@ -32,9 +32,9 @@ public enum StorageNodeDatasourceField {
     
     FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_server_endpointAddress()),
 
-    FIELD_JMX_PORT("jmxPort", "td(i18n) jmx port"),
+    FIELD_JMX_PORT("jmxPort", "jmx port"),
     
-    FIELD_CQL_PORT("cqlPort", "td(i18n) cql port"),
+    FIELD_CQL_PORT("cqlPort", "cql port"),
 
     FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_server_mode()),
 

@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.server.rest;
 
+import java.lang.reflect.UndeclaredThrowableException;
+
 import javax.ejb.EJBException;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -52,6 +54,7 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
 
         Response.ResponseBuilder builder;
         Response.Status status;
+        String message = null;
 
         if (e instanceof StuffNotFoundException) {
             status =Response.Status.NOT_FOUND;
@@ -67,14 +70,29 @@ public class CustomExceptionMapper implements ExceptionMapper<Exception> {
             status = Response.Status.NOT_ACCEPTABLE;
         } else if (e instanceof PermissionException) {
             status = Response.Status.FORBIDDEN;
-        } else if (e instanceof EJBException && e.getCause()!=null && e.getCause() instanceof IllegalArgumentException) {
-            status = Response.Status.NOT_ACCEPTABLE;
+        } else if (e instanceof EJBException && e.getCause()!=null) {
+            Throwable cause = e.getCause();
+            if (cause instanceof IllegalArgumentException) {
+                status = Response.Status.NOT_ACCEPTABLE;
+            } else if (cause instanceof UndeclaredThrowableException ) {
+                if (cause.getCause() != null && cause.getCause() instanceof IllegalAccessException) {
+                    status = Response.Status.FORBIDDEN;
+                    message = "User was authorized, but has no rights for the operation."+
+                        " If this is an LDAP user, the user needs to log in to the UI and complete registration.";
+                } else {
+                    status = Response.Status.SERVICE_UNAVAILABLE;
+                }
+            } else {
+                status = Response.Status.SERVICE_UNAVAILABLE;
+            }
         } else {
             status = Response.Status.SERVICE_UNAVAILABLE;
         }
 
         builder = Response.status(status);
-        String message = e.getMessage();
+        if (message == null) {
+            message = e.getMessage();
+        }
         wrapMessage(builder, message);
         return builder.build();
     }

@@ -100,6 +100,14 @@
         </emphasis>
       </simpara>
       <simpara><xsl:value-of select="@description"/></simpara>
+      <xsl:if test="notes">
+        <formalpara>
+          <title>Note</title>
+          <para>
+          <xsl:value-of   select="notes"/>
+          </para>
+        </formalpara>
+      </xsl:if>
       <xsl:if test="@gzip = 'true'">
         <simpara>Supports returning a gzip'ed Content-Encoding</simpara>
       </xsl:if>

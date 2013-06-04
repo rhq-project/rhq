@@ -264,6 +264,11 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 if (apiOperation.multiValueResponse())
                     responseClass = responseClass + " (multi)";
             }
+            if (apiOperation.notes()!=null) {
+                Element notesElement = doc.createElement("notes");
+                notesElement.setTextContent(apiOperation.notes());
+                methodElement.appendChild(notesElement);
+            }
         }
 
         if (responseClass == null) {

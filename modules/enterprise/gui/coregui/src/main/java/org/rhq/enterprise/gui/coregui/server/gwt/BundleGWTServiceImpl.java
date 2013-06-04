@@ -61,9 +61,9 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     @Override
-    public BundleVersion createBundleVersionViaURL(String url) throws RuntimeException {
+    public BundleVersion createBundleVersionViaURL(String url, String username, String password) throws RuntimeException {
         try {
-            BundleVersion results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url);
+            BundleVersion results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url, username, password);
             return SerialUtility.prepare(results, "createBundleVersionViaURL");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);

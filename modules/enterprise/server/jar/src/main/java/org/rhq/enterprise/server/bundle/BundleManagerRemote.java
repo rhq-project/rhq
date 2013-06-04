@@ -102,6 +102,15 @@ public interface BundleManagerRemote {
         Architecture architecture, String bundleFileUrl) throws Exception;
 
     /**
+     * A variant of {@link #addBundleFileViaURL(Subject, int, String, String, Architecture, String)} supporting the
+     * HTTP basic authentication.
+     *
+     * @see #addBundleFileViaURL(Subject, int, String, String, Architecture, String)
+     */
+    BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, String bundleFileUrl, String userName, String password) throws Exception;
+
+    /**
      * A convenience method taking an existing PackageVersion as opposed to a stream for the file bits.
      * 
      * @see {@link #addBundleFile(Subject, int, String, String, Architecture, InputStream)}
@@ -203,6 +212,15 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      */
     BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception;
+
+    /**
+     * A version of the {@link #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)} that accepts a
+     * username and password for basic authentication on the HTTP URLs.
+     *
+     * @see #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)
+     */
+    BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
+        String password) throws Exception;
 
     /**
      * Remove everything associated with the Bundles with the exception of files laid down by related deployments.

@@ -47,7 +47,7 @@ public interface BundleGWTService extends RemoteService {
 
     BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws RuntimeException;
 
-    BundleVersion createBundleVersionViaURL(String url) throws RuntimeException;
+    BundleVersion createBundleVersionViaURL(String url, String username, String password) throws RuntimeException;
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws RuntimeException;
 

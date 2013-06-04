@@ -34,10 +34,31 @@ public interface StorageNodeManagerLocal {
 
     void scanForStorageNodes();
 
+    /**
+     * <p>Returns all the {@link StorageNode} entities stored in the DB.</p>
+     * 
+     * @return all the {@link StorageNode} entities stored in the DB
+     */
     List<StorageNode> getStorageNodes();
 
+    /**
+     * <p>Updates the passed collection of {@link StorageNode} entities.</p>
+     * 
+     * @param storageNodes the collection of {@link StorageNode} to update
+     */
     void updateStorageNodeList(Collection<StorageNode> storageNodes);
     
+    /**
+     * <p>Returns the summary of load of the storage node.</p>
+     * 
+     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
+     * 
+     * @param subject   user that must have proper permissions
+     * @param node      storage node entity (it can be a new object, but the id should be set properly)
+     * @param beginTime the start time
+     * @param endTime   the end time
+     * @return instance of {@link StorageNodeLoadComposite} with the aggregate measurement data of selected metrics
+     */
     StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
 
     /**

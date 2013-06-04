@@ -34,12 +34,23 @@ import org.rhq.core.domain.util.PageList;
 @Remote
 public interface StorageNodeManagerRemote {
 
+    /**
+     * <p>Returns the summary of load of the storage node.</p>
+     * 
+     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
+     * 
+     * @param subject   user that must have proper permissions
+     * @param node      storage node entity (it can be a new object, but the id should be set properly)
+     * @param beginTime the start time
+     * @param endTime   the end time
+     * @return instance of {@link StorageNodeLoadComposite} with the aggregate measurement data of selected metrics
+     */
     StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
 
     /**
-     * Fetches the list of StorageNode entities based on provided criteria.
+     * <p>Fetches the list of {@link StorageNode} entities based on provided criteria.</p>
      *
-     * the subject needs to have MANAGE_SETTINGS permissions.
+     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      *
      * @param subject user that must have proper permissions
      * @param criteria the criteria

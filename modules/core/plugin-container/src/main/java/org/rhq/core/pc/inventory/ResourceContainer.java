@@ -575,12 +575,14 @@ public class ResourceContainer implements Serializable {
                 String msg = invokedMethodString(method, args, "timed out after " + timeout
                         + " milliseconds - invocation thread will be interrupted.");
                 LOG.debug(msg);
+                Throwable cause = new Throwable();
+                cause.setStackTrace(componentInvocation.getStackTrace());
                 future.cancel(true);
                 componentInvocation.markContextInterrupted();
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(this.container.getFacetLockStatus());
                 }
-                throw new TimeoutException(msg);
+                throw new TimeoutException(msg).initCause(cause);
             }
         }
 
@@ -591,19 +593,20 @@ public class ResourceContainer implements Serializable {
         }
 
         private Object invokeInCurrentThreadWithoutLock(Method method, Object[] args) throws Throwable {
-            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            Thread thread = Thread.currentThread();
+            ClassLoader originalContextClassLoader = thread.getContextClassLoader();
             try {
                 ClassLoader pluginClassLoader = this.container.getResourceClassLoader();
                 if (pluginClassLoader == null) {
                     throw new IllegalStateException("No plugin classloader was specified for " + this + ".");
                 }
-                Thread.currentThread().setContextClassLoader(pluginClassLoader);
+                thread.setContextClassLoader(pluginClassLoader);
                 // This is the actual call into the resource component.
                 return method.invoke(this.container.getResourceComponent(), args);
             } catch (InvocationTargetException ite) {
                 throw (ite.getCause() != null) ? ite.getCause() : ite;
             } finally {
-                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                thread.setContextClassLoader(originalContextClassLoader);
             }
         }
     }
@@ -617,6 +620,7 @@ public class ResourceContainer implements Serializable {
         private final Lock lock;
         private final ComponentInvocationContextImpl componentInvocationContext;
         private final LocalContext localContext;
+        private volatile Thread thread;
 
         ComponentInvocation(ResourceContainer resourceContainer, Method method, Object[] args, Lock lock) {
             this.resourceContainer = resourceContainer;
@@ -628,8 +632,18 @@ public class ResourceContainer implements Serializable {
             localContext = new LocalContext();
         }
 
+        /**
+         * Return the stack trace for the thread executing this call.
+         * Returns an empty stack trace if not called.
+         */
+        public StackTraceElement[] getStackTrace() throws Exception {
+            if (thread == null)
+                return new StackTraceElement[0];
+            return thread.getStackTrace();
+        }
+
         public Object call() throws Exception {
-            ResourceComponent resourceComponent = this.resourceContainer.getResourceComponent();
+            this.thread = Thread.currentThread();
             if (this.lock != null) {
                 try {
                     this.lock.lockInterruptibly();
@@ -640,8 +654,7 @@ public class ResourceContainer implements Serializable {
             }
 
             componentInvocationContext.setLocalContext(localContext);
-
-            ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+            ClassLoader originalContextClassLoader = thread.getContextClassLoader();
 
             // The thread needs to run with a fresh invocation context
             try {
@@ -649,10 +662,10 @@ public class ResourceContainer implements Serializable {
                 if (pluginClassLoader == null) {
                     throw new IllegalStateException("No plugin class loader was specified for " + this + ".");
                 }
-                Thread.currentThread().setContextClassLoader(pluginClassLoader);
+                thread.setContextClassLoader(pluginClassLoader);
                 // This is the actual call into the resource component's facet interface.
-                Object results = this.method.invoke(resourceComponent, this.args);
-                return results;
+                ResourceComponent resourceComponent = this.resourceContainer.getResourceComponent();
+                return this.method.invoke(resourceComponent, this.args);
             } catch (InvocationTargetException e) {
                 Throwable cause = e.getCause();
                 //noinspection ThrowableInstanceNeverThrown
@@ -665,7 +678,8 @@ public class ResourceContainer implements Serializable {
                 if (this.lock != null) {
                     this.lock.unlock();
                 }
-                Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                this.thread.setContextClassLoader(originalContextClassLoader);
+                this.thread = null;
             }
         }
 

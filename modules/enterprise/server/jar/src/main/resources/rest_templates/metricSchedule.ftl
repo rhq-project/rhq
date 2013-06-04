@@ -26,7 +26,7 @@
             <th>Name</th><th>Value</th>
         </tr>
         <tr>
-            <td>Id</td><td>${var.scheduleId}</td>
+            <td>Id</td><td>${var.scheduleId?c}</td>
         </tr>
         <tr>
             <td>Internal Name</td><td>${var.scheduleName}</td>

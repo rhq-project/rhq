@@ -37,7 +37,6 @@ import org.rhq.modules.integrationTests.restApi.d.MDataPoint;
 import org.rhq.modules.integrationTests.restApi.d.Schedule;
 
 import static com.jayway.restassured.RestAssured.given;
-import static org.hamcrest.CoreMatchers.containsString;
 import static org.hamcrest.CoreMatchers.hasItem;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
@@ -45,7 +44,6 @@ import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.emptyIterable;
 import static org.hamcrest.Matchers.isOneOf;
 import static org.hamcrest.Matchers.iterableWithSize;
-import static org.junit.matchers.JUnitMatchers.hasItems;
 
 /**
  * Test stuff related to metrics
@@ -90,7 +88,7 @@ public class MetricsTest extends AbstractBase {
             .pathParam("id", numericScheduleId)
         .expect()
             .statusCode(200)
-            .body("scheduleId", containsString("" + numericScheduleId))
+            .body("scheduleId", is(numericScheduleId))
             .header("ETag",notNullValue())
 //            .body("links", hasItems("edit", "metric", "resource")) TODO
             .log().everything()
@@ -107,7 +105,7 @@ public class MetricsTest extends AbstractBase {
             .pathParam("id", numericScheduleId)
         .expect()
             .statusCode(200)
-            .body("scheduleId", containsString("" + numericScheduleId))
+            .body("scheduleId", is( numericScheduleId))
         .when()
             .get("/metric/schedule/{id}");
 
@@ -132,7 +130,7 @@ public class MetricsTest extends AbstractBase {
             .pathParam("id", numericScheduleId)
         .expect()
             .statusCode(200)
-            .body("scheduleId", containsString("" + numericScheduleId))
+            .body("scheduleId", is( numericScheduleId))
             .header("ETag", notNullValue())
 //            .body("links.rel", hasItems("edit", "metric", "resource")) TODO
             .log().ifError()
@@ -164,7 +162,7 @@ public class MetricsTest extends AbstractBase {
             .queryParam("enabledOnly", false)
         .expect()
             .statusCode(200)
-            .body("scheduleId", hasItem("" + numericScheduleId))
+            .body("scheduleId", hasItem( numericScheduleId))
             .body("scheduleName", hasItem(scheduleName))
             .log().everything()
         .when()

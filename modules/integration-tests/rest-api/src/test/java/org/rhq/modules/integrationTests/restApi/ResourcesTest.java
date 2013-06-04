@@ -33,7 +33,6 @@ import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
-import com.jayway.restassured.response.ResponseBody;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
@@ -344,6 +343,22 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testGetResourcesWithPagingAndWrappingByExtension() throws Exception {
+
+        given()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+            .body("pageSize",is(2))
+            .body("currentPage",is(1))
+        .when()
+            .get("/resource.jsonw");
+    }
+
+    @Test
     public void testGetPlatformsWithPaging() throws Exception {
 
         given()
@@ -441,7 +456,7 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(201)
             .log().everything()
-            .body("resourceId",instanceOf(Number.class))
+            .body("resourceId", instanceOf(Number.class))
         .when()
             .post("/resource/platforms");
 
@@ -493,6 +508,60 @@ public class ResourcesTest extends AbstractBase {
             .expect().statusCode(HttpStatus.SC_NO_CONTENT)
             .when().delete("/resource/{id}");
 
+    }
+
+    @Test
+    public void testCreateUpdateRemovePlatform() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        Response response =
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+        int platformId=0;
+        try {
+            XmlPath xmlPath = response.xmlPath();
+            Node resource1 = xmlPath.get("resource");
+            Node platformIdNode =  resource1.get("resourceId");
+            platformId = Integer.parseInt(platformIdNode.value());
+
+            // Now update the description
+            resource.setDescription("li la lu");
+            resource.setLocation("Datacenter 1");
+            resource.setResourceName("DummY");
+
+            given()
+                .pathParam("id",platformId)
+                .body(resource)
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("location",is("Datacenter 1"))
+                .body("description",is("li la lu"))
+                .body("resourceName",is("DummY"))
+            .when()
+                .put("/resource/{id}");
+
+        } finally {
+            given()
+                .pathParam("id", platformId)
+            .expect()
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+            .when()
+                .delete("/resource/{id}");
+        }
     }
 
     @Test

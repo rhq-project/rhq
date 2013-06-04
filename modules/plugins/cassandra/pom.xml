@@ -22,12 +22,17 @@
     <dependency>
       <groupId>org.yaml</groupId>
       <artifactId>snakeyaml</artifactId>
-      <version>1.12</version>
+      <version>1.6</version>
     </dependency>
     <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
       <version>1.0.5-M3-p1</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra-all</artifactId>
+      <version>${cassandra.version}</version>
     </dependency>
     <dependency>
       <groupId>${project.groupId}</groupId>
@@ -91,7 +96,7 @@
                 <artifactItem>
                     <groupId>org.yaml</groupId>
                     <artifactId>snakeyaml</artifactId>
-                    <version>1.12</version>
+                    <version>1.6</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>io.netty</groupId>

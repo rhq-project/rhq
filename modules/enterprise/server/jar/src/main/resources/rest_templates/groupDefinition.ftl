@@ -31,7 +31,7 @@
             <td>Name</td><td>${var.name}</td>
         </tr>
         <tr>
-            <td>Id</td><td>${var.id}</td>
+            <td>Id</td><td>${var.id?c}</td>
         </tr>
         <tr>
             <td>Description</td><td>${var.description}</td>

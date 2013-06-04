@@ -26,21 +26,15 @@
 package org.rhq.server.control.command;
 
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.InetAddress;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import java.util.Properties;
-import java.util.TreeMap;
 import java.util.prefs.Preferences;
 
 import org.apache.commons.cli.CommandLine;
@@ -50,7 +44,6 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
-import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
@@ -499,25 +492,23 @@ public class Install extends ControlCommand {
     }
 
     private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
+        // If the user provided us with an agent configuration, we will use it completely. Otherwise,
+        // We are going to accept all defaults from the out-of-box agent.
+        // Because we want to accept all defaults and consider the agent fully configured, we need to set
+        //    rhq.agent.configuration-setup-flag
+        // to "true". This tells the agent not to attempt to ask any setup questions at startup.
         try {
             log.info("Configuring the RHQ agent");
             if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
                 replaceAgentConfigIfNecessary(commandLine);
             } else {
-                File agentConfDir = new File(agentBasedir, "conf");
-                File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
-                agentConfigFile.delete();
-
-                Map<String, String> tokens = new TreeMap<String, String>();
-                tokens.put("rhq.agent.server.bind-address", InetAddress.getLocalHost().getHostName());
-
-                InputStream inputStream = getClass().getResourceAsStream("/agent-configuration.xml");
-                TokenReplacingReader reader = new TokenReplacingReader(new InputStreamReader(inputStream), tokens);
-                BufferedWriter writer = new BufferedWriter(new FileWriter(agentConfigFile));
-
-                StreamUtil.copy(reader, writer);
-                log.info("Finished configuring the agent");
+                String setupPref = "rhq.agent.configuration-setup-flag";
+                Preferences prefs = getAgentPreferences();
+                prefs.putBoolean(setupPref, true);
+                prefs.flush();
+                prefs.sync();
             }
+            log.info("Finished configuring the agent");
         } catch (Exception e) {
             log.error("An error occurred while configuring the agent: " + e.getMessage());
             throw e;
@@ -525,11 +516,32 @@ public class Install extends ControlCommand {
     }
 
     private void clearAgentPreferences() throws Exception {
-        log.info("Removing any existing agent preferences");
-        Preferences agentPrefs = Preferences.userRoot().node("/rhq-agent");
-        agentPrefs.removeNode();
-        agentPrefs.flush();
-        Preferences.userRoot().sync();
+        log.info("Removing any existing agent preferences from default preference node");
+
+        // remove everything EXCEPT the security token
+        Preferences agentPrefs = getAgentPreferences();
+        String[] prefKeys = null;
+
+        try {
+            prefKeys = agentPrefs.keys();
+        } catch (Exception e) {
+            log.warn("Failed to get agent preferences - cannot clear them: " + e);
+        }
+
+        if (prefKeys != null && prefKeys.length > 0) {
+            for (String prefKey : prefKeys) {
+                if (!prefKey.equals("rhq.agent.security-token")) {
+                    agentPrefs.remove(prefKey);
+                }
+            }
+            agentPrefs.flush();
+            Preferences.userRoot().sync();
+        }
+    }
+
+    private Preferences getAgentPreferences() {
+        Preferences agentPrefs = Preferences.userRoot().node("rhq-agent/default");
+        return agentPrefs;
     }
 
     private void startAgent(File agentBasedir) throws Exception {

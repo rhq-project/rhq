@@ -33,5 +33,8 @@ public class BundleCreateWizard extends AbstractBundleCreateWizard {
         steps.add(new BundleUploadDataStep(this));
         steps.add(new BundleSummaryStep(this));
         setSteps(steps);
+
+        //slightly increase the default dialog height so that we don't show the ugly scrollbar.
+        setDialogHeight(610);
     }
 }

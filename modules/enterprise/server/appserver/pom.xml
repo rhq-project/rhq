@@ -17,6 +17,10 @@
     <name>RHQ Enterprise Server Application Server Container</name>
     <description>The full RHQ appserver container build, including the JBossAS server and all config/deploy files</description>
 
+    <properties>
+        <rhq.dev.data.dir>${rhq.rootDir}/rhq-data</rhq.dev.data.dir>
+    </properties>
+
     <dependencies>
 
         <dependency>
@@ -192,7 +196,7 @@
                                     <!-- dev/test DB type (TODO: do we still need this?) -->
                                     <property name="rhq.test.ds.type-mapping" value="${rhq.test.ds.type-mapping}" />
                                     <property name="rhq.dev.ds.type-mapping"  value="${rhq.dev.ds.type-mapping}" />
-                                    <property name="rhq.dev.data.dir" location="${rhq.rootDir}/rhq-data"/>
+                                    <property name="rhq.dev.data.dir" location="${rhq.dev.data.dir}"/>
                                 </ant>
                             </target>
                         </configuration>

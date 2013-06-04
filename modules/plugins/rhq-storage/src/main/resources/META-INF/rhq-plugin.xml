@@ -11,10 +11,132 @@
   <server
     name="RHQ Storage Node"
     discovery="StorageNodeDiscoveryComponent"
-    class="org.rhq.plugins.cassandra.CassandraNodeComponent"
-    description="RHQ Storage Node" sourcePlugin="Cassandra" sourceType="Cassandra Node">
+    class="StorageNodeComponent"
+    description="RHQ Storage Node">
 
+    <subcategories>
+      <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
+      <subcategory name="Server Request Metrics" description="Server Request Metrics"/>
+      <subcategory name="Internal Server Metrics" description="Internal Server Metrics"/>
+      <subcategory name="Database Management Services" description="Database Management Services"/>
+      <subcategory name="Network Services" description="Network Services"/>
+    </subcategories>
+
+    <plugin-configuration>
+      <c:simple-property name="connectorAddress" displayName="Manager URL" default="service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi"
+                         description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
+      <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
+                         description="The type used to establish the EMS connection to the Cassandra node."/>
+      <c:simple-property name="username" default="cassandra" required="true" description="The login username"/>
+      <c:simple-property name="password" default="cassandra" required="true" type="password" description="The login password"/>
+      <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
+      <c:simple-property name="yamlConfiguration" displayName="YAML Configuration File" description="YAML Configuration File"/>
+      <c:simple-property name="nativeTransportPort" description="The port on which Cassandra listens for CQL client connections." default="9042" type="integer"/>
+      <c:simple-property name="host" description="The host on which cassandra listens to CQL client connections" default="localhost"/>
+      <c:simple-property name="clusterName" description="Cluster name" default="localhost"/>
+      <c:simple-property name="authenticator" required="true" default="org.apache.cassandra.auth.AllowAllAuthenticator" description="Cassandra client authenticator">
+        <c:property-options>
+          <c:option name="org.apache.cassandra.auth.AllowAllAuthenticator" value="org.apache.cassandra.auth.AllowAllAuthenticator"/>
+          <c:option name="org.apache.cassandra.auth.PasswordAuthenticator" value="org.apache.cassandra.auth.PasswordAuthenticator"/>
+        </c:property-options>
+      </c:simple-property>
+      <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
+    </plugin-configuration>
+
+    <process-scan name="CassandraDaemon" query="process|basename|match=^java.*,arg|org.apache.cassandra.service.CassandraDaemon|match=.*"/>
+
+    <operation name="shutdown" description="Shuts down the Cassandra daemon">
+      <results>
+        <c:simple-property name="shutdownResult" description="Shutdown the Cassandra daemon"/>
+      </results>
+    </operation>
+
+    <operation name="start" description="Starts the Cassandra daemon">
+      <results>
+        <c:simple-property name="startResult" description="Start the Cassandra daemon"/>
+      </results>
+    </operation>
+    <operation name="restart" description="Restarts the Cassandra daemon">
+      <results>
+        <c:simple-property name="startResult" description="Restart the Cassandra daemon"/>
+      </results>
+    </operation>
+    
+    <operation name="addNodeMaintenance">
+      <parameters>
+        <c:simple-property name="runRepair" type="boolean" default="true"/>
+        <c:simple-property name="updateSeedsList" type="boolean" default="true"/>
+        <c:list-property name="seedsList">
+          <c:simple-property name="seed" type="string"/>
+        </c:list-property>
+      </parameters>
+      <results>
+        <c:list-property name="results">
+          <c:map-property name="resultsMap">
+            <c:simple-property name="task" type="string"/>
+            <c:simple-property name="succeeded" type="boolean"/>
+            <c:simple-property name="details" type="string"/>
+          </c:map-property>
+        </c:list-property>
+      </results>
+    </operation>
+
+    <operation name="updateSeedsList" description="Updatess the node's seeds property in cassandra.yaml">
+      <parameters>
+        <c:list-property name="seedsList">
+          <c:simple-property name="seed" type="string"/>
+        </c:list-property>
+      </parameters>
+    </operation>
+
+    <server name="Cassandra Server JVM"
+            sourcePlugin="JMX" sourceType="JMX Server"
+            discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"
+            class="org.rhq.plugins.jmx.EmbeddedJMXServerComponent"
+            description="The JVM of the Cassandra node"
+            singleton="true">
+
+      <plugin-configuration>
+        <c:simple-property name="type" type="string" default="PARENT" readOnly="true" description="The EMS connection type for this JVM (cannot be modified)"/>
+      </plugin-configuration>
+    </server>
+
+    <service name="StorageProxy" sourcePlugin="Cassandra" sourceType="StorageProxy" singleton="true"/>
+
+    <service name="StorageService" sourcePlugin="Cassandra" sourceType="StorageService" singleton="true"/>
+
+    <service name="CommitLog" sourcePlugin="Cassandra" sourceType="CommitLog" singleton="true"/>
+
+    <service name="ReadTimeouts" sourcePlugin="Cassandra" sourceType="ReadTimeouts" singleton="true"/>
+
+    <service name="ReadUnavailables" sourcePlugin="Cassandra" sourceType="ReadUnavailables" singleton="true"/>
+
+    <service name="WriteTimeouts" sourcePlugin="Cassandra" sourceType="WriteTimeouts" singleton="true"/>
+
+    <service name="WriteUnavailables" sourcePlugin="Cassandra" sourceType="WriteUnavailables" singleton="true"/>
+
+    <service name="CompactionManager" sourcePlugin="Cassandra" sourceType="CompactionManager" singleton="true"/>
+
+    <service name="CacheService" sourcePlugin="Cassandra" sourceType="CacheService" singleton="true"/>
+
+    <service name="ConfigurableStages" sourcePlugin="Cassandra" sourceType="ConfigurableStages" singleton="true"/>
+
+    <service name="EnabledStages" sourcePlugin="Cassandra" sourceType="EnabledStages" singleton="true"/>
+
+    <service name="ConfigurableInternalServerMetrics" sourcePlugin="Cassandra" sourceType="ConfigurableInternalServerMetrics"
+             singleton="true"/>
+
+    <service name="EnabledInternalServerMetrics" sourcePlugin="Cassandra" sourceType="EnabledInternalServerMetrics"
+             singleton="true"/>
+
+    <service name="FailureDetector" sourcePlugin="Cassandra" sourceType="FailureDetector" singleton="true"/>
+
+    <service name="Gossiper" sourcePlugin="Cassandra" sourceType="Gossiper" singleton="true"/>
+
+    <service name="StreamingService" sourcePlugin="Cassandra" sourceType="StreamingService" singleton="true"/>
+
+    <service name="MessagingService" sourcePlugin="Cassandra" sourceType="MessagingService" singleton="true"/>
+
+    <service name="Keyspace" sourcePlugin="Cassandra" sourceType="Keyspace"/>
   </server>
-
-
 </plugin>

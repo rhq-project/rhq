@@ -42,6 +42,30 @@ public class DatasourceJBossASClient extends JBossASClient {
         super(client);
     }
 
+    /**
+     * Completely removes the named datasource. If the datasource does not exist,
+     * this returns silently (in other words, no exception is thrown).
+     * 
+     * Note that no distinguishing between XA and non-XA datasource is needed - if any datasource
+     * (XA or non-XA) exists with the given name, it will be removed.
+     *
+     * @param name the name of the datasource to remove
+     * @throws Exception
+     */
+    public void removeDatasource(String name) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES);
+        if (isDatasource(name)) {
+            addr.add(DATA_SOURCE, name);
+        } else if (isXADatasource(name)) {
+            addr.add(XA_DATA_SOURCE, name);
+        } else {
+            return; // there is no datasource (XA or non-XA) with the given name, just return silently
+        }
+
+        remove(addr);
+        return;
+    }
+
     public boolean isDatasourceEnabled(String name) throws Exception {
         return isDatasourceEnabled(false, name);
     }

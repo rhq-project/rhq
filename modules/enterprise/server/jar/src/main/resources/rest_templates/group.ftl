@@ -38,7 +38,7 @@
         </tr>
         <#if var.resourceTypeId??>
         <tr>
-            <td>ResourceType id</td><td></td>
+            <td>ResourceType id</td><td>${var.resourceTypeId?c}</td>
         </tr>
         </#if>
         <tr>

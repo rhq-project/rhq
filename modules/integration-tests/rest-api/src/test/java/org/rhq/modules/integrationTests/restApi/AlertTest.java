@@ -19,6 +19,8 @@
 
 package org.rhq.modules.integrationTests.restApi;
 
+import com.jayway.restassured.config.RedirectConfig;
+import com.jayway.restassured.config.RestAssuredConfig;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.response.Response;
@@ -37,6 +39,7 @@ import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -206,6 +209,47 @@ public class AlertTest extends AbstractBase {
             .statusCode(200)
         .when()
             .get("/alert/definitions");
+    }
+
+    @Test
+    public void testListAllAlertDefinitionsRedirects() throws Exception {
+
+        given()
+            .config(RestAssuredConfig.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
+        .expect()
+            .statusCode(303)
+            .log().ifError()
+            .header("Location",endsWith("rest/alert/definitions"))
+        .when()
+            .get("/alert/definition");
+
+        given()
+            .config(RestAssuredConfig.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
+        .expect()
+            .statusCode(303)
+            .log().ifError()
+            .header("Location",endsWith("rest/alert/definitions.json"))
+        .when()
+            .get("/alert/definition.json");
+
+        // This time follow redirect
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/alert/definition.json");
+
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/alert/definition");
+
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/alert/definition.xml");
     }
 
     @Test

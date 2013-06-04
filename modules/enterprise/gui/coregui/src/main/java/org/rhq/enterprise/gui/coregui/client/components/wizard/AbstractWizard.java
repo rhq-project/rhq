@@ -29,6 +29,8 @@ public abstract class AbstractWizard implements Wizard {
     private String windowTitle = "";
     private String title = "";
     private String subtitle = "";
+    private int dialogWidth = 800;
+    private int dialogHeight = 600;
 
     public String getWindowTitle() {
         return windowTitle;
@@ -69,8 +71,24 @@ public abstract class AbstractWizard implements Wizard {
         return Collections.emptyList();
     }
 
+    public int getDialogHeight() {
+        return dialogHeight;
+    }
+
+    public void setDialogHeight(int dialogHeight) {
+        this.dialogHeight = dialogHeight;
+    }
+
+    public int getDialogWidth() {
+        return dialogWidth;
+    }
+
+    public void setDialogWidth(int dialogWidth) {
+        this.dialogWidth = dialogWidth;
+    }
+
     public void startWizard() {
-        view = new WizardView(this);
+        view = new WizardView(this, dialogWidth, dialogHeight);
         view.displayDialog();
     }
 

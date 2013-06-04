@@ -54,6 +54,7 @@ public class BundleFileUploadForm extends FileUploadForm {
         return onDrawItems;
     }
 
+    @Override
     protected boolean processSubmitCompleteResults(String submitCompleteEventResults) {
         return !submitCompleteEventResults.contains(MSG.view_upload_error_file());
     }

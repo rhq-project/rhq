@@ -63,6 +63,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
@@ -96,6 +97,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
@@ -136,6 +138,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
     AgentManagerLocal agentMgr;
     @EJB
     ResourceFactoryManagerLocal resourceFactory;
+    @EJB
+    DiscoveryBossLocal discoveryBoss;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -174,6 +178,50 @@ public class ResourceHandlerBean extends AbstractRestBean {
         return builder.build();
     }
 
+    @PUT
+    @Path("/{id:\\d+}")
+    @ApiOperation(value = "Update a single resource (name, description, location) that is committed or import "+
+        "a resource that is new. To do the latter you need to PUT the resource retrieved with a COMMITTED state",
+        responseClass = "ResourceWithType")
+    @ApiErrors({
+        @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID),
+        @ApiError(code = 406, reason = "Tried to update a resource that is not COMMITTED")
+    })
+    public Response updateResource(@ApiParam("Id of the resource to import") @PathParam("id") int resourceId,
+                                   @ApiParam("Resource to update" ) ResourceWithType resourceWithType,
+                                   @Context UriInfo uriInfo) {
+
+        Resource res = fetchResource(resourceId);
+
+        if (res.getInventoryStatus()==InventoryStatus.NEW && res.getResourceType().getCategory()!=ResourceCategory.SERVICE && resourceWithType.getStatus().equalsIgnoreCase("COMMITTED")) {
+            // Import
+            discoveryBoss.importResources(caller,new int[] { resourceId});
+
+            res = fetchResource(resourceId);
+
+            ResourceWithType outWithType = fillRWT(res,uriInfo);
+
+            return Response.ok(outWithType).build();
+        }
+
+        // Import was handled above, so we require committed state now
+        if (res.getInventoryStatus()!=InventoryStatus.COMMITTED) {
+            throw new BadArgumentException("Can only update resources in committed state");
+        }
+
+        // No import, so update some of the allowed items
+        Resource in = new Resource(res.getId());
+        in.setName(resourceWithType.getResourceName());
+        in.setDescription(resourceWithType.getDescription());
+        in.setLocation(resourceWithType.getLocation());
+        Resource out = resMgr.updateResource(caller,in);
+
+        ResourceWithType outWithType = fillRWT(out,uriInfo);
+
+        return Response.ok(outWithType).build();
+
+    }
+
     @GET @GZIP
     @Path("/")
     @ApiError(code = 406, reason = "The passed inventory status was invalid")
@@ -189,7 +237,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addSortName(PageOrdering.ASC);
-        criteria.addSortId(PageOrdering.ASC);
         if (!status.toLowerCase().equals("all")) {
             try {
                 criteria.addFilterInventoryStatus(InventoryStatus.valueOf(status.toUpperCase()));
@@ -270,7 +317,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         } else {
             if (mediaType.equals(wrappedCollectionJsonType)) {
-                wrapForPaging(builder,uriInfo,resources,rwtList);
+                wrapForPaging(builder, uriInfo, resources, rwtList);
             } else {
                 GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList) {
             };

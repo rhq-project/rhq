@@ -68,9 +68,8 @@ public class MetricSchedule {
     }
 
     @ApiProperty("The id of the schedule")
-    @XmlID
-    public String getScheduleId() {
-        return ""+scheduleId;
+    public int getScheduleId() {
+        return scheduleId;
     }
 
     public void setScheduleId(int scheduleId) {

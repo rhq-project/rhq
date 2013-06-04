@@ -55,4 +55,4 @@
 <a href="/rest/alert/${var.id?c}/definition.html">Alert Definition</a>
 <a href="/rest/alert/${var.id?c}/conditions.html">Condition Logs</a>
 <a href="/rest/alert/${var.id?c}/notifications.html">Notification Logs</a>
-<a href="/rest/resource/${var.resource.getResourceId()}.html">Resource</a>
+<a href="/rest/resource/${var.resource.getResourceId()?c}.html">Resource</a>

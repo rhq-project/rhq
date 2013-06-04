@@ -1,13 +1,9 @@
 <updatePlan>
   <step>
-    UPDATE system.schema_keyspaces SET
-    strategy_options='{"replication_factor":"%s"}'
-    WHERE keyspace_name='rhq'
+    ALTER KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': %s};
   </step>
 
   <step>
-    UPDATE system.schema_keyspaces SET
-    strategy_options='{"replication_factor":"%s"}'
-    WHERE keyspace_name='system_auth'
+    ALTER KEYSPACE system_auth WITH replication = {'class': 'SimpleStrategy', 'replication_factor': %s};
   </step>
 </updatePlan>

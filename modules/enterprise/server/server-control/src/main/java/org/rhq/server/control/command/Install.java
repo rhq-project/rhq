@@ -26,6 +26,8 @@
 package org.rhq.server.control.command;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
@@ -59,7 +61,7 @@ public class Install extends ControlCommand {
 
     private final String SERVER_CONFIG_OPTION = "server-config";
 
-    private final String AGENT_TOKEN_OPTION = "agent-security-token";
+    private final String AGENT_PREFERENCE = "agent-preference";
 
     private final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
@@ -68,6 +70,10 @@ public class Install extends ControlCommand {
     private final File DEFAULT_AGENT_BASEDIR = new File(basedir, AGENT_BASEDIR_NAME);
 
     private Options options;
+
+    // some known agent preference setting names
+    private static final String PREF_RHQ_AGENT_SECURITY_TOKEN = "rhq.agent.security-token";
+    private static final String PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG = "rhq.agent.configuration-setup-flag";
 
     public Install() {
         options = new Options()
@@ -97,9 +103,8 @@ public class Install extends ControlCommand {
                 "A properties file with keys that correspond to option names "
                     + "of the storage installer. Each property will be translated into an option that is passed to the "
                     + " storage installer. See example.storage.properties for examples.")
-            .addOption(null, AGENT_TOKEN_OPTION, true, "The security token that the agent needs to include with " +
-                "commands sent to the server. Use this option when installing or upgrading an agent that is already " +
-                "registered with the server.");
+            .addOption(null, AGENT_PREFERENCE, true,
+                "An agent preference setting (name=value) to be set in the agent. More than one of these is allowed.");
     }
 
     @Override
@@ -164,7 +169,6 @@ public class Install extends ControlCommand {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        replaceAgentConfigIfNecessary(commandLine);
                         configureAgent(agentBasedir, commandLine);
                         startAgent(agentBasedir);
                     }
@@ -188,7 +192,6 @@ public class Install extends ControlCommand {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        replaceAgentConfigIfNecessary(commandLine);
                         configureAgent(agentBasedir, commandLine);
                         startAgent(agentBasedir);
                     }
@@ -492,27 +495,71 @@ public class Install extends ControlCommand {
     }
 
     private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
-        // If the user provided us with an agent configuration, we will use it completely. Otherwise,
-        // We are going to accept all defaults from the out-of-box agent.
+        // If the user provided us with an agent config file, we will use it.
+        // Otherwise, we are going to use the out-of-box agent config file.
+        //
         // Because we want to accept all defaults and consider the agent fully configured, we need to set
-        //    rhq.agent.configuration-setup-flag
-        // to "true". This tells the agent not to attempt to ask any setup questions at startup.
+        //    rhq.agent.configuration-setup-flag=true
+        // This tells the agent not to ask any setup questions at startup.
+        // We do this whether using a custom config file or the default config file - this is because
+        // we cannot allow the agent to ask the setup questions (rhqctl doesn't support that).
+        //
+        // Note that agent preferences found in the config file can be overridden with
+        // the AGENT_PREFERENCE settings (you can set more than one).
         try {
-            log.info("Configuring the RHQ agent");
+            File agentConfDir = new File(agentBasedir, "conf");
+            File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
+
             if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+                log.info("Configuring the RHQ agent with custom configuration file: "
+                    + commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                 replaceAgentConfigIfNecessary(commandLine);
             } else {
-                String setupPref = "rhq.agent.configuration-setup-flag";
-                Preferences prefs = getAgentPreferences();
-                prefs.putBoolean(setupPref, true);
-                prefs.flush();
-                prefs.sync();
+                log.info("Configuring the RHQ agent with default configuration file: " + agentConfigFile);
             }
+
+            // we require our agent preference node to be the user node called "default"
+            Preferences preferencesNode = getAgentPreferences();
+
+            // read the comments in AgentMain.loadConfigurationFile(String) to know why we do all of this
+            String securityToken = preferencesNode.get(PREF_RHQ_AGENT_SECURITY_TOKEN, null);
+            ByteArrayOutputStream rawConfigFileData = new ByteArrayOutputStream();
+            StreamUtil.copy(new FileInputStream(agentConfigFile), rawConfigFileData, true);
+            String newConfig = rawConfigFileData.toString().replace("${rhq.agent.preferences-node}", "default");
+            ByteArrayInputStream newConfigInputStream = new ByteArrayInputStream(newConfig.getBytes());
+            Preferences.importPreferences(newConfigInputStream);
+            if (securityToken != null) {
+                preferencesNode.put(PREF_RHQ_AGENT_SECURITY_TOKEN, securityToken);
+            }
+
+            overrideAgentPreferences(commandLine, preferencesNode);
+
+            String setupPref = PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG;
+            preferencesNode.putBoolean(setupPref, true);
+
+            preferencesNode.flush();
+            preferencesNode.sync();
+
             log.info("Finished configuring the agent");
         } catch (Exception e) {
             log.error("An error occurred while configuring the agent: " + e.getMessage());
             throw e;
         }
+    }
+
+    private void overrideAgentPreferences(CommandLine commandLine, Preferences preferencesNode) {
+        // override the out of box config with user custom agent preference values
+        String[] customPrefs = commandLine.getOptionValues(AGENT_PREFERENCE);
+        if (customPrefs != null && customPrefs.length > 0) {
+            for (String nameValuePairString : customPrefs) {
+                String[] nameValuePairArray = nameValuePairString.split("=", 2);
+                String prefName = nameValuePairArray[0];
+                String prefValue = nameValuePairArray.length == 1 ? "true" : nameValuePairArray[1];
+                log.info("Overriding agent preference: " + prefName + "=" + prefValue);
+                preferencesNode.put(prefName, prefValue);
+            }
+        }
+        return;
     }
 
     private void clearAgentPreferences() throws Exception {
@@ -530,7 +577,7 @@ public class Install extends ControlCommand {
 
         if (prefKeys != null && prefKeys.length > 0) {
             for (String prefKey : prefKeys) {
-                if (!prefKey.equals("rhq.agent.security-token")) {
+                if (!prefKey.equals(PREF_RHQ_AGENT_SECURITY_TOKEN)) {
                     agentPrefs.remove(prefKey);
                 }
             }

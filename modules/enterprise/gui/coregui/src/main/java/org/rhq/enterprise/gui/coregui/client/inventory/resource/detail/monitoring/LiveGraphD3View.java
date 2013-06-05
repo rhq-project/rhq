@@ -144,6 +144,11 @@ public class LiveGraphD3View extends EnhancedVLayout {
         dataLoaderTimer.scheduleRepeating(DATA_REFRESH_TIME);
     }
 
+    /**
+     * Live Graphs are no longer available.
+     * @param resourceId
+     * @param def
+     */
     public static void displayAsDialog(int resourceId, MeasurementDefinition def) {
         final LiveGraphD3View graph = new LiveGraphD3View(resourceId, def);
         final Window graphPopup = new Window();
@@ -200,44 +205,46 @@ public class LiveGraphD3View extends EnhancedVLayout {
     }
 
     public native void drawJsniCharts() /*-{
-                                        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getChartId()(),
-                                        chartHandle = "#liveChart-"+chartId,
-                                        chartSelection = chartHandle + " svg",
-                                        yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisTitle()(),
-                                        yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisUnits()(),
-                                        xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getXAxisTitle()(),
-                                        json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getJsonMetrics()()),
-                                        data = function() {
-                                        return [
-                                        {
-                                        values: json,
-                                        key: yAxisLabel ,
-                                        color: '#ff7f0e'
-                                        }
-                                        ];
-                                        };
+        var chartId = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getChartId()(),
+                chartHandle = "#liveChart-" + chartId,
+                chartSelection = chartHandle + " svg",
+                yAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisTitle()(),
+                yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getYAxisUnits()(),
+                xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getXAxisTitle()(),
+                json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.LiveGraphD3View::getJsonMetrics()()),
+                data = function () {
+                    return [
+                        {
+                            values: json,
+                            key: yAxisLabel,
+                            color: '#ff7f0e'
+                        }
+                    ];
+                };
 
-                                        $wnd.nv.addGraph(function() {
-                                        var chart = $wnd.nv.models.multiBarChart()
-                                        .showControls(false)
-                                        .tooltips(true);
+        $wnd.nv.addGraph(function () {
+            var chart = $wnd.nv.models.multiBarChart()
+                    .showControls(false)
+                    .tooltips(true);
 
-                                        chart.xAxis.axisLabel(xAxisLabel)
-                                        .tickFormat(function(d) { return $wnd.d3.time.format('%X')(new Date(d)) });
+            chart.xAxis.axisLabel(xAxisLabel)
+                    .tickFormat(function (d) {
+                        return $wnd.d3.time.format('%X')(new Date(d))
+                    });
 
-                                        chart.yAxis
-                                        .axisLabel(yAxisUnits)
-                                        .tickFormat($wnd.d3.format('.02f'));
+            chart.yAxis
+                    .axisLabel(yAxisUnits)
+                    .tickFormat($wnd.d3.format('.02f'));
 
-                                        $wnd.d3.select(chartSelection)
-                                        .datum(data())
-                                        .transition().duration(100)
-                                        .call(chart);
+            $wnd.d3.select(chartSelection)
+                    .datum(data())
+                    .transition().duration(100)
+                    .call(chart);
 
-                                        $wnd.nv.utils.windowResize(chart.update);
+            $wnd.nv.utils.windowResize(chart.update);
 
-                                        return chart;
-                                        });
+            return chart;
+        });
 
                                         }-*/;
 }

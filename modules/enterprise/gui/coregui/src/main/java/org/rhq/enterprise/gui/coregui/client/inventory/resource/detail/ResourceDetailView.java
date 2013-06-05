@@ -68,7 +68,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitorin
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.ResourceSchedulesView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MetricsTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
@@ -198,7 +198,7 @@ public class ResourceDetailView extends
 
         monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
 
-        metricsTables = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_tables()), null);
+        metricsTables = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_metrics()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
         monitorAvail = new SubTab(monitoringTab, new ViewName("Availability", MSG.view_tabs_common_availability()),
             null);
@@ -405,7 +405,7 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MeasurementTableView(resource.getId());
+                return new MetricsTableView(resource.getId());
             }
         };
         updateSubTab(this.monitoringTab, this.metricsTables, visible, true, viewFactory);

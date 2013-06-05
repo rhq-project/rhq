@@ -116,37 +116,54 @@ public class MetricD3Graph extends EnhancedVLayout {
     /**
      * Setup the page elements especially the div and svg elements that serve as
      * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
-     * Later the drawJsniGraph() is called to actually fill in the div/svg element
+     * Later the drawJsniChart() is called to actually fill in the div/svg element
      * created here with the actual svg element.
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in MetricD3Graph for: " + getFullChartId() + " " + graph.getChartTitle());
-
-        StringBuilder divAndSvgDefs = new StringBuilder();
-        divAndSvgDefs
-            .append("<div id=\""
-                + getFullChartId()
-                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
-                + getChartHeight() + "px;\">");
-        divAndSvgDefs.append(getSvgDefs());
-        divAndSvgDefs.append("</svg></div>");
+        final String divAndSvgDefs = createGraphMarker();
 
         if (null != graphDiv) {
             removeMember(graphDiv);
         }
 
-        graphDiv = new HTMLFlow(divAndSvgDefs.toString());
+        graphDiv = new HTMLFlow(divAndSvgDefs);
         graphDiv.setWidth100();
         graphDiv.setHeight100();
         addMember(graphDiv);
 
-        new Timer() {
-            @Override
-            public void run() {
-                drawJsniChart();
-            }
-        }.schedule(200);
+        drawJsniChart();
+
+    }
+
+    /**
+     * This is used to explicitly use the 2 phase creation of a graph separately.
+     * Used to add the chart to something custom.
+     * @return String Graph Marker to be filled in with drawJsniChart() later
+     */
+    public String createGraphMarker() {
+      return createGraphMarkerTemplate(getFullChartId(), getHeight());
+    }
+
+    /**
+     * A static version of createGraphMarker that can be used when a MetricD3Graph is not
+     * instantiated.
+     * @param fullChartId
+     * @param height
+     * @return String chart marker
+     */
+    public static String createGraphMarkerTemplate(String fullChartId, Integer height){
+        Log.debug("drawGraph marker in MetricD3Graph for: " + fullChartId);
+
+        StringBuilder divAndSvgDefs = new StringBuilder();
+        divAndSvgDefs
+                .append("<div id=\""
+                        + fullChartId
+                        + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
+                        + height + "px;\">");
+        divAndSvgDefs.append(getSvgDefs());
+        divAndSvgDefs.append("</svg></div>");
+        return divAndSvgDefs.toString();
     }
 
     /**
@@ -154,7 +171,12 @@ public class MetricD3Graph extends EnhancedVLayout {
      * This way the chart type can be swapped out at any time.
      */
     public void drawJsniChart() {
-        graph.drawJsniChart();
+        new Timer() {
+            @Override
+            public void run() {
+                graph.drawJsniChart();
+            }
+        }.schedule(200);
     }
 
     public String getFullChartId() {

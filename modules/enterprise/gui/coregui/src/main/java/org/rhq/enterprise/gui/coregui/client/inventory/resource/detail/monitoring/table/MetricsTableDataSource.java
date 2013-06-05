@@ -18,6 +18,7 @@ import org.rhq.core.domain.measurement.ui.MetricDisplayValue;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -31,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * 
  * @author John Mazzitelli
  */
-public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
+public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
 
     public static final String FIELD_METRIC_LABEL = "label";
     public static final String FIELD_ALERT_COUNT = "alertCount";
@@ -47,7 +48,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
 
     private int resourceId;
 
-    public MeasurementTableDataSource(int resourceId) {
+    public MetricsTableDataSource(int resourceId) {
         this.resourceId = resourceId;
     }
 
@@ -79,6 +80,7 @@ public class MeasurementTableDataSource extends RPCDataSource<MetricDisplaySumma
 
             }
         });
+        BrowserUtility.graphSparkLines();
 
         ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.common_title_alerts());
         alertsField.setWidth("10%");

@@ -192,7 +192,7 @@ public class ResourceGroupDetailView extends
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
         monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
-        monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
+        monitorTables = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_metrics()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
 
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);

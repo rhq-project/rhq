@@ -27,6 +27,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -39,12 +40,12 @@ public interface StorageNodeManagerLocal {
     void updateStorageNodeList(Collection<StorageNode> storageNodes);
 
     void linkResource(Resource resource);
-    
+
     /**
      * <p>Returns the summary of load of the storage node.</p>
-     * 
+     *
      * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     * 
+     *
      * @param subject   user that must have proper permissions
      * @param node      storage node entity (it can be a new object, but the id should be set properly)
      * @param beginTime the start time

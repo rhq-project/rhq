@@ -34,19 +34,11 @@ public interface StorageNodeManagerLocal {
 
     void scanForStorageNodes();
 
-    /**
-     * <p>Returns all the {@link StorageNode} entities stored in the DB.</p>
-     * 
-     * @return all the {@link StorageNode} entities stored in the DB
-     */
     List<StorageNode> getStorageNodes();
 
-    /**
-     * <p>Updates the passed collection of {@link StorageNode} entities.</p>
-     * 
-     * @param storageNodes the collection of {@link StorageNode} to update
-     */
     void updateStorageNodeList(Collection<StorageNode> storageNodes);
+
+    void linkResource(Resource resource);
     
     /**
      * <p>Returns the summary of load of the storage node.</p>

@@ -68,8 +68,8 @@ import org.rhq.server.metrics.CQLException;
 @Stateless
 public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageNodeManagerRemote {
 
-    private static final String RESOURCE_TYPE_NAME = "RHQ Storage Node";
-    private static final String PLUGIN_NAME = "RHQStorage";
+    private static final String RHQ_STORAGE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
+    private static final String RHQ_STORAGE_PLUGIN_NAME = "RHQStorage";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -97,12 +97,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNodes = new ArrayList<StorageNode>();
             }
 
-            for (StorageNode storageNode : storageNodes) {
-                storageNode.setOperationMode(OperationMode.DOWN);
-            }
-
             Map<String, StorageNode> storageNodeMap = new HashMap<String, StorageNode>();
             for (StorageNode storageNode : storageNodes) {
+                storageNode.setOperationMode(OperationMode.DOWN);
                 storageNodeMap.put(storageNode.getAddress(), storageNode);
             }
 
@@ -133,10 +130,26 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
+    public void linkResource(Resource resource) {
+        List<StorageNode> storageNodes = this.getStorageNodes();
+
+        Configuration resourceConfiguration = resource.getPluginConfiguration();
+        String host = resourceConfiguration.getSimpleValue("host");
+
+        if (storageNodes != null && host != null) {
+            for (StorageNode storageNode : storageNodes) {
+                if (host.equals(storageNode.getAddress())) {
+                    storageNode.setResource(resource);
+                    break;
+                }
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void discoverResourceInformation(Map<String, StorageNode> storageNodeMap) {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN)
-            .setParameter("name", RESOURCE_TYPE_NAME).setParameter("plugin", PLUGIN_NAME);
+            .setParameter("name", RHQ_STORAGE_RESOURCE_TYPE_NAME).setParameter("plugin", RHQ_STORAGE_PLUGIN_NAME);
         List<ResourceType> resourceTypes = (List<ResourceType>) query.getResultList();
 
         if (resourceTypes.isEmpty()) {

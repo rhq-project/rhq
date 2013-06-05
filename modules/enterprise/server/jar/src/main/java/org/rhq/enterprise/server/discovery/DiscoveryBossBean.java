@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.discovery;
 
@@ -90,7 +90,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.cloud.StorageNodeManagerBean;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
@@ -156,7 +156,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     @EJB
     private AvailabilityManagerLocal availabilityManager;
     @EJB
-    private StorageNodeManagerBean storageNodeManager;
+    private StorageNodeManagerLocal storageNodeManager;
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
     @TransactionAttribute(TransactionAttributeType.NEVER)

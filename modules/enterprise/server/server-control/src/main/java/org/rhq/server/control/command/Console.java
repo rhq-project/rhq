@@ -60,7 +60,7 @@ public class Console extends ControlCommand {
 
     @Override
     public String getDescription() {
-        return "Starts an RHQ service in the foreground. Only one of the following options should be specified.";
+        return "Starts an RHQ service in the foreground. Only --server or --storage is supported.";
     }
 
     @Override

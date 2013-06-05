@@ -36,7 +36,6 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.sql.DataSource;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -89,12 +88,12 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.Datapoint;
+import org.rhq.enterprise.server.rest.domain.DoubleValue;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricDefinitionAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
-import org.rhq.enterprise.server.rest.domain.NumericValue;
 import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -104,12 +103,11 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
  * @author Heiko W. Rupp
  */
 @Api(value = "Deal with metrics",
-        description = "This part of the API deals with exporting metrics")
+        description = "This part of the API deals with exporting and adding metrics")
 @Produces({"application/json","application/xml", "text/html"})
 @Path("/metric")
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MetricHandlerBean  extends AbstractRestBean  {
 
     static final String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
@@ -132,9 +130,6 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     EntityManager em;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
-    private DataSource rhqDs;
-
 
     private static final long EIGHT_HOURS = 8 * 3600L * 1000L;
     private static final long SEVEN_DAYS = 7L*86400*1000;
@@ -142,7 +137,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GET
     @Path("data/{scheduleId}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
-    @ApiOperation(value = "Get the bucketized metric values for the schedule ")
+    @ApiOperation(value = "Get the bucketized metric values for the schedule.")
     @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
     public Response getMetricData(
             @ApiParam("Schedule Id of the values to query") @PathParam("scheduleId") int scheduleId,
@@ -268,8 +263,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
      * Get the schedule for the passed schedule id
      *
      * @param scheduleId id to look up
-     * @param force
-     * @param type
+     * @param force If true always go to the DB, otherwise search in the cache first
+     * @param type Type of schedule to look for
      * @return schedule
      * @throws StuffNotFoundException if there is no schedule with the passed id
      */
@@ -343,10 +338,18 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GET
     @Path("data")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_HTML})
-    public Response getMetricDataMulti(@QueryParam("sid") String schedules, @QueryParam("startTime") long startTime,
-                                       @QueryParam("endTime") long endTime, @QueryParam("dataPoints") int dataPoints,
-                                       @QueryParam("hideEmpty") boolean hideEmpty,
-                                       @Context HttpHeaders headers) {
+    @ApiOperation(value = "Return bucketized metric data (60 points) for the passed schedules")
+    @ApiErrors({
+        @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID),
+        @ApiError(code = 406, reason = "No schedules requested"),
+        @ApiError(code = 406, reason = "Schedule Ids are not numeric")
+    })
+    public Response getMetricDataMulti(
+        @ApiParam("A comma separated list of schedule ids") @QueryParam("sid") String schedules,
+        @ApiParam("Start time in ms since epoch. Default is now -8h") @QueryParam("startTime") long startTime,
+        @ApiParam("End time in ms since epoch. Default is now") @QueryParam("endTime") long endTime,
+        @ApiParam("Should empty datapoints be hidden") @DefaultValue("false") @QueryParam("hideEmpty") boolean hideEmpty,
+        @Context HttpHeaders headers) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
@@ -359,6 +362,9 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             startTime = endTime - EIGHT_HOURS;
         }
 
+        if (schedules==null) {
+            throw new ParameterMissingException("sid");
+        }
         String[] tmp = schedules.split(",");
         Integer[] scheduleIds = new Integer[tmp.length];
         try {
@@ -376,12 +382,13 @@ public class MetricHandlerBean  extends AbstractRestBean  {
                 throw new StuffNotFoundException("Schedule with id " + scheduleId);
             int definitionId = sched.getDefinition().getId();
             List<List<MeasurementDataNumericHighLowComposite>> listList =
-                dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,dataPoints);
+                dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,60);
             if (!listList.isEmpty()) {
+                MeasurementAggregate measurementAggregate = dataManager.getAggregate(caller,scheduleId,startTime,endTime);
                 List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
-                MetricAggregate res = new MetricAggregate();
+                MetricAggregate res = new MetricAggregate(scheduleId,measurementAggregate.getMin(),measurementAggregate.getAvg(),measurementAggregate.getMax());
                 boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
-                fillInDatapoints(res, list, scheduleId, hideEmpty, isHtml);
+                res = fillInDatapoints(res, list, scheduleId, hideEmpty, isHtml);
                 resList.add(res);
             }
             else
@@ -396,7 +403,6 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
     /**
      * Return a metric schedule with the respective status codes for cache validation
-     *
      *
      * @param scheduleId ID of the schedule
      * @param request the REST request - injected by the REST framework
@@ -513,15 +519,17 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GZIP
     @GET
     @Path("data/resource/{resourceId}")
-    @ApiOperation("Retrieve a list of high/low/average/data aggregate for the resource")
+    @ApiOperation("Retrieve a list of high/low/average/data aggregates for the resource")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
     public List<MetricAggregate> getAggregatesForResource(
-            @ApiParam("Id of the resource to query") @PathParam("resourceId") int resourceId,
-            @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
-            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
-            @ApiParam(value = "Include data points") @DefaultValue("false") @QueryParam("includeDataPoints") boolean includeDataPoints,
-            @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam( "hideEmpty") boolean hideEmpty,
-                        @Context HttpHeaders headers)
+        @ApiParam("Id of the resource to query") @PathParam("resourceId") int resourceId,
+        @ApiParam(value = "Start time since epoch.", defaultValue = "End time - 8h") @QueryParam(
+            "startTime") long startTime,
+        @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
+        @ApiParam(value = "Include data points") @DefaultValue("false") @QueryParam(
+            "includeDataPoints") boolean includeDataPoints,
+        @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam(
+            "hideEmpty") boolean hideEmpty)
     {
 
         long now = System.currentTimeMillis();
@@ -564,7 +572,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GZIP
     @GET
     @Path("data/group/{groupId}")
-    @ApiOperation("Retrieve a list of high/low/average/data aggregate for the group")
+    @ApiOperation("Retrieve a list of high/low/average/data aggregates for the group")
     @ApiError(code = 404, reason = "There is no group with the passed id")
     public List<MetricDefinitionAggregate> getAggregatesForGroup(
             @ApiParam("Id of the group to query") @PathParam("groupId") int groupId,
@@ -675,12 +683,12 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Path("data/{scheduleId}/raw/{timeStamp}")
     public Response putMetricValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
                                 @ApiParam("Timestamp of the metric") @PathParam("timeStamp") long timestamp,
-                                @ApiParam(value = "Data value", required = true) NumericValue value,
+                                @ApiParam(value = "Data value", required = true) DoubleValue value,
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
+        obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         long now = System.currentTimeMillis();
         if (timestamp < now - SEVEN_DAYS)
@@ -711,7 +719,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     public Response putTraitValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
 	    @ApiParam("Timestamp of the metric") @PathParam("timeStamp") long timestamp,
 	    @ApiParam(value = "Data value", required = true) StringValue value) {
-        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.TRAIT);
+
+        obtainSchedule(scheduleId, false, DataType.TRAIT);
 
         long now = System.currentTimeMillis();
         if (timestamp < now - SEVEN_DAYS)
@@ -821,9 +830,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @ApiOperation(value = "Get the current baseline for the schedule")
     @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
-    public Baseline getBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
-                                @Context HttpHeaders headers,
-                                @Context UriInfo uriInfo) {
+    public Baseline getBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId) {
         MeasurementSchedule schedule = obtainSchedule(scheduleId, true, DataType.MEASUREMENT);
         MeasurementBaseline mBase = schedule.getBaseline();
 
@@ -844,8 +851,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID),
         @ApiError(code = 406 ,reason = "Baseline data is incorrect")
     })
-    public Response setBaseline(@ApiParam("Id of the schedule")  @PathParam("scheduleId") int scheduleId,
-                                Baseline baseline, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response setBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
+                                Baseline baseline, @Context UriInfo uriInfo) {
         MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         // little bit of sanity checking

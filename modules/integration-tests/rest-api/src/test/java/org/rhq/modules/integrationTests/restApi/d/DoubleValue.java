@@ -17,33 +17,28 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.enterprise.server.rest.domain;
+package org.rhq.modules.integrationTests.restApi.d;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
-import com.wordnik.swagger.annotations.ApiClass;
-import com.wordnik.swagger.annotations.ApiProperty;
-
 /**
- * Encapsulate a simple string value
+ * Encapsulate a simple double value
  * @author Libor Zoubek
  */
-@ApiClass("Encapsulates a simple numeric value. In XML this is represented as <value value=\"...\"/>")
 @XmlRootElement(name =  "value")
-public class NumericValue {
+public class DoubleValue {
 
     Double value;
 
-    public NumericValue() {
+    public DoubleValue() {
     }
 
-    public NumericValue(Double value) {
+    public DoubleValue(Double value) {
         this.value = value;
     }
 
     @XmlAttribute
-    @ApiProperty("The actual value")
     public Double getValue() {
         return value;
     }
@@ -52,4 +47,4 @@ public class NumericValue {
         this.value = value;
     }
 }
--
+

@@ -24,16 +24,13 @@ import javax.ejb.Local;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.ProductInfo;
-import org.rhq.core.domain.common.ServerDetails;
-import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
  * Provides access to the server cloud's system configuration as well as some methods
  * to perform configuration on the server in which this bean is running.
  */
 @Local
-public interface SystemManagerLocal {
+public interface SystemManagerLocal extends SystemManagerRemote {
     /**
      * Returns the {@link DatabaseType} that corresponds to the database the JON Server uses for its backend.
      *
@@ -142,25 +139,6 @@ public interface SystemManagerLocal {
 
     void validateSystemConfiguration(Subject subject, Properties properties) throws InvalidSystemConfigurationException;
 
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    //
-    // The following are shared with the Remote Interface
-    //
-    // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-    ProductInfo getProductInfo(Subject subject);
-
-    ServerDetails getServerDetails(Subject subject);
-
-    SystemSettings getSystemSettings(Subject subject);
-
-    void setSystemSettings(Subject subject, SystemSettings settings) throws Exception;
-
-    @Deprecated
-    Properties getSystemConfiguration(Subject subject);
-
-    @Deprecated
-    void setSystemConfiguration(Subject subject, Properties properties, boolean skipValidation) throws Exception;
-
     void dumpSystemInfo(Subject subject);
+
 }

@@ -2030,7 +2030,7 @@
 
             <schemaSpec version="2.132">
                 <schema-directSQL>
-                    <statement desc="Adding drift file purge system setting">
+                    <statement desc="Adding session timeout system setting">
                         INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
                         VALUES (59, 'RHQ_SESSION_TIMEOUT', '3600000', '3600000')
                     </statement>

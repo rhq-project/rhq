@@ -33,9 +33,6 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.common.composite.SystemSetting;
-import org.rhq.core.domain.common.composite.SystemSettings;
-import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -423,13 +420,11 @@ public class UserSessionManager {
                 userPreferences = new UserPreferences(loggedInSubject);
                 userPreferences.setAutomaticPersistence(true);
 
-                GWTServiceLookup.getSystemService().getSystemSettings(new AsyncCallback<SystemSettings>() {
+                GWTServiceLookup.getSystemService().getSessionTimeout(new AsyncCallback<String>() {
                     @Override
-                    public void onSuccess(SystemSettings result) {
-                        Configuration config = result.toConfiguration();
+                    public void onSuccess(String result) {
                         try {
-                            final long millis = Long.parseLong(config.getSimpleValue(SystemSetting.RHQ_SESSION_TIMEOUT
-                                .getInternalName()));
+                            final long millis = Long.parseLong(result);
 
                             // let's be safe here
                             sessionTimeout = (int) millis;

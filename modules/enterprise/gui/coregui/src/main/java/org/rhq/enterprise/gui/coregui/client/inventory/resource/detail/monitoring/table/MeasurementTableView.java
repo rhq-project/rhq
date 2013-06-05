@@ -128,7 +128,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 int i = 0;
                 for (ListGridRecord record : selection) {
                     Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
-                    definitionIds[i++] = defId.intValue();
+                    definitionIds[i++] = defId;
 
                     String name = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_NAME);
                     String label = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_LABEL);
@@ -185,7 +185,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
         });
 
 
-        addTableAction("Add To Dashboard", new TableAction() {
+        addTableAction(MSG.view_measureTable_addToDashboard(), new TableAction() {
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -256,7 +256,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
             df.setNumCols(4);
             df.setDataSource(getDataSource());
 
-            IButton saveButton = new IButton("Save");
+            IButton saveButton = new IButton("Mike");
             IButton cancelButton = new IButton("Done");
 
             HLayout hLayout = new HLayout(10);
@@ -285,9 +285,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                         public void onSuccess(PageList<ResourceComposite> results) {
                             if (!results.isEmpty()) {
                                 Resource resource = results.get(0).getResource();
-
                                 D3GraphListView graphListView = D3GraphListView.createSingleGraph(resource, definitionId, false);
-
 
 
                             }

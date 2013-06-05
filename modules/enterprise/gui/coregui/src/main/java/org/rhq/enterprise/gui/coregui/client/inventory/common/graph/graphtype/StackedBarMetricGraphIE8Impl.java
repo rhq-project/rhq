@@ -20,7 +20,10 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
 
 /**
  * Contains the javascript chart definition for an IE8 d3 Stacked Bar graph chart.
- * Curr
+ * A deferred representation for IE8 rendering currently not implemented.
+ * IE8 cannot render SVG so this implementation is not defined.
+ * If a shim for IE8 to render becomes practical then this could be useful.
+ * Another option here is a HTML div graph representation or a just an HTML table.
  *
  * @author Mike Thompson
  */

@@ -18,14 +18,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph;
 
 /**
  * Contains the javascript chart definition for a d3 Stacked Bar graph chart.
+ * The purpose of this class is the fill the div element with id: '#rChart-[resourceId]-[metricId]'.
+ * with SVG instructions to draw a d3 graph (in this case a stacked bar graph).
  *
  * @author Mike Thompson
  */
-public class StackedBarMetricGraphImpl extends AbstractGraph {
+public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
     /**
      * GWT constructor for GWT.create() deferred instantiation.
@@ -46,28 +48,28 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
         // This way, we are decoupled from the dependency on globals and JSNI and kept all the java interaction right here.
-                chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartHeight()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getJsonMetrics()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getXAxisTitle()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartTitle()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getYAxisUnits()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartTitleMinLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartTitleAvgLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartTitlePeakLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartDateLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartTimeLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartDownLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartUnknownLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartNoDataLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartHoverStartLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartHoverEndLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartHoverPeriodLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartHoverBarLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getChartHoverDateFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::isPortalGraph()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::getPortalId()()
+                chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartId()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHeight()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getJsonMetrics()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTitle()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitle()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getYAxisUnits()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitleMinLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitleAvgLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitlePeakLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartDateLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTimeLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartDownLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartUnknownLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartNoDataLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverStartLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverEndLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverPeriodLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverBarLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverTimeFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverDateFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::isPortalGraph()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getPortalId()()
                 );
 
 
@@ -466,7 +468,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
 
             function createAvgLines() {
                 var showBarAvgTrendline =
-                                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph::showBarAvgTrendLine()(),
+                                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::showBarAvgTrendLine()(),
                         barAvgLine = $wnd.d3.svg.line()
                                 .interpolate("linear")
                                 .defined(function (d) {

@@ -18,7 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractGraph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 
 /**
@@ -26,7 +26,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphD
  *
  * @author Mike Thompson
  */
-public final class MetricNvd3MultiLineGraph extends AbstractGraph
+public final class MetricNvd3MultiLineGraph extends AbstractMetricGraph
 {
     /**
      * General constructor for stacked bar graph when you have all the data needed to

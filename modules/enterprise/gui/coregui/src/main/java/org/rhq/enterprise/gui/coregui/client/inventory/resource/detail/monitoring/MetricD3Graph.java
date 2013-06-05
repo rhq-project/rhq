@@ -27,8 +27,9 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A D3 graph implementation for graphing Resource metrics.
+ * Just the graph only. No avail graph no buttons just he graph.
  */
-public class MetricD3GraphView extends EnhancedVLayout {
+public class MetricD3Graph extends EnhancedVLayout {
 
     protected StackedBarMetricGraphImpl graph;
     private HTMLFlow graphDiv = null;
@@ -38,11 +39,11 @@ public class MetricD3GraphView extends EnhancedVLayout {
      * This constructor is for the use case in the Dashboard where we dont actually
      * have a entity or measurement yet.
      */
-    public MetricD3GraphView() {
+    public MetricD3Graph() {
         super();
     }
 
-    public MetricD3GraphView(StackedBarMetricGraphImpl graph) {
+    public MetricD3Graph(StackedBarMetricGraphImpl graph) {
         super();
         this.graph = graph;
         setHeight100();
@@ -69,7 +70,6 @@ public class MetricD3GraphView extends EnhancedVLayout {
             + "               </pattern>"
             + "<pattern id=\"diagonalHatchFill\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"105\" height=\"105\">"
             + "<g style=\"fill:none; stroke:black; stroke-width:1\">"
-            + "<circle cx=\"0\" cy=\"0\" r=\"1000\" fill=\"grey\"/>"
             + "<path d=\"M0 90 l15,15\"/>"
             + "<path d=\"M0 75 l30,30\"/>"
             + "<path d=\"M0 60 l45,45\"/>"
@@ -92,10 +92,10 @@ public class MetricD3GraphView extends EnhancedVLayout {
             + "<path d=\"M15 0 l90,90\"/>" + "<path d=\"M30 0 l75,75\"/>" + "<path d=\"M45 0 l60,60\"/>"
             + "<path d=\"M60 0 l45,45\"/>" + "<path d=\"M75 0 l30,30\"/>" + "<path d=\"M90 0 l15,15\"/>" + "</g>"
             + "</pattern>"
-            + "               <pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
-            + "                        width=\"6\" height=\"3\">"
-            + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>"
-            + "               </pattern>" + "</defs>";
+            + "<pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
+            + "      width=\"6\" height=\"3\">"
+            + "<path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>"
+            + "</pattern>" + "</defs>";
     }
 
     @Override
@@ -144,7 +144,6 @@ public class MetricD3GraphView extends EnhancedVLayout {
         new Timer() {
             @Override
             public void run() {
-                //@todo: this is a hack around timing issue of jsni not seeing the DOM
                 drawJsniChart();
             }
         }.schedule(200);

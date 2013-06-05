@@ -36,7 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  *
  * @author Mike Thompson
  */
-public class GraphDateTimeRangeEditor extends EnhancedVLayout {
+public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     private MeasurementUserPreferences measurementUserPreferences;
     private AbstractD3GraphListView d3GraphListView;
@@ -45,8 +45,8 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
     private Long endDateTime;
 
 
-    public GraphDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
-                                    AbstractD3GraphListView d3GraphListView) {
+    public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
+                                        AbstractD3GraphListView d3GraphListView) {
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
 
@@ -119,7 +119,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
         function saveDateRange(startDate, endDate){
             var start = startDate | 0, end = endDate | 0;
-            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::changeDateRange(DD)(start,end);
+            global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor::changeDateRange(DD)(start,end);
             //@todo: fixme
             //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::refreshGraphs()();
         }
@@ -207,7 +207,7 @@ public class GraphDateTimeRangeEditor extends EnhancedVLayout {
 
     public native void refreshGraphs() /*-{
         console.log("Calling GraphDateTimeRangeEditor.refreshGraphs");
-        this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::redrawGraphs()();
+        this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor::redrawGraphs()();
     }-*/;
 
 

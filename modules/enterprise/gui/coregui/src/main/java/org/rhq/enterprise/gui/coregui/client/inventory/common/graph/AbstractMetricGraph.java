@@ -24,7 +24,7 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 
 /**
- * Common Graph capability used across multiple graphs.
+ * Common Metric Graph capability used across multiple metric rendering graphs.
  * The MetricGraphData delegate is wrapped for JSNI access via d3 charts.
  * Also, by delegating and directly extending MetricGraphData we have more
  * control over the visibility of what we want graphs to 'see'.
@@ -33,7 +33,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
  *
  * @author Mike Thompson
  */
-public abstract class AbstractGraph extends VLayout implements HasD3MetricJsniChart {
+public abstract class AbstractMetricGraph extends VLayout implements HasD3MetricJsniChart {
 
     private MetricGraphData metricGraphData;
 

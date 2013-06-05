@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
@@ -112,13 +112,13 @@ public class D3GraphListView extends AbstractD3GraphListView {
     }
 
     private void commonConstructorSettings() {
-        graphDateTimeRangeEditor = new GraphDateTimeRangeEditor(measurementUserPrefs,this);
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
         setOverflow(Overflow.HIDDEN);
     }
 
     @Deprecated
     public void addSetButtonClickHandler(ClickHandler clickHandler) {
-        Log.debug("measurementRangeEditor " + graphDateTimeRangeEditor);
+        Log.debug("measurementRangeEditor " + buttonBarDateTimeRangeEditor);
       //  graphDateTimeRangeEditor.getSetButton().addClickHandler(clickHandler);
     }
 
@@ -128,8 +128,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
         Log.debug("D3GraphListView.onDraw() for: " + resource.getName());
         destroyMembers();
 
-        addMember(graphDateTimeRangeEditor);
-        graphDateTimeRangeEditor.createDateSliderMarker();
+        addMember(buttonBarDateTimeRangeEditor);
+        buttonBarDateTimeRangeEditor.createDateSliderMarker();
 
         if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));
@@ -193,8 +193,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
         final long startTimer = System.currentTimeMillis();
 
         if(null != availabilityGraph){
-            queryAvailability(EntityContext.forResource(resource.getId()), graphDateTimeRangeEditor.getStartTime(),
-                graphDateTimeRangeEditor.getEndTime(), null);
+            queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
+                buttonBarDateTimeRangeEditor.getEndTime(), null);
         }
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
@@ -270,7 +270,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
                 private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
                     GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
-                            graphDateTimeRangeEditor.getStartTime(), graphDateTimeRangeEditor.getEndTime(), 60,
+                            buttonBarDateTimeRangeEditor.getStartTime(), buttonBarDateTimeRangeEditor.getEndTime(), 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             @Override
                             public void onFailure(Throwable caught) {
@@ -376,7 +376,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
             measurementDefinition, data, measurementOOBCompositeList );
         StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
         graph.setMetricGraphData(metricGraphData);
-        MetricD3GraphView graphView = new MetricD3GraphView(graph);
+        MetricD3Graph graphView = new MetricD3Graph(graph);
 
         graphView.setWidth("95%");
         graphView.setHeight(height);

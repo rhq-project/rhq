@@ -458,24 +458,29 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @POST
     @Path("definition/{id}/conditions")
     @ApiOperation(value = "Add a new alert condition to an existing alert definition",
-        notes = "Each condition falls into a category. Allowed categories are " +
+        notes = "<xml>" +
+            "<para>Each condition falls into a category. Allowed categories are " +
             "AVAILABILITY, AVAIL_DURATION, BASELINE(m), CHANGE(m), CONTROL, DRIFT, EVENT, RANGE(m), RESOURCE_CONFIG, THRESHOLD(m), TRAIT(m)." +
-            "Categories with an appended (m) are for metrics and need a metricDefinition, but no name. " +
-            "* AVAILABILITY: name is one of AVAIL_GOES_DOWN, " +
-            "AVAIL_GOES_DISABLED, AVAIL_GOES_UNKNOWN, AVAIL_GOES_NOT_UP and AVAIL_GOES_UP." +
-            "* AVAIL_DURATION: name is one of AVAIL_DURATION_DOWN andAVAIL_DURATION_NOT_UP; option gives the duration in seconds."+
-            "* BASELINE: option is one of 'min','mean','max', threshold gives the percentage (0.01=1%), " +
-            "comparator is one of '<','=' and '>'." +
-            "* CONTROL: option gives the Operation status (FAILURE,SUCCESS,INPROGRESS,CANCELED), name is the name " +
-            "of the operation (not the display-name)." +
-            "* EVENT: name is the severity (DEBUG,INFO,WARN,ERROR,FATAL), option is an optional RegEx to match against." +
-            "* DRIFT: name is optional and matches drift-definitions; option is optional and matches directories." +
-            "* RANGE: threshold has the lower bound, " +
-            "option the higher bound, comparator is one of '<','<=','=','>=' or '>'." +
-            "* RESOURCE_CONFIG: no additional params needed." +
-            "* THRESHOLD: comparator " +
-            "is one of '<','=','>'; threshold is the value to compare against." +
-            "* TRAIT: option is an optional RegEx to match against." )
+            "Categories with an appended (m) are for metrics and need a metricDefinition, but no name, as the name is obtained from the " +
+            "metric definition. Parameters vary depending on the category: " +
+            "<itemizedlist>"+
+            "<listitem><simpara>AVAILABILITY: name is one of AVAIL_GOES_DOWN, " +
+            "AVAIL_GOES_DISABLED, AVAIL_GOES_UNKNOWN, AVAIL_GOES_NOT_UP and AVAIL_GOES_UP.</simpara></listitem>" +
+            "<listitem><simpara>AVAIL_DURATION: name is one of AVAIL_DURATION_DOWN andAVAIL_DURATION_NOT_UP; option gives the duration in seconds.</simpara></listitem>"+
+            "<listitem><simpara>BASELINE: option is one of 'min','mean','max', threshold gives the percentage (0.01=1%), " +
+            "comparator is one of '&lt;','=' and '>'.</simpara></listitem>" +
+            "<listitem><simpara>CONTROL: option gives the Operation status (FAILURE,SUCCESS,INPROGRESS,CANCELED), name is the name " +
+            "of the operation (not the display-name).</simpara></listitem>" +
+            "<listitem><simpara>EVENT: name is the severity (DEBUG,INFO,WARN,ERROR,FATAL), option is an optional RegEx to match against.</simpara></listitem>" +
+            "<listitem><simpara>DRIFT: name is optional and matches drift-definitions; option is optional and matches directories.</simpara></listitem>" +
+            "<listitem><simpara>RANGE: threshold has the lower bound, " +
+            "option the higher bound, comparator is one of '&lt;','&lt;=','=','>=' or '>'.</simpara></listitem>" +
+            "<listitem><simpara>RESOURCE_CONFIG: no additional params needed.</simpara></listitem>" +
+            "<listitem><simpara>THRESHOLD: comparator " +
+            "is one of '&lt;','=','>'; threshold is the value to compare against.</simpara></listitem>" +
+            "<listitem><simpara>TRAIT: option is an optional RegEx to match against.</simpara></listitem>" +
+            "</itemizedlist>" +
+            "</para></xml>" )
     @ApiErrors({
         @ApiError(code = 404, reason = "No AlertDefinition with the passed id exists"),
         @ApiError(code = 406, reason = "The passed condition failed validation. A more detailed message is provided"),

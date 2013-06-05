@@ -88,9 +88,16 @@
     <em><xsl:value-of select="@description"/></em>
     <br/>
     <xsl:if test="notes">
-      <h4>Note</h4>
-        <xsl:value-of   select="notes"/>
-      <p/>
+      <h4>Notes</h4>
+      <xsl:choose>
+        <xsl:when test="notes/xml">
+          <!-- We should perhaps not copy them literally, but do some translation from docbook to html -->
+          <xsl:copy-of select="notes/xml/*"/>
+        </xsl:when>
+        <xsl:otherwise>
+          <xsl:value-of select="notes"/>
+        </xsl:otherwise>
+      </xsl:choose>
     </xsl:if>
 
     <xsl:if test="not(@gzip = '')">

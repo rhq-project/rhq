@@ -3,6 +3,8 @@ package org.rhq.helpers.rest_docs_generator;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringBufferInputStream;
+import java.io.StringReader;
 import java.io.StringWriter;
 import java.util.Collection;
 import java.util.Map;
@@ -30,6 +32,7 @@ import javax.ws.rs.QueryParam;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.transform.OutputKeys;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
@@ -49,6 +52,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import org.jboss.resteasy.annotations.GZIP;
 
@@ -264,11 +272,7 @@ public class ClassLevelProcessor extends AbstractProcessor {
                 if (apiOperation.multiValueResponse())
                     responseClass = responseClass + " (multi)";
             }
-            if (apiOperation.notes()!=null) {
-                Element notesElement = doc.createElement("notes");
-                notesElement.setTextContent(apiOperation.notes());
-                methodElement.appendChild(notesElement);
-            }
+            processNotes(doc, methodElement, apiOperation);
         }
 
         if (responseClass == null) {
@@ -283,6 +287,71 @@ public class ClassLevelProcessor extends AbstractProcessor {
 
         processErrors(doc,td, methodElement);
 
+    }
+
+    /**
+     * Parse the notes attribute of @ApiOperation. The notes can be in xml, which
+     * is then copied to the output for further processing. This is done by parsing the notes
+     * and checking for XML document validity and for an enclosing &lt;xml> element as e.g. in
+     * <br/>
+     * <code>
+     * &lt;xml><br/>
+     *   &lt;simpara><br/>
+     *     This is some text<br/>
+     *   &lt;/simpara<br/>
+     * &lt;/xml><br/>
+     * </code>
+     * <br/>
+     * Note: the less-than sign (&lt;) must be escaped in the form of &amp;lt;, otherwise
+     * processing as XML fails and the XML will be attached as text content.<p/>
+     * If no such XML is detected, then the content of the notes is attached as text content.
+     * If no notes attribute is present the nothing happens
+     * @param mainDocument Outer document to attach the notes to
+     * @param methodElement the method element we are looking at
+     * @param apiOperation The ApiOperation annotation
+     */
+    private void processNotes(Document mainDocument, Element methodElement, ApiOperation apiOperation) {
+
+        String notes = apiOperation.notes();
+        if (notes==null || notes.isEmpty()) {
+            return;
+        }
+        String methodName = methodElement.getAttribute("name");
+
+        Element notesElement = mainDocument.createElement("notes");
+        methodElement.appendChild(notesElement);
+
+        try {
+            StringReader sr = new StringReader(notes);
+            InputSource is = new InputSource();
+                is.setCharacterStream(sr);
+            DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            if (!verbose) {
+                // Don't print all the validation errors, as we expect them for notes that are not xml
+                documentBuilder.setErrorHandler(new DefaultHandler());
+            }
+            Document doc = documentBuilder.parse(is);
+
+            NodeList nodeList = doc.getElementsByTagName("xml");
+            if (nodeList.getLength()!=1) {
+
+                System.err.println("\nERROR: Notes for " + methodName + " must contain exactly one surrounding <xml> element\n");
+                return;
+            }
+            Node node = nodeList.item(0);
+            Node n = mainDocument.importNode(node,true);
+            notesElement.appendChild(n);
+        } catch (SAXException e) {
+            if (verbose) {
+                e.printStackTrace();
+                System.err.println("\n===["+notes+"]==\n");
+            }
+            notesElement.setTextContent(notes);
+        } catch (ParserConfigurationException e) {
+            System.err.println("Parsing notes failed: " + e.getMessage());
+        } catch (IOException e) {
+            System.err.println("Parsing notes failed: " + e.getMessage());
+        }
     }
 
     /**

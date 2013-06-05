@@ -28,6 +28,8 @@ package org.rhq.enterprise.server.cassandra;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.persistence.EntityManager;
@@ -54,6 +56,7 @@ import org.rhq.server.metrics.MetricsServer;
  * @author John Sanda
  */
 @Singleton
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class StorageClientManagerBean {
 
     private final Log log = LogFactory.getLog(StorageClientManagerBean.class);
@@ -82,7 +85,7 @@ public class StorageClientManagerBean {
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
 
-    public void init() {
+    public synchronized void init() {
         if (initialized) {
             if (log.isDebugEnabled()) {
                 log.debug("Storage client subsystem is already initialized. Skipping initialization.");
@@ -151,7 +154,7 @@ public class StorageClientManagerBean {
         log.info("Storage client subsystem is now initialized");
     }
 
-    public void shutdown() {
+    public synchronized void shutdown() {
         if (!initialized) {
             log.info("Storage client subsytem is already shut down. Skipping shutdown steps.");
             return;

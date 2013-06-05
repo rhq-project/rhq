@@ -31,6 +31,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import javax.annotation.Resource;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Timeout;
@@ -101,13 +103,17 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * specifically, all EJBs must have been deployed and available.
  *
  * This bean is not meant for client consumption - it is only for startup initialization.
+ *
+ * BEAN ConcurrencyManagement is enough: the {@link #initialized} property is only modified on startup.
  */
 @Singleton
 //@Startup // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class StartupBean implements StartupLocal {
     private Log log = LogFactory.getLog(this.getClass());
 
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
 
     @EJB
     private AgentManagerLocal agentManager;
@@ -146,7 +152,6 @@ public class StartupBean implements StartupLocal {
     private DataSource dataSource;
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean isInitialized() {
         return this.initialized;
     }
@@ -164,7 +169,7 @@ public class StartupBean implements StartupLocal {
      * @throws RuntimeException
      */
     //@PostConstruct // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @Override
     public void init() throws RuntimeException {
         secureNaming();
 
@@ -375,8 +380,6 @@ public class StartupBean implements StartupLocal {
     }
 
     @Timeout
-    // does AS7 EJB3 container allow this? We do not want a tx here!
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void scanForPlugins(final Timer timer) {
         try {
             PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();

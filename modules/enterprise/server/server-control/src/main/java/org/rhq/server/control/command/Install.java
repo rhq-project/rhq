@@ -73,6 +73,7 @@ public class Install extends ControlCommand {
     // some known agent preference setting names
     private static final String PREF_RHQ_AGENT_SECURITY_TOKEN = "rhq.agent.security-token";
     private static final String PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG = "rhq.agent.configuration-setup-flag";
+    private static final String PREF_RHQ_AGENT_AUTO_UPDATE_FLAG = "rhq.agent.agent-update.enabled";
 
     public Install() {
         options = new Options()
@@ -592,6 +593,11 @@ public class Install extends ControlCommand {
 
             overrideAgentPreferences(commandLine, preferencesNode);
 
+            // set some prefs that must be a specific value
+            // - do not tell this agent to auto-update itself - this agent must be managed by rhqctl only
+            // - set the config setup flag to true to prohibit the agent from asking setup questions at startup
+            String agentUpdateEnabledPref = PREF_RHQ_AGENT_AUTO_UPDATE_FLAG;
+            preferencesNode.putBoolean(agentUpdateEnabledPref, false);
             String setupPref = PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG;
             preferencesNode.putBoolean(setupPref, true);
 

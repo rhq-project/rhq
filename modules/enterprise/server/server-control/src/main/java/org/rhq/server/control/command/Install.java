@@ -1,26 +1,25 @@
 /*
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 package org.rhq.server.control.command;
@@ -56,12 +55,12 @@ import org.rhq.server.control.RHQControlException;
 public class Install extends ControlCommand {
 
     private final String STORAGE_CONFIG_OPTION = "storage-config";
+    private final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
 
     private final String AGENT_CONFIG_OPTION = "agent-config";
+    private final String AGENT_PREFERENCE = "agent-preference";
 
     private final String SERVER_CONFIG_OPTION = "server-config";
-
-    private final String AGENT_PREFERENCE = "agent-preference";
 
     private final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
@@ -81,21 +80,23 @@ public class Install extends ControlCommand {
                 null,
                 "storage",
                 false,
-                "Install RHQ storage node. The default install directory will be " + DEFAULT_STORAGE_BASEDIR
-                    + ". Use the --storage-dir option to choose an alternate directory.")
-            .addOption(null, "server", false, "Install RHQ server")
+                "Install RHQ storage node. The default install directory will be: "
+                    + DEFAULT_STORAGE_BASEDIR
+                    + ". Note that this option implies --agent which means an agent will also be installed, if one is not yet installed.")
+            .addOption(
+                null,
+                "server",
+                false,
+                "Install RHQ server. If you have not yet installed an RHQ storage node somewhere in your network, you must specify --storage to install one.")
             .addOption(
                 null,
                 "agent",
                 false,
-                "Install RHQ agent. The default install directory will be " + DEFAULT_AGENT_BASEDIR
-                    + ". Use the --agent-dir option to choose an alternate directory.")
-            .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
-            .addOption(null, "agent-dir", true, "The directory where the agent will be installed.")
+                "Install RHQ agent. The install directory will be: " + DEFAULT_AGENT_BASEDIR)
             .addOption(null, SERVER_CONFIG_OPTION, true,
-                "An alternate properties file to use in place of the default " + "rhq-server.properties")
+                "An alternate properties file to use in place of the default rhq-server.properties")
             .addOption(null, AGENT_CONFIG_OPTION, true,
-                "An alternate XML file to use in place of the default " + "agent-configuration.xml")
+                "An alternate XML file to use in place of the default agent-configuration.xml")
             .addOption(
                 null,
                 STORAGE_CONFIG_OPTION,
@@ -104,7 +105,9 @@ public class Install extends ControlCommand {
                     + "of the storage installer. Each property will be translated into an option that is passed to the "
                     + " storage installer. See example.storage.properties for examples.")
             .addOption(null, AGENT_PREFERENCE, true,
-                "An agent preference setting (name=value) to be set in the agent. More than one of these is allowed.");
+                "An agent preference setting (whose argument is in the form 'name=value') to be set in the agent. More than one of these is allowed.")
+            .addOption(null, STORAGE_DATA_ROOT_DIR, true,
+                "The root directory under which all storage data directories will be placed.");
     }
 
     @Override
@@ -134,7 +137,7 @@ public class Install extends ControlCommand {
                 return;
             }
 
-            // if no options specified, then install whatever is installed
+            // if no options specified, then install whatever is not installed yet
             if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
                 .hasOption(AGENT_OPTION))) {
 
@@ -207,6 +210,9 @@ public class Install extends ControlCommand {
 
         if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
             .hasOption(AGENT_OPTION))) {
+
+            validateCustomStorageDataDirectories(commandLine, errors);
+
             if (commandLine.hasOption(SERVER_CONFIG_OPTION) && !isServerInstalled()) {
                 File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
                 validateServerConfigOption(serverConfig, errors);
@@ -232,6 +238,8 @@ public class Install extends ControlCommand {
                     File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                     validateAgentConfigOption(agentConfig, errors);
                 }
+
+                validateCustomStorageDataDirectories(commandLine, errors);
             }
 
             if (commandLine.hasOption(SERVER_OPTION) && !isStorageInstalled()
@@ -248,6 +256,26 @@ public class Install extends ControlCommand {
         }
 
         return errors;
+    }
+
+    private void validateCustomStorageDataDirectories(CommandLine commandLine, List<String> errors) {
+        StorageDataDirectories customDataDirs = getCustomStorageDataDirectories(commandLine);
+        if (customDataDirs != null) {
+            if (customDataDirs.basedir.isAbsolute()) {
+                if (!isDirectoryEmpty(customDataDirs.dataDir)) {
+                    errors.add("Storage data directory [" + customDataDirs.dataDir + "] is not empty.");
+                }
+                if (!isDirectoryEmpty(customDataDirs.commitlogDir)) {
+                    errors.add("Storage commitlog directory [" + customDataDirs.commitlogDir + "] is not empty.");
+                }
+                if (!isDirectoryEmpty(customDataDirs.savedcachesDir)) {
+                    errors.add("Storage saved-caches directory [" + customDataDirs.savedcachesDir + "] is not empty.");
+                }
+            } else {
+                errors.add("The storage root directory [" + customDataDirs.basedir
+                    + "] must be specified with an absolute path and should be outside of the main install directory.");
+            }
+        }
     }
 
     private void validateServerConfigOption(File serverConfig, List<String> errors) {
@@ -284,18 +312,10 @@ public class Install extends ControlCommand {
     }
 
     private File getStorageBasedir(CommandLine cmdLine) {
-        if (cmdLine.hasOption("storage-dir")) {
-            File installDir = new File(cmdLine.getOptionValue("storage-dir"));
-            return new File(installDir, STORAGE_BASEDIR_NAME);
-        }
         return DEFAULT_STORAGE_BASEDIR;
     }
 
     private File getAgentBasedir(CommandLine cmdLine) {
-        if (cmdLine.hasOption("agent-dir")) {
-            File installDir = new File(cmdLine.getOptionValue("agent-dir"));
-            return new File(installDir, AGENT_BASEDIR_NAME);
-        }
         return DEFAULT_AGENT_BASEDIR;
     }
 
@@ -307,6 +327,14 @@ public class Install extends ControlCommand {
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
                 storageBasedir.getAbsolutePath());
+
+            if (rhqctlCommandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
+                StorageDataDirectories dataDirs;
+                dataDirs = getCustomStorageDataDirectories(rhqctlCommandLine);
+                commandLine.addArguments(new String[] { "--data", dataDirs.dataDir.getAbsolutePath() });
+                commandLine.addArguments(new String[] { "--commitlog", dataDirs.commitlogDir.getAbsolutePath() });
+                commandLine.addArguments(new String[] { "--saved-caches", dataDirs.savedcachesDir.getAbsolutePath() });
+            }
 
             if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
                 String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
@@ -326,6 +354,36 @@ public class Install extends ControlCommand {
         } catch (IOException e) {
             log.error("An error occurred while running the storage installer: " + e.getMessage());
             throw e;
+        }
+    }
+
+    private class StorageDataDirectories {
+        public File basedir; // the other three will be under this base directory
+        public File dataDir;
+        public File commitlogDir;
+        public File savedcachesDir;
+    }
+
+    private StorageDataDirectories getCustomStorageDataDirectories(CommandLine commandLine) {
+        StorageDataDirectories storageDataDirs = null;
+
+        if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
+            storageDataDirs = new StorageDataDirectories();
+            storageDataDirs.basedir = new File(commandLine.getOptionValue(STORAGE_DATA_ROOT_DIR));
+            storageDataDirs.dataDir = new File(storageDataDirs.basedir, "data");
+            storageDataDirs.commitlogDir = new File(storageDataDirs.basedir, "commitlog");
+            storageDataDirs.savedcachesDir = new File(storageDataDirs.basedir, "saved_caches");
+        }
+
+        return storageDataDirs;
+    }
+
+    private boolean isDirectoryEmpty(File dir) {
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            return (files == null || files.length == 0);
+        } else {
+            return true;
         }
     }
 

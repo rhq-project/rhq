@@ -176,14 +176,15 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         final StaticTextItem nameItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         nameItem.setValue("<b>" + storageNode.getAddress() + "</b>");
 
-        final TextItem jmxPortItem = new TextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
+//        final TextItem jmxPortItem = new TextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
+        final StaticTextItem jmxPortItem = new StaticTextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
         jmxPortItem.setValue(storageNode.getJmxPort());
 
         final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",
             MSG.view_adminTopology_storageNode_jmxConnectionUrl());
         jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
 
-        final TextItem cqlPortItem = new TextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
+        final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
         
         cqlPortItem.setValue(storageNode.getCqlPort());
 

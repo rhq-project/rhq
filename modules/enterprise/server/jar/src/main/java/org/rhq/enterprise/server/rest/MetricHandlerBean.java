@@ -94,6 +94,7 @@ import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricDefinitionAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
+import org.rhq.enterprise.server.rest.domain.NumericValue;
 import org.rhq.enterprise.server.rest.domain.StringValue;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -136,7 +137,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
 
     private static final long EIGHT_HOURS = 8 * 3600L * 1000L;
-
+    private static final long SEVEN_DAYS = 7L*86400*1000;
     @GZIP
     @GET
     @Path("data/{scheduleId}")
@@ -648,7 +649,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         if (duration>0) // overrides start time
             startTime = endTime - duration*1000L; // duration is in seconds
 
-        if (startTime < now -7L*86400*1000)
+        if (startTime < now - SEVEN_DAYS)
             throw new IllegalArgumentException("(Computed) start time is older than 7 days");
 
         // Check if the schedule exists
@@ -667,19 +668,26 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @ApiOperation("Submit a single (numerical) metric to the server")
-    @ApiError(code=404, reason = NO_SCHEDULE_FOR_ID)
+    @ApiErrors({
+	@ApiError(code=404, reason = NO_SCHEDULE_FOR_ID),
+	@ApiError(code=406, reason = "Timestamp is older than 7 days")
+    })
     @Path("data/{scheduleId}/raw/{timeStamp}")
     public Response putMetricValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
                                 @ApiParam("Timestamp of the metric") @PathParam("timeStamp") long timestamp,
-                                @ApiParam(value = "Data point", required = true) NumericDataPoint point,
+                                @ApiParam(value = "Data value", required = true) NumericValue value,
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
         MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
+        long now = System.currentTimeMillis();
+        if (timestamp < now - SEVEN_DAYS)
+            throw new IllegalArgumentException("Timestamp is older than 7 days");
+
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(1);
-        data.add(new MeasurementDataNumeric(point.getTimeStamp(),scheduleId,point.getValue()));
+        data.add(new MeasurementDataNumeric(timestamp,scheduleId,value.getValue()));
 
         dataManager.addNumericData(data);
 
@@ -693,15 +701,24 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     }
 
     @PUT
-    @Path("data/{scheduleId}/trait")
+    @Path("data/{scheduleId}/trait/{timeStamp}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @ApiOperation(value = "Submit a new trait value for the passed schedule id")
-    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
-    public Response putTraitValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId, StringValue value) {
+    @ApiErrors({
+	@ApiError(code=404, reason = NO_SCHEDULE_FOR_ID),
+	@ApiError(code=406, reason = "Timestamp is older than 7 days")
+    })
+    public Response putTraitValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
+	    @ApiParam("Timestamp of the metric") @PathParam("timeStamp") long timestamp,
+	    @ApiParam(value = "Data value", required = true) StringValue value) {
         MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.TRAIT);
 
+        long now = System.currentTimeMillis();
+        if (timestamp < now - SEVEN_DAYS)
+            throw new IllegalArgumentException("Timestamp is older than 7 days");
+
         Set<MeasurementDataTrait> traits = new HashSet<MeasurementDataTrait>(1);
-        MeasurementDataPK pk = new MeasurementDataPK(System.currentTimeMillis(),scheduleId);
+        MeasurementDataPK pk = new MeasurementDataPK(timestamp,scheduleId);
         traits.add(new MeasurementDataTrait(pk,value.getValue()));
 
         dataManager.addTraitData(traits);

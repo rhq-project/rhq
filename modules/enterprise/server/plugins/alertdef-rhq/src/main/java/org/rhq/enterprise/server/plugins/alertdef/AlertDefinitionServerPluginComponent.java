@@ -22,6 +22,7 @@ package org.rhq.enterprise.server.plugins.alertdef;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -238,11 +239,15 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         ac.setCategory(AlertConditionCategory.THRESHOLD);
         ac.setComparator(">");
         ac.setThreshold(0.75D);
+
+        List<Integer> measurementDefinitionIds = new ArrayList<Integer>(2);
         for (MeasurementDefinition d : resourceType.getMetricDefinitions()) {
             if ("Calculated.HeapUsagePercentage".equals(d.getName())) {
+                measurementDefinitionIds.add(d.getId());
                 ac.setMeasurementDefinition(d);
                 ac.setName(d.getDisplayName());
-                break;
+            } else if ("{HeapMemoryUsage.used}".equals(d.getName())) {
+                measurementDefinitionIds.add(d.getId());
             }
         }
         assert null != ac.getMeasurementDefinition() : "Did not find expected measurement definition [Calculated.HeapUsagePercentage] for "
@@ -261,10 +266,9 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         // additionally, we want to ensure that the metric is enabled and collecting at a more frequent interval than
         // is set by default.
         MeasurementScheduleManagerLocal measurementManager = LookupUtil.getMeasurementScheduleManager();
-        int[] measurementDefinitionIds = new int[1];
-        measurementDefinitionIds[0] = ac.getMeasurementDefinition().getId();
         measurementManager.updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(
-            subjectManager.getOverlord(), measurementDefinitionIds, 60000L, true, true);
+            subjectManager.getOverlord(), ArrayUtils.toPrimitive(measurementDefinitionIds.toArray(new Integer[2])),
+            60000L, true, true);
 
         return newTemplateId;
     }

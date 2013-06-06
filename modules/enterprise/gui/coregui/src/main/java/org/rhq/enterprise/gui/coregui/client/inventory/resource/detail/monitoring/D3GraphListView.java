@@ -242,7 +242,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                         public void execute() {
                             Log.debug("Total Time for async metrics/avail query: "
                                 + (System.currentTimeMillis() - startTimer));
-                            if (metricsDataList.isEmpty()) {
+                            if (null == metricsDataList || metricsDataList.isEmpty()) {
                                 loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
                             } else {
                                 loadingLabel.hide();

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
+import java.util.Arrays;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
@@ -29,7 +30,9 @@ import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeas
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferenceNames;
 
 /**
  * Component to allow selection of Date/Time range for graphs using a button group from bootstrap.
@@ -41,8 +44,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private MeasurementUserPreferences measurementUserPreferences;
     private AbstractD3GraphListView d3GraphListView;
     private static final Messages MSG = CoreGUI.getMessages();
-    private Long startDateTime;
-    private Long endDateTime;
 
 
     public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
@@ -50,13 +51,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
 
-
         AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
-
-        // initialize with saved begin/end times
-        List<Long> beginEndTimes = prefs.getBeginEndTimes();
-        startDateTime = beginEndTimes.get(0);
-        endDateTime = beginEndTimes.get(1);
+        Log.debug("ButtonBarDateTimeRangeEditor initialized with start: "+ prefs.begin +" end: "+prefs.end);
     }
 
     /**
@@ -68,7 +64,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      *
      */
     public void createDateSliderMarker() {
-        Log.debug("drawGraph marker in AvailabilityD3Graph for: graphDateTimeRangeEditor" );
+        Log.debug("drawGraph marker for: buttonBarDateTimeRangeEditor" );
 
         // append the bootstrap buttongroup since smartGWT doesn't have one
         StringBuilder buttonBarDiv = new StringBuilder();
@@ -101,8 +97,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         new Timer(){
             @Override
             public void run() {
-                changeDateRange(getStartTime(), getEndTime());
-                //drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
                 attachGraphDateRangeEditorButtonGroupHandlers();
             }
         }.schedule(200);
@@ -132,7 +126,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radio6h").bind('click', function (event) {
             console.log(" 6h selected");
@@ -140,7 +133,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radio12h").bind('click', function (event) {
             console.log("12h selected");
@@ -148,7 +140,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radio1d").bind('click', function (event) {
             console.log("1d selected");
@@ -156,7 +147,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radio5d").bind('click', function (event) {
             console.log("5d selected");
@@ -164,7 +154,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radio1m").bind('click', function (event) {
             console.log("1m selected");
@@ -172,7 +161,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radio3m").bind('click', function (event) {
             console.log("3m selected");
@@ -180,7 +168,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radio1y").bind('click', function (event) {
             console.log("1y selected");
@@ -188,7 +175,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
         $wnd.jQuery("#radioCustom").bind('click', function (event) {
             console.log("Custom Range selected");
@@ -196,7 +182,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             graphDateContext.endDate = $wnd.moment();
             updateDateDisplay(graphDateContext.startDate, graphDateContext.endDate);
             saveDateRange(graphDateContext.startDate, graphDateContext.endDate);
-            //this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.GraphDateTimeRangeEditor::drawJsniDateSlider(Ljava/lang/Long;Ljava/lang/Long;)(graphDateContext.startDate, graphDateContext.endDate);
         });
 
 
@@ -211,13 +196,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }-*/;
 
 
-//    public void drawJsniDateSlider(){
-//        dateSliderGraphType.drawJsniChart(dateSliderGraphType.getStartTime(), dateSliderGraphType.getEndTime());
-//    }
-//
-//    public void drawJsniDateSlider(Long startTime, Long endTime){
-//        dateSliderGraphType.drawJsniChart(startTime, endTime);
-//    }
 
     public void redrawGraphs(){
         d3GraphListView.redrawGraphs();
@@ -254,20 +232,18 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      */
     public void changeDateRange(double startTime, double endTime){
 
-        startDateTime = (long)startTime;
-        endDateTime = (long)endTime;
-
         //@todo: uncomment when ready
-//        final boolean advanced = true;
-//        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
-//        prefs.explicitBeginEnd = advanced;
-//        prefs.begin = (long) startTime;
-//        prefs.end = (long) endTime;
-//        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
-//            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
-//        } else {
-//            measurementUserPreferences.setMetricRangePreferences(prefs);
-//        }
+        final boolean advanced = true;
+        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
+        prefs.explicitBeginEnd = advanced;
+        prefs.begin = (long) startTime;
+        prefs.end = (long) endTime;
+        ///prefs.setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end));
+        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
+        } else {
+            measurementUserPreferences.setMetricRangePreferences(prefs);
+        }
 
     }
 

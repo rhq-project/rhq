@@ -678,7 +678,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             createOOBLines();
                         }
                         createHovers(chartContext);
-                        //createBrush();
+                        createBrush();
                     }
                 }
             }; // end public closure

@@ -50,7 +50,7 @@ public class Console extends ControlCommand {
     public Console() {
         options = new Options().addOption(null, "storage", false, "Start the RHQ storage node in the foreground")
             .addOption(null, "server", false, "Start the RHQ server in the foreground")
-            .addOption(null, "agent", false, "Start the RHQ agent in the foreground");
+            .addOption(null, "agent", false, "Start the RHQ agent in the foreground (unsupported)");
     }
 
     @Override

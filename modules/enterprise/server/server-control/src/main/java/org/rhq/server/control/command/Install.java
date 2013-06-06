@@ -81,7 +81,7 @@ public class Install extends ControlCommand {
                 null,
                 "storage",
                 false,
-                "Install RHQ storage node. The default install directory will be: "
+                "Install RHQ storage node. The install directory will be: "
                     + DEFAULT_STORAGE_BASEDIR
                     + ". Note that this option implies --agent which means an agent will also be installed, if one is not yet installed.")
             .addOption(

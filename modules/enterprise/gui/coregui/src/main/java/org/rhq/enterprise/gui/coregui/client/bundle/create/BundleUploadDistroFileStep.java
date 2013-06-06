@@ -71,7 +71,6 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
     private static final String UPLOAD_OPTION = MSG.view_bundle_createWizard_uploadOption();
     private static final String RECIPE_OPTION = MSG.view_bundle_createWizard_recipeOption();
     private static final String URL_OPTION_USERNAME = MSG.view_bundle_createWizard_urlUserName();
-    private static final String URL_OPTION_USERNAME_OPTIONAL_HINT = MSG.view_bundle_createWizard_urlUserNameOptionalHint();
     private static final String URL_OPTION_PASSWORD = MSG.view_bundle_createWizard_urlPassword();
     private static final String URL_OPTION_TOOLTIP = MSG.view_bundle_createWizard_urlTooltip();
 
@@ -152,8 +151,6 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         urlTextItem.setColSpan(4);
         urlUserNameItem = new TextItem("username", URL_OPTION_USERNAME);
         urlUserNameItem.setTooltip(URL_OPTION_TOOLTIP);
-        urlUserNameItem.setHint(URL_OPTION_USERNAME_OPTIONAL_HINT);
-        urlUserNameItem.setShowHintInField(true);
         urlUserNameItem.setRequired(false);
         urlUserNameItem.setShowTitle(true);
         urlUserNameItem.setWidth(100);

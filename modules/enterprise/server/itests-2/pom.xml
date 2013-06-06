@@ -328,8 +328,6 @@
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
                 <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/1.0.5-M3-p1/snappy-java-1.0.5-M3-p1.jar"
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
-                <copy file="${settings.localRepository}/log4j/log4j/1.2.17/log4j-1.2.17.jar"
-                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
 
                 <echo file="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
 <module xmlns="urn:jboss:module:1.1" name="com.datastax.cassandra.cassandra-driver-core">
@@ -351,6 +349,8 @@
     <dependencies>
         <module name="org.codehaus.jackson.jackson-core-asl"/>
         <module name="org.codehaus.jackson.jackson-mapper-asl"/>
+        <module name="org.jboss.logmanager" services="import"/>
+        <module name="org.apache.log4j"/>
         <module name="javax.api"/>
     </dependencies>
 </module>

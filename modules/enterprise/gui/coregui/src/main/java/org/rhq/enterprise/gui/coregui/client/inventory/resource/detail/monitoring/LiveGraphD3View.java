@@ -41,7 +41,9 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 /**
  * @author Greg Hinkle
  * @author Mike Thompson
+ * @deprecated
  */
+@Deprecated
 public class LiveGraphD3View extends EnhancedVLayout {
 
     private static final int MAX_BARS_TO_KEEP = 60;

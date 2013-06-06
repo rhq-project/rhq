@@ -1156,7 +1156,16 @@ public class InstallerServiceImpl implements InstallerService {
         String username = serverProps.get("rhq.cassandra.username");
         String password = serverProps.get("rhq.cassandra.password");
 
-        return new SchemaManager(username, password, hosts);
+        // We have to connect with the default cassandra super user here. The
+        // username/password specified in rhq-server.properties is one that we create
+        // during schema installation so we cannot make the initial connection with
+        // that user. In fact, I am not even so sure we need to put those credentials
+        // in rhq-server.properties. That user is for internal use by the server to
+        // talk to storage nodes. Not sure we even want to expose it to the user, at
+        // least not directly.
+        //
+        // jsanda
+        return new SchemaManager("cassandra", "cassandra", hosts);
     }
 
     private void writeInstalledFileMarker() throws Exception {

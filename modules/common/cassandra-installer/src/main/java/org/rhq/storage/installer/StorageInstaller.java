@@ -77,7 +77,9 @@ public class StorageInstaller {
 
     public static final int STATUS_INVALID_FILE_PERMISSIONS = 3;
 
-    public static final int STATUS_SHOW_USAGE = 4;
+    public static final int STATUS_DATA_DIR_NOT_EMPTY = 4;
+
+    public static final int STATUS_SHOW_USAGE = 100;
 
     private final String STORAGE_BASEDIR = "rhq-storage";
 
@@ -112,7 +114,7 @@ public class StorageInstaller {
     public StorageInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");
         serverBasedir = new File(basedir);
-        storageBasedir = new File(basedir, "rhq-storage");
+        storageBasedir = new File(basedir, STORAGE_BASEDIR);
         logDir = new File(serverBasedir, "logs");
 
         Option hostname = new Option("n", "hostname", true,
@@ -227,6 +229,21 @@ public class StorageInstaller {
             commitLogDir = cmdLine.getOptionValue("commitlog", commitLogDir);
             dataDir = cmdLine.getOptionValue("data", dataDir);
             savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
+
+            // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
+            if (!isDirectoryEmpty(new File(commitLogDir))) {
+                log.error("Commitlog directory is not empty: " + commitLogDir);
+                return STATUS_DATA_DIR_NOT_EMPTY;
+            }
+            if (!isDirectoryEmpty(new File(dataDir))) {
+                log.error("Data directory is not empty: " + dataDir);
+                return STATUS_DATA_DIR_NOT_EMPTY;
+            }
+            if (!isDirectoryEmpty(new File(savedCachesDir))) {
+                log.error("Saved caches directory is not empty: " + savedCachesDir);
+                return STATUS_DATA_DIR_NOT_EMPTY;
+            }
+
             File logFile = new File(logDir, "rhq-storage.log");
 
             deploymentOptions.setBasedir(basedir.getAbsolutePath());
@@ -334,6 +351,15 @@ public class StorageInstaller {
                 log.info("Installation of the storage node is complete");
                 return STATUS_NO_ERRORS;
             }
+        }
+    }
+
+    private boolean isDirectoryEmpty(File dir) {
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            return (files == null || files.length == 0);
+        } else {
+            return true;
         }
     }
 

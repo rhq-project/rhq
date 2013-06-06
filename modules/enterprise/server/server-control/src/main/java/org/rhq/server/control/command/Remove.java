@@ -37,7 +37,11 @@ import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
 /**
- * @author John Sanda
+ * This command is registered on Windows only.  It performs Windows service removal.
+ * <p/>
+ * If we decide to enable this for Linux it is coded to by a synonym for stop. 
+ * 
+ * @author Jay Shaughnessy
  */
 public class Remove extends ControlCommand {
 
@@ -56,7 +60,7 @@ public class Remove extends ControlCommand {
 
     @Override
     public String getDescription() {
-        return "Removes RHQ services on Windows. Otherwise, same as Stop command";
+        return "Removes RHQ services on Windows.";
     }
 
     @Override

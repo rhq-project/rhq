@@ -177,9 +177,9 @@ public class StorageNodeTableView extends
         operationsMap.put("Start", "start");
         operationsMap.put("Shutdown", "shutdown");
         operationsMap.put("Restart", "restart");
-        operationsMap.put("Stop RPC Server", "stopRPCServer");
-        operationsMap.put("Start RPC Server", "startRPCServer");
-        operationsMap.put("Decommission", "decommission");
+        operationsMap.put("Disable Debug Mode", "stopRPCServer");
+        operationsMap.put("Enable Debug Mode", "startRPCServer");
+//        operationsMap.put("Decommission", "decommission");
 
         addTableAction(MSG.common_title_operation(), null, operationsMap, new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
@@ -194,11 +194,10 @@ public class StorageNodeTableView extends
                 final String operationName = (String) actionValue;
                 final List<String> selectedAddresses = getSelectedAddresses(selections);
 //                String message = MSG.view_adminTopology_message_setModeConfirm(selectedAddresses.toString(), mode.name());
-                SC.ask("Seriously?", new BooleanCallback() {
+                SC.ask("Are you sure, you want to run operation " + operationName + "?" , new BooleanCallback() {
                     public void execute(Boolean confirmed) {
                         if (confirmed) {
-                            SC.say("You've selected:\n\n" + selectedAddresses);
-                            final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {   
+                            final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {
                                 @Override
                                 public void execute() {
 //                                    Message msg = new Message(MSG.view_adminTopology_message_setMode(

@@ -41,6 +41,8 @@ import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -188,9 +190,10 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         
         cqlPortItem.setValue(storageNode.getCqlPort());
 
-        final SelectItem operationModeItem = new SelectItem(FIELD_OPERATION_MODE.propertyName(),
-            MSG.view_adminTopology_serverDetail_operationMode());
-        operationModeItem.setValueMap("NORMAL", "MAINTENANCE");
+//        final SelectItem operationModeItem = new SelectItem(FIELD_OPERATION_MODE.propertyName(),
+//            MSG.view_adminTopology_serverDetail_operationMode());
+//        operationModeItem.setValueMap("NORMAL", "MAINTENANCE");
+        final StaticTextItem operationModeItem = new StaticTextItem(FIELD_OPERATION_MODE.propertyName(), MSG.view_adminTopology_serverDetail_operationMode());
         operationModeItem.setValue(storageNode.getOperationMode());
 
         // make clickable link to associated resource
@@ -210,8 +213,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         installationDateItem.setValue(TimestampCellFormatter.format(Long.valueOf(storageNode.getCtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
-        StaticTextItem lastUpdatetem = new StaticTextItem(FIELD_MTIME.propertyName(), FIELD_MTIME.title());
-        lastUpdatetem.setValue(TimestampCellFormatter.format(Long.valueOf(storageNode.getMtime()),
+        StaticTextItem lastUpdateItem = new StaticTextItem(FIELD_MTIME.propertyName(), FIELD_MTIME.title());
+        lastUpdateItem.setValue(TimestampCellFormatter.format(Long.valueOf(storageNode.getMtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
         IButton saveButton = new IButton();
@@ -220,7 +223,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 if (form.validate()) {
-                    storageNode.setOperationMode(OperationMode.valueOf(operationModeItem.getValueAsString()));
+//                    storageNode.setOperationMode(OperationMode.valueOf(operationModeItem.getValueAsString()));
+                    storageNode.setOperationMode(OperationMode.valueOf((String) operationModeItem.getValue()));
                     SC.say(storageNode.toString());
                     // TODO: logic
                 }
@@ -228,7 +232,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         });
 
         form.setItems(nameItem, jmxPortItem, cqlPortItem, jmxConnectionUrlItem, operationModeItem, resourceItem,
-            installationDateItem, lastUpdatetem);
+            installationDateItem, lastUpdateItem);
 
         EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setPadding(5);
@@ -238,19 +242,45 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);
-        section.setItems(form, footer);
+        section.setItems(form/*, footer*/);
 
         detailsSection = section;
         initSectionCount++;
     }
 
     private void prepareLoadSection(SectionStack stack, final StorageNode storageNode) {
-        loadDataGrid = new ListGrid();
+        loadDataGrid = new ListGrid(){
+        @Override
+            protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
+                if ("avg".equals(getFieldName(colNum)) && record.getAttributeAsInt("id") == 1) {
+                    if (record.getAttributeAsFloat("avgFloat") > 85) {
+                        return "font-weight:bold; color:#d64949;";
+                    } else if (record.getAttributeAsFloat("avgFloat") > 70) {
+                        return "color:#ed9b26;";
+                    } else {
+                        return "color:#00ff00;";
+                    }
+                } else {
+                    return super.getCellCSSText(record, rowNum, colNum);
+                }
+            }
+        };
+        ListGridField idField = new ListGridField("id", "id");
+        idField.setHidden(true);
         ListGridField nameField = new ListGridField("name", MSG.common_title_metric());
         ListGridField minField = new ListGridField("min", MSG.view_resource_monitor_table_min());
         ListGridField avgField = new ListGridField("avg", MSG.view_resource_monitor_table_avg());
         ListGridField maxField = new ListGridField("max", MSG.view_resource_monitor_table_max());
+        ListGridField hoverField = new ListGridField("hover", "hover");
+        hoverField.setHidden(true);
         nameField.setWidth("40%");
+        nameField.setShowHover(true);
+        nameField.setHoverCustomizer(new HoverCustomizer() {
+            @Override
+            public String hoverHTML(Object o, ListGridRecord listGridRecord, int i, int i2) {
+                return listGridRecord.getAttribute("hover");
+            }
+        });
         loadDataGrid.setFields(nameField, minField, avgField, maxField);
 
         IButton refreshButton = new IButton();
@@ -280,58 +310,67 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
     @Override
     public void renderView(ViewPath viewPath) {
-        Log.debug("StorageNodeDetainView: " + viewPath);
+        Log.debug("StorageNodeDetailView: " + viewPath);
     }
 
-    private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name) {
+    private ListGridRecord makeListGridRecord(int id, MeasurementAggregateWithUnits aggregateWithUnits, String name, String hover) {
         ListGridRecord record = new ListGridRecord();
+        record.setAttribute("id", id);
         record.setAttribute("name", name);
         record.setAttribute("min", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
             aggregateWithUnits.getUnits(), true));
+        record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
         record.setAttribute("avg", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
-            aggregateWithUnits.getUnits(), true));
+                aggregateWithUnits.getUnits(), true));
         record.setAttribute("max", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
             aggregateWithUnits.getUnits(), true));
+        record.setAttribute("hover", hover);
         return record;
     }
 
     private void showFreshLoadData(final StorageNode node) {
         GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS,
-            new AsyncCallback<StorageNodeLoadComposite>() {
-                @SuppressWarnings("unchecked")
-                public void onSuccess(final StorageNodeLoadComposite loadComposite) {
+                new AsyncCallback<StorageNodeLoadComposite>() {
+                    @SuppressWarnings("unchecked")
+                    public void onSuccess(final StorageNodeLoadComposite loadComposite) {
                     ListGridRecord[] records = new ListGridRecord[6];
 
-                    List<List<Object>> loadFields = Arrays.<List<Object>> asList(
-                        Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Commited"),
-                        Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used"),
-                        Arrays.<Object> asList(loadComposite.getHeapPercentageUsed(), "Heap Used in Percent"),
-                        Arrays.<Object> asList(loadComposite.getLoad(), "Load (data stored on the node)"),
-                        Arrays.<Object> asList(loadComposite.getActuallyOwns(), "Token Ownership in Percent"));
+                    List<List<Object>> loadFields = Arrays.<List<Object>> asList(Arrays.<Object>asList(
+                            loadComposite.getHeapCommitted(), "Heap Maximum",
+                            "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option."),
+                            Arrays.<Object>asList(loadComposite.getHeapUsed(), "Heap Used",
+                                    "Amount of memory actually used by the RHQ storage node"), Arrays.<Object>asList(
+                            loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
+                            "This value is calculated by dividing Heap Used by Heap Maximum."), Arrays.<Object>asList(
+                            loadComposite.getLoad(), "Load", "Data stored on the node"), Arrays.<Object>asList(
+                            loadComposite.getActuallyOwns(), "Ownership",
+                            "Refers to the percentage of keys that a node owns."));
                     int i = 0;
                     for (List<Object> aggregateWithUnitsList : loadFields) {
                         if (aggregateWithUnitsList.get(0) != null) {
-                            records[i++] = makeListGridRecord(
+                            records[i] = makeListGridRecord(i,
                                 (MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
-                                (String) aggregateWithUnitsList.get(1));
+                                (String) aggregateWithUnitsList.get(1), (String) aggregateWithUnitsList.get(2));
+                            i++;
                         }
                     }
                     records[i] = new ListGridRecord();
+                    records[i].setAttribute("id", i);
                     records[i].setAttribute("name", "Number of Tokens");
+                    records[i].setAttribute("hover", "Number of partitions of the ring that a node owns.");
                     records[i].setAttribute("min", loadComposite.getTokens().getMin());
                     records[i].setAttribute("avg", loadComposite.getTokens().getAvg());
                     records[i].setAttribute("max", loadComposite.getTokens().getMax());
-
                     loadDataGrid.setData(records);
                 }
 
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
-                            + caught.getMessage(), caught);
-                    initSectionCount = SECTION_COUNT;
-                }
-            });
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                                MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                                        + caught.getMessage(), caught);
+                        initSectionCount = SECTION_COUNT;
+                    }
+                });
     }
 
 }

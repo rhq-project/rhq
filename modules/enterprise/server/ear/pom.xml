@@ -243,7 +243,58 @@
                     <filtering>true</filtering>
                     <defaultJavaBundleDir>lib</defaultJavaBundleDir>
                     <unpackTypes>war,ejb</unpackTypes>
+                    <initializeInOrder>true</initializeInOrder>
                     <modules>
+                        <!-- ** EJB-JARs -->
+                        <ejbModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-core-domain</artifactId>
+                            <bundleFileName>rhq-core-domain-ejb3.jar</bundleFileName>
+                        </ejbModule>
+
+                        <ejbModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-enterprise-server</artifactId>
+                            <bundleFileName>rhq-enterprise-server-ejb3.jar</bundleFileName>
+                        </ejbModule>
+
+                        <ejbClientModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-enterprise-server</artifactId>
+                            <excluded>true</excluded>
+                        </ejbClientModule>
+
+                        <!-- ** SARs -->
+
+                        <!-- AS7 allows for SARs embedded in an EAR without anything in application.xml -->
+                        <!-- see https://issues.jboss.org/browse/AS7-1248 -->
+                        <!-- The Maven ear plugin has a bug that causes SARs to be marked as <connector> modules -->
+                        <!-- and there is no way to tell it not to put the SAR in the application.xml so we have -->
+                        <!-- to do things with SARs separately using another maven plugin below -->
+                        <sarModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-enterprise-server-services-sar</artifactId>
+                            <bundleFileName>rhq-services.sar</bundleFileName>
+                            <excluded>true</excluded>
+                        </sarModule>
+
+                        <!--
+                        <sarModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-enterprise-server-agent-sar</artifactId>
+                            <bundleFileName>rhq-agent.sar</bundleFileName>
+                            <excluded>true</excluded>
+                        </sarModule>
+                        -->
+
+                        <!-- ** JARs -->
+                        <jarModule>
+                            <groupId>org.rhq.helpers</groupId>
+                            <artifactId>rhq-rtfilter</artifactId>
+                            <bundleDir>lib</bundleDir>
+                            <includeInApplicationXml>false</includeInApplicationXml>
+                        </jarModule>
+
                         <!-- ** WARs -->
                         <webModule>
                             <groupId>${project.groupId}</groupId>
@@ -288,56 +339,6 @@
                             <bundleFileName>rhq-remoting.war</bundleFileName>
                             <contextRoot>/jboss-remoting-servlet-invoker</contextRoot>
                         </webModule>
-
-                        <!-- ** EJB-JARs -->
-                        <ejbModule>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-enterprise-server</artifactId>
-                            <bundleFileName>rhq-enterprise-server-ejb3.jar</bundleFileName>
-                        </ejbModule>
-
-                        <ejbClientModule>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-enterprise-server</artifactId>
-                            <excluded>true</excluded>
-                        </ejbClientModule>
-
-                        <ejbModule>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-core-domain</artifactId>
-                            <bundleFileName>rhq-core-domain-ejb3.jar</bundleFileName>
-                        </ejbModule>
-
-                        <!-- ** SARs -->
-
-                        <!-- AS7 allows for SARs embedded in an EAR without anything in application.xml -->
-                        <!-- see https://issues.jboss.org/browse/AS7-1248 -->
-                        <!-- The Maven ear plugin has a bug that causes SARs to be marked as <connector> modules -->
-                        <!-- and there is no way to tell it not to put the SAR in the application.xml so we have -->
-                        <!-- to do things with SARs separately using another maven plugin below -->
-                        <sarModule>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-enterprise-server-services-sar</artifactId>
-                            <bundleFileName>rhq-services.sar</bundleFileName>
-                            <excluded>true</excluded>
-                        </sarModule>
-
-                        <!--
-                        <sarModule>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-enterprise-server-agent-sar</artifactId>
-                            <bundleFileName>rhq-agent.sar</bundleFileName>
-                            <excluded>true</excluded>
-                        </sarModule>
-                        -->
-
-                        <!-- ** JARs -->
-                        <jarModule>
-                            <groupId>org.rhq.helpers</groupId>
-                            <artifactId>rhq-rtfilter</artifactId>
-                            <bundleDir>lib</bundleDir>
-                            <includeInApplicationXml>false</includeInApplicationXml>
-                        </jarModule>
 
                     </modules>
                 </configuration>

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core;
 
@@ -47,8 +47,15 @@ import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * This listens for the RHQ server's shutdown notification and when it hears it, will start shutting down RHQ components
- * that need to clean up.
+ * <p>This listens for the RHQ server's shutdown notification and when it hears it, will start shutting down RHQ
+ * components that need to clean up.</p>
+ *
+ * <p>This session bean will depend on every over session bean in the deployment. Its class name is processed by the
+ * org.rhq.enterprise.startup.deployment.RhqShutdownDependenciesProcessor which is installed by the RHQ Startup
+ * Subsystem. This is completely AS7 specific and is a work around AS7 shutting down session beans in parallel.</p>
+ *
+ * <p><strong>DO NOT CHANGE THIS CLASS FULLY QUALIFIED NAME</strong> org.rhq.enterprise.server.core.ShutdownListener
+ * or make the change in the DUP accordingly.</p>
  *
  * @author John Mazzitelli
  * @author Jay Shaughnessy
@@ -75,13 +82,17 @@ public class ShutdownListener {
     @Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
     private DataSource dataSource;
 
+    @Resource(name = "NoTx_RHQ_DS", mappedName = RHQConstants.NO_TX_DATASOURCE_JNDI_NAME)
+    @SuppressWarnings("unused")
+    // Prevent the server from closing the NoTx datasource before RHQ EAR
+    // NoTxDS is used by  the Quartz scheduler
+    private DataSource noTxDataSource;
+
     private File shutdownTimeLogFile;
 
     /**
      * This is called when the shutdown notification is received from the JBoss server. This gives a chance for us to
      * cleanly shutdown our application in an orderly fashion.
-     *
-     * @see javax.management.NotificationListener#handleNotification(Notification, Object)
      */
     @PreDestroy
     public void handleNotification() {

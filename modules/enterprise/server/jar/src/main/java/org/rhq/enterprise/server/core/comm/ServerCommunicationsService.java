@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core.comm;
 
@@ -35,10 +35,17 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.prefs.Preferences;
 
-import javax.management.MBeanRegistration;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 
 import mazz.i18n.Logger;
 
@@ -70,6 +77,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.agentclient.impl.AgentClientImpl;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.remote.RemoteSafeInvocationHandler;
+import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -79,12 +87,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  */
-public class ServerCommunicationsService implements ServerCommunicationsServiceMBean, MBeanRegistration {
+@Singleton
+@Startup
+@LocalBean
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+public class ServerCommunicationsService implements ServerCommunicationsServiceMBean {
 
     /**
      * A log for subclasses to be able to use.
      */
-    private static Logger LOG = ServerI18NFactory.getLogger(ServerCommunicationsService.class);
+    private static final Logger LOG = ServerI18NFactory.getLogger(ServerCommunicationsService.class);
 
     private static final String DEFAULT_OVERRIDES_PROPERTIES_FILE = "server-comm-configuration-overrides.properties";
 
@@ -156,26 +169,6 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * The invocation handler used to process incoming remote API requests from things such as the CLI.
      */
     private RemoteSafeInvocationHandler m_remoteApiHandler;
-
-    /**
-     * Sets up some internal state.
-     *
-     * @see MBeanRegistration#preRegister(MBeanServer, ObjectName)
-     */
-    public ObjectName preRegister(MBeanServer mbs, ObjectName name) throws Exception {
-        m_mbs = mbs;
-
-        return name;
-    }
-
-    /**
-     * This method does nothing - it is a no-op.
-     *
-     * @see javax.management.MBeanRegistration#postRegister(java.lang.Boolean)
-     */
-    public void postRegister(Boolean arg0) {
-        return; // NO-OP
-    }
 
     /**
      * Actually starts the communications services. Once this returns, agents can communicate with the server. This
@@ -258,21 +251,18 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return m_started;
     }
 
-    /**
-     * This method does nothing - it is a no-op.
-     *
-     * @see javax.management.MBeanRegistration#preDeregister()
-     */
-    public void preDeregister() throws Exception {
-        return; // NO-OP
+    @PostConstruct
+    private void init() {
+        m_mbs = JMXUtil.getPlatformMBeanServer();
+        JMXUtil.registerMBean(this, OBJECT_NAME);
     }
 
     /**
      * Cleans up the internal state of this service.
-     *
-     * @see javax.management.MBeanRegistration#postDeregister()
      */
-    public void postDeregister() {
+    @PreDestroy
+    private void destroy() {
+        JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
         m_mbs = null;
         m_container = null;
         m_configuration = null;
@@ -283,8 +273,6 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         m_knownAgents.removeAllAgents();
         m_knownAgentClients.clear();
         m_started = false;
-
-        return;
     }
 
     @Override

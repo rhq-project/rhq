@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,23 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core.plugin;
 
 import java.io.File;
 import java.util.Date;
+
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,6 +41,7 @@ import org.rhq.core.clientapi.descriptor.AgentPluginDescriptorUtil;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
 
@@ -42,6 +53,11 @@ import org.rhq.enterprise.server.xmlschema.ServerPluginDescriptorUtil;
  *
  * @author John Mazzitelli
  */
+@Singleton
+@Startup
+@LocalBean
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
 
     private Log log = LogFactory.getLog(PluginDeploymentScanner.class);
@@ -331,6 +347,18 @@ public class PluginDeploymentScanner implements PluginDeploymentScannerMBean {
         }
 
         return;
+    }
+
+    @PostConstruct
+    private void init() {
+        JMXUtil.registerMBean(this, OBJECT_NAME);
+        setScanPeriod("${rhq.server.plugin-scan-period-ms:300000}");
+    }
+
+    @PreDestroy
+    private void destroy() {
+        stop();
+        JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
     }
 
 }

@@ -21,6 +21,7 @@
         <!-- additional modules that this subsystem depends on -->
         <module name="org.jboss.metadata"/>
         <module name="org.jboss.as.ee"/>
+        <module name="org.jboss.as.ejb3"/>
         <module name="org.jboss.as.web"/>
     </dependencies>
 

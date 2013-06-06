@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
@@ -44,12 +45,12 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MetricsTableView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
@@ -62,7 +63,7 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
  *
  * @author Mike Thompson
  */
-public class D3GraphListView extends AbstractD3GraphListView {
+public class D3ConsolidatedGraphListView extends D3GraphListView {
 
     private static int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
 
@@ -72,49 +73,54 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
     private VLayout vLayout;
+    private MetricsTableView metricsTableView;
 
-    public static D3GraphListView createMultipleGraphs(Resource resource, Set<Integer> definitionIds,
-        boolean showAvailabilityGraph) {
-
-        return new D3GraphListView(resource, definitionIds, showAvailabilityGraph);
-    }
-
-    public static D3GraphListView createSummaryMultipleGraphs(Resource resource, boolean monitorDetailView) {
-        return new D3GraphListView(resource, monitorDetailView);
-    }
-
-    public static D3GraphListView createSingleGraph(Resource resource, Integer measurementId,
+//    public static D3ConsolidatedGraphListView createMultipleGraphs(Resource resource, Set<Integer> definitionIds,
+//        boolean showAvailabilityGraph) {
+//
+//        return new D3ConsolidatedGraphListView(resource, definitionIds, showAvailabilityGraph);
+//    }
+//
+//    public static D3ConsolidatedGraphListView createSummaryMultipleGraphs(Resource resource, boolean monitorDetailView) {
+//        return new D3ConsolidatedGraphListView(resource, monitorDetailView);
+//    }
+//
+    public static D3ConsolidatedGraphListView createSingleGraph(Resource resource, Integer measurementId,
         boolean showAvailabilityGraph) {
         TreeSet<Integer> definitionIds = new TreeSet<Integer>();
         definitionIds.add(measurementId);
-        return new D3GraphListView(resource, definitionIds, showAvailabilityGraph);
+        return new D3ConsolidatedGraphListView(resource, definitionIds, showAvailabilityGraph);
 
     }
+//
+//    public static D3ConsolidatedGraphListView createSingleGraphNoAvail(Resource resource, Integer measurementId) {
+//        return D3ConsolidatedGraphListView.createSingleGraph(resource, measurementId, false);
+//    }
 
-    public static D3GraphListView createSingleGraphNoAvail(Resource resource, Integer measurementId) {
-        return D3GraphListView.createSingleGraph(resource, measurementId, false);
+    public static D3ConsolidatedGraphListView createSparklineGraphs(Resource resource, Integer measurementId) {
+        return D3ConsolidatedGraphListView.createSingleGraph(resource, measurementId, false);
     }
 
-    protected D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
-        super();
+    private D3ConsolidatedGraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
+        super(resource, definitionIds,showAvailabilityGraph);
         this.resource = resource;
-        commonConstructorSettings();
+        //commonConstructorSettings();
         this.definitionIds = definitionIds;
         this.showAvailabilityGraph = showAvailabilityGraph;
     }
 
-    protected D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
-        super();
+    private D3ConsolidatedGraphListView(Resource resource, boolean showAvailabilityGraph) {
+        super(resource, showAvailabilityGraph);
         this.resource = resource;
         this.showAvailabilityGraph = showAvailabilityGraph;
-        commonConstructorSettings();
+        //commonConstructorSettings();
         useSummaryData = true;
     }
 
-    private void commonConstructorSettings() {
-        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
-        setOverflow(Overflow.HIDDEN);
-    }
+//    private void commonConstructorSettings() {
+//        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
+//        setOverflow(Overflow.HIDDEN);
+//    }
 
     @Deprecated
     public void addSetButtonClickHandler(ClickHandler clickHandler) {
@@ -125,20 +131,18 @@ public class D3GraphListView extends AbstractD3GraphListView {
     @Override
     protected void onDraw() {
         super.onDraw();
-        Log.debug("D3GraphListView.onDraw() for: " + resource.getName());
+        Log.debug("D3ConsolidatedGraphListView.onDraw() for: " + resource.getName());
         destroyMembers();
 
         addMember(buttonBarDateTimeRangeEditor);
         buttonBarDateTimeRangeEditor.createDateSliderMarker();
 
-        if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));
             // first step in 2 step to create d3 chart
             // create a placeholder for avail graph
             availabilityGraph.createGraphMarker();
             addMember(availabilityGraph);
 
-        }
 
         vLayout = new VLayout();
         vLayout.setOverflow(Overflow.AUTO);
@@ -147,15 +151,15 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
         if (resource != null) {
             queryAndBuildGraphs();
+            metricsTableView = new MetricsTableView(resource.getId());
+            vLayout.addMember(metricsTableView);
         }
         addMember(vLayout);
     }
 
     public void redrawGraphs() {
         this.onDraw();
-        if(null != availabilityGraph){
             availabilityGraph.drawJsniChart();
-        }
     }
 
     @Override
@@ -257,7 +261,15 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                     // we only need the first metricData since we are only taking the
                                     // availability data set in there for the dropdowns already
                                     availabilityGraph.setAvailabilityList(availabilityList);
-                                    availabilityGraph.drawJsniChart();
+                                    new Timer(){
+                                        /**
+                                         * This method will be called when a timer fires. Override it to implement the timer's logic.
+                                         */
+                                        @Override
+                                        public void run() {
+                                            availabilityGraph.drawJsniChart();
+                                        }
+                                    }.schedule(200);
                                 }
                             }
 

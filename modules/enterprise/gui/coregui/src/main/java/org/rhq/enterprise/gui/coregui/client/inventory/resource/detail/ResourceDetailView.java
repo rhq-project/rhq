@@ -65,6 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.PluginConfigurationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3ConsolidatedGraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.ResourceSchedulesView;
@@ -260,6 +261,12 @@ public class ResourceDetailView extends
         return graphListView;
     }
 
+    protected D3GraphListView createD3ConsolidatedGraphListView() {
+        //@todo: remove hard coding
+        graphListView = D3ConsolidatedGraphListView.createSparklineGraphs(resourceComposite.getResource(), 1001);
+        return graphListView;
+    }
+
     @Override
     protected void updateTabContent(ResourceComposite resourceComposite, boolean isRefresh) {
         super.updateTabContent(resourceComposite, isRefresh);
@@ -405,7 +412,8 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MetricsTableView(resource.getId());
+                //return new MetricsTableView(resource.getId());
+                return createD3ConsolidatedGraphListView();
             }
         };
         updateSubTab(this.monitoringTab, this.metricsTables, visible, true, viewFactory);

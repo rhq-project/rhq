@@ -144,8 +144,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             @ApiParam(value = "Start time since epoch.", defaultValue = "End time - 8h") @QueryParam(
                     "startTime") long startTime,
             @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
-            @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue(
-                    "60") int dataPoints,
+            @ApiParam("Number of buckets") @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
             @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam(
                     "hideEmpty") boolean hideEmpty,
             @Context HttpHeaders headers) {
@@ -203,7 +202,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             @ApiParam(value = "Start time since epoch.", defaultValue = "End time - 8h") @QueryParam(
                     "startTime") long startTime,
             @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
-            @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue(
+            @ApiParam("Number of buckets") @QueryParam("dataPoints") @DefaultValue(
                     "60") int dataPoints,
             @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam(
                     "hideEmpty") boolean hideEmpty,
@@ -348,8 +347,12 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         @ApiParam("A comma separated list of schedule ids") @QueryParam("sid") String schedules,
         @ApiParam("Start time in ms since epoch. Default is now -8h") @QueryParam("startTime") long startTime,
         @ApiParam("End time in ms since epoch. Default is now") @QueryParam("endTime") long endTime,
+        @ApiParam("Number of buckets") @QueryParam("dataPoints") @DefaultValue( "60") int dataPoints,
         @ApiParam("Should empty datapoints be hidden") @DefaultValue("false") @QueryParam("hideEmpty") boolean hideEmpty,
         @Context HttpHeaders headers) {
+
+        if (dataPoints<=0)
+            throw new BadArgumentException("dataPoints","must be >0");
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
@@ -382,7 +385,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
                 throw new StuffNotFoundException("Schedule with id " + scheduleId);
             int definitionId = sched.getDefinition().getId();
             List<List<MeasurementDataNumericHighLowComposite>> listList =
-                dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,60);
+                dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,dataPoints);
             if (!listList.isEmpty()) {
                 MeasurementAggregate measurementAggregate = dataManager.getAggregate(caller,scheduleId,startTime,endTime);
                 List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
@@ -526,8 +529,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         @ApiParam(value = "Start time since epoch.", defaultValue = "End time - 8h") @QueryParam(
             "startTime") long startTime,
         @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
-        @ApiParam(value = "Include data points") @DefaultValue("false") @QueryParam(
-            "includeDataPoints") boolean includeDataPoints,
+        @ApiParam(value = "Include data points") @DefaultValue("false") @QueryParam("includeDataPoints") boolean includeDataPoints,
+        @ApiParam("Number of buckets (if include data points))") @QueryParam("dataPoints") @DefaultValue( "60") int dataPoints,
         @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam(
             "hideEmpty") boolean hideEmpty)
     {
@@ -555,7 +558,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             if (includeDataPoints) {
                 int definitionId = schedule.getDefinition().getId();
                 List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
-                        schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, 60); // TODO number data points
+                        schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, dataPoints);
 
                 if (!listList.isEmpty()) {
                     List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
@@ -801,6 +804,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
     private int findScheduleId(int resourceId, String metric) {
         CacheKey key = new CacheKey("schedulesForResource",resourceId);
+        @SuppressWarnings("unchecked")
         Map<String,Integer> schedulesForResource = (Map<String, Integer>) cache.get(key);
         if (schedulesForResource!=null && schedulesForResource.containsKey(metric)) {
             return schedulesForResource.get(metric);

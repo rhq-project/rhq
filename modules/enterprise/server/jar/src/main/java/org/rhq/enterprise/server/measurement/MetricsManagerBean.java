@@ -81,7 +81,15 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
         long endTime) {
         MetricsServer metricsServer = getMetricsServer();
-        return metricsServer.findDataForResource(scheduleId, beginTime, endTime);
+        return metricsServer.findDataForResource(scheduleId, beginTime, endTime,60);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
+        long endTime, int numberOfBuckets) {
+        MetricsServer metricsServer = getMetricsServer();
+        return metricsServer.findDataForResource(scheduleId, beginTime, endTime, numberOfBuckets);
     }
 
     @Override
@@ -107,7 +115,15 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     public List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
         long beginTime, long endTime) {
         MetricsServer metricsServer = getMetricsServer();
-        return metricsServer.findDataForGroup(scheduleIds, beginTime, endTime);
+        return metricsServer.findDataForGroup(scheduleIds, beginTime, endTime, 60);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
+        long beginTime, long endTime, int numberOfBuckets) {
+        MetricsServer metricsServer = getMetricsServer();
+        return metricsServer.findDataForGroup(scheduleIds, beginTime, endTime, numberOfBuckets);
     }
 
     private MetricsServer getMetricsServer() {

@@ -470,7 +470,7 @@
         <configuration>
           <ejbVersion>3.0</ejbVersion>
           <generateClient>true</generateClient>
-          <!-- We shoudn't need Class-Path manifest entry, at least when deployed in AS
+          <!-- We shouldn't need Class-Path manifest entry, at least when deployed in AS
                but we might need it for CLI. If we don't need the manifest entry in CLI,
                then we should uncomment this because we get annoying errors in AS7 logs
                with the manifest entry.
@@ -656,7 +656,7 @@
 
   <repositories>
     <repository>
-      <!-- TODO change when the annotations are puplished. This is temporary for the swagger annotations for REST-docu -->
+      <!-- TODO change when the annotations are published. This is temporary for the swagger annotations for REST-docu -->
       <id>sonatype-oss-snapshot</id>
       <name>Sonatype OSS Snapshot repository</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>

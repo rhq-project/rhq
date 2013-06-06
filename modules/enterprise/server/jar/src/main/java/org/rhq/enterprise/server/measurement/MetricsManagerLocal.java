@@ -54,8 +54,13 @@ public interface MetricsManagerLocal {
 
     Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime, long endTime);
 
+    Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime, long endTime, int numberOfBuckets);
+
     Iterable<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
         long beginTime, long endTime);
+
+    Iterable<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
+        long beginTime, long endTime, int numberOfBuckets);
 
     MeasurementAggregate getSummaryAggregate(int scheduleId, long beginTime, long endTime);
 

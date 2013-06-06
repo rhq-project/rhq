@@ -596,6 +596,61 @@ public class MetricsTest extends AbstractBase {
     }
 
     @Test
+    public void testGetAggregateForResourceNoDataPoints() throws Exception {
+
+        addDataToSchedule(1);
+
+        given()
+            .header(acceptJson)
+            .pathParam("resourceId", _platformId)
+            .queryParam("includeDataPoints",false)
+        .expect()
+            .statusCode(200)
+            .body("scheduleId", hasItem(numericScheduleId))
+            .body("[0].dataPoints", emptyIterable())
+            .body("[0].numDataPoints",is(0))
+            .log().everything()
+        .when()
+            .get("/metric/data/resource/{resourceId}");
+    }
+
+    @Test
+    public void testGetAggregateForResource77DataPoints() throws Exception {
+
+        addDataToSchedule(1);
+
+
+        JsonPath jp =
+        given()
+            .header(acceptJson)
+            .pathParam("resourceId", _platformId)
+            .queryParam("includeDataPoints",true)
+            .queryParam("dataPoints",77)
+        .expect()
+            .statusCode(200)
+            .body("scheduleId", hasItem(numericScheduleId))
+            .body("[0].dataPoints", iterableWithSize(77))
+            .body("[0].numDataPoints",is(77))
+            .log().everything()
+        .when()
+            .get("/metric/data/resource/{resourceId}")
+        .jsonPath();
+
+        List<Map<String,Object>> map = jp.getList("");
+        for (Map<String,Object> entry : map) {
+            if (((Integer)entry.get("scheduleId")) == numericScheduleId) {
+
+//                assert entry.get("avg").equals(1.5f) : "Expected an avg of 1.5, but was " + entry.get("avg");
+                assert entry.get("min").equals(1.5f) : "Expected an min of 1.5, but was " + entry.get("min");
+//                assert entry.get("max").equals(1.5f) : "Expected an max of 1.5, but was " + entry.get("max");
+                assert ((Integer)entry.get("numDataPoints"))==77;
+                System.out.println(entry);
+            }
+        }
+    }
+
+
+    @Test
     public void testGetAggregateForUnknownResource() throws Exception {
 
         Response r =
@@ -676,6 +731,142 @@ public class MetricsTest extends AbstractBase {
     }
 
     @Test
+    public void testGetDataForGroup() throws Exception {
+
+        Group group = new Group(X_TEST_GROUP);
+
+        Response resp =
+        given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+            .expect()
+                .statusCode(isOneOf(200,201))
+                .log().ifError()
+            .when()
+                .post("/group");
+
+
+        Group createdGroup = resp.as(Group.class);
+
+
+        // Determine location from response
+        int groupId = createdGroup.getId();
+
+        try {
+            // add the platform
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+                .pathParam("id", groupId)
+                .pathParam("resourceId",_platformId)
+            .expect()
+                .statusCode(HttpStatus.SC_OK)
+                .log().ifError()
+            .when()
+                .put("/group/{id}/resource/{resourceId}");
+
+            addDataToSchedule(1);
+
+
+            // Now get the data
+            given()
+                .header(acceptJson)
+                .pathParam("groupId", groupId)
+                .pathParam("defId",numericScheduleDefinitionId)
+            .expect()
+                .statusCode(200)
+                .body("dataPoints", iterableWithSize(60))
+                .body("numDataPoints",is(60))
+                .log().everything()
+            .when()
+                .get("/metric/data/group/{groupId}/{defId}");
+
+        }
+        finally {
+                    // delete the group again
+            given()
+                .pathParam("id",groupId)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .delete("/group/{id}");
+        }
+
+    }
+
+    @Test
+    public void testGetDataForGroup45Points() throws Exception {
+
+        Group group = new Group(X_TEST_GROUP);
+
+        Response resp =
+        given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+            .expect()
+                .statusCode(isOneOf(200,201))
+                .log().ifError()
+            .when()
+                .post("/group");
+
+
+        Group createdGroup = resp.as(Group.class);
+
+
+        // Determine location from response
+        int groupId = createdGroup.getId();
+
+        try {
+            // add the platform
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+                .pathParam("id", groupId)
+                .pathParam("resourceId",_platformId)
+            .expect()
+                .statusCode(HttpStatus.SC_OK)
+                .log().ifError()
+            .when()
+                .put("/group/{id}/resource/{resourceId}");
+
+            addDataToSchedule(1);
+
+
+            // Now get the data
+            given()
+                .header(acceptJson)
+                .pathParam("groupId", groupId)
+                .pathParam("defId",numericScheduleDefinitionId)
+                .queryParam("dataPoints",45)
+            .expect()
+                .statusCode(200)
+                .body("dataPoints", iterableWithSize(45))
+                .body("numDataPoints",is(45))
+                .log().everything()
+            .when()
+                .get("/metric/data/group/{groupId}/{defId}");
+
+        }
+        finally {
+                    // delete the group again
+            given()
+                .pathParam("id",groupId)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .delete("/group/{id}");
+        }
+
+    }
+
+
+    @Test
     public void testGetAggregateForUnknownGroup() throws Exception {
 
         given()
@@ -702,9 +893,10 @@ public class MetricsTest extends AbstractBase {
 
     }
 
-//    @Test Not yet - see https://bugzilla.redhat.com/show_bug.cgi?id=835647 TODO
-    public void testGetAggregate120Points() throws Exception {
+    @Test
+    public void testGetAggregate120PointsSchedule() throws Exception {
 
+        addDataToSchedule(34);
 
         Response r =
         given()
@@ -761,6 +953,27 @@ JsonPath jp =
         .expect()
             .statusCode(200)
             .log().ifError()
+//            .body("[0].min",closeTo(1.5,0.1))
+//            .body("[0].max",closeTo(46.0,0.1)) // We may have data already
+//            .body("[0].avg",notNullValue())
+        .when()
+            .get("/metric/data").jsonPath();
+    }
+
+    @Test
+    public void testGetMetricDataOneSchedule99Points() throws Exception {
+
+        int num = 13;
+        addDataToSchedule(num);
+JsonPath jp =
+        given()
+            .header(acceptJson)
+            .queryParam("sid", numericScheduleId)
+            .queryParam("dataPoints",99)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("[0].dataPoints",iterableWithSize(99))
 //            .body("[0].min",closeTo(1.5,0.1))
 //            .body("[0].max",closeTo(46.0,0.1)) // We may have data already
 //            .body("[0].avg",notNullValue())

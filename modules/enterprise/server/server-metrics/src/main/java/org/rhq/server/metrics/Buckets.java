@@ -93,9 +93,10 @@ public class Buckets {
         }
     }
 
+    // Default value
     private int numDataPoints = 60;
 
-    private Bucket[] buckets = new Bucket[numDataPoints];
+    private Bucket[] buckets;
 
     private long interval;
 
@@ -103,11 +104,20 @@ public class Buckets {
         this(beginTime.getMillis(), endTime.getMillis());
     }
 
-    public Buckets(long beginTime, long endTime) {
+    public Buckets(long beginTime, long endTime, int numberOfDataPoints) {
+        if (numberOfDataPoints<=0) {
+            throw new IllegalArgumentException("Number of buckets must be > 0");
+        }
+        numDataPoints = numberOfDataPoints;
+        buckets = new Bucket[numDataPoints];
         interval = (endTime - beginTime) / numDataPoints;
         for (int i = 1; i <= numDataPoints; ++i) {
             buckets[i - 1] = new Bucket(beginTime + (interval * (i - 1)), beginTime + (interval * i));
         }
+    }
+
+    public Buckets(long beginTime, long endTime) {
+        this(beginTime, endTime,60);
     }
 
     public int getNumDataPoints() {

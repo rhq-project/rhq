@@ -203,8 +203,8 @@ public class StartupBean implements StartupLocal {
         startPluginDeployer(); // make sure this is initialized before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         upgradeRhqUserSecurityDomainIfNeeded();
-        startServerCommunicationServices();
         initStorageClient();
+        startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
         //startAgentClients(); // this could be expensive if we have large number of agents so skip it and we'll create them lazily
@@ -434,6 +434,9 @@ public class StartupBean implements StartupLocal {
         }
     }
 
+    /**
+     * Initalizes the storage client subsystem which is needed for reading/writing metric data.
+     */
     private void initStorageClient() {
         storageClientManager.init();
     }

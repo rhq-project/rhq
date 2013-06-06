@@ -287,7 +287,7 @@ public class StorageInstaller {
                 for (String error : errors) {
                     log.error(error);
                 }
-                log.error("The installer will now exit due to previous errors.");
+                log.error("The storage installer will now exit due to previous errors.");
                 return STATUS_INVALID_FILE_PERMISSIONS;
             }
 
@@ -321,7 +321,7 @@ public class StorageInstaller {
                         } else {
                             log.error("Could not verify that the node is up and running.");
                             log.error("Check the log file at " + logFile + " for errors.");
-                            log.error("The installer will now exit");
+                            log.error("The storage installer will now exit");
                             return STATUS_FAILED_TO_VERIFY_NODE_UP;
                         }
                     } else {
@@ -344,7 +344,7 @@ public class StorageInstaller {
                     }
                     log.error("Please review your configuration for possible sources of errors such as port "
                         + "conflicts or invalid arguments/options passed to the java executable.");
-                    log.error("The installer will now exit.");
+                    log.error("The storage installer will now exit.");
                     return STATUS_STORAGE_NOT_RUNNING;
                 }
             } else {
@@ -593,7 +593,7 @@ public class StorageInstaller {
             for (String error : e.getErrors()) {
                 installer.log.error(error);
             }
-            installer.log.error("The installer is exiting due to previous errors.");
+            installer.log.error("The storage installer is exiting due to previous errors.");
             System.exit(1);
         } catch (ParseException e) {
             installer.printUsage();

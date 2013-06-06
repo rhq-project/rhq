@@ -45,6 +45,10 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
+import org.jboss.as.controller.client.ModelControllerClient;
+
+import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
+import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
@@ -407,7 +411,7 @@ public class Install extends ControlCommand {
 
     private void startRHQServerForInstallation() throws IOException {
         try {
-            log.info("Starting the RHQ server in preparation of running the installer");
+            log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(binDir);
@@ -436,21 +440,33 @@ public class Install extends ControlCommand {
             }
 
             // Wait for the server to complete it's startup
-            log.info("Waiting for server to complete its start up");
+            log.info("Waiting for the RHQ Server to start in preparation of running the server installer...");
             commandLine = getCommandLine("rhq-installer", "--test");
 
             Executor installerExecutor = new DefaultExecutor();
             installerExecutor.setWorkingDirectory(binDir);
             installerExecutor.setStreamHandler(new PumpStreamHandler());
 
-            // TODO add a max retries (probably want it to be configurable)
-            int exitCode = installerExecutor.execute(commandLine);
-            while (exitCode != 0) {
-                log.debug("Still waiting for server to complete its start up");
+            int exitCode = 0;
+            int numTries = 0, maxTries = 30;
+            do {
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                    // just keep going
+                }
+                if (numTries++ > maxTries) {
+                    throw new IOException("Failed to detect server initialization, max tries exceeded. Aborting...");
+                }
+                if (numTries > 1) {
+                    log.info("Still waiting to run the server installer...");
+                }
                 exitCode = installerExecutor.execute(commandLine);
-            }
 
-            log.info("The server start up has completed");
+            } while (exitCode != 0);
+
+            log.info("The RHQ Server is ready for the server installer to run.");
+
         } catch (IOException e) {
             log.error("An error occurred while starting the RHQ server: " + e.getMessage());
             throw e;
@@ -475,10 +491,36 @@ public class Install extends ControlCommand {
 
     private void waitForRHQServerToInitialize() throws Exception {
         try {
-            log.info("Waiting for RHQ server to initialize");
+            final long messageInterval = 30000L;
+            final long problemMessageInterval = 120000L;
+            long timerStart = System.currentTimeMillis();
+            long intervalStart = timerStart;
+
             while (!isRHQServerInitialized()) {
+                Long now = System.currentTimeMillis();
+
+                if ((now - intervalStart) > messageInterval) {
+                    long totalWait = (now - timerStart);
+
+                    if (totalWait < problemMessageInterval) {
+                        log.info("Still waiting for server to start...");
+
+                    } else {
+                        long minutes = totalWait / 60000;
+                        log.info("It has been over ["
+                            + minutes
+                            + "] minutes - you may want to ensure your server startup is proceeding as expected. You can check the log at ["
+                            + new File(basedir, "logs/server.log").getPath() + "].");
+
+                        timerStart = now;
+                    }
+
+                    intervalStart = now;
+                }
+
                 Thread.sleep(5000);
             }
+
         } catch (IOException e) {
             log.error("An error occurred while checking to see if the server is initialized: " + e.getMessage());
             throw e;
@@ -488,12 +530,29 @@ public class Install extends ControlCommand {
         }
     }
 
+    @SuppressWarnings("resource")
     private boolean isRHQServerInitialized() throws IOException {
-        File logDir = new File(basedir, "logs");
 
         BufferedReader reader = null;
+        ModelControllerClient mcc = null;
+        Properties props = new Properties();
 
         try {
+            File propsFile = new File(basedir, "bin/rhq-server.properties");
+            reader = new BufferedReader(new FileReader(propsFile));
+            props.load(reader);
+
+            String host = (String) props.get("jboss.bind.address.management");
+            int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
+            mcc = MCCHelper.getModelControllerClient(host, port);
+            DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
+            boolean isDeployed = client.isDeployment("rhq.ear");
+            return isDeployed;
+
+        } catch (Throwable t) {
+            log.debug("Falling back to logfile check due to: ", t);
+
+            File logDir = new File(basedir, "logs");
             reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
             String line = reader.readLine();
             while (line != null) {
@@ -506,6 +565,13 @@ public class Install extends ControlCommand {
             return false;
 
         } finally {
+            if (null != mcc) {
+                try {
+                    mcc.close();
+                } catch (Exception e) {
+                    // best effort                    
+                }
+            }
             if (null != reader) {
                 try {
                     reader.close();

@@ -63,6 +63,7 @@ public class Install extends ControlCommand {
 
     private final String AGENT_CONFIG_OPTION = "agent-config";
     private final String AGENT_PREFERENCE = "agent-preference";
+    private final String AGENT_NO_START = "agent-no-start";
 
     private final String SERVER_CONFIG_OPTION = "server-config";
 
@@ -111,6 +112,8 @@ public class Install extends ControlCommand {
                     + " storage installer. See example.storage.properties for examples.")
             .addOption(null, AGENT_PREFERENCE, true,
                 "An agent preference setting (whose argument is in the form 'name=value') to be set in the agent. More than one of these is allowed.")
+            .addOption(null, AGENT_NO_START, true,
+                "If an agent is to be installed it will, by default, also be started. However, if this option is set to true, the agent will not be started after it gets installed.")
             .addOption(null, STORAGE_DATA_ROOT_DIR, true,
                 "The root directory under which all storage data directories will be placed.");
     }
@@ -161,7 +164,11 @@ public class Install extends ControlCommand {
                     File agentBasedir = getAgentBasedir(commandLine);
                     installAgent(agentBasedir);
                     configureAgent(agentBasedir, commandLine);
-                    startAgent(agentBasedir);
+                    if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
+                        startAgent(agentBasedir);
+                    } else {
+                        log.info("The agent was installed but was told not to start automatically.");
+                    }
                 }
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
@@ -178,7 +185,11 @@ public class Install extends ControlCommand {
                         clearAgentPreferences();
                         installAgent(agentBasedir);
                         configureAgent(agentBasedir, commandLine);
-                        startAgent(agentBasedir);
+                        if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
+                            startAgent(agentBasedir);
+                        } else {
+                            log.info("The agent was installed but was told not to start automatically.");
+                        }
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
@@ -201,7 +212,11 @@ public class Install extends ControlCommand {
                         clearAgentPreferences();
                         installAgent(agentBasedir);
                         configureAgent(agentBasedir, commandLine);
-                        startAgent(agentBasedir);
+                        if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
+                            startAgent(agentBasedir);
+                        } else {
+                            log.info("The agent was installed but was told not to start automatically.");
+                        }
                     }
                 }
             }

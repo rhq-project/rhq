@@ -224,7 +224,7 @@ public class StorageNode implements Serializable {
 
     @Override
     public String toString() {
-        return "StorageNode [id=" + id + ", address=" + address + ", jmxPort=" + jmxPort + ", cqlPort=" + cqlPort
+        return "StorageNode[id=" + id + ", address=" + address + ", jmxPort=" + jmxPort + ", cqlPort=" + cqlPort
             + ", operationMode=" + operationMode + ", mtime=" + mtime + "]";
     }
 

@@ -90,7 +90,7 @@ import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
@@ -158,7 +158,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     private MetricsManagerLocal metricsManager;
 
     @EJB
-    private SessionManagerBean sessionManagerBean;
+    private StorageClientManagerBean storageClientManagerBean;
 
     @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;
@@ -228,7 +228,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             return;
         }
 
-        MetricsServer metricsServer = sessionManagerBean.getMetricsServer();
+        MetricsServer metricsServer = storageClientManagerBean.getMetricsServer();
         metricsServer.addNumericData(data, new RawDataInsertedCallback() {
 
             private ReentrantLock lock = new ReentrantLock();

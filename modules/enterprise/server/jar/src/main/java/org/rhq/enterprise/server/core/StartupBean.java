@@ -66,6 +66,7 @@ import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordi
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cassandra.CassandraClusterHeartBeatJob;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -135,6 +136,9 @@ public class StartupBean implements StartupLocal {
     @EJB
     private ShutdownListener shutdownListener;
 
+    @EJB
+    private StorageClientManagerBean storageClientManager;
+
     @Resource
     private TimerService timerService; // needed to schedule our plugin scanner
 
@@ -200,6 +204,7 @@ public class StartupBean implements StartupLocal {
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         upgradeRhqUserSecurityDomainIfNeeded();
         startServerCommunicationServices();
+        initStorageClient();
         startScheduler();
         scheduleJobs();
         //startAgentClients(); // this could be expensive if we have large number of agents so skip it and we'll create them lazily
@@ -427,6 +432,10 @@ public class StartupBean implements StartupLocal {
         } catch (SchedulerException e) {
             throw new RuntimeException("Cannot initialize the scheduler!", e);
         }
+    }
+
+    private void initStorageClient() {
+        storageClientManager.init();
     }
 
     /**

@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -83,7 +82,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
-    @PostConstruct
+//    @PostConstruct
     @Override
     public void scanForStorageNodes() {
         try {

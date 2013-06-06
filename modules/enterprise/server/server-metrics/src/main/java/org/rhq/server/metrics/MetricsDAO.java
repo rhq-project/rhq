@@ -93,6 +93,7 @@ public class MetricsDAO {
 
     public void initPreparedStatements() {
         log.info("Initializing prepared statements");
+        long startTime = System.currentTimeMillis();
 
         // If we at any point decide to support configurable TTLs then some of the
         // statements below will have to be updated and prepared again with the new TTL.
@@ -140,6 +141,9 @@ public class MetricsDAO {
             " WHERE bucket = ? AND time = ?");
 
         deleteIndexEntries = session.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND time = ?");
+
+        long endTime = System.currentTimeMillis();
+        log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
     }
 
     public ResultSetFuture insertRawData(MeasurementDataNumeric data) {

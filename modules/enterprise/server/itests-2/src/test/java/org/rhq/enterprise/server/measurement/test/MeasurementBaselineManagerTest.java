@@ -45,7 +45,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -71,7 +71,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private Subject overlord;
 
     @Inject
-    private SessionManagerBean cassandraSessionManager;
+    private StorageClientManagerBean storageClientManager;
 
     private MetricsDAO metricsDAO;
 
@@ -86,7 +86,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         this.baselineManager = LookupUtil.getMeasurementBaselineManager();
         this.oobManager = LookupUtil.getOOBManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
-        metricsDAO = cassandraSessionManager.getMetricsDAO();
+        metricsDAO = storageClientManager.getMetricsDAO();
 
         this.prepareScheduler();
         this.prepareForTestAgents();
@@ -645,7 +645,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 //        Query q = em.createNativeQuery(sql);
 //        q.executeUpdate();
         try {
-            Session session = cassandraSessionManager.getSession();
+            Session session = storageClientManager.getSession();
             session.execute("DELETE FROM " + MetricsTable.ONE_HOUR.getTableName() + " WHERE schedule_id = " +
                 schedule.getId());
         } catch (NoHostAvailableException e) {

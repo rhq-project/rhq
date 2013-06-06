@@ -36,7 +36,7 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -48,7 +48,7 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 public class MetricsManagerBean implements MetricsManagerLocal {
 
     @EJB
-    private SessionManagerBean sessionManager;
+    private StorageClientManagerBean sessionManager;
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

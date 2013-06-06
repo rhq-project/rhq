@@ -673,7 +673,7 @@ public class StartupBean implements StartupLocal {
 
         try {
             schedulerBean.scheduleRepeatingJob(CassandraClusterHeartBeatJob.JOB_NAME, jobGroup, jobDataMap,
-                CassandraClusterHeartBeatJob.class, true, false, 3000, 5000);
+                CassandraClusterHeartBeatJob.class, true, false, 3000, 1000 * 60);
         } catch (SchedulerException e) {
             String msg = "Unable to schedule " + CassandraClusterHeartBeatJob.class.getSimpleName() + " job. The "
                 + "server will reamin in maintenance mode without a manual override.";

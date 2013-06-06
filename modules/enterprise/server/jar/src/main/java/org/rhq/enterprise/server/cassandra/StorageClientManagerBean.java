@@ -85,13 +85,13 @@ public class StorageClientManagerBean {
     public void init() {
         if (initialized) {
             if (log.isDebugEnabled()) {
-                log.debug("Storage client is already initialized. Skipping initialization.");
+                log.debug("Storage client subsystem is already initialized. Skipping initialization.");
             }
             return;
         }
 
         if (log.isInfoEnabled()) {
-            log.info("Starting storage client initialization");
+            log.info("Initializing storage client subsystem");
         }
 
         String username = getRequiredStorageProperty(USERNAME_PROP);
@@ -148,6 +148,22 @@ public class StorageClientManagerBean {
         initMetricsServer();
 
         initialized = true;
+        log.info("Storage client subsystem is now initialized");
+    }
+
+    public void shutdown() {
+        if (!initialized) {
+            log.info("Storage client subsytem is already shut down. Skipping shutdown steps.");
+            return;
+        }
+
+        log.info("Shuttting down storage client subsystem");
+        metricsServer.shutdown();
+        metricsDAO = null;
+        metricsServer = null;
+        session.getCluster().shutdown();
+        session = null;
+        initialized = false;
     }
 
     private String getRequiredStorageProperty(String property) {

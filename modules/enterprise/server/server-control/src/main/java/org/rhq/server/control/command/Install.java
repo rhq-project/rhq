@@ -33,6 +33,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -428,6 +429,14 @@ public class Install extends ControlCommand {
         try {
             log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
+            // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
+            // to port 9999 for its native management subsystem. Make sure some other independent EAP server (or anything for that matter)
+            // isn't already listening to that port.
+            if (isPortInUse("127.0.0.1", 9999)) {
+                throw new IOException(
+                    "Something is already listening to port 9999 - shut it down before installing the server.");
+            }
+
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(binDir);
             executor.setStreamHandler(new PumpStreamHandler());
@@ -811,4 +820,20 @@ public class Install extends ControlCommand {
         }
     }
 
+    private boolean isPortInUse(String host, int port) {
+        boolean inUse;
+
+        try {
+            Socket testSocket = new Socket(host, port);
+            try {
+                testSocket.close();
+            } catch (Exception ignore) {
+            }
+            inUse = true;
+        } catch (Exception expected) {
+            inUse = false;
+        }
+
+        return inUse;
+    }
 }

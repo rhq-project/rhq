@@ -719,11 +719,13 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/")
-    @ApiOperation("Create a new resource as a child of an existing resource. If a handle is given, a content based resource is created.")
+    @ApiOperation(value = "Create a new resource as a child of an existing resource. ",
+        notes= "If a handle is given, a content based resource is created; the content identified by the handle is not removed from the content store." +
+            "If no handle is given, a resource is created from the data of the passed 'resource' object.")
     public Response createResource(
         @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") CreateCBRresourceRequest resource,
+        @ApiParam("A handle that identifies content that has been uploaded to the server before.") @QueryParam("handle") String handle,
         @Context HttpHeaders headers,
-        @QueryParam("handle") String handle,
         @Context UriInfo uriInfo) throws IOException
     {
 

@@ -25,12 +25,15 @@
 package org.rhq.server.control.command;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -82,9 +85,28 @@ public class Upgrade extends ControlCommand {
                 log.error("Exiting due to the previous errors");
                 return;
             }
+
+            updateServerPropertiesFile(commandLine);
+
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
         }
+    }
+
+    private void updateServerPropertiesFile(CommandLine commandLine) throws Exception {
+        File oldServerDir = getFromServerDir(commandLine);
+        File oldServerPropsFile = new File(oldServerDir, "bin/rhq-server.properties");
+        Properties oldServerProps = new Properties();
+        FileInputStream oldServerPropsFileInputStream = new FileInputStream(oldServerPropsFile);
+        try {
+            oldServerProps.load(oldServerPropsFileInputStream);
+        } finally {
+            oldServerPropsFileInputStream.close();
+        }
+
+        String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
+        PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
+        newServerPropsFile.update(oldServerProps);
     }
 
     private List<String> validateOptions(CommandLine commandLine) {

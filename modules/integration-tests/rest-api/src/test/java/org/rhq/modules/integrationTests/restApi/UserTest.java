@@ -213,6 +213,17 @@ public class UserTest extends AbstractBase {
     }
 
     @Test
+    public void testRemoveNonExistingResourceWithValidate() throws Exception {
+
+        given()
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+        .when()
+            .delete("/user/favorites/resource/1"); // RHQ resource ids are > 10k
+    }
+
+    @Test
     public void testAddNonExistingGroup() throws Exception {
 
         expect()
@@ -227,7 +238,19 @@ public class UserTest extends AbstractBase {
 
         expect()
             .statusCode(204)
-            .log().everything()
+            .log().ifError()
+        .when()
+            .delete("/user/favorites/group/1"); // RHQ group ids are > 10k
+    }
+
+    @Test
+    public void testRemoveNonExistingGroupWithValidate() throws Exception {
+
+        given()
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
         .when()
             .delete("/user/favorites/group/1"); // RHQ group ids are > 10k
     }

@@ -119,14 +119,21 @@ public class ContentTest extends AbstractBase {
         assert uploadedSize!=null;
         assert uploadedSize==size;
 
-        removeContent(handle);
+        removeContent(handle, false);
 
     }
 
     @Test
     public void testDeleteUnknownContent() throws Exception {
 
-        removeContent("Frobnitz");
+        removeContent("Frobnitz", false);
+
+    }
+
+    @Test
+    public void testDeleteUnknownContentWithVaildate() throws Exception {
+
+        removeContent("Frobnitz", true);
 
     }
 
@@ -245,7 +252,7 @@ public class ContentTest extends AbstractBase {
         } finally {
 
             // Remove the uploaded content
-            removeContent(handle);
+            removeContent(handle, false);
 
             System.out.println("\n  Content removed \n");
             System.out.flush();
@@ -269,7 +276,7 @@ public class ContentTest extends AbstractBase {
 
     }
 
-    private void removeContent(String handle) {
+    private void removeContent(String handle, boolean validate) {
         given()
             .pathParam("handle", handle)
             .header(acceptJson)
@@ -379,7 +386,7 @@ public class ContentTest extends AbstractBase {
             .when()
                 .put("/content/{handle}/plugins");
         } finally {
-            removeContent(handle);
+            removeContent(handle, false);
         }
 
     }
@@ -424,7 +431,7 @@ public class ContentTest extends AbstractBase {
             .when()
                 .put("/content/{handle}/plugins");
         } finally {
-            removeContent(handle);
+            removeContent(handle, false);
         }
 
     }
@@ -469,7 +476,7 @@ public class ContentTest extends AbstractBase {
             .when()
                 .put("/content/{handle}/plugins");
         } finally {
-            removeContent(handle);
+            removeContent(handle, false);
         }
 
     }

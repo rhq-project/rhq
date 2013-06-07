@@ -362,11 +362,21 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("definition/{id}")
-    @ApiOperation("Delete an alert definition")
-    public Response deleteDefinition(@ApiParam("Id of the definition to delete") @PathParam("id") int definitionId) {
+    @ApiOperation(value = "Delete an alert definition", notes = "This operation is by default idempotent, returning 204." +
+            "If you want to check if the definition existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Definition was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Definition did not exist and validate was set")
+    })
 
-        alertDefinitionManager.removeAlertDefinitions(caller, new int[]{definitionId});
+    public Response deleteDefinition(@ApiParam("Id of the definition to delete") @PathParam("id") int definitionId,
+                                     @ApiParam("Validate if the definition exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
+        int count = alertDefinitionManager.removeAlertDefinitions(caller, new int[]{definitionId});
+
+        if (count == 0 && validate) {
+            throw new StuffNotFoundException("Definition with id " + definitionId);
+        }
         return Response.noContent().build();
     }
 
@@ -427,16 +437,27 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("condition/{cid}")
-    @ApiOperation("Remove an alert condition")
+    @ApiOperation(value = "Remove an alert condition", notes = "This operation is by default idempotent, returning 204." +
+            "If you want to check if the condition existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Condition was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Condition did not exist and validate was set")
+    })
     public Response deleteCondition(
-        @ApiParam("The id of the condition to remove")@PathParam("cid") int conditionId) {
+        @ApiParam("The id of the condition to remove")@PathParam("cid") int conditionId,
+        @ApiParam("Validate if the condition exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
         Integer definitionId;
         try {
             definitionId = findDefinitionIdForConditionId(conditionId);
         }
         catch (NoResultException nre) {
-            return Response.noContent().build();
+            if (validate) {
+                throw new StuffNotFoundException("Condition with id " + conditionId);
+            }
+            else {
+                return Response.noContent().build();
+            }
         }
 
         AlertDefinition definition2;
@@ -834,9 +855,15 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("notification/{nid}")
-    @ApiOperation("Remove a notification definition")
+    @ApiOperation(value = "Remove a notification definition", notes = "This operation is by default idempotent, returning 204." +
+            "If you want to check if the notification existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Notification was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Notification did not exist and validate was set")
+    })
     public Response deleteNotification(
-        @ApiParam("The id of the notification definition to remove") @PathParam("nid") int notificationId) {
+        @ApiParam("The id of the notification definition to remove") @PathParam("nid") int notificationId,
+        @ApiParam("Validate if the notification exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
         if (notification!=null) {
@@ -847,6 +874,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             alertDefinitionManager.updateAlertDefinitionInternal(caller,definition.getId(),definition,true,true,true);
 
             entityManager.flush();
+        } else {
+            if (validate) {
+                throw new StuffNotFoundException("Notification with id "+ notificationId);
+            }
         }
         return Response.noContent().build();
     }

@@ -208,12 +208,23 @@ public class EventHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("/source/{id}")
-    @ApiOperation(value = "Delete the event source with the passed id")
-    public Response deleteEventSource(@ApiParam("Id of the source to delete") @PathParam("id")  int sourceId) {
+    @ApiOperation(value = "Delete the event source with the passed id", notes = "This operation is by default idempotent, returning 204." +
+                    "If you want to check if the source existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Source was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Source did not exist and validate was set")
+    })
+    public Response deleteEventSource(@ApiParam("Id of the source to delete") @PathParam("id")  int sourceId,
+                                      @ApiParam("Validate if the content exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
         EventSource source = em.find(EventSource.class,sourceId);
         if (source!=null) {
             em.remove(source); // We have a cascade delete on the events TODO make operation async ?
+        }
+        else {
+            if (validate) {
+                throw new StuffNotFoundException("Event source with id " + sourceId);
+            }
         }
 
         return Response.noContent().build();

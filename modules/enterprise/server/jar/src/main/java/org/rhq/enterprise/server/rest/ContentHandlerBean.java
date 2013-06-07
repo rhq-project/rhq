@@ -225,17 +225,25 @@ public class ContentHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("/{handle}")
-    @ApiOperation("Remove the content with the passed handle")
+    @ApiOperation(value = "Remove the content with the passed handle", notes = "This operation is by default idempotent, returning 204." +
+                "If you want to check if the content existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Content was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Content did not exist and validate was set")
+    })
     public Response removeUploadedContent(
-        @PathParam("handle") String handle
-        )
-    {
+        @PathParam("handle") String handle,
+        @ApiParam("Validate if the content exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
+
         File content = getFileForHandle(handle);
 
         Response.ResponseBuilder builder;
-        if (!content.exists())
+        if (!content.exists()) {
+            if (validate) {
+                throw new StuffNotFoundException("Content with handle " + handle);
+            }
             builder = Response.noContent();
-
+        }
         else {
             boolean deleted = content.delete();
             if (deleted)

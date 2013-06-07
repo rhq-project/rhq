@@ -391,12 +391,24 @@ public class EventTest extends AbstractBase {
 
     @Test
     public void testDeleteUnknownSource() throws Exception {
-            given()
-                .pathParam("id", 123)
-            .expect()
-                .statusCode(204)
-            .when()
-                .delete("/event/source/{id}");
+        given()
+            .pathParam("id", 123)
+        .expect()
+            .statusCode(204)
+        .when()
+            .delete("/event/source/{id}");
+
+    }
+
+    @Test
+    public void testDeleteUnknownSourceWithValidate() throws Exception {
+        given()
+            .pathParam("id", 123)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+        .when()
+            .delete("/event/source/{id}");
 
     }
 }

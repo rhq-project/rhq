@@ -1301,6 +1301,35 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testDeleteNonExistingDefinition() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/definition/{cid}");
+
+    }
+
+    @Test
+    public void testDeleteNonExistingDefinitionWithValidate() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .delete("/alert/definition/{cid}");
+
+    }
+
+    @Test
     public void testDeleteNonExistingNotification() throws Exception {
 
         given()
@@ -1314,6 +1343,20 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testDeleteNonExistingNotificationWithValidate() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .delete("/alert/notification/{cid}");
+    }
+
+    @Test
     public void testDeleteNonExistingCondition() throws Exception {
 
         given()
@@ -1321,6 +1364,20 @@ public class AlertTest extends AbstractBase {
             .pathParam("cid",14)
         .expect()
             .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/condition/{cid}");
+    }
+
+    @Test
+    public void testDeleteNonExistingConditionWithValidate() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
             .log().ifError()
         .when()
             .delete("/alert/condition/{cid}");

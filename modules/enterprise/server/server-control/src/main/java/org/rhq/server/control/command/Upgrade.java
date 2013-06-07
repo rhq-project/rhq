@@ -87,6 +87,11 @@ public class Upgrade extends ControlCommand {
                 return;
             }
 
+            if (isStorageInstalled() || isServerInstalled()) {
+                log.warn("RHQ is already installed so upgrade can not be performed.");
+                return;
+            }
+
             upgradeServer(commandLine);
 
         } catch (Exception e) {

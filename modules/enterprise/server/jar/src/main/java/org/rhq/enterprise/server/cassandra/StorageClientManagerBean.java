@@ -36,6 +36,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
 
 import org.apache.commons.logging.Log;
@@ -276,6 +277,7 @@ public class StorageClientManagerBean {
             Cluster cluster = new ClusterBuilder()
                 .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
                 .withCredentials(username, password)
+                .withCompression(ProtocolOptions.Compression.NONE)
                 .withPort(port)
                 .build();
             session = cluster.connect("rhq");

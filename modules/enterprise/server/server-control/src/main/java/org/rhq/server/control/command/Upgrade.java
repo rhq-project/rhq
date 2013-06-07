@@ -179,8 +179,8 @@ public class Upgrade extends ControlCommand {
     }
 
     static public File getFromServerDir(CommandLine commandLine) {
-        return (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) ? new File(
-            commandLine.getOptionValue(FROM_AGENT_DIR_OPTION)) : null;
+        return (commandLine.hasOption(FROM_SERVER_DIR_OPTION)) ? new File(
+            commandLine.getOptionValue(FROM_SERVER_DIR_OPTION)) : null;
     }
 
 }

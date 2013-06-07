@@ -95,10 +95,7 @@ public class Install extends ControlCommand {
                 "server",
                 false,
                 "Install RHQ server. If you have not yet installed an RHQ storage node somewhere in your network, you must specify --storage to install one.")
-            .addOption(
-                null,
-                "agent",
-                false,
+            .addOption(null, "agent", false,
                 "Install RHQ agent. The install directory will be: " + DEFAULT_AGENT_BASEDIR)
             .addOption(null, SERVER_CONFIG_OPTION, true,
                 "An alternate properties file to use in place of the default rhq-server.properties")
@@ -111,9 +108,15 @@ public class Install extends ControlCommand {
                 "A properties file with keys that correspond to option names "
                     + "of the storage installer. Each property will be translated into an option that is passed to the "
                     + " storage installer. See example.storage.properties for examples.")
-            .addOption(null, AGENT_PREFERENCE, true,
+            .addOption(
+                null,
+                AGENT_PREFERENCE,
+                true,
                 "An agent preference setting (whose argument is in the form 'name=value') to be set in the agent. More than one of these is allowed.")
-            .addOption(null, AGENT_NO_START, true,
+            .addOption(
+                null,
+                AGENT_NO_START,
+                true,
                 "If an agent is to be installed it will, by default, also be started. However, if this option is set to true, the agent will not be started after it gets installed.")
             .addOption(null, STORAGE_DATA_ROOT_DIR, true,
                 "The root directory under which all storage data directories will be placed.");
@@ -154,12 +157,18 @@ public class Install extends ControlCommand {
 
                 if (!isStorageInstalled()) {
                     installStorageNode(getStorageBasedir(commandLine), commandLine);
+                } else if (isWindows()) {
+                    installWindowsService(binDir, "rhq-storage");
                 }
+
                 if (!isServerInstalled()) {
                     startRHQServerForInstallation();
                     installRHQServer();
                     waitForRHQServerToInitialize();
+                } else if (isWindows()) {
+                    installWindowsService(binDir, "rhq-server");
                 }
+
                 if (!isAgentInstalled()) {
                     clearAgentPreferences();
                     File agentBasedir = getAgentBasedir(commandLine);
@@ -170,12 +179,20 @@ public class Install extends ControlCommand {
                     } else {
                         log.info("The agent was installed but was told not to start automatically.");
                     }
+                } else if (isWindows()) {
+                    installWindowsService(new File(basedir, "rhq-agent/bin"), "rhq-agent-wrapper");
                 }
+
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        log.warn("The RHQ storage node is already installed in " + new File(basedir, "storage"));
-                        log.warn("Skipping storage node installation.");
+                        log.info("The RHQ storage node is already installed in " + new File(basedir, "storage"));
+
+                        if (isWindows()) {
+                            installWindowsService(binDir, "rhq-storage");
+                        } else {
+                            log.info("Skipping storage node installation.");
+                        }
                     } else {
                         replaceServerPropertiesIfNecessary(commandLine);
                         installStorageNode(getStorageBasedir(commandLine), commandLine);
@@ -193,10 +210,17 @@ public class Install extends ControlCommand {
                         }
                     }
                 }
+
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
                         log.warn("The RHQ server is already installed.");
-                        log.warn("Skipping server installation.");
+
+                        if (isWindows()) {
+                            installWindowsService(binDir, "rhq-server");
+                        } else {
+                            log.info("Skipping server installation.");
+                        }
+
                     } else {
                         replaceServerPropertiesIfNecessary(commandLine);
                         startRHQServerForInstallation();
@@ -204,10 +228,17 @@ public class Install extends ControlCommand {
                         waitForRHQServerToInitialize();
                     }
                 }
+
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled() && !commandLine.hasOption(STORAGE_OPTION)) {
-                        log.warn("The RHQ agent is already installed in " + new File(basedir, "rhq-agent"));
-                        log.warn("Skipping agent installation");
+                        log.info("The RHQ agent is already installed in " + new File(basedir, "rhq-agent"));
+
+                        if (isWindows()) {
+                            installWindowsService(new File(basedir, "rhq-agent/bin"), "rhq-agent-wrapper");
+                        } else {
+                            log.info("Skipping agent installation.");
+                        }
+
                     } else {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
@@ -224,6 +255,22 @@ public class Install extends ControlCommand {
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the install command", e);
         }
+    }
+
+    private void installWindowsService(File workingDir, String batFile) throws Exception {
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(workingDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
+
+        commandLine = getCommandLine(batFile, "stop");
+        executor.execute(commandLine);
+
+        commandLine = getCommandLine(batFile, "remove");
+        executor.execute(commandLine);
+
+        commandLine = getCommandLine(batFile, "install");
+        executor.execute(commandLine);
     }
 
     private List<String> validateOptions(CommandLine commandLine) {

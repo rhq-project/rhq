@@ -82,7 +82,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                     barOffset = 2,
                     chartData,
                     interpolation = "basis",
-                    avg, min, peak,
+                    avgRaw, avg, minRaw, min, peakRaw, peak,
                     oobMax,
                     determineLowBound,
                     lowBound,
@@ -134,24 +134,29 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                         chartData = chartContext.data;
                     }
 
-                    avg = $wnd.d3.mean(chartContext.data.map(function (d) {
+                    avgRaw = chartContext.data.filter(function (d) {
+                        if (d.nodata !== 'true') {
+                            return d.y;
+                        }
+                    });
+                    avg = $wnd.d3.mean(avgRaw.map(function (d) {
                         return d.y;
                     }));
-                    peak = $wnd.d3.max(chartContext.data.map(function (d) {
-                        if (d.high != undefined) {
+                    peakRaw = chartContext.data.filter(function (d) {
+                        if (d.nodata !== 'true') {
                             return d.high;
                         }
-                        else {
-                            return 0;
-                        }
+                    });
+                    peak = $wnd.d3.max(peakRaw.map(function (d) {
+                            return d.high;
                     }));
-                    min = $wnd.d3.min(chartContext.data.map(function (d) {
-                        if (d.low != undefined) {
+                    minRaw = chartContext.data.filter(function (d) {
+                        if (d.nodata !== 'true') {
                             return d.low;
                         }
-                        else {
-                            return Number.MAX_VALUE;
-                        }
+                    });
+                    min = $wnd.d3.min(minRaw.map(function (d) {
+                            return d.low;
                     }));
                     // adjust the min scale so blue low line is not in axis
                     determineLowBound = function (min, peak) {

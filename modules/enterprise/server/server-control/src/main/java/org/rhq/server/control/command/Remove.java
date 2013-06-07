@@ -117,7 +117,7 @@ public class Remove extends ControlCommand {
         log.debug("Stopping RHQ storage node");
 
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
@@ -147,7 +147,7 @@ public class Remove extends ControlCommand {
         log.debug("Stopping RHQ server");
 
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 

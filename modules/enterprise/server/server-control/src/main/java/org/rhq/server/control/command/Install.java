@@ -70,9 +70,8 @@ public class Install extends ControlCommand {
 
     private final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
-    private final File DEFAULT_STORAGE_BASEDIR = new File(basedir, STORAGE_BASEDIR_NAME);
-
-    private final File DEFAULT_AGENT_BASEDIR = new File(basedir, AGENT_BASEDIR_NAME);
+    private final File DEFAULT_STORAGE_BASEDIR = new File(getBaseDir(), STORAGE_BASEDIR_NAME);
+    private final File DEFAULT_AGENT_BASEDIR = new File(getBaseDir(), AGENT_BASEDIR_NAME);
 
     private Options options;
 
@@ -158,7 +157,7 @@ public class Install extends ControlCommand {
                 if (!isStorageInstalled()) {
                     installStorageNode(getStorageBasedir(commandLine), commandLine);
                 } else if (isWindows()) {
-                    installWindowsService(binDir, "rhq-storage");
+                    installWindowsService(getBinDir(), "rhq-storage");
                 }
 
                 if (!isServerInstalled()) {
@@ -166,7 +165,7 @@ public class Install extends ControlCommand {
                     installRHQServer();
                     waitForRHQServerToInitialize();
                 } else if (isWindows()) {
-                    installWindowsService(binDir, "rhq-server");
+                    installWindowsService(getBinDir(), "rhq-server");
                 }
 
                 if (!isAgentInstalled()) {
@@ -180,16 +179,16 @@ public class Install extends ControlCommand {
                         log.info("The agent was installed but was told not to start automatically.");
                     }
                 } else if (isWindows()) {
-                    installWindowsService(new File(basedir, "rhq-agent/bin"), "rhq-agent-wrapper");
+                    installWindowsService(new File(getBaseDir(), "rhq-agent/bin"), "rhq-agent-wrapper");
                 }
 
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        log.info("The RHQ storage node is already installed in " + new File(basedir, "storage"));
+                        log.info("The RHQ storage node is already installed in " + new File(getBaseDir(), "storage"));
 
                         if (isWindows()) {
-                            installWindowsService(binDir, "rhq-storage");
+                            installWindowsService(getBinDir(), "rhq-storage");
                         } else {
                             log.info("Skipping storage node installation.");
                         }
@@ -216,7 +215,7 @@ public class Install extends ControlCommand {
                         log.warn("The RHQ server is already installed.");
 
                         if (isWindows()) {
-                            installWindowsService(binDir, "rhq-server");
+                            installWindowsService(getBinDir(), "rhq-server");
                         } else {
                             log.info("Skipping server installation.");
                         }
@@ -231,10 +230,10 @@ public class Install extends ControlCommand {
 
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled() && !commandLine.hasOption(STORAGE_OPTION)) {
-                        log.info("The RHQ agent is already installed in " + new File(basedir, "rhq-agent"));
+                        log.info("The RHQ agent is already installed in " + new File(getBaseDir(), "rhq-agent"));
 
                         if (isWindows()) {
-                            installWindowsService(new File(basedir, "rhq-agent/bin"), "rhq-agent-wrapper");
+                            installWindowsService(new File(getBaseDir(), "rhq-agent/bin"), "rhq-agent-wrapper");
                         } else {
                             log.info("Skipping agent installation.");
                         }
@@ -413,7 +412,7 @@ public class Install extends ControlCommand {
             }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitCode = executor.execute(commandLine);
@@ -485,7 +484,7 @@ public class Install extends ControlCommand {
             }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
             org.apache.commons.exec.CommandLine commandLine;
 
@@ -515,7 +514,7 @@ public class Install extends ControlCommand {
             commandLine = getCommandLine("rhq-installer", "--test");
 
             Executor installerExecutor = new DefaultExecutor();
-            installerExecutor.setWorkingDirectory(binDir);
+            installerExecutor.setWorkingDirectory(getBinDir());
             installerExecutor.setStreamHandler(new PumpStreamHandler());
 
             int exitCode = 0;
@@ -550,7 +549,7 @@ public class Install extends ControlCommand {
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             executor.execute(commandLine, new DefaultExecuteResultHandler());
@@ -581,7 +580,7 @@ public class Install extends ControlCommand {
                         log.info("It has been over ["
                             + minutes
                             + "] minutes - you may want to ensure your server startup is proceeding as expected. You can check the log at ["
-                            + new File(basedir, "logs/server.log").getPath() + "].");
+                            + new File(getBaseDir(), "logs/server.log").getPath() + "].");
 
                         timerStart = now;
                     }
@@ -601,7 +600,6 @@ public class Install extends ControlCommand {
         }
     }
 
-    @SuppressWarnings("resource")
     private boolean isRHQServerInitialized() throws IOException {
 
         BufferedReader reader = null;
@@ -609,7 +607,7 @@ public class Install extends ControlCommand {
         Properties props = new Properties();
 
         try {
-            File propsFile = new File(basedir, "bin/rhq-server.properties");
+            File propsFile = new File(getBaseDir(), "bin/rhq-server.properties");
             reader = new BufferedReader(new FileReader(propsFile));
             props.load(reader);
 
@@ -623,7 +621,7 @@ public class Install extends ControlCommand {
         } catch (Throwable t) {
             log.debug("Falling back to logfile check due to: ", t);
 
-            File logDir = new File(basedir, "logs");
+            File logDir = new File(getBaseDir(), "logs");
             reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
             String line = reader.readLine();
             while (line != null) {
@@ -666,13 +664,13 @@ public class Install extends ControlCommand {
                 .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath());
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(basedir);
+            executor.setWorkingDirectory(getBaseDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitValue = executor.execute(commandLine);
             log.info("The agent installer finished running with exit value " + exitValue);
 
-            new File(basedir, "rhq-agent-update.log").delete();
+            new File(getBaseDir(), "rhq-agent-update.log").delete();
         } catch (IOException e) {
             log.error("An error occurred while running the agent installer: " + e.getMessage());
             throw e;
@@ -680,7 +678,7 @@ public class Install extends ControlCommand {
     }
 
     private File getAgentInstaller() {
-        File agentDownloadDir = new File(basedir,
+        File agentDownloadDir = new File(getBaseDir(),
             "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
         return agentDownloadDir.listFiles(new FileFilter() {
             @Override

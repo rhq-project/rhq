@@ -119,7 +119,7 @@ public class Status extends ControlCommand {
             Executor executor = new DefaultExecutor();
             executor.setStreamHandler(new PumpStreamHandler());
             org.apache.commons.exec.CommandLine commandLine;
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "status");
             try {
                 executor.execute(commandLine);
@@ -146,7 +146,7 @@ public class Status extends ControlCommand {
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "status");
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         executor.execute(commandLine);
     }

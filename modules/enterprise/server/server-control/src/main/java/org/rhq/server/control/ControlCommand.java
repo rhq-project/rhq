@@ -51,24 +51,18 @@ import org.rhq.core.util.stream.StreamUtil;
 public abstract class ControlCommand {
 
     public static final String SERVER_OPTION = "server";
-
     public static final String STORAGE_OPTION = "storage";
-
     public static final String AGENT_OPTION = "agent";
-
     public static final String RHQ_STORAGE_BASEDIR_PROP = "rhq.storage.basedir";
-
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
-    protected final String STORAGE_BASEDIR_NAME = "rhq-storage";
-
-    protected final String AGENT_BASEDIR_NAME = "rhq-agent";
+    protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
+    protected static final String AGENT_BASEDIR_NAME = "rhq-agent";
 
     protected final Log log = LogFactory.getLog(getClass().getName());
 
-    protected File basedir;
-
-    protected File binDir;
+    private File basedir;
+    private File binDir;
 
     private PropertiesConfiguration rhqctlConfig;
 
@@ -132,17 +126,27 @@ public abstract class ControlCommand {
         return list;
     }
 
+    protected File getBaseDir() {
+        return this.basedir;
+    }
+
+    protected File getBinDir() {
+        return this.binDir;
+    }
+
     protected File getStorageBasedir() {
         return new File(
-            getProperty(RHQ_STORAGE_BASEDIR_PROP, new File(basedir, STORAGE_BASEDIR_NAME).getAbsolutePath()));
+getProperty(RHQ_STORAGE_BASEDIR_PROP,
+            new File(getBaseDir(), STORAGE_BASEDIR_NAME).getAbsolutePath()));
     }
 
     protected File getAgentBasedir() {
-        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP, new File(basedir, AGENT_BASEDIR_NAME).getAbsolutePath()));
+        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP,
+            new File(getBaseDir(), AGENT_BASEDIR_NAME).getAbsolutePath()));
     }
 
     protected boolean isServerInstalled() {
-        File markerFile = new File(basedir, "jbossas/standalone/data/rhq.installed");
+        File markerFile = new File(getBaseDir(), "jbossas/standalone/data/rhq.installed");
 
         return markerFile.exists();
     }

@@ -130,7 +130,7 @@ public class Console extends ControlCommand {
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         executor.execute(commandLine);
     }
@@ -138,7 +138,7 @@ public class Console extends ControlCommand {
     private void startAgentInForeground() throws Exception {
         log.info("Starting RHQ agent in foreground");
 
-        File agentHomeDir = new File(basedir, "rhq-agent");
+        File agentHomeDir = new File(getBaseDir(), AGENT_BASEDIR_NAME);
         File agentBinDir = new File(agentHomeDir, "bin");
         File confDir = new File(agentHomeDir, "conf");
         File agentConfigFile = new File(confDir, "agent-configuration.xml");

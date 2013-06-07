@@ -119,7 +119,7 @@ public class Start extends ControlCommand {
         org.apache.commons.exec.CommandLine commandLine;
 
         if (isWindows()) {
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "start");
             try {
                 executor.execute(commandLine);
@@ -151,7 +151,7 @@ public class Start extends ControlCommand {
         log.debug("Starting RHQ server");
 
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
 

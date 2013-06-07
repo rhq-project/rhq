@@ -34,6 +34,7 @@ import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.file.FileUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -86,14 +87,30 @@ public class Upgrade extends ControlCommand {
                 return;
             }
 
-            updateServerPropertiesFile(commandLine);
+            upgradeServer(commandLine);
 
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
         }
     }
 
-    private void updateServerPropertiesFile(CommandLine commandLine) throws Exception {
+    private void upgradeServer(CommandLine commandLine) throws Exception {
+        // copy all the old settings into the new rhq-server.properties file
+        upgradeServerPropertiesFile(commandLine);
+
+        // RHQ doesn't ship the Oracle driver. If the user uses Oracle, they have their own driver so we need to copy it over.
+        // Because the module.xml has the driver name in it, we need to copy the full Oracle JDBC driver module content.
+        String oracleModuleRelativePath = "modules/org/rhq/oracle";
+        File oldServerDir = getFromServerDir(commandLine);
+        File oldOracleModuleDir = new File(oldServerDir, oracleModuleRelativePath);
+        if (oldOracleModuleDir.isDirectory()) {
+            File newOracleModuleDir = new File(getBaseDir(), oracleModuleRelativePath);
+            FileUtil.purge(newOracleModuleDir, false); // clean out anything that might be in here
+            FileUtil.copyDirectory(oldOracleModuleDir, newOracleModuleDir);
+        }
+    }
+
+    private void upgradeServerPropertiesFile(CommandLine commandLine) throws Exception {
         File oldServerDir = getFromServerDir(commandLine);
         File oldServerPropsFile = new File(oldServerDir, "bin/rhq-server.properties");
         Properties oldServerProps = new Properties();
@@ -103,6 +120,8 @@ public class Upgrade extends ControlCommand {
         } finally {
             oldServerPropsFileInputStream.close();
         }
+
+        oldServerProps.setProperty("rhq.autoinstall.database", "auto"); // the old value could have been "overwrite" - NOT what we want when upgrading
 
         String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);

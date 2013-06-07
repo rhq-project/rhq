@@ -420,6 +420,10 @@ public class Install extends ControlCommand {
             return exitCode;
         } catch (IOException e) {
             log.error("An error occurred while running the storage installer: " + e.getMessage());
+            if (e.getMessage().toLowerCase().contains("exit value: 3")) {
+                log.error("Try to point your root data directory via [" + STORAGE_DATA_ROOT_DIR
+                    + "] to a directory where you have read and write permissions.");
+            }
             throw e;
         }
     }

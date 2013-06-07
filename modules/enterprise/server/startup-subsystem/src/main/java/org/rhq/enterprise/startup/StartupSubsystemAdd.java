@@ -28,6 +28,7 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.PER
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.URL;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.URL;
 
 import org.jboss.as.controller.AbstractAddStepHandler;
@@ -71,6 +72,9 @@ class StartupSubsystemAdd extends AbstractAddStepHandler {
                 boolean explodedDeployment = true; // this is here just to keep the code around that deploys if we are unexploded
                 if (explodedDeployment) {
                     String urlString = new File(url.toURI()).getAbsolutePath();
+                    if (!(new File(urlString).exists())) {
+                        throw new FileNotFoundException("Missing the EAR at [" + urlString + "]");
+                    }
                     contentItem.get(PATH).set(urlString);
                     contentItem.get(ARCHIVE).set(false);
                 } else {
@@ -88,7 +92,7 @@ class StartupSubsystemAdd extends AbstractAddStepHandler {
                 return;
             }
         } catch (Exception e) {
-            throw new OperationFailedException("The RHQ EAR failed to be deployed", e);
+            throw new OperationFailedException("The RHQ EAR failed to be deployed: " + e, e);
         }
     }
 

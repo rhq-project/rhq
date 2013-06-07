@@ -45,6 +45,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor2;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
@@ -112,7 +113,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     }
 
     private void commonConstructorSettings() {
-        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor2(measurementUserPrefs,this);
         setOverflow(Overflow.HIDDEN);
     }
 
@@ -125,11 +126,11 @@ public class D3GraphListView extends AbstractD3GraphListView {
     @Override
     protected void onDraw() {
         super.onDraw();
-        Log.debug("D3GraphListView.onDraw() for: " + resource.getName());
+        Log.debug("D3GraphListView.onDraw() for: " + resource.getName()+ " id: "+ resource.getId());
         destroyMembers();
 
         addMember(buttonBarDateTimeRangeEditor);
-        buttonBarDateTimeRangeEditor.createDateSliderMarker();
+        buttonBarDateTimeRangeEditor.createButtons();
 
         if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));

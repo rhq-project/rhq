@@ -262,8 +262,7 @@ public class ResourceDetailView extends
     }
 
     protected D3GraphListView createD3ConsolidatedGraphListView() {
-        //@todo: remove hard coding
-        graphListView = D3ConsolidatedGraphListView.createSparklineGraphs(resourceComposite.getResource(), 1001);
+        graphListView = D3ConsolidatedGraphListView.createSparklineGraphs(resourceComposite.getResource());
         return graphListView;
     }
 

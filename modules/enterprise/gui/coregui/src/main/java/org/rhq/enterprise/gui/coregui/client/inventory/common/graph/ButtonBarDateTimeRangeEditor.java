@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
@@ -39,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferenceName
  *
  * @author Mike Thompson
  */
+@Deprecated
 public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     private MeasurementUserPreferences measurementUserPreferences;
@@ -53,6 +55,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences.getMetricRangePreferences();
         Log.debug("ButtonBarDateTimeRangeEditor initialized with start: "+ prefs.begin +" end: "+prefs.end);
+        Log.debug("ButtonBarDateTimeRangeEditor initialized with start Date: "+ new Date(prefs.begin) +" end Date: "+new Date(prefs.end));
     }
 
     /**

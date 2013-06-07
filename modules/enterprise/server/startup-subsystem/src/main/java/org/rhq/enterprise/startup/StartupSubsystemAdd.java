@@ -67,6 +67,9 @@ class StartupSubsystemAdd extends AbstractAddStepHandler {
                 Module module = Module.forClass(getClass());
 
                 URL url = module.getExportedResource(StartupExtension.DEPLOYMENT_APP_EAR);
+                if (url == null) {
+                    throw new FileNotFoundException("Could not find the EAR");
+                }
                 ModelNode contentItem = new ModelNode();
 
                 boolean explodedDeployment = true; // this is here just to keep the code around that deploys if we are unexploded

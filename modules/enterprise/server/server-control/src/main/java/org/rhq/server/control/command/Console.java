@@ -50,7 +50,7 @@ public class Console extends ControlCommand {
     public Console() {
         options = new Options().addOption(null, "storage", false, "Start the RHQ storage node in the foreground")
             .addOption(null, "server", false, "Start the RHQ server in the foreground")
-            .addOption(null, "agent", false, "Start the RHQ agent in the foreground");
+            .addOption(null, "agent", false, "Start the RHQ agent in the foreground (unsupported)");
     }
 
     @Override
@@ -60,7 +60,7 @@ public class Console extends ControlCommand {
 
     @Override
     public String getDescription() {
-        return "Starts an RHQ service in the foreground. Only one of the following options should be specified.";
+        return "Starts an RHQ service in the foreground. Only --server or --storage is supported.";
     }
 
     @Override
@@ -130,7 +130,7 @@ public class Console extends ControlCommand {
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         executor.execute(commandLine);
     }
@@ -138,7 +138,7 @@ public class Console extends ControlCommand {
     private void startAgentInForeground() throws Exception {
         log.info("Starting RHQ agent in foreground");
 
-        File agentHomeDir = new File(basedir, "rhq-agent");
+        File agentHomeDir = new File(getBaseDir(), AGENT_BASEDIR_NAME);
         File agentBinDir = new File(agentHomeDir, "bin");
         File confDir = new File(agentHomeDir, "conf");
         File agentConfigFile = new File(confDir, "agent-configuration.xml");

@@ -107,12 +107,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
-//        if (criteria == null) {
-//            response.setTotalRows(0);
-//            processResponse(request.getRequestId(), response);
-//            return;
-//        }
-        GWTServiceLookup.getTopologyService().findStorageNodesByCriteria(criteria, new AsyncCallback<PageList<StorageNode>>() {
+        GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria, new AsyncCallback<PageList<StorageNode>>() {
             public void onSuccess(PageList<StorageNode> result) {
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());

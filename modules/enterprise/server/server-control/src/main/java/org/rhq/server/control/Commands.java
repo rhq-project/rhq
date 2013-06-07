@@ -25,6 +25,7 @@
 
 package org.rhq.server.control;
 
+import java.io.File;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -34,9 +35,11 @@ import org.apache.commons.cli.Options;
 
 import org.rhq.server.control.command.Console;
 import org.rhq.server.control.command.Install;
+import org.rhq.server.control.command.Remove;
 import org.rhq.server.control.command.Start;
 import org.rhq.server.control.command.Status;
 import org.rhq.server.control.command.Stop;
+import org.rhq.server.control.command.Upgrade;
 
 /**
  * @author John Sanda
@@ -55,8 +58,12 @@ public class Commands {
         registerCommand(new Start());
         registerCommand(new Stop());
         registerCommand(new Status());
-        // registerCommand(new Remove());  TODO: Do we need this? Maybe use would just use individual .bat files...
         registerCommand(new Console());
+        // Add the service removal command only on windows
+        if (File.separatorChar == '\\') {
+            registerCommand(new Remove());
+        }
+        registerCommand(new Upgrade());
     }
 
     private void registerCommand(ControlCommand command) {
@@ -69,17 +76,11 @@ public class Commands {
             if (cmd.getOptions().getOptions().isEmpty()) {
                 options.addOption(OptionBuilder.withDescription(cmd.getDescription()).create(cmd.getName()));
             } else if (cmd.getOptions().getOptions().size() == 1) {
-                options.addOption(OptionBuilder
-                    .withArgName("[options]")
-                    .hasOptionalArg()
-                    .withDescription(cmd.getDescription())
-                    .create(cmd.getName()));
+                options.addOption(OptionBuilder.withArgName("[options]").hasOptionalArg()
+                    .withDescription(cmd.getDescription()).create(cmd.getName()));
             } else {
-                options.addOption(OptionBuilder
-                    .withArgName("[options]")
-                    .hasOptionalArgs()
-                    .withDescription(cmd.getDescription())
-                    .create(cmd.getName()));
+                options.addOption(OptionBuilder.withArgName("[options]").hasOptionalArgs()
+                    .withDescription(cmd.getDescription()).create(cmd.getName()));
             }
         }
         return options;

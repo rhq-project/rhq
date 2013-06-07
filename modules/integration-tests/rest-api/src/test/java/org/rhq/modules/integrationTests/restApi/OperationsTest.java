@@ -454,4 +454,38 @@ public class OperationsTest extends AbstractBase {
         .when()
             .put("/operation/{id}");
     }
+
+    @Test
+    public void testDeleteBadOperationHistory() throws Exception {
+
+        given()
+            .pathParam("id","bla-44-15")
+        .expect()
+            .statusCode(406)
+        .when()
+            .delete("/operation/history/{id}");
+    }
+
+    @Test
+    public void testDeleteUnknownOperationHistory() throws Exception {
+
+        given()
+            .pathParam("id","bla_=_44_=_15")
+        .expect()
+            .statusCode(204)
+        .when()
+            .delete("/operation/history/{id}");
+    }
+
+    @Test
+    public void testDeleteUnknownOperationHistoryWithValidate() throws Exception {
+
+        given()
+            .pathParam("id","bla_=_44_=_15")
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+        .when()
+            .delete("/operation/history/{id}");
+    }
 }

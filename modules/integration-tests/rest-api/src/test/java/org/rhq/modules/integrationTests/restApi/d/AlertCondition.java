@@ -15,8 +15,12 @@ public class AlertCondition {
     private String comparator;
     private int measurementDefinition;
 
-    public AlertCondition(String name, String category) {
-        this.name = name;
+    public AlertCondition(String category) {
+        this.category = category;
+    }
+
+    public AlertCondition(String category, String operatorName) {
+        this.name = operatorName;
         this.category = category;
     }
 

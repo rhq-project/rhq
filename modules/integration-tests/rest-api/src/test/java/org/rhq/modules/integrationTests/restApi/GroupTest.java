@@ -99,9 +99,9 @@ public class GroupTest extends AbstractBase {
         .expect()
             .statusCode(200)
             .log().ifError()
-            .header("Link",nullValue())
-            .body("pageSize",is(2))
-            .body("currentPage",is(0))
+            .header("Link", nullValue())
+            .body("pageSize", is(2))
+            .body("currentPage", is(0))
         .when()
             .get("/group");
     }
@@ -175,6 +175,105 @@ public class GroupTest extends AbstractBase {
         .when()
                 .delete("/group/{id}");
 
+    }
+
+    @Test
+    public void testCreateGroupTwice() throws Exception {
+        Group group = new Group(X_TEST_GROUP);
+
+        // create the group
+        Response created =
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(group)
+        .expect()
+            .statusCode(HttpStatus.SC_CREATED)
+            .log().ifError()
+        .when()
+            .post("/group");
+
+        // Determine location from response
+        // and compare id with the found group below
+        String location = created.header("Location");
+        int createdId = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
+
+        try {
+            Group group2 =
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+            .when()
+                .post("/group")
+            .as(Group.class);
+
+            assert group2 != null;
+            assert group2.getName().equals(group.getName());
+            assert group2.getId() == createdId;
+        }
+
+        finally {
+        // delete the group again
+        given()
+            .pathParam("id",createdId)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/group/{id}");
+        }
+
+    }
+
+    @Test
+    public void testCreateGroupBadResourceType() throws Exception {
+        Group group = new Group(X_TEST_GROUP);
+        group.setResourceTypeId(42);
+
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(group)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .post("/group");
+    }
+
+    @Test
+    public void testCreateGroupNoBody() throws Exception {
+
+        // create the group
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .post("/group");
+    }
+
+    @Test
+    public void testCreateGroupNoName() throws Exception {
+
+        Group group = new Group();
+
+        // create the group
+        given()
+            .body(group)
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .post("/group");
     }
 
     @Test
@@ -439,7 +538,52 @@ public class GroupTest extends AbstractBase {
                 .pathParam("id",id)
                 .pathParam("resourceId",_platformId)
             .expect()
-                .statusCode(HttpStatus.SC_OK)
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .delete("/group/{id}/resource/{resourceId}");
+
+        }
+        finally {
+            // delete the group
+            given()
+                .pathParam("id",id)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .delete("/group/{id}");
+        }
+    }
+
+    @Test
+    public void testRemoveUnknonwResourceFromGroup() throws Exception {
+        Group group = new Group(X_TEST_GROUP);
+
+        // Generate the group
+        Response response =
+        given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(group)
+            .expect()
+                .statusCode(HttpStatus.SC_CREATED)
+                .log().ifError()
+            .when()
+                .post("/group");
+
+        String location = response.header("Location");
+        int id = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
+
+        try {
+
+            // and remove resource again
+            given()
+                .header(acceptJson)
+                .pathParam("id",id)
+                .pathParam("resourceId",42)
+            .expect()
+                .statusCode(404)
                 .log().ifError()
             .when()
                 .delete("/group/{id}/resource/{resourceId}");
@@ -455,6 +599,31 @@ public class GroupTest extends AbstractBase {
             .when()
                     .delete("/group/{id}");
         }
+    }
+
+    @Test
+    public void testDeleteUnknownGroup() throws Exception {
+
+        given()
+            .pathParam("id",13)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/group/{id}");
+    }
+
+    @Test
+    public void testDeleteUnknownGroupValidate() throws Exception {
+
+        given()
+            .pathParam("id",13)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .delete("/group/{id}");
     }
 
     @Test
@@ -687,37 +856,5 @@ public class GroupTest extends AbstractBase {
                 .when()
                 .delete("/group/definition/" + defintionId);
         }
-    }
-
-    @Test
-    public void testCreatingBadGroup1() throws Exception {
-
-        given()
-            .contentType(ContentType.XML)
-            .header(acceptJson)
-        .expect()
-            .statusCode(406)
-        .when()
-            .post("/group/");
-
-    }
-
-    @Test
-    public void testCreatingBadGroup2() throws Exception {
-
-        Group group = new Group();
-        group.setCategory("COMPATIBLE");
-        group.setResourceTypeId(10001);
-
-        given()
-            .contentType(ContentType.JSON)
-            .header(acceptJson)
-            .body(group)
-        .expect()
-            .statusCode(406)
-            .log().everything()
-        .when()
-            .post("/group/");
-
     }
 }

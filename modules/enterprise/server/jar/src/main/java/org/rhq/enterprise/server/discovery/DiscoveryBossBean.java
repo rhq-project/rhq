@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.discovery;
 
@@ -90,6 +90,7 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
@@ -154,6 +155,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private PluginManagerLocal pluginManager;
     @EJB
     private AvailabilityManagerLocal availabilityManager;
+    @EJB
+    private StorageNodeManagerLocal storageNodeManager;
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
     @TransactionAttribute(TransactionAttributeType.NEVER)
@@ -651,7 +654,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
-     * @param resource NotNull 
+     * @param resource NotNull
      * @param upgradeRequest
      * @param allowGenericPropertiesUpgrade name and description are only upgraded if this is true
      * @return response to the upgrade request detailing what has been accepted on the server side
@@ -745,11 +748,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     /**
      * <p>Should Not Be Called With Existing Transaction !!!</p>
-     *  
+     *
      * <p>Merges the specified resource and its children into inventory. If the resource already exists in inventory,
      * it is updated; if it does not already exist in inventory, it is added and its parent is set to the specified, already inventoried,
      * parent resource.</p>
-     * 
+     *
      * <p>Does not require an existing transaction.  The resource and each child will be merged in an isolated
      * transaction</p>
      *
@@ -866,7 +869,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     /**
      * Recursively set the agent on the resource tree.
-     *  
+     *
      * @param resource pojo, the parent
      * @param agent pojo, the agent
      */
@@ -879,7 +882,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     /**
      * <p>Requires A Transaction</p>
-     * 
+     *
      * Given a resource, will attempt to find it in the server's inventory (that is, finds it in the database). If the
      * given resource's ID does not exist in the database, it will be looked up by its resource key. If the resource
      * cannot be found either via ID or resource key then SIDE EFFECT: the given resource's ID will be reset to 0 and null
@@ -938,7 +941,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             while (null != parent && null == existingResource) {
                 parent = parent.getParentResource();
 
-                // check if the parent is in inventory. This might not be the case during initial sync-up for resource upgrade. 
+                // check if the parent is in inventory. This might not be the case during initial sync-up for resource upgrade.
                 Resource existingParent = null;
                 if (null != parent) {
                     int parentId = parent.getId();
@@ -1162,7 +1165,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Resource parentResource = null;
 
         if (null != parentId) {
-            // look in our map cache first 
+            // look in our map cache first
             if (null != parentMap) {
                 parentResource = parentMap.get(parentId);
             }
@@ -1235,6 +1238,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             if (!isParentCommitted) {
                 parentResource.setInventoryStatus(InventoryStatus.COMMITTED);
             }
+
+            storageNodeManager.linkResource(resource);
 
             return;
         }

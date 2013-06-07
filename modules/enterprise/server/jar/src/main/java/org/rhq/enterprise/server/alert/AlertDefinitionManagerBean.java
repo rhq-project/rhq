@@ -226,7 +226,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             // they should have already been attached to the resourceType or resourceGroup by the caller
 
             // use proxy trick to subvert having to load the entire resource into memory
-            // Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);            
+            // Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
             alertDefinition.setResource(new Resource(resourceId));
         }
 
@@ -327,7 +327,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
             // TODO GH: Can be more efficient
-            if (checkPermission(subject, alertDefinition)) {
+            if (alertDefinition!=null && checkPermission(subject, alertDefinition)) {
                 alertDefinition.setDeleted(true);
                 modifiedCount++;
 

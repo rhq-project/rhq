@@ -66,12 +66,12 @@ import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
+import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerLocal;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionAlreadyExistsException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionCreateException;
@@ -111,7 +111,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
     @ApiOperation(value = "List all groups", multiValueResponse = true, responseClass = "GroupRest")
     public Response getGroups(@ApiParam("String to search in the group name") @QueryParam("q") String q,
                               @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
-                              @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+                              @ApiParam("Page number for paging, 0-based") @QueryParam("page") Integer page,
                               @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -266,24 +266,43 @@ public class GroupHandlerBean extends AbstractRestBean  {
             putToCache(resourceGroup.getId(),ResourceGroup.class,resourceGroup);
         }
         catch (Exception e) {
-            builder = Response.status(Response.Status.NOT_ACCEPTABLE); // TODO correct?
+            builder = Response.status(Response.Status.NOT_ACCEPTABLE);
         }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        builder.type(mediaType);
+
         return builder.build();
     }
 
     @DELETE
     @Path("{id}")
-    @ApiOperation(value="Delete the group with the passed id")
-    public Response deleteGroup(@ApiParam("Id of the group to delete") @PathParam("id") int id) {
+    @ApiOperation(value="Delete the group with the passed id", notes = "This operation is by default idempotent, returning 204." +
+        "If you want to check if the group existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Group was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Group did not exist and validate was set")
+    })
+    public Response deleteGroup(@ApiParam("Id of the group to delete") @PathParam("id") int id,
+                                @ApiParam("Validate if the group exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
+        Response.ResponseBuilder builder;
         try {
             resourceGroupManager.deleteResourceGroup(caller,id);
             removeFromCache(id,ResourceGroup.class);
+            builder = Response.noContent();
+        } catch (ResourceGroupNotFoundException e) {
+            if (validate) {
+                builder = Response.status(Response.Status.NOT_FOUND);
+            } else {
+                builder = Response.noContent();
+            }
         } catch (ResourceGroupDeleteException e) {
-            e.printStackTrace();  // TODO: Customise this generated block
-            return Response.serverError().build(); // TODO what exactly ?
+            builder = Response.serverError();
+            builder.entity(e.getMessage());
         }
-        return Response.noContent().build();
+
+        return builder.build();
     }
 
     @GZIP
@@ -320,7 +339,9 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
     @PUT
     @Path("{id}/resource/{resourceId}")
-    @ApiOperation(value="Add a resource to an existing group")
+    @ApiOperation(value="Add a resource to an existing group", notes = "If you have created the group as " +
+        "a compatible group and a resource type was provided on creation, only resources with this type" +
+        "may be added.")
     @ApiErrors({
             @ApiError(code = 404,reason = "If there is no resource or group with the passed id "),
             @ApiError(code = 409,reason =" Resource type does not match the group one")
@@ -329,6 +350,8 @@ public class GroupHandlerBean extends AbstractRestBean  {
                                 @ApiParam("Id of the resource to add") @PathParam("resourceId") int resourceId,
                                 @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+
         ResourceGroup resourceGroup = fetchGroup(id, false);
         Resource res = resourceManager.getResource(caller,resourceId);
         if (res==null)
@@ -336,8 +359,11 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
         // A resource type is set for the group, so only allow to add resources with the same type.
         if (resourceGroup.getResourceType()!=null) {
-            if (!res.getResourceType().equals(resourceGroup.getResourceType()))
-                return Response.status(Response.Status.CONFLICT).build();
+            if (!res.getResourceType().equals(resourceGroup.getResourceType())) {
+                Response.ResponseBuilder status = Response.status(Response.Status.CONFLICT);
+                status.type(mediaType);
+                return status.build();
+            }
         }
 
         // TODO if comp group and no resourceTypeId set, shall we allow to have it change to a mixed group?
@@ -346,33 +372,40 @@ public class GroupHandlerBean extends AbstractRestBean  {
         resourceGroup = fetchGroup(id, false);
         GroupRest gr = fillGroup(resourceGroup,uriInfo);
 
-        Response.ResponseBuilder builder = Response.ok(); // TODO right code?
+        Response.ResponseBuilder builder = Response.ok();
         builder.entity(gr);
-        builder.type(headers.getAcceptableMediaTypes().get(0));
+        builder.type(mediaType);
         return builder.build();
 
     }
 
     @DELETE
     @Path("{id}/resource/{resourceId}")
-    @ApiOperation("Remove the resource with the passed id from the group")
+    @ApiOperation(value = "Remove the resource with the passed id from the group", notes = "This operation is by default idempotent, returning 204" +
+        "even if the resource was not member of the group." +
+                        "If you want to check if the resource existed at all, you need to pass the 'validate' query parameter.")
     @ApiErrors({
         @ApiError(code = 404, reason = "Group with the passed id does not exist"),
-        @ApiError(code = 404, reason = "Resource with the passed id does not exist")
+        @ApiError(code = 404, reason = "Resource with the passed id does not exist"),
+        @ApiError(code = 204, reason = "Resource was removed from the group or was no member and validation was not set"),
+        @ApiError(code = 404, reason = "Resource was no member of the group and validate was set")
     })
     public Response removeResource(@ApiParam("Id of the existing group") @PathParam("id") int id,
                                    @ApiParam("Id of the resource to remove") @PathParam("resourceId") int resourceId,
-                                   @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+                                   @ApiParam("Validate if the resource exists in the group") @QueryParam(
+                                       "validate") @DefaultValue("false") boolean validate) {
 
         ResourceGroup resourceGroup = fetchGroup(id, false);
         Resource res = resourceManager.getResource(caller, resourceId);
         if (res==null)
             throw new StuffNotFoundException("Resource with id " + resourceId);
 
-        resourceGroup.removeExplicitResource(res);
+        boolean removed = resourceGroup.removeExplicitResource(res);
+        if (!removed && validate) {
+            throw new StuffNotFoundException("Resource " + resourceId + " in group " + id);
+        }
 
-        return Response.ok().build(); // TODO right code?
-
+        return Response.noContent().build();
     }
 
     @GET
@@ -502,21 +535,38 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
     @DELETE
     @Path("/definition/{id}")
-    @ApiOperation("Delete the GroupDefinition with the passed id")
+    @ApiOperation(value = "Delete the GroupDefinition with the passed id", notes = "This operation is by default idempotent, returning 204." +
+                        "If you want to check if the definition existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Definition was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Definition did not exist and validate was set")
+    })
     public Response deleteGroupDefinition(
-            @ApiParam("The id of the definition to delete") @PathParam("id") int definitionId,
-            @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+        @ApiParam("The id of the definition to delete") @PathParam("id") int definitionId,
+        @ApiParam("Validate if the definition exists") @QueryParam("validate") @DefaultValue("false") boolean validate,
+        @Context HttpHeaders headers) {
 
+        Response.ResponseBuilder builder;
         try {
             GroupDefinition def = definitionManager.getById(definitionId);
             definitionManager.removeGroupDefinition(caller,definitionId);
-            return Response.noContent().build(); // Return 206, as we don't include a body
+            builder = Response.noContent();
         } catch (GroupDefinitionNotFoundException e) {
-            // Idem potent
-            return Response.noContent().build(); // Return 206, as we don't include a body
+            if (validate) {
+                builder = Response.status(Response.Status.NOT_FOUND);
+                builder.entity("Definition with id " + definitionId);
+            }
+            else {
+                builder = Response.noContent();
+            }
         } catch (GroupDefinitionDeleteException e) {
-            throw new StuffNotFoundException("Group definition with id " + definitionId);
+            builder = Response.status(Response.Status.INTERNAL_SERVER_ERROR);
+            builder.entity(e.getMessage());
         }
+        MediaType type = headers.getAcceptableMediaTypes().get(0);
+        builder.type(type);
+
+        return builder.build();
     }
 
     @POST

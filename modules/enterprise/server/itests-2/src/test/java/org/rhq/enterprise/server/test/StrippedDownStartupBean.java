@@ -24,8 +24,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
+import javax.ejb.EJB;
 import javax.ejb.Singleton;
 
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.core.StartupBean;
 import org.rhq.enterprise.server.naming.NamingHack;
 
@@ -35,6 +37,9 @@ import org.rhq.enterprise.server.naming.NamingHack;
  */
 @Singleton
 public class StrippedDownStartupBean {
+
+    @EJB
+    StorageClientManagerBean storageClientManager;
 
     private void secureNaming() {
         NamingHack.bruteForceInitialContextFactoryBuilder();
@@ -50,6 +55,8 @@ public class StrippedDownStartupBean {
         //
         // jsanda
         loadCassandraConnectionProps();
+
+        storageClientManager.init();
     }
 
     public void loadCassandraConnectionProps() {

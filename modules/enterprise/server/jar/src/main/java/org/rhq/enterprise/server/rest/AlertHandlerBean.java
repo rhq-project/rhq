@@ -311,10 +311,20 @@ public class AlertHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation(value = "Remove the alert from the list of alerts")
-    public void purgeAlert(@ApiParam(value = "Id of the alert to remove") @PathParam("id") int id) {
-        alertManager.deleteAlerts(caller, new int[]{id});
+    @ApiOperation(value = "Remove the alert from the list of alerts", notes = "This operation is by default idempotent, returning 204." +
+                "If you want to check if the alert existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Alert was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Alert did not exist and validate was set")
+    })
+    public Response purgeAlert(@ApiParam(value = "Id of the alert to remove") @PathParam("id") int id,
+                           @ApiParam("Validate if the alert exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
+        int count = alertManager.deleteAlerts(caller, new int[]{id});
 
+        if (count == 0 && validate) {
+            throw new StuffNotFoundException("Alert with id " + id);
+        }
+        return Response.noContent().build();
     }
 
     @GET

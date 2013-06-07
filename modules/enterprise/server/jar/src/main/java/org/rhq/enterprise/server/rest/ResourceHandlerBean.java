@@ -719,11 +719,13 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/")
-    @ApiOperation("Create a new resource as a child of an existing resource. If a handle is given, a content based resource is created.")
+    @ApiOperation(value = "Create a new resource as a child of an existing resource. ",
+        notes= "If a handle is given, a content based resource is created; the content identified by the handle is not removed from the content store." +
+            "If no handle is given, a resource is created from the data of the passed 'resource' object.")
     public Response createResource(
         @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") CreateCBRresourceRequest resource,
+        @ApiParam("A handle that identifies content that has been uploaded to the server before.") @QueryParam("handle") String handle,
         @Context HttpHeaders headers,
-        @QueryParam("handle") String handle,
         @Context UriInfo uriInfo) throws IOException
     {
 
@@ -923,10 +925,26 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation("Remove a resource from inventory")
+    @ApiOperation(value = "Remove a resource from inventory", notes = "This operation is by default idempotent, returning 204." +
+                "If you want to check if the resource existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Resource was removed or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Resource did not exist and validate was set")
+    })
     public Response uninventoryOrDeleteResource(
-            @PathParam("id") int resourceId
-            ,@DefaultValue("false") @QueryParam("physical") boolean delete) {
+            @PathParam("id") int resourceId,
+            @ApiParam@DefaultValue("false") @QueryParam("physical") boolean delete,
+            @ApiParam("Validate that the resource exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
+
+        try {
+            fetchResource(resourceId);
+        } catch (Exception e) {
+            if (validate) {
+                throw new StuffNotFoundException("Resource with id " + resourceId);
+            } else {
+                return Response.noContent().build();
+            }
+        }
 
         if (delete==false) {
             resMgr.uninventoryResource(caller,resourceId);
@@ -935,7 +953,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
             resourceFactory.deleteResource(caller,resourceId);
         }
 
-        return Response.status(Response.Status.NO_CONTENT).build();
+        return Response.noContent().build();
 
     }
 

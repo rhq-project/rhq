@@ -476,17 +476,18 @@ public class InstallerServiceImpl implements InstallerService {
             throw new Exception("Could not complete the database schema installation", e);
         }
 
-        SchemaManager cassandraSchemaManager = null;
+        SchemaManager storageNodeSchemaManager = null;
         try {
-            cassandraSchemaManager = createCassandraSchemaManager(serverProperties);
+            storageNodeSchemaManager = createStorageNodeSchemaManager(serverProperties);
             if (ExistingSchemaOption.SKIP != existingSchemaOptionEnum) {
                 if (ExistingSchemaOption.OVERWRITE == existingSchemaOptionEnum) {
                     log("Cassandra schema exists but installer was told to overwrite it - a the existing  schema will be "
                         + "created now.");
-                    cassandraSchemaManager.drop();
+                    storageNodeSchemaManager.drop();
                 }
                 log("Install RHQ schema along with updates to Cassandra.");
-                cassandraSchemaManager.install();
+                storageNodeSchemaManager.install();
+                storageNodeSchemaManager.updateTopology();
             } else {
                 log("Ignoring Cassandra schema - installer will assume it exists and is already up-to-date.");
             }
@@ -1150,11 +1151,20 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
-    private SchemaManager createCassandraSchemaManager(HashMap<String, String> serverProps) {
+    private SchemaManager createStorageNodeSchemaManager(HashMap<String, String> serverProps) {
         String[] hosts = serverProps.get("rhq.cassandra.seeds").split(",");
         String username = serverProps.get("rhq.cassandra.username");
         String password = serverProps.get("rhq.cassandra.password");
 
+        // We have to connect with the default cassandra super user here. The
+        // username/password specified in rhq-server.properties is one that we create
+        // during schema installation so we cannot make the initial connection with
+        // that user. In fact, I am not even so sure we need to put those credentials
+        // in rhq-server.properties. That user is for internal use by the server to
+        // talk to storage nodes. Not sure we even want to expose it to the user, at
+        // least not directly.
+        //
+        // jsanda
         return new SchemaManager("cassandra", "cassandra", hosts);
     }
 

@@ -55,6 +55,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
     protected static final String HOST_PROPERTY = "host";
     protected static final String CLUSTER_NAME_PROPERTY = "clusterName";
     protected static final String NATIVE_TRANSPORT_PORT_PROPERTY = "nativeTransportPort";
+    protected static final String JMX_PORT_PROPERTY = "jmxPort";
     protected static final String AUTHENTICATOR_PROPERTY = "authenticator";
     protected static final String USERNAME_PROPERTY = "username";
     protected static final String PASSWORD_PROPERTY = "password";
@@ -192,6 +193,8 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         }
 
         if (jmxPort != null) {
+            pluginConfig.put(new PropertySimple(JMX_PORT_PROPERTY, jmxPort));
+
             pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
                 J2SE5ConnectionTypeDescriptor.class.getName()));
             pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,

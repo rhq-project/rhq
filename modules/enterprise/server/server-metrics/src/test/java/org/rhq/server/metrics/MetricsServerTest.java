@@ -398,7 +398,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         waitForRawInserts.await("Failed to insert raw data");
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
-            scheduleId, beginTime.getMillis(), endTime.getMillis()));
+            scheduleId, beginTime.getMillis(), endTime.getMillis(),60));
 
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
@@ -640,7 +640,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         waitForRawInserts.await("Failed to insert raw data");
 
         List<MeasurementDataNumericHighLowComposite> actualData = metricsServer.findDataForGroup(
-            asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis());
+            asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis(),60);
 
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
@@ -684,7 +684,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         }
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
-            scheduleId, beginTime.getMillis(), endTime.getMillis()));
+            scheduleId, beginTime.getMillis(), endTime.getMillis(),60));
 
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 
@@ -732,7 +732,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         }
 
         List<MeasurementDataNumericHighLowComposite> actual = metricsServer.findDataForGroup(
-            asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis());
+            asList(scheduleId1, scheduleId2), beginTime.getMillis(), endTime.getMillis(),60);
 
         assertEquals(actual.size(), buckets.getNumDataPoints(), "Expected to get back " + buckets.getNumDataPoints() +
             " data points.");
@@ -773,7 +773,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         }
 
         List<MeasurementDataNumericHighLowComposite> actualData = Lists.newArrayList(metricsServer.findDataForResource(
-            scheduleId, beginTime.getMillis(), endTime.getMillis()));
+            scheduleId, beginTime.getMillis(), endTime.getMillis(),60));
 
         assertEquals(actualData.size(), buckets.getNumDataPoints(), "Expected to get back 60 data points.");
 

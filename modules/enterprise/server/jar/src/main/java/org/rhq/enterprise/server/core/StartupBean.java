@@ -31,6 +31,8 @@ import java.util.Properties;
 import java.util.UUID;
 
 import javax.annotation.Resource;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Timeout;
@@ -66,6 +68,7 @@ import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordi
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cassandra.CassandraClusterHeartBeatJob;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -100,13 +103,17 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * specifically, all EJBs must have been deployed and available.
  *
  * This bean is not meant for client consumption - it is only for startup initialization.
+ *
+ * BEAN ConcurrencyManagement is enough: the {@link #initialized} property is only modified on startup.
  */
 @Singleton
 //@Startup // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class StartupBean implements StartupLocal {
     private Log log = LogFactory.getLog(this.getClass());
 
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
 
     @EJB
     private AgentManagerLocal agentManager;
@@ -135,6 +142,9 @@ public class StartupBean implements StartupLocal {
     @EJB
     private ShutdownListener shutdownListener;
 
+    @EJB
+    private StorageClientManagerBean storageClientManager;
+
     @Resource
     private TimerService timerService; // needed to schedule our plugin scanner
 
@@ -142,7 +152,6 @@ public class StartupBean implements StartupLocal {
     private DataSource dataSource;
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean isInitialized() {
         return this.initialized;
     }
@@ -160,7 +169,7 @@ public class StartupBean implements StartupLocal {
      * @throws RuntimeException
      */
     //@PostConstruct // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @Override
     public void init() throws RuntimeException {
         secureNaming();
 
@@ -199,6 +208,7 @@ public class StartupBean implements StartupLocal {
         startPluginDeployer(); // make sure this is initialized before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         upgradeRhqUserSecurityDomainIfNeeded();
+        initStorageClient();
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
@@ -370,8 +380,6 @@ public class StartupBean implements StartupLocal {
     }
 
     @Timeout
-    // does AS7 EJB3 container allow this? We do not want a tx here!
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void scanForPlugins(final Timer timer) {
         try {
             PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();
@@ -427,6 +435,13 @@ public class StartupBean implements StartupLocal {
         } catch (SchedulerException e) {
             throw new RuntimeException("Cannot initialize the scheduler!", e);
         }
+    }
+
+    /**
+     * Initalizes the storage client subsystem which is needed for reading/writing metric data.
+     */
+    private void initStorageClient() {
+        storageClientManager.init();
     }
 
     /**
@@ -661,7 +676,7 @@ public class StartupBean implements StartupLocal {
 
         try {
             schedulerBean.scheduleRepeatingJob(CassandraClusterHeartBeatJob.JOB_NAME, jobGroup, jobDataMap,
-                CassandraClusterHeartBeatJob.class, true, false, 3000, 5000);
+                CassandraClusterHeartBeatJob.class, true, false, 3000, 1000 * 60);
         } catch (SchedulerException e) {
             String msg = "Unable to schedule " + CassandraClusterHeartBeatJob.class.getSimpleName() + " job. The "
                 + "server will reamin in maintenance mode without a manual override.";

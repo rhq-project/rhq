@@ -31,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.annotation.PostConstruct;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
@@ -68,8 +67,12 @@ import org.rhq.server.metrics.CQLException;
 @Stateless
 public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageNodeManagerRemote {
 
-    private static final String RESOURCE_TYPE_NAME = "RHQ Storage Node";
-    private static final String PLUGIN_NAME = "RHQStorage";
+    private static final String RHQ_STORAGE_RESOURCE_TYPE = "RHQ Storage Node";
+    private static final String RHQ_STORAGE_PLUGIN = "RHQStorage";
+
+    private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
+    private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
+    private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -83,7 +86,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
-    @PostConstruct
     @Override
     public void scanForStorageNodes() {
         try {
@@ -97,12 +99,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNodes = new ArrayList<StorageNode>();
             }
 
-            for (StorageNode storageNode : storageNodes) {
-                storageNode.setOperationMode(OperationMode.DOWN);
-            }
-
             Map<String, StorageNode> storageNodeMap = new HashMap<String, StorageNode>();
             for (StorageNode storageNode : storageNodes) {
+                storageNode.setOperationMode(OperationMode.DOWN);
                 storageNodeMap.put(storageNode.getAddress(), storageNode);
             }
 
@@ -133,10 +132,47 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
+    public void linkResource(Resource resource) {
+        List<StorageNode> storageNodes = this.getStorageNodes();
+
+        Configuration resourceConfig = resource.getPluginConfiguration();
+        String configAddress = resourceConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
+
+        if (configAddress != null) {
+            boolean storageNodeFound = false;
+            if (storageNodes != null) {
+                for (StorageNode storageNode : storageNodes) {
+                    if (configAddress.equals(storageNode.getAddress())) {
+                        storageNode.setResource(resource);
+                        storageNode.setOperationMode(OperationMode.NORMAL);
+                        storageNodeFound = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!storageNodeFound) {
+                int cqlPort = Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY));
+                int jmxPort = Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY));
+
+                StorageNode storageNode = new StorageNode();
+                storageNode.setAddress(configAddress);
+                storageNode.setCqlPort(cqlPort);
+                storageNode.setJmxPort(jmxPort);
+                storageNode.setResource(resource);
+                storageNode.setOperationMode(OperationMode.NORMAL);
+
+                entityManager.persist(storageNode);
+
+                //schedule the quartz job here....
+            }
+        }
+    }
+
     @SuppressWarnings("unchecked")
     private void discoverResourceInformation(Map<String, StorageNode> storageNodeMap) {
         Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN)
-            .setParameter("name", RESOURCE_TYPE_NAME).setParameter("plugin", PLUGIN_NAME);
+            .setParameter("name", RHQ_STORAGE_RESOURCE_TYPE).setParameter("plugin", RHQ_STORAGE_PLUGIN);
         List<ResourceType> resourceTypes = (List<ResourceType>) query.getResultList();
 
         if (resourceTypes.isEmpty()) {

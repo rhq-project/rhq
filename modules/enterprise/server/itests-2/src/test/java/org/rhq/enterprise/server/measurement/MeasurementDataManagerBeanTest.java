@@ -60,7 +60,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -121,7 +121,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    private SessionManagerBean cassandraSessionManager;
+    private StorageClientManagerBean storageClientManager;
 
     private MetricsDAO metricsDAO;
 
@@ -129,7 +129,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     protected void beforeMethod() throws Exception {
         overlord = subjectManager.getOverlord();
 
-        metricsDAO = cassandraSessionManager.getMetricsDAO();
+        metricsDAO = storageClientManager.getMetricsDAO();
 
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
         // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin.
@@ -360,7 +360,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private void purgeMetricsTables() {
         try {
-            Session session = cassandraSessionManager.getSession();
+            Session session = storageClientManager.getSession();
 
             session.execute("TRUNCATE " + MetricsTable.RAW);
             session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);

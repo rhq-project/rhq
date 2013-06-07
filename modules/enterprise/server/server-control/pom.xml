@@ -1,5 +1,5 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 
   <modelVersion>4.0.0</modelVersion>
 
@@ -19,10 +19,23 @@
   </properties>
 
   <dependencies>
+
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-util</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-jboss-as-dmr-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-controller-client</artifactId>
+      <version>${jboss.version}</version>
     </dependency>
 
     <dependency>
@@ -45,6 +58,7 @@
       <version>1.6</version>
       <scope>provided</scope>
     </dependency>
+
   </dependencies>
 
   <build>
@@ -90,6 +104,10 @@
                   <artifactId>rhq-core-util</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-jboss-as-dmr-client</artifactId>
+                </artifactItem>
               </artifactItems>
             </configuration>
           </execution>
@@ -105,7 +123,8 @@
       <properties>
         <rhq.rootDir>../../../..</rhq.rootDir>
         <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
-        <rhq.deploymentDir>${rhq.containerDir}/modules/org/rhq/rhq-server-control/main</rhq.deploymentDir>
+        <rhq.deploymentName>${project.build.finalName}.zip</rhq.deploymentName>
+        <rhq.deploymentDir>${rhq.containerDir}/modules/</rhq.deploymentDir>
       </properties>
 
       <build>
@@ -117,13 +136,11 @@
 
               <execution>
                 <id>deploy</id>
-                <phase>compile</phase>
+                <phase>package</phase>
                 <configuration>
                   <target>
-                    <mkdir dir="${rhq.deploymentDir}" />
-                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                    <echo>*** Updating ${deployment.file}...</echo>
-                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}" />
+                    <echo>*** Deploying server control module to ${rhq.deploymentDir} ...</echo>
+                    <unzip src="target/${rhq.deploymentName}" dest="${rhq.deploymentDir}" />
                   </target>
                 </configuration>
                 <goals>
@@ -136,9 +153,8 @@
                 <phase>clean</phase>
                 <configuration>
                   <target>
-                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar" />
-                    <echo>*** Deleting ${deployment.file}...</echo>
-                    <delete file="${deployment.file}" />
+                    <echo>*** Deleting installer module ${rhq.deploymentDir}/${moduleDir} ...</echo>
+                    <delete dir="${rhq.deploymentDir}/${moduleDir}" />
                   </target>
                 </configuration>
                 <goals>
@@ -154,5 +170,5 @@
     </profile>
 
   </profiles>
-  
+
 </project>

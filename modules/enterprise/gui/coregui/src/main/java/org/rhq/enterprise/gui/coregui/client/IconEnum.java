@@ -111,7 +111,7 @@ public enum IconEnum {
     PLUGIN("global/Plugin_16.png", "global/Plugin_24.png"),
     ALERT_FLAG_BLUE("subsystems/alert/Flag_blue_16.png", "subsystems/alert/Flag_blue_24.png"),
     CONTENT("subsystems/content/Content_16.png", "subsystems/content/Content_24.png", "subsystems/content/Content_grey_16.png",null),
-    STORAGE_NODE("global/StorageNode_16.png", "global/StorageNode_32.png"),
+    STORAGE_NODE("global/StorageNode_16.png", "global/StorageNode_24.png"),
 
     /////////////////////////////
     //  Resource Specific Tabs

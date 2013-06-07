@@ -48,7 +48,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
-import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.measurement.instrumentation.MeasurementMonitor;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -88,7 +88,7 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    private SessionManagerBean sessionManager;
+    private StorageClientManagerBean sessionManager;
 
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
 

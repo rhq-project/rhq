@@ -80,6 +80,21 @@
 #                             If not defined, this defaults to the Server's
 #                             bin directory.
 #
+#    RHQ_SERVER_STOP_DELAY - the number of minutes to wait for the server to go
+#                            down after sending the TERM signal. Defaults to
+#                            5 minutes.
+#
+#    RHQ_SERVER_KILL_AFTER_STOP_DELAY - If this is defined, the server will be
+#                                       killed if it is still running after the
+#                                       RHQ_SERVER_STOP_DELAY. If this is not
+#                                       defined or set to "false" the script
+#                                       will exit with error code 127. 
+#  
+#
+#
+# If the embedded JRE is to be used but is not available, the fallback
+# JRE to be used will be determined by the JAVA_HOME environment variable.
+#
 # This script calls standalone.sh when starting the underlying JBossAS server.
 # =============================================================================
 
@@ -95,6 +110,8 @@
 # RHQ_SERVER_ADDITIONAL_JAVA_OPTS=additional VM options
 # RHQ_SERVER_CMDLINE_OPTS=standalone.sh options
 # RHQ_SERVER_ADDITIONAL_CMDLINE_OPTS=additional standalone.sh options
+# RHQ_SERVER_STOP_DELAY=5
+# RHQ_SERVER_KILL_AFTER_STOP_DELAY=false
 
 # ----------------------------------------------------------------------
 # Environment variables to set in order to enable remote debugging.
@@ -186,6 +203,32 @@ unset_jboss_as_env ()
    unset JBOSS_BASE_DIR
    unset JBOSS_LOG_DIR
    unset JBOSS_CONFIG_DIR
+}
+
+# ----------------------------------------------------------------------
+# Kill RHQ Server
+# ----------------------------------------------------------------------
+
+kill_rhq_server ()
+{
+    echo "Trying to kill the RHQ Server..."
+
+    echo "RHQ Server parent process (pid=${_SERVER_PID}) is being killed..."
+    while [ "$_SERVER_RUNNING" = "1"  ]; do
+        kill -9 $_SERVER_PID
+        sleep 2
+        check_status "killing..."
+    done
+
+    echo "Java Virtual Machine child process (pid=${_JVM_PID}) is being killed..."
+    while [ "$_JVM_RUNNING" = "1"  ]; do
+        kill -9 $_JVM_PID
+        sleep 2
+        check_status "killing..."
+    done
+
+    remove_pid_files
+    echo "RHQ Server has been killed."
 }
 
 # ----------------------------------------------------------------------
@@ -493,15 +536,50 @@ case "$1" in
 
         echo "RHQ Server (pid=${_SERVER_PID}) is stopping..."
 
-        while [ "$_SERVER_RUNNING" = "1"  ]; do
-           kill -TERM $_SERVER_PID
-           sleep 2
-           check_status "stopping..."
+        kill -TERM $_SERVER_PID
+
+        if [ -z "$RHQ_SERVER_STOP_DELAY" ]; then
+            # RHQ_SERVER_STOP_DELAY is not set
+            RHQ_SERVER_STOP_DELAY=5
+        fi
+        case $RHQ_SERVER_STOP_DELAY in
+        ''|*[!0-9]*)
+            echo "RHQ_SERVER_STOP_DELAY is not a number (value=${RHQ_SERVER_STOP_DELAY})"
+            echo "Applying default value (5 minutes)"
+            RHQ_SERVER_STOP_DELAY=5
+            ;;
+        *) ;;
+        esac
+        if [ $RHQ_SERVER_STOP_DELAY -le 0 ]; then
+            echo "RHQ_SERVER_STOP_DELAY is less than or equal to zero (value=${RHQ_SERVER_STOP_DELAY})"
+            echo "Applying default value (5 minutes)"
+            RHQ_SERVER_STOP_DELAY=5
+        fi
+        waited_seconds=0
+        max_wait_seconds=$(expr $RHQ_SERVER_STOP_DELAY \* 60)
+        while [ "$_SERVER_RUNNING" -eq "1"  ] && [ $waited_seconds -lt $max_wait_seconds ]; do
+            sleep 2s
+            waited_seconds=$(expr $waited_seconds + 2)
+            check_status "stopping..."
         done
 
-        remove_pid_files
-        echo "RHQ Server has stopped."
-        exit 0
+        if [ "$_SERVER_RUNNING" = "0" ]; then
+            remove_pid_files
+            echo "RHQ Server has stopped."
+            exit 0
+        fi
+
+        debug_msg "RHQ Server did not stop within $RHQ_SERVER_STOP_DELAY minutes."
+        echo "Timed out waiting for RHQ Server to stop."
+        kill -QUIT $_SERVER_PID # Generate thread dump for later investigation
+
+        if [ -n "$RHQ_SERVER_KILL_AFTER_STOP_DELAY" ] && [ "$RHQ_SERVER_KILL_AFTER_STOP_DELAY" != "false" ]; then
+            kill_rhq_server
+            exit 0
+        else
+            echo "Failed to stop RHQ Server"
+            exit 127
+        fi
         ;;
 
 'kill')
@@ -514,24 +592,7 @@ case "$1" in
            exit 0
         fi
 
-        echo "Trying to kill the RHQ Server..."
-
-        echo "RHQ Server parent process (pid=${_SERVER_PID}) is being killed..."
-        while [ "$_SERVER_RUNNING" = "1"  ]; do
-           kill -9 $_SERVER_PID
-           sleep 2
-           check_status "killing..."
-        done
-
-        echo "Java Virtual Machine child process (pid=${_JVM_PID}) is being killed..."
-        while [ "$_JVM_RUNNING" = "1"  ]; do
-           kill -9 $_JVM_PID
-           sleep 2
-           check_status "killing..."
-        done
-
-        remove_pid_files
-        echo "RHQ Server has been killed."
+        kill_rhq_server
         exit 0
         ;;
 

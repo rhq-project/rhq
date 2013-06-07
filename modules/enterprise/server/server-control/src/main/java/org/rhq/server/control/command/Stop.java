@@ -112,7 +112,7 @@ public class Stop extends ControlCommand {
         log.debug("Stopping RHQ storage node");
 
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
@@ -145,7 +145,7 @@ public class Stop extends ControlCommand {
         log.debug("Stopping RHQ server");
 
         Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(binDir);
+        executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 

@@ -21,6 +21,7 @@ package org.rhq.enterprise.server.rest;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -63,7 +64,6 @@ import org.jboss.resteasy.annotations.GZIP;
 
 import org.rhq.core.domain.alert.AlertCondition;
 import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.alert.AlertConditionOperator;
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
@@ -75,11 +75,13 @@ import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
@@ -101,8 +103,7 @@ import org.rhq.enterprise.server.rest.domain.Link;
  * @author Heiko W. Rupp
  */
 @Path("/alert")
-@Api(value = "Deal with Alert Definitions",description = "This api deals with alert definitions. Everything " +
-    " is purely experimental at the moment and can change without notice at any time.")
+@Api(value = "Deal with Alert Definitions",description = "This api deals with alert definitions.")
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
 public class AlertDefinitionHandlerBean extends AbstractRestBean {
@@ -149,6 +150,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @Path("/definitions")
     @ApiOperation(value = "List all Alert Definition", responseClass = "AlertDefinitionRest", multiValueResponse = true)
     public Response listAlertDefinitions(
+            @ApiParam("Should conditions and notifications be returned too?") @QueryParam("full") @DefaultValue("false") boolean full,
             @ApiParam(value = "Page number") @QueryParam("page")  Integer page,
             @ApiParam(value = "Page size") @DefaultValue("20") @QueryParam("ps") int pageSize,
             @Context HttpHeaders headers,
@@ -163,7 +165,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         PageList<AlertDefinition> defs = alertDefinitionManager.findAlertDefinitionsByCriteria(caller, criteria);
         List<AlertDefinitionRest> ret = new ArrayList<AlertDefinitionRest>(defs.size());
         for (AlertDefinition def : defs) {
-            AlertDefinitionRest adr = definitionToDomain(def, false, uriInfo);
+            AlertDefinitionRest adr = definitionToDomain(def, full, uriInfo);
             ret.add(adr);
         }
 
@@ -193,7 +195,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiOperation(value = "Get one AlertDefinition by id", responseClass = "AlertDefinitionRest")
     @ApiError(code = 404, reason = "No definition found with the passed id.")
     public Response getAlertDefinition(@ApiParam("Id of the alert definition to retrieve") @PathParam("id") int definitionId,
-                                       @ApiParam("Should conditions be returned too?") @QueryParam("full") @DefaultValue("false") boolean full,
+                                       @ApiParam("Should conditions and notifications be returned too?") @QueryParam("full") @DefaultValue("true") boolean full,
             @Context Request request, @Context UriInfo uriInfo) {
 
         AlertDefinition def = alertDefinitionManager.getAlertDefinition(caller, definitionId);
@@ -214,9 +216,12 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/definitions")
-    @ApiOperation("Create an AlertDefinition for the resource/group/resource type passed as query param. One and only one of the three params must be given at any time.")
+    @ApiOperation(value="Create an AlertDefinition for the resource/group/resource type passed as query param. " +
+        "One and only one of the three params must be given at any time. Please also check the POST method " +
+        "for conditions and notifications to see their options")
     @ApiErrors({
         @ApiError(code = 406, reason = "There was not exactly one of 'resourceId','groupId' or 'resourceTypeId' given"),
+        @ApiError(code = 406, reason = "The passed condition failed validation"),
         @ApiError(code = 404, reason = "A non existing alert notification sender was requested."),
         @ApiError(code = 404, reason = "A referenced alert to recover does not exist")
     })
@@ -357,11 +362,21 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("definition/{id}")
-    @ApiOperation("Delete an alert definition")
-    public Response deleteDefinition(@ApiParam("Id of the definition to delete") @PathParam("id") int definitionId) {
+    @ApiOperation(value = "Delete an alert definition", notes = "This operation is by default idempotent, returning 204." +
+            "If you want to check if the definition existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Definition was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Definition did not exist and validate was set")
+    })
 
-        alertDefinitionManager.removeAlertDefinitions(caller, new int[]{definitionId});
+    public Response deleteDefinition(@ApiParam("Id of the definition to delete") @PathParam("id") int definitionId,
+                                     @ApiParam("Validate if the definition exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
+        int count = alertDefinitionManager.removeAlertDefinitions(caller, new int[]{definitionId});
+
+        if (count == 0 && validate) {
+            throw new StuffNotFoundException("Definition with id " + definitionId);
+        }
         return Response.noContent().build();
     }
 
@@ -397,7 +412,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
                     dampening.setPeriodUnits(AlertDampening.TimeUnits.valueOf(adr.getDampeningUnit().toUpperCase()));
                 }
             } catch (Exception e) {
-                throw new BadArgumentException("dampenign unit", "Allowed values are MINUTES,HOURS,DAYS, WEEKS");
+                throw new BadArgumentException("dampening unit", "Allowed values are MINUTES,HOURS,DAYS, WEEKS");
             }
         }
 
@@ -420,10 +435,77 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
 
 
+    @DELETE
+    @Path("condition/{cid}")
+    @ApiOperation(value = "Remove an alert condition", notes = "This operation is by default idempotent, returning 204." +
+            "If you want to check if the condition existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Condition was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Condition did not exist and validate was set")
+    })
+    public Response deleteCondition(
+        @ApiParam("The id of the condition to remove")@PathParam("cid") int conditionId,
+        @ApiParam("Validate if the condition exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
+
+        Integer definitionId;
+        try {
+            definitionId = findDefinitionIdForConditionId(conditionId);
+        }
+        catch (NoResultException nre) {
+            if (validate) {
+                throw new StuffNotFoundException("Condition with id " + conditionId);
+            }
+            else {
+                return Response.noContent().build();
+            }
+        }
+
+        AlertDefinition definition2;
+        definition2 = entityManager.find(AlertDefinition.class,definitionId);
+        AlertCondition condition=null;
+        for (AlertCondition c: definition2.getConditions()) {
+            if (c.getId() == conditionId) {
+                condition=c;
+            }
+        }
+
+        definition2.getConditions().remove(condition);
+
+        alertDefinitionManager.updateAlertDefinition(caller,definitionId,definition2,true);
+
+        return Response.noContent().build();
+    }
+
     @POST
     @Path("definition/{id}/conditions")
-    @ApiOperation("Add a new alert condition to an existing alert definition")
-    @ApiError(code = 404, reason = "No AlertDefinition with the passed id exists")
+    @ApiOperation(value = "Add a new alert condition to an existing alert definition",
+        notes = "<xml>" +
+            "<para>Each condition falls into a category. Allowed categories are " +
+            "AVAILABILITY, AVAIL_DURATION, BASELINE(m), CHANGE(m), CONTROL, DRIFT, EVENT, RANGE(m), RESOURCE_CONFIG, THRESHOLD(m), TRAIT(m)." +
+            "Categories with an appended (m) are for metrics and need a metricDefinition, but no name, as the name is obtained from the " +
+            "metric definition. Parameters vary depending on the category: " +
+            "<itemizedlist>"+
+            "<listitem><simpara>AVAILABILITY: name is one of AVAIL_GOES_DOWN, " +
+            "AVAIL_GOES_DISABLED, AVAIL_GOES_UNKNOWN, AVAIL_GOES_NOT_UP and AVAIL_GOES_UP.</simpara></listitem>" +
+            "<listitem><simpara>AVAIL_DURATION: name is one of AVAIL_DURATION_DOWN andAVAIL_DURATION_NOT_UP; option gives the duration in seconds.</simpara></listitem>"+
+            "<listitem><simpara>BASELINE: option is one of 'min','mean','max', threshold gives the percentage (0.01=1%), " +
+            "comparator is one of '&lt;','=' and '>'.</simpara></listitem>" +
+            "<listitem><simpara>CONTROL: option gives the Operation status (FAILURE,SUCCESS,INPROGRESS,CANCELED), name is the name " +
+            "of the operation (not the display-name).</simpara></listitem>" +
+            "<listitem><simpara>EVENT: name is the severity (DEBUG,INFO,WARN,ERROR,FATAL), option is an optional RegEx to match against.</simpara></listitem>" +
+            "<listitem><simpara>DRIFT: name is optional and matches drift-definitions; option is optional and matches directories.</simpara></listitem>" +
+            "<listitem><simpara>RANGE: threshold has the lower bound, " +
+            "option the higher bound, comparator is one of '&lt;','&lt;=','=','>=' or '>'.</simpara></listitem>" +
+            "<listitem><simpara>RESOURCE_CONFIG: no additional params needed.</simpara></listitem>" +
+            "<listitem><simpara>THRESHOLD: comparator " +
+            "is one of '&lt;','=','>'; threshold is the value to compare against.</simpara></listitem>" +
+            "<listitem><simpara>TRAIT: option is an optional RegEx to match against.</simpara></listitem>" +
+            "</itemizedlist>" +
+            "</para></xml>" )
+    @ApiErrors({
+        @ApiError(code = 404, reason = "No AlertDefinition with the passed id exists"),
+        @ApiError(code = 406, reason = "The passed condition failed validation. A more detailed message is provided"),
+    })
     public Response addConditionToDefinition(
         @ApiParam("The id of the alert definition") @PathParam("id") int definitionId,
         @ApiParam("The condition to add") AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
@@ -441,36 +523,6 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         Response.ResponseBuilder builder = getResponseBuilderForCondition(definitionId, uriInfo, condition, true);
 
         return builder.build();
-    }
-
-    @DELETE
-    @Path("condition/{cid}")
-    @ApiOperation("Remove an alert condition")
-    public Response deleteCondition(
-        @ApiParam("The id of the condition to remove")@PathParam("cid") int conditionId) {
-
-        Integer definitionId;
-        try {
-            definitionId = findDefinitionIdForConditionId(conditionId);
-        }
-        catch (NoResultException nre) {
-            return Response.noContent().build();
-        }
-
-        AlertDefinition definition2;
-        definition2 = entityManager.find(AlertDefinition.class,definitionId);
-        AlertCondition condition=null;
-        for (AlertCondition c: definition2.getConditions()) {
-            if (c.getId() == conditionId) {
-                condition=c;
-            }
-        }
-
-        definition2.getConditions().remove(condition);
-
-        alertDefinitionManager.updateAlertDefinition(caller,definitionId,definition2,true);
-
-        return Response.noContent().build();
     }
 
     private Integer findDefinitionIdForConditionId(int conditionId) {
@@ -492,7 +544,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @PUT
     @Path("condition/{cid}")
     @ApiOperation("Update an existing condition of an alert definition.Note that the update will change the id of the condition")
-    @ApiError(code = 404, reason = "Condition with passed id does not exist")
+    @ApiErrors({
+        @ApiError(code = 404, reason = "Condition with passed id does not exist"),
+        @ApiError(code = 406, reason = "The passed category or condition operator was invalid")
+    })
     public Response updateCondition(
         @ApiParam("The id of the condition to update") @PathParam("cid") int conditionId,
         @ApiParam("The updated condition") AlertConditionRest conditionRest, @Context UriInfo uriInfo) {
@@ -554,19 +609,199 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     }
 
+    /**
+     * Convert a passed condition from the REST side into the internal domain
+     * representation. The largest part of this method is validation of the input
+     * @param conditionRest Object to convert
+     * @return Converted domain object
+     * @throws BadArgumentException If validation fails
+     */
     private AlertCondition conditionRestToCondition(AlertConditionRest conditionRest) {
         AlertCondition condition = new AlertCondition();
-        condition.setName(conditionRest.getName().name());
-        condition.setCategory(AlertConditionCategory.valueOf(conditionRest.getCategory().getName()));
-        condition.setOption(conditionRest.getOption());
+
+        try {
+            condition.setCategory(AlertConditionCategory.valueOf(conditionRest.getCategory().toUpperCase()));
+        } catch (Exception e) {
+            String allowedValues = stringify(AlertConditionCategory.class);
+            throw new BadArgumentException("Field 'category' [" + conditionRest.getCategory() + "] is invalid. Allowed values "+
+                "are : " + allowedValues);
+        }
+
+        int measurementDefinition = conditionRest.getMeasurementDefinition();
+        MeasurementDefinition md;
+        String optionValue = conditionRest.getOption();
+
+        String conditionName = conditionRest.getName();
+        // Set the name for all cases and allow it to be overridden later.
+        condition.setName(conditionName);
+
+        AlertConditionCategory category = condition.getCategory();
+        switch (category) {
+        case ALERT:
+            // Looks internal -- noting to do.
+            break;
+        case AVAIL_DURATION:
+            if (optionValue ==null) {
+                throw new BadArgumentException("Option needs to be provided as duration in seconds");
+            }
+            try {
+                Integer.parseInt(optionValue);
+            } catch (NumberFormatException nfe) {
+                throw new BadArgumentException("Option provided [" + optionValue + "] was bad. Must be duration in seconds");
+            }
+            checkForAllowedValues("name", conditionName, "AVAIL_DURATION_DOWN", "AVAIL_DURATION_NOT_UP");
+            break;
+        case AVAILABILITY:
+            checkForAllowedValues("name", conditionName, "AVAIL_GOES_DOWN", "AVAIL_GOES_DISABLED",
+                "AVAIL_GOES_UNKNOWN", "AVAIL_GOES_NOT_UP", "AVAIL_GOES_UP");
+            break;
+        case BASELINE:
+            if (measurementDefinition ==0) {
+                throw new BadArgumentException("You need to provide a measurementDefinition for category BASELINE");
+            }
+
+            md = entityManager.find(MeasurementDefinition.class,
+                measurementDefinition);
+            if (md==null) {
+                throw new StuffNotFoundException("measurementDefinition with id " + measurementDefinition);
+            }
+            condition.setMeasurementDefinition(md);
+            condition.setName(md.getDisplayName());
+            checkForAllowedValues("option", optionValue, "min", "max", "mean");
+            checkForAllowedValues("comparator", conditionRest.getComparator(), "<", "=", ">");
+            break;
+        case CHANGE:
+            md = getMeasurementDefinition(measurementDefinition, category);
+            condition.setMeasurementDefinition(md);
+            condition.setName(md.getDisplayName());
+            if (md.getDataType()== DataType.CALLTIME) {
+                checkForAllowedValues("option", optionValue, "MIN", "MAX", "AVG");
+            }
+            break;
+        case CONTROL:
+            checkForAllowedValues("option",optionValue,"INPROGRESS", "SUCCESS", "FAILURE", "CANCELED");
+
+            if (conditionName ==null) {
+                throw new BadArgumentException("name must be the name (not display name) of a valid operation.");
+            }
+            // TODO check for valid operation -- only on the resource or type itself (still hard enough)
+            break;
+        case DRIFT:
+            // option and name are optional, so nothing to do
+            break;
+        case EVENT:
+            checkForAllowedValues("name", conditionName,"DEBUG", "INFO", "WARN", "ERROR", "FATAL");
+            // option is an optional regular expression
+            break;
+        case RANGE:
+            checkForAllowedValues("comparator", conditionRest.getComparator(), "<", "=", ">","<=",">=");
+            if (optionValue==null) {
+                throw new BadArgumentException("You need to supply an upper threshold in 'option' as numeric value");
+            }
+            try {
+                Double.parseDouble(optionValue);
+            }
+            catch (NumberFormatException nfe) {
+                throw new BadArgumentException("You need to supply an upper threshold in 'option' as numeric value");
+            }
+            md = getMeasurementDefinition(measurementDefinition, category);
+            condition.setMeasurementDefinition(md);
+            condition.setName(md.getDisplayName());
+
+            break;
+        case RESOURCE_CONFIG:
+            // Nothing to do
+            break;
+        case THRESHOLD:
+            checkForAllowedValues("comparator", conditionRest.getComparator(), "<", "=", ">");
+            md = getMeasurementDefinition(measurementDefinition, category);
+            condition.setMeasurementDefinition(md);
+            condition.setName(md.getDisplayName());
+
+            if (md.getDataType()== DataType.CALLTIME) {
+                checkForAllowedValues("option", optionValue, "MIN", "MAX", "AVG");
+            }
+
+            break;
+        case TRAIT:
+            md = getMeasurementDefinition(measurementDefinition, category);
+            condition.setMeasurementDefinition(md);
+            condition.setName(md.getDisplayName());
+
+            // No need to check options - they are optional
+            break;
+        }
+
+        condition.setOption(optionValue);
         condition.setComparator(conditionRest.getComparator());
-        MeasurementDefinition md = entityManager.find(MeasurementDefinition.class,
-            conditionRest.getMeasurementDefinition());
-        condition.setMeasurementDefinition(md);
         condition.setThreshold(conditionRest.getThreshold());
         condition.setTriggerId(conditionRest.getTriggerId());
 
         return condition;
+    }
+
+    private MeasurementDefinition getMeasurementDefinition(int measurementDefinition, AlertConditionCategory category) {
+        MeasurementDefinition md;
+        if (measurementDefinition ==0) {
+            throw new BadArgumentException("You need to provide a measurementDefinition for category " + category.name());
+        }
+        md = entityManager.find(MeasurementDefinition.class,
+            measurementDefinition);
+        if (md==null) {
+            throw new StuffNotFoundException("measurementDefinition with id " + measurementDefinition);
+        }
+
+        return md;
+    }
+
+    /**
+     * Test if #toCheck matches one of the allowedValues and throw a BadArgumentException
+     * if not. In this case the attribute name is passed in the exception
+     *
+     *
+     * @param attributeName Name of the Attribute in error
+     * @param toCheck Value to check for
+     * @param allowedValues Allowed values
+     * @throws BadArgumentException if the values to check does not match any of the allowed values
+     */
+    private void checkForAllowedValues(String attributeName, String toCheck, String... allowedValues) {
+        if (toCheck==null) {
+            throw new BadArgumentException("Field " + attributeName + " must be set. Allowed values are: " + StringUtil.arrayToString(allowedValues));
+        }
+
+        if (allowedValues==null) {
+            throw new IllegalArgumentException("No allowed values are provided - please contact support");
+        }
+
+        boolean match = false;
+
+        for (String value : allowedValues) {
+            if (toCheck.equals(value))
+                match=true;
+        }
+        if (!match) {
+            throw new BadArgumentException("Field " + attributeName + " has an invalid value [" + toCheck + "]. Allowed values are: "
+                + StringUtil.arrayToString(allowedValues));
+        }
+    }
+
+    /**
+     * List the names of the passed Enum as a comma separated String
+     * @param clazz
+     * @return
+     */
+    private String stringify(Class<? extends Enum> clazz) {
+        EnumSet enumSet = EnumSet.allOf(clazz);
+        StringBuilder b = new StringBuilder();
+        Iterator iter = enumSet.iterator();
+        while (iter.hasNext()) {
+            Enum anEnum= (Enum) iter.next();
+            b.append(anEnum.name());
+            if (iter.hasNext()) {
+                b.append(", ");
+            }
+        }
+        return b.toString();
     }
 
     private Response.ResponseBuilder getResponseBuilderForCondition(int definitionId, UriInfo uriInfo,
@@ -576,7 +811,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         int conditionId=-1;
         AlertCondition createdCondition = null;
         for (AlertCondition cond :conditions) {
-            if (cond.getName().equals(originalCondition.getName())) {
+            if (originalCondition.getId() == cond.getId() || (
+                cond.getName() != null && cond.getName().equals(originalCondition.getName())))
+            {
                 conditionId = cond.getId();
                 createdCondition = cond;
             }
@@ -618,9 +855,15 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("notification/{nid}")
-    @ApiOperation("Remove a notification definition")
+    @ApiOperation(value = "Remove a notification definition", notes = "This operation is by default idempotent, returning 204." +
+            "If you want to check if the notification existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Notification was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Notification did not exist and validate was set")
+    })
     public Response deleteNotification(
-        @ApiParam("The id of the notification definition to remove") @PathParam("nid") int notificationId) {
+        @ApiParam("The id of the notification definition to remove") @PathParam("nid") int notificationId,
+        @ApiParam("Validate if the notification exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
         AlertNotification notification = notificationMgr.getAlertNotification(caller,notificationId);
         if (notification!=null) {
@@ -631,6 +874,10 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             alertDefinitionManager.updateAlertDefinitionInternal(caller,definition.getId(),definition,true,true,true);
 
             entityManager.flush();
+        } else {
+            if (validate) {
+                throw new StuffNotFoundException("Notification with id "+ notificationId);
+            }
         }
         return Response.noContent().build();
     }
@@ -881,8 +1128,8 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     private AlertConditionRest conditionToConditionRest(AlertCondition condition) {
         AlertConditionRest acr = new AlertConditionRest();
         acr.setId(condition.getId());
-        acr.setName(AlertConditionOperator.valueOf(condition.getName()));
-        acr.setCategory(condition.getCategory());
+        acr.setName(condition.getName());
+        acr.setCategory(condition.getCategory().getName());
         acr.setOption(condition.getOption());
         acr.setComparator(condition.getComparator());
         acr.setMeasurementDefinition(condition.getMeasurementDefinition()==null?0:condition.getMeasurementDefinition().getId());

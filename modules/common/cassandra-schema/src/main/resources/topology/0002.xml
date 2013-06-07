@@ -1,38 +1,26 @@
 <updatePlan>
   <step>
-    UPDATE system.schema_columnfamilies
-    SET gc_grace_seconds = %s
-    WHERE keyspace_name='rhq' AND columnfamily_name='metrics_index';
+    ALTER COLUMNFAMILY rhq.metrics_index WITH gc_grace_seconds = %s;
   </step>
 
   <step>
-    UPDATE system.schema_columnfamilies
-    SET gc_grace_seconds = %s
-    WHERE keyspace_name='rhq' AND columnfamily_name='raw_metrics';
+    ALTER COLUMNFAMILY rhq.raw_metrics WITH gc_grace_seconds = %s;
   </step>
 
   <step>
-    UPDATE system.schema_columnfamilies
-    SET gc_grace_seconds = %s
-    WHERE keyspace_name='rhq' AND columnfamily_name='one_hour_metrics';
+    ALTER COLUMNFAMILY rhq.one_hour_metrics WITH gc_grace_seconds = %s;
   </step>
 
   <step>
-    UPDATE system.schema_columnfamilies
-    SET gc_grace_seconds = %s
-    WHERE keyspace_name='rhq' AND columnfamily_name='six_hour_metrics';
+    ALTER COLUMNFAMILY rhq.six_hour_metrics WITH gc_grace_seconds = %s;
   </step>
 
   <step>
-    UPDATE system.schema_columnfamilies
-    SET gc_grace_seconds = %s
-    WHERE keyspace_name='rhq' AND columnfamily_name='twenty_four_hour_metrics';
+    ALTER COLUMNFAMILY rhq.twenty_four_hour_metrics WITH gc_grace_seconds = %s;
   </step>
 
-   <step>
-    UPDATE system.schema_columnfamilies
-    SET gc_grace_seconds = %s
-    WHERE keyspace_name='rhq' AND columnfamily_name='schema_version';
-   </step>
+  <step>
+    ALTER COLUMNFAMILY rhq.schema_version WITH gc_grace_seconds = %s;
+  </step>
 
 </updatePlan>

@@ -29,11 +29,13 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.EntityTag;
 import javax.ws.rs.core.GenericEntity;
@@ -44,6 +46,8 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
+import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
@@ -208,27 +212,49 @@ public class UserHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("favorites/resource/{id}")
-    @ApiOperation(value = "Remove a resource from favorites")
-    public void removeResourceFromFavorites(@ApiParam(name = "id", value = "Id of the resource")
-    @PathParam("id")
-    int id) {
+    @ApiOperation(value = "Remove a resource from favorites", notes = "This operation is by default idempotent, returning 204." +
+                "If you want to check if the resource was a favorite, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Resource was removed or was no favorite with validation not set"),
+        @ApiError(code = 404, reason = "Resource was no favorite and validate was set")
+    })
+    public void removeResourceFromFavorites(
+        @ApiParam(name = "id", value = "Id of the resource") @PathParam("id") int id,
+        @ApiParam("Validate if the resource is a favorite") @QueryParam("validate") @DefaultValue("false") boolean validate) {
+
         Set<Integer> favIds = getResourceIdsForFavorites();
         if (favIds.contains(id)) {
             favIds.remove(id);
             updateResourceFavorites(favIds);
         }
+        else {
+            if (validate) {
+                throw new StuffNotFoundException("Resource with id " + id + " in favorites ");
+            }
+        }
     }
 
     @DELETE
     @Path("favorites/group/{id}")
-    @ApiOperation(value = "Remove a group from favorites")
-    public void removeResourceGroupFromFavorites(@ApiParam(name = "id", value = "Id of the group")
-            @PathParam("id") int id) {
+    @ApiOperation(value = "Remove a group from favorites", notes = "This operation is by default idempotent, returning 204." +
+                    "If you want to check if the group was a favorite, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Group was removed or was no favorite with validation not set"),
+        @ApiError(code = 404, reason = "Group was no favorite and validate was set")
+    })
+    public void removeResourceGroupFromFavorites(
+        @ApiParam(name = "id", value = "Id of the group") @PathParam("id") int id,
+        @ApiParam("Validate if the group is a favorite") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
         Set<Integer> favIds = getGroupIdsForFavorites();
         if (favIds.contains(id)) {
             favIds.remove(id);
             updateGroupFavorites(favIds);
+        }
+        else {
+            if (validate) {
+                throw new StuffNotFoundException("Group with id " + id + " in favorites ");
+            }
         }
     }
 

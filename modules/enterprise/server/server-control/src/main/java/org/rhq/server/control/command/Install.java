@@ -1,37 +1,39 @@
 /*
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License, version 2, as
+ * published by the Free Software Foundation, and/or the GNU Lesser
+ * General Public License, version 2.1, also as published by the Free
+ * Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License and the GNU Lesser General Public License
+ * for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * and the GNU Lesser General Public License along with this program;
+ * if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
 package org.rhq.server.control.command;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -44,6 +46,10 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
+import org.jboss.as.controller.client.ModelControllerClient;
+
+import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
+import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
@@ -54,20 +60,25 @@ import org.rhq.server.control.RHQControlException;
 public class Install extends ControlCommand {
 
     private final String STORAGE_CONFIG_OPTION = "storage-config";
+    private final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
 
     private final String AGENT_CONFIG_OPTION = "agent-config";
+    private final String AGENT_PREFERENCE = "agent-preference";
+    private final String AGENT_NO_START = "agent-no-start";
 
     private final String SERVER_CONFIG_OPTION = "server-config";
 
-    private final String AGENT_TOKEN_OPTION = "agent-security-token";
-
     private final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
-    private final File DEFAULT_STORAGE_BASEDIR = new File(basedir, STORAGE_BASEDIR_NAME);
-
-    private final File DEFAULT_AGENT_BASEDIR = new File(basedir, AGENT_BASEDIR_NAME);
+    private final File DEFAULT_STORAGE_BASEDIR = new File(getBaseDir(), STORAGE_BASEDIR_NAME);
+    private final File DEFAULT_AGENT_BASEDIR = new File(getBaseDir(), AGENT_BASEDIR_NAME);
 
     private Options options;
+
+    // some known agent preference setting names
+    private static final String PREF_RHQ_AGENT_SECURITY_TOKEN = "rhq.agent.security-token";
+    private static final String PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG = "rhq.agent.configuration-setup-flag";
+    private static final String PREF_RHQ_AGENT_AUTO_UPDATE_FLAG = "rhq.agent.agent-update.enabled";
 
     public Install() {
         options = new Options()
@@ -75,21 +86,20 @@ public class Install extends ControlCommand {
                 null,
                 "storage",
                 false,
-                "Install RHQ storage node. The default install directory will be " + DEFAULT_STORAGE_BASEDIR
-                    + ". Use the --storage-dir option to choose an alternate directory.")
-            .addOption(null, "server", false, "Install RHQ server")
+                "Install RHQ storage node. The install directory will be: "
+                    + DEFAULT_STORAGE_BASEDIR
+                    + ". Note that this option implies --agent which means an agent will also be installed, if one is not yet installed.")
             .addOption(
                 null,
-                "agent",
+                "server",
                 false,
-                "Install RHQ agent. The default install directory will be " + DEFAULT_AGENT_BASEDIR
-                    + ". Use the --agent-dir option to choose an alternate directory.")
-            .addOption(null, "storage-dir", true, "The directory where the storage node will be installed.")
-            .addOption(null, "agent-dir", true, "The directory where the agent will be installed.")
+                "Install RHQ server. If you have not yet installed an RHQ storage node somewhere in your network, you must specify --storage to install one.")
+            .addOption(null, "agent", false,
+                "Install RHQ agent. The install directory will be: " + DEFAULT_AGENT_BASEDIR)
             .addOption(null, SERVER_CONFIG_OPTION, true,
-                "An alternate properties file to use in place of the default " + "rhq-server.properties")
+                "An alternate properties file to use in place of the default rhq-server.properties")
             .addOption(null, AGENT_CONFIG_OPTION, true,
-                "An alternate XML file to use in place of the default " + "agent-configuration.xml")
+                "An alternate XML file to use in place of the default agent-configuration.xml")
             .addOption(
                 null,
                 STORAGE_CONFIG_OPTION,
@@ -97,9 +107,18 @@ public class Install extends ControlCommand {
                 "A properties file with keys that correspond to option names "
                     + "of the storage installer. Each property will be translated into an option that is passed to the "
                     + " storage installer. See example.storage.properties for examples.")
-            .addOption(null, AGENT_TOKEN_OPTION, true, "The security token that the agent needs to include with " +
-                "commands sent to the server. Use this option when installing or upgrading an agent that is already " +
-                "registered with the server.");
+            .addOption(
+                null,
+                AGENT_PREFERENCE,
+                true,
+                "An agent preference setting (whose argument is in the form 'name=value') to be set in the agent. More than one of these is allowed.")
+            .addOption(
+                null,
+                AGENT_NO_START,
+                true,
+                "If an agent is to be installed it will, by default, also be started. However, if this option is set to true, the agent will not be started after it gets installed.")
+            .addOption(null, STORAGE_DATA_ROOT_DIR, true,
+                "The root directory under which all storage data directories will be placed.");
     }
 
     @Override
@@ -129,7 +148,7 @@ public class Install extends ControlCommand {
                 return;
             }
 
-            // if no options specified, then install whatever is installed
+            // if no options specified, then install whatever is not installed yet
             if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
                 .hasOption(AGENT_OPTION))) {
 
@@ -137,24 +156,42 @@ public class Install extends ControlCommand {
 
                 if (!isStorageInstalled()) {
                     installStorageNode(getStorageBasedir(commandLine), commandLine);
+                } else if (isWindows()) {
+                    installWindowsService(getBinDir(), "rhq-storage");
                 }
+
                 if (!isServerInstalled()) {
                     startRHQServerForInstallation();
                     installRHQServer();
                     waitForRHQServerToInitialize();
+                } else if (isWindows()) {
+                    installWindowsService(getBinDir(), "rhq-server");
                 }
+
                 if (!isAgentInstalled()) {
                     clearAgentPreferences();
                     File agentBasedir = getAgentBasedir(commandLine);
                     installAgent(agentBasedir);
                     configureAgent(agentBasedir, commandLine);
-                    startAgent(agentBasedir);
+                    if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
+                        startAgent(agentBasedir);
+                    } else {
+                        log.info("The agent was installed but was told not to start automatically.");
+                    }
+                } else if (isWindows()) {
+                    installWindowsService(new File(getBaseDir(), "rhq-agent/bin"), "rhq-agent-wrapper");
                 }
+
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        log.warn("The RHQ storage node is already installed in " + new File(basedir, "storage"));
-                        log.warn("Skipping storage node installation.");
+                        log.info("The RHQ storage node is already installed in " + new File(getBaseDir(), "storage"));
+
+                        if (isWindows()) {
+                            installWindowsService(getBinDir(), "rhq-storage");
+                        } else {
+                            log.info("Skipping storage node installation.");
+                        }
                     } else {
                         replaceServerPropertiesIfNecessary(commandLine);
                         installStorageNode(getStorageBasedir(commandLine), commandLine);
@@ -164,15 +201,25 @@ public class Install extends ControlCommand {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        replaceAgentConfigIfNecessary(commandLine);
                         configureAgent(agentBasedir, commandLine);
-                        startAgent(agentBasedir);
+                        if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
+                            startAgent(agentBasedir);
+                        } else {
+                            log.info("The agent was installed but was told not to start automatically.");
+                        }
                     }
                 }
+
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
                         log.warn("The RHQ server is already installed.");
-                        log.warn("Skipping server installation.");
+
+                        if (isWindows()) {
+                            installWindowsService(getBinDir(), "rhq-server");
+                        } else {
+                            log.info("Skipping server installation.");
+                        }
+
                     } else {
                         replaceServerPropertiesIfNecessary(commandLine);
                         startRHQServerForInstallation();
@@ -180,17 +227,27 @@ public class Install extends ControlCommand {
                         waitForRHQServerToInitialize();
                     }
                 }
+
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled() && !commandLine.hasOption(STORAGE_OPTION)) {
-                        log.warn("The RHQ agent is already installed in " + new File(basedir, "rhq-agent"));
-                        log.warn("Skipping agent installation");
+                        log.info("The RHQ agent is already installed in " + new File(getBaseDir(), "rhq-agent"));
+
+                        if (isWindows()) {
+                            installWindowsService(new File(getBaseDir(), "rhq-agent/bin"), "rhq-agent-wrapper");
+                        } else {
+                            log.info("Skipping agent installation.");
+                        }
+
                     } else {
                         File agentBasedir = getAgentBasedir(commandLine);
                         clearAgentPreferences();
                         installAgent(agentBasedir);
-                        replaceAgentConfigIfNecessary(commandLine);
                         configureAgent(agentBasedir, commandLine);
-                        startAgent(agentBasedir);
+                        if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
+                            startAgent(agentBasedir);
+                        } else {
+                            log.info("The agent was installed but was told not to start automatically.");
+                        }
                     }
                 }
             }
@@ -199,11 +256,30 @@ public class Install extends ControlCommand {
         }
     }
 
+    private void installWindowsService(File workingDir, String batFile) throws Exception {
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(workingDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
+
+        commandLine = getCommandLine(batFile, "stop");
+        executor.execute(commandLine);
+
+        commandLine = getCommandLine(batFile, "remove");
+        executor.execute(commandLine);
+
+        commandLine = getCommandLine(batFile, "install");
+        executor.execute(commandLine);
+    }
+
     private List<String> validateOptions(CommandLine commandLine) {
         List<String> errors = new LinkedList<String>();
 
         if (!(commandLine.hasOption(STORAGE_OPTION) || commandLine.hasOption(SERVER_OPTION) || commandLine
             .hasOption(AGENT_OPTION))) {
+
+            validateCustomStorageDataDirectories(commandLine, errors);
+
             if (commandLine.hasOption(SERVER_CONFIG_OPTION) && !isServerInstalled()) {
                 File serverConfig = new File(commandLine.getOptionValue(SERVER_CONFIG_OPTION));
                 validateServerConfigOption(serverConfig, errors);
@@ -229,6 +305,8 @@ public class Install extends ControlCommand {
                     File agentConfig = new File(commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                     validateAgentConfigOption(agentConfig, errors);
                 }
+
+                validateCustomStorageDataDirectories(commandLine, errors);
             }
 
             if (commandLine.hasOption(SERVER_OPTION) && !isStorageInstalled()
@@ -245,6 +323,26 @@ public class Install extends ControlCommand {
         }
 
         return errors;
+    }
+
+    private void validateCustomStorageDataDirectories(CommandLine commandLine, List<String> errors) {
+        StorageDataDirectories customDataDirs = getCustomStorageDataDirectories(commandLine);
+        if (customDataDirs != null) {
+            if (customDataDirs.basedir.isAbsolute()) {
+                if (!isDirectoryEmpty(customDataDirs.dataDir)) {
+                    errors.add("Storage data directory [" + customDataDirs.dataDir + "] is not empty.");
+                }
+                if (!isDirectoryEmpty(customDataDirs.commitlogDir)) {
+                    errors.add("Storage commitlog directory [" + customDataDirs.commitlogDir + "] is not empty.");
+                }
+                if (!isDirectoryEmpty(customDataDirs.savedcachesDir)) {
+                    errors.add("Storage saved-caches directory [" + customDataDirs.savedcachesDir + "] is not empty.");
+                }
+            } else {
+                errors.add("The storage root directory [" + customDataDirs.basedir
+                    + "] must be specified with an absolute path and should be outside of the main install directory.");
+            }
+        }
     }
 
     private void validateServerConfigOption(File serverConfig, List<String> errors) {
@@ -281,18 +379,10 @@ public class Install extends ControlCommand {
     }
 
     private File getStorageBasedir(CommandLine cmdLine) {
-        if (cmdLine.hasOption("storage-dir")) {
-            File installDir = new File(cmdLine.getOptionValue("storage-dir"));
-            return new File(installDir, STORAGE_BASEDIR_NAME);
-        }
         return DEFAULT_STORAGE_BASEDIR;
     }
 
     private File getAgentBasedir(CommandLine cmdLine) {
-        if (cmdLine.hasOption("agent-dir")) {
-            File installDir = new File(cmdLine.getOptionValue("agent-dir"));
-            return new File(installDir, AGENT_BASEDIR_NAME);
-        }
         return DEFAULT_AGENT_BASEDIR;
     }
 
@@ -305,6 +395,14 @@ public class Install extends ControlCommand {
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--dir",
                 storageBasedir.getAbsolutePath());
 
+            if (rhqctlCommandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
+                StorageDataDirectories dataDirs;
+                dataDirs = getCustomStorageDataDirectories(rhqctlCommandLine);
+                commandLine.addArguments(new String[] { "--data", dataDirs.dataDir.getAbsolutePath() });
+                commandLine.addArguments(new String[] { "--commitlog", dataDirs.commitlogDir.getAbsolutePath() });
+                commandLine.addArguments(new String[] { "--saved-caches", dataDirs.savedcachesDir.getAbsolutePath() });
+            }
+
             if (rhqctlCommandLine.hasOption(STORAGE_CONFIG_OPTION)) {
                 String[] args = toArray(loadStorageProperties(rhqctlCommandLine.getOptionValue(STORAGE_CONFIG_OPTION)));
                 commandLine.addArguments(args);
@@ -314,7 +412,7 @@ public class Install extends ControlCommand {
             }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitCode = executor.execute(commandLine);
@@ -322,7 +420,41 @@ public class Install extends ControlCommand {
             return exitCode;
         } catch (IOException e) {
             log.error("An error occurred while running the storage installer: " + e.getMessage());
+            if (e.getMessage().toLowerCase().contains("exit value: 3")) {
+                log.error("Try to point your root data directory via --" + STORAGE_DATA_ROOT_DIR
+                    + " to a directory where you have read and write permissions.");
+            }
             throw e;
+        }
+    }
+
+    private class StorageDataDirectories {
+        public File basedir; // the other three will be under this base directory
+        public File dataDir;
+        public File commitlogDir;
+        public File savedcachesDir;
+    }
+
+    private StorageDataDirectories getCustomStorageDataDirectories(CommandLine commandLine) {
+        StorageDataDirectories storageDataDirs = null;
+
+        if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
+            storageDataDirs = new StorageDataDirectories();
+            storageDataDirs.basedir = new File(commandLine.getOptionValue(STORAGE_DATA_ROOT_DIR));
+            storageDataDirs.dataDir = new File(storageDataDirs.basedir, "data");
+            storageDataDirs.commitlogDir = new File(storageDataDirs.basedir, "commitlog");
+            storageDataDirs.savedcachesDir = new File(storageDataDirs.basedir, "saved_caches");
+        }
+
+        return storageDataDirs;
+    }
+
+    private boolean isDirectoryEmpty(File dir) {
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            return (files == null || files.length == 0);
+        } else {
+            return true;
         }
     }
 
@@ -345,10 +477,18 @@ public class Install extends ControlCommand {
 
     private void startRHQServerForInstallation() throws IOException {
         try {
-            log.info("Starting the RHQ server in preparation of running the installer");
+            log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
+
+            // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
+            // to port 9999 for its native management subsystem. Make sure some other independent EAP server (or anything for that matter)
+            // isn't already listening to that port.
+            if (isPortInUse("127.0.0.1", 9999)) {
+                throw new IOException(
+                    "Something is already listening to port 9999 - shut it down before installing the server.");
+            }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
             org.apache.commons.exec.CommandLine commandLine;
 
@@ -374,21 +514,33 @@ public class Install extends ControlCommand {
             }
 
             // Wait for the server to complete it's startup
-            log.info("Waiting for server to complete its start up");
+            log.info("Waiting for the RHQ Server to start in preparation of running the server installer...");
             commandLine = getCommandLine("rhq-installer", "--test");
 
             Executor installerExecutor = new DefaultExecutor();
-            installerExecutor.setWorkingDirectory(binDir);
+            installerExecutor.setWorkingDirectory(getBinDir());
             installerExecutor.setStreamHandler(new PumpStreamHandler());
 
-            // TODO add a max retries (probably want it to be configurable)
-            int exitCode = installerExecutor.execute(commandLine);
-            while (exitCode != 0) {
-                log.debug("Still waiting for server to complete its start up");
+            int exitCode = 0;
+            int numTries = 0, maxTries = 30;
+            do {
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                    // just keep going
+                }
+                if (numTries++ > maxTries) {
+                    throw new IOException("Failed to detect server initialization, max tries exceeded. Aborting...");
+                }
+                if (numTries > 1) {
+                    log.info("Still waiting to run the server installer...");
+                }
                 exitCode = installerExecutor.execute(commandLine);
-            }
 
-            log.info("The server start up has completed");
+            } while (exitCode != 0);
+
+            log.info("The RHQ Server is ready for the server installer to run.");
+
         } catch (IOException e) {
             log.error("An error occurred while starting the RHQ server: " + e.getMessage());
             throw e;
@@ -401,7 +553,7 @@ public class Install extends ControlCommand {
 
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(binDir);
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             executor.execute(commandLine, new DefaultExecuteResultHandler());
@@ -413,10 +565,36 @@ public class Install extends ControlCommand {
 
     private void waitForRHQServerToInitialize() throws Exception {
         try {
-            log.info("Waiting for RHQ server to initialize");
+            final long messageInterval = 30000L;
+            final long problemMessageInterval = 120000L;
+            long timerStart = System.currentTimeMillis();
+            long intervalStart = timerStart;
+
             while (!isRHQServerInitialized()) {
+                Long now = System.currentTimeMillis();
+
+                if ((now - intervalStart) > messageInterval) {
+                    long totalWait = (now - timerStart);
+
+                    if (totalWait < problemMessageInterval) {
+                        log.info("Still waiting for server to start...");
+
+                    } else {
+                        long minutes = totalWait / 60000;
+                        log.info("It has been over ["
+                            + minutes
+                            + "] minutes - you may want to ensure your server startup is proceeding as expected. You can check the log at ["
+                            + new File(getBaseDir(), "logs/server.log").getPath() + "].");
+
+                        timerStart = now;
+                    }
+
+                    intervalStart = now;
+                }
+
                 Thread.sleep(5000);
             }
+
         } catch (IOException e) {
             log.error("An error occurred while checking to see if the server is initialized: " + e.getMessage());
             throw e;
@@ -427,11 +605,27 @@ public class Install extends ControlCommand {
     }
 
     private boolean isRHQServerInitialized() throws IOException {
-        File logDir = new File(basedir, "logs");
 
         BufferedReader reader = null;
+        ModelControllerClient mcc = null;
+        Properties props = new Properties();
 
         try {
+            File propsFile = new File(getBaseDir(), "bin/rhq-server.properties");
+            reader = new BufferedReader(new FileReader(propsFile));
+            props.load(reader);
+
+            String host = (String) props.get("jboss.bind.address.management");
+            int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
+            mcc = MCCHelper.getModelControllerClient(host, port);
+            DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
+            boolean isDeployed = client.isDeployment("rhq.ear");
+            return isDeployed;
+
+        } catch (Throwable t) {
+            log.debug("Falling back to logfile check due to: ", t);
+
+            File logDir = new File(getBaseDir(), "logs");
             reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
             String line = reader.readLine();
             while (line != null) {
@@ -444,6 +638,13 @@ public class Install extends ControlCommand {
             return false;
 
         } finally {
+            if (null != mcc) {
+                try {
+                    mcc.close();
+                } catch (Exception e) {
+                    // best effort                    
+                }
+            }
             if (null != reader) {
                 try {
                     reader.close();
@@ -467,13 +668,13 @@ public class Install extends ControlCommand {
                 .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath());
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(basedir);
+            executor.setWorkingDirectory(getBaseDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitValue = executor.execute(commandLine);
             log.info("The agent installer finished running with exit value " + exitValue);
 
-            new File(basedir, "rhq-agent-update.log").delete();
+            new File(getBaseDir(), "rhq-agent-update.log").delete();
         } catch (IOException e) {
             log.error("An error occurred while running the agent installer: " + e.getMessage());
             throw e;
@@ -481,7 +682,7 @@ public class Install extends ControlCommand {
     }
 
     private File getAgentInstaller() {
-        File agentDownloadDir = new File(basedir,
+        File agentDownloadDir = new File(getBaseDir(),
             "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
         return agentDownloadDir.listFiles(new FileFilter() {
             @Override
@@ -492,27 +693,76 @@ public class Install extends ControlCommand {
     }
 
     private void configureAgent(File agentBasedir, CommandLine commandLine) throws Exception {
-        // If the user provided us with an agent configuration, we will use it completely. Otherwise,
-        // We are going to accept all defaults from the out-of-box agent.
+        // If the user provided us with an agent config file, we will use it.
+        // Otherwise, we are going to use the out-of-box agent config file.
+        //
         // Because we want to accept all defaults and consider the agent fully configured, we need to set
-        //    rhq.agent.configuration-setup-flag
-        // to "true". This tells the agent not to attempt to ask any setup questions at startup.
+        //    rhq.agent.configuration-setup-flag=true
+        // This tells the agent not to ask any setup questions at startup.
+        // We do this whether using a custom config file or the default config file - this is because
+        // we cannot allow the agent to ask the setup questions (rhqctl doesn't support that).
+        //
+        // Note that agent preferences found in the config file can be overridden with
+        // the AGENT_PREFERENCE settings (you can set more than one).
         try {
-            log.info("Configuring the RHQ agent");
+            File agentConfDir = new File(agentBasedir, "conf");
+            File agentConfigFile = new File(agentConfDir, "agent-configuration.xml");
+
             if (commandLine.hasOption(AGENT_CONFIG_OPTION)) {
+                log.info("Configuring the RHQ agent with custom configuration file: "
+                    + commandLine.getOptionValue(AGENT_CONFIG_OPTION));
                 replaceAgentConfigIfNecessary(commandLine);
             } else {
-                String setupPref = "rhq.agent.configuration-setup-flag";
-                Preferences prefs = getAgentPreferences();
-                prefs.putBoolean(setupPref, true);
-                prefs.flush();
-                prefs.sync();
+                log.info("Configuring the RHQ agent with default configuration file: " + agentConfigFile);
             }
+
+            // we require our agent preference node to be the user node called "default"
+            Preferences preferencesNode = getAgentPreferences();
+
+            // read the comments in AgentMain.loadConfigurationFile(String) to know why we do all of this
+            String securityToken = preferencesNode.get(PREF_RHQ_AGENT_SECURITY_TOKEN, null);
+            ByteArrayOutputStream rawConfigFileData = new ByteArrayOutputStream();
+            StreamUtil.copy(new FileInputStream(agentConfigFile), rawConfigFileData, true);
+            String newConfig = rawConfigFileData.toString().replace("${rhq.agent.preferences-node}", "default");
+            ByteArrayInputStream newConfigInputStream = new ByteArrayInputStream(newConfig.getBytes());
+            Preferences.importPreferences(newConfigInputStream);
+            if (securityToken != null) {
+                preferencesNode.put(PREF_RHQ_AGENT_SECURITY_TOKEN, securityToken);
+            }
+
+            overrideAgentPreferences(commandLine, preferencesNode);
+
+            // set some prefs that must be a specific value
+            // - do not tell this agent to auto-update itself - this agent must be managed by rhqctl only
+            // - set the config setup flag to true to prohibit the agent from asking setup questions at startup
+            String agentUpdateEnabledPref = PREF_RHQ_AGENT_AUTO_UPDATE_FLAG;
+            preferencesNode.putBoolean(agentUpdateEnabledPref, false);
+            String setupPref = PREF_RHQ_AGENT_CONFIGURATION_SETUP_FLAG;
+            preferencesNode.putBoolean(setupPref, true);
+
+            preferencesNode.flush();
+            preferencesNode.sync();
+
             log.info("Finished configuring the agent");
         } catch (Exception e) {
             log.error("An error occurred while configuring the agent: " + e.getMessage());
             throw e;
         }
+    }
+
+    private void overrideAgentPreferences(CommandLine commandLine, Preferences preferencesNode) {
+        // override the out of box config with user custom agent preference values
+        String[] customPrefs = commandLine.getOptionValues(AGENT_PREFERENCE);
+        if (customPrefs != null && customPrefs.length > 0) {
+            for (String nameValuePairString : customPrefs) {
+                String[] nameValuePairArray = nameValuePairString.split("=", 2);
+                String prefName = nameValuePairArray[0];
+                String prefValue = nameValuePairArray.length == 1 ? "true" : nameValuePairArray[1];
+                log.info("Overriding agent preference: " + prefName + "=" + prefValue);
+                preferencesNode.put(prefName, prefValue);
+            }
+        }
+        return;
     }
 
     private void clearAgentPreferences() throws Exception {
@@ -530,7 +780,7 @@ public class Install extends ControlCommand {
 
         if (prefKeys != null && prefKeys.length > 0) {
             for (String prefKey : prefKeys) {
-                if (!prefKey.equals("rhq.agent.security-token")) {
+                if (!prefKey.equals(PREF_RHQ_AGENT_SECURITY_TOKEN)) {
                     agentPrefs.remove(prefKey);
                 }
             }
@@ -619,4 +869,20 @@ public class Install extends ControlCommand {
         }
     }
 
+    private boolean isPortInUse(String host, int port) {
+        boolean inUse;
+
+        try {
+            Socket testSocket = new Socket(host, port);
+            try {
+                testSocket.close();
+            } catch (Exception ignore) {
+            }
+            inUse = true;
+        } catch (Exception expected) {
+            inUse = false;
+        }
+
+        return inUse;
+    }
 }

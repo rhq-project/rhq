@@ -153,9 +153,13 @@ public class StorageNodeLoadComposite implements Serializable {
     public static class MeasurementAggregateWithUnits implements Serializable {
         private static final long serialVersionUID = 1L;
         
-        private final MeasurementAggregate aggregate;
-        private final MeasurementUnits units;
+        private MeasurementAggregate aggregate;
+        private MeasurementUnits units;
         private String formattedValue;
+        
+        public MeasurementAggregateWithUnits() {
+            // GWT needs this
+        }
 
         public MeasurementAggregateWithUnits(MeasurementAggregate aggregate, MeasurementUnits units) {
             this.aggregate = aggregate;

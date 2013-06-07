@@ -119,28 +119,21 @@ public class ContentTest extends AbstractBase {
         assert uploadedSize!=null;
         assert uploadedSize==size;
 
-        given()
-            .pathParam("handle",handle)
-            .header(acceptJson)
-        .expect()
-            .statusCode(204)
-            .log().ifError()
-        .when()
-            .delete("/content/{handle}");
+        removeContent(handle, false);
 
     }
 
     @Test
     public void testDeleteUnknownContent() throws Exception {
 
-        given()
-            .pathParam("handle","Frobnitz")
-            .header(acceptJson)
-        .expect()
-            .statusCode(204)
-            .log().ifError()
-        .when()
-            .delete("/content/{handle}");
+        removeContent("Frobnitz", false);
+
+    }
+
+    @Test
+    public void testDeleteUnknownContentWithVaildate() throws Exception {
+
+        removeContent("Frobnitz", true);
 
     }
 
@@ -259,14 +252,7 @@ public class ContentTest extends AbstractBase {
         } finally {
 
             // Remove the uploaded content
-            given()
-                .pathParam("handle",handle)
-                .header(acceptJson)
-            .expect()
-                .statusCode(204)
-                .log().ifError()
-            .when()
-                .delete("/content/{handle}");
+            removeContent(handle, false);
 
             System.out.println("\n  Content removed \n");
             System.out.flush();
@@ -290,6 +276,16 @@ public class ContentTest extends AbstractBase {
 
     }
 
+    private void removeContent(String handle, boolean validate) {
+        given()
+            .pathParam("handle", handle)
+            .header(acceptJson)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/content/{handle}");
+    }
 
     private void wipeWarArchiveIfNecessary() {
 
@@ -346,6 +342,142 @@ public class ContentTest extends AbstractBase {
             .log().everything()
         .when()
             .post("/resource");
+
+    }
+
+    @Test
+    public void testUploadPlugin() throws Exception {
+
+        // A Skeleton jar-less plugin.
+        String plugin = "<plugin name=\"rest-api-No-op\"\n" +
+            "        displayName=\"Abstract NO-OP plugin\"\n" +
+            "        version=\"1.0\"\n" +
+            "        description=\"Abstract plugin supporting concrete plugins that don't want java-agent support\"\n" +
+            "        package=\"org.rhq.plugins.noop\"\n" +
+            "        xmlns=\"urn:xmlns:rhq-plugin\">\n" +
+            "</plugin>";
+
+        byte[] bytes = plugin.getBytes();
+
+        // Upload content
+        String handle =
+        given()
+            .auth().preemptive().basic("rhqadmin", "rhqadmin")
+            .body(bytes)
+            .contentType(ContentType.BINARY)
+            .header(acceptJson)
+        .expect()
+            .body("value",startsWith("rhq-rest-"))
+            .body("value",endsWith(".bin"))
+            .statusCode(isOneOf(200, 201))
+        .when()
+            .post("/content/fresh")
+        .jsonPath()
+            .getString("value");
+
+        try {
+            given()
+                .pathParam("handle", handle)
+                .queryParam("name", "rest-test-rhq-plugin.xml")
+                .queryParam("scan", "true")
+            .expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .put("/content/{handle}/plugins");
+        } finally {
+            removeContent(handle, false);
+        }
+
+    }
+    @Test
+    public void testUploadPluginBadHandle() throws Exception {
+
+        // A Skeleton jar-less plugin.
+        String plugin = "<plugin name=\"rest-api-No-op\"\n" +
+            "        displayName=\"Abstract NO-OP plugin\"\n" +
+            "        version=\"1.0\"\n" +
+            "        description=\"Abstract plugin supporting concrete plugins that don't want java-agent support\"\n" +
+            "        package=\"org.rhq.plugins.noop\"\n" +
+            "        xmlns=\"urn:xmlns:rhq-plugin\">\n" +
+            "</plugin>";
+
+        byte[] bytes = plugin.getBytes();
+
+        // Upload content
+        String handle =
+        given()
+            .auth().preemptive().basic("rhqadmin", "rhqadmin")
+            .body(bytes)
+            .contentType(ContentType.BINARY)
+            .header(acceptJson)
+        .expect()
+            .body("value",startsWith("rhq-rest-"))
+            .body("value",endsWith(".bin"))
+            .statusCode(isOneOf(200, 201))
+        .when()
+            .post("/content/fresh")
+        .jsonPath()
+            .getString("value");
+
+        try {
+            given()
+                .pathParam("handle", "Frobnitz")
+                .queryParam("name", "rest-test-rhq-plugin.xml")
+                .queryParam("scan", "true")
+            .expect()
+                .statusCode(404)
+                .log().everything()
+            .when()
+                .put("/content/{handle}/plugins");
+        } finally {
+            removeContent(handle, false);
+        }
+
+    }
+
+    @Test
+    public void testUploadPluginNoName() throws Exception {
+
+        // A Skeleton jar-less plugin.
+        String plugin = "<plugin name=\"rest-api-No-op\"\n" +
+            "        displayName=\"Abstract NO-OP plugin\"\n" +
+            "        version=\"1.0\"\n" +
+            "        description=\"Abstract plugin supporting concrete plugins that don't want java-agent support\"\n" +
+            "        package=\"org.rhq.plugins.noop\"\n" +
+            "        xmlns=\"urn:xmlns:rhq-plugin\">\n" +
+            "</plugin>";
+
+        byte[] bytes = plugin.getBytes();
+
+        // Upload content
+        String handle =
+        given()
+            .auth().preemptive().basic("rhqadmin", "rhqadmin")
+            .body(bytes)
+            .contentType(ContentType.BINARY)
+            .header(acceptJson)
+        .expect()
+            .body("value",startsWith("rhq-rest-"))
+            .body("value",endsWith(".bin"))
+            .statusCode(isOneOf(200, 201))
+        .when()
+            .post("/content/fresh")
+        .jsonPath()
+            .getString("value");
+
+        try {
+            given()
+                .pathParam("handle", handle)
+                .queryParam("scan", "true")
+            .expect()
+                .statusCode(406)
+                .log().everything()
+            .when()
+                .put("/content/{handle}/plugins");
+        } finally {
+            removeContent(handle, false);
+        }
 
     }
 }

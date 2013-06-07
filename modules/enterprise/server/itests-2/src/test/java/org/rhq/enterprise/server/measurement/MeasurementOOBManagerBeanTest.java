@@ -55,7 +55,7 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
-import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -108,7 +108,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     private MeasurementBaselineManagerLocal baselineManager;
 
     @EJB
-    SessionManagerBean cassandraSessionManager;
+    StorageClientManagerBean storageClientManagerBean;
 
     private MetricsDAO metricsDAO;
 
@@ -122,7 +122,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
 
         measurementDefs = new ArrayList<MeasurementDefinition>();
         schedules = new ArrayList<MeasurementSchedule>();
-        metricsDAO = cassandraSessionManager.getMetricsDAO();
+        metricsDAO = storageClientManagerBean.getMetricsDAO();
         createInventory();
     }
 

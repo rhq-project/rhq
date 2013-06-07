@@ -15,6 +15,7 @@
                 <include>**/*</include>
             </includes>
             <excludes>
+                <exclude>**/rhqctl</exclude>
                 <exclude>**/*.sh</exclude>
                 <exclude>**/*.so</exclude>
                 <exclude>**/*.sl</exclude>
@@ -27,6 +28,7 @@
             <directory>${project.build.outputDirectory}</directory>
             <outputDirectory>/</outputDirectory>
             <includes>
+                <include>**/rhqctl</include>
                 <include>**/*.sh</include>
                 <include>**/*.so</include>
                 <include>**/*.sl</include>

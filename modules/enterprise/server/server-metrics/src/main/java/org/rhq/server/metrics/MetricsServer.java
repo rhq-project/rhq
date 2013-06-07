@@ -129,12 +129,12 @@ public class MetricsServer {
     }
 
     public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
-        long endTime) {
+        long endTime, int numberOfBuckets) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
             Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
-            return createRawComposites(metrics, beginTime, endTime);
+            return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
         }
 
         Iterable<AggregateNumericMetric> metrics = null;
@@ -148,16 +148,16 @@ public class MetricsServer {
             throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
         }
 
-        return createComposites(metrics, beginTime, endTime);
+        return createComposites(metrics, beginTime, endTime, numberOfBuckets);
     }
 
     public List<MeasurementDataNumericHighLowComposite> findDataForGroup(List<Integer> scheduleIds, long beginTime,
-        long endTime) {
+        long endTime, int numberOfBuckets) {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
             Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
-            return createRawComposites(metrics, beginTime, endTime);
+            return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
         }
 
         Iterable<AggregateNumericMetric> metrics = null;
@@ -171,7 +171,7 @@ public class MetricsServer {
             throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
         }
 
-        return createComposites(metrics, beginTime, endTime);
+        return createComposites(metrics, beginTime, endTime, numberOfBuckets);
     }
 
     public AggregateNumericMetric getSummaryAggregate(int scheduleId, long beginTime, long endTime) {
@@ -243,8 +243,8 @@ public class MetricsServer {
     }
 
     private List<MeasurementDataNumericHighLowComposite> createRawComposites(Iterable<RawNumericMetric> metrics,
-        long beginTime, long endTime) {
-        Buckets buckets = new Buckets(beginTime, endTime);
+        long beginTime, long endTime, int numberOfBuckets) {
+        Buckets buckets = new Buckets(beginTime, endTime, numberOfBuckets);
         for (RawNumericMetric metric : metrics) {
             buckets.insert(metric.getTimestamp(), metric.getValue(), metric.getValue(), metric.getValue());
         }
@@ -259,8 +259,9 @@ public class MetricsServer {
     }
 
     private List<MeasurementDataNumericHighLowComposite> createComposites(Iterable<AggregateNumericMetric> metrics,
-        long beginTime, long endTime) {
-        Buckets buckets = new Buckets(beginTime, endTime);
+        long beginTime, long endTime, int numberOfBuckets) {
+
+        Buckets buckets = new Buckets(beginTime, endTime, numberOfBuckets);
         for (AggregateNumericMetric metric : metrics) {
             buckets.insert(metric.getTimestamp(), metric.getAvg(), metric.getMin(), metric.getMax());
         }
@@ -272,6 +273,7 @@ public class MetricsServer {
                 bucket.getMax(), bucket.getMin()));
         }
         return data;
+
     }
 
     public void addNumericData(final Set<MeasurementDataNumeric> dataSet,

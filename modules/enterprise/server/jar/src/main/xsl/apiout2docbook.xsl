@@ -99,7 +99,24 @@
           select="../@path"/><xsl:if test="not(@path = '')">/</xsl:if><xsl:value-of select="@path"/>
         </emphasis>
       </simpara>
-      <simpara><xsl:value-of select="@description"/></simpara>
+      <formalpara>
+        <title>Description</title>
+        <xsl:value-of select="@description"/></formalpara>
+      <xsl:if test="notes">
+        <formalpara>
+          <title>Notes</title>
+          <para>
+            <xsl:choose>
+              <xsl:when test="notes/xml">
+                <xsl:copy-of select="notes/xml/*"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="notes"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </para>
+        </formalpara>
+      </xsl:if>
       <xsl:if test="@gzip = 'true'">
         <simpara>Supports returning a gzip'ed Content-Encoding</simpara>
       </xsl:if>

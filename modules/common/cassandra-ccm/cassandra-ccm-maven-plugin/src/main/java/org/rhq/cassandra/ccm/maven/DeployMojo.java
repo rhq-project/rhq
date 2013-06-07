@@ -74,6 +74,7 @@ public class DeployMojo extends AbstractMojo {
 
         try {
             schemaManager.install();
+            schemaManager.updateTopology();
         } catch (Exception e) {
             throw new MojoExecutionException("Schema installation failed.", e);
         }

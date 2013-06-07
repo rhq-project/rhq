@@ -86,9 +86,9 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     barOffset = 2,
                     chartData,
                     interpolation = "basis",
-                    avg, min, peak,
+                    avgRaw, avg, minRaw, min, peakRaw, peak,
                     oobMax,
-                    determineLowBound,
+                    legendDefined,
                     lowBound,
                     highBound,
                     calcBarWidth,
@@ -128,36 +128,30 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         chartData = chartContext.data;
                     }
 
-                    avg = $wnd.d3.mean(chartContext.data.map(function (d) {
+                    avgRaw = chartContext.data.filter(function (d) {
+                        if (d.nodata !== 'true') {
+                            return d.y;
+                        }
+                    });
+                    avg = $wnd.d3.mean(avgRaw.map(function (d) {
                         return d.y;
                     }));
-                    peak = $wnd.d3.max(chartContext.data.map(function (d) {
-                        if (d.high != undefined) {
+                    peakRaw = chartContext.data.filter(function (d) {
+                        if (d.nodata !== 'true') {
                             return d.high;
                         }
-                        else {
-                            return 0;
-                        }
+                    });
+                    peak = $wnd.d3.max(peakRaw.map(function (d) {
+                            return d.high;
                     }));
-                    min = $wnd.d3.min(chartContext.data.map(function (d) {
-                        if (d.low != undefined) {
+                    minRaw = chartContext.data.filter(function (d) {
+                        if (d.nodata !== 'true') {
                             return d.low;
                         }
-                        else {
-                            return Number.MAX_VALUE;
-                        }
+                    });
+                    min = $wnd.d3.min(minRaw.map(function (d) {
+                            return d.low;
                     }));
-                    // adjust the min scale so blue low line is not in axis
-                    determineLowBound = function (min, peak) {
-                        var newLow = min - ((peak - min) * 0.1);
-                        if (newLow < 0) {
-                            return 0;
-                        }
-                        else {
-                            return newLow;
-                        }
-                    };
-                    lowBound = determineLowBound(min, peak);
                     highBound = peak + ((peak - min) * 0.1);
                     oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
                         if (d.baselineMax == undefined) {
@@ -174,7 +168,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     yScale = $wnd.d3.scale.linear()
                             .clamp(true)
                             .rangeRound([height, 0])
-                            .domain([lowBound, highBound]);
+                            .domain([$wnd.d3.min(chartContext.data, function(d) {return d.low;}),$wnd.d3.max(chartContext.data, function(d) {return d.high;})]);
+
                     yAxis = $wnd.d3.svg.axis()
                             .scale(yScale)
                             .tickSubdivide(1)
@@ -204,7 +199,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
-                    if (!useSmallCharts()) {
+                    legendDefined = (typeof min !== "undefined") || (typeof avg !== "undefined") || (typeof peak !== "undefined");
+                    if (!useSmallCharts() && legendDefined) {
                         createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                     }
                 }
@@ -684,7 +680,9 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }; // end public closure
         }();
 
-        metricStackedBarGraph.draw(chartContext);
+        if(chartContext.data !== undefined && chartContext.data.length > 0){
+            metricStackedBarGraph.draw(chartContext);
+        }
 
     }-*/;
 

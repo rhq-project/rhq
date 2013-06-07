@@ -36,7 +36,7 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.server.cassandra.SessionManagerBean;
+import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;
@@ -48,7 +48,7 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 public class MetricsManagerBean implements MetricsManagerLocal {
 
     @EJB
-    private SessionManagerBean sessionManager;
+    private StorageClientManagerBean sessionManager;
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
@@ -81,7 +81,15 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
         long endTime) {
         MetricsServer metricsServer = getMetricsServer();
-        return metricsServer.findDataForResource(scheduleId, beginTime, endTime);
+        return metricsServer.findDataForResource(scheduleId, beginTime, endTime,60);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
+        long endTime, int numberOfBuckets) {
+        MetricsServer metricsServer = getMetricsServer();
+        return metricsServer.findDataForResource(scheduleId, beginTime, endTime, numberOfBuckets);
     }
 
     @Override
@@ -107,7 +115,15 @@ public class MetricsManagerBean implements MetricsManagerLocal {
     public List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
         long beginTime, long endTime) {
         MetricsServer metricsServer = getMetricsServer();
-        return metricsServer.findDataForGroup(scheduleIds, beginTime, endTime);
+        return metricsServer.findDataForGroup(scheduleIds, beginTime, endTime, 60);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    public List<MeasurementDataNumericHighLowComposite> findDataForResourceGroup(List<Integer> scheduleIds,
+        long beginTime, long endTime, int numberOfBuckets) {
+        MetricsServer metricsServer = getMetricsServer();
+        return metricsServer.findDataForGroup(scheduleIds, beginTime, endTime, numberOfBuckets);
     }
 
     private MetricsServer getMetricsServer() {

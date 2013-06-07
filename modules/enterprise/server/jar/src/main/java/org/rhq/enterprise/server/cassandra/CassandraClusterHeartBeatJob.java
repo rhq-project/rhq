@@ -31,6 +31,9 @@ import static org.rhq.core.domain.cloud.Server.OperationMode.NORMAL;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
@@ -77,6 +80,9 @@ public class CassandraClusterHeartBeatJob implements Job {
         if (pingable) {
             if (rhqServer.getOperationMode() != NORMAL) {
                 changeServerMode(rhqServer, NORMAL);
+                log.info("Restarting storage client subsystem...");
+                StorageClientManagerBean storageClientManager = getStorageClientManager();
+                storageClientManager.init();
             }
             return;
         }
@@ -85,6 +91,9 @@ public class CassandraClusterHeartBeatJob implements Job {
             log.warn(rhqServer + " is unable to connect to any Cassandra node. Server will go into maintenance mode.");
         }
         changeServerMode(rhqServer, MAINTENANCE);
+        log.info("Preparing to shut down storage client subsystem");
+        StorageClientManagerBean storageClientManager = getStorageClientManager();
+        storageClientManager.shutdown();
     }
 
     private Server getRhqServer() {
@@ -103,6 +112,18 @@ public class CassandraClusterHeartBeatJob implements Job {
         TopologyManagerLocal rhqClusterManager = LookupUtil.getTopologyManager();
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         rhqClusterManager.updateServerMode(subjectManager.getOverlord(), new Integer[] {rhqServer.getId()}, mode);
+    }
+
+    private StorageClientManagerBean getStorageClientManager() {
+        try {
+          return (StorageClientManagerBean) new InitialContext().lookup(
+              "java:global/rhq/rhq-enterprise-server-ejb3/" + StorageClientManagerBean.class.getSimpleName());
+        } catch (NamingException e) {
+            String msg = "Unable to access " + StorageClientManagerBean.class + " due to JNDI error. You may " +
+                "need to restart the server so that the storage client subsystem can be reinitialized.";
+            log.error(msg, e);
+            throw new RuntimeException(msg, e);
+        }
     }
 
     private void logException(String msg, Exception e) {

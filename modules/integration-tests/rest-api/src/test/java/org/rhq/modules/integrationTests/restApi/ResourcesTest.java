@@ -1017,6 +1017,30 @@ public class ResourcesTest extends AbstractBase {
         .when()
             .get("/resource/creationStatus/{id}");
 
+    }
+
+    @Test
+    public void testDeleteUnknownResource() throws Exception {
+
+        given()
+            .pathParam("id",22)
+        .expect()
+            .statusCode(204)
+        .when()
+            .delete("/resource/{id}");
+
+    }
+
+    @Test
+    public void testDeleteUnknownResourceWithValidate() throws Exception {
+
+        given()
+            .pathParam("id",22)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+        .when()
+            .delete("/resource/{id}");
 
     }
 }

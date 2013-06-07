@@ -55,6 +55,17 @@ public class AlertAvailabilityDurationJob extends AbstractStatefulJob {
         // get the current resource availability
         ResourceAvailability resourceAvail = LookupUtil.getResourceAvailabilityManager().getLatestAvailability(
             resourceId);
+
+        // Although unlikely, it's possible the resource has actually gone away while we waited out the duration period.
+        // If we can't find any resource avail assume the resource is gone and just end the job.
+        if (null == resourceAvail) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("AlertAvailabilityDurationJob: Assuming resource has been uninventoried [" + resourceId + "]");
+            }
+
+            return;
+        }
+
         AvailabilityType availType = resourceAvail.getAvailabilityType();
 
         // Question? Do we care whether the avail type has been the same for the entire duration (meaning we would need

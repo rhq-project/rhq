@@ -372,7 +372,7 @@ public class DataMigratorRunner {
         }
 
         if (commandLine.hasOption(cassandraCompressionOption.getLongOpt())) {
-            boolean value = tryParseBoolean(commandLine.getOptionValue(disableRawOption.getLongOpt()), true);
+            boolean value = tryParseBoolean(commandLine.getOptionValue(cassandraCompressionOption.getLongOpt()), true);
             configuration.put(cassandraCompressionOption, value);
         }
     }

@@ -110,7 +110,7 @@ public class Upgrade extends ControlCommand {
         File oldOracleModuleDir = new File(oldServerDir, oracleModuleRelativePath);
         if (oldOracleModuleDir.isDirectory()) {
             File newOracleModuleDir = new File(getBaseDir(), oracleModuleRelativePath);
-            FileUtil.purge(newOracleModuleDir, false); // clean out anything that might be in here
+            FileUtil.purge(newOracleModuleDir, true); // clean out anything that might be in here
             FileUtil.copyDirectory(oldOracleModuleDir, newOracleModuleDir);
         }
     }
@@ -126,6 +126,7 @@ public class Upgrade extends ControlCommand {
             oldServerPropsFileInputStream.close();
         }
 
+        oldServerProps.setProperty("rhq.autoinstall.enabled", "true"); // ensure that we always enable the installer
         oldServerProps.setProperty("rhq.autoinstall.database", "auto"); // the old value could have been "overwrite" - NOT what we want when upgrading
 
         String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();

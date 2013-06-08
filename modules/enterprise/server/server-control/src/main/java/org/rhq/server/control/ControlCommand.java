@@ -28,6 +28,7 @@ package org.rhq.server.control;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -134,9 +135,12 @@ public abstract class ControlCommand {
         return this.binDir;
     }
 
+    protected File getLogDir() {
+        return new File(getBaseDir(), "logs");
+    }
+
     protected File getStorageBasedir() {
-        return new File(
-getProperty(RHQ_STORAGE_BASEDIR_PROP,
+        return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP,
             new File(getBaseDir(), STORAGE_BASEDIR_NAME).getAbsolutePath()));
     }
 
@@ -252,5 +256,22 @@ getProperty(RHQ_STORAGE_BASEDIR_PROP,
     protected boolean isWindows() {
         String operatingSystem = System.getProperty("os.name").toLowerCase(Locale.US);
         return operatingSystem.contains("windows");
+    }
+
+    protected boolean isPortInUse(String host, int port) {
+        boolean inUse;
+
+        try {
+            Socket testSocket = new Socket(host, port);
+            try {
+                testSocket.close();
+            } catch (Exception ignore) {
+            }
+            inUse = true;
+        } catch (Exception expected) {
+            inUse = false;
+        }
+
+        return inUse;
     }
 }

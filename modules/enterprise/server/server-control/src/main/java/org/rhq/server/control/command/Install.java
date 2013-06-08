@@ -33,7 +33,6 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.Socket;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -665,7 +664,8 @@ public class Install extends ControlCommand {
 
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath())
-                .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath());
+                .addArgument("--install=" + agentBasedir.getParentFile().getAbsolutePath())
+                .addArgument("--log=" + new File(getLogDir(), "rhq-agent-update.log"));
 
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(getBaseDir());
@@ -673,8 +673,6 @@ public class Install extends ControlCommand {
 
             int exitValue = executor.execute(commandLine);
             log.info("The agent installer finished running with exit value " + exitValue);
-
-            new File(getBaseDir(), "rhq-agent-update.log").delete();
         } catch (IOException e) {
             log.error("An error occurred while running the agent installer: " + e.getMessage());
             throw e;
@@ -867,22 +865,5 @@ public class Install extends ControlCommand {
         } catch (IOException e) {
             throw new RHQControlException(("Failed to replace " + defaultConfigFile + " with " + newConfigFile));
         }
-    }
-
-    private boolean isPortInUse(String host, int port) {
-        boolean inUse;
-
-        try {
-            Socket testSocket = new Socket(host, port);
-            try {
-                testSocket.close();
-            } catch (Exception ignore) {
-            }
-            inUse = true;
-        } catch (Exception expected) {
-            inUse = false;
-        }
-
-        return inUse;
     }
 }

@@ -50,7 +50,6 @@
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
 
-    <script src="/coregui/js/moment.min.js"/>
     <script src="/coregui/js/rhq.js"/>
     <!-- External javascript libraries -->
     <!-- jquery.sparkline requires jquery.
@@ -60,9 +59,6 @@
     <script src="/coregui/js/d3.v3.js"/>
     <script src="/coregui/js/nv.d3.js"/>
     <script src="/coregui/js/jquery.tipsy.js"/>
-
-    <!-- for d3 dual slider control only -->
-    <script src="/coregui/js/bootstrap.min.js" />
 
 
     <!--

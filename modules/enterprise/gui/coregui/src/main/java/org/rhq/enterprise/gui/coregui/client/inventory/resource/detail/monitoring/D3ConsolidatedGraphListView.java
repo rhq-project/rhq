@@ -92,7 +92,6 @@ public class D3ConsolidatedGraphListView extends D3GraphListView {
         destroyMembers();
 
         addMember(buttonBarDateTimeRangeEditor);
-        buttonBarDateTimeRangeEditor.createButtons();
 
         availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
             new AvailabilityOverUnderGraphType(resource.getId()));

@@ -687,6 +687,19 @@ rhq.cassandra.password=${rhq.cassandra.password}
 #    hostname|jmxPort|nativeTransportPort|
 #
 rhq.cassandra.seeds=
+
+# If enabled data sent to and from storage nodes will be compressed using
+# snappy (https://code.google.com/p/snappy) compression. Note that this is an
+# advanced configuration option. If you turn on client compression and your
+# storage nodes do not support compression, then the RHQ server will not be
+# able to connect to the storage cluster. The storage node will log the
+# following at start up if it does not support compression,
+#
+# Cannot initialize native Snappy library. Compression on new tables will be disabled.
+#
+# Please make sure you do not find the above log statement in your storage logs
+# before you enable client compression.
+# rhq.cassandra.client.compression-enabled=false
 </echo>
 
     </target>

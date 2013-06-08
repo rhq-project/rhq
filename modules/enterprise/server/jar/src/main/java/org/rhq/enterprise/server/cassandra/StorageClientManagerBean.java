@@ -226,10 +226,23 @@ public class StorageClientManagerBean {
         }
         int port = storageNodes.get(0).getCqlPort();
 
+        boolean compressionEnabled = Boolean.valueOf(System.getProperty("rhq.cassandra.client.compression-enabled",
+            "false"));
+        ProtocolOptions.Compression compression;
+        if (compressionEnabled) {
+            compression = ProtocolOptions.Compression.SNAPPY;
+            log.info("Compression has been enabled for the storage client. Be aware that if your storage nodes do " +
+                "not support compression then the client will not be able to connect to the storage cluster.");
+        } else {
+            compression = ProtocolOptions.Compression.NONE;
+            log.debug("Storage client compression is disabled");
+        }
+
         Cluster cluster = new ClusterBuilder()
             .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
             .withCredentials(username, password)
             .withPort(port)
+            .withCompression(compression)
             .build();
 
         return cluster.connect(RHQ_KEYSPACE);

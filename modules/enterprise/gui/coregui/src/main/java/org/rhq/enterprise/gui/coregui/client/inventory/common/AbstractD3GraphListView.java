@@ -29,7 +29,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor2;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -48,13 +48,13 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     protected AvailabilityD3GraphView availabilityGraph;
     protected MeasurementUserPreferences measurementUserPrefs;
     protected boolean showAvailabilityGraph = false;
-    protected ButtonBarDateTimeRangeEditor2 buttonBarDateTimeRangeEditor;
+    protected ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     protected Timer refreshTimer;
 
     public AbstractD3GraphListView() {
         super();
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor2(measurementUserPrefs,this);
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
         startRefreshCycle();
     }
 

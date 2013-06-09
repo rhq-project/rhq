@@ -38,11 +38,13 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
- * Component to allow selection of Date/Time range for graphs using a button group from bootstrap.
+ * Component to allow selection of Date/Time range for graphs using a radio button group.
+ * The DateTimeButton enum defines the button labels and time ranges change this if you
+ * wish to add/delete custom time ranges.
  *
  * @author Mike Thompson
  */
-public class ButtonBarDateTimeRangeEditor2 extends EnhancedVLayout {
+public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     static final String TIMERANGE = "timerange";
     static final int BUTTON_WIDTH = 28;
@@ -56,8 +58,8 @@ public class ButtonBarDateTimeRangeEditor2 extends EnhancedVLayout {
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
 
-    public ButtonBarDateTimeRangeEditor2(MeasurementUserPreferences measurementUserPrefs,
-                                         AbstractD3GraphListView d3GraphListView) {
+    public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
+                                        AbstractD3GraphListView d3GraphListView) {
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
 
@@ -172,15 +174,12 @@ public class ButtonBarDateTimeRangeEditor2 extends EnhancedVLayout {
      * @param endTime   double because JSNI doesnt support long
      */
     public void saveDateRange(double startTime, double endTime) {
-
-        //@todo: uncomment when ready
         final boolean advanced = true;
         AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences
                 .getMetricRangePreferences();
         prefs.explicitBeginEnd = advanced;
         prefs.begin = (long) startTime;
         prefs.end = (long) endTime;
-        ///prefs.setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end));
         if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
             CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
         } else {
@@ -203,6 +202,9 @@ public class ButtonBarDateTimeRangeEditor2 extends EnhancedVLayout {
     }
 
     @SuppressWarnings("GwtInconsistentSerializableClass")
+    /**
+     * This enum defines the button labels and time ranges used in the toolbar.
+     */
     private enum DateTimeButton {
         oneHour( "1h", 60 * 60 ),
         sixHour( "6h", 6 * 60 * 60 ),

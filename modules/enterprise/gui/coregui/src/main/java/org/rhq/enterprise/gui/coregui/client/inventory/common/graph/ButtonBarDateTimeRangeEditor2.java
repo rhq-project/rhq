@@ -197,8 +197,9 @@ public class ButtonBarDateTimeRangeEditor2 extends EnhancedVLayout {
             String selectedDateTimeRange = button.getTitle();
             Log.info("Button pressed for: " + selectedDateTimeRange);
             Date calculatedStartDateTime = calculateStartDate(new Date(getEndTime()), selectedDateTimeRange);
-            updateDateTimeRangeDisplay(calculatedStartDateTime, new Date());
+            saveDateRange(calculatedStartDateTime.getTime(),new Date().getTime());
             redrawGraphs();
+            updateDateTimeRangeDisplay(calculatedStartDateTime, new Date());
         }
     }
 

@@ -29,7 +29,6 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor2;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
@@ -43,10 +42,10 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
 public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh {
     protected final static int SINGLE_CHART_HEIGHT = 225;
     protected final static int MULTI_CHART_HEIGHT = 195;
+    protected static Label loadingLabel = new Label(MSG.common_msg_loading());
     protected List<Availability> availabilityList;
     protected List<ResourceGroupAvailability> groupAvailabilityList;
     protected AvailabilityD3GraphView availabilityGraph;
-    protected static Label loadingLabel = new Label(MSG.common_msg_loading());
     protected MeasurementUserPreferences measurementUserPrefs;
     protected boolean showAvailabilityGraph = false;
     protected ButtonBarDateTimeRangeEditor2 buttonBarDateTimeRangeEditor;

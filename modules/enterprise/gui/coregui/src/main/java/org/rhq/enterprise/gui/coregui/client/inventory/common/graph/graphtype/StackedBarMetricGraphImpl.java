@@ -581,13 +581,13 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                 function brushmove() {
                     var s = brush.extent();
-                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
+//                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
                 }
 
                 function brushend() {
                     var s = brush.extent();
                     svg.classed("selecting", !$wnd.d3.event.target.empty());
-                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
+                    //updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
                 }
 
                 function updateDateRangeDisplay(startDate, endDate ) {

@@ -208,7 +208,7 @@ public class ResourceDetailView extends
             null);
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-       i monitoringTab.registerSubTabs(monitorTables, metricsTables,  monitorNewGraphs, monitorTraits, monitorAvail,
+        monitoringTab.registerSubTabs(monitorTables, metricsTables,  monitorNewGraphs, monitorTraits, monitorAvail,
             monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 

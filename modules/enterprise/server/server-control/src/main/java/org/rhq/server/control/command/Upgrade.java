@@ -107,15 +107,34 @@ public class Upgrade extends ControlCommand {
                 return;
             }
 
-            if (isStorageInstalled() || isServerInstalled()) {
+            if (isStorageInstalled() || isServerInstalled() || isAgentInstalled()) {
                 log.warn("RHQ is already installed so upgrade can not be performed.");
                 return;
             }
 
-            // TODO: we should shutdown the server/agent/storage nodes first, then upgrade storage (then start it), then server then agent.
+            // shutdown the server/agent/storage nodes from the old install
+            org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, "rhqctl", "stop");
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(new File(getFromServerDir(commandLine), "bin"));
+            executor.setStreamHandler(new PumpStreamHandler());
+            int exitValue = executor.execute(rhqctlStop);
+            if (exitValue == 0) {
+                log.info("The old installation components have been stopped");
+            } else {
+                log.error("The old installation components failed to be stopped. Please stop them manually before continuing. exit code="
+                    + exitValue);
+                return;
+            }
 
+            // now upgrade everything and start them up again
             upgradeServer(commandLine);
             upgradeAgent(commandLine);
+
+            if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
+                startAgent(new File(getBaseDir(), AGENT_BASEDIR_NAME));
+            } else {
+                log.info("The agent was upgraded but was told not to start automatically.");
+            }
 
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
@@ -182,8 +201,6 @@ public class Upgrade extends ControlCommand {
             File agentBasedir = getAgentBasedir();
             File agentInstallerJar = getAgentInstaller();
 
-            putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getAbsolutePath()); // TODO why is this here?
-
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath()) //
                 .addArgument("--update=" + oldAgentDir.getAbsolutePath()) //
@@ -221,6 +238,49 @@ public class Upgrade extends ControlCommand {
                 return file.getName().contains("rhq-enterprise-agent");
             }
         })[0];
+    }
+
+    private void startAgent(File agentBasedir) throws Exception {
+        try {
+            log.info("Starting RHQ agent");
+            Executor executor = new DefaultExecutor();
+            File agentBinDir = new File(agentBasedir, "bin");
+            executor.setWorkingDirectory(agentBinDir);
+            executor.setStreamHandler(new PumpStreamHandler());
+            org.apache.commons.exec.CommandLine commandLine;
+
+            if (isWindows()) {
+                // For windows we will [re-]install the server as a windows service, then start the service.
+
+                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+                try {
+                    executor.execute(commandLine);
+                } catch (Exception e) {
+                    // Ignore, service may not exist or be running, , script returns 1
+                    log.debug("Failed to stop agent service", e);
+                }
+
+                commandLine = getCommandLine("rhq-agent-wrapper", "remove");
+                try {
+                    executor.execute(commandLine);
+                } catch (Exception e) {
+                    // Ignore, service may not exist, script returns 1
+                    log.debug("Failed to uninstall agent service", e);
+                }
+
+                commandLine = getCommandLine("rhq-agent-wrapper", "install");
+                executor.execute(commandLine);
+            }
+
+            // For *nix, just start the server in the background, for Win, now that the service is installed, start it
+            commandLine = getCommandLine("rhq-agent-wrapper", "start");
+            executor.execute(commandLine);
+
+            log.info("The agent has started up");
+        } catch (IOException e) {
+            log.error("An error occurred while starting the agent: " + e.getMessage());
+            throw e;
+        }
     }
 
     private List<String> validateOptions(CommandLine commandLine) {

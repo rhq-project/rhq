@@ -63,6 +63,7 @@ import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * @author John Sanda
@@ -80,6 +81,8 @@ public class StorageInstaller {
     public static final int STATUS_DATA_DIR_NOT_EMPTY = 4;
 
     public static final int STATUS_SHOW_USAGE = 100;
+
+    public static final int STATUS_INVALID_UPGRADE = 5;
 
     private final String STORAGE_BASEDIR = "rhq-storage";
 
@@ -176,6 +179,10 @@ public class StorageInstaller {
         Option stackSizeOption = new Option(null, "stack-size", true, "The value to use for the thread stack size. " +
             "This value is passed directly to the -Xss option of the Java executable.");
 
+        Option upgradeOption = new Option(null, "upgrade", true, "Upgrades an existing storage node. The directory " +
+            "where the existing RHQ server is installed.");
+        upgradeOption.setArgName("RHQ_SERVER_DIR");
+
         options = new Options().addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
             .addOption(seeds)
@@ -191,7 +198,8 @@ public class StorageInstaller {
             .addOption(basedirOption)
             .addOption(heapSizeOption)
             .addOption(heapNewSizeOption)
-            .addOption(stackSizeOption);
+            .addOption(stackSizeOption)
+            .addOption(upgradeOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -199,6 +207,25 @@ public class StorageInstaller {
             printUsage();
             return STATUS_SHOW_USAGE;
         } else {
+            File existingStorageDir = null;
+            File upgradeFromDir = null;
+            if (cmdLine.hasOption("upgrade")) {
+                upgradeFromDir = new File(cmdLine.getOptionValue("upgrade", ""));
+
+                if (!upgradeFromDir.isDirectory()) {
+                    log.error("The value passed to the upgrade option is not a directory. The value must be a valid " +
+                        "path that points to the base directory of an existing RHQ server installation.");
+                    return STATUS_INVALID_UPGRADE;
+                }
+                existingStorageDir = new File(upgradeFromDir, "rhq-storage");
+                if (!(existingStorageDir.exists() && existingStorageDir.isDirectory())) {
+                    log.error(existingStorageDir + " does not appear to be an existing RHQ storage node installtion. " +
+                        "Check the value that was passed to the upgrade option and make sure it specifies the base " +
+                        "directory of an existing RHQ server installation.");
+                    return STATUS_INVALID_UPGRADE;
+                }
+            }
+
             DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
             DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
 
@@ -296,6 +323,29 @@ public class StorageInstaller {
             storageBasedir.mkdirs();
             deployer.unzipDistro();
             deployer.applyConfigChanges();
+
+            // check to see if this is an upgrade
+            if (existingStorageDir != null) {
+                // For upgrades we will copy the existing cassandra.yaml,
+                // log4j-server.properties, and cassandra-env.sh file from the existing
+                // storage node installation. Going forward though we need to add support
+                // for merging in the existing cassandra.yaml with the new one. We also
+                // need to do something about cassandra-env.sh. There is no easy to parse
+                // it and merge in changes which is problematic since that is where heap
+                // settings and JMX port and other JMV options are specified. Maybe we can
+                // replace it with a cassandra-in.sh that is essentially a properties file
+                // which we can easily parse and update.
+                File oldConfDir = new File(existingStorageDir, "conf");
+                File newConfDir = new File(storageBasedir, "conf");
+                String cassandraYaml = "cassandra.yaml";
+                String cassandraEnv = "cassandra-env.sh";
+                String log4j = "log4j-server.properties";
+
+                replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
+                replaceFile(new File(oldConfDir, cassandraEnv), new File(newConfDir, cassandraEnv));
+                replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
+            }
+
             deployer.updateFilePerms();
             log.info("Finished installing RHQ Storage Node.");
 
@@ -565,6 +615,21 @@ public class StorageInstaller {
             }
         }
         return false;
+    }
+
+    private void replaceFile(File oldFile, File newFile) throws IOException {
+        log.info("Copying " + oldFile + " to " + newFile);
+        if (!oldFile.exists()) {
+            log.warn(oldFile + " does not exist. " + newFile.getName() + " will be created.");
+        } else {
+            newFile.delete();
+            try {
+                FileUtil.copyFile(oldFile, newFile);
+            } catch (IOException e) {
+                log.error("There was an error while copying " + oldFile + " to " + " " + newFile, e);
+                throw e;
+            }
+        }
     }
 
     public void printUsage() {

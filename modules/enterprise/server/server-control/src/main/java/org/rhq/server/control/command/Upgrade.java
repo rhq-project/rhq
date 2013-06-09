@@ -113,6 +113,12 @@ public class Upgrade extends ControlCommand {
             }
 
             // shutdown the server/agent/storage nodes from the old install
+            log.info("Stopping old installation components");
+
+            if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
+                stopOldAgent(commandLine);
+            }
+
             org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, "rhqctl", "stop");
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(new File(getFromServerDir(commandLine), "bin"));
@@ -509,6 +515,30 @@ public class Upgrade extends ControlCommand {
                 } catch (Exception e) {
                     // best effort
                 }
+            }
+        }
+    }
+
+    private void stopOldAgent(CommandLine rhqctlCommandLine) throws Exception {
+        log.debug("Stopping old RHQ agent");
+
+        File agentBinDir = new File(getFromAgentDir(rhqctlCommandLine), "bin");
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(agentBinDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+
+        if (isWindows()) {
+            try {
+                executor.execute(commandLine);
+            } catch (Exception e) {
+                // Ignore, service may not exist or be running, , script returns 1
+                log.debug("Failed to stop agent service", e);
+            }
+        } else {
+            String pid = getAgentPid();
+            if (pid != null) {
+                executor.execute(commandLine);
             }
         }
     }

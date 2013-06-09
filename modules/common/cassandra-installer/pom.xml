@@ -40,6 +40,11 @@
       <artifactId>commons-io</artifactId>
       <version>2.1</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -93,6 +98,11 @@
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-cassandra-jmx</artifactId>
                   <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.yaml</groupId>
+                  <artifactId>snakeyaml</artifactId>
+                  <version>${cassandra.snakeyaml.version}</version>
                 </artifactItem>
               </artifactItems>
             </configuration>

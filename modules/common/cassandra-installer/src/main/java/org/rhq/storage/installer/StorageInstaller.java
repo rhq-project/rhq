@@ -26,6 +26,7 @@
 package org.rhq.storage.installer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -55,6 +56,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.yaml.snakeyaml.Yaml;
 
 import org.rhq.cassandra.Deployer;
 import org.rhq.cassandra.DeploymentOptions;
@@ -257,18 +259,20 @@ public class StorageInstaller {
             dataDir = cmdLine.getOptionValue("data", dataDir);
             savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
 
-            // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
-            if (!isDirectoryEmpty(new File(commitLogDir))) {
-                log.error("Commitlog directory is not empty: " + commitLogDir);
-                return STATUS_DATA_DIR_NOT_EMPTY;
-            }
-            if (!isDirectoryEmpty(new File(dataDir))) {
-                log.error("Data directory is not empty: " + dataDir);
-                return STATUS_DATA_DIR_NOT_EMPTY;
-            }
-            if (!isDirectoryEmpty(new File(savedCachesDir))) {
-                log.error("Saved caches directory is not empty: " + savedCachesDir);
-                return STATUS_DATA_DIR_NOT_EMPTY;
+            if (upgradeFromDir == null) {
+                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
+                if (!isDirectoryEmpty(new File(commitLogDir))) {
+                    log.error("Commitlog directory is not empty: " + commitLogDir);
+                    return STATUS_DATA_DIR_NOT_EMPTY;
+                }
+                if (!isDirectoryEmpty(new File(dataDir))) {
+                    log.error("Data directory is not empty: " + dataDir);
+                    return STATUS_DATA_DIR_NOT_EMPTY;
+                }
+                if (!isDirectoryEmpty(new File(savedCachesDir))) {
+                    log.error("Saved caches directory is not empty: " + savedCachesDir);
+                    return STATUS_DATA_DIR_NOT_EMPTY;
+                }
             }
 
             File logFile = new File(logDir, "rhq-storage.log");
@@ -289,6 +293,8 @@ public class StorageInstaller {
             // to 64 for dev/test environments so we need to update it here.
             deploymentOptions.setNativeTransportMaxThreads(128);
 
+            // TODO set defaults for read/write/range timeouts
+
             if (cmdLine.hasOption("heap-size")) {
                 deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size"));
             }
@@ -304,9 +310,11 @@ public class StorageInstaller {
             deploymentOptions.load();
 
             List<String> errors = new ArrayList<String>();
-            checkPerms(options.getOption("saved-caches"), savedCachesDir, errors);
-            checkPerms(options.getOption("commitlog"), commitLogDir, errors);
-            checkPerms(options.getOption("data"), dataDir, errors);
+            if (upgradeFromDir == null) {
+                checkPerms(options.getOption("saved-caches"), savedCachesDir, errors);
+                checkPerms(options.getOption("commitlog"), commitLogDir, errors);
+                checkPerms(options.getOption("data"), dataDir, errors);
+            }
 
             if (!errors.isEmpty()) {
                 log.error("Problems have been detected with one or more of the directories in which the storage "
@@ -352,7 +360,24 @@ public class StorageInstaller {
             log.info("Updating rhq-server.properties...");
             PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
             try {
-                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
+                if (upgradeFromDir == null) {
+                    serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
+                } else {
+                    File newConfDir = new File(storageBasedir, "conf");
+                    File yamlFile = new File(newConfDir, "cassandra.yaml");
+
+                    Yaml yaml = new Yaml();
+                    Map<String, Object> config = (Map<String, Object>) yaml.load(new FileInputStream(yamlFile));
+
+                    List seedProviderList = (List) config.get("seed_provider");
+                    Map seedProvider = (Map) seedProviderList.get(0);
+                    List paramsList = (List) seedProvider.get("parameters");
+                    Map params = (Map) paramsList.get(0);
+                    // TODO What should we do if the seeds option is also set?
+                    // Should we replace or merge?
+                    seeds = (String) params.get("seeds");
+                    serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
+                }
             } catch (IOException e) {
                 throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
             }

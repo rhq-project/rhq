@@ -41,7 +41,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  */
 public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh {
     protected final static int SINGLE_CHART_HEIGHT = 225;
-    protected final static int MULTI_CHART_HEIGHT = 195;
+    protected final static int MULTI_CHART_HEIGHT = 210;
     protected static Label loadingLabel = new Label(MSG.common_msg_loading());
     protected List<Availability> availabilityList;
     protected List<ResourceGroupAvailability> groupAvailabilityList;

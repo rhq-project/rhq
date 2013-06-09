@@ -195,7 +195,6 @@ public class ButtonBarDateTimeRangeEditor2 extends EnhancedVLayout {
         public void onClick(ClickEvent clickEvent) {
             IButton button = (IButton) clickEvent.getSource();
             String selectedDateTimeRange = button.getTitle();
-            Log.info("Button pressed for: " + selectedDateTimeRange);
             Date calculatedStartDateTime = calculateStartDate(new Date(getEndTime()), selectedDateTimeRange);
             saveDateRange(calculatedStartDateTime.getTime(),new Date().getTime());
             redrawGraphs();
@@ -212,7 +211,7 @@ public class ButtonBarDateTimeRangeEditor2 extends EnhancedVLayout {
         fiveDay("5d", 5 * 24 * 60 * 60 ),
         oneMonth("1m", 30 * 24 * 60 * 60 ),
         threeMonth("3m", 3 * 30 * 24 * 60 * 60 ),
-        oneYear("1y",365  * 24 * 60 * 60 );
+        sixMonth("6m", 6 * 30 * 24 * 60 * 60 );
 
         private final String label;
         private final long timeSpanInSeconds;

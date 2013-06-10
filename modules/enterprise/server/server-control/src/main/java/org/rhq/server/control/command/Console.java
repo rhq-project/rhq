@@ -138,7 +138,7 @@ public class Console extends ControlCommand {
     private void startAgentInForeground() throws Exception {
         log.info("Starting RHQ agent in foreground");
 
-        File agentHomeDir = new File(getBaseDir(), AGENT_BASEDIR_NAME);
+        File agentHomeDir = getAgentBasedir();
         File agentBinDir = new File(agentHomeDir, "bin");
         File confDir = new File(agentHomeDir, "conf");
         File agentConfigFile = new File(confDir, "agent-configuration.xml");

@@ -24,12 +24,10 @@
 
 package org.rhq.server.control.command;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,29 +35,24 @@ import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
-import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
-import org.jboss.as.controller.client.ModelControllerClient;
-
-import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
-import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.file.FileUtil;
-import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
 /**
  * @author Jay Shaughnessy
  * @author John Mazzitelli 
  */
-public class Upgrade extends ControlCommand {
+public class Upgrade extends AbstractInstall {
 
     static private final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
     static private final String FROM_SERVER_DIR_OPTION = "from-server-dir";
     static private final String AGENT_NO_START = "agent-no-start";
+    static private final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
 
     private Options options;
 
@@ -76,8 +69,12 @@ public class Upgrade extends ControlCommand {
                 null,
                 AGENT_NO_START,
                 true,
-                "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to true, the agent will not be started after it gets upgraded.");
-
+                "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to true, the agent will not be started after it gets upgraded.")
+            .addOption(
+                null,
+                USE_REMOTE_STORAGE_NODE,
+                true,
+                "By default a server is co-located with a storage node. However, if this option is set to true, no local storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.");
     }
 
     @Override
@@ -107,21 +104,32 @@ public class Upgrade extends ControlCommand {
                 return;
             }
 
-            if (isStorageInstalled() || isServerInstalled() || isAgentInstalled()) {
+            // If using a non-default agent location then save it so it will be applied to all subsequent rhqctl
+            // commands.  Then, use it to stop the agent, if running.
+            boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
+            if (hasFromAgentOption) {
+                File agentBasedir = getFromAgentDir(commandLine);
+                putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getPath());
+                stopAgent(agentBasedir); // this is validate the path as well
+            }
+
+            // If anything appears to be installed already then don't perform an upgrade
+            if (isStorageInstalled() || isServerInstalled() || (!hasFromAgentOption && isAgentInstalled())) {
                 log.warn("RHQ is already installed so upgrade can not be performed.");
                 return;
             }
 
-            // shutdown the server/agent/storage nodes from the old install
-            log.info("Stopping old installation components");
+            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
+            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
+            log.info("Stopping any running RHQ components...");
 
-            if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
-                stopOldAgent(commandLine);
-            }
-
-            org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, "rhqctl", "stop");
+            // If rhqctl exists in the old version, use it to stop everything, otherwise, just try and stop the server
+            // using the legacy script.
+            File fromBinDir = new File(getFromServerDir(commandLine), "bin");
+            String fromScript = !isPreStorageNode(commandLine) ? "rhqctl" : "rhq-server";
+            org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, fromScript, "stop");
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(new File(getFromServerDir(commandLine), "bin"));
+            executor.setWorkingDirectory(fromBinDir);
             executor.setStreamHandler(new PumpStreamHandler());
             int exitValue = executor.execute(rhqctlStop);
             if (exitValue == 0) {
@@ -133,11 +141,12 @@ public class Upgrade extends ControlCommand {
             }
 
             // now upgrade everything and start them up again
+            upgradeStorage(commandLine);
             upgradeServer(commandLine);
             upgradeAgent(commandLine);
 
             if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
-                startAgent(new File(getBaseDir(), AGENT_BASEDIR_NAME));
+                startAgent(new File(getBaseDir(), AGENT_BASEDIR_NAME), true);
             } else {
                 log.info("The agent was upgraded but was told not to start automatically.");
             }
@@ -147,19 +156,74 @@ public class Upgrade extends ControlCommand {
         }
     }
 
+    private void upgradeStorage(CommandLine rhqctlCommandLine) throws Exception {
+        if (rhqctlCommandLine.hasOption(USE_REMOTE_STORAGE_NODE)) {
+            log.info("Ignoring storage node upgrade, a remote storage node is configured.");
+            return;
+        }
+
+        // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
+        if (isPreStorageNode(rhqctlCommandLine)) {
+            installStorageNode(getStorageBasedir(), rhqctlCommandLine);
+
+        } else {
+            try {
+                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
+                    getFromServerDir(rhqctlCommandLine).getAbsolutePath());
+                Executor executor = new DefaultExecutor();
+                executor.setWorkingDirectory(getBinDir());
+                executor.setStreamHandler(new PumpStreamHandler());
+
+                int exitCode = executor.execute(commandLine);
+                log.info("The storage node upgrade has finished with an exit value of " + exitCode);
+
+            } catch (IOException e) {
+                log.error("An error occurred while running the storage node upgrade: " + e.getMessage());
+                if (e.getMessage().toLowerCase().contains("exit value: 3")) {
+                    log.error("Try to point your root data directory via --" + STORAGE_DATA_ROOT_DIR
+                        + " to a directory where you have read and write permissions.");
+                }
+                throw e;
+            }
+
+        }
+    }
+
     private void upgradeServer(CommandLine commandLine) throws Exception {
+        // don't upgrade the server if this is a storage node only install
+        File oldServerDir = getFromServerDir(commandLine);
+        if (!(isPreStorageNode(commandLine) || isServerInstalled(oldServerDir))) {
+            log.info("Ignoring server upgrade, this is a storage node only installation.");
+            return;
+        }
+
         // copy all the old settings into the new rhq-server.properties file
         upgradeServerPropertiesFile(commandLine);
 
         // RHQ doesn't ship the Oracle driver. If the user uses Oracle, they have their own driver so we need to copy it over.
         // Because the module.xml has the driver name in it, we need to copy the full Oracle JDBC driver module content.
         String oracleModuleRelativePath = "modules/org/rhq/oracle";
-        File oldServerDir = getFromServerDir(commandLine);
         File oldOracleModuleDir = new File(oldServerDir, oracleModuleRelativePath);
         if (oldOracleModuleDir.isDirectory()) {
             File newOracleModuleDir = new File(getBaseDir(), oracleModuleRelativePath);
-            FileUtil.purge(newOracleModuleDir, true); // clean out anything that might be in here
-            FileUtil.copyDirectory(oldOracleModuleDir, newOracleModuleDir);
+            File newOracleModuleMainDir = new File(newOracleModuleDir, "main");
+            // only copy over our "dummy" driver, leave anything else in place as it may be a newer driver
+            // basically, look for a file of non-nominal size
+            boolean copy = true;
+            for (File f : newOracleModuleMainDir.listFiles()) {
+                copy = f.isFile() && f.length() < 2048L; // the actual driver is much bigger, our fake one is 1K or so
+            }
+            if (copy) {
+                FileUtil.purge(newOracleModuleDir, true); // clean out anything that might be in here
+                FileUtil.copyDirectory(oldOracleModuleDir, newOracleModuleDir);
+            }
+        }
+
+        // copy over any wrapper.inc that may have been added
+        File oldWrapperIncFile = new File(oldServerDir, "bin/wrapper/rhq-server-wrapper.inc");
+        if (oldWrapperIncFile.exists()) {
+            File newWrapperIncFile = new File(getBaseDir(), "bin/wrapper/rhq-server-wrapper.inc");
+            FileUtil.copyFile(oldWrapperIncFile, newWrapperIncFile);
         }
 
         startRHQServerForInstallation();
@@ -246,49 +310,6 @@ public class Upgrade extends ControlCommand {
         })[0];
     }
 
-    private void startAgent(File agentBasedir) throws Exception {
-        try {
-            log.info("Starting RHQ agent");
-            Executor executor = new DefaultExecutor();
-            File agentBinDir = new File(agentBasedir, "bin");
-            executor.setWorkingDirectory(agentBinDir);
-            executor.setStreamHandler(new PumpStreamHandler());
-            org.apache.commons.exec.CommandLine commandLine;
-
-            if (isWindows()) {
-                // For windows we will [re-]install the server as a windows service, then start the service.
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-                try {
-                    executor.execute(commandLine);
-                } catch (Exception e) {
-                    // Ignore, service may not exist or be running, , script returns 1
-                    log.debug("Failed to stop agent service", e);
-                }
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "remove");
-                try {
-                    executor.execute(commandLine);
-                } catch (Exception e) {
-                    // Ignore, service may not exist, script returns 1
-                    log.debug("Failed to uninstall agent service", e);
-                }
-
-                commandLine = getCommandLine("rhq-agent-wrapper", "install");
-                executor.execute(commandLine);
-            }
-
-            // For *nix, just start the server in the background, for Win, now that the service is installed, start it
-            commandLine = getCommandLine("rhq-agent-wrapper", "start");
-            executor.execute(commandLine);
-
-            log.info("The agent has started up");
-        } catch (IOException e) {
-            log.error("An error occurred while starting the agent: " + e.getMessage());
-            throw e;
-        }
-    }
-
     private List<String> validateOptions(CommandLine commandLine) {
         List<String> errors = new LinkedList<String>();
 
@@ -339,207 +360,8 @@ public class Upgrade extends ControlCommand {
             commandLine.getOptionValue(FROM_SERVER_DIR_OPTION)) : null;
     }
 
-    private void startRHQServerForInstallation() throws IOException {
-        try {
-            log.info("The RHQ Server must be started to complete its upgrade. Starting the RHQ server in preparation of running the server installer...");
-
-            // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
-            // to port 9999 for its native management subsystem. Make sure some other independent EAP server (or anything for that matter)
-            // isn't already listening to that port.
-            if (isPortInUse("127.0.0.1", 9999)) {
-                throw new IOException(
-                    "Something is already listening to port 9999 - shut it down before upgrading the server.");
-            }
-
-            Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(getBinDir());
-            executor.setStreamHandler(new PumpStreamHandler());
-            org.apache.commons.exec.CommandLine commandLine;
-
-            if (isWindows()) {
-                // For windows we will [re-]install the server as a windows service, then start the service.
-
-                commandLine = getCommandLine("rhq-server", "stop");
-                executor.execute(commandLine);
-
-                commandLine = getCommandLine("rhq-server", "remove");
-                executor.execute(commandLine);
-
-                commandLine = getCommandLine("rhq-server", "install");
-                executor.execute(commandLine);
-
-                commandLine = getCommandLine("rhq-server", "start");
-                executor.execute(commandLine);
-
-            } else {
-                // For *nix, just start the server in the background
-                commandLine = getCommandLine("rhq-server", "start");
-                executor.execute(commandLine, new DefaultExecuteResultHandler());
-            }
-
-            // Wait for the server to complete it's startup
-            log.info("Waiting for the RHQ Server to start in preparation of running the server installer for upgrade...");
-            commandLine = getCommandLine("rhq-installer", "--test");
-
-            Executor installerExecutor = new DefaultExecutor();
-            installerExecutor.setWorkingDirectory(getBinDir());
-            installerExecutor.setStreamHandler(new PumpStreamHandler());
-
-            int exitCode = 0;
-            int numTries = 0, maxTries = 30;
-            do {
-                try {
-                    Thread.sleep(5000L);
-                } catch (InterruptedException e) {
-                    // just keep going
-                }
-                if (numTries++ > maxTries) {
-                    throw new IOException("Failed to detect server initialization, max tries exceeded. Aborting...");
-                }
-                if (numTries > 1) {
-                    log.info("Still waiting to run the server installer...");
-                }
-                exitCode = installerExecutor.execute(commandLine);
-
-            } while (exitCode != 0);
-
-            log.info("The RHQ Server is ready to be upgraded by the server installer.");
-
-        } catch (IOException e) {
-            log.error("An error occurred while starting the RHQ server: " + e.getMessage());
-            throw e;
-        }
+    protected boolean isPreStorageNode(CommandLine commandLine) {
+        return new File(getFromServerDir(commandLine), "bin/rhqctl").exists();
     }
 
-    private void runRHQServerInstaller() throws IOException {
-        try {
-            log.info("Installing RHQ server");
-
-            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-installer");
-            Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(getBinDir());
-            executor.setStreamHandler(new PumpStreamHandler());
-
-            executor.execute(commandLine, new DefaultExecuteResultHandler());
-            log.info("The server installer is running");
-        } catch (IOException e) {
-            log.error("An error occurred while starting the server installer: " + e.getMessage());
-        }
-    }
-
-    private void waitForRHQServerToInitialize() throws Exception {
-        try {
-            final long messageInterval = 30000L;
-            final long problemMessageInterval = 120000L;
-            long timerStart = System.currentTimeMillis();
-            long intervalStart = timerStart;
-
-            while (!isRHQServerInitialized()) {
-                Long now = System.currentTimeMillis();
-
-                if ((now - intervalStart) > messageInterval) {
-                    long totalWait = (now - timerStart);
-
-                    if (totalWait < problemMessageInterval) {
-                        log.info("Still waiting for server to start...");
-
-                    } else {
-                        long minutes = totalWait / 60000;
-                        log.info("It has been over ["
-                            + minutes
-                            + "] minutes - you may want to ensure your server startup is proceeding as expected. You can check the log at ["
-                            + new File(getBaseDir(), "logs/server.log").getPath() + "].");
-
-                        timerStart = now;
-                    }
-
-                    intervalStart = now;
-                }
-
-                Thread.sleep(5000);
-            }
-
-        } catch (IOException e) {
-            log.error("An error occurred while checking to see if the server is initialized: " + e.getMessage());
-            throw e;
-        } catch (InterruptedException e) {
-            // Don't think we need to log any details here
-            throw e;
-        }
-    }
-
-    private boolean isRHQServerInitialized() throws IOException {
-
-        BufferedReader reader = null;
-        ModelControllerClient mcc = null;
-        Properties props = new Properties();
-
-        try {
-            File propsFile = new File(getBaseDir(), "bin/rhq-server.properties");
-            reader = new BufferedReader(new FileReader(propsFile));
-            props.load(reader);
-
-            String host = (String) props.get("jboss.bind.address.management");
-            int port = Integer.valueOf((String) props.get("jboss.management.native.port")).intValue();
-            mcc = MCCHelper.getModelControllerClient(host, port);
-            DeploymentJBossASClient client = new DeploymentJBossASClient(mcc);
-            boolean isDeployed = client.isDeployment("rhq.ear");
-            return isDeployed;
-
-        } catch (Throwable t) {
-            log.debug("Falling back to logfile check due to: ", t);
-
-            File logDir = new File(getBaseDir(), "logs");
-            reader = new BufferedReader(new FileReader(new File(logDir, "server.log")));
-            String line = reader.readLine();
-            while (line != null) {
-                if (line.contains("Server started")) {
-                    return true;
-                }
-                line = reader.readLine();
-            }
-
-            return false;
-
-        } finally {
-            if (null != mcc) {
-                try {
-                    mcc.close();
-                } catch (Exception e) {
-                    // best effort
-                }
-            }
-            if (null != reader) {
-                try {
-                    reader.close();
-                } catch (Exception e) {
-                    // best effort
-                }
-            }
-        }
-    }
-
-    private void stopOldAgent(CommandLine rhqctlCommandLine) throws Exception {
-        log.debug("Stopping old RHQ agent");
-
-        File agentBinDir = new File(getFromAgentDir(rhqctlCommandLine), "bin");
-        Executor executor = new DefaultExecutor();
-        executor.setWorkingDirectory(agentBinDir);
-        executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-
-        if (isWindows()) {
-            try {
-                executor.execute(commandLine);
-            } catch (Exception e) {
-                // Ignore, service may not exist or be running, , script returns 1
-                log.debug("Failed to stop agent service", e);
-            }
-        } else {
-            String pid = getAgentPid();
-            if (pid != null) {
-                executor.execute(commandLine);
-            }
-        }
-    }
 }

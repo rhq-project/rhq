@@ -8,6 +8,7 @@ gwt-tmp/
 /cassandra/
 dev-container/
 rhq-data/
+rhq-agent/
 dev-agent/
 dev-cli/
 modules/enterprise/gui/portal-war/build/classes/

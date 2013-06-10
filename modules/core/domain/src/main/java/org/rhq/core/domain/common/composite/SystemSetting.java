@@ -83,7 +83,8 @@ public enum SystemSetting {
     LDAP_BIND_PW("CAM_LDAP_BIND_PW", PropertySimpleType.PASSWORD, false, false),
     LDAP_NAMING_FACTORY("CAM_LDAP_NAMING_FACTORY_INITIAL", PropertySimpleType.STRING, true, true),
  LDAP_GROUP_USE_POSIX(
-        "CAM_LDAP_GROUP_USE_POSIX", PropertySimpleType.BOOLEAN, false, true),
+        "CAM_LDAP_GROUP_USE_POSIX", PropertySimpleType.BOOLEAN, false, true), LDAP_GROUP_QUERY_PAGE_SIZE(
+        "LDAP_GROUP_QUERY_PAGE_SIZE", PropertySimpleType.INTEGER, false, true),
 
     ACTIVE_DRIFT_PLUGIN("ACTIVE_DRIFT_PLUGIN", PropertySimpleType.STRING, false, true),
 

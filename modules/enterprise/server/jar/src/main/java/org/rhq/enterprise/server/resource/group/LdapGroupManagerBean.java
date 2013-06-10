@@ -54,6 +54,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -408,7 +409,29 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             searchControls.setReturningAttributes(attributes);
 
             //BZ:964250: add rfc 2696
+            //default to 1000 results.  System setting page size from UI should be non-negative integer > 0.
+            //additionally as system settings are modifiable via CLI which may not have param checking enabled do some
+            //more checking.
             int defaultPageSize = 1000;
+            //            Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
+            Properties options = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+            //                        Properties options = systemManager.getSystemSettings(subjectManager.getOverlord()).;
+            String groupPageSize = options.getProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.getInternalName(), ""
+                + defaultPageSize);
+            if ((groupPageSize != null) && (!groupPageSize.trim().isEmpty())) {
+                int passedInPageSize = -1;
+                try {
+                    passedInPageSize = Integer.valueOf(groupPageSize.trim());
+                    if (passedInPageSize > 0) {
+                        defaultPageSize = passedInPageSize;
+                    }
+                } catch (NumberFormatException nfe) {
+                    //log issue and do nothing. Go with the default.
+                    log.debug("LDAP Group Page Size passed '" + groupPageSize + "' in is invalid. Defaulting to 1000."
+                        + nfe.getMessage());
+                }
+            }
+
             ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, Control.CRITICAL) });
 
             // Loop through each configured base DN.  It may be useful
@@ -468,6 +491,25 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         }
 
         return ret;
+    }
+
+    /** Translate SystemSettings to familiar Properties instance since we're
+     *  passing not one but multiple values.
+     * 
+     * @param systemSettings
+     * @return
+     */
+    private Properties populateProperties(SystemSettings systemSettings) {
+        Properties properties = null;
+        if (systemSettings != null) {
+            properties = new Properties();
+            Set<SystemSetting> keySet = systemSettings.keySet();
+            for (SystemSetting setting : keySet) {
+                String key = setting.getInternalName();
+                properties.put(key, systemSettings.get(key));
+            }
+        }
+        return properties;
     }
 
     /** Executes the LDAP group query using the filters, context and search controls, etc. parameters passed in.

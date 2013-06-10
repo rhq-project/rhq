@@ -50,6 +50,7 @@
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
 
+    <script src="/coregui/js/moment.min.js"/>
     <script src="/coregui/js/rhq.js"/>
     <!-- External javascript libraries -->
     <!-- jquery.sparkline requires jquery.

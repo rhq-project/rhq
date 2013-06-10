@@ -46,7 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  */
 public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
-    static final String TIMERANGE = "timerange";
+    static final String TIMERANGE = "graphtimerange";
     static final int BUTTON_WIDTH = 28;
 
     private MeasurementUserPreferences measurementUserPreferences;
@@ -101,16 +101,18 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         toolStrip.addSpacer(20);
 
         dateRangeLabel = new Label();
-        updateDateTimeRangeDisplay(new Date(prefs.begin), new Date(prefs.end));
         dateRangeLabel.setWidth(260);
+        dateRangeLabel.setID("dateRange");
+        dateRangeLabel.addStyleName("graphDateTimeRangeLabel");
+        updateDateTimeRangeDisplay(new Date(prefs.begin), new Date(prefs.end));
         toolStrip.addMember(dateRangeLabel);
 
         toolStrip.addSpacer(20);
 
-        IButton resetZoomButton = new IButton("Reset Manual Zoom");
-        resetZoomButton.setWidth(150);
-        resetZoomButton.disable();
-        toolStrip.addMember(resetZoomButton);
+//        IButton resetZoomButton = new IButton("Reset Manual Zoom");
+//        resetZoomButton.setWidth(150);
+//        resetZoomButton.disable();
+//        toolStrip.addMember(resetZoomButton);
 
         addMember(toolStrip);
     }
@@ -160,6 +162,15 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         return new Date(endDate.getTime() - dateTimeOffset);
     }
 
+    /**
+     * Function meant to be called by the javascript inside the d3 charting javascript.
+     * @param startDate double (as javascript doenst have long) representing unix date
+     * @param endDate double
+     */
+    public void updateDateTimeRangeDisplayFromJavascript(double startDate, double endDate){
+        updateDateTimeRangeDisplay(new Date((long)startDate), new Date((long)endDate));
+    }
+
     public void updateDateTimeRangeDisplay(Date startDate, Date endDate) {
         String rangeString = fmt.format(startDate) + " - " + fmt.format(endDate);
         dateRangeLabel.setContents(rangeString);
@@ -207,7 +218,8 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      */
     private enum DateTimeButton {
         oneHour( "1h", 60 * 60 ),
-        sixHour( "6h", 6 * 60 * 60 ),
+        fourHour( "4h", 4 * 60 * 60 ),
+        eightHour( "8h", 8 * 60 * 60 ),
         twelveHour( "12h", 12 * 60 * 60 ),
         oneDay("1d", 24 * 60 * 60 ),
         fiveDay("5d", 5 * 24 * 60 * 60 ),

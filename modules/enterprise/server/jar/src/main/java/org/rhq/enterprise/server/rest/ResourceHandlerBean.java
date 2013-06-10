@@ -180,8 +180,10 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @PUT
     @Path("/{id:\\d+}")
-    @ApiOperation(value = "Update a single resource (name, description, location) that is committed or import "+
-        "a resource that is new. To do the latter you need to PUT the resource retrieved with a COMMITTED state",
+    @ApiOperation(value = "Update a single resource or import a new resource from the discovery queue.",
+        notes = "You can either update a resource that is already in inventory, in which case the fields" +
+            "name, description and location can be updated. Or you can import a Platform or Server resource that is in state NEW." +
+            "To do this you need to PUT the resource retrieved with a COMMITTED state",
         responseClass = "ResourceWithType")
     @ApiErrors({
         @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID),

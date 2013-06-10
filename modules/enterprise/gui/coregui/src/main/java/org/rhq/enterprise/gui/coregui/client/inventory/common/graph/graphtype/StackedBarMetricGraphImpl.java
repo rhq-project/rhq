@@ -86,7 +86,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     barOffset = 2,
                     chartData,
                     interpolation = "basis",
-                    avgRaw, avg, minRaw, min, peakRaw, peak,
+                    avgFiltered, avg, minFiltered, min, peakFiltered, peak,
                     oobMax,
                     legendDefined,
                     lowBound,
@@ -128,28 +128,28 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         chartData = chartContext.data;
                     }
 
-                    avgRaw = chartContext.data.filter(function (d) {
+                    avgFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
                             return d.y;
                         }
                     });
-                    avg = $wnd.d3.mean(avgRaw.map(function (d) {
+                    avg = $wnd.d3.mean(avgFiltered.map(function (d) {
                         return d.y;
                     }));
-                    peakRaw = chartContext.data.filter(function (d) {
+                    peakFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
                             return d.high;
                         }
                     });
-                    peak = $wnd.d3.max(peakRaw.map(function (d) {
+                    peak = $wnd.d3.max(peakFiltered.map(function (d) {
                             return d.high;
                     }));
-                    minRaw = chartContext.data.filter(function (d) {
+                    minFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
                             return d.low;
                         }
                     });
-                    min = $wnd.d3.min(minRaw.map(function (d) {
+                    min = $wnd.d3.min(minFiltered.map(function (d) {
                             return d.low;
                     }));
                     highBound = peak + ((peak - min) * 0.1);
@@ -572,9 +572,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 brushg.selectAll("rect")
                         .attr("height", height);
 
-                brushstart();
-                brushmove();
-
                 function brushstart() {
                     svg.classed("selecting", true);
                 }
@@ -587,7 +584,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 function brushend() {
                     var s = brush.extent();
                     svg.classed("selecting", !$wnd.d3.event.target.empty());
-                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
+                    //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)($wnd.moment(s[0]).unix(),$wnd.moment(s[0]).unix());
+                    //$wnd.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView::redrawGraphs()();
                 }
 
                 function updateDateRangeDisplay(startDate, endDate ) {

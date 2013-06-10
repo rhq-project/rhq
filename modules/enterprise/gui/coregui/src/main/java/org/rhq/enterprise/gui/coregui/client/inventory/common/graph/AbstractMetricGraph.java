@@ -19,9 +19,18 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
 
+import java.util.Date;
+
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Common Metric Graph capability used across multiple metric rendering graphs.
@@ -35,6 +44,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
  */
 public abstract class AbstractMetricGraph extends VLayout implements HasD3MetricJsniChart {
 
+    private static final Messages MSG = CoreGUI.getMessages();
     private MetricGraphData metricGraphData;
 
     public MetricGraphData getMetricGraphData() {
@@ -171,4 +181,27 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     }
 
 
+    /**
+     * Whenever we make a change to the date range save it here so it gets propogated to
+     * the correct places.
+     *
+     * @param startTime double because JSNI doesnt support long
+     * @param endTime   double because JSNI doesnt support long
+     */
+    public void saveDateRange(double startTime, double endTime) {
+        MeasurementUserPreferences measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+
+        Log.debug("Saving Date range: "+new Date((long)startTime) +  " - "+ new Date((long)endTime));
+        final boolean advanced = true;
+        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPrefs.getMetricRangePreferences();
+        prefs.explicitBeginEnd = advanced;
+        prefs.begin = (long) startTime;
+        prefs.end = (long) endTime;
+        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
+        } else {
+            measurementUserPrefs.setMetricRangePreferences(prefs);
+        }
+
+    }
 }

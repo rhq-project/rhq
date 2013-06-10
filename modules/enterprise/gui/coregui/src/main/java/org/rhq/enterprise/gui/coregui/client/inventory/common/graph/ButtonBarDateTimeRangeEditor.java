@@ -98,7 +98,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         customButton.addClickHandler(dateTimeButtonBarClickHandler);
         toolStrip.addMember(customButton);
 
-        toolStrip.addSpacer(20);
+        toolStrip.addSpacer(30);
 
         dateRangeLabel = new Label();
         dateRangeLabel.setWidth(260);
@@ -186,8 +186,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
      */
     public void saveDateRange(double startTime, double endTime) {
         final boolean advanced = true;
-        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPreferences
-                .getMetricRangePreferences();
         prefs.explicitBeginEnd = advanced;
         prefs.begin = (long) startTime;
         prefs.end = (long) endTime;

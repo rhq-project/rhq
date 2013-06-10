@@ -26,17 +26,26 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ListGridEditEvent;
+import com.smartgwt.client.types.RowEndEditAction;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
@@ -53,6 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
@@ -129,6 +139,90 @@ public class StorageNodeTableView extends
                 });
             }
         }
+    }
+    
+    @Override
+    protected ListGrid createListGrid() {
+        ListGrid listGrid = new ListGrid() {
+            @Override
+            protected Canvas getExpansionComponent(final ListGridRecord record) {
+                final ListGrid grid = this;  
+                
+                EnhancedVLayout layout = new EnhancedVLayout(5);  
+                layout.setPadding(5);  
+  
+                final ListGrid countryGrid = new ListGrid();  
+                countryGrid.setWidth100();  
+                countryGrid.setHeight(224);  
+//                countryGrid.setCellHeight(22);  
+//                countryGrid.setDataSource(getRelatedDataSource(record));  
+//                countryGrid.fetchRelatedData(record, SupplyCategoryXmlDS.getInstance());  
+  
+//                countryGrid.setCanEdit(true);  
+//                countryGrid.setModalEditing(true);  
+//                countryGrid.setEditEvent(ListGridEditEvent.CLICK);
+//                countryGrid.setListEndEditAction(RowEndEditAction.NEXT);
+//                countryGrid.setAutoSaveEdits(false);
+                ListGridField fooField = new ListGridField("foo", "Heap Used");
+                fooField.setWidth("*");
+                countryGrid.setFields(fooField, new ListGridField("bar", "Heap Max",
+                    100), new ListGridField("baz", "Heap Percentage", 100), new ListGridField("fooBar", "Tokens", 100),
+                    new ListGridField("fooBaz", "Ownage", 100));
+                ListGridRecord[] data = new ListGridRecord[5];
+                for (int i = 0; i < data.length; i++) {
+                    ListGridRecord fooRecord = new ListGridRecord();
+                    fooRecord.setAttribute("foo", new Random().nextInt(100));
+                    fooRecord.setAttribute("bar", new Random().nextInt(100));
+                    fooRecord.setAttribute("baz", new Random().nextInt(100));
+                    fooRecord.setAttribute("fooBar", new Random().nextInt(100));
+                    fooRecord.setAttribute("fooBaz", new Random().nextInt(100));
+                    data[i] = fooRecord;
+                }
+                countryGrid.setData(data);
+  
+                layout.addMember(countryGrid);  
+//  
+//                HLayout hLayout = new HLayout(10);  
+//                hLayout.setAlign(Alignment.CENTER);  
+//  
+                IButton saveButton = new IButton("Save");  
+                saveButton.setTop(250);  
+                saveButton.addClickHandler(new ClickHandler() {  
+                    public void onClick(ClickEvent event) {  
+                        countryGrid.saveAllEdits();  
+                    }  
+                });  
+//                hLayout.addMember(saveButton);  
+//  
+//                IButton discardButton = new IButton("Discard");  
+//                discardButton.addClickHandler(new ClickHandler() {  
+//                    public void onClick(ClickEvent event) {  
+//                        countryGrid.discardAllEdits();  
+//                    }  
+//                });  
+//                hLayout.addMember(discardButton);  
+//  
+                IButton closeButton = new IButton("Close");  
+                closeButton.addClickHandler(new ClickHandler() {  
+                    public void onClick(ClickEvent event) {  
+                        grid.collapseRecord(record);  
+                    }  
+                });  
+//                hLayout.addMember(closeButton);  
+//                                                 
+//                layout.addMember(hLayout);
+                ToolStrip toolStrip = new ToolStrip();
+                toolStrip.addMember(saveButton);
+                toolStrip.addMember(closeButton);
+                layout.addMember(toolStrip);
+                layout.setBackgroundColor("#FFFFFF");
+                return layout;  
+            }
+        };
+        listGrid.setCanExpandRecords(true);
+//        listGrid.setBaseStyle("storageNodeGridCell");
+//        listGrid.setDetailDS(detailDS)
+        return listGrid;
     }
 
     @Override

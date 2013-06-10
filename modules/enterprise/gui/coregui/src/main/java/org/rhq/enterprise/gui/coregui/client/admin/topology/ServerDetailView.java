@@ -213,8 +213,8 @@ public class ServerDetailView extends EnhancedVLayout implements BookmarkableVie
         installationDateItem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getCtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
-        StaticTextItem lastUpdatetem = new StaticTextItem(FIELD_MTIME.propertyName(), FIELD_MTIME.title());
-        lastUpdatetem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getMtime()),
+        StaticTextItem lastUpdateItem = new StaticTextItem(FIELD_MTIME.propertyName(), FIELD_MTIME.title());
+        lastUpdateItem.setValue(TimestampCellFormatter.format(Long.valueOf(server.getMtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
 
         IButton saveButton = new IButton();
@@ -246,7 +246,7 @@ public class ServerDetailView extends EnhancedVLayout implements BookmarkableVie
         });
 
         form.setItems(nameItem, addressItem, portItem, securePortItem, operationModeItem, affinityGroupItem,
-            installationDateItem, lastUpdatetem);
+            installationDateItem, lastUpdateItem);
 
         EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setPadding(5);

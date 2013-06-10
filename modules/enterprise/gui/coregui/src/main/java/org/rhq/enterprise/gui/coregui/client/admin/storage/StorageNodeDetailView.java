@@ -26,6 +26,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -38,10 +39,8 @@ import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.TextItem;
-import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -79,6 +78,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private final int storageNodeId;
 
     private static final int SECTION_COUNT = 2;
+    private static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
     private final SectionStack sectionStack;
     private SectionStackSection detailsSection;
     private SectionStackSection loadSection;
@@ -187,12 +187,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
 
         final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
-        
         cqlPortItem.setValue(storageNode.getCqlPort());
 
-//        final SelectItem operationModeItem = new SelectItem(FIELD_OPERATION_MODE.propertyName(),
-//            MSG.view_adminTopology_serverDetail_operationMode());
-//        operationModeItem.setValueMap("NORMAL", "MAINTENANCE");
         final StaticTextItem operationModeItem = new StaticTextItem(FIELD_OPERATION_MODE.propertyName(), MSG.view_adminTopology_serverDetail_operationMode());
         operationModeItem.setValue(storageNode.getOperationMode());
 
@@ -230,9 +226,11 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                 }
             }
         });
-
-        form.setItems(nameItem, jmxPortItem, cqlPortItem, jmxConnectionUrlItem, operationModeItem, resourceItem,
-            installationDateItem, lastUpdateItem);
+        List<FormItem> formItems = new ArrayList<FormItem>(8);
+        formItems.addAll(Arrays.asList(nameItem, jmxPortItem, cqlPortItem, jmxConnectionUrlItem));
+        if (!CoreGUI.isDebugMode()) formItems.add(operationModeItem); // debug mode fails if this item is added
+        formItems.addAll(Arrays.asList(resourceItem, installationDateItem, lastUpdateItem));
+        form.setItems(formItems.toArray(new FormItem[]{}));
 
         EnhancedToolStrip footer = new EnhancedToolStrip();
         footer.setPadding(5);
@@ -242,8 +240,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
         section.setExpanded(true);
-        section.setItems(form/*, footer*/);
-
+        
+        section.setItems(form);
         detailsSection = section;
         initSectionCount++;
     }
@@ -252,13 +250,13 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         loadDataGrid = new ListGrid(){
         @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
-                if ("avg".equals(getFieldName(colNum)) && record.getAttributeAsInt("id") == 1) {
+                if ("avg".equals(getFieldName(colNum)) && HEAP_PERCENTAGE_KEY.equals(record.getAttribute("id"))) {
                     if (record.getAttributeAsFloat("avgFloat") > 85) {
                         return "font-weight:bold; color:#d64949;";
                     } else if (record.getAttributeAsFloat("avgFloat") > 70) {
                         return "color:#ed9b26;";
                     } else {
-                        return "color:#00ff00;";
+                        return "color:#26aa26;";
                     }
                 } else {
                     return super.getCellCSSText(record, rowNum, colNum);
@@ -313,7 +311,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         Log.debug("StorageNodeDetailView: " + viewPath);
     }
 
-    private ListGridRecord makeListGridRecord(int id, MeasurementAggregateWithUnits aggregateWithUnits, String name, String hover) {
+    private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
+        String hover, String id) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("id", id);
         record.setAttribute("name", name);
@@ -321,7 +320,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             aggregateWithUnits.getUnits(), true));
         record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
         record.setAttribute("avg", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
-                aggregateWithUnits.getUnits(), true));
+            aggregateWithUnits.getUnits(), true));
         record.setAttribute("max", MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
             aggregateWithUnits.getUnits(), true));
         record.setAttribute("hover", hover);
@@ -335,27 +334,28 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     public void onSuccess(final StorageNodeLoadComposite loadComposite) {
                     ListGridRecord[] records = new ListGridRecord[6];
 
-                    List<List<Object>> loadFields = Arrays.<List<Object>> asList(Arrays.<Object>asList(
-                            loadComposite.getHeapCommitted(), "Heap Maximum",
-                            "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option."),
-                            Arrays.<Object>asList(loadComposite.getHeapUsed(), "Heap Used",
-                                    "Amount of memory actually used by the RHQ storage node"), Arrays.<Object>asList(
-                            loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
-                            "This value is calculated by dividing Heap Used by Heap Maximum."), Arrays.<Object>asList(
-                            loadComposite.getLoad(), "Load", "Data stored on the node"), Arrays.<Object>asList(
-                            loadComposite.getActuallyOwns(), "Ownership",
-                            "Refers to the percentage of keys that a node owns."));
+                    List<List<Object>> loadFields = Arrays.<List<Object>> asList(Arrays.<Object> asList(
+                        loadComposite.getHeapCommitted(), "Heap Maximum",
+                        "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.",
+                        "heapMax"), Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used",
+                        "Amount of memory actually used by the RHQ storage node", "heapUsed"), Arrays.<Object> asList(
+                        loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
+                        "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY), Arrays
+                        .<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"), Arrays
+                        .<Object> asList(loadComposite.getActuallyOwns(), "Ownership",
+                            "Refers to the percentage of keys that a node owns.", "ownership"));
                     int i = 0;
                     for (List<Object> aggregateWithUnitsList : loadFields) {
                         if (aggregateWithUnitsList.get(0) != null) {
-                            records[i] = makeListGridRecord(i,
+                            records[i] = makeListGridRecord(
                                 (MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
-                                (String) aggregateWithUnitsList.get(1), (String) aggregateWithUnitsList.get(2));
+                                (String) aggregateWithUnitsList.get(1), (String) aggregateWithUnitsList.get(2),
+                                (String) aggregateWithUnitsList.get(3));
                             i++;
                         }
                     }
                     records[i] = new ListGridRecord();
-                    records[i].setAttribute("id", i);
+                    records[i].setAttribute("id", "tokens");
                     records[i].setAttribute("name", "Number of Tokens");
                     records[i].setAttribute("hover", "Number of partitions of the ring that a node owns.");
                     records[i].setAttribute("min", loadComposite.getTokens().getMin());

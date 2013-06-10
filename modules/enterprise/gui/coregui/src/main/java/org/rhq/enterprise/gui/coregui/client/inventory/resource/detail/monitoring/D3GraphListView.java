@@ -378,7 +378,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
             measurementDefinition, data, measurementOOBCompositeList );
         StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
         graph.setMetricGraphData(metricGraphData);
-        MetricD3Graph graphView = new MetricD3Graph(graph);
+        graph.setGraphListView(this);
+        MetricD3Graph graphView = new MetricD3Graph<D3GraphListView>(graph, this);
 
         graphView.setWidth("95%");
         graphView.setHeight(height);

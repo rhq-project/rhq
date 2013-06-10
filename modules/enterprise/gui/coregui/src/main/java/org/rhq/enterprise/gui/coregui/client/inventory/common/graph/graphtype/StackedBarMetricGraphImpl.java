@@ -586,6 +586,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     svg.classed("selecting", !$wnd.d3.event.target.empty());
                     //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)($wnd.moment(s[0]).unix(),$wnd.moment(s[0]).unix());
                     //$wnd.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView::redrawGraphs()();
+                    global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::redrawGraphs()();
                 }
 
                 function updateDateRangeDisplay(startDate, endDate ) {

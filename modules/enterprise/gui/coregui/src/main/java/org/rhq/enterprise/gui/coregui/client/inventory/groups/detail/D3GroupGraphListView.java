@@ -198,7 +198,8 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
 
         StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
         graph.setMetricGraphData(metricGraphData);
-        MetricD3Graph graphView = new MetricD3Graph(graph);
+        graph.setGraphListView(this);
+        MetricD3Graph graphView = new MetricD3Graph<D3GroupGraphListView>(graph, this);
 
         graphView.setWidth("95%");
         graphView.setHeight(MULTI_CHART_HEIGHT);

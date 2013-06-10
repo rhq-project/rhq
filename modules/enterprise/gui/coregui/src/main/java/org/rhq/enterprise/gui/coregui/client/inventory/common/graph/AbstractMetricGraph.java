@@ -28,6 +28,8 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -46,6 +48,12 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
 
     private static final Messages MSG = CoreGUI.getMessages();
     private MetricGraphData metricGraphData;
+
+    /**
+     * Just so we have a handle to the the topmost view to call redraw graphs on a view
+     * from this graph.
+     */
+    private AbstractD3GraphListView graphListView;
 
     public MetricGraphData getMetricGraphData() {
         return metricGraphData;
@@ -180,6 +188,9 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         return metricGraphData.getPortalId();
     }
 
+    public void setGraphListView(AbstractD3GraphListView graphListView) {
+        this.graphListView = graphListView;
+    }
 
     /**
      * Whenever we make a change to the date range save it here so it gets propogated to
@@ -203,5 +214,9 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
             measurementUserPrefs.setMetricRangePreferences(prefs);
         }
 
+    }
+
+    public void redrawGraphs(){
+       graphListView.redrawGraphs();
     }
 }

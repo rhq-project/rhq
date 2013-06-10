@@ -261,6 +261,7 @@
     <dependencies>
         <module name="org.codehaus.jackson.jackson-core-asl"/>
         <module name="org.codehaus.jackson.jackson-mapper-asl"/>
+        <module name="org.jboss.logging"/>
         <module name="org.jboss.logmanager" services="import"/>
         <module name="org.apache.log4j"/>
         <module name="javax.api"/>
@@ -749,7 +750,7 @@ rhq.server.agent-update.nonstrict-version-check=true
 </echo>
 
 <!-- We must use forward slashes when writing paths to a properties files. Properties.load()
-     treats the values as Java Strings so backslashes will be parsed as escapes. --> 
+     treats the values as Java Strings so backslashes will be parsed as escapes. -->
 <path id="path.datadir">
   <pathelement location="${rhq.dev.data.dir}" />
 </path>
@@ -765,7 +766,7 @@ hostname=127.0.0.1
 </echo>
 
 <echo file="${project.build.outputDirectory}/bin/rhqctl.properties" append="true">rhqctl.install.storage-config=bin/rhq-storage.properties</echo>
-    	
+
     </target>
 
     <target name="prepare-release"

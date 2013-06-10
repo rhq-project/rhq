@@ -70,6 +70,7 @@ import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 @SuppressWarnings({ "static-access", "deprecation" })
 public class DataMigratorRunner {
 
+    private static final int DEFAULT_CASSANDRA_PORT = 9142;
     private final Log log = LogFactory.getLog(DataMigratorRunner.class);
 
     //Cassandra
@@ -261,7 +262,7 @@ public class DataMigratorRunner {
         configuration.put(cassandraUserOption, "rhqadmin");
         configuration.put(cassandraPasswordOption, "rhqadmin");
         configuration.put(cassandraHostsOption, new String[] { "127.0.0.1" });
-        configuration.put(cassandraPortOption, 9042);
+        configuration.put(cassandraPortOption, DEFAULT_CASSANDRA_PORT);
         configuration.put(cassandraCompressionOption, true);
 
         //default SQL configuration
@@ -367,7 +368,8 @@ public class DataMigratorRunner {
         }
 
         if (commandLine.hasOption(cassandraPortOption.getLongOpt())) {
-            Integer cassandraPort = tryParseInteger(commandLine.getOptionValue(cassandraPortOption.getLongOpt()), 9142);
+            Integer cassandraPort = tryParseInteger(commandLine.getOptionValue(cassandraPortOption.getLongOpt()),
+                DEFAULT_CASSANDRA_PORT);
             configuration.put(cassandraPortOption, cassandraPort);
         }
 

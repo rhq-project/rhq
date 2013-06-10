@@ -12,10 +12,10 @@ _rhqctl() {
     opts="console install start status stop"
     agentServerStorage="--agent --server --storage"
     storageInstallSubopts=" --storage-config --storage-dir "
-    agentInstallSubopts=" --agent-config --agent-dir --agent-security-token "
+    agentInstallSubopts=" --agent-config --agent-dir --agent-preference "
     serverInstallSubopts=" --server-config "
 
-    if [[ "${COMP_LINE}" =~ ^rhqctl[[:space:]]*$ ]] ; then
+    if [[ "${COMP_LINE}" =~ ^\.?rhqctl[[:space:]]*$ ]] ; then
       COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
       return 0
     fi
@@ -34,24 +34,21 @@ _rhqctl() {
 
         if [[ "x${second}" == "x--server" ]] ; then
             if [[ "${serverInstallSubopts}" == *" ${prev} "* ]] ; then
-                # complete path
-                COMPREPLY=( $( ls -1 | grep ^${cur} ) )
+                completePath ${cur}
                 return 0
             fi
             COMPREPLY=( $(compgen -W "${serverInstallSubopts}" -- ${cur}) )
             return 0
         elif [[ "x${second}" == "x--agent" ]] ; then
             if [[ "${agentInstallSubopts}" == *" ${prev} "* ]] ; then
-                # complete path
-                COMPREPLY=( $( ls -1 | grep ^${cur} ) )
+                completePath ${cur}
                 return 0
             fi
             COMPREPLY=( $(compgen -W "${agentInstallSubopts}" -- ${cur}) )
             return 0
         elif [[ "x${second}" == "x--storage" ]] ; then
             if [[ "${storageInstallSubopts}" == *" ${prev} "* ]] ; then
-                # complete path
-                COMPREPLY=( $( ls -1 | grep ^${cur} ) )
+                completePath ${cur}
                 return 0
             fi
             COMPREPLY=( $(compgen -W "${storageInstallSubopts}" -- ${cur}) )
@@ -64,6 +61,17 @@ _rhqctl() {
         COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
         return 0
     fi
+}
+
+function completePath(){
+  [ $# -gt 1 ] && return 1
+  cur=$1
+  if [[ "${cur}x" == *"/x" ]] ; then
+    toComplete="${cur}"
+  else
+    toComplete="${cur}*"
+  fi
+  COMPREPLY=( $(compgen -W "$( ls -1 ${toComplete} 2> /dev/null )" ) )
 }
 
 complete -F _rhqctl rhqctl

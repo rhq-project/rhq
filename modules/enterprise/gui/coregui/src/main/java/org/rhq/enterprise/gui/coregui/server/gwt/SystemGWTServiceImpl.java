@@ -146,6 +146,26 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     }
 
     @Override
+    public HashMap<String, String> getMigratorDownloads() throws RuntimeException {
+        try {
+            File downloadDir = getMigratorDownloadsDir();
+            List<File> files = getFiles(downloadDir);
+            if (files == null) {
+                return new HashMap<String, String>(0);
+            }
+            HashMap<String, String> map = new HashMap<String, String>(files.size());
+            for (File file : files) {
+                // key is the filename, value is the relative URL to download the file from the server
+                map.put(file.getName(), "/downloads/data-migrator/" + file.getName());
+            }
+            return map;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+
+    }
+
+    @Override
     public HashMap<String, String> getCliAlertScriptDownloads() throws RuntimeException {
         try {
             File downloadsDir = getCliAlertScriptDownloadsDir();
@@ -227,6 +247,15 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
         File downloadDir = new File(homeDir, "connectors");
         if (!downloadDir.isDirectory()) {
             throw new RuntimeException("Server is missing connectors download directory at [" + downloadDir + "]");
+        }
+        return downloadDir;
+    }
+
+    private File getMigratorDownloadsDir() {
+        File homeDir = getDownloadHomeDir();
+        File downloadDir = new File(homeDir, "data-migrator");
+        if (!downloadDir.isDirectory()) {
+            throw new RuntimeException("Server is missing data-migrator directory at [" + downloadDir + "]");
         }
         return downloadDir;
     }

@@ -583,11 +583,15 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                 function brushend() {
                     var s = brush.extent();
+                    var startTime = Math.round(s[0].getTime());
+                    var endTime = Math.round(s[1].getTime() );
                     svg.classed("selecting", !$wnd.d3.event.target.empty());
-                    //global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)($wnd.moment(s[0]).unix(),$wnd.moment(s[0]).unix());
-                    //$wnd.@org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView::redrawGraphs()();
+                    global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)(startTime, endTime);
                     global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::redrawGraphs()();
                 }
+
+                brushstart();
+                brushmove();
 
                 function updateDateRangeDisplay(startDate, endDate ) {
                     //@todo: i18n the date format

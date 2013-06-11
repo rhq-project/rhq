@@ -229,13 +229,17 @@ public class Upgrade extends AbstractInstall {
         if (oldOracleModuleDir.isDirectory()) {
             File newOracleModuleDir = new File(getBaseDir(), oracleModuleRelativePath);
             File newOracleModuleMainDir = new File(newOracleModuleDir, "main");
-            // only copy over our "dummy" driver, leave anything else in place as it may be a newer driver
-            // basically, look for a file of non-nominal size
-            boolean copy = true;
+            // Look in the new server install and see if we do not have a real oracle JDBC driver.
+            // If the new server only has our "dummy" driver, we copy over the old driver module to the new server.
+            // If the new server already has a "real" driver, leave anything else in place as it may be a newer driver.
+            boolean foundRealOracleDriver = false;
             for (File f : newOracleModuleMainDir.listFiles()) {
-                copy = f.isFile() && f.length() < 2048L; // the actual driver is much bigger, our fake one is 1K or so
+                foundRealOracleDriver = f.isFile() && f.length() > 100000L; // the actual driver is much bigger, our fake one is 1K or so
+                if (foundRealOracleDriver == true) {
+                    break; // we found the real driver, do not continue looking
+                }
             }
-            if (copy) {
+            if (!foundRealOracleDriver) {
                 FileUtil.purge(newOracleModuleDir, true); // clean out anything that might be in here
                 FileUtil.copyDirectory(oldOracleModuleDir, newOracleModuleDir);
             }

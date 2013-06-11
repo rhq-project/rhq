@@ -45,7 +45,7 @@ import org.rhq.server.control.RHQControlException;
 
 /**
  * @author Jay Shaughnessy
- * @author John Mazzitelli 
+ * @author John Mazzitelli
  */
 public class Upgrade extends AbstractInstall {
 
@@ -150,6 +150,7 @@ public class Upgrade extends AbstractInstall {
             } else {
                 log.info("The agent was upgraded but was told not to start automatically.");
             }
+            printDataMigrationNotice();
 
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
@@ -362,6 +363,18 @@ public class Upgrade extends AbstractInstall {
 
     protected boolean isPreStorageNode(CommandLine commandLine) {
         return new File(getFromServerDir(commandLine), "bin/rhqctl").exists();
+    }
+
+    private void printDataMigrationNotice() {
+        log.info("\n================\n" +
+            "If this was an upgrade from a RHQ version before 4.8,\n " +
+            "you need to run the data migration job to transfer stored (historic)\n" +
+            "metrics data from the relational database into the new storage.\n" +
+            "Until the migration has run, that historic data is not available \n" +
+            "in e.g. the charting views.\n\n" +
+            "To run the data migration, you can download the migration app from the\n" +
+            "server and run it on the command line.\n" +
+            "================\n");
     }
 
 }

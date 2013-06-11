@@ -53,6 +53,7 @@ public class Upgrade extends AbstractInstall {
     static private final String FROM_SERVER_DIR_OPTION = "from-server-dir";
     static private final String AGENT_NO_START = "agent-no-start";
     static private final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
+    static private final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
 
     private Options options;
 
@@ -74,7 +75,14 @@ public class Upgrade extends AbstractInstall {
                 null,
                 USE_REMOTE_STORAGE_NODE,
                 true,
-                "By default a server is co-located with a storage node. However, if this option is set to true, no local storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.");
+                "By default a server is co-located with a storage node. However, if this option is set to true, no local storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.")
+            .addOption(
+                null,
+                STORAGE_DATA_ROOT_DIR,
+                true,
+                "By default the storage data directory is /var/db . You can use this option to use a different base directory"
+            )
+        ;
     }
 
     @Override
@@ -126,7 +134,7 @@ public class Upgrade extends AbstractInstall {
             // If rhqctl exists in the old version, use it to stop everything, otherwise, just try and stop the server
             // using the legacy script.
             File fromBinDir = new File(getFromServerDir(commandLine), "bin");
-            String serverScriptName = getRhqServerScriptName();
+            String serverScriptName = getPre48RhqServerScriptName();
             String fromScript = isRhq48OrLater(commandLine) ? "rhqctl" : serverScriptName;
             org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, fromScript, "stop");
             Executor executor = new DefaultExecutor();
@@ -146,10 +154,17 @@ public class Upgrade extends AbstractInstall {
             upgradeServer(commandLine);
             upgradeAgent(commandLine);
 
-            if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
-                startAgent(new File(getBaseDir(), AGENT_BASEDIR_NAME), true);
-            } else {
+            if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_NO_START, "false"))) {
                 log.info("The agent was upgraded but was told not to start automatically.");
+            } else {
+                File agentDir ;
+
+                if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
+                   agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
+                }  else {
+                    agentDir = new File(getBaseDir(), AGENT_BASEDIR_NAME);
+                }
+                startAgent(agentDir, true);
             }
             printDataMigrationNotice();
 
@@ -158,7 +173,7 @@ public class Upgrade extends AbstractInstall {
         }
     }
 
-    private String getRhqServerScriptName() {
+    private String getPre48RhqServerScriptName() {
         String rhqServerBase = "rhq-server";
         if (File.separatorChar=='/') {
             rhqServerBase = rhqServerBase + ".sh";
@@ -204,7 +219,7 @@ public class Upgrade extends AbstractInstall {
     private void upgradeServer(CommandLine commandLine) throws Exception {
         // don't upgrade the server if this is a storage node only install
         File oldServerDir = getFromServerDir(commandLine);
-        if (!(isRhq48OrLater(commandLine) || isServerInstalled(oldServerDir))) {
+        if (!(!isRhq48OrLater(commandLine) || isServerInstalled(oldServerDir))) {
             log.info("Ignoring server upgrade, this is a storage node only installation.");
             return;
         }
@@ -298,9 +313,11 @@ public class Upgrade extends AbstractInstall {
 
             // We need to now move the new, updated agent over to the new agent location.
             // renameTo() may fail if we are crossing file system boundaries, so try a true copy as a fallback.
-            FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
-            if (!oldAgentDir.renameTo(agentBasedir)) {
-                FileUtil.copyDirectory(oldAgentDir, agentBasedir);
+            if (!agentBasedir.equals(oldAgentDir)) {
+                FileUtil.purge(agentBasedir, true); // clear the way for the new upgraded agent
+                if (!oldAgentDir.renameTo(agentBasedir)) {
+                    FileUtil.copyDirectory(oldAgentDir, agentBasedir);
+                }
             }
 
             log.info("The agent has been upgraded and placed in: " + agentBasedir);

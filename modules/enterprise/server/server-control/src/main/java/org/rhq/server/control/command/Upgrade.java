@@ -126,7 +126,8 @@ public class Upgrade extends AbstractInstall {
             // If rhqctl exists in the old version, use it to stop everything, otherwise, just try and stop the server
             // using the legacy script.
             File fromBinDir = new File(getFromServerDir(commandLine), "bin");
-            String fromScript = !isPreStorageNode(commandLine) ? "rhqctl" : "rhq-server";
+            String serverScriptName = getRhqServerScriptName();
+            String fromScript = isRhq48OrLater(commandLine) ? "rhqctl" : serverScriptName;
             org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, fromScript, "stop");
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(fromBinDir);
@@ -157,6 +158,17 @@ public class Upgrade extends AbstractInstall {
         }
     }
 
+    private String getRhqServerScriptName() {
+        String rhqServerBase = "rhq-server";
+        if (File.separatorChar=='/') {
+            rhqServerBase = rhqServerBase + ".sh";
+        }
+        else {
+            rhqServerBase = rhqServerBase + ".bat";
+        }
+        return rhqServerBase;
+    }
+
     private void upgradeStorage(CommandLine rhqctlCommandLine) throws Exception {
         if (rhqctlCommandLine.hasOption(USE_REMOTE_STORAGE_NODE)) {
             log.info("Ignoring storage node upgrade, a remote storage node is configured.");
@@ -164,10 +176,7 @@ public class Upgrade extends AbstractInstall {
         }
 
         // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
-        if (isPreStorageNode(rhqctlCommandLine)) {
-            installStorageNode(getStorageBasedir(), rhqctlCommandLine);
-
-        } else {
+        if (isRhq48OrLater(rhqctlCommandLine)) {
             try {
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
@@ -187,13 +196,15 @@ public class Upgrade extends AbstractInstall {
                 throw e;
             }
 
+        } else {
+            installStorageNode(getStorageBasedir(), rhqctlCommandLine);
         }
     }
 
     private void upgradeServer(CommandLine commandLine) throws Exception {
         // don't upgrade the server if this is a storage node only install
         File oldServerDir = getFromServerDir(commandLine);
-        if (!(isPreStorageNode(commandLine) || isServerInstalled(oldServerDir))) {
+        if (!(isRhq48OrLater(commandLine) || isServerInstalled(oldServerDir))) {
             log.info("Ignoring server upgrade, this is a storage node only installation.");
             return;
         }
@@ -361,7 +372,7 @@ public class Upgrade extends AbstractInstall {
             commandLine.getOptionValue(FROM_SERVER_DIR_OPTION)) : null;
     }
 
-    protected boolean isPreStorageNode(CommandLine commandLine) {
+    protected boolean isRhq48OrLater(CommandLine commandLine) {
         return new File(getFromServerDir(commandLine), "bin/rhqctl").exists();
     }
 

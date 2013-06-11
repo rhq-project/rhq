@@ -624,9 +624,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                     '</div>';
 
 
-                }
-                else {
-                    // regular bar hover
+                } else if (d.y === d.high  && d.high === d.low ) {
+                    // single point of data not a duration
+                    hoverString =
+                        '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
+                            '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                            '</div>';
+                } else {
+                    // regular bar hover for duration
                     hoverString =
                             '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span>' +
                                     '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +

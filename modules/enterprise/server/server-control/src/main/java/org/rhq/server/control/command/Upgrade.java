@@ -80,8 +80,7 @@ public class Upgrade extends AbstractInstall {
                 null,
                 STORAGE_DATA_ROOT_DIR,
                 true,
-                "By default the storage data directory is /var/db . You can use this option to use a different base directory"
-            )
+                "You can use this option to use a different base directory for all the data directories created by the storage node. This is only used if the storage node needs to be newly installed during the upgrade process; otherwise, an error will result if you specify this option.")
         ;
     }
 
@@ -134,7 +133,7 @@ public class Upgrade extends AbstractInstall {
             // If rhqctl exists in the old version, use it to stop everything, otherwise, just try and stop the server
             // using the legacy script.
             File fromBinDir = new File(getFromServerDir(commandLine), "bin");
-            String serverScriptName = getPre48RhqServerScriptName();
+            String serverScriptName = getRhqServerScriptName();
             String fromScript = isRhq48OrLater(commandLine) ? "rhqctl" : serverScriptName;
             org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, fromScript, "stop");
             Executor executor = new DefaultExecutor();
@@ -173,7 +172,7 @@ public class Upgrade extends AbstractInstall {
         }
     }
 
-    private String getPre48RhqServerScriptName() {
+    private String getRhqServerScriptName() {
         String rhqServerBase = "rhq-server";
         if (File.separatorChar=='/') {
             rhqServerBase = rhqServerBase + ".sh";
@@ -204,10 +203,6 @@ public class Upgrade extends AbstractInstall {
 
             } catch (IOException e) {
                 log.error("An error occurred while running the storage node upgrade: " + e.getMessage());
-                if (e.getMessage().toLowerCase().contains("exit value: 3")) {
-                    log.error("Try to point your root data directory via --" + STORAGE_DATA_ROOT_DIR
-                        + " to a directory where you have read and write permissions.");
-                }
                 throw e;
             }
 
@@ -356,6 +351,12 @@ public class Upgrade extends AbstractInstall {
                         + " directory does not appear to be an RHQ installation. Missing expected file: ["
                         + serverPropsFile.getPath() + "]");
                 }
+            }
+        }
+
+        if (isRhq48OrLater(commandLine)) {
+            if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
+                errors.add("You cannot use the option --" + STORAGE_DATA_ROOT_DIR + " for your installation.");
             }
         }
 

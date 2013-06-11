@@ -595,7 +595,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 function updateDateRangeDisplay(startDate, endDate ) {
                     //@todo: i18n the date format
                     var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + '  -  ' + endDate.format('MM/DD/YYYY h:mm a');
-                    $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange);
+                    var timeRange = endDate.from(startDate,true);
+                    $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+'('+timeRange+')');
                 }
 
 

@@ -589,8 +589,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::redrawGraphs()();
                 }
 
-                brushstart();
-                brushmove();
+                //brushstart();
+                //brushmove();
 
                 function updateDateRangeDisplay(startDate, endDate ) {
                     //@todo: i18n the date format

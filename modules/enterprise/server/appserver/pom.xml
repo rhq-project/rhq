@@ -249,6 +249,7 @@
             <properties>
                 <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.containerServerDir>${rhq.containerDir}/rhq-server</rhq.containerServerDir>
             </properties>
 
             <build>
@@ -263,7 +264,7 @@
                                 <phase>package</phase>
                                 <configuration>
                                     <target>
-                                        <property name="deployment.dir" location="${rhq.containerDir}" />
+                                        <property name="deployment.dir" location="${rhq.containerServerDir}" />
                                         <echo>*** Copying updated files
                                             from
                                             target${file.separator}${project.build.finalName}${file.separator}

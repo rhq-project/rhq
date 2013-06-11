@@ -217,7 +217,7 @@
       <id>dev</id>
       <properties>
         <rhq.rootDir>../../..</rhq.rootDir>
-        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
         <rhq.deploymentDir>${rhq.containerDir}/${rhq.earLibDir}</rhq.deploymentDir>
       </properties>
 

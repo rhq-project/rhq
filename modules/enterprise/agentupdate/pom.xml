@@ -146,7 +146,7 @@ rhq-agent.latest.build-number=${buildNumber}
       <id>dev</id>
         <properties>
           <rhq.rootDir>../../..</rhq.rootDir>
-          <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+          <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
           <rhq.projectJar>${project.build.finalName}.jar</rhq.projectJar>
           <rhq.deploymentJar>rhq-enterprise-agent-${project.version}.jar</rhq.deploymentJar>
           <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/rhq-downloads/rhq-agent</rhq.deploymentDir>

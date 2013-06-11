@@ -566,8 +566,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("class", "brush")
                         .call(brush);
 
-                brushg.selectAll(".resize").append("path")
-                        .attr("d", resizePath);
+                brushg.selectAll(".resize").append("path");
 
                 brushg.selectAll("rect")
                         .attr("height", height);
@@ -669,6 +668,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         createHeader(chartContext.chartTitle);
 
                         createYAxisGridLines();
+                        createBrush();
                         createStackedBars();
                         createXandYAxes();
                         createAvgLines();
@@ -677,7 +677,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             createOOBLines();
                         }
                         createHovers(chartContext);
-                        createBrush();
                     }
                 }
             }; // end public closure

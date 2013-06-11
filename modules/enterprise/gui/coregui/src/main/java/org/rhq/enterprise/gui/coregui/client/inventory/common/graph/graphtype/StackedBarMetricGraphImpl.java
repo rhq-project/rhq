@@ -556,9 +556,9 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 },
                 brush = $wnd.d3.svg.brush()
                         .x(timeScale)
-                        .extent($wnd.d3.extent(chartData, function (d) {
-                            return d.x;
-                        }))
+                        //.extent($wnd.d3.extent(chartData, function (d) {
+                            //return d.x;
+                        //}))
                         .on("brushstart", brushstart)
                         .on("brush", brushmove)
                         .on("brushend", brushend),

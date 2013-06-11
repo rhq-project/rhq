@@ -11,6 +11,7 @@ _rhqctl() {
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="console install start status stop upgrade"
     agentServerStorage="--agent --server --storage"
+    serverStorage="--server --storage"
 
     # the spaces in the beginning and in the end are important here
     storageInstallSubopts=" --storage-config --storage-dir "
@@ -25,8 +26,11 @@ _rhqctl() {
 
     first="${COMP_WORDS[1]}"
 
-    if [[ "x${first}" == "xstart" ]] || [[ "x${first}" == "xstop" ]] || [[ "x${first}" == "xstatus" ]] || [[ "x${first}" == "xconsole" ]] ; then
+    if [[ "x${first}" == "xstart" ]] || [[ "x${first}" == "xstop" ]] || [[ "x${first}" == "xstatus" ]] ; then
         COMPREPLY=( $(compgen -W "${agentServerStorage}" -- ${cur}) )
+        return 0
+    elif  [[ "x${first}" == "xconsole" ]] ; then
+        COMPREPLY=( $(compgen -W "${serverStorage}" -- ${cur}) )
         return 0
     elif [[ "x${first}" == "xupgrade" ]] ; then
         if [[ "${upgradeSubopts}" == *" ${prev} "* ]] ; then

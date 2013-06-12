@@ -96,11 +96,11 @@ if not defined RHQ_SERVER_JBOSS_HOME (
       set RHQ_SERVER_JBOSS_HOME=%JBOSS_HOME%
    )
 ) else (
-   cd %RHQ_SERVER_JBOSS_HOME% || (   
+   cd %RHQ_SERVER_JBOSS_HOME% || (
       echo ERROR! RHQ_SERVER_JBOSS_HOME is not pointing to a valid AS directory
       echo RHQ_SERVER_JBOSS_HOME: "%RHQ_SERVER_JBOSS_HOME%"
       exit /B 1
-   )   
+   )
 )
 
 cd %RHQ_SERVER_JBOSS_HOME%
@@ -158,7 +158,7 @@ rem Prepare the VM command line options to be passed in
 rem ----------------------------------------------------------------------
 
 if not defined RHQ_CONTROL_JAVA_OPTS (
-   set RHQ_CONTROL_JAVA_OPTS=-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true
+   set RHQ_CONTROL_JAVA_OPTS=-Xmx512M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true
 )
 
 rem Add the JVM opts that we always want to specify, whether or not the user set RHQ_CCM_JAVA_OPTS.
@@ -169,7 +169,7 @@ if defined RHQ_CONTROL_DEBUG (
 )
 
 rem debugging the logging level now for development/testing
-set RHQ_CONTROL_JAVA_OPTS=%RHQ_CONTROL_JAVA_OPTS% -Djava.awt.headless=true -Drhq.server.properties-file=%RHQ_SERVER_HOME%\bin\rhq-server.properties -Drhq.control.logdir=%RHQ_SERVER_HOME%\logs -Drhq.control.loglevel=%_RHQ_LOGLEVEL% -Drhq.server.basedir=%RHQ_SERVER_HOME% -Drhqctl.properties-file=%RHQ_SERVER_HOME%\bin\rhqctl.properties 
+set RHQ_CONTROL_JAVA_OPTS=%RHQ_CONTROL_JAVA_OPTS% -Djava.awt.headless=true -Drhq.server.properties-file=%RHQ_SERVER_HOME%\bin\rhq-server.properties -Drhq.control.logdir=%RHQ_SERVER_HOME%\logs -Drhq.control.loglevel=%_RHQ_LOGLEVEL% -Drhq.server.basedir=%RHQ_SERVER_HOME% -Drhqctl.properties-file=%RHQ_SERVER_HOME%\bin\rhqctl.properties
 
 rem Sample JPDA settings for remote socket debugging
 rem set RHQ_CONTROL_JAVA_OPTS=%RHQ_CONTROL_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y

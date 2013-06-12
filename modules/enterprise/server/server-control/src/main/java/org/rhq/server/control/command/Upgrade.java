@@ -131,13 +131,15 @@ public class Upgrade extends AbstractInstall {
                 return;
             }
 
-            // If using a non-default agent location then save it so it will be applied to all subsequent rhqctl
-            // commands.  Then, use it to stop the agent, if running.
+            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
+            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
+            log.info("Stopping any running RHQ components...");
+
+            // If using non-default agent location then save it so it will be applied to all subsequent rhqctl commands.
             boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
             if (hasFromAgentOption) {
                 File agentBasedir = getFromAgentDir(commandLine);
                 putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getPath());
-                stopAgent(agentBasedir); // this is validate the path as well
             }
 
             // If anything appears to be installed already then don't perform an upgrade
@@ -146,9 +148,10 @@ public class Upgrade extends AbstractInstall {
                 return;
             }
 
-            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
-            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
-            log.info("Stopping any running RHQ components...");
+            // Stop the agent, if running.
+            if (hasFromAgentOption) {
+                stopAgent(getFromAgentDir(commandLine)); // this is validate the path as well
+            }
 
             // If rhqctl exists in the old version, use it to stop everything, otherwise, just try and stop the server
             // using the legacy script.

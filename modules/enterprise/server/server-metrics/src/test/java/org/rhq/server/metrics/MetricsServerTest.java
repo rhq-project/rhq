@@ -227,7 +227,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         rawMetrics.add(new MeasurementDataNumeric(secondMetricTime.getMillis(), scheduleId, secondValue));
         rawMetrics.add(new MeasurementDataNumeric(thirdMetricTime.getMillis(), scheduleId, thirdValue));
 
-        WaitForResults waitForRawInserts = new WaitForResults(rawMetrics.size());
+        WaitForWrite waitForRawInserts = new WaitForWrite(rawMetrics.size());
 
         for (MeasurementDataNumeric raw : rawMetrics) {
             ResultSetFuture resultSetFuture = dao.insertRawData(raw);

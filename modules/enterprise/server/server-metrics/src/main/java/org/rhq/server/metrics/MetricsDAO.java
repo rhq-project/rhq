@@ -239,6 +239,11 @@ public class MetricsDAO {
         }
     }
 
+    public ResultSetFuture findRawMetricsAsync(int scheduleId, long startTime, long endTime) {
+        BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
+        return session.executeAsync(boundStatement);
+    }
+
     public RawNumericMetric findLatestRawMetric(int scheduleId) {
         RawNumericMetricMapper mapper = new RawNumericMetricMapper(false);
         BoundStatement boundStatement = findLatestRawMetric.bind(scheduleId);

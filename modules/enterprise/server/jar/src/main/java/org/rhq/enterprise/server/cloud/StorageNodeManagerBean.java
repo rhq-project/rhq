@@ -209,7 +209,11 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         int resourceId;
         if (node.getResource() == null) {
-            resourceId = entityManager.merge(node).getResource().getId();
+            Resource res = entityManager.merge(node).getResource();
+            if (res == null) { // no associated resource
+                throw new IllegalStateException("This storage node [" + node.getId() +"] has no associated resource.");
+            }
+            resourceId = res.getId();
         } else {
             resourceId = node.getResource().getId();
         }

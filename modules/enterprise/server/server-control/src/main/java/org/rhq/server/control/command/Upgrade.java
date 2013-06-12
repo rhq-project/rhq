@@ -271,9 +271,74 @@ public class Upgrade extends AbstractInstall {
         oldServerProps.setProperty("rhq.autoinstall.enabled", "true"); // ensure that we always enable the installer
         oldServerProps.setProperty("rhq.autoinstall.database", "auto"); // the old value could have been "overwrite" - NOT what we want when upgrading
 
+        // copy the old key/truststore files from the old location to the new server configuration directory
+        copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.keystore.file");
+        copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.truststore.file");
+        copyReferredFile(commandLine, oldServerProps, "rhq.communications.connector.security.keystore.file");
+        copyReferredFile(commandLine, oldServerProps, "rhq.communications.connector.security.truststore.file");
+        copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
+        copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
+
         String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
         newServerPropsFile.update(oldServerProps);
+    }
+
+    /**
+     * Given server properties and a property name whose value is a file path, see if we need to copy the referred
+     * file to the new server location. This will set the new property value in the given properties if it needed to be
+     * updated.
+     *
+     * @param commandLine the rhqctl command line
+     * @param properties the properties
+     * @param propertyName name of a property whose value refers to a file path
+     */
+    private void copyReferredFile(CommandLine commandLine, Properties properties, String propertyName) {
+        String propertyValue = properties.getProperty(propertyName);
+        if (propertyValue == null || propertyValue.trim().length() == 0) {
+            return;
+        }
+
+        File referredFile = new File(propertyValue);
+        boolean originalFilePathIsAbsolute = referredFile.isAbsolute();
+        if (!originalFilePathIsAbsolute) {
+            // if its not absolute, we assume it is using ${jboss.server.config.dir}
+            File oldServerConfigDir = new File(getFromServerDir(commandLine), "jbossas/standalone/configuration");
+            if (!oldServerConfigDir.isDirectory()) {
+                // the older RHQ releases had the old JBossAS 4.2.3 directory structure
+                oldServerConfigDir = new File(getFromServerDir(commandLine), "jbossas/server/default/conf");
+                if (!oldServerConfigDir.isDirectory()) {
+                    log.warn("Cannot determine the old server's configuration directory - cannot copy over the old file: " + referredFile);
+                    return;
+                }
+            }
+
+            String absPath = propertyValue.replace("${jboss.server.config.dir}", oldServerConfigDir.getAbsolutePath());
+            referredFile = new File(absPath);
+        }
+
+        if (!referredFile.isFile()) {
+            log.info("Server property [" + propertyName + "] refers to file [" + referredFile
+                + "] that does not exist. Skipping.");
+            return;
+        }
+
+        File newServerConfigDir = new File(getBaseDir(), "jbossas/standalone/configuration");
+        File newFile = new File(newServerConfigDir, referredFile.getName());
+        try {
+            FileUtil.copyFile(referredFile, newFile);
+        } catch (Exception e) {
+            // log a message about this problem, but we will let the upgrade continue
+            log.error("Failed to copy the old file ["
+                + referredFile
+                + "] referred to by server property ["
+                + propertyName + "] to the new location of [" + newFile
+                + "]. You will need to manually copy that file to the new location."
+                + "The server may not work properly until you do this.");
+        }
+        properties.setProperty(propertyName, "${jboss.server.config.dir}/" + newFile.getName());
+
+        return;
     }
 
     private void upgradeAgent(CommandLine rhqctlCommandLine) throws IOException {

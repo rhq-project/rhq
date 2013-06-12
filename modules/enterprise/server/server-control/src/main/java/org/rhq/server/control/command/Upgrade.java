@@ -58,6 +58,7 @@ public class Upgrade extends AbstractInstall {
     static private final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     static private final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
     private static final String RUN_DATA_MIGRATION = "run-data-migrator";
+    private static final long STORAGE_INSTALL_SLEEP_TIME = 10 * 1000L; // Wait 10s so that ports get recycled
 
     private Options options;
 
@@ -320,6 +321,11 @@ public class Upgrade extends AbstractInstall {
         // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
         if (isRhq48OrLater(rhqctlCommandLine)) {
             try {
+                // We need to be sure the storage is really stopped (long enough)
+                // to not get a port conflict
+                // TODO find a better way
+                Thread.sleep(STORAGE_INSTALL_SLEEP_TIME);
+
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
                 Executor executor = new DefaultExecutor();

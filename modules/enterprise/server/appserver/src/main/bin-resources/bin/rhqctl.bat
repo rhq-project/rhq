@@ -172,7 +172,7 @@ rem debugging the logging level now for development/testing
 set RHQ_CONTROL_JAVA_OPTS=%RHQ_CONTROL_JAVA_OPTS% -Djava.awt.headless=true -Drhq.server.properties-file=%RHQ_SERVER_HOME%\bin\rhq-server.properties -Drhq.control.logdir=%RHQ_SERVER_HOME%\logs -Drhq.control.loglevel=%_RHQ_LOGLEVEL% -Drhq.server.basedir=%RHQ_SERVER_HOME% -Drhqctl.properties-file=%RHQ_SERVER_HOME%\bin\rhqctl.properties
 
 rem Sample JPDA settings for remote socket debugging
-rem set RHQ_CONTROL_JAVA_OPTS=%RHQ_CONTROL_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y
+rem set RHQ_CONTROL_JAVA_OPTS=%RHQ_CONTROL_JAVA_OPTS% -Xrunjdwp:transport=dt_socket,address=8786,server=y,suspend=y
 
 if defined RHQ_CONTROL_DEBUG echo RHQ_CONTROL_JAVA_OPTS: %RHQ_CONTROL_JAVA_OPTS%
 if defined RHQ_CONTROL_DEBUG echo RHQ_CONTROL_ADDITIONAL_JAVA_OPTS: %RHQ_CONTROL_ADDITIONAL_JAVA_OPTS%

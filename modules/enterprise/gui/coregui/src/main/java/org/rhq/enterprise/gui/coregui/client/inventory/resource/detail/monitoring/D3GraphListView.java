@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
@@ -129,7 +130,6 @@ public class D3GraphListView extends AbstractD3GraphListView {
         destroyMembers();
 
         addMember(buttonBarDateTimeRangeEditor);
-        buttonBarDateTimeRangeEditor.createButtons();
 
         if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));
@@ -153,9 +153,6 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     public void redrawGraphs() {
         this.onDraw();
-        if(null != availabilityGraph){
-            availabilityGraph.drawJsniChart();
-        }
     }
 
     @Override
@@ -257,7 +254,12 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                     // we only need the first metricData since we are only taking the
                                     // availability data set in there for the dropdowns already
                                     availabilityGraph.setAvailabilityList(availabilityList);
-                                    availabilityGraph.drawJsniChart();
+                                    new Timer(){
+                                        @Override
+                                        public void run() {
+                                            availabilityGraph.drawJsniChart();
+                                        }
+                                    }.schedule(150);
                                 }
                             }
 

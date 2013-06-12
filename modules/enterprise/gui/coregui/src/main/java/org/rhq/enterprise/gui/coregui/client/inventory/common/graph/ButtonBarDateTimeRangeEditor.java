@@ -102,7 +102,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         dateRangeLabel = new Label();
         dateRangeLabel.setWidth(400);
-        dateRangeLabel.setID("dateRange");
         dateRangeLabel.addStyleName("graphDateTimeRangeLabel");
         updateDateTimeRangeDisplay(new Date(prefs.begin), new Date(prefs.end));
         toolStrip.addMember(dateRangeLabel);

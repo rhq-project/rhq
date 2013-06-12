@@ -25,6 +25,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -75,9 +76,6 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         addMember(buttonBarDateTimeRangeEditor);
         if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resourceGroup.getId()));
-            // first step in 2 step to create d3 chart
-            // create a placeholder for avail graph
-            availabilityGraph.createGraphMarker();
             addMember(availabilityGraph);
         }
         graphsVLayout = new VLayout();
@@ -93,7 +91,6 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
 
     public void redrawGraphs() {
         this.onDraw();
-        availabilityGraph.drawJsniChart();
     }
 
     /**
@@ -151,7 +148,12 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
                                     // There is a weird timing case when availabilityGraph can be null
                                     if (availabilityGraph != null) {
                                         availabilityGraph.setGroupAvailabilityList(groupAvailabilityList);
-                                        availabilityGraph.drawJsniChart();
+                                        new Timer(){
+                                            @Override
+                                            public void run() {
+                                                availabilityGraph.drawJsniChart();
+                                            }
+                                        }.schedule(150);
                                     }
                                 }
                             }

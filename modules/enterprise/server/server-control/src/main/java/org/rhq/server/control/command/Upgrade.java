@@ -29,6 +29,8 @@ import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -46,6 +48,7 @@ import org.rhq.server.control.RHQControlException;
 /**
  * @author Jay Shaughnessy
  * @author John Mazzitelli
+ * @author Heiko W. Rupp
  */
 public class Upgrade extends AbstractInstall {
 
@@ -54,6 +57,7 @@ public class Upgrade extends AbstractInstall {
     static private final String AGENT_START_OPTION = "agent-start";
     static private final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     static private final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
+    private static final String RUN_DATA_MIGRATION = "run-data-migrator";
 
     private Options options;
 
@@ -63,24 +67,38 @@ public class Upgrade extends AbstractInstall {
                 null,
                 FROM_AGENT_DIR_OPTION,
                 true,
-                "Full path to install directory of the RHQ Agent to be upgraded. Required only if an existing agent exists and is not installed in the default location: <from-server-dir>/rhq-agent")
+                "Full path to install directory of the RHQ Agent to be upgraded. Required only if an existing agent " +
+                    "exists and is not installed in the default location: <from-server-dir>/rhq-agent")
             .addOption(null, FROM_SERVER_DIR_OPTION, true,
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
             .addOption(
                 null,
                 AGENT_START_OPTION,
                 true,
-                "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to false, the agent will not be started after it gets upgraded.")
+                "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to " +
+                    "false, the agent will not be started after it gets upgraded.")
             .addOption(
                 null,
                 USE_REMOTE_STORAGE_NODE,
                 true,
-                "By default a server is co-located with a storage node. However, if this option is set to true, no local storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.")
+                "By default a server is co-located with a storage node. However, if this option is set to true, no local " +
+                    "storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.")
             .addOption(
                 null,
                 STORAGE_DATA_ROOT_DIR,
                 true,
-                "You can use this option to use a different base directory for all the data directories created by the storage node. This is only used if the storage node needs to be newly installed during the upgrade process; otherwise, an error will result if you specify this option.")
+                "You can use this option to use a different base directory for all the data directories created by the storage node e.g. " +
+                    "because the default directory (/var/db on Linux) is not writable for the current user. " +
+                    "This is only used if the storage node needs to be newly installed during the upgrade process; otherwise, " +
+                    "an error will result if you specify this option. ")
+            .addOption(
+                null,
+                RUN_DATA_MIGRATION,
+                true,
+                "By default you ned to migrate metrics from a pre RHQ 4.8 system. The upgrade process can trigger this or " +
+                    "give you an estimate on the duration. If you want to have fine control over the process, please run the " +
+                    "migrator on the command line. Options are none (do nothing), estimate (estimate the migration time only), " +
+                    "print-command (print the command line for a manual run) , do-it (run the migration)")
         ;
 
         options.getOption(AGENT_START_OPTION).setOptionalArg(true);
@@ -167,12 +185,117 @@ public class Upgrade extends AbstractInstall {
                 }
                 startAgent(agentDir, true);
             }
-            printDataMigrationNotice();
-
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
         }
+        if (!isRhq48OrLater(commandLine) && commandLine.hasOption(RUN_DATA_MIGRATION)) {
+            runDataMigration(commandLine);
+        }
+
     }
+
+    private void runDataMigration(CommandLine rhqCtlCommandLine) {
+
+        String migrationOption = rhqCtlCommandLine.getOptionValue(RUN_DATA_MIGRATION);
+
+        if (migrationOption.equals("none")) {
+            log.info("No data migration will run");
+            if (!isRhq48OrLater(rhqCtlCommandLine)) {
+                printDataMigrationNotice();
+            }
+            return;
+        }
+
+
+        // We deduct the database parameters from the server properties
+        try {
+            File propertiesFile = new File(getBinDir(), "rhq-server.properties");
+            Properties serverProperties = new Properties();
+            FileInputStream is = new FileInputStream(propertiesFile);
+            serverProperties.load(is);
+
+            String dbName = serverProperties.getProperty("rhq.server.database.db-name");
+            String dbUser = serverProperties.getProperty("rhq.server.database.user-name");
+            String dbType = serverProperties.getProperty("rhq.server.database.type-mapping");
+            String dbServerName = serverProperties.getProperty("rhq.server.database.server-name");
+            String dbServerPort = serverProperties.getProperty("rhq.server.database.port");
+            String dbPasswordProperty = serverProperties.getProperty("rhq.server.database.password");
+
+            if (dbType.toLowerCase().contains("postgres")) {
+                dbType = "postgres";
+            } else if (dbType.toLowerCase().contains("oracle")) {
+                dbType = "oracle";
+                throw new RHQControlException("Can not migrate oracle databases yet");
+            } else {
+                throw new RHQControlException("Unknown database type " + dbType + " can not migrate data");
+            }
+
+            // Password in the properties file is obfuscated
+            String dbPassword = deobfuscatePassword(dbPasswordProperty);
+
+            File dataMigratorJar = getFileDownload("data-migrator", "rhq-data-migrator");
+
+            String cassandraHost = InetAddress.getLocalHost().getCanonicalHostName();
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
+                .addArgument("-jar").addArgument(dataMigratorJar.getAbsolutePath()) //
+
+                .addArgument("--sql-user").addArgument(dbUser)
+                .addArgument("--sql-db").addArgument(dbName)
+                .addArgument("--sql-host").addArgument(dbServerName)
+                .addArgument("--sql-port").addArgument(dbServerPort)
+                .addArgument("--sql-server-type").addArgument(dbType)
+                .addArgument("--cassandra-hosts").addArgument(cassandraHost);
+
+            String commandLineString = commandLine.toString();
+            if (migrationOption.equals("print-command")) {
+                log.info(commandLineString);
+                return;
+            }
+
+            // Add the password after generating commandLineString to
+            // not print the password on stdout
+            commandLine.addArgument("--sql-password ").addArgument(dbPassword);
+
+            if (migrationOption.equals("estimate")) {
+                commandLine.addArgument("--estimate-only");
+            }
+
+            Executor executor = new DefaultExecutor();
+            executor.setWorkingDirectory(getBaseDir());
+            executor.setStreamHandler(new PumpStreamHandler());
+
+            int exitValue = executor.execute(commandLine);
+            log.info("The data migrator finished with exit value " + exitValue);
+
+            if (migrationOption.equals("estimate")) {
+                log.info("You can use this command line as a start to later run the data migrator\n\n" + commandLineString);
+            }
+
+
+        } catch (Exception e) {
+            log.error("Running the data migrator failed - please try to run it from the command line: " + e.getMessage());
+        }
+
+    }
+
+    private String deobfuscatePassword(String dbPassword) {
+
+        // We need to do some mumbo jumbo, as the interesting method is private
+        // in SecureIdentityLoginModule
+
+        try {
+            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
+            Class<?> clazz = Class.forName(className);
+            Object object = clazz.newInstance();
+            Method method = clazz.getDeclaredMethod("decode", String.class);
+            method.setAccessible(true);
+            char[] result = (char[]) method.invoke(object, dbPassword);
+            return new String(result);
+        } catch (Exception e) {
+            throw new RuntimeException("de-obfuscating db password failed: ", e);
+        }
+    }
+
 
     private String getRhqServerScriptName() {
         String rhqServerBase = "rhq-server";
@@ -362,7 +485,7 @@ public class Upgrade extends AbstractInstall {
             log.info("Upgrading RHQ agent located at: " + oldAgentDir.getAbsolutePath());
 
             File agentBasedir = getAgentBasedir();
-            File agentInstallerJar = getAgentInstaller();
+            File agentInstallerJar = getFileDownload("rhq-agent", "rhq-enterprise-agent");
 
             org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
                 .addArgument("-jar").addArgument(agentInstallerJar.getAbsolutePath()) //
@@ -394,13 +517,13 @@ public class Upgrade extends AbstractInstall {
         }
     }
 
-    private File getAgentInstaller() {
-        File agentDownloadDir = new File(getBaseDir(),
-            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
-        return agentDownloadDir.listFiles(new FileFilter() {
+    private File getFileDownload(String directory, final String fileMatch) {
+        File downloadDir = new File(getBaseDir(),
+            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/" + directory);
+        return downloadDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
-                return file.getName().contains("rhq-enterprise-agent");
+                return file.getName().contains(fileMatch);
             }
         })[0];
     }

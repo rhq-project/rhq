@@ -481,7 +481,12 @@ public class Upgrade extends AbstractInstall {
         File referredFile = new File(propertyValue);
         boolean originalFilePathIsAbsolute = referredFile.isAbsolute();
         if (!originalFilePathIsAbsolute) {
-            // if its not absolute, we assume it is using ${jboss.server.config.dir}
+            // If its not absolute, we assume it is using some default syntax used in earlier versions
+            // and we will know this if the value starts with one of the following:
+            //    ${jboss.server.config.dir}
+            //    ${jboss.server.home.dir}/conf
+            //    conf/
+            // All of which refer to the old server's configuration directory.
             File oldServerConfigDir = new File(getFromServerDir(commandLine), "jbossas/standalone/configuration");
             if (!oldServerConfigDir.isDirectory()) {
                 // the older RHQ releases had the old JBossAS 4.2.3 directory structure
@@ -493,6 +498,10 @@ public class Upgrade extends AbstractInstall {
             }
 
             String absPath = propertyValue.replace("${jboss.server.config.dir}", oldServerConfigDir.getAbsolutePath());
+            absPath = absPath.replace("${jboss.server.home.dir}/conf", oldServerConfigDir.getAbsolutePath());
+            if (absPath.startsWith("conf/")) {
+                absPath = absPath.replaceFirst("conf", oldServerConfigDir.getAbsolutePath());
+            }
             referredFile = new File(absPath);
         }
 

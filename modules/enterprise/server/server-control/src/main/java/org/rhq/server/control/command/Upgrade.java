@@ -87,10 +87,10 @@ public class Upgrade extends AbstractInstall {
                 null,
                 STORAGE_DATA_ROOT_DIR,
                 true,
-                "You can use this option to use a different base directory for all the data directories created by the storage node e.g. " +
-                    "because the default directory (/var/db on Linux) is not writable for the current user. " +
-                    "This is only used if the storage node needs to be newly installed during the upgrade process; otherwise, " +
-                    "an error will result if you specify this option. ")
+                "You can use this option to use a different base directory for all the data directories created by the storage node e.g. "
+                    + "if the default directory is not writable for the current user (which is under /var/lib on Linux). "
+                    + "This is only used if the storage node needs to be newly installed during the upgrade process; otherwise, "
+                    + "an error will result if you specify this option. ")
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,

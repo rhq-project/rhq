@@ -405,6 +405,48 @@ public class Upgrade extends AbstractInstall {
         oldServerProps.setProperty("rhq.autoinstall.enabled", "true"); // ensure that we always enable the installer
         oldServerProps.setProperty("rhq.autoinstall.database", "auto"); // the old value could have been "overwrite" - NOT what we want when upgrading
 
+        // remove some old, obsolete settings no longer needed or used
+        oldServerProps.remove("rhq.server.embedded-agent.name");
+        oldServerProps.remove("rhq.server.embedded-agent.reset-configuration");
+        oldServerProps.remove("rhq.server.embedded-agent.disable-native-system");
+        oldServerProps.remove("rhq.server.embedded-agent.enabled");
+        oldServerProps.remove("rhq.server.startup.jrmpinvoker.rmiport");
+        oldServerProps.remove("rhq.server.startup.webservice.port");
+        oldServerProps.remove("rhq.server.startup.unifiedinvoker.port");
+        oldServerProps.remove("rhq.server.startup.namingservice.rmiport");
+        oldServerProps.remove("rhq.server.startup.pooledinvoker.rmiport");
+        oldServerProps.remove("rhq.server.startup.ajp.port");
+        oldServerProps.remove("rhq.server.startup.namingservice.port");
+        oldServerProps.remove("rhq.server.startup.aspectdeployer.bind-port");
+        oldServerProps.remove("rhq.server.plugin-deployer-threads");
+        oldServerProps.remove("rhq.server.database.xa-datasource-class");
+        oldServerProps.remove("rhq.server.database.driver-class");
+
+        // do not set the keystore/truststore algorithms if they are the defaults to allow for runtime defaults to take effect
+        String[] algPropNames = new String[] { "rhq.communications.connector.security.truststore.algorithm", //
+            "rhq.communications.connector.security.keystore.algorithm", //
+            "rhq.server.client.security.keystore.algorithm", //
+            "rhq.server.client.security.truststore.algorithm", //
+            "rhq.server.tomcat.security.algorithm" };
+        for (String algPropName : algPropNames) {
+            String algValue = oldServerProps.getProperty(algPropName, "SunX509");
+            if (algValue.equals("SunX509") || algValue.equals("IbmX509")) {
+                oldServerProps.remove(algPropName); // let the default take effect at runtime - which will depend on the JVM
+            }
+        }
+
+        // the older servers stored the HTTP and HTTPS ports under different names - make sure we reuse those ports with the new properties
+        String httpPort = oldServerProps.getProperty("rhq.server.startup.web.http.port");
+        if (httpPort != null) {
+            oldServerProps.remove("rhq.server.startup.web.http.port");
+            oldServerProps.setProperty("rhq.server.socket.binding.port.http", httpPort);
+        }
+        String httpsPort = oldServerProps.getProperty("rhq.server.startup.web.https.port");
+        if (httpsPort != null) {
+            oldServerProps.remove("rhq.server.startup.web.https.port");
+            oldServerProps.setProperty("rhq.server.socket.binding.port.https", httpsPort);
+        }
+
         // copy the old key/truststore files from the old location to the new server configuration directory
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.truststore.file");
@@ -413,9 +455,12 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
 
+        // now merge the old settings in with the default properties from the new server install
         String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
         newServerPropsFile.update(oldServerProps);
+
+        return;
     }
 
     /**

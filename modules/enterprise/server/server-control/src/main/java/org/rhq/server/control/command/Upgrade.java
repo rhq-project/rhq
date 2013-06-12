@@ -54,7 +54,7 @@ public class Upgrade extends AbstractInstall {
 
     static private final String FROM_AGENT_DIR_OPTION = "from-agent-dir";
     static private final String FROM_SERVER_DIR_OPTION = "from-server-dir";
-    static private final String AGENT_START_OPTION = "agent-start";
+    static private final String AGENT_AUTOSTART_OPTION = "agent-auto-start";
     static private final String USE_REMOTE_STORAGE_NODE = "use-remote-storage-node";
     static private final String STORAGE_DATA_ROOT_DIR = "storage-data-root-dir";
     private static final String RUN_DATA_MIGRATION = "run-data-migrator";
@@ -73,7 +73,7 @@ public class Upgrade extends AbstractInstall {
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
             .addOption(
                 null,
-                AGENT_START_OPTION,
+                AGENT_AUTOSTART_OPTION,
                 true,
                 "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to " +
                     "false, the agent will not be started after it gets upgraded.")
@@ -101,7 +101,7 @@ public class Upgrade extends AbstractInstall {
                     "print-command (print the command line for a manual run) , do-it (run the migration)")
         ;
 
-        options.getOption(AGENT_START_OPTION).setOptionalArg(true);
+        options.getOption(AGENT_AUTOSTART_OPTION).setOptionalArg(true);
     }
 
     @Override
@@ -173,7 +173,7 @@ public class Upgrade extends AbstractInstall {
             upgradeServer(commandLine);
             upgradeAgent(commandLine);
 
-            if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_START_OPTION, "true"))) {
+            if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
                 log.info("The agent was upgraded but was told not to start automatically.");
             } else {
                 File agentDir ;

@@ -52,7 +52,7 @@ public class Install extends AbstractInstall {
 
     private final String AGENT_CONFIG_OPTION = "agent-config";
     private final String AGENT_PREFERENCE = "agent-preference";
-    private final String AGENT_START_OPTION = "agent-start";
+    private final String AGENT_AUTOSTART_OPTION = "agent-auto-start";
 
     private final String SERVER_CONFIG_OPTION = "server-config";
 
@@ -97,13 +97,13 @@ public class Install extends AbstractInstall {
                 "An agent preference setting (whose argument is in the form 'name=value') to be set in the agent. More than one of these is allowed.")
             .addOption(
                 null,
-                AGENT_START_OPTION,
+                AGENT_AUTOSTART_OPTION,
                 true,
                 "If an agent is to be installed it will, by default, also be started. However, if this option is set to false, the agent will not be started after it gets installed.")
             .addOption(null, STORAGE_DATA_ROOT_DIR, true,
                 "The root directory under which all storage data directories will be placed.");
 
-        options.getOption(AGENT_START_OPTION).setOptionalArg(true);
+        options.getOption(AGENT_AUTOSTART_OPTION).setOptionalArg(true);
     }
 
     @Override
@@ -158,7 +158,7 @@ public class Install extends AbstractInstall {
                     File agentBasedir = getAgentBasedir();
                     installAgent(agentBasedir);
                     configureAgent(agentBasedir, commandLine);
-                    if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_START_OPTION, "true"))) {
+                    if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
                         startAgent(agentBasedir, true);
                     } else {
                         log.info("The agent was installed but was told not to start automatically.");
@@ -187,7 +187,7 @@ public class Install extends AbstractInstall {
                         clearAgentPreferences();
                         installAgent(agentBasedir);
                         configureAgent(agentBasedir, commandLine);
-                        if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_START_OPTION, "true"))) {
+                        if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
                             startAgent(agentBasedir, true);
                         } else {
                             log.info("The agent was installed but was told not to start automatically.");
@@ -228,7 +228,7 @@ public class Install extends AbstractInstall {
                         clearAgentPreferences();
                         installAgent(agentBasedir);
                         configureAgent(agentBasedir, commandLine);
-                        if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_START_OPTION, "true"))) {
+                        if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
                             startAgent(agentBasedir, true);
                         } else {
                             log.info("The agent was installed but was told not to start automatically.");

@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
@@ -329,7 +330,12 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     AbstractActivityView.addSeeMoreLink(row, link, column);
                                                 }
                                                 //call out to 3rd party javascript lib
-                                                BrowserUtility.graphSparkLines();
+                                                new Timer(){
+                                                    @Override
+                                                    public void run() {
+                                                        BrowserUtility.graphSparkLines();
+                                                    }
+                                                }.schedule(200);
                                             } else {
                                                 DynamicForm row = AbstractActivityView
                                                     .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_NONE);

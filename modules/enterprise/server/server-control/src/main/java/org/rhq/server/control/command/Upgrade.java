@@ -323,8 +323,7 @@ public class Upgrade extends AbstractInstall {
             try {
                 // We need to be sure the storage is really stopped (long enough)
                 // to not get a port conflict
-                // TODO find a better way
-                Thread.sleep(STORAGE_INSTALL_SLEEP_TIME);
+                waitForProcessToStop(getStoragePid());
 
                 org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());

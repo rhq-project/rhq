@@ -33,13 +33,12 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
-import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
 /**
  * @author John Sanda
  */
-public class Stop extends ControlCommand {
+public class Stop extends AbstractInstall {
 
     private Options options;
 
@@ -134,6 +133,8 @@ public class Stop extends ControlCommand {
 
                 commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
                 executor.execute(commandLine);
+
+                waitForProcessToStop(pid);
 
                 System.out.println("RHQ storage node has stopped");
             }

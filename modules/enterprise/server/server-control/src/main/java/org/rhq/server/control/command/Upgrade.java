@@ -24,10 +24,12 @@
 
 package org.rhq.server.control.command;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
@@ -42,7 +44,9 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -355,27 +359,14 @@ public class Upgrade extends AbstractInstall {
         // copy all the old settings into the new rhq-server.properties file
         upgradeServerPropertiesFile(commandLine);
 
-        // RHQ doesn't ship the Oracle driver. If the user uses Oracle, they have their own driver so we need to copy it over.
-        // Because the module.xml has the driver name in it, we need to copy the full Oracle JDBC driver module content.
-        String oracleModuleRelativePath = "modules/org/rhq/oracle";
-        File oldOracleModuleDir = new File(oldServerDir, oracleModuleRelativePath);
-        if (oldOracleModuleDir.isDirectory()) {
-            File newOracleModuleDir = new File(getBaseDir(), oracleModuleRelativePath);
-            File newOracleModuleMainDir = new File(newOracleModuleDir, "main");
-            // Look in the new server install and see if we do not have a real oracle JDBC driver.
-            // If the new server only has our "dummy" driver, we copy over the old driver module to the new server.
-            // If the new server already has a "real" driver, leave anything else in place as it may be a newer driver.
-            boolean foundRealOracleDriver = false;
-            for (File f : newOracleModuleMainDir.listFiles()) {
-                foundRealOracleDriver = f.isFile() && f.length() > 100000L; // the actual driver is much bigger, our fake one is 1K or so
-                if (foundRealOracleDriver == true) {
-                    break; // we found the real driver, do not continue looking
-                }
-            }
-            if (!foundRealOracleDriver) {
-                FileUtil.purge(newOracleModuleDir, true); // clean out anything that might be in here
-                FileUtil.copyDirectory(oldOracleModuleDir, newOracleModuleDir);
-            }
+        // make sure we retain the oracle driver if one exists
+        try {
+            copyOracleDriver(oldServerDir);
+        } catch (Exception e) {
+            log.error("Failed to copy the old Oracle driver to the new server. "
+                + "The upgrade will continue but your server may not work if connecting to an Oracle database, "
+                + "in which case you will need to manually install an Oracle driver to your server. " + "Cause: "
+                + ThrowableUtil.getAllMessages(e));
         }
 
         // copy over any wrapper.inc that may have been added
@@ -385,9 +376,82 @@ public class Upgrade extends AbstractInstall {
             FileUtil.copyFile(oldWrapperIncFile, newWrapperIncFile);
         }
 
+        // start the server, the invoke the installer and wait for the server to be completely installed
         startRHQServerForInstallation();
         runRHQServerInstaller();
         waitForRHQServerToInitialize();
+
+        return;
+    }
+
+    public void copyOracleDriver(File oldServerDir) throws IOException {
+        // RHQ doesn't ship the Oracle driver. If the user uses Oracle, they have their own driver so we need to copy it over.
+        // Because the module.xml has the driver name in it, we need to copy the full Oracle JDBC driver module content.
+        // Look in the new server install and see if we do not have a real oracle JDBC driver.
+        // If the new server only has our "dummy" driver, we copy over the old driver module to the new server.
+        // If the new server already has a "real" driver, leave anything else in place as it may be a newer driver.
+        String oracleModuleRelativePath = "modules/org/rhq/oracle";
+        File newOracleModuleDir = new File(getBaseDir(), oracleModuleRelativePath);
+        File newOracleModuleMainDir = new File(newOracleModuleDir, "main");
+
+        // first see if the new server was already given a real oracle driver - if so, there is nothing for us to do
+        for (File f : newOracleModuleMainDir.listFiles()) {
+            boolean foundRealOracleDriver = f.isFile() && f.length() > 100000L; // the actual driver is much bigger, our fake one is small
+            if (foundRealOracleDriver == true) {
+                log.info("Looks like the new server already has an Oracle driver: " + f);
+                return; // nothing for us to do since the new server already appears to have a real oracle driver
+            }
+        }
+
+        // now see if we are updating a newer JBossAS7+ based server - if so, the old oracle driver is in a module
+        File oldOracleModuleDir = new File(oldServerDir, oracleModuleRelativePath);
+        if (oldOracleModuleDir.isDirectory()) {
+            FileUtil.purge(newOracleModuleDir, true); // clean out anything that might be in here
+            FileUtil.copyDirectory(oldOracleModuleDir, newOracleModuleDir);
+            log.info("Copied the old Oracle JDBC module [" + oldOracleModuleDir + "] to the new server: "
+                + newOracleModuleDir);
+        } else {
+            // we aren't updating a newer JBossAS7+ based server, its probably an older JBossAS 4.2.3 based server
+            // where the oracle jar is located in a different directory (jbossas/server/default/lib/ojdbc*.jar)
+            File oldLibDir = new File(oldServerDir, "jbossas/server/default/lib");
+            if (oldLibDir.isDirectory()) {
+                FilenameFilter oracleDriverFilenameFilter = new FilenameFilter() {
+                    public boolean accept(File dir, String name) {
+                        return name.startsWith("ojdbc") && name.endsWith(".jar");
+                    }
+                };
+                // find the old ojdbc driver
+                File[] oracleDriver = oldLibDir.listFiles(oracleDriverFilenameFilter);
+                if (oracleDriver != null && oracleDriver.length > 0) {
+                    if (oracleDriver.length > 1) {
+                        log.warn("It appears that more than one oracle driver exists in the old server at ["
+                            + oldLibDir + "]; this one will be reused: " + oracleDriver[0]);
+                    }
+                    // we need to remove the dummy oracle driver file from the new server first
+                    File[] dummy = newOracleModuleMainDir.listFiles(oracleDriverFilenameFilter);
+                    if (dummy != null) {
+                        for (File dummyFileToDelete : dummy) { // there should only be one, but just remove all ojdbc*.jar files
+                            dummyFileToDelete.delete();
+                        }
+                    }
+                    // copy the real oracle driver to our new server's oracle module
+                    File newOracleJarFile = new File(newOracleModuleMainDir, oracleDriver[0].getName());
+                    FileUtil.copyFile(oracleDriver[0], newOracleJarFile);
+                    log.info("Copied the old Oracle JDBC driver [" + oracleDriver[0] + "] to the new server: "
+                        + newOracleJarFile);
+
+                    // now we need to update the module.xml file so it points to the new oracle driver
+                    File moduleXmlFile = new File(newOracleModuleMainDir, "module.xml");
+                    String originalXml = new String(StreamUtil.slurp(new FileInputStream(moduleXmlFile)));
+                    String newXml = originalXml.replaceFirst("resource-root path.*=.*\"ojdbc.*jar\"",
+                        "resource-root path=\"" + oracleDriver[0].getName() + "\"");
+                    FileUtil.writeFile(new ByteArrayInputStream(newXml.getBytes()), moduleXmlFile);
+                    log.info("Updated module.xml [" + moduleXmlFile + "] to use the proper Oracle driver");
+                }
+            }
+        }
+
+        return;
     }
 
     private void upgradeServerPropertiesFile(CommandLine commandLine) throws Exception {

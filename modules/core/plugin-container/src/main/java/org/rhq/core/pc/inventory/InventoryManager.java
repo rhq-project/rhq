@@ -36,6 +36,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Future;
@@ -196,13 +197,12 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * UUID to ResourceContainer map
      */
-    private Map<String, ResourceContainer> resourceContainers = Collections
-        .synchronizedMap(new HashMap<String, ResourceContainer>(1000));
+    private final Map<String, ResourceContainer> resourceContainers = new ConcurrentHashMap<String, ResourceContainer>(100);
 
     /**
      * Collection of event listeners to inform of changes to the inventory.
      */
-    private Set<InventoryEventListener> inventoryEventListeners = new HashSet<InventoryEventListener>();
+    private final Set<InventoryEventListener> inventoryEventListeners = new CopyOnWriteArraySet<InventoryEventListener>();
 
     private PluginManager pluginManager = PluginContainer.getInstance().getPluginManager();
 
@@ -466,9 +466,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     @Nullable
     public ResourceContainer getResourceContainer(CanonicalResourceKey canonicalId) {
         ResourceContainer resourceContainer = null;
-        Map<String, ResourceContainer> copy = new HashMap<String, ResourceContainer>(this.resourceContainers); // avoids concurrent mod exception, kinda
-
-        for (Map.Entry<String, ResourceContainer> entry : copy.entrySet()) {
+        for (Map.Entry<String, ResourceContainer> entry : resourceContainers.entrySet()) {
             ResourceContainer container = entry.getValue();
             Resource resource = container.getResource();
             if (resource != null) {
@@ -486,14 +484,15 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 }
             }
         }
-
-        copy.clear(); // help GC
         return resourceContainer;
     }
 
     @Nullable
     public ResourceContainer getResourceContainer(Resource resource) {
-        return this.resourceContainers.get(resource.getUuid());
+        String uuid = resource.getUuid();
+        if (uuid == null)
+            return null;
+        return this.resourceContainers.get(uuid);
     }
 
     @Nullable
@@ -512,15 +511,13 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return null;
         }
 
-        List<ResourceContainer> containers = new ArrayList<ResourceContainer>(this.resourceContainers.values()); // avoids concurrent mod exception
         ResourceContainer retContainer = null;
-        for (ResourceContainer container : containers) {
+        for (ResourceContainer container : resourceContainers.values()) {
             if (resourceId.equals(container.getResource().getId())) {
                 retContainer = container;
                 break;
             }
         }
-        containers.clear(); // help GC
         return retContainer;
     }
 
@@ -619,7 +616,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * This method implicitly calls {@link #handleReport(AvailabilityReport)} so any report generating entries
      * *will be sent to the server*.  Callers should subsequently *NOT* send the report.
-     * 
+     *
      * @param changedOnlyReport
      * @return The report, for inspection
      */
@@ -630,7 +627,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
     /**
      * This method implicitly calls {@link #handleReport(AvailabilityReport)} so any report generating entries
      * *will be sent to the server*.  Callers should subsequently *NOT* send the report.
-     * 
+     *
      * @param changedOnlyReport
      * @param forceChecks
      * @return The report, for inspection
@@ -1193,7 +1190,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             // If we synced any Resources, one or more Resource components were probably started, request a
             // full avail report to make sure their availabilities are determined on the next avail run (typically
             // < 30s away). A full avail report will ensure an initial avail check is performed for a resource.
-            // 
+            //
             // Also kick off a service scan to scan those Resources for new child Resources. Kick both tasks off
             // asynchronously.
             //
@@ -2445,9 +2442,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param listener instance to notify of change events
      */
     public void addInventoryEventListener(InventoryEventListener listener) {
-        synchronized (this.inventoryEventListeners) {
-            this.inventoryEventListeners.add(listener);
-        }
+        this.inventoryEventListeners.add(listener);
     }
 
     /**
@@ -2456,9 +2451,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @param listener instance to remove from event notification
      */
     public void removeInventoryEventListener(InventoryEventListener listener) {
-        synchronized (this.inventoryEventListeners) {
-            this.inventoryEventListeners.remove(listener);
-        }
+        this.inventoryEventListeners.remove(listener);
     }
 
     /**
@@ -2485,9 +2478,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * @return all inventory event listeners
      */
     private Set<InventoryEventListener> getInventoryEventListeners() {
-        synchronized (this.inventoryEventListeners) {
-            return new HashSet<InventoryEventListener>(this.inventoryEventListeners);
-        }
+        return this.inventoryEventListeners;
     }
 
     /**
@@ -2970,7 +2961,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
         }
 
         /////
-        // Now we need to loop over batches of the resource ID list - asking the server for their resource representations. 
+        // Now we need to loop over batches of the resource ID list - asking the server for their resource representations.
         // When we get the resources from the server, we put them in our resourceMap, keyed on ID.
 
         Map<Integer, Resource> resourceMap = new HashMap<Integer, Resource>(resourceIdList.size());
@@ -3021,7 +3012,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             for (Resource r : resourceBatch) {
                 //  protect against childResources notNull assumptions downstream
                 if (null == r.getChildResources()) {
-                    r.setChildResources(null); // this will actually initialize to an empty Set 
+                    r.setChildResources(null); // this will actually initialize to an empty Set
                 }
                 resourceMap.put(r.getId(), r);
             }

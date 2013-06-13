@@ -157,8 +157,8 @@ public class Upgrade extends AbstractInstall {
                 stopAgent(getFromAgentDir(commandLine)); // this is validate the path as well
             }
 
-            // If rhqctl exists in the old version, use it to stop everything, otherwise, just try and stop the server
-            // using the legacy script.
+            // If rhqctl exists in the old version, use it to stop server and storage node, otherwise, just try and stop the server
+            // using the legacy script. If there is no rhqctl, there is no storage node anyway, so we just stop server in that case.
             File fromBinDir = new File(getFromServerDir(commandLine), "bin");
             String serverScriptName = getRhqServerScriptName();
             String fromScript = isRhq48OrLater(commandLine) ? "rhqctl" : serverScriptName;
@@ -301,18 +301,6 @@ public class Upgrade extends AbstractInstall {
         } catch (Exception e) {
             throw new RuntimeException("de-obfuscating db password failed: ", e);
         }
-    }
-
-
-    private String getRhqServerScriptName() {
-        String rhqServerBase = "rhq-server";
-        if (File.separatorChar=='/') {
-            rhqServerBase = rhqServerBase + ".sh";
-        }
-        else {
-            rhqServerBase = rhqServerBase + ".bat";
-        }
-        return rhqServerBase;
     }
 
     private void upgradeStorage(CommandLine rhqctlCommandLine) throws Exception {

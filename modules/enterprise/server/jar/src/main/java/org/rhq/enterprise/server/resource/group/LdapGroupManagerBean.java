@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.Set;
 
@@ -413,10 +414,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             //additionally as system settings are modifiable via CLI which may not have param checking enabled do some
             //more checking.
             int defaultPageSize = 1000;
-            //            Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
             Properties options = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
-            //                        Properties options = systemManager.getSystemSettings(subjectManager.getOverlord()).;
-            String groupPageSize = options.getProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.getInternalName(), ""
+            String groupPageSize = options.getProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                 + defaultPageSize);
             if ((groupPageSize != null) && (!groupPageSize.trim().isEmpty())) {
                 int passedInPageSize = -1;
@@ -431,7 +430,6 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                         + nfe.getMessage());
                 }
             }
-
             ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, Control.CRITICAL) });
 
             // Loop through each configured base DN.  It may be useful
@@ -503,10 +501,15 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         Properties properties = null;
         if (systemSettings != null) {
             properties = new Properties();
-            Set<SystemSetting> keySet = systemSettings.keySet();
-            for (SystemSetting setting : keySet) {
-                String key = setting.getInternalName();
-                properties.put(key, systemSettings.get(key));
+            Set<Entry<SystemSetting, String>> entries = systemSettings.entrySet();
+            for (Entry<SystemSetting, String> entry : entries) {
+                SystemSetting key = entry.getKey();
+                if (key != null) {
+                    String value = entry.getValue();
+                    if (value != null) {
+                        properties.put(key.name(), value);
+                    }
+                }
             }
         }
         return properties;

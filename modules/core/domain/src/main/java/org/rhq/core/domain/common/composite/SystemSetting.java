@@ -78,13 +78,12 @@ public enum SystemSetting {
     LDAP_FILTER("CAM_LDAP_FILTER", PropertySimpleType.STRING, false, false),
     LDAP_GROUP_FILTER("CAM_LDAP_GROUP_FILTER", PropertySimpleType.STRING, false, false),
     LDAP_GROUP_MEMBER("CAM_LDAP_GROUP_MEMBER", PropertySimpleType.STRING, false, false),
+    LDAP_GROUP_QUERY_PAGE_SIZE("CAM_LDAP_GROUP_QUERY_PAGE_SIZE", PropertySimpleType.LONG, false, true),
     LDAP_BASE_DN("CAM_LDAP_BASE_DN", PropertySimpleType.STRING, false, false),
     LDAP_BIND_DN("CAM_LDAP_BIND_DN", PropertySimpleType.STRING, false, false),
     LDAP_BIND_PW("CAM_LDAP_BIND_PW", PropertySimpleType.PASSWORD, false, false),
     LDAP_NAMING_FACTORY("CAM_LDAP_NAMING_FACTORY_INITIAL", PropertySimpleType.STRING, true, true),
- LDAP_GROUP_USE_POSIX(
-        "CAM_LDAP_GROUP_USE_POSIX", PropertySimpleType.BOOLEAN, false, true), LDAP_GROUP_QUERY_PAGE_SIZE(
-        "LDAP_GROUP_QUERY_PAGE_SIZE", PropertySimpleType.INTEGER, false, true),
+    LDAP_GROUP_USE_POSIX("CAM_LDAP_GROUP_USE_POSIX", PropertySimpleType.BOOLEAN, false, true),
 
     ACTIVE_DRIFT_PLUGIN("ACTIVE_DRIFT_PLUGIN", PropertySimpleType.STRING, false, true),
 

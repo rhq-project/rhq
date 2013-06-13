@@ -501,6 +501,7 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupPageSize_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupPageSize_name());
                 pd.setPropertyGroupDefinition(ldapGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
                 pd.setDefaultValue("1000");
                 break;
 

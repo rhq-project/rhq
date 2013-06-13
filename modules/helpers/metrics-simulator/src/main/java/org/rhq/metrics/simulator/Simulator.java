@@ -98,7 +98,6 @@ public class Simulator implements ShutdownManager {
 
         MetricsDAO metricsDAO = new MetricsDAO(session, plan.getMetricsServerConfiguration());
         MetricsServer metricsServer = new MetricsServer();
-        metricsServer.setSession(session);
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());
 

@@ -87,6 +87,10 @@ public class EmbeddedJMXServerDiscoveryComponent implements ResourceDiscoveryCom
             return null;
         }
 
+        // EmsConnection caches the list MBeans it previously found
+        // See https://bugzilla.redhat.com/show_bug.cgi?id=924903
+        emsConnection.refresh();
+
         EmsBean runtimeMBean = emsConnection.getBean(ManagementFactory.RUNTIME_MXBEAN_NAME);
         if (runtimeMBean == null) {
             log.debug("MBean [" + ManagementFactory.RUNTIME_MXBEAN_NAME + "] not found for ["

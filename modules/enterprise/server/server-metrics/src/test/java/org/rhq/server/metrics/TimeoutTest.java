@@ -48,7 +48,6 @@ public class TimeoutTest extends CassandraIntegrationTest {
         MetricsConfiguration configuration = new MetricsConfiguration();
 
         MetricsServer metricsServer = new MetricsServer();
-        metricsServer.setSession(session);
         metricsServer.setConfiguration(configuration);
 
         DateTimeService dateTimeService = new DateTimeService();

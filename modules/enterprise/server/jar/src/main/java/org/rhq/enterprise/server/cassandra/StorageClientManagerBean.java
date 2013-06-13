@@ -43,10 +43,12 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.util.ClusterBuilder;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.server.metrics.CQLException;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
@@ -86,6 +88,9 @@ public class StorageClientManagerBean {
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
 
+    @EJB
+    private ServerManagerLocal serverManager;
+
     public synchronized void init() {
         if (initialized) {
             if (log.isDebugEnabled()) {
@@ -98,6 +103,7 @@ public class StorageClientManagerBean {
             log.info("Initializing storage client subsystem");
         }
 
+        boolean isNewServerInstall = false;
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
@@ -130,6 +136,7 @@ public class StorageClientManagerBean {
                 log.debug("No storage node entities exist in the database");
                 log.debug("Persisting seed nodes [" + StringUtil.listToString(seedNodes) + "]");
             }
+            isNewServerInstall = true;
             persistNodes(seedNodes);
         } else {
             List<StorageNode> newNodes = findNewStorageNodes(existingStorageNodes, seedNodes);
@@ -147,9 +154,11 @@ public class StorageClientManagerBean {
         storageNodes.addAll(existingStorageNodes);
         storageNodes.addAll(seedNodes);
 
+        Server server = serverManager.getServer();
+
         session = createSession(username, password, storageNodes);
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
-        initMetricsServer();
+        initMetricsServer(isNewServerInstall, server.getCtime());
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");
@@ -157,7 +166,7 @@ public class StorageClientManagerBean {
 
     public synchronized void shutdown() {
         if (!initialized) {
-            log.info("Storage client subsytem is already shut down. Skipping shutdown steps.");
+            log.info("Storage client subsystem is already shut down. Skipping shutdown steps.");
             return;
         }
 
@@ -226,27 +235,40 @@ public class StorageClientManagerBean {
         }
         int port = storageNodes.get(0).getCqlPort();
 
+        boolean compressionEnabled = Boolean.valueOf(System.getProperty("rhq.cassandra.client.compression-enabled",
+            "false"));
+        ProtocolOptions.Compression compression;
+        if (compressionEnabled) {
+            compression = ProtocolOptions.Compression.SNAPPY;
+            log.info("Compression has been enabled for the storage client. Be aware that if your storage nodes do " +
+                "not support compression then the client will not be able to connect to the storage cluster.");
+        } else {
+            compression = ProtocolOptions.Compression.NONE;
+            log.debug("Storage client compression is disabled");
+        }
+
         Cluster cluster = new ClusterBuilder()
             .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
             .withCredentials(username, password)
             .withPort(port)
+            .withCompression(compression)
             .build();
 
         return cluster.connect(RHQ_KEYSPACE);
     }
 
-    private void initMetricsServer() {
+    private void initMetricsServer(boolean isNewInstall, long serverInstallTime) {
         if (log.isDebugEnabled()) {
             log.debug("Initializing " + MetricsServer.class.getName());
         }
         metricsServer = new MetricsServer();
         metricsServer.setDAO(metricsDAO);
-        metricsServer.setSession(getSession());
         metricsServer.setConfiguration(metricsConfiguration);
 
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
+        metricsServer.init(isNewInstall, serverInstallTime);
     }
 
 

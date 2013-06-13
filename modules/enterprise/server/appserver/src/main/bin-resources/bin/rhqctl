@@ -203,7 +203,7 @@ fi
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_CONTROL_JAVA_OPTS" ]; then
-   RHQ_CONTROL_JAVA_OPTS="-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
+   RHQ_CONTROL_JAVA_OPTS=" -Xmx512M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
 fi
 
 # Add the JVM opts that we always want to specify, whether or not the user set RHQ_CCM_JAVA_OPTS.
@@ -217,7 +217,7 @@ fi
 RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME} -Drhqctl.properties-file=$RHQ_SERVER_HOME/bin/rhqctl.properties"
 
 # Sample JPDA settings for remote socket debugging
-#RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y"
+#RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8786,server=y,suspend=y"
 
 debug_msg "RHQ_CONTROL_JAVA_OPTS: $RHQ_CONTROL_JAVA_OPTS"
 debug_msg "RHQ_CONTROL_ADDITIONAL_JAVA_OPTS: $RHQ_CONTROL_ADDITIONAL_JAVA_OPTS"

@@ -57,6 +57,7 @@ import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsIndexEntry;
 import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.domain.RawNumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetricMapper;
 
 /**
  * @author John Sanda
@@ -98,7 +99,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int scheduleId = 1;
         MeasurementDataNumeric expected = new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId, 1.23);
 
-        WaitForResults waitForResults = new WaitForResults(1);
+        WaitForWrite waitForResults = new WaitForWrite(1);
 
         ResultSetFuture resultSetFuture = dao.insertRawData(expected);
         Futures.addCallback(resultSetFuture, waitForResults);
@@ -127,18 +128,54 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId, 3.9));
         data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
 
-        WaitForResults waitForResults = new WaitForResults(data.size());
+        WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
             ResultSetFuture resultSetFuture = dao.insertRawData(raw);
-            Futures.addCallback(resultSetFuture, waitForResults);
+            Futures.addCallback(resultSetFuture, waitForWrite);
         }
-        waitForResults.await("Failed to insert raw data");
+        waitForWrite.await("Failed to insert raw data");
 
         RawNumericMetric actual = dao.findLatestRawMetric(scheduleId);
         RawNumericMetric expected = new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6);
 
         assertEquals(actual, expected, "Failed to find latest raw metric");
+    }
+
+    @Test
+    public void findRawDataAsync() throws Exception {
+        DateTime hour0 = hour0();
+        DateTime currentTime = hour0.plusHours(4).plusMinutes(44);
+        DateTime threeMinutesAgo = currentTime.minusMinutes(3);
+        DateTime twoMinutesAgo = currentTime.minusMinutes(2);
+        DateTime oneMinuteAgo = currentTime.minusMinutes(1);
+
+        int scheduleId = 1;
+
+        List<MeasurementDataNumeric> data = new ArrayList<MeasurementDataNumeric>();
+        data.add(new MeasurementDataNumeric(threeMinutesAgo.getMillis(), scheduleId, 3.2));
+        data.add(new MeasurementDataNumeric(twoMinutesAgo.getMillis(), scheduleId, 3.9));
+        data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId, 2.6));
+
+        WaitForWrite waitForWrite = new WaitForWrite(data.size());
+
+        for (MeasurementDataNumeric raw : data) {
+            ResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            Futures.addCallback(resultSetFuture, waitForWrite);
+        }
+        waitForWrite.await("Failed to insert raw data");
+
+        RawNumericMetricMapper mapper = new RawNumericMetricMapper();
+        WaitForRead<RawNumericMetric> waitForRead = new WaitForRead<RawNumericMetric>(mapper);
+        ResultSetFuture resultSetFuture = dao.findRawMetricsAsync(scheduleId,
+            threeMinutesAgo.minusSeconds(5).getMillis(), oneMinuteAgo.plusSeconds(5).getMillis());
+        Futures.addCallback(resultSetFuture, waitForRead);
+
+        waitForRead.await("Failed to fetch raw data");
+        List<RawNumericMetric> actual = waitForRead.getResults();
+        List<RawNumericMetric> expected = map(data);
+
+        assertEquals(actual, expected, "Async read of raw data failed");
     }
 
     @Test(enabled = ENABLED)
@@ -160,13 +197,13 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId1, 3.1));
         data.add(new MeasurementDataNumeric(oneMinuteAgo.getMillis(), scheduleId2, 3.2));
 
-        WaitForResults waitForResults = new WaitForResults(data.size());
+        WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
             ResultSetFuture resultSetFuture = dao.insertRawData(raw);
-            Futures.addCallback(resultSetFuture, waitForResults);
+            Futures.addCallback(resultSetFuture, waitForWrite);
         }
-        waitForResults.await("Failed to insert raw data");
+        waitForWrite.await("Failed to insert raw data");
 
         List<RawNumericMetric> actualMetrics = Lists.newArrayList(dao.findRawMetrics(asList(scheduleId1, scheduleId2),
             currentHour.getMillis(), currentHour.plusHours(1).getMillis()));
@@ -282,17 +319,17 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         int scheduleId1 = 1;
         int scheduleId2= 2;
 
-        WaitForResults waitForResults = new WaitForResults(2);
+        WaitForWrite waitForWrite = new WaitForWrite(2);
 
         ResultSetFuture resultSetFuture1 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId1,
             hour0().getMillis());
         ResultSetFuture resultSetFuture2 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId2,
             hour0().getMillis());
 
-        Futures.addCallback(resultSetFuture1, waitForResults);
-        Futures.addCallback(resultSetFuture2, waitForResults);
+        Futures.addCallback(resultSetFuture1, waitForWrite);
+        Futures.addCallback(resultSetFuture2, waitForWrite);
 
-        waitForResults.await("Failed to update metrics index");
+        waitForWrite.await("Failed to update metrics index");
 
         List<MetricsIndexEntry> expected = asList(
             new MetricsIndexEntry(MetricsTable.TWENTY_FOUR_HOUR, hour0(), scheduleId1),
@@ -666,6 +703,14 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
             assertNotNull(metric.getMaxColumnMetadata().getTtl(), "The TTL for maximum column of " + metric +
                 " is not set.");
         }
+    }
+
+    private List<RawNumericMetric> map(List<MeasurementDataNumeric> data) {
+        List<RawNumericMetric> raw = new ArrayList<RawNumericMetric>(data.size());
+        for (MeasurementDataNumeric datum : data) {
+            raw.add(new RawNumericMetric(datum.getScheduleId(), datum.getTimestamp(), datum.getValue()));
+        }
+        return raw;
     }
 
 }

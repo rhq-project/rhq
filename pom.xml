@@ -40,6 +40,7 @@
     <rhq.earName>rhq.ear</rhq.earName>
     <!-- the below path is relative to {rhq-trunk} -->
     <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
+    <rhq.devContainerServerPath>${rhq.defaultDevContainerPath}/rhq-server</rhq.devContainerServerPath>
     <!-- path relative to under dev container path where the EAR is deployed -->
     <rhq.earDeployDir>modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}</rhq.earDeployDir>
     <!-- path relative to under dev container path where other things are stored -->
@@ -178,6 +179,7 @@
     <cassandra.driver.version>1.0.0-rhq-1.2.4</cassandra.driver.version>
     <cassandra.driver.netty.version>3.6.3.Final</cassandra.driver.netty.version>
     <cassandra.driver.snappy.version>1.0.5-M3-p1</cassandra.driver.snappy.version>
+    <cassandra.snakeyaml.version>1.6</cassandra.snakeyaml.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
     <rhq.db.admin.password>rhqadmin</rhq.db.admin.password>
@@ -886,6 +888,12 @@
          <groupId>javax.servlet</groupId>
          <artifactId>javax.servlet-api</artifactId>
          <version>3.0.1</version>
+      </dependency>
+   
+      <dependency>
+         <groupId>org.yaml</groupId>
+         <artifactId>snakeyaml</artifactId>
+         <version>${cassandra.snakeyaml.version}</version>
       </dependency>
   </dependencies>
 

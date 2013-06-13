@@ -40,6 +40,11 @@
       <artifactId>commons-io</artifactId>
       <version>2.1</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.yaml</groupId>
+      <artifactId>snakeyaml</artifactId>
+    </dependency>
   </dependencies>
 
   <build>
@@ -94,6 +99,11 @@
                   <artifactId>rhq-cassandra-jmx</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
+                <artifactItem>
+                  <groupId>org.yaml</groupId>
+                  <artifactId>snakeyaml</artifactId>
+                  <version>${cassandra.snakeyaml.version}</version>
+                </artifactItem>
               </artifactItems>
             </configuration>
           </execution>
@@ -108,7 +118,7 @@
 
       <properties>
         <rhq.rootDir>../../../..</rhq.rootDir>
-        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
         <rhq.deploymentDir>${rhq.containerDir}/modules/org/rhq/rhq-cassandra-installer/main</rhq.deploymentDir>
       </properties>
 

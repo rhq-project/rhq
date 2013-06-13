@@ -28,6 +28,7 @@ package org.rhq.server.control;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +60,9 @@ public abstract class ControlCommand {
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
     protected static final String AGENT_BASEDIR_NAME = "rhq-agent";
 
+    private final File defaultStorageBasedir;
+    private final File defaultAgentBasedir;
+
     protected final Log log = LogFactory.getLog(getClass().getName());
 
     private File basedir;
@@ -76,6 +80,9 @@ public abstract class ControlCommand {
         } catch (ConfigurationException e) {
             throw new RHQControlException("Failed to load configuration", e);
         }
+
+        defaultStorageBasedir = new File(getBaseDir(), STORAGE_BASEDIR_NAME);
+        defaultAgentBasedir = new File(getBaseDir().getParent(), AGENT_BASEDIR_NAME);
     }
 
     public abstract String getName();
@@ -134,19 +141,24 @@ public abstract class ControlCommand {
         return this.binDir;
     }
 
+    protected File getLogDir() {
+        return new File(getBaseDir(), "logs");
+    }
+
     protected File getStorageBasedir() {
-        return new File(
-getProperty(RHQ_STORAGE_BASEDIR_PROP,
-            new File(getBaseDir(), STORAGE_BASEDIR_NAME).getAbsolutePath()));
+        return new File(getProperty(RHQ_STORAGE_BASEDIR_PROP, defaultStorageBasedir.getAbsolutePath()));
     }
 
     protected File getAgentBasedir() {
-        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP,
-            new File(getBaseDir(), AGENT_BASEDIR_NAME).getAbsolutePath()));
+        return new File(getProperty(RHQ_AGENT_BASEDIR_PROP, defaultAgentBasedir.getAbsolutePath()));
     }
 
     protected boolean isServerInstalled() {
-        File markerFile = new File(getBaseDir(), "jbossas/standalone/data/rhq.installed");
+        return isServerInstalled(getBaseDir());
+    }
+
+    protected boolean isServerInstalled(File baseDir) {
+        File markerFile = new File(baseDir, "jbossas/standalone/data/rhq.installed");
 
         return markerFile.exists();
     }
@@ -252,5 +264,22 @@ getProperty(RHQ_STORAGE_BASEDIR_PROP,
     protected boolean isWindows() {
         String operatingSystem = System.getProperty("os.name").toLowerCase(Locale.US);
         return operatingSystem.contains("windows");
+    }
+
+    protected boolean isPortInUse(String host, int port) {
+        boolean inUse;
+
+        try {
+            Socket testSocket = new Socket(host, port);
+            try {
+                testSocket.close();
+            } catch (Exception ignore) {
+            }
+            inUse = true;
+        } catch (Exception expected) {
+            inUse = false;
+        }
+
+        return inUse;
     }
 }

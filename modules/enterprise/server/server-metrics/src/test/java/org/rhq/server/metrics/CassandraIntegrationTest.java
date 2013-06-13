@@ -28,11 +28,13 @@ package org.rhq.server.metrics;
 import static org.testng.Assert.fail;
 
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.base.Throwables;
@@ -52,6 +54,7 @@ import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateNumericMetricMapper;
 import org.rhq.server.metrics.domain.MetricsTable;
+import org.rhq.server.metrics.domain.ResultSetMapper;
 import org.rhq.server.metrics.domain.SimplePagedResult;
 
 /**
@@ -116,20 +119,20 @@ public class CassandraIntegrationTest {
         }
     }
 
-    protected static class WaitForResults<ResultSetFuture> implements FutureCallback<ResultSetFuture> {
+    protected static class WaitForWrite implements FutureCallback<ResultSet> {
 
-        private final Log log = LogFactory.getLog(WaitForResults.class);
+        private final Log log = LogFactory.getLog(WaitForWrite.class);
 
         private CountDownLatch latch;
 
         private Throwable throwable;
 
-        public WaitForResults(int numResults) {
+        public WaitForWrite(int numResults) {
             latch = new CountDownLatch(numResults);
         }
 
         @Override
-        public void onSuccess(ResultSetFuture resultSetFuture) {
+        public void onSuccess(ResultSet rows) {
             latch.countDown();
         }
 
@@ -147,5 +150,52 @@ public class CassandraIntegrationTest {
             }
         }
 
+    }
+
+    protected static class WaitForRead<T> implements FutureCallback<ResultSet> {
+        private final Log log = LogFactory.getLog(WaitForRead.class);
+
+        private CountDownLatch latch;
+
+        private Throwable throwable;
+
+        private ResultSetMapper<T> mapper;
+
+        private List<T> results;
+
+        public  WaitForRead(ResultSetMapper<T> mapper) {
+            latch = new CountDownLatch(1);
+            this.mapper = mapper;
+        }
+
+        @Override
+        public void onSuccess(ResultSet rows) {
+            try {
+                results = mapper.mapAll(rows);
+            } catch (Exception e) {
+                throwable = e;
+                log.error("There was an error getting the results", e);
+            } finally {
+                latch.countDown();
+            }
+        }
+
+        @Override
+        public void onFailure(Throwable throwable) {
+            this.throwable = throwable;
+            log.error("An async operation failed", throwable);
+            latch.countDown();
+        }
+
+        public void await(String errorMsg) throws InterruptedException {
+            latch.await();
+            if (throwable != null) {
+                fail(errorMsg, Throwables.getRootCause(throwable));
+            }
+        }
+
+        public List<T> getResults() {
+            return results;
+        }
     }
 }

@@ -250,12 +250,12 @@ public class ConditionEditor extends EnhancedVLayout {
             formItems.addAll(buildMetricThresholdFormItems(editMode
                 && AlertConditionCategory.THRESHOLD == existingCondition.getCategory()
                 && existingCondition.getOption() == null));
-            formItems.addAll(buildMetricRangeFormItems(editMode
-                && AlertConditionCategory.BASELINE == existingCondition.getCategory()));
             formItems.addAll(buildMetricBaselineFormItems(editMode
+                && AlertConditionCategory.BASELINE == existingCondition.getCategory()));
+            formItems.addAll(buildMetricChangeFormItems(editMode
                 && AlertConditionCategory.CHANGE == existingCondition.getCategory()
                 && existingCondition.getOption() == null));
-            formItems.addAll(buildMetricChangeFormItems(editMode
+            formItems.addAll(buildMetricRangeFormItems(editMode
                 && AlertConditionCategory.RANGE == existingCondition.getCategory()));
         }
         if (supportsCalltimeMetrics) {
@@ -688,7 +688,7 @@ public class ConditionEditor extends EnhancedVLayout {
             baselinePercentage.setValidateOnChange(true);
             baselinePercentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
             if (editMode) {
-                baselinePercentage.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+                baselinePercentage.setDefaultValue(String.valueOf((int) (existingCondition.getThreshold() * 100)));
             }
             formItems.add(baselinePercentage);
 
@@ -842,7 +842,7 @@ public class ConditionEditor extends EnhancedVLayout {
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
         if (editMode) {
-            percentage.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+            percentage.setDefaultValue(String.valueOf((int) (existingCondition.getThreshold() * 100)));
             regex.setDefaultValue(existingCondition.getName());
         }
 

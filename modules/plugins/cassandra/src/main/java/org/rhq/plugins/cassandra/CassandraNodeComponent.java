@@ -232,6 +232,10 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         return result;
     }
 
+//    protected OperationResult drain() {
+//
+//    }
+
     protected OperationResult updateSeedsList(Configuration params) {
         PropertyList list = params.getList("seedsList");
         List<String> addresses = getAddresses(list);

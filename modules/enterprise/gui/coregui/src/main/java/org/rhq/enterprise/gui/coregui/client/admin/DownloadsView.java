@@ -43,7 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 /**
  * A simple page to view the downloads the server provides (like
  * the agent update binary and the CLI distro).
- * 
+ *
  * @author John Mazzitelli
  */
 public class DownloadsView extends EnhancedVLayout {
@@ -60,6 +60,7 @@ public class DownloadsView extends EnhancedVLayout {
     private SectionStackSection cliSection;
     private SectionStackSection bundleSection;
     private SectionStackSection connectorsSection;
+    private SectionStackSection migratorSection;
     private SectionStackSection cliAlertScriptsSection;
     private SectionStackSection scriptModulesSection;
 
@@ -83,6 +84,7 @@ public class DownloadsView extends EnhancedVLayout {
         cliSection = new SectionStackSection(MSG.view_admin_downloads_cliDownload());
         bundleSection = new SectionStackSection(MSG.view_admin_downloads_bundleDownload());
         connectorsSection = new SectionStackSection(MSG.view_admin_downloads_connectorsDownload());
+        migratorSection = new SectionStackSection(MSG.view_admin_downloads_migratorDownload());
         cliAlertScriptsSection = new SectionStackSection(MSG.view_admin_downloads_cliAlertScriptsDownload());
         scriptModulesSection = new SectionStackSection(MSG.view_admin_downloads_scriptModulesDownload());
 
@@ -97,6 +99,7 @@ public class DownloadsView extends EnhancedVLayout {
         sectionStack.addSection(cliSection);
         sectionStack.addSection(bundleSection);
         sectionStack.addSection(connectorsSection);
+        sectionStack.addSection(migratorSection);
         sectionStack.addSection(cliAlertScriptsSection);
         sectionStack.addSection(scriptModulesSection);
 
@@ -111,6 +114,7 @@ public class DownloadsView extends EnhancedVLayout {
         prepareCLISection();
         prepareBundleSection();
         prepareConnectorsSection();
+        prepareMigratorSection();
         prepareCliAlertScriptsSection();
         prepareScriptModulesSection();
     }
@@ -305,6 +309,56 @@ public class DownloadsView extends EnhancedVLayout {
             @Override
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_connectors_loadError(), caught);
+            }
+        });
+    }
+
+    private void prepareMigratorSection() {
+        systemManager.getMigratorDownloads(new AsyncCallback<HashMap<String, String>>() {
+            @Override
+            public void onSuccess(HashMap<String, String> result) {
+                DynamicForm form = new DynamicForm();
+                form.setMargin(10);
+                form.setWidth100();
+
+                if (result != null && !result.isEmpty()) {
+                    int i = 0;
+                    FormItem[] items = new FormItem[result.size() + 2];
+
+                    for (Map.Entry<String, String> entry : result.entrySet()) {
+                        StaticTextItem linkItem = new StaticTextItem("link" + i);
+                        linkItem.setTitle(MSG.common_label_link());
+                        linkItem.setValue("<a href=\"" + entry.getValue() + "\">" + entry.getKey() + "</a>");
+                        items[i++] = linkItem;
+                    }
+
+                    SpacerItem spacerItem = new SpacerItem("spacer");
+                    spacerItem.setHeight(5);
+                    items[i++] = spacerItem;
+
+                    StaticTextItem helpText = new StaticTextItem("migratorHelp");
+                    helpText.setColSpan(2);
+                    helpText.setShowTitle(false);
+                    helpText.setValue(MSG.view_admin_downloads_migrator_help(productInfo.getShortName()));
+                    items[i++] = helpText;
+
+                    form.setItems(items);
+                } else {
+                    StaticTextItem item = new StaticTextItem("noMigrator");
+                    item.setColSpan(2);
+                    item.setShowTitle(false);
+                    item.setValue(MSG.view_admin_downloads_migrator_none());
+                    form.setItems(item);
+                }
+
+                migratorSection.setItems(form);
+                migratorSection.setExpanded(true);
+                sectionStack.markForRedraw();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_admin_downloads_migrator_loadError(), caught);
             }
         });
     }

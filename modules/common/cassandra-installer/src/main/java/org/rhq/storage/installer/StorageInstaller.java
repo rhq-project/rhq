@@ -26,6 +26,7 @@
 package org.rhq.storage.installer;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -55,6 +56,7 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.yaml.snakeyaml.Yaml;
 
 import org.rhq.cassandra.Deployer;
 import org.rhq.cassandra.DeploymentOptions;
@@ -63,6 +65,7 @@ import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * @author John Sanda
@@ -80,6 +83,8 @@ public class StorageInstaller {
     public static final int STATUS_DATA_DIR_NOT_EMPTY = 4;
 
     public static final int STATUS_SHOW_USAGE = 100;
+
+    public static final int STATUS_INVALID_UPGRADE = 5;
 
     private final String STORAGE_BASEDIR = "rhq-storage";
 
@@ -176,6 +181,10 @@ public class StorageInstaller {
         Option stackSizeOption = new Option(null, "stack-size", true, "The value to use for the thread stack size. " +
             "This value is passed directly to the -Xss option of the Java executable.");
 
+        Option upgradeOption = new Option(null, "upgrade", true, "Upgrades an existing storage node. The directory " +
+            "where the existing RHQ server is installed.");
+        upgradeOption.setArgName("RHQ_SERVER_DIR");
+
         options = new Options().addOption(new Option("h", "help", false, "Show this message."))
             .addOption(hostname)
             .addOption(seeds)
@@ -191,7 +200,8 @@ public class StorageInstaller {
             .addOption(basedirOption)
             .addOption(heapSizeOption)
             .addOption(heapNewSizeOption)
-            .addOption(stackSizeOption);
+            .addOption(stackSizeOption)
+            .addOption(upgradeOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -202,109 +212,167 @@ public class StorageInstaller {
             DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
             DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
 
-            File basedir;
-            if (cmdLine.hasOption("dir")) {
-                basedir = new File(cmdLine.getOptionValue("dir"));
-            } else {
-                basedir = storageBasedir;
-            }
-            deploymentOptions.setBasedir(basedir.getAbsolutePath());
-
-            String hostname;
-            if (cmdLine.hasOption("n")) {
-                hostname = cmdLine.getOptionValue("n");
-            } else {
-                hostname = InetAddress.getLocalHost().getHostName();
-            }
-            deploymentOptions.setListenAddress(hostname);
-            deploymentOptions.setRpcAddress(hostname);
-
-            // TODO add support for getting updated seeds list
-            // Rather than have the user specify the seeds for each node, the installer can
-            // obtain the list either from the RHQ server or directly from querying the
-            // database.
-            String seeds = cmdLine.getOptionValue("seeds", hostname);
-            deploymentOptions.setSeeds(seeds);
-
-            commitLogDir = cmdLine.getOptionValue("commitlog", commitLogDir);
-            dataDir = cmdLine.getOptionValue("data", dataDir);
-            savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
-
-            // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
-            if (!isDirectoryEmpty(new File(commitLogDir))) {
-                log.error("Commitlog directory is not empty: " + commitLogDir);
-                return STATUS_DATA_DIR_NOT_EMPTY;
-            }
-            if (!isDirectoryEmpty(new File(dataDir))) {
-                log.error("Data directory is not empty: " + dataDir);
-                return STATUS_DATA_DIR_NOT_EMPTY;
-            }
-            if (!isDirectoryEmpty(new File(savedCachesDir))) {
-                log.error("Saved caches directory is not empty: " + savedCachesDir);
-                return STATUS_DATA_DIR_NOT_EMPTY;
-            }
-
             File logFile = new File(logDir, "rhq-storage.log");
 
-            deploymentOptions.setBasedir(basedir.getAbsolutePath());
-            deploymentOptions.setCommitLogDir(commitLogDir);
-            deploymentOptions.setDataDir(dataDir);
-            deploymentOptions.setSavedCachesDir(savedCachesDir);
-            deploymentOptions.setLogFileName(logFile.getPath());
-            deploymentOptions.setLoggingLevel("INFO");
-            deploymentOptions.setRpcPort(rpcPort);
-            deploymentOptions.setJmxPort(getPort(cmdLine, "jmx-port", jmxPort));
-            deploymentOptions.setNativeTransportPort(getPort(cmdLine, "client-port", nativeTransportPort));
-            deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
-            deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
+            if (cmdLine.hasOption("upgrade")) {
+                File existingStorageDir = null;
+                File upgradeFromDir = new File(cmdLine.getOptionValue("upgrade", ""));
 
-            // The out of box default for native_transport_max_threads is 128. We default
-            // to 64 for dev/test environments so we need to update it here.
-            deploymentOptions.setNativeTransportMaxThreads(128);
-
-            if (cmdLine.hasOption("heap-size")) {
-                deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size"));
-            }
-
-            if (cmdLine.hasOption("heap-new-size")) {
-                deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size"));
-            }
-
-            if (cmdLine.hasOption("stack-size")) {
-                deploymentOptions.setStackSize(cmdLine.getOptionValue("stack-size"));
-            }
-
-            deploymentOptions.load();
-
-            List<String> errors = new ArrayList<String>();
-            checkPerms(options.getOption("saved-caches"), savedCachesDir, errors);
-            checkPerms(options.getOption("commitlog"), commitLogDir, errors);
-            checkPerms(options.getOption("data"), dataDir, errors);
-
-            if (!errors.isEmpty()) {
-                log.error("Problems have been detected with one or more of the directories in which the storage "
-                    + "node will need to store data");
-                for (String error : errors) {
-                    log.error(error);
+                if (!upgradeFromDir.isDirectory()) {
+                    log.error("The value passed to the upgrade option is not a directory. The value must be a valid " +
+                        "path that points to the base directory of an existing RHQ server installation.");
+                    return STATUS_INVALID_UPGRADE;
                 }
-                log.error("The storage installer will now exit due to previous errors.");
-                return STATUS_INVALID_FILE_PERMISSIONS;
-            }
+                existingStorageDir = new File(upgradeFromDir, "rhq-storage");
+                if (!(existingStorageDir.exists() && existingStorageDir.isDirectory())) {
+                    log.error(existingStorageDir + " does not appear to be an existing RHQ storage node installtion. " +
+                        "Check the value that was passed to the upgrade option and make sure it specifies the base " +
+                        "directory of an existing RHQ server installation.");
+                    return STATUS_INVALID_UPGRADE;
+                }
 
-            Deployer deployer = new Deployer();
-            deployer.setDeploymentOptions(deploymentOptions);
-            storageBasedir.mkdirs();
-            deployer.unzipDistro();
-            deployer.applyConfigChanges();
-            deployer.updateFilePerms();
-            log.info("Finished installing RHQ Storage Node.");
+                deploymentOptions.setBasedir(storageBasedir.getAbsolutePath());
 
-            log.info("Updating rhq-server.properties...");
-            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
-            try {
+                Deployer deployer = new Deployer();
+                deployer.setDeploymentOptions(deploymentOptions);
+                storageBasedir.mkdirs();
+                deployer.unzipDistro();
+                deployer.updateFilePerms();
+
+                // For upgrades we will copy the existing cassandra.yaml,
+                // log4j-server.properties, and cassandra-env.sh file from the existing
+                // storage node installation. Going forward though we need to add support
+                // for merging in the existing cassandra.yaml with the new one. We also
+                // need to do something about cassandra-env.sh. There is no easy to parse
+                // it and merge in changes which is problematic since that is where heap
+                // settings and JMX port and other JMV options are specified. Maybe we can
+                // replace it with a cassandra-in.sh that is essentially a properties file
+                // which we can easily parse and update.
+                File oldConfDir = new File(existingStorageDir, "conf");
+                File newConfDir = new File(storageBasedir, "conf");
+                String cassandraYaml = "cassandra.yaml";
+                String cassandraEnv = "cassandra-env.sh";
+                String log4j = "log4j-server.properties";
+
+                replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
+                replaceFile(new File(oldConfDir, cassandraEnv), new File(newConfDir, cassandraEnv));
+                replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
+
+                log.info("Finished installing RHQ Storage Node.");
+
+                PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+                log.info("Updating rhq-server.properties...");
+                File yamlFile = new File(newConfDir, "cassandra.yaml");
+
+                Yaml yaml = new Yaml();
+                Map<String, Object> config = (Map<String, Object>) yaml.load(new FileInputStream(yamlFile));
+
+                List seedProviderList = (List) config.get("seed_provider");
+                Map seedProvider = (Map) seedProviderList.get(0);
+                List paramsList = (List) seedProvider.get("parameters");
+                Map params = (Map) paramsList.get(0);
+                // TODO What should we do if the seeds option is also set?
+                // Should we replace or merge?
+                String seeds = (String) params.get("seeds");
                 serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
-            } catch (IOException e) {
-                throw new RuntimeException("An error occurred while trying to update RHQ server properties", e);
+            } else {
+                if (cmdLine.hasOption("dir")) {
+                    File basedir = new File(cmdLine.getOptionValue("dir"));
+                    deploymentOptions.setBasedir(basedir.getAbsolutePath());
+                }
+
+                String hostname;
+                if (cmdLine.hasOption("n")) {
+                    hostname = cmdLine.getOptionValue("n");
+                } else {
+                    hostname = InetAddress.getLocalHost().getHostName();
+                }
+                deploymentOptions.setListenAddress(hostname);
+                deploymentOptions.setRpcAddress(hostname);
+
+                // TODO add support for getting updated seeds list
+                // Rather than have the user specify the seeds for each node, the installer can
+                // obtain the list either from the RHQ server or directly from querying the
+                // database.
+                String seeds = cmdLine.getOptionValue("seeds", hostname);
+                deploymentOptions.setSeeds(seeds);
+
+                commitLogDir = cmdLine.getOptionValue("commitlog", commitLogDir);
+                dataDir = cmdLine.getOptionValue("data", dataDir);
+                savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
+
+                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
+                if (!isDirectoryEmpty(new File(commitLogDir))) {
+                    log.error("Commitlog directory is not empty: " + commitLogDir);
+                    return STATUS_DATA_DIR_NOT_EMPTY;
+                }
+                if (!isDirectoryEmpty(new File(dataDir))) {
+                    log.error("Data directory is not empty: " + dataDir);
+                    return STATUS_DATA_DIR_NOT_EMPTY;
+                }
+                if (!isDirectoryEmpty(new File(savedCachesDir))) {
+                    log.error("Saved caches directory is not empty: " + savedCachesDir);
+                    return STATUS_DATA_DIR_NOT_EMPTY;
+                }
+
+                deploymentOptions.setCommitLogDir(commitLogDir);
+                deploymentOptions.setDataDir(dataDir);
+                deploymentOptions.setSavedCachesDir(savedCachesDir);
+                deploymentOptions.setLogFileName(logFile.getPath());
+                deploymentOptions.setLoggingLevel("INFO");
+                deploymentOptions.setRpcPort(rpcPort);
+                deploymentOptions.setJmxPort(getPort(cmdLine, "jmx-port", jmxPort));
+                deploymentOptions.setNativeTransportPort(getPort(cmdLine, "client-port", nativeTransportPort));
+                deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
+                deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
+
+                // The out of box default for native_transport_max_threads is 128. We default
+                // to 64 for dev/test environments so we need to update it here.
+                deploymentOptions.setNativeTransportMaxThreads(128);
+
+                // TODO set defaults for read/write/range timeouts
+
+                if (cmdLine.hasOption("heap-size")) {
+                    deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size"));
+                }
+
+                if (cmdLine.hasOption("heap-new-size")) {
+                    deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size"));
+                }
+
+                if (cmdLine.hasOption("stack-size")) {
+                    deploymentOptions.setStackSize(cmdLine.getOptionValue("stack-size"));
+                }
+
+                deploymentOptions.load();
+
+                List<String> errors = new ArrayList<String>();
+                checkPerms(options.getOption("saved-caches"), savedCachesDir, errors);
+                checkPerms(options.getOption("commitlog"), commitLogDir, errors);
+                checkPerms(options.getOption("data"), dataDir, errors);
+
+                if (!errors.isEmpty()) {
+                    log.error("Problems have been detected with one or more of the directories in which the storage "
+                        + "node will need to store data");
+                    for (String error : errors) {
+                        log.error(error);
+                    }
+                    log.error("The storage installer will now exit due to previous errors.");
+                    return STATUS_INVALID_FILE_PERMISSIONS;
+                }
+
+                Deployer deployer = new Deployer();
+                deployer.setDeploymentOptions(deploymentOptions);
+                storageBasedir.mkdirs();
+                deployer.unzipDistro();
+                deployer.applyConfigChanges();
+                deployer.updateFilePerms();
+
+                log.info("Finished installing RHQ Storage Node.");
+
+                PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+                log.info("Updating rhq-server.properties...");
+                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
             }
 
             boolean startNode = Boolean.parseBoolean(cmdLine.getOptionValue("start", "true"));
@@ -353,7 +421,6 @@ public class StorageInstaller {
             }
         }
     }
-
     private boolean isDirectoryEmpty(File dir) {
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();
@@ -565,6 +632,21 @@ public class StorageInstaller {
             }
         }
         return false;
+    }
+
+    private void replaceFile(File oldFile, File newFile) throws IOException {
+        log.info("Copying " + oldFile + " to " + newFile);
+        if (!oldFile.exists()) {
+            log.warn(oldFile + " does not exist. " + newFile.getName() + " will be created.");
+        } else {
+            newFile.delete();
+            try {
+                FileUtil.copyFile(oldFile, newFile);
+            } catch (IOException e) {
+                log.error("There was an error while copying " + oldFile + " to " + " " + newFile, e);
+                throw e;
+            }
+        }
     }
 
     public void printUsage() {

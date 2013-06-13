@@ -355,6 +355,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         //
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
+        metricsServer.setCurrentHour(hour15);
         metricsServer.init(false, hour0().plusHours(2).getMillis());
 
         rawData = new HashSet<MeasurementDataNumeric>();
@@ -368,7 +369,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.
-        metricsServer.setCurrentHour(hour15);
         metricsServer.calculateAggregates();
 
         // verify that we have one hour aggregates
@@ -420,6 +420,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         //
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
+        metricsServer.setCurrentHour(hour9);
         metricsServer.init(false, hour0().minusDays(1).plusHours(4).getMillis());
 
         rawData = new HashSet<MeasurementDataNumeric>();
@@ -433,7 +434,6 @@ public class MetricsServerTest extends CassandraIntegrationTest {
 
         // Now let's assume we have reached the top of the hour and run the scheduled
         // aggregation.
-        metricsServer.setCurrentHour(hour9);
         metricsServer.calculateAggregates();
 
         // verify that we have one hour aggregates

@@ -26,6 +26,7 @@
 package org.rhq.server.metrics;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -491,22 +492,32 @@ public class MetricsServer {
     private List<AggregateNumericMetric> calculateAggregates(MetricsTable fromTable,
         MetricsTable toTable, long timeSlice, Duration nextDuration) {
 
+        if (log.isDebugEnabled()) {
+            log.debug("Preparing to compute aggregates for data in " + fromTable + " table");
+        }
         long start = System.currentTimeMillis();
         try {
+            DateTime startTime = new DateTime(timeSlice);
+            DateTime endTime = startTime.plus(nextDuration);
+            DateTime currentHour = currentHour();
+
+            if (log.isDebugEnabled()) {
+                log.debug("Time slice start time is [" + startTime + "] and the end time is [" + endTime +  "].");
+            }
+
+            DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
+            if (dateTimeComparator.compare(currentHour, endTime) < 0) {
+                if (log.isDebugEnabled()) {
+                    log.debug("Skipping aggregation for " + fromTable + " since the time slice has not yet completed");
+                }
+                return Collections.emptyList();
+            }
+
             Iterable<MetricsIndexEntry> indexEntries = dao.findMetricsIndexEntries(toTable, timeSlice);
             List<AggregateNumericMetric> toMetrics = new ArrayList<AggregateNumericMetric>();
 
-            DateTime currentHour = currentHour();
-            DateTimeComparator dateTimeComparator = DateTimeComparator.getInstance();
 
             for (MetricsIndexEntry indexEntry : indexEntries) {
-                DateTime startTime = indexEntry.getTime();
-                DateTime endTime = startTime.plus(nextDuration);
-
-                if (dateTimeComparator.compare(currentHour, endTime) < 0) {
-                    continue;
-                }
-
                 Iterable<AggregateNumericMetric> metrics = null;
                 switch (fromTable) {
                     case ONE_HOUR:

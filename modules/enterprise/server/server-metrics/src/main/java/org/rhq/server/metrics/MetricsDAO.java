@@ -83,6 +83,7 @@ public class MetricsDAO {
     private PreparedStatement findSixHourMetricsByDateRange;
     private PreparedStatement findTwentyFourHourMetricsByDateRange;
     private PreparedStatement findIndexEntries;
+    private PreparedStatement findTimeSliceForIndex;
     private PreparedStatement deleteIndexEntries;
 
     public MetricsDAO(Session session, MetricsConfiguration configuration) {
@@ -138,6 +139,9 @@ public class MetricsDAO {
             MetricsTable.TWENTY_FOUR_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
 
         findIndexEntries = session.prepare("SELECT time, schedule_id FROM " + MetricsTable.INDEX +
+            " WHERE bucket = ? AND time = ?");
+
+        findTimeSliceForIndex = session.prepare("SELECT time FROM " + MetricsTable.INDEX +
             " WHERE bucket = ? AND time = ?");
 
         deleteIndexEntries = session.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND time = ?");
@@ -301,6 +305,11 @@ public class MetricsDAO {
     public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table, long timestamp) {
         BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
         return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), session);
+    }
+
+    public ResultSet setFindTimeSliceForIndex(MetricsTable table, long timestamp) {
+        BoundStatement statement = findTimeSliceForIndex.bind(table.toString(), new Date(timestamp));
+        return session.execute(statement);
     }
 
     public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {

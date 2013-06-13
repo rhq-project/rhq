@@ -183,6 +183,7 @@
       </operation>
 
       <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
+      <metric property="DiskSpaceUsedPercentage" dataType="measurement" units="percentage" displayType="summary" description="How much of diskspace is already used. This takes into account the installation path, where Cassandra was installed."/>
       <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
       <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
       <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>

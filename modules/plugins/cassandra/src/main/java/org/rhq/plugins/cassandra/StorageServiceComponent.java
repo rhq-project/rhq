@@ -29,6 +29,7 @@ import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
+import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
@@ -55,6 +56,8 @@ import org.rhq.plugins.jmx.JMXComponent;
 public class StorageServiceComponent extends ComplexConfigurationResourceComponent {
     
     private static final String OWNERSHIP_METRIC_NAME = "Ownership";
+    private static final String DISK_USED_METRIC_NAME = "DiskSpaceUsedPercentage";
+    private static final String DATA_FILE_LOCATIONS_NAME = "AllDataFileLocations";
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
     private InetAddress host;
     
@@ -154,6 +157,7 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                 EmsAttribute attribute = bean.getAttribute(OWNERSHIP_METRIC_NAME);
                 Object valueObject = attribute.refresh();
                 if (valueObject instanceof Map<?, ?>) {
+                    @SuppressWarnings("unchecked")
                     Map<InetAddress, Float> ownership = (Map<InetAddress, Float>) valueObject;
                     Float value = ownership.get(host);
                     if (value == null) {
@@ -171,8 +175,29 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                     report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
                 }
                 break;
+            } else if (DISK_USED_METRIC_NAME.equals(request.getName())) {
+                EmsAttribute attribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
+                Object valueObject = attribute.refresh();
+                if (valueObject instanceof String[]) {
+                    String[] paths = (String[]) valueObject;
+                    double max = 0;
+                    for (String path : paths) {
+                        double taken = getUsage(path);
+                        if (taken > max) {
+                            max = taken;
+                        }
+                    }
+                    if (max > 0.0001d) {
+                        report.addData(new MeasurementDataNumeric(request, max));
+                    }
+                }
             }
         }
+    }
+    
+    private double getUsage(String path) {
+        File f = new File(path);
+        return ((double)f.getTotalSpace() - f.getUsableSpace()) /  f.getTotalSpace();
     }
     
     public static boolean kindOfIP(final String addr) {

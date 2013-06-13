@@ -209,14 +209,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         int resourceId;
         if (node.getResource() == null) {
-            Resource res = entityManager.merge(node).getResource();
-            if (res == null) { // no associated resource
-                throw new IllegalStateException("This storage node [" + node.getId() +"] has no associated resource.");
+            node = entityManager.find(StorageNode.class, node.getId());
+            if (node.getResource() == null) { // no associated resource
+                throw new IllegalStateException("This storage node [" + node.getId() + "] has no associated resource.");
             }
-            resourceId = res.getId();
-        } else {
-            resourceId = node.getResource().getId();
         }
+        resourceId = node.getResource().getId();
 
         // get the schedule ids for Storage Service resource
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(

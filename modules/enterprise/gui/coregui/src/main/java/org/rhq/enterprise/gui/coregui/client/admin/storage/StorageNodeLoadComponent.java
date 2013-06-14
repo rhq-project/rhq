@@ -53,9 +53,9 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                 if ("avg".equals(getFieldName(colNum))
                     && (StorageNodeLoadCompositeDatasource.HEAP_PERCENTAGE_KEY.equals(record.getAttribute("id")) || StorageNodeLoadCompositeDatasource.DISK_SPACE_PERCENTAGE_KEY
                         .equals(record.getAttribute("id")))) {
-                    if (record.getAttributeAsFloat("avgFloat") > 85) {
+                    if (record.getAttributeAsFloat("avgFloat") > .85) {
                         return "font-weight:bold; color:#d64949;";
-                    } else if (record.getAttributeAsFloat("avgFloat") > 70) {
+                    } else if (record.getAttributeAsFloat("avgFloat") > .7) {
                         return "color:#ed9b26;";
                     } else {
                         return "color:#26aa26;";

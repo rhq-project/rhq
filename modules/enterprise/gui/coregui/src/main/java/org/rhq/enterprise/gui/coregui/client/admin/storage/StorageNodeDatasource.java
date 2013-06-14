@@ -225,12 +225,13 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             DataSourceField idField = new DataSourceIntegerField(FIELD_ID.propertyName(), FIELD_ID.title(), 50);
             idField.setPrimaryKey(true);
             idField.setHidden(true);
-            DataSourceTextField parentField = new DataSourceTextField(StorageNodeLoadCompositeDatasourceField.FIELD_PARENT_ID.propertyName(), null);
+            DataSourceTextField parentField = new DataSourceTextField(
+                StorageNodeLoadCompositeDatasourceField.FIELD_PARENT_ID.propertyName(), null);
             parentField.setHidden(true);
             parentField.setRequired(true);
             parentField.setRootValue("root");
             parentField.setForeignKey("storageNode." + FIELD_ID);
-            
+
             fields.add(idField);
             return fields;
         }
@@ -282,20 +283,26 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
                     }
                 });
         }
-        
+
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {
             List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6);
             @SuppressWarnings("unchecked")
-            List<List<Object>> loadFields = Arrays.<List<Object>> asList(Arrays.<Object> asList(
-                loadComposite.getHeapCommitted(), "Heap Maximum",
-                "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.",
-                "heapMax"), Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used",
-                "Amount of memory actually used by the RHQ storage node", "heapUsed"), Arrays.<Object> asList(
-                loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
-                "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY), Arrays
-                .<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"), Arrays
-                .<Object> asList(loadComposite.getActuallyOwns(), "Ownership",
-                    "Refers to the percentage of keys that a node owns.", "ownership"));
+            List<List<Object>> loadFields = Arrays
+                .<List<Object>> asList(
+                    Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Maximum",
+                        "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.",
+                        "heapMax"),
+                    Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used",
+                        "Amount of memory actually used by the RHQ storage node", "heapUsed"),
+                    Arrays.<Object> asList(loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
+                        "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY),
+                    Arrays.<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"),
+                    Arrays.<Object> asList(
+                        loadComposite.getDiskSpacePercentageUsed(),
+                        "Disk Space Percent Used",
+                        "How much of diskspace is already used. This takes into account the installation path, where Cassandra was installed.",
+                        DISK_SPACE_PERCENTAGE_KEY), Arrays.<Object> asList(loadComposite.getActuallyOwns(),
+                        "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
             for (List<Object> aggregateWithUnitsList : loadFields) {
                 if (aggregateWithUnitsList.get(0) != null) {
                     recordsList.add(makeListGridRecord((MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
@@ -317,19 +324,25 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             ListGridRecord[] records = recordsList.toArray(new ListGridRecord[recordsList.size()]);
             return records;
         }
-        
+
         private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
             String hover, String id) {
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("id", id);
             record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);
-            record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(), MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
-                aggregateWithUnits.getUnits(), true));
+            record.setAttribute(
+                StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(),
+                MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
+                    aggregateWithUnits.getUnits(), true));
             record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
-            record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(), MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
-                aggregateWithUnits.getUnits(), true));
-            record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(), MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
-                aggregateWithUnits.getUnits(), true));
+            record.setAttribute(
+                StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(),
+                MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
+                    aggregateWithUnits.getUnits(), true));
+            record.setAttribute(
+                StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(),
+                MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
+                    aggregateWithUnits.getUnits(), true));
             record.setAttribute("hover", hover);
             return record;
         }

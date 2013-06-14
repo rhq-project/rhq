@@ -187,6 +187,7 @@ public class AlertPortletConfigurationDataSource extends AlertDataSource {
         }
         criteria.fetchAlertDefinition(true);
         criteria.fetchRecoveryAlertDefinition(true);
+        criteria.fetchConditionLogs(true);
         return criteria;
     }
 

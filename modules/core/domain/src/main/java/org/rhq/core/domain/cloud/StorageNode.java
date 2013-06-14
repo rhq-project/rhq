@@ -127,7 +127,7 @@ public class StorageNode implements Serializable {
     private long mtime;
 
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(fetch = FetchType.LAZY, optional = true)
+    @OneToOne(fetch = FetchType.EAGER, optional = true)
     private Resource resource;
 
     // required for JPA

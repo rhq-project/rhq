@@ -34,6 +34,7 @@ public class GroupDef {
     private String name;
     private String description;
     private List<String> expression;
+    private long recalcInterval;
 
     public GroupDef() {
     }
@@ -72,5 +73,13 @@ public class GroupDef {
 
     public void setExpression(List<String> expression) {
         this.expression = expression;
+    }
+
+    public long getRecalcInterval() {
+        return recalcInterval;
+    }
+
+    public void setRecalcInterval(long recalcInterval) {
+        this.recalcInterval = recalcInterval;
     }
 }

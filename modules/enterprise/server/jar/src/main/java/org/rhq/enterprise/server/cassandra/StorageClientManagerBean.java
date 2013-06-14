@@ -111,7 +111,7 @@ public class StorageClientManagerBean {
             return;
         }
 
-        log.info("Shuttting down storage client subsystem");
+        log.info("Shutting down storage client subsystem");
         metricsServer.shutdown();
         metricsDAO = null;
         metricsServer = null;

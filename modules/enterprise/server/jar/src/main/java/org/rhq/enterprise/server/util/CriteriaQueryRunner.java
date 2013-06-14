@@ -157,7 +157,11 @@ public class CriteriaQueryRunner<T> {
                 while(it.hasNext()) it.next();
             }
         } catch (Exception e) {
-            LOG.warn("Could not initialize " + field);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not initialize " + field + "  Following exception has caused the problem: ", e);
+            } else {
+                LOG.warn("Could not initialize " + field);
+            }
         }
     }
 

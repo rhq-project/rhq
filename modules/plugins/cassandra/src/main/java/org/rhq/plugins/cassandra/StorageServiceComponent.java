@@ -56,7 +56,7 @@ import org.rhq.plugins.jmx.JMXComponent;
 public class StorageServiceComponent extends ComplexConfigurationResourceComponent {
     
     private static final String OWNERSHIP_METRIC_NAME = "Ownership";
-    private static final String DISK_USED_METRIC_NAME = "DiskSpaceUsedPercentage";
+    private static final String DISK_USED_METRIC_NAME = "Calculated.DiskSpaceUsedPercentage";
     private static final String DATA_FILE_LOCATIONS_NAME = "AllDataFileLocations";
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
     private InetAddress host;

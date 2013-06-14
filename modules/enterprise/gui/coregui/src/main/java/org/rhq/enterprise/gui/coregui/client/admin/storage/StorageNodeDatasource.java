@@ -192,14 +192,15 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         criteria.addFilterOperationMode(modesFilter);
 
         //@todo: Remove me when finished debugging search expression
-        Log.debug(" *** ServerCriteria Search String: " + getFilter(request, "search", String.class));
+        Log.debug(" *** StorageNodeCriteria Search String: " + getFilter(request, "search", String.class));
         criteria.setSearchExpression(getFilter(request, "search", String.class));
 
         return criteria;
     }
     
     public static class StorageNodeLoadCompositeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
-        private static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
+        public static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
+        public static final String DISK_SPACE_PERCENTAGE_KEY = "diskSpacePercentage";
         private int id;
 
         public static StorageNodeLoadCompositeDatasource getInstance(int id) {
@@ -302,15 +303,17 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
                         (String) aggregateWithUnitsList.get(3)));
                 }
             }
-            ListGridRecord tokens = new ListGridRecord();
-            tokens.setAttribute("id", "tokens");
-            tokens.setAttribute("name", "Number of Tokens");
-            tokens.setAttribute("hover", "Number of partitions of the ring that a node owns.");
-            tokens.setAttribute("min", loadComposite.getTokens().getMin());
-            tokens.setAttribute("avg", loadComposite.getTokens().getAvg());
-            tokens.setAttribute("max", loadComposite.getTokens().getMax());
+            if (loadComposite.getTokens() != null) {
+                ListGridRecord tokens = new ListGridRecord();
+                tokens.setAttribute("id", "tokens");
+                tokens.setAttribute("name", "Number of Tokens");
+                tokens.setAttribute("hover", "Number of partitions of the ring that a node owns.");
+                tokens.setAttribute("min", loadComposite.getTokens().getMin());
+                tokens.setAttribute("avg", loadComposite.getTokens().getAvg());
+                tokens.setAttribute("max", loadComposite.getTokens().getMax());
+                recordsList.add(tokens);
+            }
 
-            recordsList.add(tokens);
             ListGridRecord[] records = recordsList.toArray(new ListGridRecord[recordsList.size()]);
             return records;
         }

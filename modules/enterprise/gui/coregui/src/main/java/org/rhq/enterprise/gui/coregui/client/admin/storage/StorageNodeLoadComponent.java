@@ -38,7 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  */
 public class StorageNodeLoadComponent extends EnhancedVLayout {
     private final ListGrid loadGrid;
-    
+
     public StorageNodeLoadComponent(int storageNodeId) {
         this(storageNodeId, null, null);
     }
@@ -47,10 +47,12 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         super(5);
         setPadding(5);
         setBackgroundColor("#ffffff");
-        loadGrid = new ListGrid(){
+        loadGrid = new ListGrid() {
             @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
-                if ("avg".equals(getFieldName(colNum)) && "heapPercentage".equals(record.getAttribute("id"))) {
+                if ("avg".equals(getFieldName(colNum))
+                    && (StorageNodeLoadCompositeDatasource.HEAP_PERCENTAGE_KEY.equals(record.getAttribute("id")) || StorageNodeLoadCompositeDatasource.DISK_SPACE_PERCENTAGE_KEY
+                        .equals(record.getAttribute("id")))) {
                     if (record.getAttributeAsFloat("avgFloat") > 85) {
                         return "font-weight:bold; color:#d64949;";
                     } else if (record.getAttributeAsFloat("avgFloat") > 70) {
@@ -69,7 +71,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         List<ListGridField> fields = datasource.getListGridFields();
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         loadGrid.setAutoFetchData(true);
-        
+
         IButton refreshButton = new IButton(MSG.common_button_refresh());
         refreshButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
@@ -91,6 +93,6 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         loadGrid.setDataSource(datasource);
         addMember(loadGrid);
         addMember(toolStrip);
-        
+
     }
 }

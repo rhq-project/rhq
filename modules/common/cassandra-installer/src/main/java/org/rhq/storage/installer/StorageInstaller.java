@@ -25,11 +25,12 @@
 
 package org.rhq.storage.installer;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -96,7 +97,7 @@ public class StorageInstaller {
 
     private File storageBasedir;
 
-    private int jmxPort = 7299;
+    private int defaultJmxPort = 7299;
 
     private int rpcPort = 9160;
 
@@ -133,7 +134,7 @@ public class StorageInstaller {
         seeds.setArgName("SEEDS");
 
         Option jmxPortOption = new Option("j", "jmx-port", true, "The port on which to listen for JMX connections. "
-            + "Defaults to " + jmxPort + ".");
+            + "Defaults to " + defaultJmxPort + ".");
         jmxPortOption.setArgName("PORT");
 
         Option nativeTransportPortOption = new Option("c", "client-port", true, "The port on which to "
@@ -212,6 +213,8 @@ public class StorageInstaller {
             DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
             DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
 
+            String hostname;
+            int jmxPort;
             File logFile = new File(logDir, "rhq-storage.log");
 
             if (cmdLine.hasOption("upgrade")) {
@@ -250,13 +253,17 @@ public class StorageInstaller {
                 // which we can easily parse and update.
                 File oldConfDir = new File(existingStorageDir, "conf");
                 File newConfDir = new File(storageBasedir, "conf");
+
                 String cassandraYaml = "cassandra.yaml";
                 String cassandraEnv = "cassandra-env.sh";
+                File cassandraEnvFile = new File(newConfDir, cassandraEnv);
                 String log4j = "log4j-server.properties";
 
                 replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
-                replaceFile(new File(oldConfDir, cassandraEnv), new File(newConfDir, cassandraEnv));
+                replaceFile(new File(oldConfDir, cassandraEnv), cassandraEnvFile);
                 replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
+
+                jmxPort = parseJmxPort(cassandraEnvFile);
 
                 log.info("Finished installing RHQ Storage Node.");
 
@@ -267,6 +274,8 @@ public class StorageInstaller {
                 Yaml yaml = new Yaml();
                 Map<String, Object> config = (Map<String, Object>) yaml.load(new FileInputStream(yamlFile));
 
+                hostname = (String) config.get("listen_address");
+
                 List seedProviderList = (List) config.get("seed_provider");
                 Map seedProvider = (Map) seedProviderList.get(0);
                 List paramsList = (List) seedProvider.get("parameters");
@@ -274,14 +283,13 @@ public class StorageInstaller {
                 // TODO What should we do if the seeds option is also set?
                 // Should we replace or merge?
                 String seeds = (String) params.get("seeds");
-                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
+                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds, jmxPort));
             } else {
                 if (cmdLine.hasOption("dir")) {
                     File basedir = new File(cmdLine.getOptionValue("dir"));
                     deploymentOptions.setBasedir(basedir.getAbsolutePath());
                 }
 
-                String hostname;
                 if (cmdLine.hasOption("n")) {
                     hostname = cmdLine.getOptionValue("n");
                 } else {
@@ -315,13 +323,15 @@ public class StorageInstaller {
                     return STATUS_DATA_DIR_NOT_EMPTY;
                 }
 
+                jmxPort = getPort(cmdLine, "jmx-port", defaultJmxPort);
+
                 deploymentOptions.setCommitLogDir(commitLogDir);
                 deploymentOptions.setDataDir(dataDir);
                 deploymentOptions.setSavedCachesDir(savedCachesDir);
                 deploymentOptions.setLogFileName(logFile.getPath());
                 deploymentOptions.setLoggingLevel("INFO");
                 deploymentOptions.setRpcPort(rpcPort);
-                deploymentOptions.setJmxPort(getPort(cmdLine, "jmx-port", jmxPort));
+                deploymentOptions.setJmxPort(jmxPort);
                 deploymentOptions.setNativeTransportPort(getPort(cmdLine, "client-port", nativeTransportPort));
                 deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
                 deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
@@ -372,7 +382,7 @@ public class StorageInstaller {
 
                 PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
                 log.info("Updating rhq-server.properties...");
-                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds));
+                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(seeds, jmxPort));
             }
 
             boolean startNode = Boolean.parseBoolean(cmdLine.getOptionValue("start", "true"));
@@ -382,7 +392,7 @@ public class StorageInstaller {
                 if (startupErrors == null) {
                     boolean checkStatus = Boolean.parseBoolean(cmdLine.getOptionValue("check-status", "true"));
                     if (checkStatus || isWindows()) { // no reliable pid file on windows
-                        if (verifyNodeIsUp(jmxPort, 5, 3000)) {
+                        if (verifyNodeIsUp(hostname, jmxPort, 5, 3000)) {
                             log.info("RHQ Storage Node is up and running and ready to service client requests");
                             log.info("Installation of the storage node has completed successfully.");
                             return STATUS_NO_ERRORS;
@@ -473,7 +483,7 @@ public class StorageInstaller {
         return new PropertiesFileUpdate(file.getAbsolutePath());
     }
 
-    private String getSeedsProperty(String seeds) {
+    private String getSeedsProperty(String seeds, int jmxPort) {
         String[] hosts = seeds.split(",");
         List<String> list = new ArrayList<String>(hosts.length);
         for (String host : hosts) {
@@ -587,13 +597,7 @@ public class StorageInstaller {
         return new File(binDir, "cassandra.pid").exists();
     }
 
-    private boolean verifyNodeIsUp(int jmxPort, int retries, long timeout) throws Exception {
-        String address;
-        try {
-            address = InetAddress.getLocalHost().getHostAddress();
-        } catch (UnknownHostException e) {
-            address = "localhost";
-        }
+    private boolean verifyNodeIsUp(String address, int jmxPort, int retries, long timeout) throws Exception {
         String url = "service:jmx:rmi:///jndi/rmi://" + address + ":" + jmxPort + "/jmxrmi";
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         JMXConnector connector = null;
@@ -645,6 +649,59 @@ public class StorageInstaller {
             } catch (IOException e) {
                 log.error("There was an error while copying " + oldFile + " to " + " " + newFile, e);
                 throw e;
+            }
+        }
+    }
+
+    private int parseJmxPort(File cassandraEnvFile) {
+        Integer port = null;
+        if (isWindows()) {
+            // TODO
+            return defaultJmxPort;
+        } else {
+            BufferedReader reader = null;
+            try {
+                reader = new BufferedReader(new FileReader(cassandraEnvFile));
+                String line = reader.readLine();
+
+                while (line != null) {
+                    if (line.startsWith("JMX_PORT")) {
+                        int startIndex = line.indexOf("JMX_PORT=\"") + 1;
+                        int endIndex = line.lastIndexOf("\"");
+
+                        if (startIndex == -1 || endIndex == -1) {
+                            log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its " +
+                                "own line as follows, JMX_PORT=\"<jmx-port>\"");
+                            throw new RuntimeException("Cannot determine JMX port");
+                        }
+                        try {
+                            port = Integer.parseInt(line.substring(startIndex, endIndex));
+                        } catch (NumberFormatException e) {
+                            log.error("The JMX port must be an integer. [" + port + "] is an invalid value");
+                            throw new RuntimeException("The JMX port has an invalid value");
+                        }
+                        return port;
+                    }
+                }
+                log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its " +
+                    "own line as follows, JMX_PORT=\"<jmx-port>\"");
+                throw new RuntimeException("Cannot determine JMX port");
+            } catch(IOException e) {
+                log.error("Failed to parse JMX port. There was an unexpected IO error", e);
+                throw new RuntimeException("Failed to parse JMX port due to IO error: " + e.getMessage());
+            } finally {
+                try {
+                    if (reader != null) {
+                        reader.close();
+                    }
+                } catch (IOException e) {
+                    if (log.isDebugEnabled()) {
+                        log.debug("An error occurred closing the " + BufferedReader.class.getName() + " used to " +
+                            "parse the JMX port", e);
+                    } else {
+                        log.warn("There was error closing the reader used to parse the JMX port: " + e.getMessage());
+                    }
+                }
             }
         }
     }

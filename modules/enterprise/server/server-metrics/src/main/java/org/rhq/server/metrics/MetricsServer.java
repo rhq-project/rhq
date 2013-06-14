@@ -60,8 +60,6 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
  */
 public class MetricsServer {
 
-    private static final int DEFAULT_PAGE_SIZE = 200;
-
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
     private DateTimeService dateTimeService = new DateTimeService();
@@ -317,7 +315,7 @@ public class MetricsServer {
             });
         }
         } catch (Exception e) {
-            log.error("An error occurred while inserting raw numeric data", e);
+            log.error("An error occurred while inserting raw numeric data ", e);
             throw new RuntimeException(e);
         }
     }
@@ -552,7 +550,7 @@ public class MetricsServer {
         } finally {
             long end = System.currentTimeMillis();
             if (log.isInfoEnabled()) {
-                log.info("Finished computing aggregates for table [" + fromTable + "]" + (end - start) + " ms");
+                log.info("Finished computing aggregates for table [" + fromTable + "] " + (end - start) + " ms");
             }
         }
     }

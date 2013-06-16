@@ -118,28 +118,34 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
         setNewDescription(report.getNewDescription());
         setNewName(report.getNewName());
         setNewResourceKey(report.getNewResourceKey());
+        setNewPluginConfiguration(report.getNewPluginConfiguration());
     }
 
     public void fillInFromResource(Resource resource) {
         setNewDescription(resource.getDescription());
         setNewName(resource.getName());
         setNewResourceKey(resource.getResourceKey());
+        setNewPluginConfiguration(resource.getPluginConfiguration());
     }
-    
+
     public void updateResource(Resource resource) {
         if (getNewResourceKey() != null) {
             resource.setResourceKey(getNewResourceKey());
         }
-        
+
         if (getNewName() != null) {
             resource.setName(getNewName());
         }
-        
+
         if (getNewDescription() != null) {
             resource.setDescription(getNewDescription());
         }
+
+        if (getNewPluginConfiguration() != null) {
+            resource.setPluginConfiguration(getNewPluginConfiguration());
+        }
     }
-    
+
     /**
      * Clears all the data to be upgraded apart from the error message, stacktrace and timestamp
      */
@@ -147,8 +153,9 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
         setNewDescription(null);
         setNewName(null);
         setNewResourceKey(null);
+        setNewPluginConfiguration(null);
     }
-    
+
     @Override
     public boolean hasSomethingToUpgrade() {
         return super.hasSomethingToUpgrade() || upgradeErrorMessage != null || upgradeErrorStackTrace != null;
@@ -178,7 +185,7 @@ public class ResourceUpgradeRequest extends ResourceUpgradeReport {
     public String toString() {
         return "ResourceUpgradeRequest[resourceId = '" + resourceId + "', newResourceKey = '" + getNewResourceKey()
             + "', newName = '" + getNewName() + "', newDescription = '" + getNewDescription()
-            + "', upgradeErrorMessage = '" + upgradeErrorMessage + "', upgradeErrorStackTrace = '"
-            + upgradeErrorStackTrace + "']";
+            + "', hasNewPluginConfig = '" + (null != getNewPluginConfiguration()) + "', upgradeErrorMessage = '"
+            + upgradeErrorMessage + "', upgradeErrorStackTrace = '" + upgradeErrorStackTrace + "']";
     }
 }

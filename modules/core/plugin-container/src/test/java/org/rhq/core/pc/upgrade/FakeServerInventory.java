@@ -147,7 +147,7 @@ public class FakeServerInventory {
     public synchronized CustomAction setResourceError() {
         return new CustomAction("setResourceError") {
             public Object invoke(Invocation invocation) throws Throwable {
-                synchronized(FakeServerInventory.this) {
+                synchronized (FakeServerInventory.this) {
                     throwIfFailing();
 
                     ResourceError error = (ResourceError) invocation.getParameter(0);
@@ -169,7 +169,7 @@ public class FakeServerInventory {
         return new CustomAction("upgradeServerSideInventory") {
             @SuppressWarnings({ "serial", "unchecked" })
             public Object invoke(Invocation invocation) throws Throwable {
-                synchronized(FakeServerInventory.this) {
+                synchronized (FakeServerInventory.this) {
                     throwIfFailing();
 
                     if (failUpgrade) {
@@ -197,6 +197,10 @@ public class FakeServerInventory {
                                 resource.setResourceKey(request.getNewResourceKey());
                             }
 
+                            if (request.getNewPluginConfiguration() != null) {
+                                resource.setPluginConfiguration(request.getNewPluginConfiguration());
+                            }
+
                             if (request.getUpgradeErrorMessage() != null) {
                                 ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
                                     request.getUpgradeErrorMessage(), request.getUpgradeErrorStackTrace(),
@@ -209,6 +213,7 @@ public class FakeServerInventory {
                             resp.setUpgradedResourceName(resource.getName());
                             resp.setUpgradedResourceKey(resource.getResourceKey());
                             resp.setUpgradedResourceDescription(resource.getDescription());
+                            resp.setUpgradedResourcePluginConfiguration(resource.getPluginConfiguration());
                             responses.add(resp);
                         }
                     }
@@ -238,12 +243,13 @@ public class FakeServerInventory {
         return new CustomAction("getResourcesAsList") {
             @Override
             public Object invoke(Invocation invocation) throws Throwable {
-                synchronized(FakeServerInventory.this) {
+                synchronized (FakeServerInventory.this) {
                     throwIfFailing();
 
                     Integer[] resourceIds = (Integer[]) invocation.getParameter(0);
 
-                    Set<Resource> resources = getResources(new LinkedHashSet<Integer>(Arrays.asList(resourceIds)), false);
+                    Set<Resource> resources = getResources(new LinkedHashSet<Integer>(Arrays.asList(resourceIds)),
+                        false);
 
                     return new ArrayList<Resource>(resources);
                 }
@@ -329,7 +335,7 @@ public class FakeServerInventory {
         if (parent != null) {
             parent.getChildResources().remove(r);
         }
-        for(Resource child : r.getChildResources()) {
+        for (Resource child : r.getChildResources()) {
             removeResource(child);
         }
     }
@@ -365,8 +371,7 @@ public class FakeServerInventory {
 
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {
-            parent = fakePersist(agentSideResource.getParentResource(), statusJudge,
-                inProgressUUIds);
+            parent = fakePersist(agentSideResource.getParentResource(), statusJudge, inProgressUUIds);
             persisted.setParentResource(parent);
             parent.getChildResources().add(persisted);
         } else {

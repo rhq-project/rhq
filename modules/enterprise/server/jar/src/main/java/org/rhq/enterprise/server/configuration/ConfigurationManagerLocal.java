@@ -474,4 +474,20 @@ public interface ConfigurationManagerLocal extends ConfigurationManagerRemote {
 
     ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
         ConfigurationDefinition def);
+
+    /**
+     * Dedicated method for supporting resource upgrade of plugin configuration. Similar to
+     * {@link #updatePluginConfiguration(Subject, int, Configuration) but does not inform the agent for
+     * two reasons: first, the agent is already updated (it initiates the update and two, callingback into
+     * the agent would lock the plugin container, as this is during PC initialization.
+     *
+     * @param  subject          The logged in user's subject.
+     * @param  resourceId       a {@link Resource} id
+     * @param  newConfiguration the new plugin configuration
+     *
+     * @return the plugin configuration update item corresponding to this request
+     */
+    PluginConfigurationUpdate upgradePluginConfiguration(Subject subject, int resourceId, Configuration newConfiguration)
+        throws ResourceNotFoundException;
+
 }

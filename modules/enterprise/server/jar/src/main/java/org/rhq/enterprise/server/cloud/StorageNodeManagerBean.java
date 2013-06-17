@@ -26,7 +26,6 @@ package org.rhq.enterprise.server.cloud;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -84,7 +83,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
-
     private static final String SEEDS_PROP = "rhq.cassandra.seeds";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -121,14 +119,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         List<StorageNode> seedNodes = parseSeedsProperty(seeds);
         boolean clusterMaintenanceNeeded = false;
-
+        List<StorageNode> newNodes = null;
         if (existingStorageNodes.isEmpty()) {
             if (log.isDebugEnabled()) {
                 log.debug("No storage node entities exist in the database");
                 log.debug("Persisting seed nodes [" + StringUtil.listToString(seedNodes) + "]");
             }
         } else {
-            List<StorageNode> newNodes = findNewStorageNodes(existingStorageNodes, seedNodes);
+            newNodes = findNewStorageNodes(existingStorageNodes, seedNodes);
             if (!newNodes.isEmpty()) {
                 log.info("Detected topology change. New seed nodes will be persisted.");
                 if (log.isDebugEnabled()) {
@@ -139,20 +137,33 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
 
-        List<StorageNode> storageNodes = new ArrayList<StorageNode>(existingStorageNodes.size() + seedNodes.size());
-        storageNodes.addAll(existingStorageNodes);
-        storageNodes.addAll(seedNodes);
+        Map<String, StorageNode> storageNodeMap = new HashMap<String, StorageNode>(existingStorageNodes.size()
+            + seedNodes.size());
+        for (StorageNode existingStorageNode : existingStorageNodes) {
+            storageNodeMap.put(existingStorageNode.getAddress(), existingStorageNode);
+        }
+        // possibly overide the existing storage nodes with up to date data
+        for (StorageNode seedNode : seedNodes) {
+            StorageNode existing = storageNodeMap.get(seedNode.getAddress());
+            if (existing != null) {
+                if (existing.getJmxPort() != seedNode.getJmxPort() || existing.getCqlPort() != seedNode.getCqlPort()
+                    || existing.getResource() != seedNode.getResource()) {
+                    existing.setMtime(new Date().getTime());
+                }
+                seedNode.setResource(existing.getResource());
+            }
+            storageNodeMap.put(seedNode.getAddress(), seedNode);
+        }
 
-        this.discoverResourceInformation(storageNodes);
-        this.updateStorageNodes(storageNodes);
+        this.discoverResourceInformation(storageNodeMap);
+        this.updateStorageNodes(storageNodeMap);
 
         if (clusterMaintenanceNeeded) {
             this.scheduleQuartzJob();
         }
 
-        return storageNodes;
+        return new ArrayList<StorageNode>(storageNodeMap.values());
     }
-
 
     public void linkResource(Resource resource) {
         List<StorageNode> storageNodes = this.getStorageNodes();
@@ -190,7 +201,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
     }
-
 
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
@@ -290,7 +300,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return query.getResultList();
     }
 
-
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -299,14 +308,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return runner.execute();
     }
 
-
     private String getSummaryString(MeasurementAggregate aggregate, MeasurementUnits units) {
         String formattedValue = "Min: " + MeasurementConverter.format(aggregate.getMin(), units, true) + ", Max: "
             + MeasurementConverter.format(aggregate.getMax(), units, true) + ", Avg: "
             + MeasurementConverter.format(aggregate.getAvg(), units, true);
         return formattedValue;
     }
-
 
     private List<StorageNode> parseSeedsProperty(String seedsProperty) {
         String[] seeds = seedsProperty.split(",");
@@ -319,7 +326,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         return storageNodes;
     }
-
 
     private List<StorageNode> findNewStorageNodes(List<StorageNode> nodes, List<StorageNode> seedNodes) {
         if (log.isDebugEnabled()) {
@@ -339,7 +345,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return newNodes;
     }
 
-
     private void scheduleQuartzJob() {
         String jobName = StorageNodeMaintenanceJob.class.getName();
         String jobGroupName = StorageNodeMaintenanceJob.class.getName();
@@ -356,24 +361,21 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
-
-    private void updateStorageNodes(Collection<StorageNode> storageNodes) {
-        for (StorageNode storageNode : storageNodes) {
-            entityManager.persist(storageNode);
+    private void updateStorageNodes(Map<String, StorageNode> storageNodeMap) {
+        for (Map.Entry<String, StorageNode> storageNodeEntry : storageNodeMap.entrySet()) {
+            TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(
+                StorageNode.QUERY_FIND_BY_ADDRESS, StorageNode.class);
+            query.setParameter("address", storageNodeEntry.getKey());
+            List<StorageNode> result = query.getResultList();
+            if (!result.isEmpty()) {
+                storageNodeEntry.getValue().setId(result.get(0).getId());
+                entityManager.merge(storageNodeEntry.getValue());
+            } else {
+                entityManager.persist(storageNodeEntry.getValue());
+            }
         }
         entityManager.flush();
     }
-
-
-    private void discoverResourceInformation(List<StorageNode> storageNodes) {
-        Map<String, StorageNode> storageNodeMap = new HashMap<String, StorageNode>();
-        for (StorageNode storageNode : storageNodes) {
-            storageNodeMap.put(storageNode.getAddress(), storageNode);
-        }
-
-        this.discoverResourceInformation(storageNodeMap);
-    }
-
 
     @SuppressWarnings("unchecked")
     private void discoverResourceInformation(Map<String, StorageNode> storageNodeMap) {

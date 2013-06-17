@@ -313,6 +313,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         List<StorageNode> storageNodes = new ArrayList<StorageNode>();
         for (String seed : seeds) {
             StorageNode node = new StorageNode();
+            node.setOperationMode(OperationMode.INSTALLED);
             node.parseNodeInformation(seed);
             storageNodes.add(node);
         }

@@ -63,14 +63,13 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private AbstractD3GraphListView d3GraphListView;
     private static final Messages MSG = CoreGUI.getMessages();
     private Label dateRangeLabel;
-    //@todo: pull dateformat messages.properties
-    private static final DateTimeFormat fmt = DateTimeFormat.getFormat("MM/dd/yyyy h:mm a");
+    private static final DateTimeFormat fmt = DateTimeFormat.getFormat(MSG.common_buttonbar_datetime_format());
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
     final private ButtonBarDateTimeRangeEditor self;
 
     public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
-                                        AbstractD3GraphListView d3GraphListView) {
+        AbstractD3GraphListView d3GraphListView) {
         this.self = this;
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
@@ -78,12 +77,12 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         dateTimeButtonBarClickHandler = new DateTimeButtonBarClickHandler();
         prefs = measurementUserPreferences.getMetricRangePreferences();
         Log.debug("ButtonBarDateTimeRangeEditor initialized with start Date: " + new Date(prefs.begin) + " end Date: "
-                + new Date(prefs.end));
+            + new Date(prefs.end));
         createButtons();
 
     }
 
-    public void createButtons() {
+    private void createButtons() {
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
@@ -91,7 +90,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         toolStrip.addSpacer(10);
 
-        for(DateTimeButton dateTimeButton : DateTimeButton.values()){
+        for (DateTimeButton dateTimeButton : DateTimeButton.values()) {
             IButton oneHourButton = new IButton(dateTimeButton.label);
             oneHourButton.setWidth(BUTTON_WIDTH);
             oneHourButton.setActionType(SelectionType.RADIO);
@@ -101,15 +100,16 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             toolStrip.addMember(oneHourButton);
         }
 
-
-        IButton customButton = new IButton("Custom...");
+        IButton customButton = new IButton(MSG.common_buttonbar_custom());
         customButton.setWidth(60);
         customButton.setActionType(SelectionType.RADIO);
         customButton.setRadioGroup(TIMERANGE);
         customButton.addClickHandler(new ClickHandler() {
             @Override
             public void onClick(ClickEvent clickEvent) {
-                CustomDateRangeWindow customDateRangeWindow = new CustomDateRangeWindow("Date Range", "Custom", self, new Date(prefs.begin), new Date(prefs.end));
+                CustomDateRangeWindow customDateRangeWindow = new CustomDateRangeWindow(MSG
+                    .common_buttonbar_custom_window_title(), MSG.common_buttonbar_custom_window_subtitle(), self,
+                    new Date(prefs.begin), new Date(prefs.end));
                 customDateRangeWindow.show();
             }
         });
@@ -128,7 +128,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         addMember(toolStrip);
     }
 
-
     public void redrawGraphs() {
         d3GraphListView.redrawGraphs();
     }
@@ -145,7 +144,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         super.parentResized();
         removeMembers(getMembers());
         createButtons();
-        //drawJsniChart();
     }
 
     public Label getDateRangeLabel() {
@@ -162,30 +160,20 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     public Date calculateStartDate(Date endDate, String dateTimeSelection) {
         long dateTimeOffset = 0;
-        for(DateTimeButton dateTimeButton : DateTimeButton.values()){
-            if(dateTimeButton.label.equals(dateTimeSelection)){
+        for (DateTimeButton dateTimeButton : DateTimeButton.values()) {
+            if (dateTimeButton.label.equals(dateTimeSelection)) {
                 dateTimeOffset = dateTimeButton.timeSpanInSeconds * 1000;
                 break;
             }
         }
 
-        Log.debug("DateTimeSelection: "+ dateTimeSelection + " = "+ dateTimeOffset);
+        Log.debug("DateTimeSelection: " + dateTimeSelection + " = " + dateTimeOffset);
         return new Date(endDate.getTime() - dateTimeOffset);
-    }
-
-    /**
-     * Function meant to be called by the javascript inside the d3 charting javascript.
-     * @param startDate double (as javascript doenst have long) representing unix date
-     * @param endDate double
-     */
-    public void updateDateTimeRangeDisplayFromJavascript(double startDate, double endDate){
-        updateDateTimeRangeDisplay(new Date((long)startDate), new Date((long)endDate));
     }
 
     public void updateDateTimeRangeDisplay(Date startDate, Date endDate) {
         String rangeString = fmt.format(startDate) + " - " + fmt.format(endDate);
         dateRangeLabel.setContents(rangeString);
-
     }
 
     /**
@@ -215,7 +203,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             IButton button = (IButton) clickEvent.getSource();
             String selectedDateTimeRange = button.getTitle();
             Date calculatedStartDateTime = calculateStartDate(new Date(getEndTime()), selectedDateTimeRange);
-            saveDateRange(calculatedStartDateTime.getTime(),new Date().getTime());
+            saveDateRange(calculatedStartDateTime.getTime(), new Date().getTime());
             redrawGraphs();
             updateDateTimeRangeDisplay(calculatedStartDateTime, new Date());
         }
@@ -258,11 +246,13 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     public class CustomDateRangeWindow extends Window {
 
-        public CustomDateRangeWindow(String title, String windowTitle, final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor) {
+        public CustomDateRangeWindow(String title, String windowTitle,
+            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor) {
             new CustomDateRangeWindow(title, windowTitle, buttonBarDateTimeRangeEditor, new Date(), new Date());
         }
 
-        public CustomDateRangeWindow(String title, String windowTitle, final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Date startTime, Date endTime) {
+        public CustomDateRangeWindow(String title, String windowTitle,
+            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Date startTime, Date endTime) {
             super();
             setTitle(windowTitle + ": " + title);
             setShowMinimizeButton(false);
@@ -284,37 +274,37 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             form.setWidth100();
             form.setPadding(5);
             form.setLayoutAlign(VerticalAlignment.BOTTOM);
-            final DateItem startDateItem = new DateItem("startDate", "Start Date");
+            final DateItem startDateItem = new DateItem("startDate", MSG.common_buttonbar_start_date());
             startDateItem.setValue(startTime);
-            final TimeItem startTimeItem = new TimeItem("startTime", "Start Time");
+            final TimeItem startTimeItem = new TimeItem("startTime", MSG.common_buttonbar_start_time());
             startTimeItem.setValue(startTime);
-            final DateItem endDateItem = new DateItem("endDate", "End Date");
+            final DateItem endDateItem = new DateItem("endDate", MSG.common_buttonbar_end_date());
             endDateItem.setValue(endTime);
-            final TimeItem endTimeItem = new TimeItem("endTime", "End Time");
+            final TimeItem endTimeItem = new TimeItem("endTime", MSG.common_buttonbar_end_time());
             endTimeItem.setValue(endTime);
-            form.setFields(startDateItem, startTimeItem, new RowSpacerItem(), endDateItem, endTimeItem, new RowSpacerItem() );
+            form.setFields(startDateItem, startTimeItem, new RowSpacerItem(), endDateItem, endTimeItem,
+                new RowSpacerItem());
             this.addItem(form);
 
             HLayout buttonHLayout = new HLayout();
             buttonHLayout.setMargin(15);
             buttonHLayout.setMembersMargin(20);
-            IButton cancelButton = new IButton("Cancel");
+            IButton cancelButton = new IButton(MSG.common_buttonbar_custom_cancel());
             cancelButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
-                    Log.debug("Cancel Window.");
                     CustomDateRangeWindow.this.destroy();
                 }
             });
             buttonHLayout.addMember(cancelButton);
 
-            IButton saveButton = new IButton("Save");
+            IButton saveButton = new IButton(MSG.common_buttonbar_custom_save());
             saveButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     Log.debug("Saving Custom Date Range Window.");
-                    buttonBarDateTimeRangeEditor.saveDateRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate().getTime());
-                    //@todo: give feedback message that we saved changes
+                    buttonBarDateTimeRangeEditor.saveDateRange(startDateItem.getValueAsDate().getTime(), endDateItem
+                        .getValueAsDate().getTime());
                     redrawGraphs();
                     updateDateTimeRangeDisplay(startDateItem.getValueAsDate(), endDateItem.getValueAsDate());
                     CustomDateRangeWindow.this.destroy();
@@ -329,8 +319,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                 public void onCloseClick(CloseClickEvent event) {
                     try {
                         CustomDateRangeWindow.this.destroy();
-                    }
-                    catch (Throwable e) {
+                    } catch (Throwable e) {
                         Log.warn("Cannot destroy custom date range window.", e);
                     }
                 }
@@ -338,8 +327,5 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         }
     }
-
-
-
 
 }

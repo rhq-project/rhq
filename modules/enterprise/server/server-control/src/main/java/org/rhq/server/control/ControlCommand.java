@@ -216,16 +216,6 @@ public abstract class ControlCommand {
         rhqctlConfig.setProperty(key, value);
     }
 
-    protected String getRhqServerScriptName() {
-        String rhqServerBase = "rhq-server";
-        if (isWindows()) {
-            rhqServerBase = rhqServerBase + ".bat";
-        } else {
-            rhqServerBase = rhqServerBase + ".sh";
-        }
-        return rhqServerBase;
-    }
-
     protected File getRhqCtlProperties() {
         String sysprop = System.getProperty("rhqctl.properties-file");
         if (sysprop == null) {

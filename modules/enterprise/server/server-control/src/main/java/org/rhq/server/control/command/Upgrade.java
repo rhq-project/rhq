@@ -71,22 +71,22 @@ public class Upgrade extends AbstractInstall {
                 null,
                 FROM_AGENT_DIR_OPTION,
                 true,
-                "Full path to install directory of the RHQ Agent to be upgraded. Required only if an existing agent " +
-                    "exists and is not installed in the default location: <from-server-dir>/rhq-agent")
+                "Full path to install directory of the RHQ Agent to be upgraded. Required only if an existing agent "
+                    + "exists and is not installed in the default location: <from-server-dir>/rhq-agent")
             .addOption(null, FROM_SERVER_DIR_OPTION, true,
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
             .addOption(
                 null,
                 AGENT_AUTOSTART_OPTION,
                 true,
-                "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to " +
-                    "false, the agent will not be started after it gets upgraded.")
+                "If an agent is to be upgraded it will, by default, also be started. However, if this option is set to "
+                    + "false, the agent will not be started after it gets upgraded.")
             .addOption(
                 null,
                 USE_REMOTE_STORAGE_NODE,
                 true,
-                "By default a server is co-located with a storage node. However, if this option is set to true, no local " +
-                    "storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.")
+                "By default a server is co-located with a storage node. However, if this option is set to true, no local "
+                    + "storage node will be upgraded and it is assumed a remote storage node is configured in rhq-server.properties.")
             .addOption(
                 null,
                 STORAGE_DATA_ROOT_DIR,
@@ -99,11 +99,10 @@ public class Upgrade extends AbstractInstall {
                 null,
                 RUN_DATA_MIGRATION,
                 true,
-                "By default you ned to migrate metrics from a pre RHQ 4.8 system. The upgrade process can trigger this or " +
-                    "give you an estimate on the duration. If you want to have fine control over the process, please run the " +
-                    "migrator on the command line. Options are none (do nothing), estimate (estimate the migration time only), " +
-                    "print-command (print the command line for a manual run) , do-it (run the migration)")
-        ;
+                "By default you ned to migrate metrics from a pre RHQ 4.8 system. The upgrade process can trigger this or "
+                    + "give you an estimate on the duration. If you want to have fine control over the process, please run the "
+                    + "migrator on the command line. Options are none (do nothing), estimate (estimate the migration time only), "
+                    + "print-command (print the command line for a manual run) , do-it (run the migration)");
 
         options.getOption(AGENT_AUTOSTART_OPTION).setOptionalArg(true);
     }
@@ -146,8 +145,9 @@ public class Upgrade extends AbstractInstall {
                 putProperty(RHQ_AGENT_BASEDIR_PROP, agentBasedir.getPath());
             }
 
-            // If anything appears to be installed already then don't perform an upgrade
-            if (isStorageInstalled() || isServerInstalled() || (!hasFromAgentOption && isAgentInstalled())) {
+            // If storage or server appear to be installed already then don't perform an upgrade.  It's OK
+            // if the agent already exists in the default location, it may be there from a prior install.
+            if (isStorageInstalled() || isServerInstalled()) {
                 log.warn("RHQ is already installed so upgrade can not be performed.");
                 return;
             }
@@ -160,9 +160,9 @@ public class Upgrade extends AbstractInstall {
             // If rhqctl exists in the old version, use it to stop server and storage node, otherwise, just try and stop the server
             // using the legacy script. If there is no rhqctl, there is no storage node anyway, so we just stop server in that case.
             File fromBinDir = new File(getFromServerDir(commandLine), "bin");
-            String serverScriptName = getRhqServerScriptName();
-            String fromScript = isRhq48OrLater(commandLine) ? "rhqctl" : serverScriptName;
-            org.apache.commons.exec.CommandLine rhqctlStop = getCommandLine(false, fromScript, "stop");
+            org.apache.commons.exec.CommandLine rhqctlStop = isRhq48OrLater(commandLine) ? getCommandLine(false,
+                "rhqctl", "stop") : getCommandLine("rhq-server", "stop");
+
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(fromBinDir);
             executor.setStreamHandler(new PumpStreamHandler());
@@ -183,11 +183,11 @@ public class Upgrade extends AbstractInstall {
             if (!Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
                 log.info("The agent was upgraded but was told not to start automatically.");
             } else {
-                File agentDir ;
+                File agentDir;
 
                 if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
-                   agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
-                }  else {
+                    agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
+                } else {
                     agentDir = new File(getBaseDir(), AGENT_BASEDIR_NAME);
                 }
                 startAgent(agentDir, true);
@@ -212,7 +212,6 @@ public class Upgrade extends AbstractInstall {
             }
             return;
         }
-
 
         // We deduct the database parameters from the server properties
         try {
@@ -243,14 +242,15 @@ public class Upgrade extends AbstractInstall {
             File dataMigratorJar = getFileDownload("data-migrator", "rhq-data-migrator");
 
             String cassandraHost = InetAddress.getLocalHost().getCanonicalHostName();
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java") //
-                .addArgument("-jar").addArgument(dataMigratorJar.getAbsolutePath()) //
+            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
+                //
+                .addArgument("-jar")
+                .addArgument(dataMigratorJar.getAbsolutePath())
+                //
 
-                .addArgument("--sql-user").addArgument(dbUser)
-                .addArgument("--sql-db").addArgument(dbName)
-                .addArgument("--sql-host").addArgument(dbServerName)
-                .addArgument("--sql-port").addArgument(dbServerPort)
-                .addArgument("--sql-server-type").addArgument(dbType)
+                .addArgument("--sql-user").addArgument(dbUser).addArgument("--sql-db").addArgument(dbName)
+                .addArgument("--sql-host").addArgument(dbServerName).addArgument("--sql-port")
+                .addArgument(dbServerPort).addArgument("--sql-server-type").addArgument(dbType)
                 .addArgument("--cassandra-hosts").addArgument(cassandraHost);
 
             String commandLineString = commandLine.toString();
@@ -275,12 +275,13 @@ public class Upgrade extends AbstractInstall {
             log.info("The data migrator finished with exit value " + exitValue);
 
             if (migrationOption.equals("estimate")) {
-                log.info("You can use this command line as a start to later run the data migrator\n\n" + commandLineString);
+                log.info("You can use this command line as a start to later run the data migrator\n\n"
+                    + commandLineString);
             }
 
-
         } catch (Exception e) {
-            log.error("Running the data migrator failed - please try to run it from the command line: " + e.getMessage());
+            log.error("Running the data migrator failed - please try to run it from the command line: "
+                + e.getMessage());
         }
 
     }
@@ -542,7 +543,8 @@ public class Upgrade extends AbstractInstall {
                 // the older RHQ releases had the old JBossAS 4.2.3 directory structure
                 oldServerConfigDir = new File(getFromServerDir(commandLine), "jbossas/server/default/conf");
                 if (!oldServerConfigDir.isDirectory()) {
-                    log.warn("Cannot determine the old server's configuration directory - cannot copy over the old file: " + referredFile);
+                    log.warn("Cannot determine the old server's configuration directory - cannot copy over the old file: "
+                        + referredFile);
                     return;
                 }
             }
@@ -567,9 +569,7 @@ public class Upgrade extends AbstractInstall {
             FileUtil.copyFile(referredFile, newFile);
         } catch (Exception e) {
             // log a message about this problem, but we will let the upgrade continue
-            log.error("Failed to copy the old file ["
-                + referredFile
-                + "] referred to by server property ["
+            log.error("Failed to copy the old file [" + referredFile + "] referred to by server property ["
                 + propertyName + "] to the new location of [" + newFile
                 + "]. You will need to manually copy that file to the new location."
                 + "The server may not work properly until you do this.");
@@ -632,7 +632,8 @@ public class Upgrade extends AbstractInstall {
 
     private File getFileDownload(String directory, final String fileMatch) {
         File downloadDir = new File(getBaseDir(),
-            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/" + directory);
+            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/"
+                + directory);
         return downloadDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {
@@ -702,15 +703,12 @@ public class Upgrade extends AbstractInstall {
     }
 
     private void printDataMigrationNotice() {
-        log.info("\n================\n" +
-            "If this was an upgrade from a RHQ version before 4.8,\n " +
-            "you need to run the data migration job to transfer stored (historic)\n" +
-            "metrics data from the relational database into the new storage.\n" +
-            "Until the migration has run, that historic data is not available \n" +
-            "in e.g. the charting views.\n\n" +
-            "To run the data migration, you can download the migration app from the\n" +
-            "server and run it on the command line.\n" +
-            "================\n");
+        log.info("\n================\n" + "If this was an upgrade from a RHQ version before 4.8,\n "
+            + "you need to run the data migration job to transfer stored (historic)\n"
+            + "metrics data from the relational database into the new storage.\n"
+            + "Until the migration has run, that historic data is not available \n" + "in e.g. the charting views.\n\n"
+            + "To run the data migration, you can download the migration app from the\n"
+            + "server and run it on the command line.\n" + "================\n");
     }
 
 }

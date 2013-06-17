@@ -344,8 +344,7 @@ public abstract class AbstractInstall extends ControlCommand {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(serverBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        String serverScriptName = getRhqServerScriptName();
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine(false, serverScriptName, "stop");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
         if (isWindows()) {
             try {

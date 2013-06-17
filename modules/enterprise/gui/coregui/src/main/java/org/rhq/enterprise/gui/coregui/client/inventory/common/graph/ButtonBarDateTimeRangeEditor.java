@@ -33,6 +33,7 @@ import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.DateItem;
+import com.smartgwt.client.widgets.form.fields.DateTimeItem;
 import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
 import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -303,8 +304,12 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     Log.debug("Saving Custom Date Range Window.");
-                    buttonBarDateTimeRangeEditor.saveDateRange(startDateItem.getValueAsDate().getTime(), endDateItem
-                        .getValueAsDate().getTime());
+                    Date startTimeDate = (Date) startTimeItem.getValue();
+                    Date endTimeDate = (Date) endTimeItem.getValue();
+
+                    Date newStartDate = new Date(startDateItem.getValueAsDate().getYear(), startDateItem.getValueAsDate().getMonth(),startDateItem.getValueAsDate().getDate(), startTimeDate.getHours(), startTimeDate.getMinutes());
+                    Date newEndDate = new Date(endDateItem.getValueAsDate().getYear(), endDateItem.getValueAsDate().getMonth(),endDateItem.getValueAsDate().getDate(), endTimeDate.getHours(), endTimeDate.getMinutes());
+                    buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(),newEndDate.getTime());
                     redrawGraphs();
                     updateDateTimeRangeDisplay(startDateItem.getValueAsDate(), endDateItem.getValueAsDate());
                     CustomDateRangeWindow.this.destroy();

@@ -46,7 +46,7 @@ check_status ()
         _PID=`cat "${_PIDFILE}"`
         check_status_of_pid $_PID
     else
-        _STATUS="RHQ Agent (no pidfile) is NOT running"
+        _STATUS=`printf "%-30s (no pid file) IS NOT running" "RHQ Agent"`
         _RUNNING=0
     fi
 }
@@ -59,10 +59,10 @@ check_status ()
 check_status_of_pid ()
 {
     if [ -n "$1" ] && kill -0 $1 2>/dev/null ; then
-        _STATUS="RHQ Agent (pid $1) is running"
+        _STATUS=`printf "%-30s (pid %-7s) IS running %s" "RHQ Agent" $1`
         _RUNNING=1
     else
-        _STATUS="RHQ Agent (pid $1) is NOT running"
+        _STATUS=`printf "%-30s (pid %-7s) IS NOT running" "RHQ Agent" $1`
         _RUNNING=0
     fi
 }
@@ -345,7 +345,7 @@ case "$1" in
         ;;
 
 'status')
-        echo $_STATUS
+        echo "$_STATUS"
         exit 0
         ;;
 

@@ -21,11 +21,21 @@ package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 import java.util.Date;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.SelectionType;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.events.CloseClickEvent;
+import com.smartgwt.client.widgets.events.CloseClickHandler;
+import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.DateItem;
+import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
+import com.smartgwt.client.widgets.form.fields.TimeItem;
+import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -57,18 +67,20 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     private static final DateTimeFormat fmt = DateTimeFormat.getFormat("MM/dd/yyyy h:mm a");
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
+    final private ButtonBarDateTimeRangeEditor self;
 
     public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
                                         AbstractD3GraphListView d3GraphListView) {
+        this.self = this;
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
 
         dateTimeButtonBarClickHandler = new DateTimeButtonBarClickHandler();
         prefs = measurementUserPreferences.getMetricRangePreferences();
-        Log.debug("ButtonBarDateTimeRangeEditor initialized with start: " + prefs.begin + " end: " + prefs.end);
         Log.debug("ButtonBarDateTimeRangeEditor initialized with start Date: " + new Date(prefs.begin) + " end Date: "
                 + new Date(prefs.end));
         createButtons();
+
     }
 
     public void createButtons() {
@@ -92,10 +104,15 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         IButton customButton = new IButton("Custom...");
         customButton.setWidth(60);
-        customButton.disable();
         customButton.setActionType(SelectionType.RADIO);
         customButton.setRadioGroup(TIMERANGE);
-        customButton.addClickHandler(dateTimeButtonBarClickHandler);
+        customButton.addClickHandler(new ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                CustomDateRangeWindow customDateRangeWindow = new CustomDateRangeWindow("Date Range", "Custom", self, new Date(prefs.begin), new Date(prefs.end));
+                customDateRangeWindow.show();
+            }
+        });
         toolStrip.addMember(customButton);
 
         toolStrip.addSpacer(30);
@@ -107,11 +124,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         toolStrip.addMember(dateRangeLabel);
 
         toolStrip.addSpacer(20);
-
-//        IButton resetZoomButton = new IButton("Reset Manual Zoom");
-//        resetZoomButton.setWidth(150);
-//        resetZoomButton.disable();
-//        toolStrip.addMember(resetZoomButton);
 
         addMember(toolStrip);
     }
@@ -243,5 +255,91 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         }
 
     }
+
+    public class CustomDateRangeWindow extends Window {
+
+        public CustomDateRangeWindow(String title, String windowTitle, final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor) {
+            new CustomDateRangeWindow(title, windowTitle, buttonBarDateTimeRangeEditor, new Date(), new Date());
+        }
+
+        public CustomDateRangeWindow(String title, String windowTitle, final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Date startTime, Date endTime) {
+            super();
+            setTitle(windowTitle + ": " + title);
+            setShowMinimizeButton(false);
+            setShowMaximizeButton(false);
+            setShowCloseButton(true);
+            setIsModal(true);
+            setShowModalMask(true);
+            setWidth(450);
+            setHeight(300);
+            setShowResizer(true);
+            setCanDragResize(true);
+            centerInPage();
+            DynamicForm form = new DynamicForm();
+            form.setMargin(25);
+            form.setAutoFocus(true);
+            form.setShowErrorText(true);
+            form.setErrorOrientation(FormErrorOrientation.BOTTOM);
+            form.setHeight100();
+            form.setWidth100();
+            form.setPadding(5);
+            form.setLayoutAlign(VerticalAlignment.BOTTOM);
+            final DateItem startDateItem = new DateItem("startDate", "Start Date");
+            startDateItem.setValue(startTime);
+            final TimeItem startTimeItem = new TimeItem("startTime", "Start Time");
+            startTimeItem.setValue(startTime);
+            final DateItem endDateItem = new DateItem("endDate", "End Date");
+            endDateItem.setValue(endTime);
+            final TimeItem endTimeItem = new TimeItem("endTime", "End Time");
+            endTimeItem.setValue(endTime);
+            form.setFields(startDateItem, startTimeItem, new RowSpacerItem(), endDateItem, endTimeItem, new RowSpacerItem() );
+            this.addItem(form);
+
+            HLayout buttonHLayout = new HLayout();
+            buttonHLayout.setMargin(15);
+            buttonHLayout.setMembersMargin(20);
+            IButton cancelButton = new IButton("Cancel");
+            cancelButton.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent clickEvent) {
+                    Log.debug("Cancel Window.");
+                    CustomDateRangeWindow.this.destroy();
+                }
+            });
+            buttonHLayout.addMember(cancelButton);
+
+            IButton saveButton = new IButton("Save");
+            saveButton.addClickHandler(new ClickHandler() {
+                @Override
+                public void onClick(ClickEvent clickEvent) {
+                    Log.debug("Saving Custom Date Range Window.");
+                    buttonBarDateTimeRangeEditor.saveDateRange(startDateItem.getValueAsDate().getTime(), endDateItem.getValueAsDate().getTime());
+                    //@todo: give feedback message that we saved changes
+                    redrawGraphs();
+                    updateDateTimeRangeDisplay(startDateItem.getValueAsDate(), endDateItem.getValueAsDate());
+                    CustomDateRangeWindow.this.destroy();
+                }
+            });
+
+            buttonHLayout.addMember(saveButton);
+            addItem(buttonHLayout);
+
+            addCloseClickHandler(new CloseClickHandler() {
+                @Override
+                public void onCloseClick(CloseClickEvent event) {
+                    try {
+                        CustomDateRangeWindow.this.destroy();
+                    }
+                    catch (Throwable e) {
+                        Log.warn("Cannot destroy custom date range window.", e);
+                    }
+                }
+            });
+
+        }
+    }
+
+
+
 
 }

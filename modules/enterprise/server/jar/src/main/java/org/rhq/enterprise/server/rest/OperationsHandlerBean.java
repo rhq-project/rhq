@@ -48,6 +48,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -92,6 +93,9 @@ import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
 @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
+@Api(value = "Endpoints for operations - EXPERIMENTAL",
+    description = "These endpoints deal with scheduling of operations and retrieval of operation results. " +
+        "These are working, but may still change in the next RHQ release.")
 public class OperationsHandlerBean extends AbstractRestBean  {
 
     @EJB

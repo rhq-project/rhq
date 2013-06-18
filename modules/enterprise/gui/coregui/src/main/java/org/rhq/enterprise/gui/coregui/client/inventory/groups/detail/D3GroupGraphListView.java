@@ -81,6 +81,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         graphsVLayout = new VLayout();
         graphsVLayout.setOverflow(Overflow.AUTO);
         graphsVLayout.setWidth100();
+        graphsVLayout.setHeight100();
 
         if (resourceGroup != null) {
             buildGraphs();

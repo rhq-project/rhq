@@ -124,16 +124,20 @@ public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements Au
         graph.setMetricGraphData(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId()));
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
-            PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
-            PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            if (resourceIdProperty != null && measurementDefIdProperty != null) {
-                final Integer entityId = resourceIdProperty.getIntegerValue();
-                final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
-                if (entityId != null && measurementDefId != null) {
-                    queryResourceGroup(entityId, measurementDefId);
-                }
+            refreshFromConfiguration(storedPortlet);
+        }
+    }
 
+    private void refreshFromConfiguration(DashboardPortlet storedPortlet) {
+        PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
+        PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+        if (resourceIdProperty != null && measurementDefIdProperty != null) {
+            final Integer entityId = resourceIdProperty.getIntegerValue();
+            final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
+            if (entityId != null && measurementDefId != null) {
+                queryResourceGroup(entityId, measurementDefId);
             }
+
         }
     }
 
@@ -335,7 +339,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements Au
     @Override
     public void refresh() {
         if (isVisible() && !isRefreshing()) {
-            redraw();
+            refreshFromConfiguration(portletWindow.getStoredPortlet());
         }
     }
 

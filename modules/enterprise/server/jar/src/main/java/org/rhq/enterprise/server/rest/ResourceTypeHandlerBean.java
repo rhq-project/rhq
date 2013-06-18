@@ -19,14 +19,20 @@
 
 package org.rhq.enterprise.server.rest;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
+import javax.ws.rs.core.GenericEntity;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -35,13 +41,18 @@ import javax.ws.rs.core.UriInfo;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiOperation;
+import com.wordnik.swagger.annotations.ApiParam;
 
+import org.jboss.resteasy.annotations.GZIP;
 import org.jboss.resteasy.annotations.cache.Cache;
 
+import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeNotFoundException;
 import org.rhq.enterprise.server.rest.domain.ResourceTypeRest;
+import org.rhq.enterprise.server.rest.domain.ResourceWithType;
 
 /**
  * Deal with resource types
@@ -78,12 +89,7 @@ public class ResourceTypeHandlerBean extends AbstractRestBean {
             throw new StuffNotFoundException("Resource type with id " + resourceTypeId);
         }
 
-        ResourceTypeRest rtr = new ResourceTypeRest();
-        rtr.setId(resourceTypeId);
-        rtr.setName(type.getName());
-        rtr.setPluginName(type.getPlugin());
-        rtr.setCreatePolicy(type.getCreateDeletePolicy());
-        rtr.setDataType(type.getCreationDataType());
+        ResourceTypeRest rtr = resourceTypeToResourceTypeRest(type);
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
@@ -93,5 +99,58 @@ public class ResourceTypeHandlerBean extends AbstractRestBean {
         return builder.build();
 
     }
+
+
+    @GET @GZIP
+    @Path("/")
+    @ApiOperation(value = "Search for resource types", responseClass = "ResourceTypeRest", multiValueResponse = true)
+    public Response getTypes(@ApiParam("Limit results to param in the resource type name") @QueryParam("q") String name,
+                             @ApiParam("Limit results to the plugin with the passed name") @QueryParam("plugin") String pluginName,
+                             @ApiParam("Page size for paging") @QueryParam("ps") @DefaultValue("20") int pageSize,
+                             @ApiParam("Page for paging, 0-based") @QueryParam("page") Integer page,
+                             @Context UriInfo uriInfo,
+        @Context HttpHeaders headers) {
+
+        ResourceTypeCriteria criteria = new ResourceTypeCriteria();
+        if (name!=null) {
+            criteria.addFilterName(name);
+        }
+        if (pluginName!=null) {
+            criteria.addFilterPluginName(pluginName);
+        }
+        PageList<ResourceType> pageList = typeManager.findResourceTypesByCriteria(caller,criteria);
+        List<ResourceTypeRest> rtrList = new ArrayList<ResourceTypeRest>(pageList.size());
+        for (ResourceType type : pageList) {
+            ResourceTypeRest rtr = resourceTypeToResourceTypeRest(type);
+            rtrList.add(rtr);
+        }
+
+        MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
+        Response.ResponseBuilder builder = Response.ok();
+        builder.type(mediaType);
+
+        if (mediaType.equals(wrappedCollectionJsonType)) {
+            wrapForPaging(builder, uriInfo, pageList, rtrList);
+        } else {
+            GenericEntity<List<ResourceTypeRest>> list = new GenericEntity<List<ResourceTypeRest>>(rtrList) {
+        };
+            builder.entity(list);
+            createPagingHeader(builder,uriInfo,pageList);
+        }
+
+        return builder.build();
+
+    }
+
+    private ResourceTypeRest resourceTypeToResourceTypeRest(ResourceType type) {
+        ResourceTypeRest rtr = new ResourceTypeRest();
+        rtr.setId(type.getId());
+        rtr.setName(type.getName());
+        rtr.setPluginName(type.getPlugin());
+        rtr.setCreatePolicy(type.getCreateDeletePolicy());
+        rtr.setDataType(type.getCreationDataType());
+        return rtr;
+    }
+
 
 }

@@ -44,7 +44,6 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
@@ -57,12 +56,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * Views a resource's measurements in a tabular view.
- * @todo: this is TEMPORARY until the metric view is complete to replace it
  *
- * @deprecated
  * @author John Mazzitelli
  */
-@Deprecated
 public class MeasurementTableView extends Table<MetricsTableDataSource> {
 
     private final int resourceId;

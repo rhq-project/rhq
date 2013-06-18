@@ -44,7 +44,6 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
     public static final String FIELD_METRIC_SCHED_ID = "schedId";
     public static final String FIELD_METRIC_UNITS = "units";
     public static final String FIELD_METRIC_NAME = "name";
-    public static final String FIELD_RESOURCE_ID = "resourceId";
 
     private int resourceId;
 
@@ -64,23 +63,6 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
         ListGridField nameField = new ListGridField(FIELD_METRIC_LABEL, MSG.common_title_name());
         nameField.setWidth("30%");
         fields.add(nameField);
-
-        nameField.setCellFormatter(new CellFormatter() {
-            @Override
-            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                if (value == null) {
-                    return "";
-                }
-                String commaDelimitedList = "5, 10, 20, 25";
-                //String formattedValue = StringUtility.escapeHtml(value.toString());
-                String contents= "<span id='sparkline_" +  resourceId + "-"+ record.getAttributeAsInt("FIELD_METRIC_DEF_ID")
-                        + "' class='dynamicsparkline' width='0' " + "values='"
-                        + commaDelimitedList + "'>...</span>";
-                return contents;
-
-            }
-        });
-        BrowserUtility.graphSparkLines();
 
         ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.common_title_alerts());
         alertsField.setWidth("10%");
@@ -129,7 +111,6 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
         record.setAttribute(FIELD_METRIC_SCHED_ID, from.getScheduleId());
         record.setAttribute(FIELD_METRIC_UNITS, from.getUnits());
         record.setAttribute(FIELD_METRIC_NAME, from.getMetricName());
-        record.setAttribute(FIELD_RESOURCE_ID, resourceId);
         return record;
     }
 

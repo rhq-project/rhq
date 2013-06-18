@@ -193,7 +193,10 @@ if defined RHQ_STORAGE_DEBUG echo _JBOSS_MODULEPATH: %_JBOSS_MODULEPATH%
 echo "Starting RHQ Storage Installer ..."
 
 rem start the AS instance with our main installer module
+
 "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" %RHQ_STORAGE_INSTALLER_JAVA_OPTS% %RHQ_STORAGE_INSTALLER_ADDITIONAL_JAVA_OPTS% -jar "%RHQ_SERVER_JBOSS_HOME%\jboss-modules.jar" -mp "%_JBOSS_MODULEPATH%" org.rhq.rhq-cassandra-installer %*
+if not errorlevel 1 goto done
+exit /B %ERRORLEVEL%
 
 :done
 endlocal

@@ -188,6 +188,8 @@ if defined RHQ_CONTROL_DEBUG echo _JBOSS_MODULEPATH: %_JBOSS_MODULEPATH%
 
 rem start the AS instance with our main installer module
 "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" %RHQ_CONTROL_JAVA_OPTS% %RHQ_CONTROL_ADDITIONAL_JAVA_OPTS% -jar "%RHQ_SERVER_JBOSS_HOME%\jboss-modules.jar" -mp "%_JBOSS_MODULEPATH%" org.rhq.rhq-server-control %*
+if not errorlevel 1 goto done
+exit /B %ERRORLEVEL%
 
 :done
 endlocal

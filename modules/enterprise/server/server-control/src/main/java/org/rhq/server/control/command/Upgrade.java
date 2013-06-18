@@ -196,7 +196,7 @@ public class Upgrade extends AbstractInstall {
                 if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
                     agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
                 } else {
-                    agentDir = new File(getBaseDir(), AGENT_BASEDIR_NAME);
+                    agentDir = getAgentBasedir();
                 }
                 startAgent(agentDir, true);
             }
@@ -601,7 +601,7 @@ public class Upgrade extends AbstractInstall {
                     throw new FileNotFoundException("Missing agent to upgrade: " + oldAgentDir.getAbsolutePath());
                 }
             } else {
-                oldAgentDir = new File(rhqctlCommandLine.getOptionValue(FROM_SERVER_DIR_OPTION), AGENT_BASEDIR_NAME);
+                oldAgentDir = getAgentBasedir();
                 if (!oldAgentDir.isDirectory()) {
                     log.info("No agent found in the old server location... skipping agent upgrade");
                     return;

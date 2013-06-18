@@ -176,37 +176,26 @@ public class StorageInstaller {
         Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed "
             + "The default directory will be " + storageBasedir);
 
-        Option heapSizeOption = new Option(null, "heap-size", true, "The value to use for both the min and max heap. " +
-            "This value is passed directly to the -Xms and -Xmx options of the Java executable. Defaults to " +
-            defaultHeapSize);
+        Option heapSizeOption = new Option(null, "heap-size", true, "The value to use for both the min and max heap. "
+            + "This value is passed directly to the -Xms and -Xmx options of the Java executable. Defaults to "
+            + defaultHeapSize);
 
-        Option heapNewSizeOption = new Option(null, "heap-new-size", true, "The value to use for the new generation " +
-            "of the heap. This value is passed directly to the -Xmn option of the Java executable. Defaults to " +
-            defaultHeapNewSize);
+        Option heapNewSizeOption = new Option(null, "heap-new-size", true, "The value to use for the new generation "
+            + "of the heap. This value is passed directly to the -Xmn option of the Java executable. Defaults to "
+            + defaultHeapNewSize);
 
-        Option stackSizeOption = new Option(null, "stack-size", true, "The value to use for the thread stack size. " +
-            "This value is passed directly to the -Xss option of the Java executable.");
+        Option stackSizeOption = new Option(null, "stack-size", true, "The value to use for the thread stack size. "
+            + "This value is passed directly to the -Xss option of the Java executable.");
 
-        Option upgradeOption = new Option(null, "upgrade", true, "Upgrades an existing storage node. The directory " +
-            "where the existing RHQ server is installed.");
+        Option upgradeOption = new Option(null, "upgrade", true, "Upgrades an existing storage node. The directory "
+            + "where the existing RHQ server is installed.");
         upgradeOption.setArgName("RHQ_SERVER_DIR");
 
-        options = new Options().addOption(new Option("h", "help", false, "Show this message."))
-            .addOption(hostname)
-            .addOption(seeds)
-            .addOption(jmxPortOption)
-            .addOption(startOption)
-            .addOption(checkStatus)
-            .addOption(commitLogOption)
-            .addOption(dataDirOption)
-            .addOption(savedCachesDirOption)
-            .addOption(nativeTransportPortOption)
-            .addOption(storagePortOption)
-            .addOption(sslStoragePortOption)
-            .addOption(basedirOption)
-            .addOption(heapSizeOption)
-            .addOption(heapNewSizeOption)
-            .addOption(stackSizeOption)
+        options = new Options().addOption(new Option("h", "help", false, "Show this message.")).addOption(hostname)
+            .addOption(seeds).addOption(jmxPortOption).addOption(startOption).addOption(checkStatus)
+            .addOption(commitLogOption).addOption(dataDirOption).addOption(savedCachesDirOption)
+            .addOption(nativeTransportPortOption).addOption(storagePortOption).addOption(sslStoragePortOption)
+            .addOption(basedirOption).addOption(heapSizeOption).addOption(heapNewSizeOption).addOption(stackSizeOption)
             .addOption(upgradeOption);
     }
 
@@ -227,15 +216,15 @@ public class StorageInstaller {
                 File upgradeFromDir = new File(cmdLine.getOptionValue("upgrade", ""));
 
                 if (!upgradeFromDir.isDirectory()) {
-                    log.error("The value passed to the upgrade option is not a directory. The value must be a valid " +
-                        "path that points to the base directory of an existing RHQ server installation.");
+                    log.error("The value passed to the upgrade option is not a directory. The value must be a valid "
+                        + "path that points to the base directory of an existing RHQ server installation.");
                     return STATUS_INVALID_UPGRADE;
                 }
                 existingStorageDir = new File(upgradeFromDir, "rhq-storage");
                 if (!(existingStorageDir.exists() && existingStorageDir.isDirectory())) {
-                    log.error(existingStorageDir + " does not appear to be an existing RHQ storage node installtion. " +
-                        "Check the value that was passed to the upgrade option and make sure it specifies the base " +
-                        "directory of an existing RHQ server installation.");
+                    log.error(existingStorageDir + " does not appear to be an existing RHQ storage node installtion. "
+                        + "Check the value that was passed to the upgrade option and make sure it specifies the base "
+                        + "directory of an existing RHQ server installation.");
                     return STATUS_INVALID_UPGRADE;
                 }
 
@@ -303,18 +292,24 @@ public class StorageInstaller {
                 commitLogDir = cmdLine.getOptionValue("commitlog", commitLogDir);
                 dataDir = cmdLine.getOptionValue("data", dataDir);
                 savedCachesDir = cmdLine.getOptionValue("saved-caches", savedCachesDir);
+                File commitLogDirFile = new File(commitLogDir);
+                File dataDirFile = new File(dataDir);
+                File savedCachesDirFile = new File(savedCachesDir);
 
-                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
-                if (!isDirectoryEmpty(new File(commitLogDir))) {
-                    log.error("Commitlog directory is not empty: " + commitLogDir);
+                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node 
+                if (!isDirectoryEmpty(commitLogDirFile)) {
+                    log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
+                        + commitLogDirFile.getAbsolutePath() + "]");
                     return STATUS_DATA_DIR_NOT_EMPTY;
                 }
-                if (!isDirectoryEmpty(new File(dataDir))) {
-                    log.error("Data directory is not empty: " + dataDir);
+                if (!isDirectoryEmpty(dataDirFile)) {
+                    log.error("Data directory is not empty. It should not exist for a new Storage Node ["
+                        + dataDirFile.getAbsolutePath() + "]");
                     return STATUS_DATA_DIR_NOT_EMPTY;
                 }
-                if (!isDirectoryEmpty(new File(savedCachesDir))) {
-                    log.error("Saved caches directory is not empty: " + savedCachesDir);
+                if (!isDirectoryEmpty(savedCachesDirFile)) {
+                    log.error("Saved caches directory is not empty. It should not exist for a new Storage Node ["
+                        + savedCachesDirFile.getAbsolutePath() + "]");
                     return STATUS_DATA_DIR_NOT_EMPTY;
                 }
 
@@ -373,8 +368,8 @@ public class StorageInstaller {
 
                 PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
                 log.info("Updating rhq-server.properties...");
-                serverPropertiesUpdater.update("rhq.cassandra.seeds", getSeedsProperty(hostname, jmxPort,
-                    nativeTransportPort));
+                serverPropertiesUpdater.update("rhq.cassandra.seeds",
+                    getSeedsProperty(hostname, jmxPort, nativeTransportPort));
             }
 
             boolean startNode = Boolean.parseBoolean(cmdLine.getOptionValue("start", "true"));
@@ -423,6 +418,7 @@ public class StorageInstaller {
             }
         }
     }
+
     private boolean isDirectoryEmpty(File dir) {
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();
@@ -657,8 +653,8 @@ public class StorageInstaller {
                         int endIndex = line.lastIndexOf("\"");
 
                         if (startIndex == -1 || endIndex == -1) {
-                            log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its " +
-                                "own line as follows, JMX_PORT=\"<jmx-port>\"");
+                            log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its "
+                                + "own line as follows, JMX_PORT=\"<jmx-port>\"");
                             throw new RuntimeException("Cannot determine JMX port");
                         }
                         try {
@@ -671,10 +667,10 @@ public class StorageInstaller {
                     }
                     line = reader.readLine();
                 }
-                log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its " +
-                    "own line as follows, JMX_PORT=\"<jmx-port>\"");
+                log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its "
+                    + "own line as follows, JMX_PORT=\"<jmx-port>\"");
                 throw new RuntimeException("Cannot determine JMX port");
-            } catch(IOException e) {
+            } catch (IOException e) {
                 log.error("Failed to parse JMX port. There was an unexpected IO error", e);
                 throw new RuntimeException("Failed to parse JMX port due to IO error: " + e.getMessage());
             } finally {
@@ -684,8 +680,8 @@ public class StorageInstaller {
                     }
                 } catch (IOException e) {
                     if (log.isDebugEnabled()) {
-                        log.debug("An error occurred closing the " + BufferedReader.class.getName() + " used to " +
-                            "parse the JMX port", e);
+                        log.debug("An error occurred closing the " + BufferedReader.class.getName() + " used to "
+                            + "parse the JMX port", e);
                     } else {
                         log.warn("There was error closing the reader used to parse the JMX port: " + e.getMessage());
                     }

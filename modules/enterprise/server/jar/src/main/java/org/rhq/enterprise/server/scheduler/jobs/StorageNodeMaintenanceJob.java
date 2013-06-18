@@ -22,10 +22,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import javax.ejb.TransactionAttribute;
-import javax.ejb.TransactionAttributeType;
-import javax.persistence.Query;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.quartz.JobExecutionContext;
@@ -38,6 +34,7 @@ import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
@@ -68,10 +65,10 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
     private final static String MAINTENANCE_OPERATION_NOTE = "Topology change maintenance.";
     private final static String RUN_REPAIR_PROPERTY = "runRepair";
     private final static String UPDATE_SEEDS_LIST = "updateSeedsList";
+    private final static String SEEDS_LIST = "seedsList";
     private final static String SUCCEED_PROPERTY = "succeed";
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
         //1. Wait for resouces to be linked to node storage nodes
         waitForResouceLinks();
@@ -106,13 +103,10 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
                 List<String> endpoints = new ArrayList<String>();
 
                 try {
-                    //Set<Resource> childResources = resource.getChildResources();
-
-                    Query query = LookupUtil.getEntityManager()
-                        .createNamedQuery(Resource.QUERY_FIND_CHILDREN_ADMIN);
-                    query.setParameter("parent", resource);
-                    List<Resource> childResources = query.getResultList();
-
+                    ResourceCriteria c = new ResourceCriteria();
+                    c.addFilterParentResourceId(resource.getId());
+                    List<Resource> childResources = LookupUtil.getResourceManager().findResourcesByCriteria(
+                        LookupUtil.getSubjectManager().getOverlord(), c);
 
                     for (Resource childResource : childResources) {
                         if (STORAGE_SERVICE.equals(childResource.getName())) {
@@ -168,7 +162,7 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
             List<Property> properties = new ArrayList<Property>();
             properties.add(new PropertySimple(RUN_REPAIR_PROPERTY, Boolean.TRUE));
             properties.add(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.FALSE));
-            properties.add(new PropertyList("seedsList"));
+            properties.add(new PropertyList(SEEDS_LIST));
             Configuration config = new Configuration();
             config.setProperties(properties);
             newSchedule.setParameters(config);

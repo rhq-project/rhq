@@ -72,7 +72,7 @@ public class Upgrade extends AbstractInstall {
                 FROM_AGENT_DIR_OPTION,
                 true,
                 "Full path to install directory of the RHQ Agent to be upgraded. Required only if an existing agent "
-                    + "exists and is not installed in the default location: <from-server-dir>/rhq-agent")
+                    + "exists and is not installed in the default location: <from-server-dir>/../rhq-agent")
             .addOption(null, FROM_SERVER_DIR_OPTION, true,
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
             .addOption(

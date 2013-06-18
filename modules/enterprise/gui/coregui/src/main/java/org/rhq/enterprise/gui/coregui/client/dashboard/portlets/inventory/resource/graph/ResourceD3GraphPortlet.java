@@ -103,16 +103,20 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
         }
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID) != null) {
-            PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
-            PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            if (resourceIdProperty != null && measurementDefIdProperty != null) {
-                final Integer entityId = resourceIdProperty.getIntegerValue();
-                final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
-                if (entityId != null && measurementDefId != null) {
-                    queryResource(entityId, measurementDefId);
-                }
+            refreshFromConfiguration(storedPortlet);
+        }
+    }
 
+    private void refreshFromConfiguration(DashboardPortlet storedPortlet) {
+        PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_ID);
+        PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+        if (resourceIdProperty != null && measurementDefIdProperty != null) {
+            final Integer entityId = resourceIdProperty.getIntegerValue();
+            final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
+            if (entityId != null && measurementDefId != null) {
+                queryResource(entityId, measurementDefId);
             }
+
         }
     }
 
@@ -348,8 +352,7 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
     @Override
     public void refresh() {
         if (isVisible() && !isRefreshing() ){
-            //if (isVisible() && !isRefreshing() && (null != graph.getMetricGraphData().getJsonMetrics()) ) {
-            drawGraph();
+            refreshFromConfiguration(portletWindow.getStoredPortlet());
         }
     }
 

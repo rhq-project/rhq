@@ -149,28 +149,28 @@ check_status ()
     if [ -f "$_SERVER_PIDFILE" ]; then
         _SERVER_PID=`cat "$_SERVER_PIDFILE"`
         if [ -n "$_SERVER_PID" ] && kill -0 $_SERVER_PID 2>/dev/null ; then
-            _SERVER_STATUS="RHQ Server (pid $_SERVER_PID) is $1"
+            _SERVER_STATUS=`printf "%-30s (pid %-7s) IS %s" "RHQ Server" $_SERVER_PID $1`
             _SERVER_RUNNING=1
         else
-            _SERVER_STATUS="RHQ Server (pid $_SERVER_PID) is NOT running"
+            _SERVER_STATUS=`printf "%-30s (pid %-7s) IS NOT running" "RHQ Server" $_SERVER_PID`
             _SERVER_RUNNING=0
         fi
     else
-        _SERVER_STATUS="RHQ Server (no pid file) is NOT running"
+        _SERVER_STATUS=`printf "%-30s (no pid file) IS NOT running" "RHQ Server"`
         _SERVER_RUNNING=0
     fi
 
     if [ -f "$_JVM_PIDFILE" ]; then
         _JVM_PID=`cat "$_JVM_PIDFILE"`
         if [ -n "$_JVM_PID" ] && kill -0 $_JVM_PID 2>/dev/null ; then
-            _JVM_STATUS="JBossAS Java VM child process (pid $_JVM_PID) is $1"
+            _JVM_STATUS=`printf "%-30s (pid %-7s) IS %s" "JBossAS Java VM child process" $_SERVER_PID $1`
             _JVM_RUNNING=1
         else
-            _JVM_STATUS="JBossAS Java VM child process (pid $_JVM_PID) is NOT running"
+            _JVM_STATUS=`printf "%-30s (pid %-7s) IS NOT running" "JBossAS Java VM child process" $_SERVER_PID`
             _JVM_RUNNING=0
         fi
     else
-        _JVM_STATUS="JBossAS Java VM child process (no pid file) is NOT running"
+        _JVM_STATUS=`printf "%-30s (no pid file) IS NOT running" "JBossAS Java VM child process"`
         _JVM_RUNNING=0
     fi
 }

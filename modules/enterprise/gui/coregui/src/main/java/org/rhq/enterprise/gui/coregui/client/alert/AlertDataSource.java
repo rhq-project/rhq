@@ -112,14 +112,14 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
-     * 
+     *
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
         ListGridField ctimeField = new ListGridField(AlertCriteria.SORT_FIELD_CTIME, MSG.common_title_createTime());
-        ctimeField.setCellFormatter(new TimestampCellFormatter());
+        ctimeField.setCellFormatter(new TimestampCellFormatter(TimestampCellFormatter.DATE_TIME_FORMAT_SHORT));
         ctimeField.setShowHover(true);
         ctimeField.setHoverCustomizer(TimestampCellFormatter.getHoverCustomizer(AlertCriteria.SORT_FIELD_CTIME));
         fields.add(ctimeField);
@@ -138,6 +138,10 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         ListGridField conditionField = new ListGridField("conditionText", MSG.view_alerts_field_condition_text());
         conditionField.setCanSortClientOnly(true);
         fields.add(conditionField);
+
+        ListGridField conditionLogField = new ListGridField("conditionValue", MSG.view_alerts_field_condition_value());
+        conditionLogField.setCanSortClientOnly(true);
+        fields.add(conditionLogField);
 
         ListGridField priorityField = new ListGridField("priority", MSG.view_alerts_field_priority());
         priorityField.setType(ListGridFieldType.IMAGE);
@@ -216,15 +220,17 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
 
             ctimeField.setWidth(100);
             nameField.setWidth("15%");
-            conditionField.setWidth("35%");
+            conditionField.setWidth("15%");
+            conditionLogField.setWidth("25%");
             priorityField.setWidth(50);
             statusField.setWidth(80);
-            resourceNameField.setWidth("25%");
-            ancestryField.setWidth("25%");
+            resourceNameField.setWidth("20%");
+            ancestryField.setWidth("20%");
         } else {
             ctimeField.setWidth(200);
             nameField.setWidth("15%");
-            conditionField.setWidth("60%");
+            conditionField.setWidth("20%");
+            conditionLogField.setWidth("35%");
             priorityField.setWidth(50);
             statusField.setWidth("25%");
         }
@@ -291,13 +297,13 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             typeRepo.getResourceTypes(typesSet.toArray(new Integer[typesSet.size()]), new TypesLoadedCallback() {
                 @Override
                 public void onTypesLoaded(Map<Integer, ResourceType> types) {
-                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.                
+                    // Smartgwt has issues storing a Map as a ListGridRecord attribute. Wrap it in a pojo.
                     AncestryUtil.MapWrapper typesWrapper = new AncestryUtil.MapWrapper(types);
 
                     Record[] records = buildRecords(result);
                     for (Record record : records) {
                         // To avoid a lot of unnecessary String construction, be lazy about building ancestry hover text.
-                        // Store the types map off the records so we can build a detailed hover string as needed.                      
+                        // Store the types map off the records so we can build a detailed hover string as needed.
                         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY_TYPES, typesWrapper);
 
                         // Build the decoded ancestry Strings now for display
@@ -315,12 +321,12 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     /**
      * Sub-classes can override this to add fine-grained control over the result set size. By default the
      * total rows are set to the total result set for the query, allowing proper paging.  But some views (portlets)
-     * may want to limit results to a small set (like most recent).  
+     * may want to limit results to a small set (like most recent).
      * @param result
      * @param response
      * @param request
-     * 
-     * @return should not exceed result.getTotalSize(). 
+     *
+     * @return should not exceed result.getTotalSize().
      */
     protected int getTotalRows(final PageList<Alert> result, final DSResponse response, final DSRequest request) {
 
@@ -398,7 +404,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         record.setAttribute("description", alertDefinition.getDescription());
         record.setAttribute("priority", ImageManager.getAlertIcon(alertDefinition.getPriority()));
 
-        // for ancestry handling       
+        // for ancestry handling
         record.setAttribute(AncestryUtil.RESOURCE_ID, resource.getId());
         record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
@@ -429,6 +435,10 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             conditionValue = "--";
         }
         record.setAttribute("conditionText", conditionText);
+        if (conditionValue.contains("extraInfo=")) {
+            conditionValue = conditionValue.replaceFirst("extraInfo=\\[","");
+            conditionValue = conditionValue.substring(0,conditionValue.length()-1);
+        }
         record.setAttribute("conditionValue", conditionValue);
 
         // We also need the'raw' notification data to show in details
@@ -447,6 +457,11 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
                     // the condition log value was probably not a number (most likely a trait). Ignore this exception.
                     // even if any other errors occur trying to format the value, ignore this and just use the raw value string
                 }
+            }
+            // Remove the extraInfo=[ ] that is added when storing the raw event data in the data base
+            if (value.contains("extraInfo=")) {
+                value = value.replaceFirst("extraInfo=\\[","");
+                value = value.substring(0,value.length()-1);
             }
             dc.setAttribute("value", value);
             conditions[i++] = dc;

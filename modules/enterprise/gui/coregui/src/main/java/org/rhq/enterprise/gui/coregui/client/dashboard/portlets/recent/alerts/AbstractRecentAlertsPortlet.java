@@ -50,14 +50,14 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 /**
  * A base class for deriving recent alerts portlets for different entity contexts.  In this way the
  * basic plumbing is shared, giving a consistent behavior and configuration for the concrete portlets.
- *  
+ *
  * @author Jay Shaughnessy
- * @author Simeon Pinder 
+ * @author Simeon Pinder
  */
 public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView implements CustomSettingsPortlet,
     AutoRefreshPortlet {
 
-    // set on initial configuration, the window for this portlet view. 
+    // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
 
     private AlertsPortletDataSource dataSource;
@@ -339,7 +339,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
         /* (non-Javadoc)
          * This override allows us to set the total rows to the number of recent op history configured for
          * the portlet. This sets the counter appropriately and stops further queries to the server.
-         * 
+         *
          * @see org.rhq.enterprise.gui.coregui.client.operation.OperationHistoryDataSource#getTotalRows(org.rhq.core.domain.util.PageList, com.smartgwt.client.data.DSResponse, com.smartgwt.client.data.DSRequest)
          */
         @Override
@@ -420,6 +420,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
 
             criteria.fetchAlertDefinition(true);
             criteria.fetchRecoveryAlertDefinition(true);
+            criteria.fetchConditionLogs(true);
 
             return criteria;
         }

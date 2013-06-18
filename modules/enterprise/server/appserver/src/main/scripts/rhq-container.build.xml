@@ -764,16 +764,16 @@ rhq.server.agent-update.nonstrict-version-check=true
 </path>
 <pathconvert targetos="unix" property="safe.datadir" refid="path.datadir"/>
 
-<echo file="${project.build.outputDirectory}/bin/rhq-storage.properties" append="true"># storage installer options for dev deployment
-commitlog=${safe.datadir}/storage/commit_log
-data=${safe.datadir}/storage/data
-saved-caches=${safe.datadir}/storage/saved_caches
-heap-size=256M
-heap-new-size=64M
-hostname=127.0.0.1
-</echo>
+<!--<echo file="${project.build.outputDirectory}/bin/rhq-storage.properties" append="true"># storage installer options for dev deployment-->
+<!--commitlog=${safe.datadir}/storage/commit_log-->
+<!--data=${safe.datadir}/storage/data-->
+<!--saved-caches=${safe.datadir}/storage/saved_caches-->
+<!--heap-size=256M-->
+<!--heap-new-size=64M-->
+<!--hostname=127.0.0.1-->
+<!--</echo>-->
 
-<echo file="${project.build.outputDirectory}/bin/rhqctl.properties" append="true">rhqctl.install.storage-config=bin/rhq-storage.properties</echo>
+<!--<echo file="${project.build.outputDirectory}/bin/rhqctl.properties" append="true">rhqctl.install.storage-config=bin/rhq-storage.properties</echo>-->
 
     </target>
 

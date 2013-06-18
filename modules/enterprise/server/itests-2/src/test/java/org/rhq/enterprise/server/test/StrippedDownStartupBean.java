@@ -26,7 +26,12 @@ import java.util.Properties;
 
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
 import org.rhq.enterprise.server.core.StartupBean;
 import org.rhq.enterprise.server.naming.NamingHack;
@@ -38,8 +43,13 @@ import org.rhq.enterprise.server.naming.NamingHack;
 @Singleton
 public class StrippedDownStartupBean {
 
+    public static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+
     @EJB
     StorageClientManagerBean storageClientManager;
+
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
 
     private void secureNaming() {
         NamingHack.bruteForceInitialContextFactoryBuilder();
@@ -55,8 +65,18 @@ public class StrippedDownStartupBean {
         //
         // jsanda
         loadCassandraConnectionProps();
-
         storageClientManager.init();
+    }
+
+    /**
+     * Purges the test server and any storage nodes created during server initialization
+     * from a prior test run.
+     */
+    public void purgeTestServerAndStorageNodes() {
+        entityManager.createQuery("DELETE FROM " + StorageNode.class.getName()).executeUpdate();
+        entityManager.createQuery("DELETE FROM " + Server.class.getName() + " WHERE name = :serverName")
+            .setParameter("serverName", TestConstants.RHQ_TEST_SERVER_NAME)
+            .executeUpdate();
     }
 
     public void loadCassandraConnectionProps() {

@@ -60,7 +60,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author Jirka Kremser
  */
-public class StorageNodeTableView extends TableSection<StorageNodeDatasource> implements HasViewName {
+public class StorageNodeAdminView extends TableSection<StorageNodeDatasource> implements HasViewName {
 
     public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(),
         IconEnum.STORAGE_NODE);
@@ -68,7 +68,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
 
-    public StorageNodeTableView() {
+    public StorageNodeAdminView() {
         super(null);
         setHeight100();
         setWidth100();
@@ -202,7 +202,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
 
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
-                return StorageNodeTableView.this.isEnabled(super.isEnabled(selection), selection);
+                return StorageNodeAdminView.this.isEnabled(super.isEnabled(selection), selection);
             };
 
             @Override

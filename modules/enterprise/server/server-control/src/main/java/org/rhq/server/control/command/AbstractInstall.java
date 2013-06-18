@@ -340,23 +340,21 @@ public abstract class AbstractInstall extends ControlCommand {
 
         log.debug("Stopping RHQ server...");
 
+
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(serverBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
         if (isWindows()) {
             try {
                 executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
-                log.debug("Failed to stop agent service", e);
+                log.debug("Failed to stop server service", e);
             }
         } else {
-            String pid = getAgentPid();
-            if (pid != null) {
-                executor.execute(commandLine);
-            }
+            executor.execute(commandLine);
         }
     }
 

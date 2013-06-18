@@ -78,6 +78,7 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
         final String originalSeedValue = System.getProperty(cassandraSeedsProperty);
 
         try {
+            prepareScheduler();
             executeInTransaction(new TransactionCallback() {
 
                 @Override
@@ -130,6 +131,7 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
                 }
             });
         } finally {
+            unprepareScheduler();
             cleanDatabase();
             System.setProperty(cassandraSeedsProperty, originalSeedValue);
         }

@@ -131,12 +131,11 @@ public class Status extends ControlCommand {
 
             File storageBinDir = new File(getStorageBasedir(), "bin");
             File pidFile = new File(storageBinDir, "cassandra.pid");
-
             if (pidFile.exists()) {
                 String pid = StreamUtil.slurp(new FileReader(pidFile));
-                System.out.println("RHQ storage node (pid " + pid + ") is running");
+                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (pid " + String.format("%-7s", pid) + ") IS running");
             } else {
-                System.out.println("RHQ storage node (no pid file) is NOT running");
+                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (no pid file) IS NOT running");
             }
         }
     }

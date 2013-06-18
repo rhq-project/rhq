@@ -91,7 +91,7 @@ public class GroupDefinitionRest {
         this.expression = expression;
     }
 
-    @ApiProperty("Interval in ms at which the expression should be re-evaluated")
+    @ApiProperty("Interval in ms at which the expression should be re-evaluated. A value of 0 means no recalculation.")
     public long getRecalcInterval() {
         return recalcInterval;
     }

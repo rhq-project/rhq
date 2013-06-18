@@ -63,6 +63,7 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
@@ -91,6 +92,7 @@ import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
@@ -157,6 +159,8 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private AvailabilityManagerLocal availabilityManager;
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
+    @EJB
+    private ConfigurationManagerLocal configurationManager;
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
     @TransactionAttribute(TransactionAttributeType.NEVER)
@@ -672,11 +676,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         ResourceUpgradeResponse ret = new ResourceUpgradeResponse();
         ret.setResourceId(resource.getId());
 
-        String resourceKey = upgradeRequest.getNewResourceKey();
-        String name = upgradeRequest.getNewName();
-        String description = upgradeRequest.getNewDescription();
+        if (upgradeRequest.hasSomethingToUpgrade()) {
 
-        if (resourceKey != null || name != null || description != null) {
+            String resourceKey = upgradeRequest.getNewResourceKey();
+            String name = upgradeRequest.getNewName();
+            String description = upgradeRequest.getNewDescription();
+
             StringBuilder logMessage = new StringBuilder("Resource [").append(resource.toString()).append(
                 "] upgraded its ");
 
@@ -698,6 +703,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
             ret.setUpgradedResourceDescription(resource.getDescription());
 
+            // If provided, assume the new plugin config should replace the old plugin config in its entirety.
+            // Use a deep copy without ids as the updgardeRequest config may contain entity config props. 
+            // Note: we explicitly do not call configurationManager.updatePluginConfiguration() because the
+            // agent is already updated to the new configuration. Instead we call the dedicated local method
+            // supporting this use case.   
+            Configuration pluginConfig = upgradeRequest.getNewPluginConfiguration();
+            if (null != pluginConfig) {
+                pluginConfig = pluginConfig.deepCopy(false);
+                PluginConfigurationUpdate update = configurationManager.upgradePluginConfiguration(
+                    subjectManager.getOverlord(), resource.getId(), pluginConfig);
+                ret.setUpgradedResourcePluginConfiguration(update.getResource().getPluginConfiguration());
+
+            } else {
+                ret.setUpgradedResourcePluginConfiguration(resource.getPluginConfiguration());
+            }
+
             // finally let's remove the potential previous upgrade error. we've now successfully
             // upgraded the resource.
             List<ResourceError> upgradeErrors = resourceManager.findResourceErrors(subjectManager.getOverlord(),
@@ -711,6 +732,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
             log.info(logMessage.toString());
         }
+
         return ret;
     }
 

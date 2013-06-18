@@ -59,6 +59,8 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
     protected static final String AUTHENTICATOR_PROPERTY = "authenticator";
     protected static final String USERNAME_PROPERTY = "username";
     protected static final String PASSWORD_PROPERTY = "password";
+    protected static final String YAML_PROPERTY = "yamlConfiguration";
+    protected static final String BASEDIR_PROPERTY = "baseDir";
 
     protected static final String DEFAULT_RHQ_CLUSTER = "rhq";
 
@@ -130,7 +132,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
             commandLineBuilder.append(' ');
         }
 
-        pluginConfig.put(new PropertySimple("commandLine", commandLineBuilder.toString()));
+        pluginConfig.put(new PropertySimple(COMMAND_LINE_CONFIG_PROPERTY, commandLineBuilder.toString()));
 
         if (classpathIndex != -1 && classpathIndex + 1 < arguments.length) {
             String[] classpathEntries = arguments[classpathIndex + 1].split(File.pathSeparator);
@@ -154,7 +156,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                 InputStream inputStream = null;
                 try {
                     File yamlConfigurationFile = new File(yamlConfigurationPath, "cassandra.yaml");
-                    pluginConfig.put(new PropertySimple("yamlConfiguration", yamlConfigurationFile.getAbsolutePath()));
+                    pluginConfig.put(new PropertySimple(YAML_PROPERTY, yamlConfigurationFile.getAbsolutePath()));
 
                     inputStream = new FileInputStream(yamlConfigurationFile);
                     Yaml yaml = new Yaml();
@@ -206,7 +208,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         String resourceName = RESOURCE_NAME;
 
         String path = processInfo.getExecutable().getCwd();
-        pluginConfig.put(new PropertySimple("baseDir", new File(path).getParentFile().getAbsolutePath()));
+        pluginConfig.put(new PropertySimple(BASEDIR_PROPERTY, new File(path).getParentFile().getAbsolutePath()));
 
         pluginConfig.put(new PropertySimple(USERNAME_PROPERTY, "cassandra"));
         pluginConfig.put(new PropertySimple(PASSWORD_PROPERTY, "cassandra"));

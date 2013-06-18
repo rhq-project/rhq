@@ -140,7 +140,8 @@ public class FakeServerInventory {
                                 synchronized (sync) {
                                     if (!finished) {
                                         if (LOG.isDebugEnabled()) {
-                                            LOG.debug("Notifying about discovery complete on " + CompleteDiscoveryChecker.this);
+                                            LOG.debug("Notifying about discovery complete on "
+                                                + CompleteDiscoveryChecker.this);
                                         }
                                         sync.notifyAll();
                                     }
@@ -207,9 +208,9 @@ public class FakeServerInventory {
             public MergeResourceResponse answer(InvocationOnMock invocation) throws Throwable {
                 Resource r = (Resource) invocation.getArguments()[0];
                 int subjectId = (Integer) invocation.getArguments()[1];
-                
+
                 LOG.debug("A request to add a resource [" + r + "] made by subject with id " + subjectId);
-                
+
                 boolean exists = getResourceStore().containsKey(r.getUuid());
 
                 r = fakePersist(r, InventoryStatus.COMMITTED, new HashSet<String>());
@@ -274,9 +275,9 @@ public class FakeServerInventory {
             public ResourceSyncInfo answer(InvocationOnMock invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     throwIfFailing();
-    
+
                     platform = null;
-    
+
                     return getSyncInfo();
                 }
             }
@@ -287,40 +288,40 @@ public class FakeServerInventory {
         return new Answer<Void>() {
             @Override
             public Void answer(InvocationOnMock invocation) throws Throwable {
-                synchronized(FakeServerInventory.this) {
+                synchronized (FakeServerInventory.this) {
                     throwIfFailing();
-                    
+
                     ResourceError error = (ResourceError) invocation.getArguments()[0];
-                    
+
                     Resource serverSideResource = resourceStore.get(error.getResource().getUuid());
-                    
+
                     if (serverSideResource != null) {
                         List<ResourceError> currentErrors = serverSideResource.getResourceErrors();
                         currentErrors.add(error);
                     }
-                    
+
                     return null;
                 }
             }
         };
     }
-    
+
     public synchronized Answer<Set<ResourceUpgradeResponse>> upgradeResources() {
         return new Answer<Set<ResourceUpgradeResponse>>() {
             @Override
             @SuppressWarnings({ "serial", "unchecked" })
             public Set<ResourceUpgradeResponse> answer(InvocationOnMock invocation) throws Throwable {
-                synchronized(FakeServerInventory.this) {
+                synchronized (FakeServerInventory.this) {
                     throwIfFailing();
-    
+
                     if (failUpgrade) {
-                        throw new RuntimeException("Failing the upgrade purposefully.");                        
+                        throw new RuntimeException("Failing the upgrade purposefully.");
                     }
-                    
+
                     Object[] args = invocation.getArguments();
                     Set<ResourceUpgradeRequest> requests = (Set<ResourceUpgradeRequest>) args[0];
                     Set<ResourceUpgradeResponse> responses = new HashSet<ResourceUpgradeResponse>();
-    
+
                     for (final ResourceUpgradeRequest request : requests) {
                         Resource resource = findResource(platform, new Resource() {
                             @Override
@@ -335,23 +336,28 @@ public class FakeServerInventory {
                             if (request.getNewName() != null) {
                                 resource.setName(request.getNewName());
                             }
-    
+
                             if (request.getNewResourceKey() != null) {
                                 resource.setResourceKey(request.getNewResourceKey());
                             }
-    
+
+                            if (request.getNewPluginConfiguration() != null) {
+                                resource.setPluginConfiguration(request.getNewPluginConfiguration());
+                            }
+
                             if (request.getUpgradeErrorMessage() != null) {
                                 ResourceError error = new ResourceError(resource, ResourceErrorType.UPGRADE,
                                     request.getUpgradeErrorMessage(), request.getUpgradeErrorStackTrace(),
                                     request.getTimestamp());
                                 resource.getResourceErrors().add(error);
                             }
-    
+
                             ResourceUpgradeResponse resp = new ResourceUpgradeResponse();
                             resp.setResourceId(resource.getId());
                             resp.setUpgradedResourceName(resource.getName());
                             resp.setUpgradedResourceKey(resource.getResourceKey());
                             resp.setUpgradedResourceDescription(resource.getDescription());
+                            resp.setUpgradedResourcePluginConfiguration(resource.getPluginConfiguration());
                             responses.add(resp);
                         }
                     }
@@ -368,11 +374,11 @@ public class FakeServerInventory {
             public Set<Resource> answer(InvocationOnMock invocation) throws Throwable {
                 synchronized (FakeServerInventory.this) {
                     throwIfFailing();
-    
+
                     Object[] args = invocation.getArguments();
                     Set<Integer> resourceIds = (Set<Integer>) args[0];
                     boolean includeDescendants = (Boolean) args[1];
-    
+
                     return getResources(resourceIds, includeDescendants);
                 }
             }
@@ -457,11 +463,11 @@ public class FakeServerInventory {
     public synchronized boolean isFailUpgrade() {
         return failUpgrade;
     }
-    
+
     public synchronized void setFailUpgrade(boolean failUpgrade) {
         this.failUpgrade = failUpgrade;
     }
-    
+
     @SuppressWarnings("serial")
     public synchronized Set<Resource> findResourcesByType(final ResourceType type) {
         Set<Resource> result = new HashSet<Resource>();
@@ -509,7 +515,7 @@ public class FakeServerInventory {
         if (parent != null) {
             parent.getChildResources().remove(r);
         }
-        for(Resource child : r.getChildResources()) {
+        for (Resource child : r.getChildResources()) {
             removeResource(child);
         }
     }
@@ -546,8 +552,7 @@ public class FakeServerInventory {
 
         Resource parent = agentSideResource.getParentResource();
         if (parent != null && parent != Resource.ROOT) {
-            parent = fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus,
-                inProgressUUIds);
+            parent = fakePersist(agentSideResource.getParentResource(), requiredInventoryStatus, inProgressUUIds);
             persisted.setParentResource(parent);
             parent.getChildResources().add(persisted);
         } else {
@@ -563,9 +568,9 @@ public class FakeServerInventory {
         //i.e. we prefer the current results from the agent but keep the children we used to
         //have in the past. This is the same behavior as the actual RHQ server has.
         childResources.addAll(persisted.getChildResources());
-        
+
         persisted.setChildResources(childResources);
-        
+
         inProgressUUIds.remove(agentSideResource.getUuid());
 
         return persisted;
@@ -619,7 +624,8 @@ public class FakeServerInventory {
 
             return ret;
         } catch (Exception e) {
-            throw new IllegalStateException("Failed to convert resource " + root + " to a ResourceSyncInfo. This should not happen.", e);
+            throw new IllegalStateException("Failed to convert resource " + root
+                + " to a ResourceSyncInfo. This should not happen.", e);
         }
     }
 

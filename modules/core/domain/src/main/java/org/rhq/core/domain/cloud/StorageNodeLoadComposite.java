@@ -41,6 +41,7 @@ public class StorageNodeLoadComposite implements Serializable {
     private MeasurementAggregateWithUnits heapUsed;
     private MeasurementAggregateWithUnits heapPercentageUsed;
     private MeasurementAggregateWithUnits load;
+    private MeasurementAggregateWithUnits diskSpacePercentageUsed;
     private MeasurementAggregate tokens; 
     private MeasurementAggregateWithUnits actuallyOwns;
 
@@ -102,6 +103,14 @@ public class StorageNodeLoadComposite implements Serializable {
         this.heapPercentageUsed = heapPercentageUsed;
     }
     
+    public MeasurementAggregateWithUnits getDiskSpacePercentageUsed() {
+        return diskSpacePercentageUsed;
+    }
+
+    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits diskSpacePercentageUsed) {
+        this.diskSpacePercentageUsed = diskSpacePercentageUsed;
+    }
+    
     public MeasurementAggregateWithUnits getLoad() {
         return load;
     }
@@ -144,6 +153,7 @@ public class StorageNodeLoadComposite implements Serializable {
         builder.append("heapUsed=").append(heapUsed).append(", ");
         builder.append("heapPercentageUsed=").append(heapPercentageUsed).append(", ");
         builder.append("load=").append(load).append(", ");
+        builder.append("diskSpacePercentageUsed=").append(diskSpacePercentageUsed).append(", ");
         builder.append("tokens=").append(tokens).append(", ");
         builder.append("actuallyOwns=").append(actuallyOwns);
         return builder.toString();

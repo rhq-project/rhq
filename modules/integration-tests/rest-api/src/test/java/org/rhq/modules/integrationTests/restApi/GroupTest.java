@@ -675,10 +675,10 @@ public class GroupTest extends AbstractBase {
     public void testGetGroupDefinitions() throws Exception {
 
         expect()
-                .statusCode(200)
-                .log().ifError()
+            .statusCode(200)
+            .log().ifError()
         .when()
-                .get("/group/definitions");
+            .get("/group/definitions");
     }
 
     @Test
@@ -700,6 +700,106 @@ public class GroupTest extends AbstractBase {
             .log().ifError()
         .when()
             .post("/group/definitions");
+    }
+
+    @Test
+    public void testCreateDefinitionWithNegativeRecalcInterval() throws Exception {
+
+        GroupDef gd = new GroupDef();
+        gd.setDescription("Just testing");
+        List<String> list = new ArrayList<String>();
+        list.add("groupby resource");
+        list.add("resource.name");
+        gd.setExpression(list);
+        gd.setRecalcInterval(-5);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Accept","application/json")
+            .body(gd)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .post("/group/definitions");
+    }
+
+    @Test
+    public void testCreateEmptyDefinition() throws Exception {
+
+        GroupDef gd = new GroupDef();
+        gd.setName("li la lu");
+        gd.setDescription("Just testing");
+        List<String> list = new ArrayList<String>();
+        gd.setExpression(list);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Accept","application/json")
+            .body(gd)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .post("/group/definitions");
+    }
+
+    @Test
+    public void testCreateDefinitionAllExpressionsEmpty() throws Exception {
+
+        GroupDef gd = new GroupDef();
+        gd.setName("li la lu");
+        gd.setDescription("Just testing");
+        List<String> list = new ArrayList<String>();
+        list.add("");
+        list.add(" ");
+        list.add(null);
+        gd.setExpression(list);
+
+        given()
+            .contentType(ContentType.JSON)
+            .header("Accept","application/json")
+            .body(gd)
+        .expect()
+            .statusCode(406)
+            .log().ifError()
+        .when()
+            .post("/group/definitions");
+    }
+
+    @Test
+    public void testCreateDefinitionAlmostAllExpressionsEmpty() throws Exception {
+
+        GroupDef gd = new GroupDef();
+        gd.setName("li la lu2");
+        gd.setDescription("Just testing");
+        List<String> list = new ArrayList<String>();
+        list.add("");
+        list.add(" ");
+        list.add(null);
+        list.add("resource.type = 'bla'");
+        gd.setExpression(list);
+
+        Response response =
+        given()
+            .contentType(ContentType.JSON)
+            .header("Accept","application/json")
+            .body(gd)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/group/definitions");
+
+        String location = response.getHeader("Location");
+        int definitionId = Integer.parseInt(location.substring(location.lastIndexOf("/")+1));
+
+        // remove the definition again
+        expect()
+            .statusCode(204)
+        .when()
+            .delete("/group/definition/" + definitionId);
+
     }
 
     @Test

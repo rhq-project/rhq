@@ -25,6 +25,8 @@ package org.rhq.core.clientapi.agent.upgrade;
 
 import java.io.Serializable;
 
+import org.rhq.core.domain.configuration.Configuration;
+
 /**
  * Represents a response to a resource upgrade request.
  * The upgraded* properties contain the values of the corresponding resource properties
@@ -34,13 +36,14 @@ import java.io.Serializable;
  */
 public class ResourceUpgradeResponse implements Serializable {
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     private int resourceId;
     
     private String upgradedResourceName;
     private String upgradedResourceKey;
     private String upgradedResourceDescription;
+    private Configuration upgradedResourcePluginConfiguration;
     
     public ResourceUpgradeResponse() {
         
@@ -66,6 +69,10 @@ public class ResourceUpgradeResponse implements Serializable {
         return upgradedResourceKey;
     }
 
+    public Configuration getUpgradedResourcePluginConfiguration() {
+        return upgradedResourcePluginConfiguration;
+    }
+
     public void setUpgradedResourceKey(String upgradedResourceKey) {
         this.upgradedResourceKey = upgradedResourceKey;
     }
@@ -76,5 +83,9 @@ public class ResourceUpgradeResponse implements Serializable {
 
     public void setUpgradedResourceDescription(String upgradedResourceDescription) {
         this.upgradedResourceDescription = upgradedResourceDescription;
+    }
+
+    public void setUpgradedResourcePluginConfiguration(Configuration upgradedResourcePluginConfiguration) {
+        this.upgradedResourcePluginConfiguration = upgradedResourcePluginConfiguration;
     }
 }

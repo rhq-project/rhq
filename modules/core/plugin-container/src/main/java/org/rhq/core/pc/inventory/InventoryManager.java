@@ -1471,9 +1471,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 String resourceKey = upgradeResponse.getUpgradedResourceKey();
                 String name = upgradeResponse.getUpgradedResourceName();
                 String description = upgradeResponse.getUpgradedResourceDescription();
+                Configuration pluginConfig = upgradeResponse.getUpgradedResourcePluginConfiguration();
 
                 //only bother if there's something to upgrade at all on this resource.
-                if (resourceKey != null || name != null || description != null) {
+                if (resourceKey != null || name != null || description != null || pluginConfig != null) {
                     ResourceContainer existingResourceContainer = getResourceContainer(upgradeResponse.getResourceId());
                     if (existingResourceContainer != null) {
                         Resource existingResource = existingResourceContainer.getResource();
@@ -1494,6 +1495,11 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         if (description != null) {
                             existingResource.setDescription(description);
                             logMessage.append("description, ");
+                        }
+
+                        if (pluginConfig != null) {
+                            existingResource.setPluginConfiguration(pluginConfig);
+                            logMessage.append("pluginConfiguration, ");
                         }
 
                         logMessage.replace(logMessage.length() - 1, logMessage.length(), "to become [")

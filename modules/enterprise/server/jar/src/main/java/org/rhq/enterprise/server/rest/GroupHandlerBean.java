@@ -572,9 +572,13 @@ public class GroupHandlerBean extends AbstractRestBean  {
     @POST
     @Path("/definitions")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    @ApiOperation("Create a new GroupDefinition. The name of the group is required in the passed definition.")
+    @ApiOperation(
+        value = "Create a new GroupDefinition.", notes = "The name of the group is required in the passed " +
+        "definition, as well as a non-empty expression. A recalcInterval of 0 means to never recalculate.")
     @ApiErrors({
         @ApiError(code = 406, reason = "Passed group definition has no name"),
+        @ApiError(code = 406, reason = "Passed expression was empty"),
+        @ApiError(code = 406, reason = "Recalculation interval is < 0 "),
         @ApiError(code = 409, reason = "There already exists a definition by this name"),
         @ApiError(code = 406, reason = "Group creation failed")
     })
@@ -584,7 +588,7 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
         Response.ResponseBuilder builder = null;
 
-        if (definition.getName()==null||definition.getName().isEmpty()) {
+        if (definition.getName()==null||definition.getName().trim().isEmpty()) {
             builder = Response.status(Response.Status.NOT_ACCEPTABLE);
             builder.entity("No name for the definition given");
         }
@@ -594,13 +598,10 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
         GroupDefinition gd = new GroupDefinition(definition.getName());
         gd.setDescription(definition.getDescription());
-        List<String> expressionList = definition.getExpression();
-        StringBuilder sb = new StringBuilder();
-        for(String e : expressionList ) {
-            sb.append(e);
-            sb.append("\n");
+        addGroupDefinitionExpression(definition, gd);
+        if (definition.getRecalcInterval() < 0 ) {
+            throw new BadArgumentException("Recalculation interval must be >= 0");
         }
-        gd.setExpression(sb.toString());
         gd.setRecalculationInterval(definition.getRecalcInterval());
         gd.setRecursive(definition.isRecursive());
 
@@ -628,12 +629,46 @@ public class GroupHandlerBean extends AbstractRestBean  {
         return builder.build();
     }
 
+    private void addGroupDefinitionExpression(GroupDefinitionRest definition, GroupDefinition gd) {
+        boolean isEmpty = false;
+        List<String> expressionList = definition.getExpression();
+        if (expressionList.isEmpty()) {
+            isEmpty=true;
+        }
+        StringBuilder sb = new StringBuilder();
+        int countEmpty = 0;
+        for(String e : expressionList ) {
+            if (e==null) {
+                countEmpty++;
+                continue;
+            }
+            sb.append(e);
+            if (e.trim().isEmpty()) {
+                countEmpty++;
+            }
+            sb.append("\n");
+        }
+        if (countEmpty == expressionList.size()) {
+            isEmpty = true;
+        }
+        if (isEmpty) {
+            throw new BadArgumentException("The expression must not be empty");
+        }
+        gd.setExpression(sb.toString());
+    }
+
     @PUT
     @Path("/definition/{id}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
-    @ApiOperation("Update an existing GroupDefinition or recalculate it if the query param 'recalculate' is set to true")
+    @ApiOperation(value = "Update or recalculate an existing GroupDefinition",
+        notes = "If the query param 'recalculate' is set to true, the group with the passed id is recalculated. " +
+            "Otherwise the existing group will be updated with the passed definition. The expression in the " +
+            "definition must be empty. If the name is emtpy, the old name is kept. A recalcInterval" +
+            "of 0 means no recalculation.")
     @ApiErrors({
         @ApiError(code = 404, reason = "Group with the passed id does not exist"),
+        @ApiError(code = 406, reason = "Passed expression was empty"),
+        @ApiError(code = 406, reason = "Recalculation interval is < 0 "),
         @ApiError(code = 406, reason = "Group membership calculation failed")
     })
     public Response updateGroupDefinition(@ApiParam("Id fo the definition to update") @PathParam("id") int definitionId,
@@ -665,17 +700,14 @@ public class GroupHandlerBean extends AbstractRestBean  {
 
         // Not recalculation, but an update
 
-        if (!definition.getName().isEmpty())
+        if (!definition.getName().isEmpty()) {
             gd.setName(definition.getName());
-        gd.setDescription(definition.getDescription());
-        List<String> expressionList = definition.getExpression();
-        StringBuilder sb = new StringBuilder();
-        for(String e : expressionList ) {
-            sb.append(e);
-            sb.append("\n");
         }
-        gd.setExpression(sb.toString());
-
+        gd.setDescription(definition.getDescription());
+        addGroupDefinitionExpression(definition,gd);
+        if (definition.getRecalcInterval() < 0 ) {
+            throw new BadArgumentException("Recalculation interval must be >= 0");
+        }
         gd.setRecalculationInterval(definition.getRecalcInterval());
         gd.setRecursive(definition.isRecursive());
 

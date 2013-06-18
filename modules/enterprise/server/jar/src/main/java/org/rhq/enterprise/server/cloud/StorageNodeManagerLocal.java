@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.server.cloud;
 
-import java.util.Collection;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -33,11 +32,9 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface StorageNodeManagerLocal {
 
-    void scanForStorageNodes();
+    List<StorageNode> scanForStorageNodes();
 
     List<StorageNode> getStorageNodes();
-
-    void updateStorageNodeList(Collection<StorageNode> storageNodes);
 
     void linkResource(Resource resource);
 
@@ -64,4 +61,5 @@ public interface StorageNodeManagerLocal {
      * @return list of nodes
      */
     PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
+
 }

@@ -3,7 +3,7 @@
 # =============================================================================
 # RHQ Data Migration Script
 #
-# This file is used to migrate metric data from SQL server to the new RHQ storage Server on a
+# This file is used to migrate metric data from SQL server to the new RHQ storage server on a
 # UNIX platform.
 #
 # This script is customizable by setting the following environment variables:

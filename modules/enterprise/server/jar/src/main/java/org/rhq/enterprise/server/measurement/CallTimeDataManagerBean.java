@@ -216,6 +216,7 @@ public class CallTimeDataManagerBean implements CallTimeDataManagerLocal, CallTi
             criteria.addFilterAutoGroupParentResourceId(context.parentResourceId);
             criteria.addFilterAutoGroupResourceTypeId(context.resourceTypeId);
         }
+        criteria.setSupportsAddSortId(false);
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         String replacementSelectList = "" //

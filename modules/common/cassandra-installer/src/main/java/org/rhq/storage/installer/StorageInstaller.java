@@ -116,6 +116,10 @@ public class StorageInstaller {
 
     private String savedCachesDir = dirPrefix + "/rhq/storage/saved_caches";
 
+    private String defaultHeapSize = "512M";
+
+    private String defaultHeapNewSize = "128M";
+
     public StorageInstaller() {
         String basedir = System.getProperty("rhq.server.basedir");
         serverBasedir = new File(basedir);
@@ -173,10 +177,12 @@ public class StorageInstaller {
             + "The default directory will be " + storageBasedir);
 
         Option heapSizeOption = new Option(null, "heap-size", true, "The value to use for both the min and max heap. " +
-            "This value is passed directly to the -Xms and -Xmx options of the Java executable.");
+            "This value is passed directly to the -Xms and -Xmx options of the Java executable. Defaults to " +
+            defaultHeapSize);
 
         Option heapNewSizeOption = new Option(null, "heap-new-size", true, "The value to use for the new generation " +
-            "of the heap. This value is passed directly to the -Xmn option of the Java executable");
+            "of the heap. This value is passed directly to the -Xmn option of the Java executable. Defaults to " +
+            defaultHeapNewSize);
 
         Option stackSizeOption = new Option(null, "stack-size", true, "The value to use for the thread stack size. " +
             "This value is passed directly to the -Xss option of the Java executable.");
@@ -332,13 +338,8 @@ public class StorageInstaller {
 
                 // TODO set defaults for read/write/range timeouts
 
-                if (cmdLine.hasOption("heap-size")) {
-                    deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size"));
-                }
-
-                if (cmdLine.hasOption("heap-new-size")) {
-                    deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size"));
-                }
+                deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size", defaultHeapSize));
+                deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size", defaultHeapNewSize));
 
                 if (cmdLine.hasOption("stack-size")) {
                     deploymentOptions.setStackSize(cmdLine.getOptionValue("stack-size"));

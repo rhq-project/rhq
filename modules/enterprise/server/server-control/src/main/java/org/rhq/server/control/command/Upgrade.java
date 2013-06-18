@@ -91,18 +91,26 @@ public class Upgrade extends AbstractInstall {
                 null,
                 STORAGE_DATA_ROOT_DIR,
                 true,
-                "You can use this option to use a different base directory for all the data directories created by the storage node e.g. "
-                    + "if the default directory is not writable for the current user (which is under /var/lib on Linux). "
-                    + "This is only used if the storage node needs to be newly installed during the upgrade process; otherwise, "
-                    + "an error will result if you specify this option. ")
+                "This option is valid only when upgrading from a pre 4.8 system. Use this option to specify a non-default base "
+                    + "directory for the data directories created by the storage node. For example, if the default directory is "
+                    + "not writable for the current user (/var/lib on Linux) or if you simply prefer a different location. ")
+            .addOption(
+                null,
+                STORAGE_CONFIG_OPTION,
+                true,
+                "This option is valid only when upgrading from a pre 4.8 system. Use this option to specify non-default storage "
+                    + "installer options. It is the path to a properties file with keys that correspond to option names of the "
+                    + "storage installer. Each property will be translated into an option that is passed to the storage "
+                    + "installer. See example.storage.properties for examples.")
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,
                 true,
-                "By default you ned to migrate metrics from a pre RHQ 4.8 system. The upgrade process can trigger this or "
-                    + "give you an estimate on the duration. If you want to have fine control over the process, please run the "
-                    + "migrator on the command line. Options are none (do nothing), estimate (estimate the migration time only), "
-                    + "print-command (print the command line for a manual run) , do-it (run the migration)");
+                "This option is valid only when upgrading from a pre 4.8 system. The existing metric data needs to migrate to "
+                    + "the metric storage.  The upgrade process can trigger this or give you an estimate on the duration. If you want "
+                    + "to have fine control over the process, please run the migrator on the command line. Options are none (do "
+                    + "nothing), estimate (estimate the migration time only), print-command (print the command line for a manual run), "
+                    + "do-it (run the migration)");
 
         options.getOption(AGENT_AUTOSTART_OPTION).setOptionalArg(true);
     }
@@ -550,9 +558,10 @@ public class Upgrade extends AbstractInstall {
             }
 
             String absPath = propertyValue.replace("${jboss.server.config.dir}", oldServerConfigDir.getAbsolutePath());
-            absPath = absPath.replace("${jboss.server.home.dir}/conf", oldServerConfigDir.getAbsolutePath());
+            absPath = absPath.replace("${jboss.server.home.dir}/conf",
+                useForwardSlash(oldServerConfigDir.getAbsolutePath()));
             if (absPath.startsWith("conf/")) {
-                absPath = absPath.replaceFirst("conf", oldServerConfigDir.getAbsolutePath());
+                absPath = absPath.replaceFirst("conf", useForwardSlash(oldServerConfigDir.getAbsolutePath()));
             }
             referredFile = new File(absPath);
         }
@@ -577,6 +586,10 @@ public class Upgrade extends AbstractInstall {
         properties.setProperty(propertyName, "${jboss.server.config.dir}/" + newFile.getName());
 
         return;
+    }
+
+    private String useForwardSlash(String path) {
+        return (null != path) ? path.replace('\\', '/') : null;
     }
 
     private void upgradeAgent(CommandLine rhqctlCommandLine) throws IOException {
@@ -664,7 +677,18 @@ public class Upgrade extends AbstractInstall {
 
         if (isRhq48OrLater(commandLine)) {
             if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
-                errors.add("You cannot use the option --" + STORAGE_DATA_ROOT_DIR + " for your installation.");
+                errors.add("The option --" + STORAGE_DATA_ROOT_DIR
+                    + " is valid only for upgrades from pre RHQ 4.8 systems.");
+            }
+
+            if (commandLine.hasOption(STORAGE_CONFIG_OPTION)) {
+                errors.add("The option --" + STORAGE_CONFIG_OPTION
+                    + " is valid only for upgrades from pre RHQ 4.8 systems.");
+            }
+
+            if (commandLine.hasOption(RUN_DATA_MIGRATION)) {
+                errors.add("The option --" + RUN_DATA_MIGRATION
+                    + " is valid only for upgrades from pre RHQ 4.8 systems.");
             }
         }
 

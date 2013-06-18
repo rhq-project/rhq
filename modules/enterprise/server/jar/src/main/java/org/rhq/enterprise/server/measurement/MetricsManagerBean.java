@@ -36,7 +36,7 @@ import javax.ejb.TransactionAttributeType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
-import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.RawNumericMetric;

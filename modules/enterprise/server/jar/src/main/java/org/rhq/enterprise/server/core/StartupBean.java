@@ -28,7 +28,6 @@ import java.sql.Connection;
 import java.util.Date;
 import java.util.List;
 import java.util.Properties;
-import java.util.UUID;
 
 import javax.annotation.Resource;
 import javax.ejb.ConcurrencyManagement;
@@ -49,7 +48,6 @@ import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.JobDataMap;
 import org.quartz.SchedulerException;
 
 import org.rhq.core.db.DatabaseTypeFactory;
@@ -67,8 +65,7 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cassandra.CassandraClusterHeartBeatJob;
-import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -93,6 +90,7 @@ import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
+import org.rhq.enterprise.server.storage.StorageClusterHeartBeatJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
@@ -145,6 +143,9 @@ public class StartupBean implements StartupLocal {
 
     @EJB
     private StorageClientManagerBean storageClientManager;
+
+    @EJB
+    private StorageClusterHeartBeatJob storageClusterHeartBeatJob;
 
     @Resource
     private TimerService timerService; // needed to schedule our plugin scanner
@@ -450,6 +451,7 @@ public class StartupBean implements StartupLocal {
         }
 
         storageClientManager.init();
+        storageClusterHeartBeatJob.scheduleJob();
     }
 
     /**
@@ -665,31 +667,7 @@ public class StartupBean implements StartupLocal {
             log.error("Cannot create alert availability duration job.", e);
         }
 
-        scheduleCassandraClusterHeartBeatJob();
-
         return;
-    }
-
-    private void scheduleCassandraClusterHeartBeatJob() {
-        String seeds = System.getProperty("rhq.cassandra.seeds");
-        if (seeds != null) {
-            seeds = seeds.replaceAll(";", ",");
-        }
-        String jobTrigger = "CassandraClusterHeartBeatTrigger - " + UUID.randomUUID().toString();
-        String jobGroup = CassandraClusterHeartBeatJob.JOB_NAME + "Group";
-
-        JobDataMap jobDataMap = new JobDataMap();
-        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CONNECTION_TIMEOUT, "100");
-        jobDataMap.put(CassandraClusterHeartBeatJob.KEY_CASSANDRA_HOSTS, seeds);
-
-        try {
-            schedulerBean.scheduleRepeatingJob(CassandraClusterHeartBeatJob.JOB_NAME, jobGroup, jobDataMap,
-                CassandraClusterHeartBeatJob.class, true, false, 3000, 1000 * 60);
-        } catch (SchedulerException e) {
-            String msg = "Unable to schedule " + CassandraClusterHeartBeatJob.class.getSimpleName() + " job. The "
-                + "server will reamin in maintenance mode without a manual override.";
-            log.error(msg, e);
-        }
     }
 
     /**

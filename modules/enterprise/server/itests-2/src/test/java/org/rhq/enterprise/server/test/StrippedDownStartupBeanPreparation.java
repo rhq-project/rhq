@@ -69,7 +69,7 @@ public class StrippedDownStartupBeanPreparation {
     }
 
     /**
-     * The storage client initialization performed by {@link org.rhq.enterprise.server.cassandra.StorageClientManagerBean#init()}
+     * The storage client initialization performed by {@link org.rhq.enterprise.server.storage.StorageClientManagerBean#init()}
      * requires having a server entity in the database which will be the case with a regular deployment. This method
      * persists a server before any tests execute. If the server entity does not exist or cannot be loaded, then the
      * storage client will not initialize properly and any tests that depend on the storage client will fail.

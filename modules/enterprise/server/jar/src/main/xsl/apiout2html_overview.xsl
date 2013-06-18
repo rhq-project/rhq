@@ -9,7 +9,7 @@
   <xsl:template match="/api">
     <html>
       <head>
-        <title>RHQ REST-Api documentation</title>
+        <title>RHQ REST-Api overview</title>
         <style type="text/css">
           h2 {background-color:#ADD8E6   }
           h3 {background-color:#C0C0C0   }
@@ -71,14 +71,8 @@
       </xsl:if>
     </xsl:element>
     <em><xsl:value-of select="@description"/></em>
-    <p/>
-    Defining class: <xsl:value-of select="@name"/><br/>
     <br/>
-    <xsl:call-template name="print-created-media-types">
-      <xsl:with-param name="produces" select="produces"/>
-    </xsl:call-template>
     <xsl:if test="method">
-      Methods:<br/>
       <xsl:apply-templates>
         <xsl:sort select="@path"/>
       </xsl:apply-templates>
@@ -92,82 +86,16 @@
     </h3>
     <em><xsl:value-of select="@description"/></em>
     <br/>
-    <xsl:if test="notes">
-      <h4>Notes</h4>
-      <xsl:choose>
-        <xsl:when test="notes/xml">
-          <!-- We should perhaps not copy them literally, but do some translation from docbook to html -->
-          <xsl:copy-of select="notes/xml/*"/>
-        </xsl:when>
-        <xsl:otherwise>
-          <xsl:value-of select="notes"/>
-        </xsl:otherwise>
-      </xsl:choose>
-    </xsl:if>
 
-    <xsl:if test="not(@gzip = '')">
-      <p><em>Supports returning a gzip'ed Content-Encoding</em></p>
-    </xsl:if>
-    <xsl:choose>
-    <xsl:when test="param">
-    Parameters:
-    <table>
-        <tr><th>Name</th><th>P.Type</th><th>Description</th><th>Required</th><th>Type</th><th>Allowed values</th><th>Default value</th></tr>
-      <xsl:apply-templates select="param"/>
-    </table>
-    </xsl:when>
-      <xsl:otherwise>
-        This method has no parameters
-      </xsl:otherwise>
-    </xsl:choose>
-    <br/>
-    Return type: <xsl:value-of select="@returnType"/>
-    <p/>
-    <xsl:if test="error">
-      Error codes:<br/>
-      <table>
-          <tr>
-            <th>Code</th><th>Reason</th>
-          </tr>
-        <xsl:apply-templates select="error"/>
-      </table>
-    </xsl:if>
   </xsl:template>
 
   <xsl:template match="param">
-    <tr>
-      <td><xsl:value-of select="@name"/></td>
-      <td><xsl:value-of select="@paramType"/></td>
-      <td><xsl:value-of select="@description"/></td>
-      <td><xsl:value-of select="@required"/></td>
-      <td><xsl:value-of select="@type"/></td>
-      <td><xsl:value-of select="@allowableValues"/></td>
-      <td><xsl:value-of select="@defaultValue"/></td>
-    </tr>
   </xsl:template>
 
   <xsl:template match="error">
-    <tr>
-        <td><xsl:value-of select="@code"/></td>
-        <td><xsl:value-of select="@reason"/></td>
-    </tr>
   </xsl:template>
 
-  <!-- emit media types produced -->
-  <xsl:template name="print-created-media-types">
-    <xsl:param name="produces"/>
-
-    <xsl:if test="$produces">
-      <b>Produces:</b>
-      <ul>
-      <xsl:for-each select="$produces/type">
-        <li>
-        <xsl:value-of select="."/>
-        </li>
-      </xsl:for-each>
-      </ul>
-  </xsl:if>
-
+  <xsl:template match="produces">
   </xsl:template>
 
 </xsl:stylesheet>

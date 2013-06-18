@@ -26,6 +26,7 @@
       <modules>
         <module>xml-schemas</module>
         <module>server-metrics</module>
+        <module>data-migration</module>
         <module>jar</module>
         <module>sars</module>
         <module>plugins</module>

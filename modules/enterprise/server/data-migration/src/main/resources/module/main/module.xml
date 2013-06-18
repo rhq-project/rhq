@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<module xmlns="urn:jboss:module:1.0" name="${moduleName}">
+  <main-class name="org.rhq.server.metrics.migrator.DataMigratorRunner"/>
+
+  <resources>
+    <resource-root path="${project.build.finalName}.jar"/>
+    <resource-root path="rhq-server-metrics-${project.version}.jar"/>
+    <resource-root path="joda-time-${joda-time.version}.jar"/>
+    <resource-root path="hibernate-core-${hibernate.version}.jar"/>
+    <resource-root path="hibernate-entitymanager-${hibernate.version}.jar"/>
+    <resource-root path="hibernate-jpa-2.0-api-${hibernate-jpa-2.0-api.version}.jar"/>
+  </resources>
+
+  <dependencies>
+    <module name="javax.transaction.api"/>
+    <module name="org.rhq.postgres"/>
+    <module name="javax.persistence.api"/>
+    <module name="javax.api"/>
+    <module name="org.dom4j"/>
+    <module name="org.apache.commons.logging"/>
+    <module name="org.apache.commons.cli"/>
+    <module name="org.apache.commons.lang"/>
+    <module name="org.apache.log4j"/>
+    <module name="sun.jdk"/>
+    <module name="org.jboss.logmanager" services="import"/>
+    <module name="org.jboss.logging"/>
+    <module name="org.rhq.oracle" optional="true" />
+    <module name="com.datastax.cassandra.cassandra-driver-core"/>
+    <module name="org.hibernate.commons-annotations" services="import"/>
+  </dependencies>
+</module>

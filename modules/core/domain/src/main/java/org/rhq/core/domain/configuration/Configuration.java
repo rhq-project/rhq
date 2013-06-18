@@ -25,7 +25,6 @@ package org.rhq.core.domain.configuration;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -493,6 +492,12 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
         return propertiesProxy;
     }
 
+    /**
+     * This method removes the existing set of properties and adds the properties
+     * that got passed as argument to the list of properties.
+     *
+     * @param properties new set of properties
+     */
     public void setProperties(Collection<Property> properties) {
         //propertiesProxy is a mere view of the properties map.
         //thus, if one obtained an instance of propertiesProxy from the #getProperties() method and then tried to
@@ -505,9 +510,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
             return;
         }
 
-        this.properties = new HashMap<String, Property>();
+        this.properties.clear();
         for (Property p : properties) {
-            this.properties.put(p.getName(), p);
+            this.put(p);
         }
     }
 

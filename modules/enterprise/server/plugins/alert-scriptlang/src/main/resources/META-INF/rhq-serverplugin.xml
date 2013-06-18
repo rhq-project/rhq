@@ -25,7 +25,6 @@
         <c:simple-property name="scriptfolder" type="file" default="/scripts"/>
     </serverplugin:plugin-configuration>
 -->
-    
     <!-- How does this sender show up in drop downs etc -->
     <short-name>Scriptlang</short-name>
 

@@ -37,6 +37,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.clientapi.agent.metadata.ConfigurationMetadataParser;
+import org.rhq.core.clientapi.descriptor.configuration.ConfigurationDescriptor;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDefinitionContext;
 import org.rhq.core.domain.alert.notification.AlertNotification;
@@ -88,7 +89,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * AlertDefinitionManager.updateAlertDefinition() to perform the actual modifications and persistence.
      * If we use an attached AlertDefinity entity at this layer, modify the set of notifications, then call
      * into AlertDefinitionManager.updateAlertDefinition() which executes in a new transaction, the work will
-     * actually be performed twice - once at each layer.  This would result in either duplicate notifications 
+     * actually be performed twice - once at each layer.  This would result in either duplicate notifications
      * (in the case of adding notifications) or Hibernate exceptions (in the case of removing notifications,
      * which are attempted twice for each being removed).
      *
@@ -96,7 +97,7 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
      * the Hibernate session, a better method is to just execute the add/removal logic for the AlertNotification(s)
      * outside a transaction and then call AlertDefinitionManager.updateAlertNotification() which starts a new
      * transaction to do all of its logic.
-     * 
+     *
      * Note: for AlertNotification updates to work properly, alertDefinitionManager.getAlertDefinitionById() must
      *        eagerly load the List<AlertNotification> on the returned AlertDefinition
      */
@@ -134,10 +135,10 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
     public void updateAlertNotification(Subject subject, int alertDefinitionId, AlertNotification notification) {
         AlertDefinition alertDefinition = getDetachedAlertDefinition(alertDefinitionId); // permissions check first
 
-        /* 
+        /*
          * NULL notifications used to perform cascade updates from template and group level for alert senders
          * that leverage custom UIs, which have a completely external methodology for loading/saving the data
-         * into and out of configuration object(s) associated with an AlertNotification.  
+         * into and out of configuration object(s) associated with an AlertNotification.
          */
         if (notification != null) {
             // remove then add is a cheap way of performing an update
@@ -209,10 +210,17 @@ public class AlertNotificationManagerBean implements AlertNotificationManagerLoc
             AlertPluginDescriptorType descriptor = (AlertPluginDescriptorType) serverPluginsBean
                 .getServerPluginDescriptor(key);
             //ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("pc:" + pluginName, descriptor.getPluginConfiguration());
-            ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("alerts:"
-                + pluginName, descriptor.getAlertConfiguration());
+            ConfigurationDescriptor alertConfiguration = descriptor.getAlertConfiguration();
+            if (alertConfiguration==null || alertConfiguration.getConfigurationProperty()== null || alertConfiguration.getConfigurationProperty().isEmpty()) {
+                // User either provided no <alert-configuration> or an empty one
+                return new ConfigurationDefinition("alerts:"+pluginName,"No properties given");
+            }
+            else {
+                ConfigurationDefinition pluginConfigurationDefinition = ConfigurationMetadataParser.parse("alerts:"
+                    + pluginName, alertConfiguration);
 
-            return pluginConfigurationDefinition;
+                return pluginConfigurationDefinition;
+            }
         } catch (Exception e) {
             LOG.error(e);
             return null;

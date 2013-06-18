@@ -91,14 +91,14 @@ public class Upgrade extends AbstractInstall {
                 null,
                 STORAGE_DATA_ROOT_DIR,
                 true,
-                "This option is valid only when upgrading from a pre 4.8 system. Use this option to specify a non-default base "
+                "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify a non-default base "
                     + "directory for the data directories created by the storage node. For example, if the default directory is "
                     + "not writable for the current user (/var/lib on Linux) or if you simply prefer a different location. ")
             .addOption(
                 null,
                 STORAGE_CONFIG_OPTION,
                 true,
-                "This option is valid only when upgrading from a pre 4.8 system. Use this option to specify non-default storage "
+                "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify non-default storage "
                     + "installer options. It is the path to a properties file with keys that correspond to option names of the "
                     + "storage installer. Each property will be translated into an option that is passed to the storage "
                     + "installer. See example.storage.properties for examples.")
@@ -106,7 +106,7 @@ public class Upgrade extends AbstractInstall {
                 null,
                 RUN_DATA_MIGRATION,
                 true,
-                "This option is valid only when upgrading from a pre 4.8 system. The existing metric data needs to migrate to "
+                "This option is valid only when upgrading from older systems that did not have storage nodes. The existing metric data needs to migrate to "
                     + "the metric storage.  The upgrade process can trigger this or give you an estimate on the duration. If you want "
                     + "to have fine control over the process, please run the migrator on the command line. Options are none (do "
                     + "nothing), estimate (estimate the migration time only), print-command (print the command line for a manual run), "
@@ -678,17 +678,17 @@ public class Upgrade extends AbstractInstall {
         if (isRhq48OrLater(commandLine)) {
             if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
                 errors.add("The option --" + STORAGE_DATA_ROOT_DIR
-                    + " is valid only for upgrades from pre RHQ 4.8 systems.");
+                    + " is valid only for upgrades from older systems that did not have storage nodes.");
             }
 
             if (commandLine.hasOption(STORAGE_CONFIG_OPTION)) {
                 errors.add("The option --" + STORAGE_CONFIG_OPTION
-                    + " is valid only for upgrades from pre RHQ 4.8 systems.");
+                    + " is valid only for upgrades from older systems that did not have storage nodes.");
             }
 
             if (commandLine.hasOption(RUN_DATA_MIGRATION)) {
                 errors.add("The option --" + RUN_DATA_MIGRATION
-                    + " is valid only for upgrades from pre RHQ 4.8 systems.");
+                    + " is valid only for upgrades from older systems that did not have storage nodes.");
             }
         }
 
@@ -727,7 +727,8 @@ public class Upgrade extends AbstractInstall {
     }
 
     private void printDataMigrationNotice() {
-        log.info("\n================\n" + "If this was an upgrade from a RHQ version before 4.8,\n "
+        log.info("\n================\n"
+            + "If this was an upgrade from older systems that did not have storage nodes,\n "
             + "you need to run the data migration job to transfer stored (historic)\n"
             + "metrics data from the relational database into the new storage.\n"
             + "Until the migration has run, that historic data is not available \n" + "in e.g. the charting views.\n\n"

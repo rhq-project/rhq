@@ -183,7 +183,7 @@ public class AbstractManager {
             URL resourceFolderURL = this.getClass().getClassLoader().getResource(folder);
 
             if (resourceFolderURL.getProtocol().equals("file")) {
-                stream = this.getClass().getResourceAsStream(folder);
+                stream = this.getClass().getClassLoader().getResourceAsStream(folder);
                 BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
 
                 String updateFile;

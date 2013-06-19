@@ -24,7 +24,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceGroupDefinitionCriteria;
 import org.rhq.core.domain.resource.group.GroupDefinition;
 import org.rhq.core.domain.resource.group.InvalidExpressionException;
-import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.resource.group.ResourceGroupDeleteException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupUpdateException;
@@ -44,8 +43,8 @@ import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefini
 public interface GroupDefinitionManagerRemote {
 
     /**
-     * Creates a new group definiton.
-     * The subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * <p>Creates a new group definition.</p>
+     * <p>The subject needs to have <code>MANAGE_INVENTORY</code> permission.</p>
      * 
      * @param subject the user who is asking create the group definition
      * @param newGroupDefinition the object defining the group definition
@@ -57,8 +56,8 @@ public interface GroupDefinitionManagerRemote {
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionCreateException;
 
     /**
-     * Fetches the group definitions based on provided criteria.
-     * The subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * <p>Fetches the group definitions based on provided criteria.</p>
+     * <p>The subject needs to have <code>MANAGE_INVENTORY</code> permission.</p>
      * 
      * @param subject the user who is asking to find the group definitions
      * @param criteria the criteria
@@ -67,8 +66,8 @@ public interface GroupDefinitionManagerRemote {
     PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject, ResourceGroupDefinitionCriteria criteria);
 
     /**
-     * Deletes the given group definition.
-     * The subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * <p>Deletes the given group definition.</p>
+     * <p>The subject needs to have <code>MANAGE_INVENTORY</code> permission.</p>
      * 
      * @param subject the user who is asking to remove the group definition
      * @param groupDefinitionId the id of a group definition to be deleted
@@ -79,8 +78,8 @@ public interface GroupDefinitionManagerRemote {
         GroupDefinitionDeleteException;
 
     /**
-     * Updates the given group definition.
-     * The subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * <p>Updates the given group definition.</p>
+     * <p>The subject needs to have <code>MANAGE_INVENTORY</code> permission.</p>
      * 
      * @param subject the user who is asking to update the group definition
      * @param updated the object defining the group definition to be changed (based on its id)
@@ -95,8 +94,8 @@ public interface GroupDefinitionManagerRemote {
         ResourceGroupUpdateException;
 
     /**
-     * Explicitly recalculates the group membership, depending on the GroupDefinition's expression.
-     * The subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     * <p>Explicitly recalculates the group membership, depending on the GroupDefinition's expression.</p>
+     * <p>The subject needs to have <code>MANAGE_INVENTORY</code> permission.</p>
      * 
      * @param subject the user who is asking to recalculate the group membership
      * @param groupDefinitionId the id of a group definition to be recalculated

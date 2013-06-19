@@ -413,6 +413,7 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         }
     }
 
+    @RequiredPermission(Permission.MANAGE_INVENTORY)
     public PageList<GroupDefinition> findGroupDefinitionsByCriteria(Subject subject,
         ResourceGroupDefinitionCriteria criteria) {
         if (authorizationManager.isInventoryManager(subject) == false) {

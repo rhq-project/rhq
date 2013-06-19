@@ -69,6 +69,8 @@ public class AbstractManager {
     private static final String SCHEMA_EXISTS_QUERY = "SELECT * FROM system.schema_keyspaces WHERE keyspace_name = 'rhq';";
     private static final String VERSION_COLUMNFAMILY_EXISTS_QUERY = "SELECT * from system.schema_columnfamilies WHERE keyspace_name='rhq' AND columnfamily_name='schema_version';";
     private static final String VERSION_QUERY = "SELECT version FROM rhq.schema_version";
+    private static final String REPLICATION_FACTOR_QUERY = "SELECT strategy_options FROM system.schema_keyspaces where keyspace_name='rhq';";
+
 
 
     private final Log log = LogFactory.getLog(AbstractManager.class);
@@ -247,5 +249,27 @@ public class AbstractManager {
     protected void shutdown() {
         log.info("Shutting down connections");
         session.getCluster().shutdown();
+    }
+
+    protected int getReplicationFactor() {
+        int replicationFactor = 1;
+        try {
+            String replicationFactorString = "replication_factor\"";
+
+            ResultSet resultSet = session.execute(REPLICATION_FACTOR_QUERY);
+            Row row = resultSet.one();
+
+            String resultString = row.getString(0);
+            resultString = resultString.substring(resultString.indexOf(replicationFactorString)
+                + replicationFactorString.length());
+            resultString = resultString.substring(resultString.indexOf('"') + 1);
+            resultString = resultString.substring(0, resultString.indexOf('"'));
+
+            replicationFactor = Integer.parseInt(resultString);
+        } catch (Exception e) {
+            log.error(e);
+        }
+
+        return replicationFactor;
     }
 }

@@ -27,6 +27,7 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
@@ -41,6 +42,7 @@ import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -67,6 +69,8 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
     private final static String UPDATE_SEEDS_LIST = "updateSeedsList";
     private final static String SEEDS_LIST = "seedsList";
     private final static String SUCCEED_PROPERTY = "succeed";
+    private static final String USERNAME_PROP = "rhq.cassandra.username";
+    private static final String PASSWORD_PROP = "rhq.cassandra.password";
 
     @Override
     public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
@@ -80,14 +84,36 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
         //3. Wait for the all storage nodes to be part of the same cluster
         storageNodes = waitForClustering(storageNodes);
 
-        //4. Run repair operation on all the storage nodes
-        for (StorageNode storageNode : storageNodes) {
-            Resource resource = storageNode.getResource();
-            runNodeMaintenanceOperation(resource);
+        //4. Update topology
+        boolean topologyUpdated = updateTopology(storageNodes);
+
+        //5. Run repair operation on all the storage nodes if topology(replication factor was updated)
+        if (topologyUpdated) {
+            List<String> seedList = new ArrayList<String>();
+            for (StorageNode storageNode : storageNodes) {
+                seedList.add(storageNode.getAddress());
+            }
+
+            for (StorageNode storageNode : storageNodes) {
+                Resource resource = storageNode.getResource();
+                runNodeMaintenance(resource, seedList);
+            }
         }
     }
 
-    @SuppressWarnings("unchecked")
+    private boolean updateTopology(List<StorageNode> storageNodes) throws JobExecutionException {
+        String username = getRequiredStorageProperty(USERNAME_PROP);
+        String password = getRequiredStorageProperty(PASSWORD_PROP);
+        SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
+        try{
+            return schemaManager.updateTopology();
+        } catch (Exception e) {
+            log.error(e);
+        }
+
+        return false;
+    }
+
     private List<StorageNode> waitForClustering(List<StorageNode> storageNodes) {
         List<String> existingEndpoints = new ArrayList<String>();
         for (StorageNode storageNode : storageNodes) {
@@ -108,14 +134,23 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
                     List<Resource> childResources = LookupUtil.getResourceManager().findResourcesByCriteria(
                         LookupUtil.getSubjectManager().getOverlord(), c);
 
+
+
                     for (Resource childResource : childResources) {
                         if (STORAGE_SERVICE.equals(childResource.getName())) {
-                            PropertyList propertyList = childResource.getResourceConfiguration().getList(
-                                LOAD_MAP_PROPERTY);
-                            List<Property> actualList = propertyList.getList();
-                            for (Property property : actualList) {
-                                PropertyMap map = (PropertyMap) property;
-                                endpoints.add(map.get(ENDPOINT_PROPERTY).toString());
+                            try {
+                                PropertyList propertyList = LookupUtil
+                                    .getConfigurationManager()
+                                    .getLiveResourceConfiguration(LookupUtil.getSubjectManager().getOverlord(),
+                                        childResource.getId(), true).getList(LOAD_MAP_PROPERTY);
+
+                                List<Property> actualList = propertyList.getList();
+                                for (Property property : actualList) {
+                                    PropertyMap map = (PropertyMap) property;
+                                    endpoints.add(map.get(ENDPOINT_PROPERTY).toString());
+                                }
+                            } catch (Exception e) {
+                                log.error("Error fetching live configuration for resource " + resource.getId());
                             }
 
                             break;
@@ -149,7 +184,7 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
         return storageNodes;
     }
 
-    private void runNodeMaintenanceOperation(Resource resource) {
+    private void runNodeMaintenance(Resource resource, List<String> seedList) {
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
         try {
@@ -161,8 +196,14 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
 
             List<Property> properties = new ArrayList<Property>();
             properties.add(new PropertySimple(RUN_REPAIR_PROPERTY, Boolean.TRUE));
-            properties.add(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.FALSE));
-            properties.add(new PropertyList(SEEDS_LIST));
+            properties.add(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
+
+            PropertyList seedListProperty = new PropertyList(SEEDS_LIST);
+            for (String seed : seedList) {
+                seedListProperty.add(new PropertySimple("seed", seed));
+            }
+            properties.add(seedListProperty);
+
             Configuration config = new Configuration();
             config.setProperties(properties);
             newSchedule.setParameters(config);
@@ -243,5 +284,15 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
             }
             iteration++;
         }
+    }
+
+    private String getRequiredStorageProperty(String property) throws JobExecutionException {
+        String value = System.getProperty(property);
+        if (StringUtil.isEmpty(property)) {
+            throw new JobExecutionException("The system property [" + property + "] is not set. The RHQ "
+                + "server will not be able connect to the RHQ storage node(s). This property should be defined "
+                + "in rhq-server.properties.");
+        }
+        return value;
     }
 }

@@ -69,9 +69,9 @@ public class SchemaManager {
         version.drop();
     }
 
-    public void updateTopology() throws Exception {
+    public boolean updateTopology() throws Exception {
         TopologyManager topology = new TopologyManager(username, password, nodes);
-        topology.updateTopology();
+        return topology.updateTopology();
     }
 
     private static List<StorageNode> parseNodeInformation(String... nodes) {
@@ -97,7 +97,7 @@ public class SchemaManager {
             if (args.length < 4) {
                 System.out.println("Usage      : command username password nodes...");
                 System.out.println("\n");
-                System.out.println("Commands   : install | drop ");
+                System.out.println("Commands   : install | drop | topology");
                 System.out.println("Node format: hostname|thriftPort|nativeTransportPort");
 
                 return;

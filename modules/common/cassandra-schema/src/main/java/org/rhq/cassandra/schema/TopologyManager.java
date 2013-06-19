@@ -64,26 +64,37 @@ public class TopologyManager extends AbstractManager {
         super(username, password, nodes);
     }
 
-    public void updateTopology() throws Exception {
+    public boolean updateTopology() throws Exception {
+        boolean result = false;
+
         initCluster();
         if (schemaExists()) {
             log.info("Applying topology updates...");
-            this.updateReplicationFactor(nodes.size());
+            result = this.updateReplicationFactor(nodes.size());
             this.updateGCGrace(nodes.size());
         } else {
             log.info("Topology updates cannot be applied because the schema is not installed.");
         }
         shutdown();
+
+        return result;
     }
 
     private boolean updateReplicationFactor(int numberOfNodes) throws Exception {
         log.info("Starting to execute " + Task.UpdateReplicationFactor + " task.");
 
         int replicationFactor = 1;
-        if (numberOfNodes < 4) {
-            replicationFactor = numberOfNodes;
-        } else {
+
+        if (numberOfNodes == 2) {
+            replicationFactor = 2;
+        } else if (numberOfNodes == 3) {
+            replicationFactor = 2;
+        } else if (numberOfNodes > 3) {
             replicationFactor = 3;
+        }
+
+        if (getReplicationFactor() == replicationFactor) {
+            return false;
         }
 
         log.info("Applying file " + Task.UpdateReplicationFactor.getFile() + " for " + Task.UpdateReplicationFactor

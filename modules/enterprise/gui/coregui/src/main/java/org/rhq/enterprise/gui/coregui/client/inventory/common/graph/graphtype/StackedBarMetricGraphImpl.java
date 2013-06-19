@@ -118,7 +118,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         width = 250;
                         xTicks = 3;
                         xTickSubDivide = 2;
-                        chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length - 1);
+                        chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length);
                     }
                     else {
                         console.log("Using Large Charts Profile");

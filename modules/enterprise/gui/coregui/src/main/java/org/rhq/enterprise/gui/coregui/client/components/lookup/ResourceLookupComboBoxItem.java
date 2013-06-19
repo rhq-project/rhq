@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -79,6 +79,7 @@ public class ResourceLookupComboBoxItem extends ComboBoxItem {
         setPickListWidth(800);
         setTextMatchStyle(TextMatchStyle.SUBSTRING);
         setCompleteOnTab(true);
+        setAddUnknownValues(false);
 
     }
 }

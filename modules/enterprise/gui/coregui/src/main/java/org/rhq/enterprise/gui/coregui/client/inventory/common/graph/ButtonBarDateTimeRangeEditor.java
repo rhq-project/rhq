@@ -33,7 +33,6 @@ import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.DateItem;
-import com.smartgwt.client.widgets.form.fields.DateTimeItem;
 import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
 import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.layout.HLayout;
@@ -42,7 +41,6 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -61,7 +59,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     static final int BUTTON_WIDTH = 28;
 
     private MeasurementUserPreferences measurementUserPreferences;
-    private AbstractD3GraphListView d3GraphListView;
+    private RedrawGraphs d3GraphListView;
     private static final Messages MSG = CoreGUI.getMessages();
     private Label dateRangeLabel;
     private static final DateTimeFormat fmt = DateTimeFormat.getFormat(MSG.common_buttonbar_datetime_format());
@@ -70,7 +68,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     final private ButtonBarDateTimeRangeEditor self;
 
     public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
-        AbstractD3GraphListView d3GraphListView) {
+        RedrawGraphs d3GraphListView) {
         this.self = this;
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
@@ -246,11 +244,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }
 
     public class CustomDateRangeWindow extends Window {
-
-        public CustomDateRangeWindow(String title, String windowTitle,
-            final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor) {
-            new CustomDateRangeWindow(title, windowTitle, buttonBarDateTimeRangeEditor, new Date(), new Date());
-        }
 
         public CustomDateRangeWindow(String title, String windowTitle,
             final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor, Date startTime, Date endTime) {

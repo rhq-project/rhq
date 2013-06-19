@@ -113,7 +113,6 @@ public class D3GraphListView extends AbstractD3GraphListView {
     }
 
     private void commonConstructorSettings() {
-        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
         setOverflow(Overflow.HIDDEN);
     }
 
@@ -133,11 +132,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
         if (showAvailabilityGraph) {
             availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));
-            // first step in 2 step to create d3 chart
-            // create a placeholder for avail graph
-            availabilityGraph.createGraphMarker();
             addMember(availabilityGraph);
-
         }
 
         vLayout = new VLayout();

@@ -255,7 +255,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             setIsModal(true);
             setShowModalMask(true);
             setWidth(450);
-            setHeight(300);
+            setHeight(340);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();
@@ -281,7 +281,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             this.addItem(form);
 
             HLayout buttonHLayout = new HLayout();
-            buttonHLayout.setMargin(15);
+            buttonHLayout.setMargin(75);
             buttonHLayout.setMembersMargin(20);
             IButton cancelButton = new IButton(MSG.common_buttonbar_custom_cancel());
             cancelButton.addClickHandler(new ClickHandler() {

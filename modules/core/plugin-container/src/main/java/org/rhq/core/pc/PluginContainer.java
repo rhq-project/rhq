@@ -164,7 +164,7 @@ public class PluginContainer {
     }
 
     private PluginContainer() {
-        // for why we need to do this, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6727821 
+        // for why we need to do this, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6727821
         try {
             Configuration.getConfiguration();
         } catch (Throwable t) {
@@ -260,10 +260,10 @@ public class PluginContainer {
 
     /**
      * If the plugin container has been initialized, the plugins have started work, and the container is
-     * not actively shutting down, this returns <code>true</code>.  
-     * 
+     * not actively shutting down, this returns <code>true</code>.
+     *
      * <p>Note! that there is no locking on this method. Therefore it returns quickly and is likely correct, but if
-     * called outside of locking the return value is not guaranteed. As such, use this only as a lightweight check.</p> 
+     * called outside of locking the return value is not guaranteed. As such, use this only as a lightweight check.</p>
      *
      * @return <code>true</code> if the plugin container was initialized, started and is not shutting down; <code>false</code> otherwise
      */
@@ -281,14 +281,14 @@ public class PluginContainer {
      * <p>If the plugin container has already been initialized, this method does nothing and returns.</p>
      */
     public void initialize() {
-        // this quick guard is OK but doesn't prevent several calls to initialize() from stacking up while waiting for the lock        
+        // this quick guard is OK but doesn't prevent several calls to initialize() from stacking up while waiting for the lock
         if (started) {
             log.info("Plugin container is already initialized.");
         }
 
         Lock lock = obtainWriteLock();
         try {
-            // this guard prevents us from executing initialize logic multiple times in a row            
+            // this guard prevents us from executing initialize logic multiple times in a row
             if (started) {
                 return;
             }
@@ -317,7 +317,7 @@ public class PluginContainer {
             operationManager = new OperationManager();
             resourceFactoryManager = new ResourceFactoryManager();
             contentManager = new ContentManager();
-            eventManager = new EventManager();
+            eventManager = new EventManager(configuration);
             supportManager = new SupportManager();
             bundleManager = new BundleManager();
             driftManager = new DriftManager();
@@ -358,7 +358,7 @@ public class PluginContainer {
      * this method does nothing and returns.
      */
     public boolean shutdown() {
-        // this quick guard is OK but doesn't prevent several calls to shutdown() from stacking up while waiting for the lock 
+        // this quick guard is OK but doesn't prevent several calls to shutdown() from stacking up while waiting for the lock
         if (!isRunning()) {
             log.info("Plugin container is already shut down.");
         }
@@ -367,7 +367,7 @@ public class PluginContainer {
         // end up deadlocked.
         Lock lock = (configuration.isWaitForShutdownServiceTermination()) ? obtainReadLock() : obtainWriteLock();
         try {
-            // this guard prevents us from executing shutdown logic multiple times in a row 
+            // this guard prevents us from executing shutdown logic multiple times in a row
             if (!isRunning()) {
                 return true;
             }
@@ -471,7 +471,7 @@ public class PluginContainer {
         Introspector.flushCaches();
         LogFactory.releaseAll();
 
-        // for why we need to do this, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6727821 
+        // for why we need to do this, see http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=6727821
         try {
             Configuration.setConfiguration(null);
         } catch (Throwable t) {
@@ -740,10 +740,10 @@ public class PluginContainer {
     /**
      * Add the callback listener to notify when the plugin container is initialized. If this method is invoked and
      * the PC is already initialized, then <code>listener</code> will be invoked immediately.
-     * 
+     *
      * @param name associated with the listener
      * @param listener The callback object to notify. If a listener with the supplied name is registered, it
-     * will be replaced with the newly supplied listner. 
+     * will be replaced with the newly supplied listner.
      */
     public void addInitializationListener(String name, InitializationListener listener) {
         synchronized (initListenersLock) {
@@ -756,10 +756,10 @@ public class PluginContainer {
     }
 
     /**
-     * Add the callback listener to notify when the plugin container is shutdown. Unlike 
-     * {@link #addInitializationListener(String, InitializationListener)} the <code>listener</code> will 
+     * Add the callback listener to notify when the plugin container is shutdown. Unlike
+     * {@link #addInitializationListener(String, InitializationListener)} the <code>listener</code> will
      * not be invoked immediately if the PC is already shutdown.  It will only be invoked on future shutdowns.
-     * 
+     *
      * @param name associated with the listener
      * @param listener The callback object to notify. If a listener with the supplied name is registered, it
      * will be replaced with the newly supplied listener.

@@ -89,7 +89,7 @@ public class Install extends AbstractInstall {
                 true,
                 "A properties file with keys that correspond to option names "
                     + "of the storage installer. Each property will be translated into an option that is passed to the "
-                    + " storage installer. See example.storage.properties for examples.")
+                    + "storage installer.")
             .addOption(
                 null,
                 AGENT_PREFERENCE,

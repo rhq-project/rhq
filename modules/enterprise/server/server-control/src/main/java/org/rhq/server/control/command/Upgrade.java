@@ -100,8 +100,7 @@ public class Upgrade extends AbstractInstall {
                 true,
                 "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify non-default storage "
                     + "installer options. It is the path to a properties file with keys that correspond to option names of the "
-                    + "storage installer. Each property will be translated into an option that is passed to the storage "
-                    + "installer. See example.storage.properties for examples.")
+                    + "storage installer. Each property will be translated into an option that is passed to the storage installer.")
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,

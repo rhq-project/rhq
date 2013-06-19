@@ -208,13 +208,13 @@ public class Upgrade extends AbstractInstall {
 
     }
 
-    private void runDataMigration(CommandLine rhqCtlCommandLine) {
+    private void runDataMigration(CommandLine rhqctlCommandLine) {
 
-        String migrationOption = rhqCtlCommandLine.getOptionValue(RUN_DATA_MIGRATION);
+        String migrationOption = rhqctlCommandLine.getOptionValue(RUN_DATA_MIGRATION);
 
         if (migrationOption.equals("none")) {
             log.info("No data migration will run");
-            if (!isRhq48OrLater(rhqCtlCommandLine)) {
+            if (!isRhq48OrLater(rhqctlCommandLine)) {
                 printDataMigrationNotice();
             }
             return;
@@ -238,54 +238,34 @@ public class Upgrade extends AbstractInstall {
                 dbType = "postgres";
             } else if (dbType.toLowerCase().contains("oracle")) {
                 dbType = "oracle";
-                throw new RHQControlException("Can not migrate oracle databases yet");
             } else {
                 throw new RHQControlException("Unknown database type " + dbType + " can not migrate data");
             }
 
+            org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-data-migration");
+
+            String cassandraHost = InetAddress.getLocalHost().getCanonicalHostName();
             // Password in the properties file is obfuscated
             String dbPassword = deobfuscatePassword(dbPasswordProperty);
 
-            File dataMigratorJar = getFileDownload("data-migrator", "rhq-data-migrator");
-
-            String cassandraHost = InetAddress.getLocalHost().getCanonicalHostName();
-            org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("java")
-                //
-                .addArgument("-jar")
-                .addArgument(dataMigratorJar.getAbsolutePath())
-                //
-
-                .addArgument("--sql-user").addArgument(dbUser).addArgument("--sql-db").addArgument(dbName)
-                .addArgument("--sql-host").addArgument(dbServerName).addArgument("--sql-port")
-                .addArgument(dbServerPort).addArgument("--sql-server-type").addArgument(dbType)
-                .addArgument("--cassandra-hosts").addArgument(cassandraHost);
-
-            String commandLineString = commandLine.toString();
-            if (migrationOption.equals("print-command")) {
-                log.info(commandLineString);
-                return;
-            }
-
-            // Add the password after generating commandLineString to
-            // not print the password on stdout
-            commandLine.addArgument("--sql-password ").addArgument(dbPassword);
+            commandLine.addArgument("--sql-user").addArgument(dbUser)
+                .addArgument("--sql-db").addArgument(dbName)
+                .addArgument("--sql-host").addArgument(dbServerName)
+                .addArgument("--sql-port").addArgument(dbServerPort)
+                .addArgument("--sql-server-type").addArgument(dbType)
+                .addArgument("--cassandra-hosts").addArgument(cassandraHost)
+                .addArgument("--sql-password ").addArgument(dbPassword);
 
             if (migrationOption.equals("estimate")) {
                 commandLine.addArgument("--estimate-only");
             }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(getBaseDir());
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitValue = executor.execute(commandLine);
             log.info("The data migrator finished with exit value " + exitValue);
-
-            if (migrationOption.equals("estimate")) {
-                log.info("You can use this command line as a start to later run the data migrator\n\n"
-                    + commandLineString);
-            }
-
         } catch (Exception e) {
             log.error("Running the data migrator failed - please try to run it from the command line: "
                 + e.getMessage());
@@ -731,8 +711,8 @@ public class Upgrade extends AbstractInstall {
             + "you need to run the data migration job to transfer stored (historic)\n"
             + "metrics data from the relational database into the new storage.\n"
             + "Until the migration has run, that historic data is not available \n" + "in e.g. the charting views.\n\n"
-            + "To run the data migration, you can download the migration app from the\n"
-            + "server and run it on the command line.\n" + "================\n");
+            + "To run the data migration, just run rhq-data-migration.{sh|bat}\n"
+            + "script located in the server bin folder.\n" + "================\n");
     }
 
 }

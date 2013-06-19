@@ -52,7 +52,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -283,12 +282,6 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                                 graphView = D3GraphListView
                                                                     .createSingleGraph(resourceComposite.getResource(),
                                                                         md.getId(), true);
-                                                                graphView.addSetButtonClickHandler(new ClickHandler() {
-                                                                    @Override
-                                                                    public void onClick(ClickEvent event) {
-                                                                        graphView.redrawGraphs();
-                                                                    }
-                                                                });
 
                                                                 window.addItem(graphView);
                                                                 window.show();

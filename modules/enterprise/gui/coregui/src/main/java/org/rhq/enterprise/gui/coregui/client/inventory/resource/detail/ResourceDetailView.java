@@ -198,7 +198,7 @@ public class ResourceDetailView extends
 
         monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
 
-        monitorTables = new SubTab(monitoringTab, new ViewName("Tables", MSG.view_tabs_common_tables()), null);
+        monitorTables = new SubTab(monitoringTab, new ViewName("Tables", "Tables"), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
         monitorAvail = new SubTab(monitoringTab, new ViewName("Availability", MSG.view_tabs_common_availability()),
             null);
@@ -259,6 +259,8 @@ public class ResourceDetailView extends
         graphListView = D3GraphListView.createSummaryMultipleGraphs(resourceComposite.getResource(), true);
         return graphListView;
     }
+
+
 
     @Override
     protected void updateTabContent(ResourceComposite resourceComposite, boolean isRefresh) {

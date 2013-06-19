@@ -22,7 +22,7 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableDataSource;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MetricsTableDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -37,14 +37,14 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  * @author John Mazzitelli
  * @author Simeon PInder
  */
-public class GroupMeasurementTableDataSource extends MeasurementTableDataSource {
+public class GroupMetricsTableDataSource extends MetricsTableDataSource {
 
     public static final String FIELD_MEMBERS_REPORTING = "membersReporting";
 
     private int groupId;
     private ResourceGroupComposite groupComposite;
 
-    public GroupMeasurementTableDataSource(ResourceGroupComposite groupComposite, int groupId) {
+    public GroupMetricsTableDataSource(ResourceGroupComposite groupComposite, int groupId) {
         super(groupId);
         this.groupComposite = groupComposite;
         this.groupId = groupId;

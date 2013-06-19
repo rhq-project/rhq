@@ -16,14 +16,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
+
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph;
 
 /**
  * Contains the javascript chart definition for a d3 Stacked Bar graph chart.
+ * The purpose of this class is the fill the div element with id: '#rChart-[resourceId]-[metricId]'.
+ * with SVG instructions to draw a d3 graph (in this case a stacked bar graph).
  *
  * @author Mike Thompson
  */
-public class StackedBarMetricGraphImpl extends AbstractGraph {
+public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
     /**
      * GWT constructor for GWT.create() deferred instantiation.
@@ -44,28 +48,28 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
         // This way, we are decoupled from the dependency on globals and JSNI and kept all the java interaction right here.
-                chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHeight()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getJsonMetrics()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getXAxisTitle()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitle()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getYAxisUnits()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitleMinLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitleAvgLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTitlePeakLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartDateLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartTimeLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartDownLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartUnknownLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartNoDataLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverStartLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverEndLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverPeriodLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverBarLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverTimeFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getChartHoverDateFormat()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::isPortalGraph()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::getPortalId()()
+                chartContext = new $wnd.ChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartId()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHeight()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getJsonMetrics()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTitle()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitle()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getYAxisUnits()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitleMinLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitleAvgLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTitlePeakLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartDateLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartTimeLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartDownLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartUnknownLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartNoDataLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverStartLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverEndLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverPeriodLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverBarLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverTimeFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverDateFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::isPortalGraph()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getPortalId()()
                 );
 
 
@@ -82,7 +86,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                     barOffset = 2,
                     chartData,
                     interpolation = "basis",
-                    avgRaw, avg, minRaw, min, peakRaw, peak,
+                    avgFiltered, avg, minFiltered, min, peakFiltered, peak,
                     oobMax,
                     legendDefined,
                     lowBound,
@@ -124,28 +128,28 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                         chartData = chartContext.data;
                     }
 
-                    avgRaw = chartContext.data.filter(function (d) {
+                    avgFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
                             return d.y;
                         }
                     });
-                    avg = $wnd.d3.mean(avgRaw.map(function (d) {
+                    avg = $wnd.d3.mean(avgFiltered.map(function (d) {
                         return d.y;
                     }));
-                    peakRaw = chartContext.data.filter(function (d) {
+                    peakFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
                             return d.high;
                         }
                     });
-                    peak = $wnd.d3.max(peakRaw.map(function (d) {
+                    peak = $wnd.d3.max(peakFiltered.map(function (d) {
                             return d.high;
                     }));
-                    minRaw = chartContext.data.filter(function (d) {
+                    minFiltered = chartContext.data.filter(function (d) {
                         if (d.nodata !== 'true') {
                             return d.low;
                         }
                     });
-                    min = $wnd.d3.min(minRaw.map(function (d) {
+                    min = $wnd.d3.min(minFiltered.map(function (d) {
                             return d.low;
                     }));
                     highBound = peak + ((peak - min) * 0.1);
@@ -460,7 +464,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
 
             function createAvgLines() {
                 var showBarAvgTrendline =
-                                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AbstractGraph::showBarAvgTrendLine()(),
+                                global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::showBarAvgTrendLine()(),
                         barAvgLine = $wnd.d3.svg.line()
                                 .interpolate("linear")
                                 .defined(function (d) {
@@ -474,7 +478,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                                         return yScale(d.y);
                                     }
                                     else {
-                                        return yScale(0);
+                                        return NaN;
                                     }
                                 });
 
@@ -533,6 +537,50 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
 
             }
 
+            function createBrush(){
+
+                var brush = $wnd.d3.svg.brush()
+                        .x(timeScale)
+                        .on("brushstart", brushstart)
+                        .on("brush", brushmove)
+                        .on("brushend", brushend),
+                brushg = svg.append("g")
+                        .attr("class", "brush")
+                        .call(brush);
+
+                brushg.selectAll(".resize").append("path");
+
+                brushg.selectAll("rect")
+                        .attr("height", height);
+
+                function brushstart() {
+                    svg.classed("selecting", true);
+                }
+
+                function brushmove() {
+                    var s = brush.extent();
+                    updateDateRangeDisplay($wnd.moment(s[0]), $wnd.moment(s[1]));
+                }
+
+                function brushend() {
+                    var s = brush.extent();
+                    var startTime = Math.round(s[0].getTime());
+                    var endTime = Math.round(s[1].getTime() );
+                    svg.classed("selecting", !$wnd.d3.event.target.empty());
+                    global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)(startTime, endTime);
+                    global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::redrawGraphs()();
+                }
+
+                function updateDateRangeDisplay(startDate, endDate ) {
+                    //@todo: i18n the date format
+                    var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + '  -  ' + endDate.format('MM/DD/YYYY h:mm a');
+                    var timeRange = endDate.from(startDate,true);
+                    $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+'('+timeRange+')');
+                }
+
+
+            }
+
             function formatHovers(chartContext, d) {
                 var hoverString,
                         xValue = (d.x == undefined) ? 0 : +d.x,
@@ -556,9 +604,15 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                                     '</div>';
 
 
-                }
-                else {
-                    // regular bar hover
+                } else if (d.y === d.high  && d.high === d.low ) {
+                    // single point of data not a duration
+                    hoverString =
+                        '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
+                            '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
+                                '<div class="chartHoverAlignRight"><span id="chartHoverAvgValue" >' + chartContext.avgChartTitle + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
+                            '</div>';
+                } else {
+                    // regular bar hover for duration
                     hoverString =
                             '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span>' +
                                     '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
@@ -600,6 +654,7 @@ public class StackedBarMetricGraphImpl extends AbstractGraph {
                         createHeader(chartContext.chartTitle);
 
                         createYAxisGridLines();
+                        createBrush();
                         createStackedBars();
                         createXandYAxes();
                         createAvgLines();

@@ -16,15 +16,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.gui.coregui.client.inventory.common.charttype;
+package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
+
+import java.util.Date;
 
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
- * Common Graph capability used across multiple graphs.
+ * Common Metric Graph capability used across multiple metric rendering graphs.
  * The MetricGraphData delegate is wrapped for JSNI access via d3 charts.
  * Also, by delegating and directly extending MetricGraphData we have more
  * control over the visibility of what we want graphs to 'see'.
@@ -33,9 +44,16 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
  *
  * @author Mike Thompson
  */
-public abstract class AbstractGraph extends VLayout implements HasD3MetricJsniChart {
+public abstract class AbstractMetricGraph extends VLayout implements HasD3MetricJsniChart {
 
+    private static final Messages MSG = CoreGUI.getMessages();
     private MetricGraphData metricGraphData;
+
+    /**
+     * Just so we have a handle to the the topmost view to call redraw graphs on a view
+     * from this graph.
+     */
+    private AbstractD3GraphListView graphListView;
 
     public MetricGraphData getMetricGraphData() {
         return metricGraphData;
@@ -170,5 +188,35 @@ public abstract class AbstractGraph extends VLayout implements HasD3MetricJsniCh
         return metricGraphData.getPortalId();
     }
 
+    public void setGraphListView(AbstractD3GraphListView graphListView) {
+        this.graphListView = graphListView;
+    }
 
+    /**
+     * Whenever we make a change to the date range save it here so it gets propogated to
+     * the correct places.
+     *
+     * @param startTime double because JSNI doesnt support long
+     * @param endTime   double because JSNI doesnt support long
+     */
+    public void saveDateRange(double startTime, double endTime) {
+        MeasurementUserPreferences measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+
+        Log.debug("Saving Date range: "+new Date((long)startTime) +  " - "+ new Date((long)endTime));
+        final boolean advanced = true;
+        AbstractMeasurementRangeEditor.MetricRangePreferences prefs = measurementUserPrefs.getMetricRangePreferences();
+        prefs.explicitBeginEnd = advanced;
+        prefs.begin = (long) startTime;
+        prefs.end = (long) endTime;
+        if (null != prefs.begin && null != prefs.end && prefs.begin > prefs.end) {
+            CoreGUI.getMessageCenter().notify(new Message(MSG.view_measureTable_startBeforeEnd()));
+        } else {
+            measurementUserPrefs.setMetricRangePreferences(prefs);
+        }
+
+    }
+
+    public void redrawGraphs(){
+       graphListView.redrawGraphs();
+    }
 }

@@ -24,8 +24,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityGraph;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AvailabilityGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -35,13 +34,13 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author Mike Thompson
  */
-public class AvailabilityD3Graph extends EnhancedVLayout implements AvailabilityGraph {
+public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends EnhancedVLayout {
 
-    protected AvailabilityOverUnderGraphType availabilityGraphType;
+    protected T availabilityGraphType;
 
-    public AvailabilityD3Graph(AvailabilityOverUnderGraphType graphType) {
+    public AvailabilityD3GraphView(T availabilityGraphType) {
         super();
-        this.availabilityGraphType = graphType;
+        this.availabilityGraphType = availabilityGraphType;
         setHeight(65);
         setWidth100();
     }
@@ -98,8 +97,10 @@ public class AvailabilityD3Graph extends EnhancedVLayout implements Availability
      */
     private static String getSvgDefs() {
         return " <defs>"+
-                "<pattern id=\"diagonalHatch\" patternUnits=\"userSpaceOnUse\" width=\"4\" height=\"4\">  <path d=\"M-1,1 l2,-2           M0,4 l4,-4           M3,5 l2,-2\" /> </pattern>"
-                + "</defs>";
+                "<pattern id=\"diagonalHatch\" patternUnits=\"userSpaceOnUse\" width=\"4\" height=\"4\">" +
+                "<path d=\"M-1,1 l2,-2 M0,4 l4,-4 M3,5 l2,-2\" />" +
+                "</pattern>" +
+                 "</defs>";
     }
 
     @Override

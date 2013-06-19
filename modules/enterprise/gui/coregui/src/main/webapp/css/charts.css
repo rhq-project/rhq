@@ -43,6 +43,19 @@
 .y.axis path {
     stroke: #50505a;
 }
+ /* Brush related css rules */
+.brush rect.extent {
+    fill: #0757ff;
+    fill-opacity: .15;
+    shape-rendering: crispEdges;
+}
+
+.brush .resize path {
+    fill: #666;
+    fill-opacity: .8;
+    stroke: #000;
+    stroke-width: 1.5px;
+}
 
 .minLabel, .avgLabel, .highLabel {
     font-family: Arial, Verdana, sans-serif;

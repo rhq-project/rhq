@@ -25,8 +25,6 @@ import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.HTMLFlow;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -40,15 +38,18 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.JsonMetricProducer;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * This composite graph view has different graph types and data structures for
@@ -57,10 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author  Mike Thompson
  */
-public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout implements JsonMetricProducer
-{
-
-    private HTMLFlow resourceTitle;
+public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout implements JsonMetricProducer, RedrawGraphs {
 
     private int groupId;
     private int definitionId;
@@ -68,7 +66,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
     private MeasurementDefinition definition;
 
-    private UserPreferencesMeasurementRangeEditor measurementRangeEditor;
+    private MeasurementUserPreferences measurementUserPreferences;
+    private ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
 
     /**
      * measurementForEachResource is a list of a list of single Measurement data for multiple resources.
@@ -84,7 +83,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         this.isAutogroup = isAutogroup;
         setDefinitionId(defId);
         measurementForEachResource = new ArrayList<MultiLineGraphData>();
-        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
+        measurementUserPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPreferences, this);
         setHeight100();
         setWidth100();
         setPadding(10);
@@ -117,8 +117,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                     Log.debug("group name: " + parentGroup.getName());
                     Log.debug("# of child resources: " + parentGroup.getExplicitResources().size());
                     // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-                    final CountDownLatch countDownLatch = CountDownLatch.create(parentGroup.getExplicitResources().size(),
-                            new Command() {
+                    final CountDownLatch countDownLatch = CountDownLatch.create(parentGroup.getExplicitResources()
+                        .size(), new Command() {
                         @Override
                         /**
                          * Do this only after ALL of the metric queries for each resource
@@ -149,43 +149,30 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                                         }
                                     }
 
-                                    List<Long> times = measurementRangeEditor.getBeginEndTimes();
-                                    Long startTime = times.get(0);
-                                    Long endTime = times.get(1);
-                                    measurementRangeEditor.getSetButton().addClickHandler(new ClickHandler()
-                                    {
-                                        @Override
-                                        public void onClick(ClickEvent event)
-                                        {
-                                           drawGraph();
-                                           populateData();
-                                           markForRedraw();
-                                        }
-                                    });
-
                                     for (final Resource childResource : childResources) {
                                         Log.debug("Adding child composite: " + childResource.getName()
                                             + childResource.getId());
 
                                         GWTServiceLookup.getMeasurementDataService().findDataForResource(
-                                                childResource.getId(), new int[]{getDefinitionId()}, startTime, endTime, 60,
-                                                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>()
-                                                {
-                                                    @Override
-                                                    public void onFailure(Throwable caught)
-                                                    {
-                                                        countDownLatch.countDown();
-                                                        CoreGUI.getErrorHandler().handleError(
-                                                                MSG.view_resource_monitor_graphs_loadFailed(), caught);
-                                                    }
+                                            childResource.getId(), new int[] { getDefinitionId() },
+                                            buttonBarDateTimeRangeEditor.getStartTime(),
+                                            buttonBarDateTimeRangeEditor.getEndTime(), 60,
+                                            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                                @Override
+                                                public void onFailure(Throwable caught) {
+                                                    CoreGUI.getErrorHandler().handleError(
+                                                        MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                                                    countDownLatch.countDown();
+                                                }
 
-                                                    @Override
-                                                    public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> result)
-                                                    {
-                                                        addMeasurementForEachResource(childResource.getName(), childResource.getId(), result.get(0));
-                                                        countDownLatch.countDown();
-                                                    }
-                                                });
+                                                @Override
+                                                public void onSuccess(
+                                                    List<List<MeasurementDataNumericHighLowComposite>> result) {
+                                                    addMeasurementForEachResource(childResource.getName(),
+                                                        childResource.getId(), result.get(0));
+                                                    countDownLatch.countDown();
+                                                }
+                                            });
                                     }
                                 }
                             });
@@ -199,31 +186,27 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     /**
      * Immutable data for each graph line.
      */
-    private final class MultiLineGraphData
-    {
+    private final class MultiLineGraphData {
         private String resourceName;
         private int resourceId;
         private List<MeasurementDataNumericHighLowComposite> measurementData;
 
-        private MultiLineGraphData(String resourceName, int resourceId, List<MeasurementDataNumericHighLowComposite> measurmentData)
-        {
+        private MultiLineGraphData(String resourceName, int resourceId,
+            List<MeasurementDataNumericHighLowComposite> measurmentData) {
             this.resourceName = resourceName;
             this.resourceId = resourceId;
             this.measurementData = measurmentData;
         }
 
-        public String getResourceName()
-        {
+        public String getResourceName() {
             return resourceName;
         }
 
-        public int getResourceId()
-        {
+        public int getResourceId() {
             return resourceId;
         }
 
-        public List<MeasurementDataNumericHighLowComposite> getMeasurementData()
-        {
+        public List<MeasurementDataNumericHighLowComposite> getMeasurementData() {
             return measurementData;
         }
     }
@@ -232,9 +215,10 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
      * Adding is done asynchronously, so we must synchronize the add.
      * @param resourceMeasurementList
      */
-    public synchronized  void addMeasurementForEachResource(String resourceName, int resourceId, List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
+    public synchronized void addMeasurementForEachResource(String resourceName, int resourceId,
+        List<MeasurementDataNumericHighLowComposite> resourceMeasurementList) {
 
-        measurementForEachResource.add(new MultiLineGraphData(resourceName,resourceId,resourceMeasurementList));
+        measurementForEachResource.add(new MultiLineGraphData(resourceName, resourceId, resourceMeasurementList));
     }
 
     @Override
@@ -271,33 +255,38 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         this.definition = definition;
     }
 
-    private void removeMembers(){
+    private void removeMembers() {
 
-        removeMember(measurementRangeEditor);
-        if(null != titleHLayout) removeMember(titleHLayout);
-        if(null != title) removeMember(title);
-        if (null != graph) removeMember(graph);
+        removeMember(buttonBarDateTimeRangeEditor);
+        if (null != titleHLayout)
+            removeMember(titleHLayout);
+        if (null != title)
+            removeMember(title);
+        if (null != graph)
+            removeMember(graph);
+    }
+
+    @Override
+    public void redrawGraphs() {
+        drawGraph();
+        populateData();
+        markForRedraw();
     }
 
     private void drawGraph() {
         Log.debug("drawGraph in CompositeGroupD3GraphListView for: " + definition + "," + definitionId);
 
-        if(null != titleHLayout){
+        if (null != titleHLayout) {
             removeMembers();
         }
 
-        addMember(measurementRangeEditor);
+        addMember(buttonBarDateTimeRangeEditor);
 
         titleHLayout = new EnhancedHLayout();
 
         if (definition != null) {
             titleHLayout.setAutoHeight();
             titleHLayout.setWidth100();
-
-            if (null != resourceTitle) {
-                resourceTitle.setWidth("*");
-                titleHLayout.addMember(resourceTitle);
-            }
 
             addMember(titleHLayout);
 
@@ -369,10 +358,11 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
      */
     public boolean shouldDisplayDayOfWeekInXAxisLabel() {
         // because of asyncrony this is possible so default it
-        if(null == measurementForEachResource || measurementForEachResource.isEmpty()){
-           return true;
+        if (null == measurementForEachResource || measurementForEachResource.isEmpty()) {
+            return true;
         }
-        List<MeasurementDataNumericHighLowComposite> firstResourceMeasurementList = measurementForEachResource.get(0).getMeasurementData();
+        List<MeasurementDataNumericHighLowComposite> firstResourceMeasurementList = measurementForEachResource.get(0)
+            .getMeasurementData();
         Long startTime = firstResourceMeasurementList.get(0).getTimestamp();
         Long endTime = firstResourceMeasurementList.get(firstResourceMeasurementList.size() - 1).getTimestamp();
         long timeThreshold = 24 * 60 * 60 * 1000; // 1 days

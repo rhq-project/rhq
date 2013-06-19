@@ -36,12 +36,12 @@
         </any>
     </replace-with>
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
     </replace-with>
 
-    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphIE8Impl">
-        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl"/>
+    <replace-with class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphIE8Impl">
+        <when-type-is class="org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl"/>
             <when-property-is name="user.agent" value="ie8"/>
     </replace-with>
 
@@ -50,10 +50,10 @@
         <when-type-assignable class="com.google.gwt.user.client.rpc.RemoteService"/>
     </generate-with>
 
+    <script src="/coregui/js/moment.min.js"/>
+    <script src="/coregui/js/rhq.js"/>
     <!-- External javascript libraries -->
-    <!-- jquery.sparkline requires jquery. We don't explicitly provide jquery here because it is already
-         embedded in the GFlot JAR (the charting lib used for GraphPortlet).  Furthermore, GFlot 2.4.2 requires
-         the version of jquery (1.7.2).
+    <!-- jquery.sparkline requires jquery.
     -->
     <script src="/coregui/js/jquery-1.7.2.min.js"/>
     <script src="/coregui/js/jquery.sparkline-2.1.min.js"/>

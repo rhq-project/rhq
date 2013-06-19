@@ -21,30 +21,34 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * A D3 graph implementation for graphing Resource metrics.
+ * Just the graph only. No avail graph no buttons just he graph.
  */
-public class MetricD3GraphView extends EnhancedVLayout {
+public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVLayout {
 
     protected StackedBarMetricGraphImpl graph;
     private HTMLFlow graphDiv = null;
     protected Timer refreshTimer;
+    private T d3GraphListView;
 
     /**
      * This constructor is for the use case in the Dashboard where we dont actually
      * have a entity or measurement yet.
      */
-    public MetricD3GraphView() {
+    public MetricD3Graph() {
         super();
     }
 
-    public MetricD3GraphView(StackedBarMetricGraphImpl graph) {
+    public MetricD3Graph(StackedBarMetricGraphImpl graph, T graphListView) {
         super();
         this.graph = graph;
+        this.d3GraphListView = graphListView;
         setHeight100();
         setWidth100();
     }
@@ -69,7 +73,6 @@ public class MetricD3GraphView extends EnhancedVLayout {
             + "               </pattern>"
             + "<pattern id=\"diagonalHatchFill\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"105\" height=\"105\">"
             + "<g style=\"fill:none; stroke:black; stroke-width:1\">"
-            + "<circle cx=\"0\" cy=\"0\" r=\"1000\" fill=\"grey\"/>"
             + "<path d=\"M0 90 l15,15\"/>"
             + "<path d=\"M0 75 l30,30\"/>"
             + "<path d=\"M0 60 l45,45\"/>"
@@ -92,10 +95,10 @@ public class MetricD3GraphView extends EnhancedVLayout {
             + "<path d=\"M15 0 l90,90\"/>" + "<path d=\"M30 0 l75,75\"/>" + "<path d=\"M45 0 l60,60\"/>"
             + "<path d=\"M60 0 l45,45\"/>" + "<path d=\"M75 0 l30,30\"/>" + "<path d=\"M90 0 l15,15\"/>" + "</g>"
             + "</pattern>"
-            + "               <pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
-            + "                        width=\"6\" height=\"3\">"
-            + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>"
-            + "               </pattern>" + "</defs>";
+            + "<pattern id=\"downStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
+            + "      width=\"6\" height=\"3\">"
+            + "<path d=\"M 0 0 6 0\" style=\"stroke:#ff8a9a; fill:none;\"/>"
+            + "</pattern>" + "</defs>";
     }
 
     @Override
@@ -116,38 +119,54 @@ public class MetricD3GraphView extends EnhancedVLayout {
     /**
      * Setup the page elements especially the div and svg elements that serve as
      * placeholders for the d3 stuff to grab onto and add svg tags to render the chart.
-     * Later the drawJsniGraph() is called to actually fill in the div/svg element
+     * Later the drawJsniChart() is called to actually fill in the div/svg element
      * created here with the actual svg element.
      *
      */
     protected void drawGraph() {
-        Log.debug("drawGraph marker in MetricD3Graph for: " + getFullChartId() + " " + graph.getChartTitle());
-
-        StringBuilder divAndSvgDefs = new StringBuilder();
-        divAndSvgDefs
-            .append("<div id=\""
-                + getFullChartId()
-                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
-                + getChartHeight() + "px;\">");
-        divAndSvgDefs.append(getSvgDefs());
-        divAndSvgDefs.append("</svg></div>");
+        final String divAndSvgDefs = createGraphMarker();
 
         if (null != graphDiv) {
             removeMember(graphDiv);
         }
 
-        graphDiv = new HTMLFlow(divAndSvgDefs.toString());
+        graphDiv = new HTMLFlow(divAndSvgDefs);
         graphDiv.setWidth100();
         graphDiv.setHeight100();
         addMember(graphDiv);
 
-        new Timer() {
-            @Override
-            public void run() {
-                //@todo: this is a hack around timing issue of jsni not seeing the DOM
-                drawJsniChart();
-            }
-        }.schedule(200);
+        drawJsniChart();
+
+    }
+
+    /**
+     * This is used to explicitly use the 2 phase creation of a graph separately.
+     * Used to add the chart to something custom.
+     * @return String Graph Marker to be filled in with drawJsniChart() later
+     */
+    public String createGraphMarker() {
+      return createGraphMarkerTemplate(getFullChartId(), getHeight());
+    }
+
+    /**
+     * A static version of createGraphMarker that can be used when a MetricD3Graph is not
+     * instantiated.
+     * @param fullChartId
+     * @param height
+     * @return String chart marker
+     */
+    public static String createGraphMarkerTemplate(String fullChartId, Integer height){
+        Log.debug("drawGraph marker in MetricD3Graph for: " + fullChartId);
+
+        StringBuilder divAndSvgDefs = new StringBuilder();
+        divAndSvgDefs
+                .append("<div id=\""
+                        + fullChartId
+                        + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
+                        + height + "px;\">");
+        divAndSvgDefs.append(getSvgDefs());
+        divAndSvgDefs.append("</svg></div>");
+        return divAndSvgDefs.toString();
     }
 
     /**
@@ -155,7 +174,12 @@ public class MetricD3GraphView extends EnhancedVLayout {
      * This way the chart type can be swapped out at any time.
      */
     public void drawJsniChart() {
-        graph.drawJsniChart();
+        new Timer() {
+            @Override
+            public void run() {
+                graph.drawJsniChart();
+            }
+        }.schedule(200);
     }
 
     public String getFullChartId() {
@@ -175,6 +199,13 @@ public class MetricD3GraphView extends EnhancedVLayout {
     @Override
     public void hide() {
         super.hide();
+    }
+
+    /**
+     * Allow the graph to refresh  the whole d3GraphListView.
+     */
+    public void redrawGraphs(){
+        d3GraphListView.redrawGraphs();
     }
 
 }

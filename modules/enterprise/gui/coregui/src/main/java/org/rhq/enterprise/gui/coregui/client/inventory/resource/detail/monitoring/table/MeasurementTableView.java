@@ -32,8 +32,6 @@ import com.smartgwt.client.types.SelectionStyle;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.CloseClickEvent;
 import com.smartgwt.client.widgets.events.CloseClickHandler;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -44,8 +42,6 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -57,23 +53,22 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * Views a resource's measurements in a tabular view.
- * 
+ *
  * @author John Mazzitelli
  */
-public class MeasurementTableView extends Table<MeasurementTableDataSource> {
+public class MeasurementTableView extends Table<MetricsTableDataSource> {
 
     private final int resourceId;
 
     public MeasurementTableView(int resourceId) {
         super();
         this.resourceId = resourceId;
-        setDataSource(new MeasurementTableDataSource(resourceId));
+        setDataSource(new MetricsTableDataSource(resourceId));
     }
 
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
-        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
         addTableAction(MSG.view_measureTable_getLive(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
@@ -90,12 +85,12 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 int[] definitionIds = new int[selection.length];
                 int i = 0;
                 for (ListGridRecord record : selection) {
-                    Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
+                    Integer defId = record.getAttributeAsInt(MetricsTableDataSource.FIELD_METRIC_DEF_ID);
                     definitionIds[i++] = defId.intValue();
 
-                    String name = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_NAME);
-                    String label = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_LABEL);
-                    String units = record.getAttribute(MeasurementTableDataSource.FIELD_METRIC_UNITS);
+                    String name = record.getAttribute(MetricsTableDataSource.FIELD_METRIC_NAME);
+                    String label = record.getAttribute(MetricsTableDataSource.FIELD_METRIC_LABEL);
+                    String units = record.getAttribute(MetricsTableDataSource.FIELD_METRIC_UNITS);
                     if (units == null || units.length() < 1) {
                         units = MeasurementUnits.NONE.name();
                     }
@@ -105,44 +100,44 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
 
                 // actually go out and ask the agents for the data
                 GWTServiceLookup.getMeasurementDataService(60000).findLiveData(resourceId, definitionIds,
-                    new AsyncCallback<Set<MeasurementData>>() {
-                        @Override
-                        public void onSuccess(Set<MeasurementData> result) {
-                            if (result == null) {
-                                result = new HashSet<MeasurementData>(0);
-                            }
-                            ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>(result.size());
-                            for (MeasurementData data : result) {
-                                String[] nameAndUnits = scheduleNamesAndUnits.get(data.getName());
-                                if (nameAndUnits != null) {
-                                    double doubleValue;
-                                    if (data.getValue() instanceof Number) {
-                                        doubleValue = ((Number) data.getValue()).doubleValue();
-                                    } else {
-                                        doubleValue = Double.parseDouble(data.getValue().toString());
+                        new AsyncCallback<Set<MeasurementData>>() {
+                            @Override
+                            public void onSuccess(Set<MeasurementData> result) {
+                                if (result == null) {
+                                    result = new HashSet<MeasurementData>(0);
+                                }
+                                ArrayList<ListGridRecord> records = new ArrayList<ListGridRecord>(result.size());
+                                for (MeasurementData data : result) {
+                                    String[] nameAndUnits = scheduleNamesAndUnits.get(data.getName());
+                                    if (nameAndUnits != null) {
+                                        double doubleValue;
+                                        if (data.getValue() instanceof Number) {
+                                            doubleValue = ((Number) data.getValue()).doubleValue();
+                                        } else {
+                                            doubleValue = Double.parseDouble(data.getValue().toString());
+                                        }
+                                        String value = MeasurementConverterClient.formatToSignificantPrecision(
+                                                new double[] { doubleValue }, MeasurementUnits.valueOf(nameAndUnits[1]), true)[0];
+
+                                        ListGridRecord record = new ListGridRecord();
+                                        record.setAttribute("name", nameAndUnits[0]);
+                                        record.setAttribute("value", value);
+                                        records.add(record);
                                     }
-                                    String value = MeasurementConverterClient.formatToSignificantPrecision(
-                                        new double[] { doubleValue }, MeasurementUnits.valueOf(nameAndUnits[1]), true)[0];
-
-                                    ListGridRecord record = new ListGridRecord();
-                                    record.setAttribute("name", nameAndUnits[0]);
-                                    record.setAttribute("value", value);
-                                    records.add(record);
                                 }
+                                Collections.sort(records, new Comparator<ListGridRecord>() {
+                                    public int compare(ListGridRecord o1, ListGridRecord o2) {
+                                        return o1.getAttribute("name").compareTo(o2.getAttribute("name"));
+                                    }
+                                });
+                                showLiveData(records);
                             }
-                            Collections.sort(records, new Comparator<ListGridRecord>() {
-                                public int compare(ListGridRecord o1, ListGridRecord o2) {
-                                    return o1.getAttribute("name").compareTo(o2.getAttribute("name"));
-                                }
-                            });
-                            showLiveData(records);
-                        }
 
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_measureTable_getLive_failure(), caught);
-                        }
-                    });
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getErrorHandler().handleError(MSG.view_measureTable_getLive_failure(), caught);
+                            }
+                        });
             }
         });
 
@@ -160,7 +155,7 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 }
                 final TreeSet<Integer> definitionIds = new TreeSet<Integer>();
                 for (ListGridRecord record : selection) {
-                    Integer defId = record.getAttributeAsInt(MeasurementTableDataSource.FIELD_METRIC_DEF_ID);
+                    Integer defId = record.getAttributeAsInt(MetricsTableDataSource.FIELD_METRIC_DEF_ID);
                     definitionIds.add(defId);
                 }
 
@@ -168,41 +163,36 @@ public class MeasurementTableView extends Table<MeasurementTableDataSource> {
                 criteria.addFilterId(resourceId);
                 criteria.fetchSchedules(true);
                 GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
-                    new AsyncCallback<PageList<ResourceComposite>>() {
+                        new AsyncCallback<PageList<ResourceComposite>>() {
 
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
-                                    Message.Severity.Warning));
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                CoreGUI.getMessageCenter().notify(
+                                        new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+                                                Message.Severity.Warning));
 
-                            CoreGUI.goToView(InventoryView.VIEW_ID.getName());
-                        }
-
-                        @Override
-                        public void onSuccess(PageList<ResourceComposite> result) {
-                            if (result.isEmpty()) {
-                                onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String
-                                    .valueOf(resourceId))));
-                            } else {
-                                final ResourceComposite resourceComposite = result.get(0);
-
-                                ChartViewWindow window = new ChartViewWindow("");
-                                final D3GraphListView graphListView = D3GraphListView.createMultipleGraphs(
-                                    resourceComposite.getResource(), definitionIds, true);
-                                graphListView.addSetButtonClickHandler(new ClickHandler() {
-                                    @Override
-                                    public void onClick(ClickEvent event) {
-                                        graphListView.redrawGraphs();
-                                    }
-                                });
-                                window.addItem(graphListView);
-                                window.show();
-                                refreshTableInfo();
-
+                                CoreGUI.goToView(InventoryView.VIEW_ID.getName());
                             }
-                        }
-                    });
+
+                            @Override
+                            public void onSuccess(PageList<ResourceComposite> result) {
+                                if (result.isEmpty()) {
+                                    onFailure(new Exception(MSG.view_inventory_resource_loadFailed(String
+                                            .valueOf(resourceId))));
+                                } else {
+                                    final ResourceComposite resourceComposite = result.get(0);
+
+                                    ChartViewWindow window = new ChartViewWindow("");
+                                    final D3GraphListView graphListView = D3GraphListView.createMultipleGraphs(
+                                            resourceComposite.getResource(), definitionIds, true);
+
+                                    window.addItem(graphListView);
+                                    window.show();
+                                    refreshTableInfo();
+
+                                }
+                            }
+                        });
 
             }
         });

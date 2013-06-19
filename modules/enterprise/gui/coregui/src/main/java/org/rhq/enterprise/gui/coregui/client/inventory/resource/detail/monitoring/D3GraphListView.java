@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import com.google.gwt.core.client.GWT;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
@@ -43,14 +44,12 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityLineGraphType;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.AvailabilityOverUnderGraphType;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
@@ -92,11 +91,11 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
     }
 
-    public static D3GraphListView createSingleGraph(Resource resource, Integer measurementId) {
+    public static D3GraphListView createSingleGraphNoAvail(Resource resource, Integer measurementId) {
         return D3GraphListView.createSingleGraph(resource, measurementId, false);
     }
 
-    private D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
+    protected D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
         commonConstructorSettings();
@@ -104,7 +103,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         this.showAvailabilityGraph = showAvailabilityGraph;
     }
 
-    private D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
+    protected D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
         this.showAvailabilityGraph = showAvailabilityGraph;
@@ -113,30 +112,21 @@ public class D3GraphListView extends AbstractD3GraphListView {
     }
 
     private void commonConstructorSettings() {
-        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
         setOverflow(Overflow.HIDDEN);
     }
 
-    public void addSetButtonClickHandler(ClickHandler clickHandler) {
-        Log.debug("measurementRangeEditor " + measurementRangeEditor);
-        measurementRangeEditor.getSetButton().addClickHandler(clickHandler);
-    }
 
     @Override
     protected void onDraw() {
         super.onDraw();
-        Log.debug("D3GraphListView.onDraw() for: " + resource.getName());
+        Log.debug("D3GraphListView.onDraw() for: " + resource.getName()+ " id: "+ resource.getId());
         destroyMembers();
 
-        addMember(measurementRangeEditor);
+        addMember(buttonBarDateTimeRangeEditor);
 
         if (showAvailabilityGraph) {
-            availabilityGraph = new AvailabilityD3Graph(new AvailabilityOverUnderGraphType(resource.getId()));
-            // first step in 2 step to create d3 chart
-            // create a placeholder for avail graph
-            availabilityGraph.createGraphMarker();
+            availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));
             addMember(availabilityGraph);
-
         }
 
         vLayout = new VLayout();
@@ -145,14 +135,13 @@ public class D3GraphListView extends AbstractD3GraphListView {
         vLayout.setHeight100();
 
         if (resource != null) {
-            buildGraphs();
+            queryAndBuildGraphs();
         }
         addMember(vLayout);
     }
 
     public void redrawGraphs() {
         this.onDraw();
-        availabilityGraph.drawJsniChart();
     }
 
     @Override
@@ -188,11 +177,13 @@ public class D3GraphListView extends AbstractD3GraphListView {
      * Build whatever graph (summary or not) by grabbing the MeasurementDefinitions
      * that are defined for the resource and then querying the metric and availability data.
      */
-    private void buildGraphs() {
+    private void queryAndBuildGraphs() {
         final long startTimer = System.currentTimeMillis();
 
-        queryAvailability(EntityContext.forResource(resource.getId()), measurementRangeEditor.getStartTime(),
-            measurementRangeEditor.getEndTime(), null);
+        if(null != availabilityGraph){
+            queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
+                buttonBarDateTimeRangeEditor.getEndTime(), null);
+        }
 
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
@@ -237,7 +228,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
                         public void execute() {
                             Log.debug("Total Time for async metrics/avail query: "
                                 + (System.currentTimeMillis() - startTimer));
-                            if (metricsDataList.isEmpty()) {
+                            if (null == metricsDataList || metricsDataList.isEmpty()) {
                                 loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
                             } else {
                                 loadingLabel.hide();
@@ -248,11 +239,16 @@ public class D3GraphListView extends AbstractD3GraphListView {
                                     determineGraphsToBuild(metricsDataList, measurementDefinitions, definitionIds);
                                 }
                                 // There is a weird timing case when availabilityGraph can be null
-                                if (availabilityGraph != null) {
+                                if (null != availabilityGraph) {
                                     // we only need the first metricData since we are only taking the
                                     // availability data set in there for the dropdowns already
                                     availabilityGraph.setAvailabilityList(availabilityList);
-                                    availabilityGraph.drawJsniChart();
+                                    new Timer(){
+                                        @Override
+                                        public void run() {
+                                            availabilityGraph.drawJsniChart();
+                                        }
+                                    }.schedule(150);
                                 }
                             }
 
@@ -267,7 +263,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
                 private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
                     GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
-                        measurementRangeEditor.getStartTime(), measurementRangeEditor.getEndTime(), 60,
+                            buttonBarDateTimeRangeEditor.getStartTime(), buttonBarDateTimeRangeEditor.getEndTime(), 60,
                         new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                             @Override
                             public void onFailure(Throwable caught) {
@@ -371,10 +367,10 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
         MetricGraphData metricGraphData = MetricGraphData.createForResource(resource.getId(), resource.getName(),
             measurementDefinition, data, measurementOOBCompositeList );
-        //StackedBarMetricGraphImpl graph = new StackedBarMetricGraphImpl(metricGraphData);
         StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
         graph.setMetricGraphData(metricGraphData);
-        MetricD3GraphView graphView = new MetricD3GraphView(graph);
+        graph.setGraphListView(this);
+        MetricD3Graph graphView = new MetricD3Graph<D3GraphListView>(graph, this);
 
         graphView.setWidth("95%");
         graphView.setHeight(height);

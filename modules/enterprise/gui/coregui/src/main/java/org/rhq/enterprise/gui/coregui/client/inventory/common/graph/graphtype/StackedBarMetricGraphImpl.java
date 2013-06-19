@@ -538,27 +538,9 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }
 
             function createBrush(){
-                // slightly modified but originally from crossfilter (http://square.github.com/crossfilter/)
-              var resizePath = function (d) {
-                      var e1 = +(d === "e"),
-                           e = e1 ? 1 : 0 ,
-                            x = e ? 1 : -1,
-                            y = height / 3;
-                    return "M" + (.5 * x) + "," + y
-                            + "A6,6 0 0 " + e + " " + (6.5 * x) + "," + (y + 6)
-                            + "V" + (2 * y - 6)
-                            + "A6,6 0 0 " + e + " " + (.5 * x) + "," + (2 * y)
-                            + "Z"
-                            + "M" + (2.5 * x) + "," + (y + 8)
-                            + "V" + (2 * y - 8)
-                            + "M" + (4.5 * x) + "," + (y + 8)
-                            + "V" + (2 * y - 8);
-                },
-                brush = $wnd.d3.svg.brush()
+
+                var brush = $wnd.d3.svg.brush()
                         .x(timeScale)
-                        //.extent($wnd.d3.extent(chartData, function (d) {
-                            //return d.x;
-                        //}))
                         .on("brushstart", brushstart)
                         .on("brush", brushmove)
                         .on("brushend", brushend),
@@ -588,9 +570,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::saveDateRange(DD)(startTime, endTime);
                     global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::redrawGraphs()();
                 }
-
-                //brushstart();
-                //brushmove();
 
                 function updateDateRangeDisplay(startDate, endDate ) {
                     //@todo: i18n the date format

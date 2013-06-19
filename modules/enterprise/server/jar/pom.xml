@@ -64,6 +64,32 @@
       <groupId>org.rhq</groupId>
       <artifactId>rhq-cassandra-schema</artifactId>
       <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hyperic</groupId>
+          <artifactId>sigar-dist</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.datastax.cassandra</groupId>
+          <artifactId>cassandra-driver-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-core-plugin-api</artifactId>
+        </exclusion>
+       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-plugin-api</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hyperic</groupId>
+          <artifactId>sigar-dist</artifactId>
+        </exclusion>
+       </exclusions>
     </dependency>
 
     <dependency>

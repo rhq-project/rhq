@@ -1,16 +1,16 @@
 #!/bin/sh
 
 # =============================================================================
-# RHQ Storage Installer Script
+# RHQ Control Script
 #
-# This file is used to complete the installation of the RHQ storage Server on a
-# UNIX platform.
+# This file is used to perform install/upgrade/start/stop commands for
+# RHQ Servers (and their associated storage nodes/agents) on a UNIX platform.
 #
 # This script is customizable by setting the following environment variables:
 #
 #    RHQ_CONTROL_DEBUG - If this is defined, the script will emit debug
-#                       messages. If this is not defined or set to "false"
-#                       debug messages are not emitted.
+#                        messages. If this is not defined or set to "false"
+#                        debug messages are not emitted.
 #
 #    RHQ_SERVER_HOME - Defines where the server's home install directory is.
 #                      If not defined, it will be assumed to be the parent
@@ -39,18 +39,18 @@
 #                                    Server's embedded JRE will be used.
 #
 #    RHQ_CONTROL_JAVA_OPTS - Java VM command line options to be
-#                        passed into the Java VM. If this is not defined
-#                        this script will pass in a default set of options.
-#                        If you only want to add options to the defaults,
-#                        then you will want to use
-#                        RHQ_CONTROL_ADDITIONAL_JAVA_OPTS instead.
+#                            passed into the Java VM. If this is not defined
+#                            this script will pass in a default set of options.
+#                            If you only want to add options to the defaults,
+#                            then you will want to use
+#                            RHQ_CONTROL_ADDITIONAL_JAVA_OPTS instead.
 #
 #    RHQ_CONTROL_ADDITIONAL_JAVA_OPTS - additional Java VM command
-#                                   line options to be passed into the VM.
-#                                   This is added to RHQ_CONTROL_JAVA_OPTS; it
-#                                   is mainly used to augment the
-#                                   default set of options. This can be
-#                                   left unset if it is not needed.
+#                                       line options to be passed into the VM.
+#                                       This is added to RHQ_CONTROL_JAVA_OPTS;
+#                                       it is mainly used to augment the
+#                                       default set of options. This can be
+#                                       left unset if it is not needed.
 #
 # If the embedded JRE is to be used but is not available, the fallback
 # JRE to be used will be determined by the JAVA_HOME environment variable.

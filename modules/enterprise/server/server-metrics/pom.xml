@@ -161,43 +161,10 @@
           </systemPropertyVariables>
         </configuration>
       </plugin>
-
-      <plugin>
-          <artifactId>maven-assembly-plugin</artifactId>
-          <configuration>
-              <descriptorRefs>
-                  <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
-              <archive>
-                  <manifest>
-                      <mainClass>org.rhq.server.metrics.migrator.DataMigratorRunner</mainClass>
-                      <addClasspath>true</addClasspath>
-                  </manifest>
-              </archive>
-          </configuration>
-          <executions>
-            <execution>
-                <id>package-jar-with-dependencies</id>
-                <phase>package</phase>
-                <goals>
-                    <goal>single</goal>
-                </goals>
-                <configuration>
-                  <attach>false</attach>
-                  <finalName>migrator-executable/data-migrator-${project.version}</finalName>
-                </configuration>
-          </execution>
-          </executions>
-      </plugin>
     </plugins>
   </build>
 
   <profiles>
-    <!--
-      Temporarily commenting out dev profile. The data migrator self-executing JAR was
-      getting deployed to the EAR and causing the EAR deployment to fail. I think the
-      assembly might need to be moved outside of the dev profile.
-    -->
     <profile>
       <id>dev</id>
       <properties>
@@ -244,57 +211,6 @@
             </executions>
           </plugin>
          </plugins>
-      </build>
-    </profile>
-
-    <profile>
-      <id>oracle</id>
-      <activation>
-        <activeByDefault>false</activeByDefault>
-      </activation>
-
-     <dependencies>
-          <!-- Oracle JDBC driver - required only if you want to run the tests, or dbsetup, against Oracle.
-               Add a top level dependency if this profile is active to allow for db-required tests in any module.
-               The driver can not be packaged for OpenSource distributions due to licensing issues, and as such,
-               this profile should not be active by default. -->
-          <dependency>
-              <groupId>com.oracle</groupId>
-              <artifactId>ojdbc6</artifactId>
-              <version>${ojdbc6.version}</version>
-          </dependency>
-      </dependencies>
-
-      <build>
-        <plugins>
-       <plugin>
-          <artifactId>maven-assembly-plugin</artifactId>
-          <configuration>
-              <descriptorRefs>
-                  <descriptorRef>jar-with-dependencies</descriptorRef>
-              </descriptorRefs>
-              <archive>
-                  <manifest>
-                      <mainClass>org.rhq.server.metrics.migrator.DataMigratorRunner</mainClass>
-                      <addClasspath>true</addClasspath>
-                  </manifest>
-              </archive>
-          </configuration>
-          <executions>
-            <execution>
-                <id>package-jar-with-dependencies</id>
-                <phase>package</phase>
-                <goals>
-                    <goal>single</goal>
-                </goals>
-                <configuration>
-                  <attach>false</attach>
-                  <finalName>migrator-executable/data-migrator-oracle-${project.version}</finalName>
-                </configuration>
-          </execution>
-          </executions>
-      </plugin>
-    </plugins>
       </build>
     </profile>
    </profiles>

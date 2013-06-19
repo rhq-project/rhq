@@ -59,20 +59,11 @@ public interface SystemGWTService extends RemoteService {
     HashMap<String, String> getConnectorDownloads() throws RuntimeException;
 
     /**
-     * Returns the name and download URL (key and value respectively) of all data-migrator downloads
-     * available on the server. The URL is relative to the server's host and port (i.e. only
-     * the path of the URL is returned).
-     *
-     * @return information about data-migrators that can be downloaded from the server
-     */
-    HashMap<String, String> getMigratorDownloads() throws RuntimeException;
-
-    /**
      * Returns the name and download URL (key and value respectively) of all CLI alert scripts
-     * that are available on the server for download. These are just scripts that users can
+     * that are available on the server for download. These are just scripts that users can 
      * then use to create actual cli scripts for alert notifications. These scripts will usually
      * require some tweaking to be usable as alert scripts.
-     *
+     * 
      * @return info about the available CLI alert scripts
      * @throws RuntimeException
      */
@@ -82,12 +73,12 @@ public interface SystemGWTService extends RemoteService {
      * Returns the name and download URL (key and value respectively) of all script modules
      * that are available on the server for download. These are provided by RHQ for other
      * scripts to peruse using the module-loading mechanism of particular language.
-     *
+     * 
      * @return info about the available script modules
      * @throws RuntimeException
      */
     HashMap<String, String> getScriptModulesDownloads() throws RuntimeException;
-
+    
     /**
      * @return metadata properties about the CLI download available on the server.
      */

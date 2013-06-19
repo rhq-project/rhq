@@ -105,7 +105,7 @@ public class RHQControl {
             System.exit(0);
         } catch (RHQControlException e) {
             Throwable rootCause = ThrowableUtil.getRootCause(e);
-            control.log.error("There was an unexpected error: " + rootCause.getMessage(), rootCause);
+            control.log.error("There was an unxpected error: " + rootCause.getMessage(), rootCause);
             System.exit(1);
         }
     }

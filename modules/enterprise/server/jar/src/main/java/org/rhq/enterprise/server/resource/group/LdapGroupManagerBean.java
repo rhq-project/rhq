@@ -156,6 +156,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             throw new IllegalArgumentException("Role with id [" + roleId + "] does not exist.");
         }
 
+        //add some code to synch up the current list of ldap groups.
         Set<LdapGroup> currentGroups = role.getLdapGroups();
         List<String> currentGroupNames = new ArrayList<String>(currentGroups.size());
         for (LdapGroup group : currentGroups) {
@@ -167,10 +168,12 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             newGroupNames.add(group.getName());
         }
 
+        //figure out which ones are new then add them.
         List<String> namesOfGroupsToBeAdded = new ArrayList<String>(newGroupNames);
         namesOfGroupsToBeAdded.removeAll(currentGroupNames);
         addLdapGroupsToRole(subject, roleId, namesOfGroupsToBeAdded);
 
+        //figure out which ones need to be removed. then remove them.
         List<String> namesOfGroupsToBeRemoved = new ArrayList<String>(currentGroupNames);
         namesOfGroupsToBeRemoved.removeAll(newGroupNames);
         int[] idsOfGroupsToBeRemoved = new int[namesOfGroupsToBeRemoved.size()];
@@ -290,11 +293,10 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     public Map<String, String> findLdapUserDetails(String userName) {
+        // Load our LDAP specific properties
         Properties systemConfig = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
 
         HashMap<String, String> userDetails = new HashMap<String, String>();
-        // Load our LDAP specific properties
-        Properties env = getProperties(systemConfig);
 
         // Load the BaseDN
         String baseDN = (String) systemConfig.get(SystemSetting.LDAP_BASE_DN.getInternalName());
@@ -312,13 +314,13 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         // Load any search filter
         String searchFilter = (String) systemConfig.get(SystemSetting.LDAP_FILTER.getInternalName());
         if (bindDN != null) {
-            env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
-            env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
-            env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+            systemConfig.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
+            systemConfig.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
+            systemConfig.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
         }
 
         try {
-            InitialLdapContext ctx = new InitialLdapContext(env, null);
+            InitialLdapContext ctx = new InitialLdapContext(systemConfig, null);
             SearchControls searchControls = getSearchControls();
 
             // Add the search filter if specified.  This only allows for a single search filter.. i.e. foo=bar.

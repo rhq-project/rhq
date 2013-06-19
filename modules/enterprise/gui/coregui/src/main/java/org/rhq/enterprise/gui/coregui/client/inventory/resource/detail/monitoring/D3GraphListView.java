@@ -46,7 +46,6 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
@@ -116,11 +115,6 @@ public class D3GraphListView extends AbstractD3GraphListView {
         setOverflow(Overflow.HIDDEN);
     }
 
-    @Deprecated
-    public void addSetButtonClickHandler(ClickHandler clickHandler) {
-        Log.debug("measurementRangeEditor " + buttonBarDateTimeRangeEditor);
-      //  graphDateTimeRangeEditor.getSetButton().addClickHandler(clickHandler);
-    }
 
     @Override
     protected void onDraw() {

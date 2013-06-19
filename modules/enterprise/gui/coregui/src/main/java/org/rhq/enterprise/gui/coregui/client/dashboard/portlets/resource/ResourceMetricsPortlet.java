@@ -282,12 +282,6 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                                 graphView = D3GraphListView
                                                                     .createSingleGraph(resourceComposite.getResource(),
                                                                         md.getId(), true);
-                                                                graphView.addSetButtonClickHandler(new ClickHandler() {
-                                                                    @Override
-                                                                    public void onClick(ClickEvent event) {
-                                                                        graphView.redrawGraphs();
-                                                                    }
-                                                                });
 
                                                                 window.addItem(graphView);
                                                                 window.show();

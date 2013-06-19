@@ -189,12 +189,7 @@ public class MeasurementTableView extends Table<MetricsTableDataSource> {
                                     ChartViewWindow window = new ChartViewWindow("");
                                     final D3GraphListView graphListView = D3GraphListView.createMultipleGraphs(
                                             resourceComposite.getResource(), definitionIds, true);
-                                    graphListView.addSetButtonClickHandler(new ClickHandler() {
-                                        @Override
-                                        public void onClick(ClickEvent event) {
-                                            graphListView.redrawGraphs();
-                                        }
-                                    });
+
                                     window.addItem(graphListView);
                                     window.show();
                                     refreshTableInfo();

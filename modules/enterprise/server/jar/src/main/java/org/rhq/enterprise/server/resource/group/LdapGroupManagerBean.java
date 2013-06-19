@@ -380,7 +380,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
      */
     protected Set<Map<String, String>> buildGroup(Properties systemConfig, String filter) {
         Set<Map<String, String>> groupDetailsMap = new HashSet<Map<String, String>>();
-
+        //Load our LDAP specific properties
         // Load the BaseDN
         String baseDN = (String) systemConfig.get(SystemSetting.LDAP_BASE_DN.getInternalName());
 
@@ -423,7 +423,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             int defaultPageSize = 1000;
             // only if they're enabled in the UI.
             if (useQueryPaging) {
-                String groupPageSize = systemConfig.getProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
+                String groupPageSize = systemConfig.getProperty(
+                    SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.getInternalName(), ""
                     + defaultPageSize);
                 if ((groupPageSize != null) && (!groupPageSize.trim().isEmpty())) {
                     int passedInPageSize = -1;

@@ -68,25 +68,6 @@ public final class ClusterInitService {
 
     private final Log log = LogFactory.getLog(ClusterInitService.class);
 
-    private Session initRhqSession(List<StorageNode> storageNodes) {
-        return initSession(storageNodes, "rhq", "rhqadmin", "rhqadmin");
-    }
-
-    private Session initSession(List<StorageNode> hosts, String keySpace, String username, String password) {
-        if (hosts == null) {
-            throw new IllegalArgumentException("No cassandra nodes were provided.");
-        }
-        String[] addresses = new String[hosts.size()];
-        for (int i = 0; i < hosts.size(); i++) {
-            addresses[i] = hosts.get(i).getAddress();
-        }
-        Cluster cluster = Cluster.builder().addContactPoints(addresses).withoutMetrics()
-            .withCredentials(username, password)
-            .build();
-        Session session = cluster.connect(keySpace);
-        return session;
-    }
-
     public boolean ping(List<StorageNode> storageNodes, int numHosts) {
         int connections = 0;
         long sleep = 100;
@@ -240,7 +221,7 @@ public final class ClusterInitService {
      *
      * @param hosts The cluster nodes
      */
-    public void waitForSchemaAgreement(List<StorageNode> storageNodes) {
+    public void waitForSchemaAgreement(List<StorageNode> storageNodes) throws Exception {
         if (storageNodes == null) {
             return;
         }
@@ -249,15 +230,13 @@ public final class ClusterInitService {
         boolean schemaInAgreement = false;
 
         while (!schemaInAgreement) {
-            Set<UUID> schemaVersions = new HashSet<UUID>();
-            try {
+            Set<String> schemaVersions = new HashSet<String>();
                 for (StorageNode host : storageNodes) {
-                    UUID otherSchchemaVersion = getSchemaVersionForNode(host);
-                    schemaVersions.add(otherSchchemaVersion);
+                    String otherSchchemaVersion = getSchemaVersionForNode(host);
+                    if (otherSchchemaVersion != null) {
+                        schemaVersions.add(otherSchchemaVersion);
+                    }
                 }
-            } catch (NoHostAvailableException e) {
-                throw new RuntimeException("Unable to get schema versions from " + storageNodes.get(0), e);
-            }
             if (schemaVersions.size() > 1) {
                 if (log.isInfoEnabled()) {
                     log.info("Schema agreement has not been reached. Found " + schemaVersions.size() +
@@ -271,7 +250,7 @@ public final class ClusterInitService {
                 } catch (InterruptedException e) {
                 }
             } else {
-                UUID schemaVersion = schemaVersions.iterator().next();
+                String schemaVersion = schemaVersions.iterator().next();
                 if (schemaVersion != null) {
                     schemaInAgreement = true;
                 } else {
@@ -327,21 +306,40 @@ public final class ClusterInitService {
         return nativeTransportRunning;
     }
 
-    private UUID getSchemaVersionForNode(StorageNode storageNode) {
-        Session session = null;
-        try {
-            session = initRhqSession(Arrays.asList(storageNode));
-            PreparedStatement statement = session.prepare("SELECT schema_version from system.local");
-            BoundStatement boundStatement = statement.bind();
-            ResultSet rs = session.execute(boundStatement);
-            for (Row row : rs) {
-                return row.getUUID(0);
-            }
-            return null;
-        } finally {
-            if (session != null)
-                session.getCluster().shutdown();
-        }
-    }
+    private String getSchemaVersionForNode(StorageNode storageNode) throws Exception {
+        String url = storageNode.getJMXConnectionURL();
+        JMXServiceURL serviceURL = new JMXServiceURL(url);
+        Map<String, String> env = new HashMap<String, String>();
+        // see https://issues.jboss.org/browse/AS7-2138
+        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
+        JMXConnector connector = null;
 
+        try {
+            connector = JMXConnectorFactory.connect(serviceURL, env);
+            MBeanServerConnection serverConnection = connector.getMBeanServerConnection();
+            ObjectName storageService = new ObjectName("org.apache.cassandra.db:type=StorageService");
+            String attribute = "SchemaVersion";
+            try {
+                return (String) serverConnection.getAttribute(storageService, attribute);
+            } catch (Exception e) {
+                // It is ok to just catch and log exceptions here particularly in an integration
+                // test environment where we could potentially try to do the JMX query before
+                // Cassandra is fully initialized. We can query StorageService before the native
+                // transport server is initialized which will result in Cassandra throwing a NPE.
+                // We do not want propagate that exception because it is just a matter of waiting
+                // for Cassandra to finish initializing.
+                if (log.isDebugEnabled()) {
+                    log.debug("Failed to read attribute [" + attribute + "] from " + storageService, e);
+                } else {
+                    log.info("Faied to read attribute [" + attribute + "] from " + storageService + ": " +
+                        e.getMessage());
+                }
+            }
+        } finally {
+            if (connector != null) {
+                connector.close();
+            }
+        }
+        return null;
+    }
 }

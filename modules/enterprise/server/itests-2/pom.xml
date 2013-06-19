@@ -558,6 +558,7 @@
             <configuration>
               <skipTests>${skipTests}</skipTests>
               <excludes>
+                <exclude>**/DataPurgeJobTest.java</exclude>
                 <!-- NOTE: PERF GROUP EXCLUDED (SEE BZ 874696) -->
                 <exclude>org/rhq/**/performance/**/*.java</exclude>
 

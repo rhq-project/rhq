@@ -4,7 +4,7 @@ rem ============================================================================
 rem RHQ Storage Installer Script
 rem
 rem This file is used to complete the installation of the RHQ storage Server on a
-rem UNIX platform.
+rem Windows platform.
 rem
 rem This script is customizable by setting the following environment variables:
 rem

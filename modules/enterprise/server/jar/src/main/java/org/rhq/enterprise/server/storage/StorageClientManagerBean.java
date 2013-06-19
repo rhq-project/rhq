@@ -23,7 +23,7 @@
  *
  */
 
-package org.rhq.enterprise.server.cassandra;
+package org.rhq.enterprise.server.storage;
 
 import java.util.ArrayList;
 import java.util.List;

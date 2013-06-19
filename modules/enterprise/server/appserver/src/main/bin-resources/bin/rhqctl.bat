@@ -1,15 +1,15 @@
 @echo off
 
 rem =============================================================================
-rem RHQ Storage Installer Script
+rem RHQ Control Script
 
 rem This file is used to control the RHQ components on a Windows machine.
 
 rem This script is customizable by setting the following environment variables:
 
 rem    RHQ_CONTROL_DEBUG - If this is defined, the script will emit debug
-rem                       messages. If this is not defined or set to "false"
-rem                       debug messages are not emitted.
+rem                        messages. If this is not defined or set to "false"
+rem                        debug messages are not emitted.
 
 rem    RHQ_SERVER_HOME - Defines where the server's home install directory is.
 rem                      If not defined, it will be assumed to be the parent
@@ -36,18 +36,18 @@ rem                                    $RHQ_SERVER_JAVA_HOME\bin\java
 rem                                    is used.
 
 rem    RHQ_CONTROL_JAVA_OPTS - Java VM command line options to be
-rem                        passed into the Java VM. If this is not defined
-rem                        this script will pass in a default set of options.
-rem                        If you only want to add options to the defaults,
-rem                        then you will want to use
-rem                        RHQ_CONTROL_ADDITIONAL_JAVA_OPTS instead.
+rem                            passed into the Java VM. If this is not defined
+rem                            this script will pass in a default set of options.
+rem                            If you only want to add options to the defaults,
+rem                            then you will want to use
+rem                            RHQ_CONTROL_ADDITIONAL_JAVA_OPTS instead.
 
 rem    RHQ_CONTROL_ADDITIONAL_JAVA_OPTS - additional Java VM command
-rem                                   line options to be passed into the VM.
-rem                                   This is added to RHQ_CONTROL_JAVA_OPTS; it
-rem                                   is mainly used to augment the
-rem                                   default set of options. This can be
-rem                                   left unset if it is not needed.
+rem                                       line options to be passed into the VM.
+rem                                       This is added to RHQ_CONTROL_JAVA_OPTS;
+rem                                       it is mainly used to augment the
+rem                                       default set of options. This can be
+rem                                       left unset if it is not needed.
 
 rem =============================================================================
 
@@ -188,6 +188,8 @@ if defined RHQ_CONTROL_DEBUG echo _JBOSS_MODULEPATH: %_JBOSS_MODULEPATH%
 
 rem start the AS instance with our main installer module
 "%RHQ_SERVER_JAVA_EXE_FILE_PATH%" %RHQ_CONTROL_JAVA_OPTS% %RHQ_CONTROL_ADDITIONAL_JAVA_OPTS% -jar "%RHQ_SERVER_JBOSS_HOME%\jboss-modules.jar" -mp "%_JBOSS_MODULEPATH%" org.rhq.rhq-server-control %*
+if not errorlevel 1 goto done
+exit /B %ERRORLEVEL%
 
 :done
 endlocal

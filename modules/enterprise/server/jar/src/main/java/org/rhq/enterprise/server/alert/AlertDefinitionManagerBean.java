@@ -656,6 +656,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             if (alertConditionCategory == AlertConditionCategory.BASELINE) {
 
                 MeasurementDefinition def = alertCondition.getMeasurementDefinition();
+                def = entityManager.getReference(MeasurementDefinition.class, def.getId());
                 NumericType numType = def.getNumericType();
                 if (numType == null) {
                     def = entityManager.getReference(MeasurementDefinition.class, def.getId());

@@ -611,7 +611,10 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
                     AlertNotificationLog notificationLog = null;
 
                     String senderName = alertNotification.getSenderName();
-                    if (senderName == null) {
+                    if (alertSenderPluginManager == null) {
+                        notificationLog = new AlertNotificationLog(alert,senderName, ResultState.FAILURE,
+                            "Notification was not sent as alert sender plugins are not yet initialized ");
+                    } else if (senderName == null) {
                         notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
                             + senderName + "' is not defined");
                     } else {
@@ -1031,20 +1034,20 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             if (isShort) {
                 if (configNameRegex == null || configNameRegex.length() == 0) {
                     if (pathNameRegex == null || pathNameRegex.length() == 0) {
-                        // neither a config name regex nor path regex was specified 
+                        // neither a config name regex nor path regex was specified
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_SHORT));
                     } else {
-                        // a path name regex was specified, but not a config name regex 
+                        // a path name regex was specified, but not a config name regex
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYPATHS_SHORT,
                             pathNameRegex));
                     }
                 } else {
                     if (pathNameRegex == null || pathNameRegex.length() == 0) {
-                        // a config name regex was specified, but not a path name regex 
+                        // a config name regex was specified, but not a path name regex
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYCONFIG_SHORT,
                             configNameRegex));
                     } else {
-                        // both a config name regex and a path regex was specified 
+                        // both a config name regex and a path regex was specified
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_CONFIGPATHS_SHORT,
                             pathNameRegex, configNameRegex));
                     }
@@ -1052,20 +1055,20 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
             } else {
                 if (configNameRegex == null || configNameRegex.length() == 0) {
                     if (pathNameRegex == null || pathNameRegex.length() == 0) {
-                        // neither a config name regex nor path regex was specified 
+                        // neither a config name regex nor path regex was specified
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT));
                     } else {
-                        // a path name regex was specified, but not a config name regex 
+                        // a path name regex was specified, but not a config name regex
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYPATHS,
                             pathNameRegex));
                     }
                 } else {
                     if (pathNameRegex == null || pathNameRegex.length() == 0) {
-                        // a config name regex was specified, but not a path name regex 
+                        // a config name regex was specified, but not a path name regex
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_ONLYCONFIG,
                             configNameRegex));
                     } else {
-                        // both a config name regex and a path regex was specified 
+                        // both a config name regex and a path regex was specified
                         str.append(AlertI18NFactory.getMessage(AlertI18NResourceKeys.ALERT_DRIFT_CONFIGPATHS,
                             pathNameRegex, configNameRegex));
                     }

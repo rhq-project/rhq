@@ -9,12 +9,13 @@
   <xsl:template match="/api">
     <html>
       <head>
-        <title>Api documentation</title>
+        <title>RHQ REST-Api documentation</title>
         <style type="text/css">
           h2 {background-color:#ADD8E6   }
           h3 {background-color:#C0C0C0   }
           th {font-weight:bold; font-size:120% }
           em {font-style:italic}
+          .exp {background-color:#CC6666 }
         </style>
       </head>
       <body>
@@ -29,8 +30,9 @@
               <xsl:element name="a">
                 <xsl:attribute name="href">#<xsl:value-of select="@path"/></xsl:attribute>
                 <xsl:call-template name="class-level-path"/>
-
               </xsl:element>
+              <xsl:text> </xsl:text>
+              <xsl:value-of select="@shortDesc"/>
             </li>
           </xsl:for-each>
         </ul>
@@ -59,6 +61,9 @@
   <xsl:template match="class">
     <xsl:element name="h2">
       <xsl:attribute name="id"><xsl:value-of select="@path"/></xsl:attribute>
+      <xsl:if test="contains(@shortDesc,'EXPERIMENT')">
+        <xsl:attribute name="class">exp</xsl:attribute>
+      </xsl:if>
       <!--/<xsl:value-of select="@path"/>-->
       <xsl:call-template name="class-level-path"/>
       <xsl:if test="@shortDesc">

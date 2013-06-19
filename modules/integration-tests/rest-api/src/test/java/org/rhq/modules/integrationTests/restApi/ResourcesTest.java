@@ -49,6 +49,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
 
 /**
@@ -1005,6 +1006,39 @@ public class ResourcesTest extends AbstractBase {
         .when()
             .get("/resource/type/{typeId}");
 
+    }
+
+    @Test
+    public void testTypeByNameAndPlugin() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .queryParam("q","CPU")
+            .queryParam("plugin","Platforms")
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("",iterableWithSize(1))
+            .body("[0].name",is("CPU"))
+            .header("X-collection-size",is("1"))
+        .when()
+            .get("/resource/type");
+    }
+
+    @Test
+    public void testTypeByNameAndPlugin2() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .queryParam("q","C P U")
+            .queryParam("plugin","Frobnitz")
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("",iterableWithSize(0))
+            .header("X-collection-size",is("0"))
+        .when()
+            .get("/resource/type");
     }
 
     @Test

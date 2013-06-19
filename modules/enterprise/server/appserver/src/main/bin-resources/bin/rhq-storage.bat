@@ -42,12 +42,16 @@ rem                      the wrapper log file will go.
 rem
 rem    RHQ_STORAGE_RUN_AS - if defined, then when the Windows Service is
 rem                      installed, the value is the domain\username of the
-rem                      user that the Windows Service will run as 
+rem                      user that the Windows Service will run as. It is
+rem                      important to also set RHQ_STORAGE_PASSWORD for the
+rem                      current user account.
 rem                       
 rem    RHQ_STORAGE_RUN_AS_ME - if defined, then when the Windows Service is
 rem                      installed, the domain\username of the user that the Windows
 rem                      Service will run as will be the current user (.\%USERNAME%).
-rem                      This takes precedence over RHQ_STORAGE_RUN_AS.
+rem                      This takes precedence over RHQ_STORAGE_RUN_AS. It is
+rem                      important to also set RHQ_STORAGE_PASSWORD for the
+rem                      current user account.
 rem                       
 rem Note that you cannot define custom Java VM parameters or command line
 rem arguments to pass to Cassandra.  If you wish to pass in  specific arguments,
@@ -187,6 +191,8 @@ if defined RHQ_STORAGE_DEBUG set _DEBUG_OPTS=wrapper.debug=true
 rem Determine what user the Windows Service will run as.
 if defined RHQ_STORAGE_RUN_AS set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=%RHQ_STORAGE_RUN_AS%"
 if defined RHQ_STORAGE_RUN_AS_ME set _WRAPPER_NTSERVICE_ACCOUNT="wrapper.ntservice.account=.\%USERNAME%"
+rem This service is typically installed by rhqctl, so assume we don't want to prompt
+if not defined RHQ_STORAGE_PASSWORD_PROMPT set RHQ_STORAGE_PASSWORD_PROMPT=false
 
 if /i "%1"=="console" (
    rem START STORAGE NODE

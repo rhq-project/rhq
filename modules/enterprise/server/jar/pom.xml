@@ -62,6 +62,12 @@
 
     <dependency>
       <groupId>org.rhq</groupId>
+      <artifactId>rhq-cassandra-schema</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
       <artifactId>rhq-core-client-api</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -962,6 +968,30 @@
                 </parameters>
                 <outputDir>${project.build.directory}/docs/html</outputDir>
                 <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.html</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+              <transformationSet>
+                <!-- Generate a html renderingof a short form -->
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
+                <dir>target/docs/xml</dir>
+                <includes>
+                  <include>rest-api-out.xml</include>
+                </includes>
+                <stylesheet>src/main/xsl/apiout2html_overview.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}/docs/html</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.MergeFileMapper">
+                      <targetName>rest-api-overview</targetName>
+                    </fileMapper>
                   <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
                     <targetExtension>.html</targetExtension>
                   </fileMapper>

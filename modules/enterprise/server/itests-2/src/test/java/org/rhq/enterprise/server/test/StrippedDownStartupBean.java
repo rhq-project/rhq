@@ -32,7 +32,7 @@ import javax.persistence.PersistenceContext;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.cassandra.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.core.StartupBean;
 import org.rhq.enterprise.server.naming.NamingHack;
 

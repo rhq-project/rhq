@@ -72,7 +72,7 @@ public class Upgrade extends AbstractInstall {
                 FROM_AGENT_DIR_OPTION,
                 true,
                 "Full path to install directory of the RHQ Agent to be upgraded. Required only if an existing agent "
-                    + "exists and is not installed in the default location: <from-server-dir>/rhq-agent")
+                    + "exists and is not installed in the default location: <from-server-dir>/../rhq-agent")
             .addOption(null, FROM_SERVER_DIR_OPTION, true,
                 "Full path to install directory of the RHQ Server to be upgraded. Required.")
             .addOption(
@@ -91,18 +91,26 @@ public class Upgrade extends AbstractInstall {
                 null,
                 STORAGE_DATA_ROOT_DIR,
                 true,
-                "You can use this option to use a different base directory for all the data directories created by the storage node e.g. "
-                    + "if the default directory is not writable for the current user (which is under /var/lib on Linux). "
-                    + "This is only used if the storage node needs to be newly installed during the upgrade process; otherwise, "
-                    + "an error will result if you specify this option. ")
+                "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify a non-default base "
+                    + "directory for the data directories created by the storage node. For example, if the default directory is "
+                    + "not writable for the current user (/var/lib on Linux) or if you simply prefer a different location. ")
+            .addOption(
+                null,
+                STORAGE_CONFIG_OPTION,
+                true,
+                "This option is valid only when upgrading from older systems that did not have storage nodes. Use this option to specify non-default storage "
+                    + "installer options. It is the path to a properties file with keys that correspond to option names of the "
+                    + "storage installer. Each property will be translated into an option that is passed to the storage "
+                    + "installer. See example.storage.properties for examples.")
             .addOption(
                 null,
                 RUN_DATA_MIGRATION,
                 true,
-                "By default you ned to migrate metrics from a pre RHQ 4.8 system. The upgrade process can trigger this or "
-                    + "give you an estimate on the duration. If you want to have fine control over the process, please run the "
-                    + "migrator on the command line. Options are none (do nothing), estimate (estimate the migration time only), "
-                    + "print-command (print the command line for a manual run) , do-it (run the migration)");
+                "This option is valid only when upgrading from older systems that did not have storage nodes. The existing metric data needs to migrate to "
+                    + "the metric storage.  The upgrade process can trigger this or give you an estimate on the duration. If you want "
+                    + "to have fine control over the process, please run the migrator on the command line. Options are none (do "
+                    + "nothing), estimate (estimate the migration time only), print-command (print the command line for a manual run), "
+                    + "do-it (run the migration)");
 
         options.getOption(AGENT_AUTOSTART_OPTION).setOptionalArg(true);
     }
@@ -188,7 +196,7 @@ public class Upgrade extends AbstractInstall {
                 if (commandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
                     agentDir = new File(commandLine.getOptionValue(FROM_AGENT_DIR_OPTION));
                 } else {
-                    agentDir = new File(getBaseDir(), AGENT_BASEDIR_NAME);
+                    agentDir = getAgentBasedir();
                 }
                 startAgent(agentDir, true);
             }
@@ -550,9 +558,10 @@ public class Upgrade extends AbstractInstall {
             }
 
             String absPath = propertyValue.replace("${jboss.server.config.dir}", oldServerConfigDir.getAbsolutePath());
-            absPath = absPath.replace("${jboss.server.home.dir}/conf", oldServerConfigDir.getAbsolutePath());
+            absPath = absPath.replace("${jboss.server.home.dir}/conf",
+                useForwardSlash(oldServerConfigDir.getAbsolutePath()));
             if (absPath.startsWith("conf/")) {
-                absPath = absPath.replaceFirst("conf", oldServerConfigDir.getAbsolutePath());
+                absPath = absPath.replaceFirst("conf", useForwardSlash(oldServerConfigDir.getAbsolutePath()));
             }
             referredFile = new File(absPath);
         }
@@ -579,6 +588,10 @@ public class Upgrade extends AbstractInstall {
         return;
     }
 
+    private String useForwardSlash(String path) {
+        return (null != path) ? path.replace('\\', '/') : null;
+    }
+
     private void upgradeAgent(CommandLine rhqctlCommandLine) throws IOException {
         try {
             File oldAgentDir;
@@ -588,7 +601,7 @@ public class Upgrade extends AbstractInstall {
                     throw new FileNotFoundException("Missing agent to upgrade: " + oldAgentDir.getAbsolutePath());
                 }
             } else {
-                oldAgentDir = new File(rhqctlCommandLine.getOptionValue(FROM_SERVER_DIR_OPTION), AGENT_BASEDIR_NAME);
+                oldAgentDir = getAgentBasedir();
                 if (!oldAgentDir.isDirectory()) {
                     log.info("No agent found in the old server location... skipping agent upgrade");
                     return;
@@ -664,7 +677,18 @@ public class Upgrade extends AbstractInstall {
 
         if (isRhq48OrLater(commandLine)) {
             if (commandLine.hasOption(STORAGE_DATA_ROOT_DIR)) {
-                errors.add("You cannot use the option --" + STORAGE_DATA_ROOT_DIR + " for your installation.");
+                errors.add("The option --" + STORAGE_DATA_ROOT_DIR
+                    + " is valid only for upgrades from older systems that did not have storage nodes.");
+            }
+
+            if (commandLine.hasOption(STORAGE_CONFIG_OPTION)) {
+                errors.add("The option --" + STORAGE_CONFIG_OPTION
+                    + " is valid only for upgrades from older systems that did not have storage nodes.");
+            }
+
+            if (commandLine.hasOption(RUN_DATA_MIGRATION)) {
+                errors.add("The option --" + RUN_DATA_MIGRATION
+                    + " is valid only for upgrades from older systems that did not have storage nodes.");
             }
         }
 
@@ -703,7 +727,8 @@ public class Upgrade extends AbstractInstall {
     }
 
     private void printDataMigrationNotice() {
-        log.info("\n================\n" + "If this was an upgrade from a RHQ version before 4.8,\n "
+        log.info("\n================\n"
+            + "If this was an upgrade from older systems that did not have storage nodes,\n "
             + "you need to run the data migration job to transfer stored (historic)\n"
             + "metrics data from the relational database into the new storage.\n"
             + "Until the migration has run, that historic data is not available \n" + "in e.g. the charting views.\n\n"

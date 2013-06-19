@@ -70,9 +70,13 @@ public class EventManager implements ContainerService {
     private Map<PollerKey, Runnable> pollerThreads;
     private SigarProxy sigar;
 
-    public void initialize() {
+    public EventManager(PluginContainerConfiguration configuration) {
+        this.pcConfig = configuration;
         this.activeReport = new EventReport(this.pcConfig.getEventReportMaxPerSource(), this.pcConfig
             .getEventReportMaxTotal());
+    }
+
+    public void initialize() {
 
         // Schedule sender thread(s) to send Event reports to the Server periodically.
         EventSenderRunner senderRunner = new EventSenderRunner(this);
@@ -101,7 +105,7 @@ public class EventManager implements ContainerService {
     }
 
     public void setConfiguration(PluginContainerConfiguration config) {
-        this.pcConfig = config;
+        // Was already passed in the constructor
     }
 
     void publishEvents(@NotNull Set<Event> events, @NotNull Resource resource) {

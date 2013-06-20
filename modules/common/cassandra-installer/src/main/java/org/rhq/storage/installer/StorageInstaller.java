@@ -277,7 +277,7 @@ public class StorageInstaller {
                 if (cmdLine.hasOption("n")) {
                     hostname = cmdLine.getOptionValue("n");
                 } else {
-                    hostname = InetAddress.getLocalHost().getHostName();
+                    hostname = InetAddress.getLocalHost().getHostAddress();
                 }
                 deploymentOptions.setListenAddress(hostname);
                 deploymentOptions.setRpcAddress(hostname);

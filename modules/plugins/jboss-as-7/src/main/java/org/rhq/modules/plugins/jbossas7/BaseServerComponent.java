@@ -411,8 +411,15 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return operationResult;
     }
 
-    private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
+    public boolean isManuallyAddedServer() {
         if (pluginConfiguration.get("manuallyAdded") != null) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
+        if (isManuallyAddedServer()) {
             operationResult.setErrorMessage(operation + " is not enabled for manually added servers");
             return true;
         }

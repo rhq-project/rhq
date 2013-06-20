@@ -27,6 +27,7 @@ package org.rhq.cassandra.schema;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
@@ -84,6 +85,8 @@ public class VersionManager extends AbstractManager {
         try {
             initCluster();
             if (!schemaExists()) {
+                session.execute("ALTER USER cassandra NOSUPERUSER");
+                session.execute("ALTER USER cassandra WITH PASSWORD '" + UUID.randomUUID() + "'");
                 this.executeTask(Task.Create);
             }  else {
                 log.info("RHQ schema already exists.");

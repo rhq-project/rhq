@@ -1,9 +1,5 @@
 <updatePlan>
   <step>
-    DROP USER cassandra;
-  </step>
-
-  <step>
     CREATE KEYSPACE rhq WITH
       replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
   </step>

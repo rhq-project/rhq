@@ -654,7 +654,9 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         createHeader(chartContext.chartTitle);
 
                         createYAxisGridLines();
-                        createBrush();
+                        if(!chartContext.isPortalGraph){
+                            createBrush();
+                        }
                         createStackedBars();
                         createXandYAxes();
                         createAvgLines();

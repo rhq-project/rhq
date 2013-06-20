@@ -4,7 +4,7 @@
 # to auto load this script move this script to /etc/bash_completion.d/
 
 _rhqctl() {
-    local cur prev opts agentServerStorage storageInstallSubopts agentInstallSubopts serverInstallSubopts first
+    local opts agentServerStorage storageInstallSubopts agentInstallSubopts serverInstallSubopts upgradeSubopts dataMingratorSubopts
     COMPREPLY=()
 
     cur="${COMP_WORDS[COMP_CWORD]}"
@@ -12,12 +12,15 @@ _rhqctl() {
     opts="console install start status stop upgrade"
     agentServerStorage="--agent --server --storage"
     serverStorage="--server --storage"
+    dataMigratorSubopts="none estimate print-command do-it"
 
     # the spaces in the beginning and in the end are important here
-    storageInstallSubopts=" --storage-config --storage-dir "
-    agentInstallSubopts=" --agent-config --agent-dir --agent-preference "
+    storageInstallSubopts=" --storage-config --storage-data-root-dir "
+    agentInstallSubopts=" --agent-auto-start --agent-config --agent-preference "
     serverInstallSubopts=" --server-config "
-    upgradeSubopts=" --from-agent-dir --from-server-dir --agent-no-start "
+    upgradeSubopts=" --from-agent-dir --from-server-dir --agent-auto-start --run-data-migrator --storage-config --storage-data-root-dir --use-remote-storage-node "
+    booleanSubopts=" --agent-auto-start --use-remote-storage-node "
+    trueFalse="true false"
 
     if [[ "${COMP_LINE}" =~ ^\.?rhqctl[[:space:]]*$ ]] ; then
       COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
@@ -34,8 +37,15 @@ _rhqctl() {
         return 0
     elif [[ "x${first}" == "xupgrade" ]] ; then
         if [[ "${upgradeSubopts}" == *" ${prev} "* ]] ; then
+          if [[ "x${prev}" == "x--run-data-migrator" ]] ; then
+            COMPREPLY=( $(compgen -W "${dataMigratorSubopts}" -- ${cur}) )
+            return 0
+          else
+            checkForBooleanSubopt ${prev}
+            [[ "x$boolean" == "x1" ]] && return 0
             completePath ${cur}
             return 0
+          fi
         fi
         COMPREPLY=( $(compgen -W "${upgradeSubopts}" -- ${cur}) )
         return 0
@@ -55,6 +65,8 @@ _rhqctl() {
             return 0
         elif [[ "x${second}" == "x--agent" ]] ; then
             if [[ "${agentInstallSubopts}" == *" ${prev} "* ]] ; then
+                checkForBooleanSubopt ${prev}
+                [[ "x$boolean" == "x1" ]] && return 0
                 completePath ${cur}
                 return 0
             fi
@@ -78,14 +90,21 @@ _rhqctl() {
 }
 
 function completePath(){
-  [ $# -gt 1 ] && return 1
-  cur=$1
   if [[ "${cur}x" == *"/x" ]] ; then
     toComplete="${cur}"
   else
     toComplete="${cur}*"
   fi
   COMPREPLY=( $(compgen -W "$( ls -1 ${toComplete} 2> /dev/null )" ) )
+}
+
+function checkForBooleanSubopt(){
+  if [[ "${booleanSubopts}" == *" ${prev} "* ]] ; then
+    COMPREPLY=( $(compgen -W "${trueFalse}" -- ${cur} ) )
+    boolean="1"
+  else
+    boolean="0"
+  fi
 }
 
 complete -F _rhqctl rhqctl

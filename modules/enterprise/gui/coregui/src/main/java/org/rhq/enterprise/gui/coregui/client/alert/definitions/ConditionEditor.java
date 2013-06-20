@@ -56,6 +56,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -65,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.NumberWithUnitsValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -599,7 +601,15 @@ public class ConditionEditor extends EnhancedVLayout {
             absoluteValue.setValidators(new NumberWithUnitsValidator(this.resourceType.getMetricDefinitions(),
                 metricDropDownMenu));
             if (editMode) {
-                absoluteValue.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+                MeasurementUnits units = existingCondition.getMeasurementDefinition().getUnits();
+                double doubleValue = existingCondition.getThreshold();
+                MeasurementNumericValueAndUnits valueWithUnits = null;
+                if (units.getFamily() == MeasurementUnits.Family.RELATIVE) {
+                    valueWithUnits = new MeasurementNumericValueAndUnits(doubleValue * 100, MeasurementUnits.PERCENTAGE);
+                } else {
+                    valueWithUnits = MeasurementConverterClient.fit(doubleValue, units);
+                }
+                absoluteValue.setDefaultValue(valueWithUnits.toString());
             }
             absoluteValue.setShowIfCondition(ifFunc);
             formItems.add(absoluteValue);

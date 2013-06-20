@@ -1,11 +1,19 @@
 <updatePlan>
   <step>
-    CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER;
+    DROP USER cassandra;
   </step>
 
   <step>
     CREATE KEYSPACE rhq WITH
       replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+  </step>
+
+  <step>
+    GRANT ALL PERMISSIONS ON KEYSPACE  system_auth to rhqadmin;
+  </step>
+
+  <step>
+    GRANT ALL PERMISSIONS ON KEYSPACE  rhq to rhqadmin;
   </step>
 
   <step>

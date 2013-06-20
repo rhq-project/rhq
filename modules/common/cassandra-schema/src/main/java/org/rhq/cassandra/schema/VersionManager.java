@@ -30,6 +30,7 @@ import java.util.List;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
+import com.datastax.driver.core.exceptions.AuthenticationException;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
@@ -71,16 +72,52 @@ public class VersionManager extends AbstractManager {
         log.info("Preparing to install schema");
         try {
             initCluster();
+        } catch (AuthenticationException e) {
+            // If we cannot connect with the rhqadmin user, then assume it has not been
+            // created; so, we need to perform the "bootstrap" step of creating the user
+            // before we apply any schema changes. We want to create the user first so that
+            // we can go ahead and remove the default cassandra user and apply all changes
+            // using the rhqadmin user.
+            bootstrap();
+        }
 
+        try {
+            initCluster();
             if (!schemaExists()) {
                 this.executeTask(Task.Create);
-            } else {
+            }  else {
                 log.info("RHQ schema already exists.");
             }
-
             this.executeTask(Task.Update);
-        } catch (NoHostAvailableException e) {
-            throw new RuntimeException(e);
+        } finally {
+            shutdown();
+        }
+    }
+
+    /**
+     * Before applying any schema, we need to create the rhqadmin user. If we have more
+     * than a single node cluster then we also need to set the RF of the system_auth
+     * keyspace BEFORE we create the rhqadmin user. If we do not do in this order we will
+     * get inconsistent reads which will can result in failed authentication.
+     */
+    public void bootstrap() {
+        try {
+            initCluster("cassandra", "cassandra");
+
+            int replicationFactor;
+            if (nodes.size() < 3) {
+                replicationFactor = nodes.size();
+            } else if (nodes.size() < 4) {
+                replicationFactor = 2;
+            } else {
+                replicationFactor = 3;
+            }
+            log.info("Updating replication_factor of system_auth keyspace to " + replicationFactor);
+            session.execute("ALTER KEYSPACE system_auth WITH replication = {'class': 'SimpleStrategy', " +
+                "'replication_factor': " + replicationFactor + "}");
+
+            log.info("Creating rhqadmin user");
+            session.execute("CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER");
         } finally {
             shutdown();
         }
@@ -103,7 +140,7 @@ public class VersionManager extends AbstractManager {
         }
     }
 
-    private void executeTask(Task task) throws Exception {
+    private void executeTask(Task task) {
         try {
             log.info("Starting to execute " + task + " task.");
 

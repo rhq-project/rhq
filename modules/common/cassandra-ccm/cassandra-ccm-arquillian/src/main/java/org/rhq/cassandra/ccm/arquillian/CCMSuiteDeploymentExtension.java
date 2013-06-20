@@ -26,6 +26,7 @@
 package org.rhq.cassandra.ccm.arquillian;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -113,6 +114,8 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                 public Void call() throws Exception {
 
                     SchemaManager schemaManager;
+                    ClusterInitService clusterInitService = new ClusterInitService();
+                    List<StorageNode> nodes = Collections.emptyList();
 
                     if (!Boolean.valueOf(System.getProperty("itest.use-external-storage-node", "false"))) {
 
@@ -121,21 +124,21 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                         File basedir = new File("target");
                         File clusterDir = new File(basedir, "cassandra");
 
-                        options.setUsername("cassandra");
-                        options.setPassword("cassandra");
+                        options.setUsername("rhqadmin");
+                        options.setPassword("rhqadmin");
                         options.setClusterDir(clusterDir.getAbsolutePath());
                         options.setHeapSize("256M");
                         options.setHeapNewSize("64M");
+                        options.setStartRpc(true);
 
                         ccm = new CassandraClusterManager(options);
-                        List<StorageNode> nodes = ccm.createCluster();
+                        nodes = ccm.createCluster();
 
                         ccm.startCluster(false);
 
                         try {
-                            ClusterInitService clusterInitService = new ClusterInitService();
                             clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 5);
-                            schemaManager = new SchemaManager("cassandra", "cassandra", nodes);
+                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
 
                         } catch (Exception e) {
                             if (null != ccm) {
@@ -146,7 +149,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                     } else {
                         try {
                             String seed = System.getProperty("rhq.cassandra.seeds", "127.0.0.1|7199|9042");
-                            schemaManager = new SchemaManager("cassandra", "cassandra", seed);
+                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", seed);
 
                         } catch (Exception e) {
                             throw new RuntimeException("External Cassandra initialization failed", e);
@@ -155,8 +158,8 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
                     try {
                         schemaManager.install();
+                        clusterInitService.waitForSchemaAgreement(nodes);
                         schemaManager.updateTopology();
-
                     } catch (Exception e) {
                         if (null != ccm) {
                             ccm.shutdownCluster();

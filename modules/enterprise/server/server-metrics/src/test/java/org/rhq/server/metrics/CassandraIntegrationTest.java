@@ -68,13 +68,13 @@ public class CassandraIntegrationTest {
     private static DateTimeService dateTimeService;
 
     @BeforeSuite
-    @DeployCluster(numNodes = 1, username = "cassandra", password = "cassandra")
+    @DeployCluster(numNodes = 2, username = "rhqadmin", password = "rhqadmin", waitForSchemaAgreement = true)
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
 
         Cluster cluster = new ClusterBuilder()
-            .addContactPoints("127.0.0.1")
-            .withCredentials("cassandra", "cassandra")
+            .addContactPoints("127.0.0.1", "127.0.02")
+            .withCredentials("rhqadmin", "rhqadmin")
             .build();
         session = cluster.connect("rhq");
     }

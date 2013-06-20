@@ -45,14 +45,38 @@ public class SchemaManager {
 
     private final Log log = LogFactory.getLog(SchemaManager.class);
 
+    /**
+     * The username that RHQ will use to connect to the storage cluster.
+     */
     private final String username;
+
+    /**
+     * The password that RHQ will use to connect to the storage cluster.
+     */
     private final String password;
+
     private final List<StorageNode> nodes = new ArrayList<StorageNode>();
 
+    /**
+     *
+     * @param username The username RHQ will use to connect to the storage cluster.
+     * @param password The password RHQ will use to connect to the storage cluster.
+     * @param nodes A list of seeds nodes that are assumed to be already running and
+     *              clustered prior to apply schema changes. The format for each node
+     *              should be address|jmx_port|cql_port,address|jmx_port|cql_port.
+     *              Each node consists of three fields that are pipe-delimited.
+     */
     public SchemaManager(String username, String password, String... nodes) {
         this(username, password, parseNodeInformation(nodes));
     }
 
+    /**
+     *
+     * @param username The username RHQ will use to connect to the storage cluster.
+     * @param password The password RHQ will use to connect to the storage cluster.
+     * @param nodes A list of seeds nodes that are assumed to be already running and
+     *              clustered prior to apply schema changes.
+     */
     public SchemaManager(String username, String password, List<StorageNode> nodes) {
         this.username = username;
         this.password = password;

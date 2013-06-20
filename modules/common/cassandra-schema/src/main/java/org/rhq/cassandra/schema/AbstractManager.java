@@ -85,9 +85,6 @@ public class AbstractManager {
             this.username = username;
             this.password = password;
             this.nodes = nodes;
-
-            this.initCluster();
-            this.shutdown();
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("Unable create storage node session.", e);
         }
@@ -228,8 +225,11 @@ public class AbstractManager {
         return files;
     }
 
+    protected void initCluster() {
+        initCluster(username, password);
+    }
 
-    protected void initCluster() throws NoHostAvailableException {
+    protected void initCluster(String username, String password) {
         String[] hostNames = new String[nodes.size()];
         for (int i = 0; i < hostNames.length; ++i) {
             hostNames[i] = nodes.get(i).getAddress();

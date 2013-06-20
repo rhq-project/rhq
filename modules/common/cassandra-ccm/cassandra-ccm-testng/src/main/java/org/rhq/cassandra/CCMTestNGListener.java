@@ -126,18 +126,10 @@ public class CCMTestNGListener implements IInvokedMethodListener {
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
         schemaManager.install();
-        schemaManager.updateTopology();
-
         if (annotation.waitForSchemaAgreement()) {
-            // TODO do not hard code cluster name
-            // I am ok with hard coding the cluster name for now as it is only required
-            // by the Hector API, and it is to be determined whether or not we will continue
-            // using Hector. If we wind up directly using the underlying Thrift API, there
-            // is no cluster name argument.
-            //
-            // jsanda
             clusterInitService.waitForSchemaAgreement(nodes);
         }
+        schemaManager.updateTopology();
     }
 
     private void shutdownCluster() throws Exception {

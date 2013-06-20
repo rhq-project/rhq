@@ -35,7 +35,6 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
@@ -45,14 +44,19 @@ import org.quartz.Trigger;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.operation.OperationDefinition;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
+import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -60,12 +64,17 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.authz.RequiredPermissions;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
+import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  *
@@ -94,6 +103,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private SchedulerLocal quartzScheduler;
 
+    @Override
     public synchronized List<StorageNode> scanForStorageNodes() {
         List<StorageNode> existingStorageNodes = getStorageNodes();
         if (log.isDebugEnabled()) {
@@ -165,6 +175,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return new ArrayList<StorageNode>(storageNodeMap.values());
     }
 
+    @Override
     public void linkResource(Resource resource) {
         List<StorageNode> storageNodes = this.getStorageNodes();
 
@@ -202,20 +213,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
         StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
         final String tokensMetric = "Tokens", ownershipMetric = "Ownership", loadMetric = "Load", diskUsedPercentageMetric = "Calculated.DiskSpaceUsedPercentage";
         final String heapCommittedMetric = "{HeapMemoryUsage.committed}", heapUsedMetric = "{HeapMemoryUsage.used}", heapUsedPercentageMetric = "Calculated.HeapUsagePercentage";
 
-        int resourceId;
-        if (node.getResource() == null) {
-            node = entityManager.find(StorageNode.class, node.getId());
-            if (node.getResource() == null) { // no associated resource
-                throw new IllegalStateException("This storage node [" + node.getId() + "] has no associated resource.");
-            }
-        }
-        resourceId = node.getResource().getId();
+        int resourceId = getResourceIdFromStorageNode(node);
 
         // get the schedule ids for Storage Service resource
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
@@ -284,28 +289,39 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return result;
     }
 
-    private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
-        int schedId, MeasurementUnits units, long beginTime, long endTime) {
-        MeasurementAggregate measurementAggregate = measurementManager.getAggregate(subject, schedId, beginTime,
-            endTime);
-        StorageNodeLoadComposite.MeasurementAggregateWithUnits measurementAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
-            measurementAggregate, units);
-        measurementAggregateWithUnits.setFormattedValue(getSummaryString(measurementAggregate, units));
-        return measurementAggregateWithUnits;
-    }
-
+    @Override
     public List<StorageNode> getStorageNodes() {
         TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_ALL,
             StorageNode.class);
         return query.getResultList();
     }
-
+    
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<StorageNode> runner = new CriteriaQueryRunner<StorageNode>(criteria, generator,
             entityManager);
         return runner.execute();
+    }
+
+    @Override
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public void prepareNodeForUpgrade(Subject subject, StorageNode storageNode) {
+        int storageNodeResourceId = getResourceIdFromStorageNode(storageNode);
+        TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
+        ServerManagerLocal serverManager = LookupUtil.getServerManager();
+        OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+        Server server = serverManager.getServer();
+        // setting the server mode to maintenance
+        topologyManager.updateServerMode(subject, new Integer[] { server.getId() }, Server.OperationMode.MAINTENANCE);
+        
+        Configuration parameters = new Configuration();
+        parameters.setSimpleValue("snapshotName", String.valueOf(System.currentTimeMillis()));
+        // scheduling the operation
+        operationManager.scheduleResourceOperation(subject, storageNodeResourceId, "prepareForUpgrade", 0, 0, 0, 0,
+            parameters, "Run by StorageNodeManagerBean.prepareNodeForUpgrade()");
     }
 
     private String getSummaryString(MeasurementAggregate aggregate, MeasurementUnits units) {
@@ -377,19 +393,18 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         entityManager.flush();
     }
 
-    @SuppressWarnings("unchecked")
     private void discoverResourceInformation(Map<String, StorageNode> storageNodeMap) {
-        Query query = entityManager.createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN)
+        TypedQuery<ResourceType> query = entityManager.<ResourceType>createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, ResourceType.class)
             .setParameter("name", RHQ_STORAGE_RESOURCE_TYPE).setParameter("plugin", RHQ_STORAGE_PLUGIN);
-        List<ResourceType> resourceTypes = (List<ResourceType>) query.getResultList();
+        List<ResourceType> resourceTypes = query.getResultList();
 
         if (resourceTypes.isEmpty()) {
             return;
         }
 
-        query = entityManager.createNamedQuery(Resource.QUERY_FIND_BY_TYPE_ADMIN).setParameter("type",
+        TypedQuery<Resource> resourceQuery = entityManager.<Resource>createNamedQuery(Resource.QUERY_FIND_BY_TYPE_ADMIN, Resource.class).setParameter("type",
             resourceTypes.get(0));
-        List<Resource> cassandraResources = (List<Resource>) query.getResultList();
+        List<Resource> cassandraResources = resourceQuery.getResultList();
 
         for (Resource resource : cassandraResources) {
             Configuration resourceConfiguration = resource.getPluginConfiguration();
@@ -407,5 +422,27 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 }
             }
         }
+    }
+    
+    private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
+        int schedId, MeasurementUnits units, long beginTime, long endTime) {
+        MeasurementAggregate measurementAggregate = measurementManager.getAggregate(subject, schedId, beginTime,
+            endTime);
+        StorageNodeLoadComposite.MeasurementAggregateWithUnits measurementAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+            measurementAggregate, units);
+        measurementAggregateWithUnits.setFormattedValue(getSummaryString(measurementAggregate, units));
+        return measurementAggregateWithUnits;
+    }
+    
+    private int getResourceIdFromStorageNode(StorageNode storageNode) {
+        int resourceId;
+        if (storageNode.getResource() == null) {
+            storageNode = entityManager.find(StorageNode.class, storageNode.getId());
+            if (storageNode.getResource() == null) { // no associated resource
+                throw new IllegalStateException("This storage node [" + storageNode.getId() + "] has no associated resource.");
+            }
+        }
+        resourceId = storageNode.getResource().getId();
+        return resourceId;
     }
 }

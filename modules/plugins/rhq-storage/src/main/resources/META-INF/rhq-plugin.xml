@@ -81,6 +81,16 @@
       </results>
     </operation>
 
+    <operation name="prepareForUpgrade" description="Prepares the storage node for upgrade (this operation consists of following steps: 1) turning off the RPC server, 2) turning off the gossiper, 3) taking the snapshot (backuping the data), 4) invoking the drain operation">
+        <parameters>
+          <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
+                             description="Snapshot name. If left empty current system time in milliseconds will be used as the snapshot name."/>
+        </parameters>
+        <results>
+          <c:simple-property name="prepareForUpgradeResult" description="Prepares the storage node for upgrade (this operation consists of following steps: 1) turning off the RPC server, 2) turning off the gossiper, 3) taking the snapshot (backuping the data), 4) invoking the drain operation"/>
+        </results>
+    </operation>
+
     <operation name="updateSeedsList" description="Updatess the node's seeds property in cassandra.yaml">
       <parameters>
         <c:list-property name="seedsList">

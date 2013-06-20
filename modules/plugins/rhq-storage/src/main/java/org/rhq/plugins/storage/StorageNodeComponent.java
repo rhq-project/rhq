@@ -30,6 +30,9 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.bean.EmsBean;
+import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
+import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
@@ -56,6 +59,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("addNodeMaintenance")) {
             return nodeAdded(parameters);
+        } else if (name.equals("prepareForUpgrade")) {
+            return prepareForUpgrade(parameters);
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -177,6 +182,73 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             result.details = "An error occurred while running cleanup: " + ThrowableUtil.getStackAsString(rootCause);
         }
         return result;
+    }
+    
+    private OperationResult prepareForUpgrade(Configuration parameters) throws Exception {
+        EmsConnection emsConnection = getEmsConnection();
+        EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
+        Class<?>[] emptyParams = new Class<?>[0];
+        
+        if (log.isDebugEnabled()) {
+            log.debug("Disabling native transport...");
+        }
+        EmsOperation operation = storageService.getOperation("stopNativeTransport", emptyParams);
+        operation.invoke((Object[]) emptyParams);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Disabling gossip...");
+        }
+        operation = storageService.getOperation("stopGossiping", emptyParams);
+        operation.invoke((Object[]) emptyParams);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Taking the snapshot...");
+        }
+        operation = storageService.getOperation("takeSnapshot", String.class, String[].class);
+        String snapshotName = parameters.getSimpleValue("snapshotName");
+        if (snapshotName == null || snapshotName.trim().isEmpty()) {
+            snapshotName = System.currentTimeMillis() + "";
+        }
+        operation.invoke(snapshotName, new String[] {});
+        
+        // max 2 sec
+        waitForTaskToComplete(500, 10, 150);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Initiating drain...");
+        }
+        operation = storageService.getOperation("drain", emptyParams);
+        operation.invoke((Object[]) emptyParams);
+
+        return new OperationResult();
+    }
+    
+    private void waitForTaskToComplete(int initialWaiting, int maxTries, int sleepMillis) {
+        // initial waiting
+        try {
+            Thread.sleep(initialWaiting);
+        } catch (InterruptedException e) {
+            if (log.isWarnEnabled()) {
+                log.warn(e);
+            }
+        }
+        EmsConnection emsConnection = getEmsConnection();
+        EmsBean flushWriterBean = emsConnection.getBean("org.apache.cassandra.internal:type=FlushWriter");
+        EmsAttribute attribute = flushWriterBean.getAttribute("PendingTasks");
+
+        Long valueObject = (Long) attribute.refresh();
+        // wait until org.apache.cassandra.internal:type=FlushWriter / PendingTasks == 0
+        while (valueObject > 0 && maxTries-- > 0) {
+            try {
+                Thread.sleep(sleepMillis);
+            } catch (InterruptedException e) {
+                if (log.isWarnEnabled()) {
+                    log.warn(e);
+                }
+            }
+            valueObject = (Long) attribute.refresh();
+        }
+        flushWriterBean.unload();
     }
 
     private PropertyMap toPropertyMap(OpResult opResult) {

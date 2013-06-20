@@ -61,5 +61,16 @@ public interface StorageNodeManagerLocal {
      * @return list of nodes
      */
     PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
+    
+    /**
+     * <p>Prepares the node for subsequent upgrade.</p>
+     * <p> CAUTION: this method will set the RHQ server to maintenance mode, RHQ storage flushes all the data to disk
+     * and backup of all the keyspaces is created</p>
+     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> and <code>MANAGE_INVENTORY</code> permissions.</p>
+     * 
+     * @param subject caller
+     * @param storageNode storage node on which the prepareForUpgrade operation should be run
+     */
+    void prepareNodeForUpgrade(Subject subject, StorageNode storageNode);
 
 }

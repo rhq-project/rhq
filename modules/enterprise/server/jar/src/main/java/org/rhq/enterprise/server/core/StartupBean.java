@@ -669,8 +669,8 @@ public class StartupBean implements StartupLocal {
 
         return;
     }
-
-    /**
+    
+   /**
      * This seeds the agent clients cache with clients for all known agents. These clients will be started so they can
      * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
      * at a time when the server is ready to accept messages from agents because any guaranteed messages that are

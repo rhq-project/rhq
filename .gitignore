@@ -4,8 +4,6 @@ eclipse-classes/
 logs/
 antlr-generated/
 gwt-tmp/
-./cassandra/
-/cassandra/
 dev-container/
 rhq-data/
 rhq-agent/
@@ -14,8 +12,10 @@ dev-cli/
 modules/enterprise/gui/portal-war/build/classes/
 modules/enterprise/gui/coregui/build/classes/
 modules/enterprise/gui/content_http-war/build/classes/
+
 #created by rhq-enterprise-server's unit tests
 modules/enterprise/server/jar/transaction.log
+
 .idea/
 .metadata/
 *cache.html

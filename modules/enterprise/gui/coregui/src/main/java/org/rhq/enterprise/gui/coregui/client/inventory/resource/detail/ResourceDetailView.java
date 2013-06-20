@@ -196,7 +196,7 @@ public class ResourceDetailView extends
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
 
-        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
+        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
 
         monitorTables = new SubTab(monitoringTab, new ViewName("Tables", "Tables"), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);

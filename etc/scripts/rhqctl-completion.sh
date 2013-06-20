@@ -41,8 +41,7 @@ _rhqctl() {
             COMPREPLY=( $(compgen -W "${dataMigratorSubopts}" -- ${cur}) )
             return 0
           else
-            checkForBooleanSubopt ${prev}
-            [[ "x$boolean" == "x1" ]] && return 0
+            checkForBooleanSubopt ${prev} && return 0
             completePath ${cur}
             return 0
           fi
@@ -65,8 +64,7 @@ _rhqctl() {
             return 0
         elif [[ "x${second}" == "x--agent" ]] ; then
             if [[ "${agentInstallSubopts}" == *" ${prev} "* ]] ; then
-                checkForBooleanSubopt ${prev}
-                [[ "x$boolean" == "x1" ]] && return 0
+                checkForBooleanSubopt ${prev}  && return 0
                 completePath ${cur}
                 return 0
             fi
@@ -101,9 +99,9 @@ function completePath(){
 function checkForBooleanSubopt(){
   if [[ "${booleanSubopts}" == *" ${prev} "* ]] ; then
     COMPREPLY=( $(compgen -W "${trueFalse}" -- ${cur} ) )
-    boolean="1"
+    return 0
   else
-    boolean="0"
+    return 1
   fi
 }
 

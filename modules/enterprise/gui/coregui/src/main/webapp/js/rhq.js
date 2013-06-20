@@ -33,9 +33,10 @@ if (!window.console.log) window.console.log = function () { };
  * @param chartHoverDateFormat
  * @param isPortalGraph
  * @param portalId
+ * @param buttonBarDateTimeFormat
  * @constructor
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId )
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat )
 {
     "use strict";
     if(!(this instanceof ChartContext)){
@@ -69,6 +70,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
         this.chartHandle =  "rChart-"+chartId;
     }
     this.chartSelection = this.chartHandle + " svg";
+    this.buttonBarDateTimeFormat = buttonBarDateTimeFormat;
 
 },
 /**

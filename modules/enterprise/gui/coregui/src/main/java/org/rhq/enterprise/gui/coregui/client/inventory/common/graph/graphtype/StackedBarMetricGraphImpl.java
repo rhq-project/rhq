@@ -69,7 +69,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverTimeFormat()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverDateFormat()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::isPortalGraph()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getPortalId()()
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getPortalId()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getButtonBarDateTimeFormat()()
                 );
 
 
@@ -572,8 +573,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 }
 
                 function updateDateRangeDisplay(startDate, endDate ) {
-                    //@todo: i18n the date format
-                    var formattedDateRange = startDate.format('MM/DD/YYYY h:mm a') + '  -  ' + endDate.format('MM/DD/YYYY h:mm a');
+                    var formattedDateRange = startDate.format(chartContext.buttonBarDateTimeFormat) + '  -  ' + endDate.format(chartContext.buttonBarDateTimeFormat);
                     var timeRange = endDate.from(startDate,true);
                     $wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+'('+timeRange+')');
                 }

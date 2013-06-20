@@ -155,6 +155,9 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         return metricGraphData.getChartHoverDateFormat();
     }
 
+    public String getButtonBarDateTimeFormat(){
+       return MSG.common_buttonbar_datetime_format_moment_js();
+    }
 
     public int getChartHeight() {
         return metricGraphData.getChartHeight();

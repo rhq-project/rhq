@@ -71,14 +71,22 @@ public class Start extends ControlCommand {
         try {
             // if no options specified, then start whatever is installed
             if (commandLine.getOptions().length == 0) {
-                if (isStorageInstalled()) {
-                    startStorage();
-                }
-                if (isServerInstalled()) {
-                    startRHQServer();
-                }
-                if (isAgentInstalled()) {
-                    startAgent();
+                boolean storageInstalled = isStorageInstalled();
+                boolean serverInstalled = isServerInstalled();
+                boolean agentInstalled = isAgentInstalled();
+
+                if (!(storageInstalled || serverInstalled || agentInstalled)) {
+                    log.warn("Nothing to start. No RHQ services are installed.");
+                } else {
+                    if (storageInstalled) {
+                        startStorage();
+                    }
+                    if (serverInstalled) {
+                        startRHQServer();
+                    }
+                    if (agentInstalled) {
+                        startAgent();
+                    }
                 }
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
@@ -107,7 +115,7 @@ public class Start extends ControlCommand {
                 }
             }
         } catch (Exception e) {
-            throw new RHQControlException("Failed to stop services", e);
+            throw new RHQControlException("Failed to start services", e);
         }
     }
 

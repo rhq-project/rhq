@@ -495,14 +495,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }
 
             function createOOBLines() {
-
-                var minBaselineLine = $wnd.d3.svg.line()
+                var unitsPercentMultiplier = chartContext.yAxisUnits === '%' ? 100 : 1,
+                minBaselineLine = $wnd.d3.svg.line()
                                 .interpolate(interpolation)
                                 .x(function (d) {
                                     return timeScale(d.x);
                                 })
                                 .y(function (d) {
-                                    return yScale(d.baselineMin);
+                                    return yScale(d.baselineMin * unitsPercentMultiplier);
                                 }),
                         maxBaselineLine = $wnd.d3.svg.line()
                                 .interpolate(interpolation)
@@ -510,7 +510,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                                     return timeScale(d.x);
                                 })
                                 .y(function (d) {
-                                    return yScale(d.baselineMax);
+                                    return yScale(d.baselineMax * unitsPercentMultiplier);
                                 });
 
                 // min baseline Line

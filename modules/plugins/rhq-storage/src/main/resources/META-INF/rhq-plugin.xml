@@ -27,8 +27,8 @@
                          description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
       <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
                          description="The type used to establish the EMS connection to the Cassandra node."/>
-      <c:simple-property name="username" default="cassandra" required="true" description="The login username"/>
-      <c:simple-property name="password" default="cassandra" required="true" type="password" description="The login password"/>
+      <c:simple-property name="username" default="rhqadmin" required="true" description="The login username"/>
+      <c:simple-property name="password" default="rhqadmin" required="true" type="password" description="The login password"/>
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
       <c:simple-property name="yamlConfiguration" displayName="YAML Configuration File" description="YAML Configuration File"/>
       <c:simple-property name="nativeTransportPort" description="The port on which Cassandra listens for CQL client connections." default="9042" type="integer"/>

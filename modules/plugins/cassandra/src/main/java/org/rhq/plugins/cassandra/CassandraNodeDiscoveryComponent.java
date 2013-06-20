@@ -210,8 +210,8 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         String path = processInfo.getExecutable().getCwd();
         pluginConfig.put(new PropertySimple(BASEDIR_PROPERTY, new File(path).getParentFile().getAbsolutePath()));
 
-        pluginConfig.put(new PropertySimple(USERNAME_PROPERTY, "cassandra"));
-        pluginConfig.put(new PropertySimple(PASSWORD_PROPERTY, "cassandra"));
+        pluginConfig.put(new PropertySimple(USERNAME_PROPERTY, getDefaultUserName()));
+        pluginConfig.put(new PropertySimple(PASSWORD_PROPERTY, getDefaultPassword()));
 
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);
@@ -222,6 +222,14 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
         // don't use super's impl because the resource key is not a JvmResourceKey
         return null;
+    }
+
+    protected String getDefaultUserName() {
+        return "cassandra";
+    }
+
+    protected String getDefaultPassword() {
+        return "cassandra";
     }
 
 }

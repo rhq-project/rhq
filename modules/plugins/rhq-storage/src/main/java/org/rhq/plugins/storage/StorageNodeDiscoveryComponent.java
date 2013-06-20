@@ -119,4 +119,13 @@ public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryCompone
         return result;
     }
 
+    @Override
+    protected String getDefaultUserName() {
+        return "rhqadmin";
+    }
+
+    @Override
+    protected String getDefaultPassword() {
+        return "rhqadmin";
+    }
 }

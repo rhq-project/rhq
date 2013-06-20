@@ -409,29 +409,39 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             String[] attributes = { "cn", "description" };
             searchControls.setReturningAttributes(attributes);
 
+            //detect whether to use Query Page Control
+            String groupUseQueryPaging = systemConfig.getProperty(SystemSetting.LDAP_GROUP_PAGING.getInternalName(),
+                "false");
+            if (groupUseQueryPaging == null) {
+                groupUseQueryPaging = Boolean.toString(false);//default to false
+            }
+            boolean useQueryPaging = Boolean.valueOf(groupUseQueryPaging);
+
             //BZ:964250: add rfc 2696
             //default to 1000 results.  System setting page size from UI should be non-negative integer > 0.
             //additionally as system settings are modifiable via CLI which may not have param checking enabled do some
             //more checking.
             int defaultPageSize = 1000;
-            Properties options = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
-            String groupPageSize = options.getProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
-                + defaultPageSize);
-            if ((groupPageSize != null) && (!groupPageSize.trim().isEmpty())) {
-                int passedInPageSize = -1;
-                try {
-                    passedInPageSize = Integer.valueOf(groupPageSize.trim());
-                    if (passedInPageSize > 0) {
-                        defaultPageSize = passedInPageSize;
+            // only if they're enabled in the UI.
+            if (useQueryPaging) {
+                Properties options = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+                String groupPageSize = options.getProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
+                    + defaultPageSize);
+                if ((groupPageSize != null) && (!groupPageSize.trim().isEmpty())) {
+                    int passedInPageSize = -1;
+                    try {
+                        passedInPageSize = Integer.valueOf(groupPageSize.trim());
+                        if (passedInPageSize > 0) {
+                            defaultPageSize = passedInPageSize;
+                        }
+                    } catch (NumberFormatException nfe) {
+                        //log issue and do nothing. Go with the default.
+                        log.debug("LDAP Group Page Size passed '" + groupPageSize
+                            + "' in is invalid. Defaulting to 1000." + nfe.getMessage());
                     }
-                } catch (NumberFormatException nfe) {
-                    //log issue and do nothing. Go with the default.
-                    log.debug("LDAP Group Page Size passed '" + groupPageSize + "' in is invalid. Defaulting to 1000."
-                        + nfe.getMessage());
                 }
+                ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, Control.CRITICAL) });
             }
-            ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, Control.CRITICAL) });
-
             // Loop through each configured base DN.  It may be useful
             // in the future to allow for a filter to be configured for
             // each BaseDN, but for now the filter will apply to all.
@@ -440,32 +450,36 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             for (int x = 0; x < baseDNs.length; x++) {
                 executeGroupSearch(filter, ret, ctx, searchControls, baseDNs, x);
 
-                //handle paged results if they're being used here
-                byte[] cookie = null;
-                Control[] controls = ctx.getResponseControls();
-                if (controls != null) {
-                    for (Control control : controls) {
-                        if (control instanceof PagedResultsResponseControl) {
-                            PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
-                            cookie = pagedResult.getCookie();
-                        }
-                    }
-                }
-                //continually parsing pages of results until we're done.
-                while (cookie != null) {
-                    //ensure the next requests contains the session/cookie details
-                    ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, cookie,
-                        Control.CRITICAL) });
-                    executeGroupSearch(filter, ret, ctx, searchControls, baseDNs, x);
-                    //empty out cookie
-                    cookie = null;
-                    //test for further iterations
-                    controls = ctx.getResponseControls();
+                // continually parsing pages of results until we're done.
+                // only if they're enabled in the UI.
+                if (useQueryPaging) {
+                    //handle paged results if they're being used here
+                    byte[] cookie = null;
+                    Control[] controls = ctx.getResponseControls();
                     if (controls != null) {
                         for (Control control : controls) {
                             if (control instanceof PagedResultsResponseControl) {
                                 PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
                                 cookie = pagedResult.getCookie();
+                            }
+                        }
+                    }
+                    //continually parsing pages of results until we're done.
+                    while (cookie != null) {
+                        //ensure the next requests contains the session/cookie details
+                        ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, cookie,
+                            Control.CRITICAL) });
+                        executeGroupSearch(filter, ret, ctx, searchControls, baseDNs, x);
+                        //empty out cookie
+                        cookie = null;
+                        //test for further iterations
+                        controls = ctx.getResponseControls();
+                        if (controls != null) {
+                            for (Control control : controls) {
+                                if (control instanceof PagedResultsResponseControl) {
+                                    PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
+                                    cookie = pagedResult.getCookie();
+                                }
                             }
                         }
                     }

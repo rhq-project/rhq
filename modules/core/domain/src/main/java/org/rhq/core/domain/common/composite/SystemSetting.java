@@ -78,6 +78,8 @@ public enum SystemSetting {
     LDAP_FILTER("CAM_LDAP_FILTER", PropertySimpleType.STRING, false, false),
     LDAP_GROUP_FILTER("CAM_LDAP_GROUP_FILTER", PropertySimpleType.STRING, false, false),
     LDAP_GROUP_MEMBER("CAM_LDAP_GROUP_MEMBER", PropertySimpleType.STRING, false, false),
+ LDAP_GROUP_PAGING(
+        "CAM_LDAP_GROUP_PAGING", PropertySimpleType.BOOLEAN, false, true),
     LDAP_GROUP_QUERY_PAGE_SIZE("CAM_LDAP_GROUP_QUERY_PAGE_SIZE", PropertySimpleType.LONG, false, true),
     LDAP_BASE_DN("CAM_LDAP_BASE_DN", PropertySimpleType.STRING, false, false),
     LDAP_BIND_DN("CAM_LDAP_BIND_DN", PropertySimpleType.STRING, false, false),

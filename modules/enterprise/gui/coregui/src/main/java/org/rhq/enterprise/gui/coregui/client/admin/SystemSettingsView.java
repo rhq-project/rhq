@@ -497,6 +497,13 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDefaultValue("objectclass=groupOfNames");
                 break;
 
+            case LDAP_GROUP_PAGING:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupUsePaging_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupUsePaging_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
+                break;
+
             case LDAP_GROUP_QUERY_PAGE_SIZE:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupPageSize_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupPageSize_name());

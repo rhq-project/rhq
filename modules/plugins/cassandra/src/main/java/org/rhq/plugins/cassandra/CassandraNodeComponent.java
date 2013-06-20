@@ -121,8 +121,9 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     @Override
     public void stop() {
-        log.info("Shutting down");
+        log.info("Shutting down Cassandra client");
         cassandraSession.getCluster().shutdown();
+        log.info("Shutdown is complete");
     }
 
     @Override

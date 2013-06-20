@@ -59,7 +59,13 @@ public class KeyspaceService {
         EmsOperation operation = emsBean.getOperation(REPAIR_OPERATION, String.class, boolean.class,
             boolean.class, String[].class);
 
-        operation.invoke(keyspace, true, true, columnFamilies);
+        //  The isSequential param has to be false; otherwise, repair will fail as a result
+        // of https://issues.apache.org/jira/browse/CASSANDRA-5512.
+        boolean isSequential = false;  // perform sequential repair using snapshot
+
+        boolean isLocal = true;        // local to data center
+
+        operation.invoke(keyspace, isSequential, isLocal, columnFamilies);
     }
 
     public void repairPrimaryRange(String keyspace, String... columnFamilies) {
@@ -67,7 +73,13 @@ public class KeyspaceService {
         EmsOperation operation = emsBean.getOperation(REPAIR_PRIMARY_RANGE, String.class, boolean.class, boolean.class,
             String[].class);
 
-        operation.invoke(keyspace, true, true, columnFamilies);
+        //  The isSequential param has to be false; otherwise, repair will fail as a result
+        // of https://issues.apache.org/jira/browse/CASSANDRA-5512.
+        boolean isSequential = false;  // perform sequential repair using snapshot
+
+        boolean isLocal = true;        // local to data center
+
+        operation.invoke(keyspace, isSequential, isLocal, columnFamilies);
     }
 
     public void cleanup(String keyspace) {

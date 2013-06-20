@@ -85,7 +85,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
         ToolStrip toolStrip = new ToolStrip();
         toolStrip.setWidth100();
-        toolStrip.setHeight(24);
+        toolStrip.setHeight(34);
 
         toolStrip.addSpacer(10);
 

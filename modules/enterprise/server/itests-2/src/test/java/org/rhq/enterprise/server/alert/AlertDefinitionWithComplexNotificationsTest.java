@@ -96,7 +96,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         GROUP, TEMPLATE
     }
 
-    private String universalName;
+    private final String universalName = getClass().getSimpleName();
 
     private Server server;
     private Agent agent;
@@ -176,8 +176,6 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             @Override
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
-
-                universalName = getClass().getSimpleName();
 
                 agent = new Agent(universalName, "localhost", 0, "foo", "bar");
 

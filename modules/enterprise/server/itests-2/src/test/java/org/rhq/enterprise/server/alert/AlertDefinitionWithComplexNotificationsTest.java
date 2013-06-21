@@ -440,7 +440,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
         AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnResourceLevelAlertDefinitionCreation",
             false);
-        def.setResource(resources.iterator().next());
+        def.setResource(res);
 
         def = adm.createAlertDefinitionInNewTransaction(subject, def, res.getId(), true);
 

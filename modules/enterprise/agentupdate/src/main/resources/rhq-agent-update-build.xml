@@ -102,12 +102,6 @@
       The old, existing agent (the one we are upgrading) is at: ${rhq.agent.update.update-agent-dir}
       </echo>
 
-      <!-- if there are plugins, keep them -->
-      <echo>Copy existing plugins from the old agent to the new agent</echo>
-      <copy todir="${_update.tmp.dir}/rhq-agent/plugins">
-        <fileset dir="${rhq.agent.update.update-agent-dir}/plugins"/>
-      </copy>
-
       <!-- if there is a failover list, keep it -->
       <echo>Copy existing failover list from the old agent to the new agent</echo>
       <copy file="${rhq.agent.update.update-agent-dir}/data/failover-list.dat"

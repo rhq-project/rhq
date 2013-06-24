@@ -7,8 +7,11 @@ import javax.xml.bind.annotation.XmlRootElement;
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
 
+import org.codehaus.jackson.map.JsonDeserializer;
+import org.codehaus.jackson.map.annotate.JsonDeserialize;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import org.rhq.enterprise.server.rest.helper.LinkDeserializer;
 import org.rhq.enterprise.server.rest.helper.LinkSerializer;
 
 /**
@@ -18,6 +21,7 @@ import org.rhq.enterprise.server.rest.helper.LinkSerializer;
 @ApiClass("Link between two resources")
 @XmlRootElement
 @JsonSerialize(using = LinkSerializer.class)
+@JsonDeserialize(using = LinkDeserializer.class)
 @Produces({"application/json","application/xml"})
 public class Link {
 

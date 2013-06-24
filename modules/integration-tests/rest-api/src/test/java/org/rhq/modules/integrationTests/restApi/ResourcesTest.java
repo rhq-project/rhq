@@ -24,8 +24,11 @@ package org.rhq.modules.integrationTests.restApi;
 
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.jayway.restassured.http.ContentType;
@@ -38,6 +41,7 @@ import org.apache.http.HttpStatus;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Availability;
+import org.rhq.modules.integrationTests.restApi.d.Link;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -549,6 +553,79 @@ public class ResourcesTest extends AbstractBase {
             .expect()
                 .statusCode(200)
                 .log().ifError()
+                .body("location",is("Datacenter 1"))
+                .body("description",is("li la lu"))
+                .body("resourceName",is("DummY"))
+            .when()
+                .put("/resource/{id}");
+
+        } finally {
+            given()
+                .pathParam("id", platformId)
+            .expect()
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+            .when()
+                .delete("/resource/{id}");
+        }
+    }
+
+    @Test
+    public void testCreateUpdateWithLinksRemovePlatform() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        Response response =
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+        int platformId=0;
+        try {
+            XmlPath xmlPath = response.xmlPath();
+            Node resource1 = xmlPath.get("resource");
+            Node platformIdNode =  resource1.get("resourceId");
+            platformId = Integer.parseInt(platformIdNode.value());
+
+            // Now update the description
+            resource.setDescription("li la lu");
+            resource.setLocation("Datacenter 1");
+            resource.setResourceName("DummY");
+
+            /* Now add links -- JSON looks like this:
+            "links": [
+                  {
+                      "operationDefinitions": {
+                          "href": "http://localhost:7080/rest/operation/definitions?resourceId=10584"
+                      }
+                  },
+            */
+
+            List<Map> links = new ArrayList<Map>(1);
+            Map<String,Map<String,String>> map = new HashMap<String, Map<String,String>>(1);
+            Map<String,String> link = new HashMap<String, String>(1);
+            link.put("href","http:/abc");
+            map.put("self",link);
+            links.add(map);
+            resource.setLinks(links);
+
+
+            given()
+                .pathParam("id",platformId)
+                .body(resource)
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+                .log().everything()
+            .expect()
+                .statusCode(200)
+                .log().everything()
                 .body("location",is("Datacenter 1"))
                 .body("description",is("li la lu"))
                 .body("resourceName",is("DummY"))

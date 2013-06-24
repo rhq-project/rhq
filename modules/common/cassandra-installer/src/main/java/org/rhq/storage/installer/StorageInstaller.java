@@ -296,7 +296,7 @@ public class StorageInstaller {
                 File dataDirFile = new File(dataDir);
                 File savedCachesDirFile = new File(savedCachesDir);
 
-                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node 
+                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
                 if (!isDirectoryEmpty(commitLogDirFile)) {
                     log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
                         + commitLogDirFile.getAbsolutePath() + "]");
@@ -402,15 +402,33 @@ public class StorageInstaller {
                         }
                     }
                 } else {
-                    log.error("The storage node reported the following errors while trying to start:\n\n"
-                        + startupErrors + "\n\n");
+                    // There are platforms where snappy can not be found (OS/X or IBM JRE)
+                    // We get a message back from the cassandra node, which is in reality just a
+                    // warning. So we can swallow it.
+                    boolean foundLinkError = false;
+                    boolean harmless = true;
+                    if (startupErrors.contains("UnsatisfiedLinkError: no snappyjava")) {
+                        log.info("Could not find snappyjava in library path. Will not compress system tables.");
+                        log.info("Installation of the storage node is complete");
+                        foundLinkError = true;
+                    }
+                    if (!foundLinkError) {
+                        log.error("The storage node reported the following errors while trying to start:\n\n"
+                            + startupErrors + "\n\n");
+                        harmless = false;
+                    }
                     if (startupErrors.contains("java.net.BindException: Address already in use")) {
                         log.error("This error may indicate a conflict for the JMX port.");
                     }
-                    log.error("Please review your configuration for possible sources of errors such as port "
-                        + "conflicts or invalid arguments/options passed to the java executable.");
-                    log.error("The storage installer will now exit.");
-                    return STATUS_STORAGE_NOT_RUNNING;
+                    if (!harmless) {
+                        log.error("Please review your configuration for possible sources of errors such as port "
+                            + "conflicts or invalid arguments/options passed to the java executable.");
+                        log.error("The storage installer will now exit.");
+                        return STATUS_STORAGE_NOT_RUNNING;
+                    }
+                    else {
+                        return STATUS_NO_ERRORS;
+                    }
                 }
             } else {
                 log.info("Installation of the storage node is complete");

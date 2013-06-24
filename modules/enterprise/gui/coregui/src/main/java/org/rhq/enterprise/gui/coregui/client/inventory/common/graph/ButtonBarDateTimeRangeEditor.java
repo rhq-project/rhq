@@ -201,7 +201,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         public void onClick(ClickEvent clickEvent) {
             IButton button = (IButton) clickEvent.getSource();
             String selectedDateTimeRange = button.getTitle();
-            Date calculatedStartDateTime = calculateStartDate(new Date(getEndTime()), selectedDateTimeRange);
+            Date calculatedStartDateTime = calculateStartDate(new Date(), selectedDateTimeRange);
             saveDateRange(calculatedStartDateTime.getTime(), new Date().getTime());
             redrawGraphs();
             updateDateTimeRangeDisplay(calculatedStartDateTime, new Date());

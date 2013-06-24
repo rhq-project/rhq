@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
@@ -27,6 +28,7 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
@@ -86,6 +88,13 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     @Override
     public void refresh() {
         if (isVisible() && !isRefreshing()) {
+            Date now = new Date();
+            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
+            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+            Date newStartDate = new Date(now.getTime() - timeRange);
+            buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
+            buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
+
             redrawGraphs();
         }
     }

@@ -89,7 +89,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     interpolation = "basis",
                     avgFiltered, avg, minFiltered, min, peakFiltered, peak,
                     oobMax,
-                    legendDefined,
+                    legendUnDefined,
                     lowBound,
                     highBound,
                     calcBarWidth,
@@ -200,8 +200,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
-                    legendDefined = (typeof min !== "undefined") || (typeof avg !== "undefined") || (typeof peak !== "undefined");
-                    if (!useSmallCharts() && legendDefined) {
+                    legendUnDefined = (typeof min === undefined) || (typeof avg === undefined) || (typeof peak === undefined);
+                    if (!useSmallCharts() && !legendUnDefined) {
                         createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                     }
                 }
@@ -235,11 +235,13 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase)
                         .text(highLabel + " - ");
 
-                chart.append("text")
+                if(highValue !== undefined){
+                    chart.append("text")
                         .attr("class", "highText")
                         .attr("x", xValue)
                         .attr("y", yBase)
                         .text(highValue.toFixed(decimalPlaces) + " " + uom);
+                }
 
 
                 //avg
@@ -249,11 +251,13 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + yInc)
                         .text(avgLabel + " - ");
 
-                chart.append("text")
+                if(avgValue !== undefined){
+                    chart.append("text")
                         .attr("class", "avgText")
                         .attr("x", xValue)
                         .attr("y", yBase + yInc)
                         .text(avgValue.toFixed(decimalPlaces) + " " + uom);
+                }
 
                 // min
                 chart.append("text")
@@ -262,12 +266,13 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + 2 * yInc)
                         .text(minLabel + " - ");
 
-                chart.append("text")
+                if(minValue !== undefined){
+                    chart.append("text")
                         .attr("class", "minText")
                         .attr("x", xValue)
                         .attr("y", yBase + 2 * yInc)
                         .text(minValue.toFixed(decimalPlaces) + " " + uom);
-
+                }
 
             }
 

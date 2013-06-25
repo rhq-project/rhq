@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.apache;
 
@@ -73,7 +73,7 @@ import org.rhq.plugins.www.util.WWWUtils;
 public class ApacheVirtualHostServiceComponent implements ResourceComponent<ApacheServerComponent>, MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet {
 
-    private static final Log log = LogFactory.getLog(ApacheVirtualHostServiceComponent.class);
+    private static final Log LOG = LogFactory.getLog(ApacheVirtualHostServiceComponent.class);
 
     public static final String URL_CONFIG_PROP = "url";
     public static final String MAIN_SERVER_RESOURCE_KEY = "MainServer";
@@ -153,7 +153,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
                 return snmpSession.ping() ? AvailabilityType.UP : AvailabilityType.DOWN;
             } catch (Exception e) {
-                log.debug("Determining the availability of the vhost [" + resourceContext.getResourceKey()
+                LOG.debug("Determining the availability of the vhost [" + resourceContext.getResourceKey()
                     + "] using SNMP failed.", e);
                 return AvailabilityType.DOWN;
             }
@@ -199,17 +199,17 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             tree.save();
 
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
-            log.info("Apache configuration was updated");
+            LOG.info("Apache configuration was updated");
 
             finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null) {
                 String message = "Augeas failed to save configuration " + tree.summarizeAugeasError();
                 report.setErrorMessage(message);
-                log.error(message);
+                LOG.error(message);
             } else {
                 report.setErrorMessageFromThrowable(e);
-                log.error("Augeas failed to save configuration", e);
+                LOG.error("Augeas failed to save configuration", e);
             }
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
         } finally {
@@ -249,18 +249,18 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
-        int primaryIndex = getWwwServiceIndex();
-
-        //bail out quickly if there's no SNMP support
-        if (primaryIndex < 0)
-            return;
-
-        log.debug("Collecting metrics for VirtualHost service #" + primaryIndex + "...");
         SNMPSession snmpSession = this.resourceContext.getParentResourceComponent().getSNMPSession();
+        int primaryIndex = getWwwServiceIndex();
+        boolean ping = snmpSession.ping();
+        boolean snmpMetricsSupported = primaryIndex >= 0 && ping;
 
-        if (!snmpSession.ping()) {
-            log.debug("Failed to connect to SNMP agent at " + snmpSession + " - aborting metric collection...");
-            return;
+        if (LOG.isDebugEnabled()) {
+            if (snmpMetricsSupported) {
+                LOG.debug("SNMP metrics collection supported for VirtualHost service #" + primaryIndex);
+            } else {
+                LOG.debug("SNMP metrics collection unsupported for VirtualHost: primaryIndex[" + primaryIndex
+                    + "], session[" + snmpSession + "], ping[" + ping + "]");
+            }
         }
 
         for (MeasurementScheduleRequest schedule : schedules) {
@@ -272,25 +272,27 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
                         this.logParser.parseLog(callTimeData);
                         report.addData(callTimeData);
                     } catch (Exception e) {
-                        log.error("Failed to retrieve HTTP call-time data.", e);
+                        LOG.error("Failed to retrieve HTTP call-time data.", e);
                     }
                 } else {
-                    log.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for resource '"
+                    LOG.error("The '" + RESPONSE_TIME_METRIC + "' metric is enabled for resource '"
                         + this.resourceContext.getResourceKey() + "', but no value is defined for the '"
                         + RESPONSE_TIME_LOG_FILE_CONFIG_PROP + "' connection property.");
                     // TODO: Communicate this error back to the server for display in the GUI.
                 }
             } else {
-                // Assume anything else is an SNMP metric.
-                try {
-                    collectSnmpMetric(report, primaryIndex, snmpSession, schedule);
-                } catch (SNMPException e) {
-                    log.error("An error occurred while attempting to collect an SNMP metric.", e);
+                if (snmpMetricsSupported) {
+                    // Assume anything else is an SNMP metric.
+                    try {
+                        collectSnmpMetric(report, primaryIndex, snmpSession, schedule);
+                    } catch (SNMPException e) {
+                        LOG.error("An error occurred while attempting to collect an SNMP metric.", e);
+                    }
                 }
             }
         }
 
-        log.info("Collected " + report.getDataCount() + " metrics for VirtualHost "
+        LOG.info("Collected " + report.getDataCount() + " metrics for VirtualHost "
             + this.resourceContext.getResourceKey() + ".");
     }
 
@@ -379,7 +381,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
 
                     resourceContext.getParentResourceComponent().finishChildResourceCreate(report);
                 } catch (Exception e) {
-                    log.error("Could not create httpd virtual host child resource.", e);
+                    LOG.error("Could not create httpd virtual host child resource.", e);
                     report.setException(e);
                     report.setStatus(CreateResourceStatus.FAILURE);
                 }
@@ -507,13 +509,13 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             }
 
             if (!found) {
-                log.error("Entry '" + oid + "' not found for " + mibName + "[" + primaryIndex + "].");
-                log.error("Table:\n" + table);
+                LOG.error("Entry '" + oid + "' not found for " + mibName + "[" + primaryIndex + "].");
+                LOG.error("Table:\n" + table);
                 return;
             }
         }
 
-        log.debug("Collected SNMP metric [" + metricName + "], value = " + snmpValue);
+        LOG.debug("Collected SNMP metric [" + metricName + "], value = " + snmpValue);
 
         boolean valueIsTimestamp = false;
         ApacheServerComponent.addSnmpMetricValueToReport(report, schedule, snmpValue, valueIsTimestamp);
@@ -584,7 +586,7 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             }
 
             if (foundIdx == vhosts.size()) {
-                log.debug("The virtual host with resource key [" + resourceKey
+                LOG.debug("The virtual host with resource key [" + resourceKey
                     + "] doesn't seem to be present in the apache configuration anymore.");
                 return -1;
             } else {

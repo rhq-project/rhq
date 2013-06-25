@@ -368,11 +368,15 @@ public class MetricGraphData implements JsonMetricProducer {
      */
     public boolean showBarAvgTrendLine() {
         for (MeasurementDataNumericHighLowComposite measurement : metricData) {
+            int numberOfAggBars = 0;
             boolean noValuesInCurrentBarUndefined = (!Double.isNaN(measurement.getValue()) && !Double.isNaN(measurement.getHighValue())  && !Double.isNaN(measurement.getLowValue()));
             boolean foundAggregateBar = (measurement.getValue() != measurement.getHighValue() || measurement.getHighValue() != measurement.getLowValue());
             // if there exists a even one aggregate bar then I can short circuit this and exit
             if (noValuesInCurrentBarUndefined && foundAggregateBar){
-                return true;
+                numberOfAggBars++;
+                if(numberOfAggBars > 4){
+                    return true;
+                }
             }
         }
         return false;

@@ -129,8 +129,8 @@ public class ResourceDetailView extends
 
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
-    private SubTab monitorNewGraphs;
-    private SubTab monitorTables;
+    private SubTab monitorGraphs;
+    private SubTab monitorMetrics;
     private SubTab monitorTraits;
     private SubTab monitorAvail;
     private SubTab monitorSched;
@@ -196,15 +196,15 @@ public class ResourceDetailView extends
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
 
-        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
+        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
 
-        monitorTables = new SubTab(monitoringTab, new ViewName("Tables", "Tables"), null);
+        monitorMetrics = new SubTab(monitoringTab, new ViewName("Metrics", "Metrics"), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
         monitorAvail = new SubTab(monitoringTab, new ViewName("Availability", MSG.view_tabs_common_availability()),
             null);
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorNewGraphs,  monitorTables, monitorTraits, monitorAvail,
+        monitoringTab.registerSubTabs(monitorGraphs, monitorMetrics, monitorTraits, monitorAvail,
             monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
@@ -401,7 +401,7 @@ public class ResourceDetailView extends
                 return createD3GraphListView();
             }
         };
-        updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, visibleToIE8, viewFactory);
+        updateSubTab(this.monitoringTab, this.monitorGraphs, visible, visibleToIE8, viewFactory);
 
         // visible = same test as above
         viewFactory = (!visible) ? null : new ViewFactory() {
@@ -410,7 +410,7 @@ public class ResourceDetailView extends
                 return new MeasurementTableView(resource.getId());
             }
         };
-        updateSubTab(this.monitoringTab, this.monitorTables, visible, true, viewFactory);
+        updateSubTab(this.monitoringTab, this.monitorMetrics, visible, true, viewFactory);
 
         visible = hasMetricsOfType(this.resourceComposite, DataType.TRAIT);
         viewFactory = (!visible) ? null : new ViewFactory() {

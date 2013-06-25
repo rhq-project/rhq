@@ -100,8 +100,8 @@ public class ResourceGroupDetailView extends
     // subtabs
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
-    private SubTab monitorNewGraphs;
-    private SubTab monitorTables;
+    private SubTab monitorGraphs;
+    private SubTab monitorMetrics;
     private SubTab monitorTraits;
     private SubTab monitorSched;
     private SubTab monitorCallTime;
@@ -191,13 +191,13 @@ public class ResourceGroupDetailView extends
 
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
-        monitorNewGraphs = new SubTab(monitoringTab, new ViewName("NewGraphs", MSG.view_tabs_common_graphs()), null);
-        monitorTables = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_metrics()), null);
+        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
+        monitorMetrics = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_metrics()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
 
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs( monitorNewGraphs, monitorTables, monitorTraits, monitorSched,
+        monitoringTab.registerSubTabs(monitorGraphs, monitorMetrics, monitorTraits, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 
@@ -289,7 +289,7 @@ public class ResourceGroupDetailView extends
                 }
             };
 
-            updateSubTab(this.monitoringTab, this.monitorNewGraphs, visible, true, viewFactory);
+            updateSubTab(this.monitoringTab, this.monitorGraphs, visible, true, viewFactory);
 
             // visible = same test as above           
             viewFactory = (!visible) ? null : new ViewFactory() {
@@ -299,7 +299,7 @@ public class ResourceGroupDetailView extends
                     return new GroupMonitoringTablesView(groupComposite);
                 }
             };
-            updateSubTab(this.monitoringTab, this.monitorTables, visible, true, viewFactory);
+            updateSubTab(this.monitoringTab, this.monitorMetrics, visible, true, viewFactory);
 
             visible = hasMetricsOfType(this.groupComposite, DataType.TRAIT);
             viewFactory = (!visible) ? null : new ViewFactory() {

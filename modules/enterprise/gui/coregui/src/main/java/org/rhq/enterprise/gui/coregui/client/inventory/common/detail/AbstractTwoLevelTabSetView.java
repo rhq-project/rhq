@@ -235,9 +235,6 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
             // safely rendered.  Make sure to notify even on failure.            
             try {
                 this.selectTab(this.tabName, this.subTabName, viewPath);
-                if(null != graphListView){
-                    graphListView.redrawGraphs();
-                }
             } finally {
                 notifyViewRenderedListeners();
             }

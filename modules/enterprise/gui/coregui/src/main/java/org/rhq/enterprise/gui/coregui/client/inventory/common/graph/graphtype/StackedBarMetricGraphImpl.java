@@ -100,6 +100,16 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     chart,
                     svg;
 
+            // adjust the min scale so blue low line is not in axis
+            function determineLowBound(min, peak) {
+                var newLow = min - ((peak - min) * 0.1);
+                if (newLow < 0) {
+                    return 0;
+                }
+                else {
+                    return newLow;
+                }
+            }
 
             function getChartWidth() {
                 return $wnd.jQuery("#" + chartContext.chartHandle).width();
@@ -153,6 +163,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     min = $wnd.d3.min(minFiltered.map(function (d) {
                             return d.low;
                     }));
+                    lowBound = determineLowBound(min, peak);
                     highBound = peak + ((peak - min) * 0.1);
                     oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
                         if (d.baselineMax == undefined) {

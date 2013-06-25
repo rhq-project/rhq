@@ -526,9 +526,7 @@ public class ResourceGroupDetailView extends
                             group.setResourceType(type);
                             updateTabContent(groupComposite, viewPath.isRefresh());
                             selectTab(getTabName(), getSubTabName(), viewPath);
-                            if (null != graphListView) {
-                                graphListView.redrawGraphs();
-                            }
+
                         } finally {
                             notifyViewRenderedListeners();
                         }
@@ -538,9 +536,7 @@ public class ResourceGroupDetailView extends
             try {
                 updateTabContent(groupComposite, viewPath.isRefresh());
                 selectTab(getTabName(), getSubTabName(), viewPath);
-                if (null != graphListView) {
-                    graphListView.redrawGraphs();
-                }
+
             } finally {
                 notifyViewRenderedListeners();
             }

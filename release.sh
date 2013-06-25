@@ -373,7 +373,7 @@ run_release_version_and_tag_process()
    fi
 
    echo "8) Tag the current source."
-   if [ $OVERRIDE_TAG ];
+   if [ $OVERRIDE_TAG == true ];
    then
       git tag --force "$RELEASE_TAG"
       [ "$?" -ne 0 ] && abort "Force tagging failed."
@@ -410,7 +410,7 @@ update_development_version()
 {
    print_function_information $FUNCNAME
 
-   if [ $TERMINAL_BRANCH ];
+   if [ $TERMINAL_BRANCH == true ];
    then
       echo "Release branch $RELEASE_BRANCH is a terminal branch. Version on release branch no updated for future development!";
       return 0;
@@ -452,7 +452,7 @@ verify_tags()
    EXISTING_REMOTE_TAG=`git ls-remote --tags origin "$RELEASE_TAG"`
    if [ -n "$EXISTING_REMOTE_TAG" ];
    then
-      if [ $OVERRIDE_TAG ];
+      if [ $OVERRIDE_TAG == true ];
       then
          echo "A remote tag named $RELEASE_TAG already exists, but will be overriden."
       else

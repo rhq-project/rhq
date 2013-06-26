@@ -23,8 +23,6 @@ package org.rhq.server.metrics.migrator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.sql.Driver;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -118,8 +116,6 @@ public class DataMigratorRunner {
         .withDescription("Disable 6 hours aggregates table migration (default: false)").create();
     private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").hasOptionalArg().withType(Boolean.class)
         .withDescription("Disable 24 hours aggregates table migration (default: false)").create();
-    private Option preserveDataOption = OptionBuilder.withLongOpt("preserve-data").hasOptionalArg().withType(Boolean.class)
-        .withDescription("Preserve SQL data post migration (default: true)").create();
     private Option deleteDataOption = OptionBuilder.withLongOpt("delete-data").hasOptionalArg().withType(Boolean.class)
         .withDescription("Delete SQL data at the end of migration (default: false)").create();
     private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only").hasOptionalArg().withType(Boolean.class)
@@ -215,7 +211,6 @@ public class DataMigratorRunner {
         options.addOption(disable1HOption);
         options.addOption(disable6HOption);
         options.addOption(disable1DOption);
-        options.addOption(preserveDataOption);
         options.addOption(deleteDataOption);
         options.addOption(estimateOnlyOption);
         options.addOption(deleteOnlyOption);
@@ -280,8 +275,8 @@ public class DataMigratorRunner {
         configuration.put(disable1HOption, false);
         configuration.put(disable6HOption, false);
         configuration.put(disable1DOption, false);
-        configuration.put(preserveDataOption, true);
         configuration.put(estimateOnlyOption, false);
+        configuration.put(deleteDataOption, false);
         configuration.put(deleteOnlyOption, false);
         configuration.put(experimentalExportOption, false);
     }
@@ -449,12 +444,9 @@ public class DataMigratorRunner {
             configuration.put(disable1DOption, value);
         }
 
-        if (commandLine.hasOption(preserveDataOption.getLongOpt())) {
-            value = tryParseBoolean(commandLine.getOptionValue(preserveDataOption.getLongOpt()), true);
-            configuration.put(preserveDataOption, value);
-        } else if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
+        if (commandLine.hasOption(deleteDataOption.getLongOpt())) {
             value = tryParseBoolean(commandLine.getOptionValue(deleteDataOption.getLongOpt()), true);
-            configuration.put(preserveDataOption, value);
+            configuration.put(deleteDataOption, value);
         }
 
         if (commandLine.hasOption(estimateOnlyOption.getLongOpt())) {
@@ -470,25 +462,26 @@ public class DataMigratorRunner {
 
     private void run() throws Exception {
         log.debug("Creating Entity Manager");
-        EntityManager entityManager = this.createEntityManager();
+        EntityManagerFactory entityManagerFactory = this.createEntityManagerFactory();
+        EntityManager entityManager = entityManagerFactory.createEntityManager();
         log.debug("Done creating Entity Manager");
 
         log.debug("Creating Cassandra session");
-        Session session = this.createCassandraSession();
+        Session cassandraSession = this.createCassandraSession();
         log.debug("Done creating Cassandra session");
 
         DatabaseType databaseType = DatabaseType.Postgres;
         if ("oracle".equals(configuration.get(sqlServerType))) {
             databaseType = databaseType.Oracle;
         }
-        DataMigrator migrator = new DataMigrator(entityManager, session, databaseType, tryParseBoolean(
+        DataMigrator migrator = new DataMigrator(entityManager, cassandraSession, databaseType, tryParseBoolean(
             configuration.get(experimentalExportOption), false));
 
         if (!(Boolean) configuration.get(deleteOnlyOption)) {
-            if ((Boolean) configuration.get(preserveDataOption)) {
-                migrator.preserveData();
-            } else {
+            if ((Boolean) configuration.get(deleteDataOption)) {
                 migrator.deleteAllDataAtEndOfMigration();
+            } else {
+                migrator.preserveData();
             }
 
             migrator.runRawDataMigration(!(Boolean) configuration.get(disableRawOption));
@@ -535,12 +528,28 @@ public class DataMigratorRunner {
             }
         }
 
-        /*if (entityManager != null) {
-            entityManager.close();
-        }
+        this.closeCassandraSession(cassandraSession);
+        this.closeEntityManagerFactory(entityManagerFactory);
+    }
+
+    /**
+     * Closes an existing cassandra session.
+     *
+     * @param session
+     */
+    private void closeCassandraSession(Session session) {
+        session.shutdown();
+    }
+
+    /**
+     * Closes an existing entity manager factory
+     *
+     * @param entityManagerFactory
+     */
+    private void closeEntityManagerFactory(EntityManagerFactory entityManagerFactory) {
         if (entityManagerFactory != null) {
             entityManagerFactory.close();
-        }*/
+        }
     }
 
     /**
@@ -569,12 +578,12 @@ public class DataMigratorRunner {
     }
 
     /**
-     * Create a hibernate session to the SQL server.
+     * Create an entity manager factory with the SQL configuration from properties.
      *
-     * @return
+     * @return an entity manager factory
      * @throws Exception
      */
-    private EntityManager createEntityManager() throws Exception {
+    private EntityManagerFactory createEntityManagerFactory() throws Exception {
         Properties properties = new Properties();
         properties.put("javax.persistence.provider", "org.hibernate.ejb.HibernatePersistence");
         properties.put("hibernate.connection.username", (String) configuration.get(sqlUserOption));
@@ -624,7 +633,7 @@ public class DataMigratorRunner {
         Ejb3Configuration configuration = new Ejb3Configuration();
         configuration.setProperties(properties);
         EntityManagerFactory factory = configuration.buildEntityManagerFactory();
-        return factory.createEntityManager();
+        return factory;
     }
 
     /**

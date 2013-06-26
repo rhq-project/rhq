@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.server.metrics;
+package org.rhq.server.metrics.migrator;
 
 import java.util.List;
 import java.util.Properties;
@@ -31,8 +31,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.hibernate.ejb.Ejb3Configuration;
 
-import org.rhq.server.metrics.migrator.ExistingDataBulkExportSource;
-import org.rhq.server.metrics.migrator.ExistingPostgresDataBulkExportSource;
+import org.rhq.server.metrics.migrator.datasources.ExistingDataBulkExportSource;
+import org.rhq.server.metrics.migrator.datasources.ExistingPostgresDataBulkExportSource;
 
 /**
  * @author Thomas Segismont

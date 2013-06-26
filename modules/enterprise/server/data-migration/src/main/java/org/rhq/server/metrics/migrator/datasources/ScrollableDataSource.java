@@ -17,7 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-package org.rhq.server.metrics.migrator;
+package org.rhq.server.metrics.migrator.datasources;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +32,7 @@ import org.hibernate.ScrollableResults;
 import org.hibernate.Session;
 import org.hibernate.StatelessSession;
 
+import org.rhq.server.metrics.migrator.DataMigrator;
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 
 /**

@@ -1,4 +1,4 @@
-package org.rhq.server.metrics.migrator;
+package org.rhq.server.metrics.migrator.datasources;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;

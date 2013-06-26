@@ -28,9 +28,9 @@ import org.rhq.server.metrics.migrator.DataMigrator;
 import org.rhq.server.metrics.migrator.DataMigrator.DataMigratorConfiguration;
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 import org.rhq.server.metrics.migrator.DataMigrator.Task;
-import org.rhq.server.metrics.migrator.ExistingDataSource;
-import org.rhq.server.metrics.migrator.ExistingPostgresDataBulkExportSource;
-import org.rhq.server.metrics.migrator.ScrollableDataSource;
+import org.rhq.server.metrics.migrator.datasources.ExistingDataSource;
+import org.rhq.server.metrics.migrator.datasources.ExistingPostgresDataBulkExportSource;
+import org.rhq.server.metrics.migrator.datasources.ScrollableDataSource;
 
 /**
  * @author Stefan Negrea

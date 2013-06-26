@@ -41,8 +41,7 @@ import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.server.metrics.migrator.DataMigrator;
 import org.rhq.server.metrics.migrator.DataMigrator.DataMigratorConfiguration;
 import org.rhq.server.metrics.migrator.DataMigrator.Task;
-import org.rhq.server.metrics.migrator.ExistingDataSource;
-import org.rhq.server.metrics.migrator.Telemetry;
+import org.rhq.server.metrics.migrator.datasources.ExistingDataSource;
 
 /**
  * @author Stefan Negrea
@@ -125,7 +124,7 @@ public class RawDataMigrator extends AbstractMigrationWorker implements Callable
             while (true) {
                 existingData = dataSource.getData(lastMigratedRecord, MAX_RECORDS_TO_LOAD_FROM_SQL);
 
-                if (existingData.size() == 0) {
+                if (existingData == null || existingData.size() == 0) {
                     break;
                 }
 

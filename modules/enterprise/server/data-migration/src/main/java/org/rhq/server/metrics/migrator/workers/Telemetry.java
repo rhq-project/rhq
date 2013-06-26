@@ -18,7 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-package org.rhq.server.metrics.migrator;
+package org.rhq.server.metrics.migrator.workers;
 
 import org.apache.commons.lang.time.StopWatch;
 

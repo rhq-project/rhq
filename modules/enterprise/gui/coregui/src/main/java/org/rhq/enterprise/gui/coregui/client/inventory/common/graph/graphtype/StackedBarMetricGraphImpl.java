@@ -91,6 +91,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     oobMax,
                     legendUnDefined,
                     lowBound,
+                    newLow = 0,
                     highBound,
                     calcBarWidth,
                     yScale,
@@ -102,7 +103,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             // adjust the min scale so blue low line is not in axis
             function determineLowBound(min, peak) {
-                var newLow = min - ((peak - min) * 0.1);
+                //var newLow = min - ((peak - min) * 0.1);
+                newLow = min;
                 if (newLow < 0) {
                     return 0;
                 }
@@ -366,7 +368,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                return height - yScale(lowBound);
+                                return 0;
                             }
                             else {
                                 return  yScale(d.y) - yScale(d.high);
@@ -394,7 +396,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                return height - yScale(lowBound);
+                                return 0;
                             }
                             else {
                                 return  yScale(d.low) - yScale(d.y);
@@ -418,14 +420,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         })
                         .attr("height", function (d) {
                             if (d.down || d.unknown || d.nodata) {
-                                return height - yScale(lowBound);
+                                return 0;
                             }
                             else {
                                 if (d.low === d.high) {
                                     return  yScale(d.low) - yScale(d.y) + 2;
                                 }
                                 else {
-                                    return  yScale(d.low) - yScale(d.y);
+                                    return  0;
                                 }
                             }
                         })

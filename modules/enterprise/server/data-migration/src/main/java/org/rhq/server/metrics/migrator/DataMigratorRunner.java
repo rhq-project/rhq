@@ -506,10 +506,10 @@ public class DataMigratorRunner {
             }
         } else {
             migrator.deleteAllDataAtEndOfMigration();
-            migrator.runRawDataMigration(true);
-            migrator.run1HAggregateDataMigration(true);
-            migrator.run6HAggregateDataMigration(true);
-            migrator.run1DAggregateDataMigration(true);
+            migrator.runRawDataMigration(false);
+            migrator.run1HAggregateDataMigration(false);
+            migrator.run6HAggregateDataMigration(false);
+            migrator.run1DAggregateDataMigration(false);
 
             System.out.println("Estimation process - starting\n");
             long estimate = migrator.estimate();
@@ -518,6 +518,11 @@ public class DataMigratorRunner {
             System.out.println("Estimation process - ended\n\n");
 
             if (!(Boolean) configuration.get(estimateOnlyOption)) {
+                migrator.runRawDataMigration(true);
+                migrator.run1HAggregateDataMigration(true);
+                migrator.run6HAggregateDataMigration(true);
+                migrator.run1DAggregateDataMigration(true);
+
                 System.out.println("Old data deletion process - starting\n");
                 long startTime = System.currentTimeMillis();
                 migrator.deleteOldData();

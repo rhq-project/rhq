@@ -55,6 +55,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private final String chartDownLabel = MSG.chart_down_label();
     private final String chartUnknownLabel = MSG.chart_unknown_label();
     private final String chartNoDataLabel = MSG.chart_no_data_label();
+    private final String chartSingleValueLabel = MSG.chart_single_value_label();
     private final String chartHoverStartLabel = MSG.chart_hover_start_label();
     private final String chartHoverEndLabel = MSG.chart_hover_end_label();
     private final String chartHoverPeriodLabel = MSG.chart_hover_period_label();
@@ -198,6 +199,9 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public String getChartNoDataLabel() {
         return chartNoDataLabel;
+    }
+    public String getChartSingleValueLabel() {
+        return chartSingleValueLabel;
     }
 
     public String getChartHoverStartLabel() {
@@ -455,4 +459,6 @@ public class MetricGraphData implements JsonMetricProducer {
         sb.append('}');
         return sb.toString();
     }
+
+
 }

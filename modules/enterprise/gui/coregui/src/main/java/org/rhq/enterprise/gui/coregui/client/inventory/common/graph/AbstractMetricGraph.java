@@ -131,6 +131,10 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         return metricGraphData.getChartNoDataLabel();
     }
 
+    public String getChartSingleValueLabel() {
+        return metricGraphData.getChartSingleValueLabel();
+    }
+
     public String getChartHoverStartLabel() {
         return metricGraphData.getChartHoverStartLabel();
     }

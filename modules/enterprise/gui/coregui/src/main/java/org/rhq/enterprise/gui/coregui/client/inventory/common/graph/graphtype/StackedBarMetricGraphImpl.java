@@ -70,7 +70,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartHoverDateFormat()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::isPortalGraph()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getPortalId()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getButtonBarDateTimeFormat()()
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getButtonBarDateTimeFormat()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartSingleValueLabel()()
                 );
 
 
@@ -627,7 +628,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     hoverString =
                         '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
                             '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                '<div class="chartHoverAlignRight"><span id="chartHoverAvgValue" >' + chartContext.avgChartTitle + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
+                                '<div class="chartHoverAlignRight"><span class="chartHoverDateLabel" >' + chartContext.singleValueLabel + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
                             '</div>';
                 } else {
                     // regular bar hover for duration

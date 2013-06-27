@@ -34,9 +34,10 @@ if (!window.console.log) window.console.log = function () { };
  * @param isPortalGraph
  * @param portalId
  * @param buttonBarDateTimeFormat
+ * @param singleValueLabel
  * @constructor
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat )
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel )
 {
     "use strict";
     if(!(this instanceof ChartContext)){
@@ -55,6 +56,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.timeLabel = timeLabel;
     this.downLabel = downLabel;
     this.unknownLabel = unknownLabel;
+    this.singleValueLabel = singleValueLabel;
     this.noDataLabel = noDataLabel;
     this.hoverStartLabel = hoverStartLabel;
     this.hoverEndLabel = hoverEndLabel;

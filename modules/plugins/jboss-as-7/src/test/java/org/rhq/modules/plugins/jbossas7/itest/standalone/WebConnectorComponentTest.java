@@ -88,7 +88,7 @@ public class WebConnectorComponentTest extends AbstractJBossAS7PluginTest {
             requests.add(newMeasurementRequest(MAX_CONNECTIONS_METRIC_NAME));
             MeasurementReport report = new MeasurementReport();
             ComponentUtil.getComponent(webConnectorResource.getId(), MeasurementFacet.class, FacetLockType.READ,
-                SECONDS.toMillis(30), true, false).getValues(report, requests);
+                SECONDS.toMillis(30), true, false, true).getValues(report, requests);
             Set<MeasurementDataNumeric> numericMetrics = report.getNumericData();
             assertEquals(numericMetrics, 1);
             MeasurementData measurementData = numericMetrics.iterator().next();

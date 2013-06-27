@@ -280,6 +280,14 @@ public class MetricGraphData implements JsonMetricProducer {
         return MSG.view_charts_time_axis_label();
     }
 
+    public String getXAxisTimeFormatHours() {
+        return MSG.chart_xaxis_time_format_hours();
+    }
+
+    public String getXAxisTimeFormatHoursMinutes() {
+        return MSG.chart_xaxis_time_format_hours_minutes();
+    }
+
     @Override
     /**
      * Format the json for the front JSNI(javascript) UI to consume.

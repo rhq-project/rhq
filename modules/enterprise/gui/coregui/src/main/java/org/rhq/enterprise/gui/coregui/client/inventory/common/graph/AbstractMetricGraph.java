@@ -183,6 +183,14 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         return metricGraphData.getYAxisUnits();
     }
 
+    public String getXAxisTimeFormatHours() {
+        return metricGraphData.getXAxisTimeFormatHours();
+    }
+
+    public String getXAxisTimeFormatHoursMinutes() {
+        return metricGraphData.getXAxisTimeFormatHoursMinutes();
+    }
+
     public String getXAxisTitle() {
         return metricGraphData.getXAxisTitle();
     }

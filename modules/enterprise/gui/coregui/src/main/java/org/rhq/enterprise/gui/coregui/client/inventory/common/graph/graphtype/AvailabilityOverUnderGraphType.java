@@ -131,7 +131,9 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartHoverDateFormat()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartTitleLabel()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartUpLabel()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartDownLabel()()
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getAvailChartDownLabel()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartXaxisTimeFormatHours()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType::getChartXaxisTimeFormatHoursMinutes()()
                 );
 
 
@@ -168,6 +170,8 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                                 .ticks(8)
                                 .tickSize(13, 0, 0)
                                 .orient("bottom"),
+
+                        customTimeFormat,
 
                         calcBarY = function (d) {
                             var ABOVE = -6,
@@ -249,6 +253,18 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                             return calcBarFill(d);
                         });
 
+                 customTimeFormat = timeFormat([
+                    [$wnd.d3.time.format("%Y"), function() { return true; }],
+                    [$wnd.d3.time.format("%B"), function(d) { return d.getMonth(); }],
+                    [$wnd.d3.time.format("%b %d"), function(d) { return d.getDate() != 1; }],
+                    [$wnd.d3.time.format("%a %d"), function(d) { return d.getDay() && d.getDate() != 1; }],
+                    [$wnd.d3.time.format(availChartContext.chartXaxisTimeFormatHours), function(d) { return d.getHours(); }],
+                    [$wnd.d3.time.format(availChartContext.chartXaxisTimeFormatHoursMinutes), function(d) { return d.getMinutes(); }],
+                    [$wnd.d3.time.format(":%S"), function(d) { return d.getSeconds(); }],
+                    [$wnd.d3.time.format(".%L"), function(d) { return d.getMilliseconds(); }]
+                ]);
+                xAxis.tickFormat(customTimeFormat);
+
                 // create x-axis
                 svg.append("g")
                         .attr("class", "x axis")
@@ -304,6 +320,14 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         el.css({ 'z-index': '990000'})
                     }
                 });
+            }
+
+            function timeFormat(formats) {
+                return function(date) {
+                    var i = formats.length - 1, f = formats[i];
+                    while (!f[1](date)) f = formats[--i];
+                    return f[0](date);
+                }
             }
 
             function formatHovers(d) {
@@ -380,5 +404,11 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
     public String getChartHoverDateFormat() {
         return MSG.chart_hover_date_format();
+    }
+    public String getChartXaxisTimeFormatHours() {
+        return MSG.chart_xaxis_time_format_hours();
+    }
+    public String getChartXaxisTimeFormatHoursMinutes() {
+        return MSG.chart_xaxis_time_format_hours_minutes();
     }
 }

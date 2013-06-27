@@ -35,9 +35,11 @@ if (!window.console.log) window.console.log = function () { };
  * @param portalId
  * @param buttonBarDateTimeFormat
  * @param singleValueLabel
+ * @param chartXaxisTimeFormatHours
+ * @param chartXaxisTimeFormatHoursMinutes
  * @constructor
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel )
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes )
 {
     "use strict";
     if(!(this instanceof ChartContext)){
@@ -73,6 +75,8 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     }
     this.chartSelection = this.chartHandle + " svg";
     this.buttonBarDateTimeFormat = buttonBarDateTimeFormat;
+    this.chartXaxisTimeFormatHours = chartXaxisTimeFormatHours;
+    this.chartXaxisTimeFormatHoursMinutes = chartXaxisTimeFormatHoursMinutes;
 
 },
 /**
@@ -89,9 +93,11 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
  * @param chartTitle
  * @param chartUpLabel
  * @param chartDownLabel
+ * @param chartXaxisTimeFormatHours
+ * @param chartXaxisTimeFormatHoursMinutes
  * @constructor
  */
-AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel) {
+AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes) {
     "use strict";
     if (!(this instanceof AvailChartContext)) {
         throw new Error("AvailChartContext function cannot be called as a function.")
@@ -110,6 +116,8 @@ AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverSta
     this.chartTitle = chartTitle;
     this.chartDownLabel = chartDownLabel;
     this.chartUpLabel = chartUpLabel;
+    this.chartXaxisTimeFormatHours = chartXaxisTimeFormatHours;
+    this.chartXaxisTimeFormatHoursMinutes = chartXaxisTimeFormatHoursMinutes;
 
 },
 

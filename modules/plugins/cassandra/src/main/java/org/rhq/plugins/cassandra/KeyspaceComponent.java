@@ -130,6 +130,8 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("repair")) {
             return repairKeyspace();
+        } else if (name.equals("repairPrimaryRange")) {
+            return repairPrimaryRange();
         } else if (name.equals("compact")) {
             return compactKeyspace();
         } else if (name.equals("takeSnapshot")) {
@@ -157,6 +159,19 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
         keyspaceService.repair(keyspace, columnFamilies);
         long end = System.currentTimeMillis();
         log.info("Finished repair on keyspace [" + keyspace + "] in " + (end - start) + " ms");
+
+        return new OperationResult();
+    }
+
+    public OperationResult repairPrimaryRange() {
+        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
+        String keyspace = context.getResourceKey();
+
+        log.info("Executing primary range repair on keyspace [" + keyspace + "]");
+        long start = System.currentTimeMillis();
+        keyspaceService.repairPrimaryRange(keyspace);
+        long end = System.currentTimeMillis();
+        log.info("Finished primary range repair on keyspace [" + keyspace + " in (" + (end - start) + " ms");
 
         return new OperationResult();
     }

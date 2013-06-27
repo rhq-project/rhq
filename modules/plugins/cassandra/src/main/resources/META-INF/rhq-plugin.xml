@@ -661,6 +661,8 @@
                   deletes, it is important to run regularly scheduled repairs to ensure that deleted data gets purged.
                   The frequency that this should be run should be less than the gc_grace_period for each column family.
                   This runs a repair on all column families in this keyspace." />
+      <operation name="repairPrimaryRange" description="Runs repair over all column families but only for the node's
+                primary range."/>
       <operation name="cleanup" displayName="Clean Keyspace"
                  description="Goes through each SSTable file on disk fore each column family and removes keys
                  (i.e., rows) that the node does not own. This should be performed as a routine maintenance task on

@@ -56,6 +56,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author John Mazzitelli
  */
+@Deprecated
 public class MeasurementTableView extends Table<MetricsTableDataSource> {
 
     private final int resourceId;

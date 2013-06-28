@@ -1,7 +1,9 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
 
 import java.util.ArrayList;
+import java.util.List;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -21,6 +23,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.async.Command;
+import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
@@ -34,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
  */
 public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
 
+    public static final String FIELD_SPARKLINE = "sparkline";
     public static final String FIELD_METRIC_LABEL = "label";
     public static final String FIELD_ALERT_COUNT = "alertCount";
     public static final String FIELD_MIN_VALUE = "min";
@@ -44,8 +49,8 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
     public static final String FIELD_METRIC_SCHED_ID = "schedId";
     public static final String FIELD_METRIC_UNITS = "units";
     public static final String FIELD_METRIC_NAME = "name";
-
     private int resourceId;
+    private List<MetricDisplaySummary> metricDisplaySummaries;
 
     public MetricsTableDataSource(int resourceId) {
         this.resourceId = resourceId;
@@ -58,7 +63,27 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
-        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(6);
+        ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
+
+        ListGridField sparklineField = new ListGridField(FIELD_SPARKLINE, "chart");
+        sparklineField.setCellFormatter(new CellFormatter() {
+            @Override
+            public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (value == null) {
+                    return "";
+                }
+                String commaDelimitedList = "5, 10, 20, 25";
+                //String formattedValue = StringUtility.escapeHtml(value.toString());
+                String contents = "<span id='sparkline_" + resourceId + "-"
+                    + record.getAttributeAsInt(FIELD_METRIC_DEF_ID) + "' class='dynamicsparkline' width='70' "
+                    + "values='" + record.getAttribute(FIELD_SPARKLINE) + "'>...</span>";
+                return contents;
+
+            }
+        });
+
+        sparklineField.setWidth(80);
+        fields.add(sparklineField);
 
         ListGridField nameField = new ListGridField(FIELD_METRIC_LABEL, MSG.common_title_name());
         nameField.setWidth("30%");
@@ -101,6 +126,7 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
         MeasurementUtility.formatSimpleMetrics(from);
 
         ListGridRecord record = new ListGridRecord();
+        record.setAttribute(FIELD_SPARKLINE, "6,7,8,9,10,7,5");
         record.setAttribute(FIELD_METRIC_LABEL, from.getLabel());
         record.setAttribute(FIELD_ALERT_COUNT, String.valueOf(from.getAlertCount()));
         record.setAttribute(FIELD_MIN_VALUE, getMetricStringValue(from.getMinMetric()));
@@ -127,34 +153,52 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
-        // see MetricsTableUIBean for the old JSF class to see where this came from
-
         GWTServiceLookup.getMeasurementScheduleService().findSchedulesForResourceAndType(resourceId,
             DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
                 @Override
-                public void onSuccess(ArrayList<MeasurementSchedule> result) {
-                    int[] schedIds = new int[result.size()];
+                public void onSuccess(ArrayList<MeasurementSchedule> measurementSchedules) {
+                    int[] schedIds = new int[measurementSchedules.size()];
                     int i = 0;
-                    for (MeasurementSchedule measurementSchedule : result) {
+                    for (MeasurementSchedule measurementSchedule : measurementSchedules) {
                         schedIds[i++] = measurementSchedule.getId();
                     }
+
+                    final CountDownLatch countDownLatch = CountDownLatch.create(1, new Command() {
+
+                        @Override
+                        public void execute() {
+                            response.setData(buildRecords(metricDisplaySummaries));
+                            processResponse(request.getRequestId(), response);
+                            new Timer() {
+
+                                @Override
+                                public void run() {
+                                    BrowserUtility.graphSparkLines();
+                                }
+                            }.schedule(150);
+                        }
+                    });
 
                     UserPreferences prefs = UserSessionManager.getUserPreferences();
                     MeasurementUserPreferences mprefs = new MeasurementUserPreferences(prefs);
                     ArrayList<Long> range = mprefs.getMetricRangePreferences().getBeginEndTimes();
-                    GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resourceId,
-                        schedIds, range.get(0), range.get(1), new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
+                    GWTServiceLookup.getMeasurementChartsService().
+                    getMetricDisplaySummariesForResource(resourceId, schedIds, range.get(0), range.get(1),
+                        new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                             @Override
-                            public void onSuccess(ArrayList<MetricDisplaySummary> result) {
-                                response.setData(buildRecords(result));
-                                processResponse(request.getRequestId(), response);
+                            public void onSuccess(ArrayList<MetricDisplaySummary> metricDisplaySummaries) {
+                                setMetricDisplaySummaries(metricDisplaySummaries);
+                                countDownLatch.countDown();
                             }
 
                             @Override
                             public void onFailure(Throwable caught) {
                                 CoreGUI.getErrorHandler().handleError("Cannot load metrics", caught);
+                                countDownLatch.countDown();
                             }
-                        });
+                        }
+
+                    );
                 }
 
                 @Override
@@ -162,5 +206,9 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
                     CoreGUI.getErrorHandler().handleError("Cannot load schedules", caught);
                 }
             });
+    }
+
+    public void setMetricDisplaySummaries(List<MetricDisplaySummary> metricDisplaySummaries) {
+        this.metricDisplaySummaries = metricDisplaySummaries;
     }
 }

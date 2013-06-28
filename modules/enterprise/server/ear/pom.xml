@@ -298,13 +298,6 @@
                         <!-- ** WARs -->
                         <webModule>
                             <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-coregui</artifactId>
-                            <bundleFileName>coregui.war</bundleFileName>
-                            <contextRoot>/coregui</contextRoot>
-                        </webModule>
-
-                        <webModule>
-                            <groupId>${project.groupId}</groupId>
                             <artifactId>rhq-portal</artifactId>
                             <bundleFileName>rhq-portal.war</bundleFileName>
                             <contextRoot>/</contextRoot>
@@ -338,6 +331,13 @@
                             <artifactId>rhq-remoting-war</artifactId>
                             <bundleFileName>rhq-remoting.war</bundleFileName>
                             <contextRoot>/jboss-remoting-servlet-invoker</contextRoot>
+                        </webModule>
+
+                        <webModule>
+                            <groupId>${project.groupId}</groupId>
+                            <artifactId>rhq-coregui</artifactId>
+                            <bundleFileName>coregui.war</bundleFileName>
+                            <contextRoot>/coregui</contextRoot>
                         </webModule>
 
                     </modules>

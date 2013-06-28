@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core;
 
@@ -65,7 +65,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
@@ -90,6 +89,7 @@ import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.storage.StorageClusterHeartBeatJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -106,7 +106,6 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * BEAN ConcurrencyManagement is enough: the {@link #initialized} property is only modified on startup.
  */
 @Singleton
-//@Startup // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
 @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 @ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class StartupBean implements StartupLocal {
@@ -170,7 +169,6 @@ public class StartupBean implements StartupLocal {
      *
      * @throws RuntimeException
      */
-    //@PostConstruct // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
     @Override
     public void init() throws RuntimeException {
         secureNaming();

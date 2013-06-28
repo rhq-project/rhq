@@ -16,6 +16,7 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.startup;
 
 import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.ADD;
@@ -30,35 +31,26 @@ import static org.jboss.as.controller.descriptions.ModelDescriptionConstants.URL
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.net.URL;
-import java.util.List;
 
-import org.jboss.as.controller.AbstractBoottimeAddStepHandler;
+import org.jboss.as.controller.AbstractAddStepHandler;
 import org.jboss.as.controller.OperationContext;
 import org.jboss.as.controller.OperationFailedException;
 import org.jboss.as.controller.OperationStepHandler;
 import org.jboss.as.controller.PathAddress;
 import org.jboss.as.controller.PathElement;
-import org.jboss.as.controller.ServiceVerificationHandler;
 import org.jboss.as.controller.operations.common.Util;
 import org.jboss.as.controller.registry.ImmutableManagementResourceRegistration;
 import org.jboss.as.controller.registry.Resource;
-import org.jboss.as.server.AbstractDeploymentChainStep;
-import org.jboss.as.server.DeploymentProcessorTarget;
-import org.jboss.as.server.deployment.Phase;
 import org.jboss.dmr.ModelNode;
 import org.jboss.logging.Logger;
 import org.jboss.modules.Module;
-import org.jboss.msc.service.ServiceController;
-
-import org.rhq.enterprise.startup.deployment.RhqInitializationProcessor;
-import org.rhq.enterprise.startup.deployment.RhqShutdownBeanDependenciesProcessor;
 
 /**
  * Handler responsible for adding the subsystem resource to the model
  *
  * @author John Mazzitelli
  */
-class StartupSubsystemAdd extends AbstractBoottimeAddStepHandler {
+class StartupSubsystemAdd extends AbstractAddStepHandler {
 
     private static final Logger LOG = Logger.getLogger(StartupSubsystemAdd.class);
 
@@ -120,21 +112,6 @@ class StartupSubsystemAdd extends AbstractBoottimeAddStepHandler {
     @Override
     protected boolean requiresRuntimeVerification() {
         return false;
-    }
-
-    @Override
-    protected void performBoottime(OperationContext context, ModelNode operation, ModelNode model,
-        ServiceVerificationHandler verificationHandler, List<ServiceController<?>> newControllers)
-        throws OperationFailedException {
-        LOG.info("Adding RHQ deploymentUnit processors");
-        context.addStep(new AbstractDeploymentChainStep() {
-            public void execute(DeploymentProcessorTarget processorTarget) {
-                processorTarget.addDeploymentProcessor(StartupExtension.SUBSYSTEM_NAME, Phase.STRUCTURE,
-                    Phase.STRUCTURE_EAR + 10, new RhqInitializationProcessor());
-                processorTarget.addDeploymentProcessor(StartupExtension.SUBSYSTEM_NAME, Phase.INSTALL,
-                    Phase.INSTALL_DEPENDS_ON_ANNOTATION + 10, new RhqShutdownBeanDependenciesProcessor());
-            }
-        }, OperationContext.Stage.RUNTIME);
     }
 
 }

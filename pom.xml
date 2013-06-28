@@ -90,6 +90,7 @@
     <javax.annotation.api.version>1.0.1.Final</javax.annotation.api.version>
     <javax.ejb.api.version>1.0.2.Final</javax.ejb.api.version>
     <javax.jms.api.version>1.0.0.Final</javax.jms.api.version>
+    <javax.servlet.api.version>1.0.2.Final</javax.servlet.api.version>
     <javax.mail.api.version>1.4.4</javax.mail.api.version>
     <javassist.version>3.15.0-GA</javassist.version>
     <jaxb-api.version>1.0.4.Final</jaxb-api.version>
@@ -315,6 +316,12 @@
         <groupId>org.jboss.spec.javax.jms</groupId>
         <artifactId>jboss-jms-api_1.1_spec</artifactId>
         <version>${javax.jms.api.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.jboss.spec.javax.servlet</groupId>
+        <artifactId>jboss-servlet-api_3.0_spec</artifactId>
+        <version>${javax.servlet.api.version}</version>
       </dependency>
 
       <dependency>

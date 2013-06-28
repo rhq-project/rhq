@@ -99,7 +99,6 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
 
             // Set handler plugin config and update resource name 
             String handler = (null != configInfo) ? configInfo.getHandler() : TomcatConnectorComponent.UNKNOWN;
-            resource.setResourceName(resource.getResourceName().replace("{handler}", handler));
 
             // It is unusual but possible that there is a GlobalRequestProcessor object representing a configured AJP
             // connector but with a different port.  If the configured AJP connector port is in use, Tomcat increments
@@ -115,6 +114,16 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             if ((null != address) && !"".equals(address.trim())) {
                 pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_ADDRESS, address));
             }
+            // Set connector if it is in use
+            String connector = (null != configInfo) ? configInfo.getConnector() : null;
+            if ((null != connector) && !"".equals(connector.trim())) {
+                pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_CONNECTOR, connector));
+            }
+            
+            // Set the global request processor name (Tomcat 7 added quotes around the name value)
+	        String name = (null != configInfo) ? configInfo.getName() : null;
+            resource.setResourceName(resource.getResourceName().replace("{name}", name));
+            pluginConfiguration.put(new PropertySimple(TomcatConnectorComponent.PLUGIN_CONFIG_NAME, name));
 
             // Let's try to auto-discover if this Connector is using a shared executor for its thread pool.
             // If it is, let's set the plugin config property automatically so we can collect the proper metrics.
@@ -122,7 +131,7 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
             String connectorON = pluginConfiguration.getSimpleValue(TomcatConnectorComponent.OBJECT_NAME_PROP, null);
             if (connectorON != null) {
                 EmsBean connectorBean = connection.getBean(connectorON);
-                EmsAttribute executorNameAttrib = connectorBean.getAttribute("executorName"); // older tomcat versions won't have this attrib
+                EmsAttribute executorNameAttrib = connectorBean.getAttribute("executorName");
                 if (executorNameAttrib != null) {
                     Object executorNameValue = executorNameAttrib.getValue();
                     if (executorNameValue != null) {
@@ -145,10 +154,11 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
     }
 
     private static class ConfigInfo {
-        private String name;
-        private String address;
-        private String handler;
-        private String port;
+        private String name = "";
+        private String address = "";
+        private String handler = "";
+        private String connector = "";
+        private String port = "";
         private Exception exception;
 
         public ConfigInfo(EmsBean bean) {
@@ -159,30 +169,53 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
              * 1) handler-port
              * 2) handler-ipaddress-port
              * 3) handler-host%2Fipaddress-port
+             * 4) "handler-connector-port"
+             * 5) "handler-connector-ipaddress-port"
              * 
              * Option 2 or 3 occurs when the <address> is explicitly defined in the <connector> element.
              * Option 3 occurs when the address is an alias.  The alias is resolved and appended to the alias separated
              * by '/' (encoded a slash comes through as %2F).  Note that the host may have itself contain dashes '-'. 
+             * Option 4 and 5 are Tomcat 7
              */
 
             try {
-                int firstDash = name.indexOf('-');
-                int lastDash = name.lastIndexOf('-');
-                handler = name.substring(0, firstDash);
-                port = name.substring(lastDash + 1);
-                // validate that the port is a valid int
-                Integer.valueOf(port);
+        		// Check to see if this is TC7
+            	if (name.startsWith("\"")) {
+            		int firstDash = name.indexOf('-');
+            		int lastDash = name.lastIndexOf('-');
+            		handler = name.substring(1, firstDash);
+            		port = name.substring(lastDash + 1, name.length() - 1);
+            		// validate that the port is a valid int
+            		Integer.valueOf(port);
+            		String middle = name.substring(firstDash + 1, lastDash);
 
-                // Check to see if an address portion exists
-                if (firstDash != lastDash) {
-                    // For option 3 keep the alias and we'll resolve as needed
-                    String rawAddress = name.substring(firstDash + 1, lastDash);
-                    int delim = rawAddress.indexOf("%2F");
-                    address = (-1 == delim) ? rawAddress : rawAddress.substring(0, delim);
+            		if (middle.indexOf('-') != -1) {
+            			connector = middle.substring(0, middle.indexOf('-'));
+            			address = middle.substring(middle.indexOf('-') + 1);
+            		} else {
+            			connector = middle;
+            		}
+            	} else {
+            		int firstDash = name.indexOf('-');
+            		int lastDash = name.lastIndexOf('-');
+            		handler = name.substring(0, firstDash);
+            		port = name.substring(lastDash + 1);
+            		// validate that the port is a valid int
+            		Integer.valueOf(port);
+
+            		// Check to see if an address portion exists
+            		if (firstDash != lastDash) {
+            			// For option 3 keep the alias and we'll resolve as needed
+            			String rawAddress = name.substring(firstDash + 1, lastDash);
+            			int delim = rawAddress.indexOf("%2F");
+            			address = (-1 == delim) ? rawAddress : rawAddress.substring(0, delim);
+            		}
                 }
             } catch (Exception e) {
+            	name = null;
                 port = null;
                 address = null;
+                connector = null;
                 handler = null;
                 exception = e;
             }
@@ -194,6 +227,10 @@ public class TomcatConnectorDiscoveryComponent extends MBeanResourceDiscoveryCom
 
         public String getAddress() {
             return address;
+        }
+
+        public String getConnector() {
+            return connector;
         }
 
         public String getHandler() {

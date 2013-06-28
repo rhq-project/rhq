@@ -50,6 +50,7 @@ public class TomcatRoleComponent extends MBeanResourceComponent<TomcatUserDataba
         nameProperty = new PropertySimple(CONFIG_ROLE_NAME, name);
         opConfig.put(nameProperty);
         resourceContext.getParentResourceComponent().invokeOperation("removeRole", opConfig);
+        resourceContext.getParentResourceComponent().save();
     }
 
     @Override

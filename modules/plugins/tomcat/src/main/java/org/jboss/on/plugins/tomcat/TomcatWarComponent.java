@@ -146,17 +146,26 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         }
 
         if (null != this.webModuleMBean) {
-            int state;
+            String state;
 
             try {
                 // check to see if the mbean is truly active
-                state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
+                state = (String) this.webModuleMBean.getAttribute("stateName").refresh();
             } catch (Exception e) {
                 // if not active an exception may be thrown
                 state = WarMBeanState.STOPPED;
+                // try "state" for Tomcat 5.5
+                try {
+                    int stateInt = (Integer) this.webModuleMBean.getAttribute("state").refresh();
+                    if (stateInt == 1) {
+                        state = WarMBeanState.STARTED;
+                    }
+                } catch (Exception ex) {
+                    // Ignore
+                }
             }
 
-            availability = (WarMBeanState.STARTED == state) ? AvailabilityType.UP : AvailabilityType.DOWN;
+            availability = (state.equals(WarMBeanState.STARTED)) ? AvailabilityType.UP : AvailabilityType.DOWN;
 
             if (AvailabilityType.DOWN == availability) {
                 // if availability is down then ensure we use a new mbean on the next try, in case we have
@@ -361,19 +370,35 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
         mbeanOperation.invoke(paramValues);
 
         if (!WarOperation.DESTROY.equals(operation)) {
-            int state = (Integer) this.webModuleMBean.getAttribute("state").refresh();
-            int expectedState = getExpectedPostExecutionState(operation);
-            if (state != expectedState) {
+            String state = null;
+            try {
+                // check to see if the mbean is truly active
+                state = (String) this.webModuleMBean.getAttribute("stateName").refresh();
+            } catch (Exception e) {
+                // if not active an exception may be thrown
+                state = WarMBeanState.STOPPED;
+                // try "state" for Tomcat 5.5
+                try {
+                    int stateInt = (Integer) this.webModuleMBean.getAttribute("state").refresh();
+                    if (stateInt == 1) {
+                        state = WarMBeanState.STARTED;
+                    }
+                } catch (Exception ex) {
+                    // Ignore
+                }
+            }
+            String expectedState = getExpectedPostExecutionState(operation);
+            if (!state.equals(expectedState)) {
                 throw new Exception("Failed to " + name + " webapp (value of the 'state' attribute of MBean '"
-                    + this.webModuleMBean.getBeanName() + "' is " + state + ", not " + expectedState + ").");
+                    + this.webModuleMBean.getBeanName() + "' is \"" + state + "\", not \"" + expectedState + "\").");
             }
         }
 
         return new OperationResult();
     }
 
-    private static int getExpectedPostExecutionState(WarOperation operation) {
-        int expectedState;
+    private static String getExpectedPostExecutionState(WarOperation operation) {
+        String expectedState;
         switch (operation) {
         case START:
         case RELOAD: {
@@ -446,8 +471,8 @@ public class TomcatWarComponent extends MBeanResourceComponent<TomcatVHostCompon
     }
 
     private interface WarMBeanState {
-        int STOPPED = 0;
-        int STARTED = 1;
+        String STOPPED = "STOPPED";
+        String STARTED = "STARTED";
     }
 
     private List<EmsBean> getVHosts() {

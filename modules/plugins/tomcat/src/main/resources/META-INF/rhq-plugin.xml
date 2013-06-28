@@ -4,7 +4,7 @@
    name="Tomcat"
    displayName="Tomcat Server"
    package="org.jboss.on.plugins.tomcat"
-   description="Supports management and monitoring of JBoss EWS or Apache Tomcat5, Tomcat6"
+   description="Supports management and monitoring of JBoss EWS or Apache Tomcat5, Tomcat6, Tomcat7"
    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
    xmlns="urn:xmlns:rhq-plugin"
    xmlns:c="urn:xmlns:rhq-configuration">
@@ -154,13 +154,13 @@
          query="process|basename|match=^java.*,arg|org.apache.catalina.startup.Bootstrap|match=.*" />
 
       <!--
-         On windows EWS uses the tomcat5.exe and tomcat6.exe executables for starting tomcat. Unlike the normal
+         On windows EWS uses the tomcat5.exe, tomcat6.exe and tomcat7.exe executables for starting tomcat. Unlike the normal
          start up scripts, these do specify the command line args for determining catalina.home. See
          https://bugzilla.redhat.com/show_bug.cgi?id=580931 for more details.
       -->
       <process-scan
          name="WindowsEWSTomcat"
-         query="process|basename|match=^tomcat(5|6)\.exe"/>
+         query="process|basename|match=^(T|t)omcat(5|6|7)\.exe"/>
 
       <operation
          name="start"
@@ -226,7 +226,9 @@
          name="Tomcat Virtual Host"
          discovery="TomcatVHostDiscoveryComponent"
          class="TomcatVHostComponent"
-         description="A virtual host in the web container">
+         description="A virtual host in the web container"
+         createDeletePolicy="both"
+         creationDataType="configuration">
 
          <plugin-configuration>
             <c:group
@@ -501,10 +503,6 @@
                      type="integer"
                      description="Maximum size of the static resource cache in kilobytes. If not specified, the default value is 10240  (10 megabytes)." />
                   <c:simple-property
-                     name="caseSensitive"
-                     type="boolean"
-                     description="If the value of this flag is true, all case sensitivity checks will be disabled. If not specified, the default value of the flag is true. NOTE: This flag MUST NOT be set to false on the Windows platform (or any other OS which does not have a case sensitive filesystem), as it will disable case sensitivity checks, allowing JSP source code disclosure, among other security problems." />
-                  <c:simple-property
                      name="cookies"
                      type="boolean"
                      description="Set to true if you want cookies to be used for session identifier communication if supported by the client (this is the default). Set to false if you want to disable the use of cookies for session identifier communication, and rely only on URL rewriting by the application." />
@@ -516,7 +514,8 @@
                   <c:simple-property
                      name="configFile"
                      type="string"
-                     description="The location of the context.xml resource or file" />
+                     description="The location of the context.xml resource or file Note: Does not exist in Tomcat 7 (return type changed to URL)" 
+                     required="false" />
                   <c:simple-property
                      name="crossContext"
                      type="boolean"
@@ -526,13 +525,7 @@
                      readOnly="true"
                      required="true"
                      description="The docBase set for this application" />
-                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
-                  <c:simple-property
-                     name="eventProvider"
-                     type="boolean"
-                     description="Event provider support for this managed object?"                     
-                     readOnly="true" />                     
-                  <c:simple-property
+                   <c:simple-property
                      name="privileged"
                      type="boolean"
                      description="Set to true to allow this context to use container servlets, like the manager servlet. Use of the privileged  attribute will change the context's parent class loader to be the Server class loader rather than the Shared class loader. Note that in a default installation, the Common class loader is used for both the Server and the Shared  class loaders." />
@@ -544,18 +537,6 @@
                      name="saveConfig"
                      type="boolean"
                      description="Write the configuration as needed on startup?" />
-                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
-                  <c:simple-property
-                     name="stateManageable"
-                     type="boolean"
-                     description="State management support for this managed object?"
-                     readOnly="true" />
-                  <!-- Although it claims to be writable, update failed in my V5 and V6 test, so read only for now. -->
-                  <c:simple-property
-                     name="statisticsProvider"
-                     type="boolean"
-                     description="Performance statistics support for this managed object?"                     
-                     readOnly="true" />
                   <c:simple-property
                      name="swallowOutput"
                      type="boolean"
@@ -744,6 +725,12 @@
                   readOnly="true"
                   default="Catalina:type=Connector,port=%port%" />
                <c:simple-property
+                  name="name"
+                  type="string"
+                  readOnly="true" 
+                  default="Default Tomcat Connector name" 
+                  description="Connector name."/>
+               <c:simple-property
                   name="port"
                   type="string"
                   description="Port on which this connector is configured to listen."
@@ -752,7 +739,13 @@
                   name="handler"
                   type="string"
                   description="Connector protocol handler."
-                  readOnly="true" />                  
+                  readOnly="true" />    
+               <c:simple-property
+                  name="connector"
+                  type="string"
+                  description="Connector protocol connector."
+		  default="Default connector"
+                  readOnly="true" />
                <c:simple-property
                   name="address"
                   type="string"
@@ -772,7 +765,7 @@
                hiddenByDefault="true">
                <c:simple-property
                   name="nameTemplate"
-                  default="{handler}-{port}" />
+                  default="{name}" />
                <c:simple-property
                   name="descriptionTemplate"
                   default="A Tomcat connector" />
@@ -800,42 +793,42 @@
             description="Resumes this connector" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:maxTime"
+            property="Catalina:type=GlobalRequestProcessor,name=%name%:maxTime"
             displayName="Maximum Request Time"
             description="Maximum time it took to process a request."
             units="milliseconds"
             category="performance" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:requestCount"
+            property="Catalina:type=GlobalRequestProcessor,name=%name%:requestCount"
             displayName="Request count"
             description="Total number of requests processed since last restart."
             category="utilization"
             measurementType="trendsup" />
 
          <metric
-            property="Catalina:type=GlobalRequestProcessor,name=%handler%%address%-%port%:errorCount"
+            property="Catalina:type=GlobalRequestProcessor,name=%name%:errorCount"
             displayName="Error count"
             description="Number of errors while processing since last restart."
             category="utilization"
             measurementType="trendsup" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadsBusy"
+            property="Catalina:type=ThreadPool,name=%name%:currentThreadsBusy"
             displayName="Threadpool Threads Active"
             description="Number of current busy threads."
             category="utilization"
             displayType="summary" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:currentThreadCount"
+            property="Catalina:type=ThreadPool,name=%name%:currentThreadCount"
             displayName="Threadpool Threads Allocated"
             description="Number of current threads."
             category="utilization"
             displayType="summary" />
 
          <metric
-            property="Catalina:type=ThreadPool,name=%handler%%address%-%port%:maxThreads"
+            property="Catalina:type=ThreadPool,name=%name%:maxThreads"
             displayName="Threadpool Max Threads"
             description="Maximum number of threads that can be allocated for the ThreadPool."
             category="utilization"
@@ -848,10 +841,6 @@
                   type="boolean"
                   description="A boolean value which can be used to enable or disable the TRACE HTTP method. If not specified, this attribute is set to false." />
                <c:simple-property
-                  name="bufferSize"
-                  type="integer"
-                  description="HTTP: The size (in bytes) of the buffer to be provided for input streams created by this connector. By default, buffers of 2048 bytes will be provided. AJP: The size of the output buffer to use. If less than or equal to zero, then output buffering is disabled. The default value is -1 (i.e. buffering disabled)" />
-               <c:simple-property
                   name="connectionTimeout"
                   type="integer"
                   description="HTTP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is 60000 (i.e. 60 seconds). AJP: The number of milliseconds this Connector will wait, after accepting a connection, for the request URI line to be presented. The default value is infinite (i.e. no timeout)."
@@ -859,7 +848,8 @@
                <c:simple-property
                   name="emptySessionPath"
                   type="boolean"
-                  description="If set to true, all paths for session cookies will be set to /. This can be useful for portlet specification implementations, but will greatly affect performance if many applications are accessed on a given server by the client. If not specified, this attribute is set to false." />
+                  description="If set to true, all paths for session cookies will be set to /. This can be useful for portlet specification implementations, but will greatly affect performance if many applications are accessed on a given server by the client. If not specified, this attribute is set to false. Note: Does not exist in Tomcat 7" 
+                  required="false" />
                <c:simple-property
                   name="enableLookups"
                   type="boolean"

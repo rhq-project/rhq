@@ -26,6 +26,7 @@ package org.jboss.on.plugins.tomcat;
 import org.jboss.on.plugins.tomcat.helper.CreateResourceHelper;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.CreateResourceStatus;
 import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
@@ -45,8 +46,12 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
         String objectName = null;
         String operation = null;
         try {
+            PropertySimple newGroups = null;
+            PropertySimple newRoles = null;
             if (TomcatGroupComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
                 name = report.getResourceConfiguration().getSimple("groupname").getStringValue();
+                newRoles = report.getResourceConfiguration().getSimple(TomcatGroupComponent.CONFIG_ROLES);
+                report.getResourceConfiguration().remove(TomcatGroupComponent.CONFIG_ROLES);
                 objectName = String.format("Users:type=Group,groupname=\"%s\",database=UserDatabase", name);
                 operation = "createGroup";
             } else if (TomcatRoleComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
@@ -55,6 +60,10 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
                 operation = "createRole";
             } else if (TomcatUserComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
                 name = report.getResourceConfiguration().getSimple("username").getStringValue();
+                newRoles = report.getResourceConfiguration().getSimple(TomcatUserComponent.CONFIG_ROLES);
+                newGroups = report.getResourceConfiguration().getSimple(TomcatUserComponent.CONFIG_GROUPS);
+                report.getResourceConfiguration().remove(TomcatUserComponent.CONFIG_ROLES);
+                report.getResourceConfiguration().remove(TomcatUserComponent.CONFIG_GROUPS);
                 objectName = String.format("Users:type=User,username=\"%s\",database=UserDatabase", name);
                 operation = "createUser";
             } else {
@@ -67,6 +76,14 @@ public class TomcatUserDatabaseComponent extends MBeanResourceComponent<TomcatSe
             CreateResourceHelper.setResourceName(report, name);
             this.invokeOperation(operation, report.getResourceConfiguration());
 
+            if (TomcatGroupComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
+                report.getResourceConfiguration().put(newRoles);
+                // FIXME: Add newRoles to the group
+            } else if (TomcatUserComponent.RESOURCE_TYPE_NAME.equals(resourceTypeName)) {
+                report.getResourceConfiguration().put(newGroups);
+                report.getResourceConfiguration().put(newRoles);
+                // FIXME: Add newRoles and newGroups to the user
+            }
             // If all went well, persist the changes to the Tomcat user Database
             save();
 

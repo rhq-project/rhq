@@ -185,6 +185,7 @@ public class TomcatGroupComponent extends MBeanResourceComponent<TomcatUserDatab
         nameProperty = new PropertySimple(CONFIG_GROUP_NAME, name.substring(1, name.length() - 1));
         opConfig.put(nameProperty);
         resourceContext.getParentResourceComponent().invokeOperation("removeGroup", opConfig);
+        resourceContext.getParentResourceComponent().save();
     }
 
 }

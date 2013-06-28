@@ -206,6 +206,7 @@ public class TomcatUserComponent extends MBeanResourceComponent<TomcatUserDataba
         nameProperty = new PropertySimple(CONFIG_USERNAME, name.substring(1, name.length() - 1));
         opConfig.put(nameProperty);
         resourceContext.getParentResourceComponent().invokeOperation("removeUser", opConfig);
+        resourceContext.getParentResourceComponent().save();
     }
 
 }

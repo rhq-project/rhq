@@ -49,26 +49,26 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
-import org.rhq.core.domain.operation.OperationDefinition;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.operation.bean.OperationSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RequiredPermissions;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
@@ -94,6 +94,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     private static final String SEEDS_PROP = "rhq.cassandra.seeds";
 
+    private static final String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
+
+    private static final String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
+
+    private static final String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -102,6 +108,15 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private SchedulerLocal quartzScheduler;
+
+    @EJB
+    private ResourceTypeManagerLocal resourceTypeManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
 
     @Override
     public synchronized List<StorageNode> scanForStorageNodes() {
@@ -130,12 +145,23 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         List<StorageNode> seedNodes = parseSeedsProperty(seeds);
         boolean clusterMaintenanceNeeded = false;
         List<StorageNode> newNodes = null;
+
         if (existingStorageNodes.isEmpty()) {
+            // This should only happen on the very first server start upon installation.
             if (log.isDebugEnabled()) {
                 log.debug("No storage node entities exist in the database");
                 log.debug("Persisting seed nodes [" + StringUtil.listToString(seedNodes) + "]");
             }
+            createStorageNodeGroup();
         } else {
+            // There are existing storage nodes but we need to check if the storage node
+            // group exists. In the case of an upgrade, the group would not yet exist so it
+            // has to be created now.
+            if (!storageNodeGroupExists()) {
+                createStorageNodeGroup();
+                addExistingStorageNodesToGroup();
+            }
+
             newNodes = findNewStorageNodes(existingStorageNodes, seedNodes);
             if (!newNodes.isEmpty()) {
                 log.info("Detected topology change. New seed nodes will be persisted.");
@@ -210,7 +236,87 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
                 scheduleQuartzJob();
             }
+
+            addStorageNodeToGroup(resource);
         }
+    }
+
+    private void createStorageNodeGroup() {
+        log.info("Creating resource group [" + STORAGE_NODE_GROUP_NAME + "]");
+
+        ResourceGroup group = new ResourceGroup(STORAGE_NODE_GROUP_NAME);
+
+        ResourceType type = resourceTypeManager.getResourceTypeByNameAndPlugin(STORAGE_NODE_RESOURCE_TYPE_NAME,
+            STORAGE_NODE_PLUGIN_NAME);
+        group.setResourceType(type);
+        group.setRecursive(false);
+
+        resourceGroupManager.createResourceGroup(subjectManager.getOverlord(), group);
+    }
+
+    private void addExistingStorageNodesToGroup() {
+        log.info("Adding existing storage nodes to resource group [" + STORAGE_NODE_GROUP_NAME + "]");
+
+        for (StorageNode node : getStorageNodes()) {
+            if (node.getResource() != null) {
+                addStorageNodeToGroup(node.getResource());
+            }
+        }
+    }
+
+    private void addStorageNodeToGroup(Resource resource) {
+        if (log.isInfoEnabled()) {
+            log.info("Adding " + resource + " to resource group [" + STORAGE_NODE_GROUP_NAME + "]");
+        }
+
+        ResourceGroup group = getStorageNodeGroup();
+        resourceGroupManager.addResourcesToGroup(subjectManager.getOverlord(), group.getId(),
+            new int[] {resource.getId()});
+    }
+
+    /**
+     * This method is very similar to {@link #getStorageNodeGroup()} but may be called
+     * prior to the group being created.
+     *
+     * @return true if the storage node resource group exists, false otherwise.
+     */
+    private boolean storageNodeGroupExists() {
+        Subject overlord = subjectManager.getOverlord();
+
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterResourceTypeName(STORAGE_NODE_RESOURCE_TYPE_NAME);
+        criteria.addFilterPluginName(STORAGE_NODE_PLUGIN_NAME);
+        criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
+
+        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(overlord, criteria);
+
+        return !groups.isEmpty();
+    }
+
+    /**
+     * Note that this method assumes the storage node resource group already exists; as
+     * such, it should only be called from places in the code that are after the point(s)
+     * where the group has been created.
+     *
+     * @return The storage node resource group.
+     * @throws IllegalStateException if the group is not found or does not exist.
+     */
+    private ResourceGroup getStorageNodeGroup() {
+        Subject overlord = subjectManager.getOverlord();
+
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterResourceTypeName(STORAGE_NODE_RESOURCE_TYPE_NAME);
+        criteria.addFilterPluginName(STORAGE_NODE_PLUGIN_NAME);
+        criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
+
+        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(overlord, criteria);
+
+        if (groups.isEmpty()) {
+            throw new IllegalStateException("Resource group [" + STORAGE_NODE_GROUP_NAME + "] does not exist. This " +
+                "group must exist in order for the server to manage storage nodes. Restart the server for the group " +
+                "to be recreated.");
+        }
+        return groups.get(0);
     }
 
     @Override

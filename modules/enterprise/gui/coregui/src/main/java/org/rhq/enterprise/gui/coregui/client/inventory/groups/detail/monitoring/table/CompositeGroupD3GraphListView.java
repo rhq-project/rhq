@@ -350,24 +350,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         return sb.toString();
     }
 
-    /**
-     * If there is more than 2 days time window then return true so we can show day of week
-     * in axis labels. Function to switch the timescale to whichever is more appropriate hours
-     * or hours with days of week.
-     * @return true if difference between startTime and endTime is >= x days
-     */
-    public boolean shouldDisplayDayOfWeekInXAxisLabel() {
-        // because of asyncrony this is possible so default it
-        if (null == measurementForEachResource || measurementForEachResource.isEmpty()) {
-            return true;
-        }
-        List<MeasurementDataNumericHighLowComposite> firstResourceMeasurementList = measurementForEachResource.get(0)
-            .getMeasurementData();
-        Long startTime = firstResourceMeasurementList.get(0).getTimestamp();
-        Long endTime = firstResourceMeasurementList.get(firstResourceMeasurementList.size() - 1).getTimestamp();
-        long timeThreshold = 24 * 60 * 60 * 1000; // 1 days
-        return startTime + timeThreshold < endTime;
-    }
 
     /**
      * Client can choose which graph types to render.

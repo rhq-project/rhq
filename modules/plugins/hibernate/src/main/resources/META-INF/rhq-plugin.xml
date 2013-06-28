@@ -141,67 +141,6 @@
               description="The global number of cacheable entities/collections not found in the cache and loaded from the database since the statistics were reset"
               category="throughput" measurementType="trendsup"/>
 
-      <help>
-         <![CDATA[
-          <p>In order to monitor Hibernate statistics via JON, the Hibernate Session Manager MBean
-          must be deployed to an object name of the format 
-          <tt>_"Hibernate:application=%application%,type=statistics"_</tt>, and statistics must be enabled.</p>
-
-          <p>Some example code is provided below to register the Hibernate Session MBean within an EJB3 application.</p>
-          
-          <code><pre>
- public static void enableHibernateStatistics(EntityManager entityManager)
- {
-    try
-    {
-       StatisticsService mBean = new StatisticsService();
-       SessionFactory sessionFactory = getHibernateSession(entityManager).getSessionFactory();
-       mBean.setSessionFactory(sessionFactory);
-       ObjectName objectName = new ObjectName(HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
-       MBeanServer jbossMBeanServer = getJBossMBeanServer();
-       jbossMBeanServer.registerMBean(mBean, objectName);
-       sessionFactory.getStatistics().setStatisticsEnabled(true);
-    }
-    catch (InstanceAlreadyExistsException iaee)
-    {
-       LOG.info("Duplicate MBean registration ignored: " + HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
-    }
-    catch (Exception e)
-    {
-       LOG.warn("Couldn't register Hibernate statistics MBean.", e);
-    }
- }
-
- private static Session getHibernateSession(EntityManager entityManager) {
-    Session session;
-    if (entityManager.getDelegate() instanceof EntityManagerImpl) {
-        EntityManagerImpl entityManagerImpl = (EntityManagerImpl) entityManager.getDelegate();
-        session = entityManagerImpl.getSession();
-    } else {
-        session = (Session) entityManager.getDelegate();
-    }
-    return session;
- }
-
- private static MBeanServer getJBossMBeanServer() {
-    List&lt;MBeanServer&gt; servers = MBeanServerFactory.findMBeanServer(null);
-    MBeanServer jbossServer = null;
-    for (MBeanServer server : servers) {
-        if ("jboss".equals(server.getDefaultDomain())) {
-            jbossServer = server;
-        }
-    }
-    if (jbossServer == null) {
-        jbossServer = ManagementFactory.getPlatformMBeanServer();
-    }
-    return jbossServer;
- }
-          </pre></code>
-          
-          <p>See also <a href="http://hibernate.org/216.html">Publishing statistics through JMX</a> and
-          <a href="http://www.redhat.com/docs/manuals/jboss/jboss-eap-4.3/doc/hibernate/Hibernate_Reference_Guide/Optional_configuration_properties-Hibernate_statistics.html">Enabling Hibernate statistics</a></p>
-         ]]>
-      </help>
 
       <service name="Hibernate Entity"
          discovery="EntityDiscoveryComponent"
@@ -224,5 +163,68 @@
       </service>
 
    </service>
+
+  <help>
+     <![CDATA[
+      <p>In order to monitor Hibernate statistics via JON, the Hibernate Session Manager MBean
+      must be deployed to an object name of the format
+      <tt>_"Hibernate:application=%application%,type=statistics"_</tt>, and statistics must be enabled.</p>
+
+      <p>Some example code is provided below to register the Hibernate Session MBean within an EJB3 application.</p>
+
+      <code><pre>
+public static void enableHibernateStatistics(EntityManager entityManager)
+{
+try
+{
+   StatisticsService mBean = new StatisticsService();
+   SessionFactory sessionFactory = getHibernateSession(entityManager).getSessionFactory();
+   mBean.setSessionFactory(sessionFactory);
+   ObjectName objectName = new ObjectName(HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
+   MBeanServer jbossMBeanServer = getJBossMBeanServer();
+   jbossMBeanServer.registerMBean(mBean, objectName);
+   sessionFactory.getStatistics().setStatisticsEnabled(true);
+}
+catch (InstanceAlreadyExistsException iaee)
+{
+   LOG.info("Duplicate MBean registration ignored: " + HIBERNATE_STATISTICS_MBEAN_OBJECTNAME);
+}
+catch (Exception e)
+{
+   LOG.warn("Couldn't register Hibernate statistics MBean.", e);
+}
+}
+
+private static Session getHibernateSession(EntityManager entityManager) {
+Session session;
+if (entityManager.getDelegate() instanceof EntityManagerImpl) {
+    EntityManagerImpl entityManagerImpl = (EntityManagerImpl) entityManager.getDelegate();
+    session = entityManagerImpl.getSession();
+} else {
+    session = (Session) entityManager.getDelegate();
+}
+return session;
+}
+
+private static MBeanServer getJBossMBeanServer() {
+List&lt;MBeanServer&gt; servers = MBeanServerFactory.findMBeanServer(null);
+MBeanServer jbossServer = null;
+for (MBeanServer server : servers) {
+    if ("jboss".equals(server.getDefaultDomain())) {
+        jbossServer = server;
+    }
+}
+if (jbossServer == null) {
+    jbossServer = ManagementFactory.getPlatformMBeanServer();
+}
+return jbossServer;
+}
+      </pre></code>
+
+      <p>See also <a href="http://hibernate.org/216.html">Publishing statistics through JMX</a> and
+      <a href="http://www.redhat.com/docs/manuals/jboss/jboss-eap-4.3/doc/hibernate/Hibernate_Reference_Guide/Optional_configuration_properties-Hibernate_statistics.html">Enabling Hibernate statistics</a></p>
+     ]]>
+  </help>
+
 
 </plugin>

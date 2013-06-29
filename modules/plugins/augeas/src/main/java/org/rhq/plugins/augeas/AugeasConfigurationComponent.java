@@ -138,6 +138,14 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
+
+        if (!isAugeasAvailable()) {
+            if (log.isDebugEnabled()) {
+                log.debug("Can not load configuration as Augeas is not available");
+            }
+            return null;
+        }
+
         abortIfAugeasNotAvailable();
 
         //augeas was initialized in abortIfAugeasNotAvailable();
@@ -346,7 +354,7 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
 
     /**
      * Returns initialized augeas instance. Augeas instance must be closed by calling method close on the Augeas instance
-     * or by calling method close on AugeasConfigurationComponent instance after use of augeas. 
+     * or by calling method close on AugeasConfigurationComponent instance after use of augeas.
      * @return
      */
     public Augeas getAugeas() {
@@ -378,9 +386,13 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
             augeas = new Augeas(this.augeasRootPath, augeasLoadPath, Augeas.NO_MODL_AUTOLOAD);
             setupAugeasModules(augeas);
             checkModuleErrors(augeas);
-        } catch (RuntimeException e) {
+        } catch (Throwable e) {
             augeas = null;
-            log.error("Failed to initialize Augeas Java API.", e);
+            String msg = "Failed to initialize Augeas Java API: " + e.getMessage();
+            if (e instanceof NoClassDefFoundError) {
+                msg += " - there is probably no native library available";
+            }
+            log.warn(msg);
         }
         return augeas;
     }
@@ -719,18 +731,19 @@ public class AugeasConfigurationComponent<T extends ResourceComponent<?>> implem
             this.augeas = null;
         }
         this.augeas = createAugeas();
-        this.augeas.load();
-        checkModuleErrors(this.augeas);
-        String resourceConfigRootPath = getResourceConfigurationRootPath();
-        if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
-            // root path is relative - make it absolute
-            this.resourceConfigRootNode = new AugeasNode("/files/", resourceConfigRootPath);
-        } else {
-            // root path is already absolute
-            this.resourceConfigRootNode = new AugeasNode(resourceConfigRootPath);
+        if (augeas!=null) {
+            this.augeas.load();
+            checkModuleErrors(this.augeas);
+            String resourceConfigRootPath = getResourceConfigurationRootPath();
+            if (resourceConfigRootPath.indexOf(AugeasNode.SEPARATOR_CHAR) != 0) {
+                // root path is relative - make it absolute
+                this.resourceConfigRootNode = new AugeasNode("/files/", resourceConfigRootPath);
+            } else {
+                // root path is already absolute
+                this.resourceConfigRootNode = new AugeasNode(resourceConfigRootPath);
+            }
+            log.debug("Resource Config Root Node = \"" + this.resourceConfigRootNode + "\"");
         }
-        log.debug("Resource Config Root Node = \"" + this.resourceConfigRootNode + "\"");
-
     }
 
     private void abortIfAugeasNotAvailable() throws Exception {

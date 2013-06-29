@@ -45,14 +45,16 @@ public class SambaShareDiscoveryComponent implements ResourceDiscoveryComponent<
         try {
             augeas = serverComponent.getAugeas();
 
-            List<String> matches = augeas.match("/files/etc/samba/smb.conf/target[. != 'global']");
-            for (String match : matches) {
-                String name = augeas.get(match);
-                Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
-                pluginConfig.put(new PropertySimple("targetName", name));
-                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-                    name, name + " share", null, "Samba Share [" + name + "]", pluginConfig, null);
-                details.add(detail);
+            if (augeas!=null) {
+                List<String> matches = augeas.match("/files/etc/samba/smb.conf/target[. != 'global']");
+                for (String match : matches) {
+                    String name = augeas.get(match);
+                    Configuration pluginConfig = discoveryContext.getDefaultPluginConfiguration();
+                    pluginConfig.put(new PropertySimple("targetName", name));
+                    DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                        name, name + " share", null, "Samba Share [" + name + "]", pluginConfig, null);
+                    details.add(detail);
+                }
             }
 
             return details;

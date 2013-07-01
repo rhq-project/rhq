@@ -82,13 +82,6 @@
         </dependency>
 
         <!-- ** SARs -->
-        <dependency>
-            <groupId>${project.groupId}</groupId>
-            <artifactId>rhq-enterprise-server-services-sar</artifactId>
-            <version>${project.version}</version>
-            <type>sar</type>
-        </dependency>
-
         <!--
         <dependency>
             <groupId>${project.groupId}</groupId>
@@ -271,13 +264,6 @@
                         <!-- The Maven ear plugin has a bug that causes SARs to be marked as <connector> modules -->
                         <!-- and there is no way to tell it not to put the SAR in the application.xml so we have -->
                         <!-- to do things with SARs separately using another maven plugin below -->
-                        <sarModule>
-                            <groupId>${project.groupId}</groupId>
-                            <artifactId>rhq-enterprise-server-services-sar</artifactId>
-                            <bundleFileName>rhq-services.sar</bundleFileName>
-                            <excluded>true</excluded>
-                        </sarModule>
-
                         <!--
                         <sarModule>
                             <groupId>${project.groupId}</groupId>
@@ -348,35 +334,25 @@
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
 
-                    <execution>
-                        <id>copy-sars</id>
-                        <phase>process-resources</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>rhq-enterprise-server-services-sar</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>sar</type>
-                                </artifactItem>
-
-                                <!--
-                                <artifactItem>
-                                    <groupId>${project.groupId}</groupId>
-                                    <artifactId>rhq-enterprise-server-agent-sar</artifactId>
-                                    <version>${project.version}</version>
-                                    <type>sar</type>
-                                </artifactItem>
-                                -->
-
-                            </artifactItems>
-                            <outputDirectory>${earDirectory}</outputDirectory>
-                            <stripVersion>true</stripVersion>
-                        </configuration>
-                    </execution>
+                    <!--<execution>-->
+                        <!--<id>copy-sars</id>-->
+                        <!--<phase>process-resources</phase>-->
+                        <!--<goals>-->
+                            <!--<goal>copy</goal>-->
+                        <!--</goals>-->
+                        <!--<configuration>-->
+                            <!--<artifactItems>-->
+                                <!--<artifactItem>-->
+                                    <!--<groupId>${project.groupId}</groupId>-->
+                                    <!--<artifactId>rhq-enterprise-server-agent-sar</artifactId>-->
+                                    <!--<version>${project.version}</version>-->
+                                    <!--<type>sar</type>-->
+                                <!--</artifactItem>-->
+                            <!--</artifactItems>-->
+                            <!--<outputDirectory>${earDirectory}</outputDirectory>-->
+                            <!--<stripVersion>true</stripVersion>-->
+                        <!--</configuration>-->
+                    <!--</execution>-->
 
                     <execution>
                         <id>copy-core-agent-plugins</id>

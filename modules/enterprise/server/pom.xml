@@ -28,7 +28,7 @@
         <module>server-metrics</module>
         <module>data-migration</module>
         <module>jar</module>
-        <module>sars</module>
+        <!--<module>sars</module>-->
         <module>plugins</module>
         <module>ear</module>
         <module>startup-subsystem</module>

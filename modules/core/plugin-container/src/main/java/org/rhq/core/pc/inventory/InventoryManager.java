@@ -2760,7 +2760,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void updateResourceVersion(Resource resource, String version) {
         String existingVersion = resource.getVersion();
-        boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
+        boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null
+            && !version.isEmpty();
         if (versionChanged) {
             if (log.isDebugEnabled()) {
                 log.debug("Discovery reported that version of [" + resource + "] changed from [" + existingVersion

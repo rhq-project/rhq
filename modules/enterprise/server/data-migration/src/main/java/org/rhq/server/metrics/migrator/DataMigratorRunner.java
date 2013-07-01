@@ -367,22 +367,21 @@ public class DataMigratorRunner {
         if (serverProperties.getProperty("rhq.cassandra.seeds") != null
             && !serverProperties.getProperty("rhq.cassandra.seeds").trim().isEmpty()) {
 
-            StringBuffer seedHosts = new StringBuffer();
-            String cassandraPort = null;
-            for (String seed : serverProperties.getProperty("rhq.cassandra.seeds").split(",")) {
-                String[] params = seed.split("\\|");
+            String[] unparsedSeeds =serverProperties.getProperty("rhq.cassandra.seeds").split(",");
+            String[] seedHosts = new String[unparsedSeeds.length];
+            Integer cassandraPort = null;
+            for (int index = 0; index < unparsedSeeds.length; index++) {
+                String[] params = unparsedSeeds[index].split("\\|");
                 if (params.length != 3) {
                     throw new IllegalArgumentException(
-                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + seed + "]");
+                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + unparsedSeeds[index] + "]");
                 }
 
-                seedHosts.append(params[0]).append(',');
-                cassandraPort = tryParseInteger(params[2], DEFAULT_CASSANDRA_PORT) + "";
+                seedHosts[index] = params[0];
+                cassandraPort = tryParseInteger(params[2], DEFAULT_CASSANDRA_PORT);
             }
 
-            seedHosts.deleteCharAt(seedHosts.length() - 1);
-
-            configuration.put(cassandraHostsOption, seedHosts.toString());
+            configuration.put(cassandraHostsOption, seedHosts);
             configuration.put(cassandraPortOption, cassandraPort);
         }
     }

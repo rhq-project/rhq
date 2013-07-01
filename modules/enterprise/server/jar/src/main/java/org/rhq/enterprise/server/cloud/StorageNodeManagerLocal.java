@@ -73,4 +73,17 @@ public interface StorageNodeManagerLocal {
      */
     void prepareNodeForUpgrade(Subject subject, StorageNode storageNode);
 
+    /**
+     * <p>
+     * Schedules read repair to run on the storage cluster. The repair operation is executed one node at a time. This
+     * method is invoked from {@link org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob StorageClusterReadRepairJob}
+     * as part of regularly scheduled maintenance.
+     * </p>
+     * <p>
+     * <strong>NOTE:</strong> Repair is one of the most resource-intensive operations that a storage node performs. Make
+     * sure you know what you are doing if you invoke this method outside of the regularly scheduled maintenance window.
+     * </p>
+     */
+    void runReadRepair();
+
 }

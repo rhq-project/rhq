@@ -88,6 +88,7 @@ import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
+import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.storage.StorageClusterHeartBeatJob;
@@ -665,7 +666,12 @@ public class StartupBean implements StartupLocal {
             log.error("Cannot create alert availability duration job.", e);
         }
 
-        return;
+        try {
+            String cronString = "0 30 0 ? * SUN *";  // every sunday starting at 00:30.
+            schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString);
+        } catch (Exception e) {
+            log.error("Cannot create storage cluster read repair job", e);
+        }
     }
     
    /**

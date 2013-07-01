@@ -48,12 +48,14 @@ import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
+import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -117,6 +119,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    private OperationManagerLocal operationManager;
 
     @Override
     public synchronized List<StorageNode> scanForStorageNodes() {
@@ -550,5 +555,28 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         resourceId = storageNode.getResource().getId();
         return resourceId;
+    }
+
+    @Override
+    public void runReadRepair() {
+        ResourceGroup storageNodeGroup = getStorageNodeGroup();
+
+        if (storageNodeGroup.getExplicitResources().size() < 2) {
+            log.info("Skipping read repair since this is a single-node cluster");
+            return;
+        }
+
+        log.info("Scheduling read repair maintenance for storage cluster");
+
+        GroupOperationSchedule schedule = new GroupOperationSchedule();
+        schedule.setGroup(storageNodeGroup);
+        schedule.setHaltOnFailure(false);
+        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
+        schedule.setJobTrigger(JobTrigger.createNowTrigger());
+        schedule.setSubject(subjectManager.getOverlord());
+        schedule.setOperationName("readRepair");
+        schedule.setDescription("Run scheduled read repair on storage node");
+
+        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
     }
 }

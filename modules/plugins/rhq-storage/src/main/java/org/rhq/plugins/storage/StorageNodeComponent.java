@@ -61,6 +61,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return nodeAdded(parameters);
         } else if (name.equals("prepareForUpgrade")) {
             return prepareForUpgrade(parameters);
+        } else if (name.equals("readRepair")) {
+            return readRepair();
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -130,6 +132,23 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         if (hasErrors) {
             result.setErrorMessage("One or more tasks failed to complete successfully.");
         }
+        return result;
+    }
+
+    private OperationResult readRepair() {
+        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
+        OperationResult result = new OperationResult();
+        Configuration resultConfig = result.getComplexResults();
+        PropertyList resultsList = new PropertyList("results");
+
+        OpResult opResult = repairKeyspace(keyspaceService, RHQ_KEYSPACE);
+        resultsList.add(toPropertyMap(opResult));
+
+        opResult = repairKeyspace(keyspaceService, SYSTEM_AUTH_KEYSPACE);
+        resultsList.add(toPropertyMap(opResult));
+
+        resultConfig.put(resultsList);
+
         return result;
     }
 

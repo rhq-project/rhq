@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -160,7 +161,9 @@ public class AgentUpdateServlet extends HttpServlet {
                 agentJarStream.close();
             }
         } catch (Throwable t) {
-            log.error("Failed to stream agent jar.", t);
+            String clientAddr = getClientAddress(req);
+            log.error("Failed to stream agent jar to remote client [" + clientAddr + "]: "
+                + ThrowableUtil.getAllMessages(t));
             disableBrowserCache(resp);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to stream agent jar");
         }
@@ -178,7 +181,9 @@ public class AgentUpdateServlet extends HttpServlet {
             byte[] versionData = StreamUtil.slurp(stream);
             resp.getOutputStream().write(versionData);
         } catch (Throwable t) {
-            log.error("Failed to stream version info.", t);
+            String clientAddr = getClientAddress(req);
+            log.error("Failed to stream version info to remote client [" + clientAddr + "]: "
+                + ThrowableUtil.getAllMessages(t));
             disableBrowserCache(resp);
             resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to stream version info");
         }
@@ -253,4 +258,14 @@ public class AgentUpdateServlet extends HttpServlet {
         }
     }
 
+    private String getClientAddress(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+            ip = request.getHeader("HTTP_X_FORWARDED_FOR");
+            if (ip == null || ip.length() == 0 || "unknown".equalsIgnoreCase(ip)) {
+                ip = String.format("%s (%s)", request.getRemoteHost(), request.getRemoteAddr());
+            }
+        }
+        return ip;
+    }
 }

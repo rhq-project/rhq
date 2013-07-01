@@ -71,7 +71,6 @@
 	<classpathentry kind="src" path="modules/enterprise/remoting/client-api/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/remoting/cli/src/test/java"/>
-	<classpathentry kind="src" path="modules/enterprise/server/sars/agent-sar/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/safe-invoker/src/test/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/startup-subsystem/src/main/java"/>

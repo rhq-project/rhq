@@ -79,6 +79,9 @@ public class StorageNodeLoadComposite implements Serializable {
         this.endTime = endTime;
     }
 
+    /**
+     * @return heapCommitted A computed metric for the amount of memory that is committed for the JVM to use.
+     */
     public MeasurementAggregateWithUnits getHeapCommitted() {
         return heapCommitted;
     }
@@ -86,7 +89,10 @@ public class StorageNodeLoadComposite implements Serializable {
     public void setHeapCommitted(MeasurementAggregateWithUnits heapCommitted) {
         this.heapCommitted = heapCommitted;
     }
-    
+
+    /**
+     * @return A computed metric for the amount of JVM heap memory used
+     */
     public MeasurementAggregateWithUnits getHeapUsed() {
         return heapUsed;
     }
@@ -95,6 +101,10 @@ public class StorageNodeLoadComposite implements Serializable {
         this.heapUsed = heapUsed;
     }
 
+    /**
+     * @return A computed metric for the {@link #getHeapUsed() heapUsed} divided by the
+     * {@link #getHeapCommitted() heapCommitted} expressed as a percentage.
+     */
     public MeasurementAggregateWithUnits getHeapPercentageUsed() {
         return heapPercentageUsed;
     }
@@ -102,7 +112,11 @@ public class StorageNodeLoadComposite implements Serializable {
     public void setHeapPercentageUsed(MeasurementAggregateWithUnits heapPercentageUsed) {
         this.heapPercentageUsed = heapPercentageUsed;
     }
-    
+
+    /**
+     * @return A computed metric for the space used on disk by all SSTables of all column families expressed as a
+     * percentage.
+     */
     public MeasurementAggregateWithUnits getDiskSpacePercentageUsed() {
         return diskSpacePercentageUsed;
     }
@@ -110,7 +124,10 @@ public class StorageNodeLoadComposite implements Serializable {
     public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits diskSpacePercentageUsed) {
         this.diskSpacePercentageUsed = diskSpacePercentageUsed;
     }
-    
+
+    /**
+     * @return A computed metric for the the reported disk space used by all SSTables on disk for all column families.
+     */
     public MeasurementAggregateWithUnits getLoad() {
         return load;
     }
@@ -119,6 +136,10 @@ public class StorageNodeLoadComposite implements Serializable {
         this.load = load;
     }
 
+    /**
+     * @return A computed metric for the number of tokens owned by this node. The range of values between two tokens is
+     * the range of possible keys for that portion of the token ring.
+     */
     public MeasurementAggregate getTokens() {
         return tokens;
     }
@@ -127,6 +148,11 @@ public class StorageNodeLoadComposite implements Serializable {
         this.tokens = tokens;
     }
 
+    /**
+     * @return A computed metric for a percentage of keys owned by this node. This directly correlates to the
+     * number of {@link #getTokens() tokens}. For example, if you have a a two node cluster with each node having 256
+     * tokens, then with an even distribution, this metric should be right around 50%.
+     */
     public MeasurementAggregateWithUnits getActuallyOwns() {
         return actuallyOwns;
     }

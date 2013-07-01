@@ -157,15 +157,16 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         result.operation = "repair " + keyspace + " keyspace";
         try {
             if (log.isDebugEnabled()) {
-                log.debug("Running repair on " + keyspace + " keyspace");
+                log.debug("Running primary range repair on " + keyspace + " keyspace");
             }
             long start = System.currentTimeMillis();
             keyspaceService.repairPrimaryRange(keyspace);
             long end = System.currentTimeMillis();
             if (log.isDebugEnabled()) {
-                log.debug("Finsihed repair on " + keyspace + " keyspace in " + (end - start) + " ms");
+                log.debug("Finsihed primary range repair on " + keyspace + " keyspace in " + (end - start) + " ms");
             }
             result.succeeded = true;
+            result.details = "Completed repair operation in " + (end - start) + " ms.";
         } catch (Exception e) {
             log.error("An error occurred while running repair on " + keyspace, e);
             Throwable rootCause = ThrowableUtil.getRootCause(e);

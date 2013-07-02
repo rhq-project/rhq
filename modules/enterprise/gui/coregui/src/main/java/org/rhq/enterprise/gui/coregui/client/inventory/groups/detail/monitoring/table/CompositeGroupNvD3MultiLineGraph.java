@@ -19,19 +19,17 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
 
-import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.Messages;
 
 /**
  * A MultiLine version of the Composite group single metric multiple resource charts.
  *
  * @author Mike Thompson
  */
-public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3GraphListView
+@Deprecated
+public final class CompositeGroupNvD3MultiLineGraph extends CompositeGroupD3GraphListView
 {
-    private static final Messages MSG = CoreGUI.getMessages();
 
-    public CompositeGroupMultiLineGraphListView(int groupId, int defId, boolean isAutogroup)
+    public CompositeGroupNvD3MultiLineGraph(int groupId, int defId, boolean isAutogroup)
     {
         super(groupId, defId, isAutogroup);
     }
@@ -46,7 +44,7 @@ public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3
             chartSelection = chartHandle + " svg",
             yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),
             xAxisLabel = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
-            xAxisTimeFormat =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupMultiLineGraphListView::getXAxisTimeFormatHoursMinutes()();
+            xAxisTimeFormat =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3MultiLineGraph::getXAxisTimeFormatHoursMinutes()();
             json = eval(this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()());
 
         $wnd.nv.addGraph(function() {
@@ -73,7 +71,4 @@ public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3
 
 
 
-    public String getXAxisTimeFormatHoursMinutes() {
-        return MSG.chart_xaxis_time_format_hours_minutes();
-    }
 }

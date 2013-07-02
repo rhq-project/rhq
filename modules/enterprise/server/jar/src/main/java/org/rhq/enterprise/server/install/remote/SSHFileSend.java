@@ -22,15 +22,15 @@
  */
 package org.rhq.enterprise.server.install.remote;
 
-import com.jcraft.jsch.Channel;
-import com.jcraft.jsch.ChannelExec;
-import com.jcraft.jsch.Session;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+
+import com.jcraft.jsch.Channel;
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.Session;
 
 /**
  * @author Greg Hinkle
@@ -61,6 +61,8 @@ public class SSHFileSend {
             command = "C0644 " + filesize + " ";
             if (sourceFilename.lastIndexOf('/') > 0) {
                 command += sourceFilename.substring(sourceFilename.lastIndexOf('/') + 1);
+            } else if (sourceFilename.lastIndexOf('\\') > 0) {
+                command += sourceFilename.substring(sourceFilename.lastIndexOf('\\') + 1);
             } else {
                 command += sourceFilename;
             }

@@ -135,7 +135,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             return UNKNOWN;
         } else {
             // It is safe to read prior snapshot as getNativeProcess always return a fresh instance
-            ProcessInfoSnapshot processInfoSnaphot = processInfo.priorSnaphot();
+            ProcessInfoSnapshot processInfoSnaphot = processInfo.freshSnapshot();
             if (processInfoSnaphot.isRunning()) {
                 return UP;
             } else {

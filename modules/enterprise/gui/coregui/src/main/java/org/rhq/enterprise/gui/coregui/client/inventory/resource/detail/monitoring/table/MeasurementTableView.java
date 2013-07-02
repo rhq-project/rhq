@@ -42,6 +42,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -69,6 +70,7 @@ public class MeasurementTableView extends Table<MetricsTableDataSource> {
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
+        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
         addTableAction(MSG.view_measureTable_getLive(), new TableAction() {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {

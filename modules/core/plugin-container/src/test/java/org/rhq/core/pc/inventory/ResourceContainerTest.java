@@ -38,9 +38,9 @@ import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.pc.PluginContainer;
 import org.rhq.core.pc.PluginContainerConfiguration;
+import org.rhq.core.pc.component.ComponentInvocationContextImpl;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
-import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -149,42 +149,49 @@ public class ResourceContainerTest {
         OperationFacet proxy = resourceContainer.createResourceComponentProxy(OperationFacet.class,
                 FacetLockType.WRITE, 150, true, false, true);
         try {
-            proxy.invokeOperation("op", new Configuration());
-            fail("Expected invokeOperation to throw a TimeoutException");
+            OperationResult op = proxy.invokeOperation("op", new Configuration());
+            assertTrue(op.getSimpleResult().equals(MockResourceComponent.OPERATION_RESULT));
         } catch (Exception e) {
-            assertFalse(e instanceof TimeoutException, "Caught unexpected instance of TimeoutException: "
-                    + e.getClass().getName());
+            fail("Caught unexpected Exception: " + e.getClass().getName());
             assertFalse(((MockResourceComponent) resourceContainer.getResourceComponent())
                     .caughtInterruptedComponentInvocation());
         }
     }
 
-    private ResourceContainer getResourceContainer() {
+    private ResourceContainer getResourceContainer() throws Exception {
         Resource resource = new Resource("TestPlatformKey", "MyTestPlatform", PluginMetadataManager.TEST_PLATFORM_TYPE);
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         ResourceContainer resourceContainer = new ResourceContainer(resource, contextClassLoader);
+        ResourceContext resourceContext = new ResourceContext(resource, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, new ComponentInvocationContextImpl());
+        resourceContainer.setResourceContext(resourceContext);
         ResourceComponent resourceComponent = new MockResourceComponent(false);
         resourceContainer.setResourceComponent(resourceComponent);
+        resourceComponent.start(resourceContext);
         return resourceContainer;
     }
 
-    class MockResourceComponent implements ResourceComponent, OperationFacet {
-        private boolean naughty;
-        private boolean caughtInterruptedComponentInvocation;
-        private ResourceContext resourceContext;
+    private class MockResourceComponent implements ResourceComponent, OperationFacet {
+        static final String OPERATION_RESULT = "uninterrupted";
+        boolean naughty;
+        boolean caughtInterruptedComponentInvocation;
+        ResourceContext resourceContext;
 
         MockResourceComponent(boolean naughty) {
             this.naughty = naughty;
         }
 
+        @Override
         public void start(ResourceContext resourceContext) throws Exception {
             this.resourceContext = resourceContext;
         }
 
+        @Override
         public void stop() {
             this.resourceContext = null;
         }
 
+        @Override
         public AvailabilityType getAvailability() {
             if (this.naughty) {
                 throw new MockRuntimeException();
@@ -212,16 +219,16 @@ public class ResourceContainerTest {
             long start = System.nanoTime();
             while (!resourceContext.getComponentInvocationContext().isInterrupted()) {
                 if ((System.nanoTime() - start) > MILLISECONDS.toNanos(100)) {
-                    // Make the operation fail after 100ms
+                    // Return after 100ms
                     caughtInterruptedComponentInvocation = false;
-                    throw new Exception();
+                    return new OperationResult(OPERATION_RESULT);
                 }
             }
             caughtInterruptedComponentInvocation = true;
             throw new InterruptedException();
         }
 
-        public boolean caughtInterruptedComponentInvocation() {
+        boolean caughtInterruptedComponentInvocation() {
             return caughtInterruptedComponentInvocation;
         }
     }

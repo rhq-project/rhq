@@ -195,10 +195,11 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 // to have a version compatible local install and set the install path to the local path, even though
                 // the server url was remote. 
                 String catalinaHome = pluginConfig.getSimpleValue(PLUGIN_CONFIG_CATALINA_HOME_PATH, null);
-                boolean hasLocalJars = new File(catalinaHome).isDirectory();
+                boolean hasLocalJars = catalinaHome != null && new File(catalinaHome, "lib").isDirectory();
 
                 if (hasLocalJars) {
-                    connectionSettings.setLibraryURI(catalinaHome);
+                    String libDir = new File(catalinaHome, "lib").getAbsolutePath();
+                    connectionSettings.setLibraryURI(libDir);
                     connectionFactory.discoverServerClasses(connectionSettings);
 
                     // Tell EMS to make copies of jar files so that the ems classloader doesn't lock

@@ -112,9 +112,11 @@ public class JMXDiscoveryComponent implements ResourceDiscoveryComponent, Manual
      * Tomcat processes configured for JMX management.
      */
     private static final String[] DEFAULT_PROCESS_EXCLUDES = new String[] {
-        "org.rhq.enterprise.agent.AgentMain", // RHQ Agent
-        "org.jboss.Main",                     // JBoss AS 3.x-6.x
-        "catalina.startup.Bootstrap"          // Tomcat
+        "org.rhq.enterprise.agent.AgentMain",             // RHQ Agent
+        "org.jboss.Main",                                 // JBoss AS 3.x-6.x
+        "catalina.startup.Bootstrap",                     // Tomcat
+        "org.apache.cassandra.thrift.CassandraDaemon",    // Cassnadra 1.1.x
+        "org.apache.cassandra.service.CassandraDaemon"    // Cassandra 1.2.x
     };
 
     @Override

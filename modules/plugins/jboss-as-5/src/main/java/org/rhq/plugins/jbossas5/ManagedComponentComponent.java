@@ -235,15 +235,33 @@ public class ManagedComponentComponent extends AbstractManagedComponent implemen
         ManagementView managementView = getConnection().getManagementView();
         managementView.removeComponent(managedComponent);
         ManagedDeployment parentDeployment = managedComponent.getDeployment();
-        log.debug("Redeploying parent deployment '" + parentDeployment.getName()
-            + "' in order to complete removal of component " + toString(managedComponent) + "...");
-        DeploymentProgress progress = deploymentManager.redeploy(parentDeployment.getName());
-        DeploymentStatus redeployStatus = DeploymentUtils.run(progress);
-        if (redeployStatus.isFailed()) {
-            log.error("Failed to redeploy parent deployment '" + parentDeployment.getName()
-                + "during removal of component " + toString(managedComponent)
-                + " - removal may not persist when the app server is restarted.", redeployStatus.getFailure());
+
+        if (parentDeployment.getComponents().size() > 1 || !parentDeployment.getChildren().isEmpty()) {
+            log.debug("Redeploying parent deployment '" + parentDeployment.getName()
+                + "' in order to complete removal of component " + toString(managedComponent) + "...");
+            DeploymentProgress progress = deploymentManager.redeploy(parentDeployment.getName());
+            DeploymentStatus status = DeploymentUtils.run(progress);
+            if (status.isFailed()) {
+                log.error("Failed to redeploy parent deployment '" + parentDeployment.getName()
+                    + "during removal of component " + toString(managedComponent)
+                    + " - removal may not persist when the app server is restarted.", status.getFailure());
+            }
+        } else {
+            //this is the last component of the deployment and nothing would be left there after
+            //the component was removed. Let's just undeploy it in addition to removing the component.
+            //This will make sure that the deployment doesn't leave behind any defunct config files, etc.
+            log.debug("Undeploying parent deployment '" + parentDeployment.getName()
+                + "' in order to complete removal of component " + toString(managedComponent) + "...");
+            parentDeployment = managementView.getDeployment(parentDeployment.getName());
+            DeploymentProgress progress = deploymentManager.remove(parentDeployment.getName());
+            DeploymentStatus status = DeploymentUtils.run(progress);
+            if (status.isFailed()) {
+                log.error("Failed to undeploy parent deployment '" + parentDeployment.getName()
+                    + "during removal of component " + toString(managedComponent)
+                    + " - removal may not persist when the app server is restarted.", status.getFailure());
+            }
         }
+
         managementView.load();
     }
 

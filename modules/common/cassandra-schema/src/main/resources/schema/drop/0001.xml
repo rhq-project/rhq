@@ -1,0 +1,10 @@
+<updatePlan>
+  <step>
+    DROP KEYSPACE rhq;
+  </step>
+
+  <step>
+    DROP USER rhqadmin;
+  </step>
+
+</updatePlan>

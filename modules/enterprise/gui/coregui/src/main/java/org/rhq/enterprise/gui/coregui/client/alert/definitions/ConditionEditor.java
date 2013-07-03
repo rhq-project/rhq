@@ -56,6 +56,7 @@ import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.NumericType;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
@@ -65,6 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.components.form.DurationItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.NumberWithUnitsValidator;
 import org.rhq.enterprise.gui.coregui.client.components.form.SortedSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.form.TimeUnit;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.measurement.MeasurementParser;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -250,12 +252,12 @@ public class ConditionEditor extends EnhancedVLayout {
             formItems.addAll(buildMetricThresholdFormItems(editMode
                 && AlertConditionCategory.THRESHOLD == existingCondition.getCategory()
                 && existingCondition.getOption() == null));
-            formItems.addAll(buildMetricRangeFormItems(editMode
-                && AlertConditionCategory.BASELINE == existingCondition.getCategory()));
             formItems.addAll(buildMetricBaselineFormItems(editMode
+                && AlertConditionCategory.BASELINE == existingCondition.getCategory()));
+            formItems.addAll(buildMetricChangeFormItems(editMode
                 && AlertConditionCategory.CHANGE == existingCondition.getCategory()
                 && existingCondition.getOption() == null));
-            formItems.addAll(buildMetricChangeFormItems(editMode
+            formItems.addAll(buildMetricRangeFormItems(editMode
                 && AlertConditionCategory.RANGE == existingCondition.getCategory()));
         }
         if (supportsCalltimeMetrics) {
@@ -599,7 +601,15 @@ public class ConditionEditor extends EnhancedVLayout {
             absoluteValue.setValidators(new NumberWithUnitsValidator(this.resourceType.getMetricDefinitions(),
                 metricDropDownMenu));
             if (editMode) {
-                absoluteValue.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+                MeasurementUnits units = existingCondition.getMeasurementDefinition().getUnits();
+                double doubleValue = existingCondition.getThreshold();
+                MeasurementNumericValueAndUnits valueWithUnits = null;
+                if (units.getFamily() == MeasurementUnits.Family.RELATIVE) {
+                    valueWithUnits = new MeasurementNumericValueAndUnits(doubleValue * 100, MeasurementUnits.PERCENTAGE);
+                } else {
+                    valueWithUnits = MeasurementConverterClient.fit(doubleValue, units);
+                }
+                absoluteValue.setDefaultValue(valueWithUnits.toString());
             }
             absoluteValue.setShowIfCondition(ifFunc);
             formItems.add(absoluteValue);
@@ -688,7 +698,7 @@ public class ConditionEditor extends EnhancedVLayout {
             baselinePercentage.setValidateOnChange(true);
             baselinePercentage.setValidators(new NumberWithUnitsValidator(MeasurementUnits.PERCENTAGE));
             if (editMode) {
-                baselinePercentage.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+                baselinePercentage.setDefaultValue(String.valueOf((int) (existingCondition.getThreshold() * 100)));
             }
             formItems.add(baselinePercentage);
 
@@ -842,7 +852,7 @@ public class ConditionEditor extends EnhancedVLayout {
         regex.setWrapTitle(false);
         regex.setShowIfCondition(ifFunc);
         if (editMode) {
-            percentage.setDefaultValue(String.valueOf(existingCondition.getThreshold()));
+            percentage.setDefaultValue(String.valueOf((int) (existingCondition.getThreshold() * 100)));
             regex.setDefaultValue(existingCondition.getName());
         }
 

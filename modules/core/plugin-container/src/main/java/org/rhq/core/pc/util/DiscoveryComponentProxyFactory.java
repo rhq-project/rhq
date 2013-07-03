@@ -223,7 +223,7 @@ public class DiscoveryComponentProxyFactory {
                     log.debug("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
                 }
                 future.cancel(true); // this is a daemon thread, let's try to cancel it
-                throw new RuntimeException(invokedMethodString(method, args, "was interrupted."), e);
+                throw new RuntimeException(invokedMethodString(method, args, "was interrupted."));
             } catch (ExecutionException e) {
                 if (log.isDebugEnabled()) {
                     log.debug(invokedMethodString(method, args, "failed."), e);

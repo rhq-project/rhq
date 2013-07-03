@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -65,12 +66,37 @@ public interface MeasurementBaselineManagerLocal {
     int _calculateAutoBaselinesDELETE(long olderThanTime) throws Exception;
 
     /**
-     * Inserts baselines "as appropriate" for measurements that have at least amountOfData 
-     * @param amountOfData will use amountOfData to compute new min/max/mean for baselines as appropriate
-     * @return number of rows inserted
-     * @throws Exception
+     * <strong>Note</strong> This method exists only for transaction demarcation.
+     *
+     * @return A list of schedules that do not have baselines. This list is not assumed
+     * to be an exhaustive list of schedules that lack a baseline. As such, this method
+     * will be called repeatedly during baseline calculations to get all of the necessary
+     * schedules.
      */
-    int _calculateAutoBaselinesINSERT(long amountOfData) throws Exception;
+    List<MeasurementSchedule> getSchedulesWithoutBaselines();
+
+    /**
+     * Given a list of schedules, this method calculates and stores baselines using the
+     * amount of 1 hr data specified and older than the time specified.
+     * <br/><br/>
+     * <strong>Note</strong> This method exists only for transaction demarcation.
+     *
+     * @param schedules The schedules that do not yet have baselines
+     * @param olderThan Use 1 hr data prior to this time
+     * @param amountOfData  The amount of data to use for calculating baselines. This value
+     *                      is treated as a duration. For example, a value of 259200000
+     *                      would be treated as 3 days.
+     */
+    void calculateBaselines(List<MeasurementSchedule> schedules, long olderThan, long amountOfData);
+
+    /**
+     * Persists the newly calculated baselines.
+     * <br/><br/>
+     * <strong>Note</strong> This method exists only for transaction demarcation.
+     *
+     * @param baselines The baselines to persist.
+     */
+    void saveNewBaselines(List<MeasurementBaseline> baselines);
 
     MeasurementBaseline getBaselineIfEqual(Subject subject, int groupId, int definitionId);
 

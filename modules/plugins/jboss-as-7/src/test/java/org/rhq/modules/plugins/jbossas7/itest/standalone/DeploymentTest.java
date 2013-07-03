@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.modules.plugins.jbossas7.itest.standalone;
@@ -272,7 +272,7 @@ public class DeploymentTest extends AbstractJBossAS7PluginTest {
         ResourceContainer webRuntimeResourceContainer = pluginContainer.getInventoryManager().getResourceContainer(
             webRuntimeResource);
         MeasurementFacet measurementFacet = webRuntimeResourceContainer.createResourceComponentProxy(
-            MeasurementFacet.class, FacetLockType.READ, SECONDS.toMillis(5), false, false);
+            MeasurementFacet.class, FacetLockType.READ, SECONDS.toMillis(5), false, false, false);
         MeasurementReport report = new MeasurementReport();
         Set<MeasurementScheduleRequest> measurementScheduleRequests = getMeasurementScheduleRequests(webRuntimeResource);
         measurementFacet.getValues(report, measurementScheduleRequests);

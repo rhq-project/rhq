@@ -14,7 +14,7 @@
     <property name="default.rhq.server.database.port"               value="5432" />
     <property name="default.rhq.server.database.db-name"            value="rhq" />
     <property name="default.rhq.server.quartz.driverDelegateClass"  value="org.quartz.impl.jdbcjobstore.PostgreSQLDelegate" />
-    <property name="default.rhq.server.quartz.selectWithLockSQL"    value="SELECT * FROM {0}LOCKS WHERE LOCK_NAME = ? FOR UPDATE" />
+    <property name="default.rhq.server.quartz.selectWithLockSQL"    value="SELECT * FROM {0}LOCKS ROWLOCK WHERE LOCK_NAME = ? FOR UPDATE" />
     <property name="default.rhq.server.quartz.lockHandlerClass"     value="org.quartz.impl.jdbcjobstore.StdRowLockSemaphore" />
 
     <property name="rhq.sync.endpoint-address" value="false"/>
@@ -171,6 +171,23 @@
         <unzip src="${settings.localRepository}/org/rhq/rhq-installer-util/${project.version}/rhq-installer-util-${project.version}.zip"
                dest="${jboss.modules.dir}" />
 
+        <echo>Adding Cassandra installer module to ${jboss.modules.dir}...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-cassandra-installer/${project.version}/rhq-cassandra-installer-${project.version}.zip"
+               dest="${jboss.modules.dir}"/>
+
+        <echo>Adding data migration module to ${jboss.modules.dir}...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-data-migration/${project.version}/rhq-data-migration-${project.version}.zip"
+             dest="${jboss.modules.dir}"/>
+
+        <echo>Adding RHQ Server Control module to ${jboss.modules.dir}...</echo>
+        <unzip src="${settings.localRepository}/org/rhq/rhq-server-control/${project.version}/rhq-server-control-${project.version}.zip"
+               dest="${jboss.modules.dir}"/>
+
+        <echo>Updating module descriptor for sun.jdk to work around https://issues.jboss.org/browse/AS7-2138</echo>
+        <copy file="src/main/bin-resources/jbossas/modules/system/layers/base/sun/jdk/main/module.xml"
+              tofile="${jboss.home}/modules/system/layers/base/sun/jdk/main/module.xml"
+              overwrite="true"/>
+
         <echo>Adding JDBC modules to ${jboss.modules.dir} ...</echo>
     	<!-- make sure we have an oracle driver jar so the AS7 module is valid and loadable, this is empty -->
         <copy file="src/main/module-resources/ojdbc6-readme.jar"
@@ -190,6 +207,7 @@
     </dependencies>
 </module>
 ]]></echo>
+
         <copy file="${settings.localRepository}/postgresql/postgresql/${postgresql.version}/postgresql-${postgresql.version}.jar"
               toDir="${jboss.modules.dir}/org/rhq/postgres/main" verbose="true" />
         <echo file="${jboss.modules.dir}/org/rhq/postgres/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
@@ -201,6 +219,68 @@
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
     </dependencies>
+</module>
+]]></echo>
+
+      <echo>Adding DataStax Java Cassandra Driver module to ${jboss.modules.dir}</echo>
+      <copy file="${settings.localRepository}/com/datastax/cassandra/cassandra-driver-core/${cassandra.driver.version}/cassandra-driver-core-${cassandra.driver.version}.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/io/netty/netty/${cassandra.driver.netty.version}/netty-${cassandra.driver.netty.version}.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-all/${cassandra.version}/cassandra-all-${cassandra.version}.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-thrift/${cassandra.version}/cassandra-thrift-${cassandra.version}.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/org/apache/cassandra/deps/avro/1.4.0-cassandra-1/avro-1.4.0-cassandra-1.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/org/apache/thrift/libthrift/${cassandra.thrift.version}/libthrift-${cassandra.thrift.version}.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/com/google/guava/guava/14.0.1/guava-14.0.1.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/com/yammer/metrics/metrics-core/2.2.0/metrics-core-2.2.0.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/org/slf4j/slf4j-log4j12/1.7.2/slf4j-log4j12-1.7.2.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+      <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/1.0.5-M3-p1/snappy-java-1.0.5-M3-p1.jar"
+            toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+
+      <echo file="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="com.datastax.cassandra.cassandra-driver-core">
+    <resources>
+        <resource-root path="cassandra-driver-core-${cassandra.driver.version}.jar"/>
+        <resource-root path="netty-${cassandra.driver.netty.version}.jar"/>
+        <resource-root path="cassandra-all-${cassandra.version}.jar"/>
+        <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
+        <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
+        <resource-root path="guava-14.0.1.jar"/>
+        <resource-root path="metrics-core-2.2.0.jar"/>
+        <resource-root path="slf4j-api-1.7.2.jar"/>
+        <resource-root path="slf4j-log4j12-1.7.2.jar"/>
+        <resource-root path="snappy-java-1.0.5-M3-p1.jar"/>
+        <resource-root path="avro-1.4.0-cassandra-1.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="org.codehaus.jackson.jackson-core-asl"/>
+        <module name="org.codehaus.jackson.jackson-mapper-asl"/>
+        <module name="org.jboss.logging"/>
+        <module name="org.jboss.logmanager" services="import"/>
+        <module name="org.apache.log4j"/>
+        <module name="javax.api"/>
+    </dependencies>
+</module>
+]]></echo>
+
+      <echo>Adding Apache Commons Exec module to ${jboss.home}/modules</echo>
+      <copy file="${settings.localRepository}/org/apache/commons/commons-exec/1.1/commons-exec-1.1.jar"
+            toDir="${jboss.modules.dir}/org/apache/commons/exec/main" verbose="true"/>
+      <echo file="${jboss.modules.dir}/org/apache/commons/exec/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="org.apache.commons.exec">
+    <resources>
+        <resource-root path="commons-exec-1.1.jar"/>
+    </resources>
 </module>
 ]]></echo>
 
@@ -235,22 +315,6 @@
             </fileset>
         </delete>
         <delete dir="${jboss.home}/bin/init.d" />
-
-        <!--TODO - embedded agent isn't working now - we need to:
-            1) add AS7's jars jboss-as-[jmx,server]-7.x.x.Final.jar to META-INF/embedded-agent/lib
-            2) get the agent to successfully see that the server is started (AgentMain.waitForServer was hanging for me)
-            So until we fix this we need to not deploy this at all.
-            Note that I also took out the sysprops for embedded agent from rhq-server.properties.
-            If we resurrect embedded agent, add this to the rhq-server.properties created down below:
-            # Embedded RHQ Agent
-            rhq.server.embedded-agent.enabled=false
-            rhq.server.embedded-agent.name=
-            rhq.server.embedded-agent.reset-configuration=true
-            rhq.server.embedded-agent.disable-native-system=false
-
-        <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-agent-sar/${rhq.version}/rhq-enterprise-server-agent-sar-${rhq.version}.sar"
-               dest="....todo..../rhq-agent.sar" />
-        -->
 
         <echo>Delete docs, README, et. al. files</echo>
         <delete dir="${jboss.home}/docs/examples" />
@@ -337,6 +401,12 @@
 
     <target name="prepare-bin-dir">
         <echo>*** Preparing bin dir ***</echo>
+
+      <loadproperties>
+        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
+                  name="cassandra.properties"/>
+      </loadproperties>
+
         <echo>Connection URL is ${rhq.server.database.connection-url}</echo>
 
         <property name="rhq.bin.dir" location="${project.build.outputDirectory}/bin" />
@@ -461,7 +531,7 @@ rhq.server.socket.binding.port.txn-status-manager=3713
 #                                          determined at auto-install time.
 #############################################################################
 
-rhq.autoinstall.enabled=${rhq.autoinstall.enabled}
+rhq.autoinstall.enabled=true
 rhq.autoinstall.database=auto
 rhq.autoinstall.public-endpoint-address=
 
@@ -499,9 +569,13 @@ rhq.communications.multicast-detector.port=16162
 # [Due to issue https://issues.jboss.org/browse/WFLY-1177, you cannot change
 # rhq.server.tomcat.security.keystore.file or rhq.server.tomcat.security.truststore.file
 # after you install RHQ. If you need to change those again, you must manually do so in standalone-full.xml.]
+# Note that security algorithm settings are commented out - the defaults will be determined at runtime
+# based on the JVM the server is running in (for IBM JVMs, the algorithm will default to "IbmX509",
+# for all other JVMs, the algorithm will default to "SunX509"). If you need a specific algorithm value,
+# you may hardcode it here in this file by uncommenting the lines and setting the values explicitly.
 rhq.server.tomcat.security.client-auth-mode=false
 rhq.server.tomcat.security.secure-socket-protocol=TLS
-rhq.server.tomcat.security.algorithm=SunX509
+#rhq.server.tomcat.security.algorithm=SunX509
 rhq.server.tomcat.security.keystore.alias=RHQ
 rhq.server.tomcat.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
 rhq.server.tomcat.security.keystore.password=RHQManagement
@@ -514,13 +588,13 @@ rhq.server.tomcat.security.truststore.type=JKS
 # These are used when secure transports other than sslservlet are used
 rhq.communications.connector.security.secure-socket-protocol=TLS
 rhq.communications.connector.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
-rhq.communications.connector.security.keystore.algorithm=SunX509
+#rhq.communications.connector.security.keystore.algorithm=SunX509
 rhq.communications.connector.security.keystore.type=JKS
 rhq.communications.connector.security.keystore.password=RHQManagement
 rhq.communications.connector.security.keystore.key-password=RHQManagement
 rhq.communications.connector.security.keystore.alias=RHQ
 rhq.communications.connector.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
-rhq.communications.connector.security.truststore.algorithm=SunX509
+#rhq.communications.connector.security.truststore.algorithm=SunX509
 rhq.communications.connector.security.truststore.type=JKS
 rhq.communications.connector.security.truststore.password=RHQManagement
 rhq.communications.connector.security.client-auth-mode=none
@@ -528,13 +602,13 @@ rhq.communications.connector.security.client-auth-mode=none
 # Client-side SSL Security Configuration (for outgoing messages to agents)
 rhq.server.client.security.secure-socket-protocol=TLS
 rhq.server.client.security.keystore.file=${jboss.server.config.dir}/rhq.keystore
-rhq.server.client.security.keystore.algorithm=SunX509
+#rhq.server.client.security.keystore.algorithm=SunX509
 rhq.server.client.security.keystore.type=JKS
 rhq.server.client.security.keystore.password=RHQManagement
 rhq.server.client.security.keystore.key-password=RHQManagement
 rhq.server.client.security.keystore.alias=RHQ
 rhq.server.client.security.truststore.file=${jboss.server.config.dir}/rhq.truststore
-rhq.server.client.security.truststore.algorithm=SunX509
+#rhq.server.client.security.truststore.algorithm=SunX509
 rhq.server.client.security.truststore.type=JKS
 rhq.server.client.security.truststore.password=RHQManagement
 rhq.server.client.security.server-auth-mode-enabled=false
@@ -583,6 +657,38 @@ rhq.sync.endpoint-address=false
 # files that are not known binary types.
 #rhq.server.drift.store-binary-content=${rhq.server.drift.store-binary-content}
 
+#############################################
+# Cassandra cluster configuration settings
+#############################################
+# The username RHQ will use to authenticate against Cassandra.
+rhq.cassandra.username=${rhq.cassandra.username}
+
+# The password RHQ will use to authenticate against Cassandra.
+rhq.cassandra.password=${rhq.cassandra.password}
+
+# A comma-delimited list of seed nodes. Each Cassandra node uses this list as
+# contact points to find other nodes in the cluster and learn the ring
+# topology. The RHQ server(s) use this list to connect to the cluster;
+# therefore, this property MUST BE SET in order for RHQ to talk to Cassandra.
+# Each entry in the list consists of three fields that are pipe-delimited. The
+# of an entry is as follows,
+#
+#    hostname|jmxPort|nativeTransportPort|
+#
+rhq.cassandra.seeds=
+
+# If enabled data sent to and from storage nodes will be compressed using
+# snappy (https://code.google.com/p/snappy) compression. Note that this is an
+# advanced configuration option. If you turn on client compression and your
+# storage nodes do not support compression, then the RHQ server will not be
+# able to connect to the storage cluster. The storage node will log the
+# following at start up if it does not support compression,
+#
+# Cannot initialize native Snappy library. Compression on new tables will be disabled.
+#
+# Please make sure you do not find the above log statement in your storage logs
+# before you enable client compression.
+# rhq.cassandra.client.compression-enabled=false
 </echo>
 
     </target>
@@ -622,21 +728,33 @@ rhq.sync.endpoint-address=false
         <copy todir="${project.build.outputDirectory}" verbose="true">
             <fileset dir="src/main/dev-resources" />
         </copy>
+      <loadproperties>
+        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
+                  name="cassandra.properties"/>
+      </loadproperties>
         <echo>Putting a developer setting in rhq-server.properties to turn on/off strict agent update version checking</echo>
-        <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">rhq.server.agent-update.nonstrict-version-check=true</echo>
-        <echo>Add auto-installer to rhq-server scripts so developers don't have to run the installer in a separate step</echo>
-        <replace file="${project.build.outputDirectory}/bin/rhq-server.sh">
-            <replacefilter>
-                <replacetoken># START SERVER</replacetoken>
-                <replacevalue><![CDATA[export RHQ_SERVER_HOME; ${RHQ_SERVER_HOME}/bin/rhq-autoinstall.sh &]]></replacevalue>
-            </replacefilter>
-        </replace>
-        <replace file="${project.build.outputDirectory}/bin/rhq-server.bat">
-            <replacefilter>
-                <replacetoken>rem START SERVER</replacetoken>
-                <replacevalue><![CDATA[start /B %RHQ_SERVER_HOME%\bin\rhq-autoinstall.bat < nul > nul]]></replacevalue>
-            </replacefilter>
-        </replace>
+        <echo file="${project.build.outputDirectory}/bin/rhq-server.properties" append="true">
+rhq.server.agent-update.nonstrict-version-check=true
+</echo>
+
+<!-- We must use forward slashes when writing paths to a properties files. Properties.load()
+     treats the values as Java Strings so backslashes will be parsed as escapes. -->
+<path id="path.datadir">
+  <pathelement location="${rhq.dev.data.dir}" />
+</path>
+<pathconvert targetos="unix" property="safe.datadir" refid="path.datadir"/>
+
+<!--<echo file="${project.build.outputDirectory}/bin/rhq-storage.properties" append="true"># storage installer options for dev deployment-->
+<!--commitlog=${safe.datadir}/storage/commit_log-->
+<!--data=${safe.datadir}/storage/data-->
+<!--saved-caches=${safe.datadir}/storage/saved_caches-->
+<!--heap-size=256M-->
+<!--heap-new-size=64M-->
+<!--hostname=127.0.0.1-->
+<!--</echo>-->
+
+<!--<echo file="${project.build.outputDirectory}/bin/rhqctl.properties" append="true">rhqctl.install.storage-config=bin/rhq-storage.properties</echo>-->
+
     </target>
 
     <target name="prepare-release"
@@ -656,7 +774,7 @@ rhq.sync.endpoint-address=false
 
     <target name="fix-perms">
         <echo>Make sure shell scripts are readable and executable.</echo>
-        <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh" perm="ug+x" verbose="true" />
+        <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh,rhqctl" perm="ug+x" verbose="true" />
         <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     </target>
 

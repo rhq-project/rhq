@@ -1,0 +1,174 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-parent</artifactId>
+    <version>4.9.0-SNAPSHOT</version>
+    <relativePath>../../../../pom.xml</relativePath>
+  </parent>
+
+  <artifactId>rhq-server-control</artifactId>
+  <name>RHQ Server Control</name>
+  <packaging>jar</packaging>
+
+  <properties>
+    <moduleName>org.rhq.${project.artifactId}</moduleName>
+  </properties>
+
+  <dependencies>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-jboss-as-dmr-client</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.as</groupId>
+      <artifactId>jboss-as-controller-client</artifactId>
+      <version>${jboss.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-cli</groupId>
+      <artifactId>commons-cli</artifactId>
+      <version>1.2</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.commons</groupId>
+      <artifactId>commons-exec</artifactId>
+      <version>1.1</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>commons-configuration</groupId>
+      <artifactId>commons-configuration</artifactId>
+      <version>1.6</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <configuration>
+          <descriptors>
+            <descriptor>src/main/scripts/module-assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <executions>
+          <execution>
+            <id>module-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-deps</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.directory}/dependencies</outputDirectory>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>rhq-core-util</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>org.rhq</groupId>
+                  <artifactId>rhq-jboss-as-dmr-client</artifactId>
+                </artifactItem>
+              </artifactItems>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>dev</id>
+
+      <properties>
+        <rhq.rootDir>../../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
+        <rhq.deploymentName>${project.build.finalName}.zip</rhq.deploymentName>
+        <rhq.deploymentDir>${rhq.containerDir}/modules/</rhq.deploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+
+              <execution>
+                <id>deploy</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <echo>*** Deploying server control module to ${rhq.deploymentDir} ...</echo>
+                    <unzip src="target/${rhq.deploymentName}" dest="${rhq.deploymentDir}" />
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <echo>*** Deleting installer module ${rhq.deploymentDir}/${moduleDir} ...</echo>
+                    <delete dir="${rhq.deploymentDir}/${moduleDir}" />
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+
+        </plugins>
+      </build>
+    </profile>
+
+  </profiles>
+
+</project>

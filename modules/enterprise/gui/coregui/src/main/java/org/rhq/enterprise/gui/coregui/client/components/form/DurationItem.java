@@ -250,6 +250,7 @@ public class DurationItem extends CanvasItem {
             SelectItem unitsItem = (SelectItem) this.form.getItem(FIELD_UNITS);
             this.form.setValue(FIELD_VALUE, valueWithUnits.getValue().intValue());
             unitsItem.setValue(valueWithUnits.getUnits().name().toLowerCase());
+            updateValue();
         }
     }
 

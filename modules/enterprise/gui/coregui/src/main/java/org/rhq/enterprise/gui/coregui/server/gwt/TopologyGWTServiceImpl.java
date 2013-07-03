@@ -59,11 +59,11 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
     private TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
 
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
-
+    
     private PartitionEventManagerLocal partitionEventManager = LookupUtil.getPartitionEventManager();
 
     private AffinityGroupManagerLocal affinityGroupManager = LookupUtil.getAffinityGroupManager();
-
+        
     @Override
     public PageList<ServerWithAgentCountComposite> getServers(PageControl pc) throws RuntimeException {
         try {
@@ -268,5 +268,4 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
             throw getExceptionToThrowToClient(t);
         }
     }
-
 }

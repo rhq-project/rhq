@@ -1,0 +1,22 @@
+<updatePlan>
+  <step>
+    CREATE KEYSPACE rhq WITH
+      replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+  </step>
+
+  <step>
+    GRANT ALL PERMISSIONS ON KEYSPACE  system_auth to rhqadmin;
+  </step>
+
+  <step>
+    GRANT ALL PERMISSIONS ON KEYSPACE  rhq to rhqadmin;
+  </step>
+
+  <step>
+   CREATE TABLE rhq.schema_version (
+        version int,
+        time timestamp,
+        PRIMARY KEY (version, time)
+      ) WITH COMPACT STORAGE;
+  </step>
+</updatePlan>

@@ -33,14 +33,14 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import javax.ejb.EJB;
+
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
@@ -49,6 +49,7 @@ import org.testng.annotations.Test;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -58,14 +59,17 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.MetricsTable;
 import org.rhq.test.AssertUtils;
 
 /**
@@ -116,12 +120,19 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     @EJB
     private ResourceManagerLocal resourceManager;
 
+    @EJB
+    private StorageClientManagerBean storageClientManager;
+
+    private MetricsDAO metricsDAO;
+
     @Override
     protected void beforeMethod() throws Exception {
         overlord = subjectManager.getOverlord();
 
+        metricsDAO = storageClientManager.getMetricsDAO();
+
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
-        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin. 
+        // SystemManagerBean.getDriftServerPluginManager method requires drift server plugin.
         DriftServerPluginService driftServerPluginService = new DriftServerPluginService(getTempDir());
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
@@ -155,6 +166,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
 
         dataManager.mergeMeasurementReport(report);
+        waitForRawInserts();
 
         List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(overlord,
             EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(), endTime.getMillis());
@@ -199,6 +211,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         report.addData(new MeasurementDataNumeric(buckets.get(59) + 30, request, 6.6));
 
         dataManager.mergeMeasurementReport(report);
+        waitForRawInserts();
 
         MeasurementAggregate actual = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
             beginTime.getMillis(), endTime.getMillis());
@@ -282,10 +295,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void purgeDB() {
-        purgeRawData();
-        purge1HourData();
-        purge6HourData();
-        purge24HourData();
+        purgeMetricsTables();
 
         executeInTransaction(false, new TransactionCallback() {
             @Override
@@ -348,86 +358,29 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         dataManager.mergeMeasurementReport(dummyReport);
     }
 
-    public void purgeRawData() {
-        purgeTables(MeasurementDataManagerUtility.getAllRawTables());
-    }
-
-    public void purge1HourData() {
-        purgeTables("rhq_measurement_data_num_1h");
-    }
-
-    public void purge6HourData() {
-        purgeTables("rhq_measurement_data_num_6h");
-    }
-
-    public void purge24HourData() {
-        purgeTables("rhq_measurement_data_num_1d");
-    }
-
-    private void purgeTables(String... tables) {
-        // This method was previous implemented using EntityManager.createNativeQuery
-        // and called from within a TransactionCallback. It was causing a
-        // TransactionRequiredException, and I am not clear why. I suspect it is a
-        // configuration issue in our testing environment, but I haven't figured it out
-        // yet. For now,  raw tables are purges in their own separate JDBC transaction.
-        //
-        // jsanda
-        Connection connection = null;
-
+    private void purgeMetricsTables() {
         try {
-            connection = getConnection();
-            connection.setAutoCommit(false);
-            for (String table : tables) {
-                Statement statement = connection.createStatement();
-                try {
-                    statement.execute("delete from " + table);
-                } finally {
-                    JDBCUtil.safeClose(statement);
-                }
-            }
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException e1) {
-                throw new RuntimeException("Failed to rollback transaction", e1);
-            }
-            throw new RuntimeException("Failed to purge data from " + tables, e);
-        } finally {
-            JDBCUtil.safeClose(connection);
+            Session session = storageClientManager.getSession();
+
+            session.execute("TRUNCATE " + MetricsTable.RAW);
+            session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.SIX_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.TWENTY_FOUR_HOUR);
+            session.execute("TRUNCATE " + MetricsTable.INDEX);
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException("An error occurred while purging metrics tables", e);
         }
     }
 
     private void insert1HourData(List<AggregateTestData> data) {
-        Connection connection = null;
-
-        try {
-            connection = getConnection();
-            connection.setAutoCommit(false);
-            String sql = "insert into rhq_measurement_data_num_1h(time_stamp, schedule_id, value, minvalue, maxvalue) values(?, ?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(sql);
-
-            for (AggregateTestData datum : data) {
-                statement.setLong(1, datum.getTimestamp());
-                statement.setInt(2, datum.getScheduleId());
-                statement.setDouble(3, datum.getAvg());
-                statement.setDouble(4, datum.getMin());
-                statement.setDouble(5, datum.getMax());
-
-                statement.addBatch();
-            }
-
-            statement.executeBatch();
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException e1) {
-                throw new RuntimeException("Failed to rollback transaction", e1);
-            }
-            throw new RuntimeException("Failed to insert 1 hour data", e);
-        } finally {
-            JDBCUtil.safeClose(connection);
+        List<AggregateNumericMetric> metrics = new ArrayList<AggregateNumericMetric>(data.size());
+        for (AggregateTestData datum : data) {
+            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MIN,
+                datum.getMin());
+            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.AVG,
+                datum.getAvg());
+            metricsDAO.insertOneHourData(datum.getScheduleId(), datum.getTimestamp(), AggregateType.MAX,
+                datum.getMax());
         }
     }
 
@@ -440,6 +393,21 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             return Collections.emptyList();
         }
         return data.get(0);
+    }
+
+    /**
+     * Raw data is inserted asynchronously so it is possible that
+     * MeasurementDataManagerBean.mergeMeasurementReport will return before all raw data in
+     * the report has been inserted. There currently is not a good way for tests in the
+     * itests-2 module to block or to get notified when raw data inserts have finished. As
+     * a (hopefully temporary) hack we will sleep for a somewhat arbitrary amount of time
+     * to allow for the inserts to complete.
+     */
+    private void waitForRawInserts() {
+        try {
+            Thread.sleep(300);
+        } catch (InterruptedException e) {
+        }
     }
 
 }

@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
@@ -37,7 +38,10 @@ import org.jboss.shrinkwrap.api.ShrinkWrap;
 import org.jboss.shrinkwrap.api.exporter.ZipExporter;
 import org.jboss.shrinkwrap.api.spec.JavaArchive;
 
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
 import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDampening.TimeUnits;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
@@ -51,6 +55,11 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementCategory;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.plugin.ServerPlugin;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
@@ -74,8 +83,8 @@ import org.rhq.enterprise.server.util.ResourceTreeHelper;
  * !!! implementation heavily relies (i.e. Before/AfterClass and instance variables that span all tests).
  * !!! The work needed to get it to work in a similar fashion was large, and Arquillian 2 promises to perhaps
  * !!! honor the testNg lifecycle. So, for now, I've basically condensed this into one large test to
- * !!! get it running. Sorry Lukas :(  
- * 
+ * !!! get it running. Sorry Lukas :(
+ *
  *
  * @author Lukas Krejci
  */
@@ -88,7 +97,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         GROUP, TEMPLATE
     }
 
-    private String universalName;
+    private final String universalName = getClass().getSimpleName();
 
     private Server server;
     private Agent agent;
@@ -125,13 +134,13 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             testNotificationsCopiedOnGroupMemberAddition();
 
             System.out.println("Running test: testCorrectSubjectPassedOnResourceLevelAlertDefinitionCreation");
-            testCorrectSubjectPassedOnResourceLevelAlertDefinitionCreation();
+            testCorrectSubjectPassedOnResourceLevelAlertDefCreation();
 
             System.out.println("Running test: testCorrectSubjectPassedOnGroupLevelAlertDefinitionCreation");
-            testCorrectSubjectPassedOnGroupLevelAlertDefinitionCreation();
+            testCorrectSubjectPassedOnGroupLevelAlertDefCreation();
 
             System.out.println("Running test: testCorrectSubjectPassedOnTemplateLevelAlertDefinitionCreation");
-            testCorrectSubjectPassedOnTemplateLevelAlertDefinitionCreation();
+            testCorrectSubjectPassedOnTemplateLevelAlertDefCreation();
 
             System.out.println("Running test: testNoValidationWhenNoNotificationUpdateOnResourceLevel");
             testNoValidationWhenNoNotificationUpdateOnResourceLevel();
@@ -154,11 +163,10 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
-
         } finally {
-            containerTearDown();
             logout();
             cleanDB();
+            containerTearDown();
         }
     }
 
@@ -169,13 +177,11 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             public void execute() throws Exception {
                 EntityManager em = getEntityManager();
 
-                universalName = getClass().getName();
-
-                agent = new Agent("localhost", "localhost", 0, "foo", "bar");
+                agent = new Agent(universalName, "localhost", 0, "foo", "bar");
 
                 server = new Server();
                 server.setAddress("localhost");
-                server.setName("localhost");
+                server.setName(universalName);
                 server.setOperationMode(OperationMode.NORMAL);
 
                 server.setAgents(Collections.singletonList(agent));
@@ -189,6 +195,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
                 resourceType = new ResourceTypeBuilder().createPlatformResourceType().withId(0).withName(universalName)
                     .withPlugin(universalName).build();
+                MeasurementDefinition md = new MeasurementDefinition(universalName, MeasurementCategory.PERFORMANCE,
+                    MeasurementUnits.PERCENTAGE, DataType.MEASUREMENT, false, 100000, DisplayType.DETAIL);
+                resourceType.addMetricDefinition(md);
 
                 resourceGroup = new ResourceGroup(universalName, resourceType);
 
@@ -201,13 +210,13 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                     resourceGroup.addExplicitResource(res);
                 }
 
-                templateAlertDefinition = createDefinitionForTest(universalName + " template", true);
+                templateAlertDefinition = createDefinitionForTest("template", true);
                 templateAlertDefinition.setResourceType(resourceType);
 
-                groupAlertDefinition = createDefinitionForTest(universalName + " group", true);
+                groupAlertDefinition = createDefinitionForTest("group", true);
                 groupAlertDefinition.setGroup(resourceGroup);
 
-                resourceAlertDefinition = createDefinitionForTest(universalName + " resource", true);
+                resourceAlertDefinition = createDefinitionForTest("resource", true);
                 resourceAlertDefinition.setResource(resources.iterator().next());
 
                 em.persist(agent);
@@ -230,7 +239,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                 unprepareServerPluginService();
 
                 JavaArchive archive = ShrinkWrap.create(JavaArchive.class);
-                //archive.addClass(TestAlertSender.class);
+                archive.addClass(TestAlertSender.class);
                 URL res = this.getClass().getClassLoader().getResource("test-alert-sender-serverplugin.xml");
                 archive.addAsResource(res, "META-INF/rhq-serverplugin.xml");
 
@@ -241,12 +250,16 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                 //the alert sender plugin manager needs the plugins in the database...
                 serverPlugin = TestServerPluginService.getPlugin(pluginFile.toURI().toURL());
                 em.persist(serverPlugin);
+
+                em.flush();
             }
         });
     }
 
     //@BeforeMethod
     private void containerSetup() {
+        prepareScheduler();
+
         alertSenderService = new TestAlertSenderPluginService(getTempDir());
         prepareCustomServerPluginService(alertSenderService);
         alertSenderService.masterConfig.getPluginDirectory().mkdirs();
@@ -260,6 +273,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
     private void containerTearDown() throws Exception {
         unprepareServerPluginService();
         unprepareForTestAgents();
+        unprepareScheduler();
     }
 
     //@AfterClass(alwaysRun = true)
@@ -271,18 +285,36 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         removeNoExceptions(resourceAlertDefinition);
         removeNoExceptions(groupAlertDefinition);
         removeNoExceptions(templateAlertDefinition);
+
+        LookupUtil.getResourceGroupManager().deleteResourceGroup(LookupUtil.getSubjectManager().getOverlord(),
+            resourceGroup.getId());
+
         executeInTransaction(false, new TransactionCallback() {
             public void execute() throws Exception {
-                em.createQuery("delete from AlertNotification ").executeUpdate();
-                em.createQuery("delete from AlertDefinition ").executeUpdate();               
+                em.createQuery(
+                    "delete from AlertNotification an where an.senderName like '" + TestAlertSender.NAME + "%'")
+                    .executeUpdate();
+                em.createQuery("delete from AlertCondition ac where ac.name like '" + universalName + "%'")
+                    .executeUpdate();
+                em.createQuery("delete from AlertDefinition ad where ad.name like '" + universalName + "%'")
+                    .executeUpdate();
             }
         });
-        removeNoExceptions(resourceGroup);
-        for (Resource r : resources) {
-            r.removeExplicitGroup(resourceGroup);
-            r.getAlertDefinitions().clear();
-            removeNoExceptions(r);
-        }
+
+        executeInTransaction(false, new TransactionCallback() {
+            public void execute() throws Exception {
+                em.clear();
+                for (Resource r : resources) {
+                    r = em.find(Resource.class, r.getId());
+                    try {
+                        ResourceTreeHelper.deleteResource(em, r);
+                    } catch (Exception e) {
+                        LOG.error("Failed to DELETE Resource from database: " + r, e);
+                    }
+                }
+            }
+        });
+
         removeNoExceptions(resourceType);
         removeNoExceptions(subject);
         removeNoExceptions(role);
@@ -301,7 +333,12 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     //@AfterMethod(alwaysRun = true)
     private void logout() throws Exception {
-        SessionManager.getInstance().invalidate(subject.getSessionId());
+        if (subject != null) {
+            SessionManager.getInstance().invalidate(subject.getSessionId());
+        } else {
+            System.err
+                .println("Empty subject, the setup failed horribly. Not throwing an exception to allow the database clean.");
+        }
     }
 
     private Resource getCopyTestsResource() throws Exception {
@@ -334,9 +371,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         TestAlertSender.setExpectedSubject(null);
         TestAlertSender.resetValidateMethodCallCount();
 
-        Resource res = getCopyTestsResource();
+        final Resource res = getCopyTestsResource();
 
-        //apply the template manually - this is done in server-agent back-and-forth that we 
+        //apply the template manually - this is done in server-agent back-and-forth that we
         //don't test here and which is complex to mock out.
         //this method has to be called using the overlord subject
         LookupUtil.getAlertTemplateManager().updateAlertDefinitionsForResource(
@@ -389,7 +426,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
         AlertDefinition groupOriginatingDef = null;
         for (AlertDefinition d : foundAlertDefs) {
-            if ((universalName + " group").equals(d.getName())) {
+            if ((universalName + ":group").equals(d.getName())) {
                 groupOriginatingDef = d;
                 break;
             }
@@ -402,36 +439,33 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
             .getGroupAlertDefinition().getId());
     }
 
-    private void testCorrectSubjectPassedOnResourceLevelAlertDefinitionCreation() throws Exception {
+    private void testCorrectSubjectPassedOnResourceLevelAlertDefCreation() throws Exception {
         TestAlertSender.setExpectedSubject(subject);
 
         AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
 
         Resource res = resources.iterator().next();
 
-        AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnResourceLevelAlertDefinitionCreation",
-            false);
-        def.setResource(resources.iterator().next());
+        AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnResourceLevelAlertDef", false);
+        def.setResource(res);
 
-        int id = adm.createAlertDefinitionInNewTransaction(subject, def, res.getId(), true);
-        def.setId(id);
+        def = adm.createAlertDefinitionInNewTransaction(subject, def, res.getId(), true);
 
-        resourceLevelAlertDefinitionId = id;
+        resourceLevelAlertDefinitionId = def.getId();
 
         junk.add(def);
 
-        testMainAlertDefinition(id);
+        testMainAlertDefinition(resourceLevelAlertDefinitionId);
     }
 
     //@Test(dependsOnMethods = { "testNotificationsCopiedOnAlertTemplateApplication",
     //    "testNotificationsCopiedOnGroupMemberAddition" })
-    private void testCorrectSubjectPassedOnGroupLevelAlertDefinitionCreation() throws Exception {
+    private void testCorrectSubjectPassedOnGroupLevelAlertDefCreation() throws Exception {
         TestAlertSender.setExpectedSubject(subject);
 
         GroupAlertDefinitionManagerLocal gadm = LookupUtil.getGroupAlertDefinitionManager();
 
-        AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnGroupLevelAlertDefinitionCreation",
-            false);
+        AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnGroupLevelAlertDef", false);
         def.setGroup(resourceGroup);
 
         int id = gadm.createGroupAlertDefinitions(subject, def, resourceGroup.getId());
@@ -449,13 +483,12 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     //@Test(dependsOnMethods = { "testNotificationsCopiedOnAlertTemplateApplication",
     //    "testNotificationsCopiedOnGroupMemberAddition" })
-    private void testCorrectSubjectPassedOnTemplateLevelAlertDefinitionCreation() throws Exception {
+    private void testCorrectSubjectPassedOnTemplateLevelAlertDefCreation() throws Exception {
         TestAlertSender.setExpectedSubject(subject);
 
         AlertTemplateManagerLocal atm = LookupUtil.getAlertTemplateManager();
 
-        AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnTemplateLevelAlertDefinitionCreation",
-            false);
+        AlertDefinition def = createDefinitionForTest("testCorrectSubjectPassedOnTemplateLevelAlertDef", false);
         def.setGroup(resourceGroup);
 
         int id = atm.createAlertTemplate(subject, def, resourceType.getId());
@@ -571,9 +604,6 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         AlertDefinition foundDef = foundDefs.get(0);
 
         AlertNotification newNotif = createAlertNotificationForTest(foundDef, false);
-        //just add some dummy config property so that the 2 notifs are distinguishable from each other
-        //and are saved separately
-        newNotif.getConfiguration().put(new PropertySimple("foo-resource", "bar"));
 
         adm.updateAlertDefinition(subject, resourceLevelAlertDefinitionId, foundDef, false);
 
@@ -600,9 +630,6 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         AlertDefinition foundDef = foundDefs.get(0);
 
         AlertNotification newNotif = createAlertNotificationForTest(foundDef, false);
-        //just add some dummy config property so that the 2 notifs are distinguishable from each other
-        //and are saved separately
-        newNotif.getConfiguration().put(new PropertySimple("foo-group", "bar"));
 
         GroupAlertDefinitionManagerLocal gadm = LookupUtil.getGroupAlertDefinitionManager();
         gadm.updateGroupAlertDefinitions(subject, foundDef, true);
@@ -632,9 +659,6 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
         AlertDefinition foundDef = foundDefs.get(0);
 
         AlertNotification newNotif = createAlertNotificationForTest(foundDef, false);
-        //just add some dummy config property so that the 2 notifs are distinguishable from each other
-        //and are saved separately
-        newNotif.getConfiguration().put(new PropertySimple("foo-template", "bar"));
 
         AlertTemplateManagerLocal atm = LookupUtil.getAlertTemplateManager();
         atm.updateAlertTemplate(subject, foundDef, true);
@@ -657,6 +681,8 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
                     } else {
                         em.remove(o2);
                     }
+
+                    em.flush();
                 }
             });
         } catch (Exception e) {
@@ -666,11 +692,32 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 
     private AlertDefinition createDefinition(String name) {
         AlertDefinition ret = new AlertDefinition();
-        ret.setName(name);
+        ret.setName(universalName + ":" + name);
         ret.setPriority(AlertPriority.MEDIUM);
-        ret.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
         ret.setConditionExpression(BooleanExpression.ANY);
         ret.setRecoveryId(0);
+
+        AlertCondition ac = new AlertCondition();
+        ac.setName(universalName + ":" + name);
+        ac.setCategory(AlertConditionCategory.THRESHOLD);
+        ac.setComparator(">");
+        ac.setThreshold(0.75D);
+        //for (MeasurementDefinition d : resourceType.getMetricDefinitions()) {
+        //    if ("Calculated.HeapUsagePercentage".equals(d.getName())) {
+        //        ac.setMeasurementDefinition(d);
+        //        ac.setName(d.getDisplayName());
+        //        break;
+        //    }
+        // }
+        //assert null != ac.getMeasurementDefinition() : "Did not find expected measurement definition [Calculated.HeapUsagePercentage] for "
+        //    + resourceType;
+        ret.addCondition(ac);
+
+        AlertDampening dampener = new AlertDampening(AlertDampening.Category.PARTIAL_COUNT);
+        dampener.setPeriod(15);
+        dampener.setPeriodUnits(TimeUnits.MINUTES);
+        dampener.setValue(10);
+        ret.setAlertDampening(dampener);
 
         return ret;
     }
@@ -683,9 +730,15 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
     }
 
     private AlertNotification createAlertNotificationForTest(AlertDefinition alertDefinition, boolean precanned) {
-        AlertNotification notif = new AlertNotification("Test Alert Sender");
+        AlertNotification notif = new AlertNotification(TestAlertSender.NAME);
 
         Configuration alertConfig = new Configuration();
+
+        //generate random property so that the notifications are distinguishable from each other
+        //and are saved separately
+        Random randomGenerator = new Random();
+        String randomValue = randomGenerator.nextInt(100) + " - " + randomGenerator.nextInt(200);
+        alertConfig.put(new PropertySimple(randomValue, randomValue));
 
         if (precanned) {
             alertConfig.put(new PropertySimple(TestAlertSender.PERSISTENT_PROPERTY_NAME,
@@ -798,7 +851,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 }
 
 ///**
-// * 
+// *
 // *
 // * @author Lukas Krejci
 // */
@@ -810,7 +863,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //    private enum ParentType {
 //        GROUP, TEMPLATE
 //    }
-//    
+//
 //    private String universalName;
 //
 //    private Server server;
@@ -830,10 +883,10 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //    private int groupLevelAlertDefinitionId;
 //    private int templateLevelAlertDefinitionId;
 //    private Resource copyTestsResource;
-//    
+//
 //    private TestAlertSenderPluginService alertSenderService;
 //    private TestServerCommunicationsService agentService;
-//    
+//
 //    @BeforeClass
 //    public void prepareDB() {
 //        executeInTransaction(new TransactionCallback() {
@@ -844,14 +897,14 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //                universalName = getClass().getName();
 //
 //                agent = new Agent("localhost", "localhost", 0, "foo", "bar");
-//                
+//
 //                server = new Server();
 //                server.setAddress("localhost");
 //                server.setName("localhost");
 //                server.setOperationMode(OperationMode.NORMAL);
-//                
+//
 //                server.setAgents(Collections.singletonList(agent));
-//                
+//
 //                role = new Role(universalName);
 //                role.addPermission(Permission.MANAGE_INVENTORY);
 //                role.addPermission(Permission.MANAGE_SETTINGS);
@@ -868,7 +921,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //                resources = new LinkedHashSet<Resource>();
 //                for (int i = 0; i < 10; ++i) {
 //                    Resource res = createResourceForTest(universalName + i);
-//                    
+//
 //                    resources.add(res);
 //
 //                    resourceGroup.addExplicitResource(res);
@@ -923,18 +976,18 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //        alertSenderService = new TestAlertSenderPluginService();
 //        prepareCustomServerPluginService(alertSenderService);
 //        alertSenderService.masterConfig.getPluginDirectory().mkdirs();
-//        
+//
 //        alertSenderService.startMasterPluginContainer();
-//        
+//
 //        agentService = prepareForTestAgents();
 //    }
 //
 //    @AfterMethod
 //    public void containerTearDown() throws Exception {
 //        unprepareServerPluginService();
-//        unprepareForTestAgents();        
+//        unprepareForTestAgents();
 //    }
-//    
+//
 //    @AfterClass(alwaysRun = true)
 //    public void cleanDB() throws Exception {
 //        for (Object o : junk) {
@@ -955,8 +1008,8 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //        removeNoExceptions(role);
 //        removeNoExceptions(server);
 //        removeNoExceptions(agent);
-//        
-//        removeNoExceptions(serverPlugin);        
+//
+//        removeNoExceptions(serverPlugin);
 //    }
 //
 //    @BeforeMethod
@@ -974,7 +1027,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //    private Resource getCopyTestsResource() throws Exception {
 //        if (copyTestsResource == null) {
 //            final String keyAndName = universalName + "-copyTests";
-//            
+//
 //            LookupUtil.getResourceManager().createResource(subject, createResourceForTest(keyAndName), Resource.ROOT_ID);
 //
 //            //ok, now the new resource should contain the alert definition defined by the template
@@ -982,45 +1035,45 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //            crit.addFilterResourceKey(keyAndName);
 //            crit.fetchExplicitGroups(true); //so that cleanup works
 //            crit.fetchAlertDefinitions(true); //so that cleanup works
-//            
+//
 //            List<Resource> foundResources = LookupUtil.getResourceManager().findResourcesByCriteria(subject, crit);
-//            
+//
 //            assertEquals("A new resource should have been created", 1, foundResources.size());
-//            
+//
 //            Resource res = foundResources.get(0);
 //            resources.add(res);
-//            
+//
 //            copyTestsResource = res;
 //        }
-//        
+//
 //        return copyTestsResource;
 //    }
-//    
+//
 //    public void testNotificationsCopiedOnAlertTemplateApplication() throws Exception {
 //        TestAlertSender.setExpectedSubject(null);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        Resource res = getCopyTestsResource();
-//        
-//        //apply the template manually - this is done in server-agent back-and-forth that we 
+//
+//        //apply the template manually - this is done in server-agent back-and-forth that we
 //        //don't test here and which is complex to mock out.
 //        //this method has to be called using the overlord subject
 //        LookupUtil.getAlertTemplateManager().updateAlertDefinitionsForResource(LookupUtil.getSubjectManager().getOverlord(), res.getId());
-//        
+//
 //        assertEquals("No validation should occur on the copied notifications", 0, TestAlertSender.getValidateMethodCallCount());
 //
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
 //        AlertDefinitionCriteria adCrit = new AlertDefinitionCriteria();
 //        adCrit.addFilterResourceIds(res.getId());
 //        adCrit.fetchAlertNotifications(true);
-//        
+//
 //        List<AlertDefinition> foundAlertDefs = adm.findAlertDefinitionsByCriteria(subject, adCrit);
-//        junk.addAll(foundAlertDefs);        
-//        
+//        junk.addAll(foundAlertDefs);
+//
 //        assertEquals("The new resource should have an alert definition obtained from the template.", 1, foundAlertDefs.size());
-//        
+//
 //        AlertDefinition defWithNotifications = foundAlertDefs.get(0);
-//        
+//
 //        testSingleDependentAlertDefinition(defWithNotifications, ParentType.TEMPLATE, defWithNotifications.getParentId());
 //    }
 //
@@ -1028,24 +1081,24 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //    public void testNotificationsCopiedOnGroupMemberAddition() throws Exception {
 //        TestAlertSender.setExpectedSubject(null);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        Resource res = getCopyTestsResource();
-//                
+//
 //        LookupUtil.getResourceGroupManager().addResourcesToGroup(subject, resourceGroup.getId(), new int[] { res.getId() });
-//        
+//
 //        assertEquals("No validation should occur on the copied notifications", 0, TestAlertSender.getValidateMethodCallCount());
 //
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
 //        AlertDefinitionCriteria adCrit = new AlertDefinitionCriteria();
 //        adCrit.addFilterResourceIds(res.getId());
 //        adCrit.fetchAlertNotifications(true);
-//        
+//
 //        List<AlertDefinition> foundAlertDefs = adm.findAlertDefinitionsByCriteria(subject, adCrit);
-//        junk.addAll(foundAlertDefs);        
-//        
+//        junk.addAll(foundAlertDefs);
+//
 //        //1 from the group, 1 from the template
 //        assertEquals("The new resource should have an alert definition obtained from the group.", 2, foundAlertDefs.size());
-//        
+//
 //        AlertDefinition groupOriginatingDef = null;
 //        for(AlertDefinition d : foundAlertDefs) {
 //            if ((universalName + " group").equals(d.getName())) {
@@ -1053,9 +1106,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //                break;
 //            }
 //        }
-//        
+//
 //        assertNotNull("The alert definition originating from the group not present on the resource.", groupOriginatingDef);
-//        
+//
 //        testSingleDependentAlertDefinition(groupOriginatingDef, ParentType.GROUP, groupOriginatingDef.getGroupAlertDefinition().getId());
 //    }
 //
@@ -1071,9 +1124,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //
 //        int id = adm.createAlertDefinition(subject, def, res.getId(), true);
 //        def.setId(id);
-//        
+//
 //        resourceLevelAlertDefinitionId = id;
-//        
+//
 //        junk.add(def);
 //
 //        testMainAlertDefinition(id);
@@ -1090,11 +1143,11 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //
 //        int id = gadm.createGroupAlertDefinitions(subject, def, resourceGroup.getId());
 //        def.setId(id);
-//        
+//
 //        groupLevelAlertDefinitionId = id;
-//        
+//
 //        junk.add(def);
-//        
+//
 //        testMainAlertDefinition(id);
 //        List<AlertDefinition> deps = testDependentAlertDefinitions(id, ParentType.GROUP);
 //
@@ -1114,7 +1167,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //        def.setId(id);
 //
 //        templateLevelAlertDefinitionId = id;
-//        
+//
 //        junk.add(def);
 //
 //        testMainAlertDefinition(id);
@@ -1127,105 +1180,105 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //    public void testNoValidationWhenNoNotificationUpdateOnResourceLevel() throws Exception {
 //        TestAlertSender.setExpectedSubject(subject);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
-//        
+//
 //        AlertDefinitionCriteria crit = new AlertDefinitionCriteria();
 //        crit.addFilterId(resourceLevelAlertDefinitionId);
 //        crit.fetchAlertNotifications(true);
 //        crit.fetchConditions(true);
-//        
+//
 //        List<AlertDefinition> foundDefs = adm.findAlertDefinitionsByCriteria(subject, crit);
-//        
+//
 //        assertEquals("Failed to find the previously created resource level alert definition.", 1, foundDefs.size());
-//        
+//
 //        AlertDefinition foundDef = foundDefs.get(0);
-//        
+//
 //        foundDef.setEnabled(true);
-//        
+//
 //        adm.updateAlertDefinition(subject, resourceLevelAlertDefinitionId, foundDef, false);
-//        
+//
 //        assertEquals("The notification validation method shouldn't have been called", 0, TestAlertSender.getValidateMethodCallCount());
 //    }
-//    
+//
 //    @Test(dependsOnMethods = "testCorrectSubjectPassedOnGroupLevelAlertDefinitionCreation")
 //    public void testNoValidationWhenNoNotificationUpdateOnGroupLevel() throws Exception {
 //        TestAlertSender.setExpectedSubject(subject);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
-//        
+//
 //        AlertDefinitionCriteria crit = new AlertDefinitionCriteria();
 //        crit.addFilterId(groupLevelAlertDefinitionId);
 //        crit.fetchAlertNotifications(true);
 //        crit.fetchConditions(true);
-//        
+//
 //        List<AlertDefinition> foundDefs = adm.findAlertDefinitionsByCriteria(subject, crit);
-//        
+//
 //        assertEquals("Failed to find the previously created group level alert definition.", 1, foundDefs.size());
-//        
+//
 //        AlertDefinition foundDef = foundDefs.get(0);
-//        
+//
 //        foundDef.setEnabled(true);
-//        
+//
 //        GroupAlertDefinitionManagerLocal gadm = LookupUtil.getGroupAlertDefinitionManager();
 //        gadm.updateGroupAlertDefinitions(subject, foundDef, true);
-//        
+//
 //        assertEquals("The notification validation method shouldn't have been called", 0, TestAlertSender.getValidateMethodCallCount());
 //    }
-//    
+//
 //    @Test(dependsOnMethods = "testCorrectSubjectPassedOnTemplateLevelAlertDefinitionCreation")
 //    public void testNoValidationWhenNoNotificationUpdateOnTemplateLevel() throws Exception {
 //        TestAlertSender.setExpectedSubject(subject);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
-//        
+//
 //        AlertDefinitionCriteria crit = new AlertDefinitionCriteria();
 //        crit.addFilterId(templateLevelAlertDefinitionId);
 //        crit.fetchAlertNotifications(true);
 //        crit.fetchConditions(true);
-//        
+//
 //        List<AlertDefinition> foundDefs = adm.findAlertDefinitionsByCriteria(subject, crit);
-//        
+//
 //        assertEquals("Failed to find the previously created resource level alert definition.", 1, foundDefs.size());
-//        
+//
 //        AlertDefinition foundDef = foundDefs.get(0);
-//        
+//
 //        foundDef.setEnabled(true);
-//        
+//
 //        AlertTemplateManagerLocal atm = LookupUtil.getAlertTemplateManager();
-//        
+//
 //        atm.updateAlertTemplate(subject, foundDef, true);
-//        
+//
 //        assertEquals("The notification validation method shouldn't have been called", 0, TestAlertSender.getValidateMethodCallCount());
 //    }
-//    
+//
 //    @Test(dependsOnMethods = "testNoValidationWhenNoNotificationUpdateOnResourceLevel")
 //    public void testCorrectSubjectPassedOnResourceLevelAlertDefinitionUpdate() throws Exception {
 //        TestAlertSender.setExpectedSubject(subject);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
-//        
+//
 //        AlertDefinitionCriteria crit = new AlertDefinitionCriteria();
 //        crit.addFilterId(resourceLevelAlertDefinitionId);
 //        crit.fetchAlertNotifications(true);
 //        crit.fetchConditions(true);
-//        
+//
 //        List<AlertDefinition> foundDefs = adm.findAlertDefinitionsByCriteria(subject, crit);
-//        
+//
 //        assertEquals("Failed to find the previously created resource level alert definition.", 1, foundDefs.size());
-//        
+//
 //        AlertDefinition foundDef = foundDefs.get(0);
 //
 //        AlertNotification newNotif = createAlertNotificationForTest(foundDef, false);
 //        //just add some dummy config property so that the 2 notifs are distinguishable from each other
 //        //and are saved separately
 //        newNotif.getConfiguration().put(new PropertySimple("foo-resource", "bar"));
-//        
+//
 //        adm.updateAlertDefinition(subject, resourceLevelAlertDefinitionId, foundDef, false);
-//        
+//
 //        assertEquals("Validation should have been called for a new notification during alert def update", 1, TestAlertSender.getValidateMethodCallCount());
 //    }
 //
@@ -1233,28 +1286,28 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //    public void testCorrectSubjectPassedOnGroupLevelAlertDefinitionUpdate() throws Exception {
 //        TestAlertSender.setExpectedSubject(subject);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
-//        
+//
 //        AlertDefinitionCriteria crit = new AlertDefinitionCriteria();
 //        crit.addFilterId(groupLevelAlertDefinitionId);
 //        crit.fetchAlertNotifications(true);
 //        crit.fetchConditions(true);
-//        
+//
 //        List<AlertDefinition> foundDefs = adm.findAlertDefinitionsByCriteria(subject, crit);
-//        
+//
 //        assertEquals("Failed to find the previously created group level alert definition.", 1, foundDefs.size());
-//        
+//
 //        AlertDefinition foundDef = foundDefs.get(0);
 //
 //        AlertNotification newNotif = createAlertNotificationForTest(foundDef, false);
 //        //just add some dummy config property so that the 2 notifs are distinguishable from each other
 //        //and are saved separately
 //        newNotif.getConfiguration().put(new PropertySimple("foo-group", "bar"));
-//        
+//
 //        GroupAlertDefinitionManagerLocal gadm = LookupUtil.getGroupAlertDefinitionManager();
 //        gadm.updateGroupAlertDefinitions(subject, foundDef, true);
-//        
+//
 //        //notice that the validation should be called just once, even though in effect we're creating 11 notifs
 //        //1 for group and 10 for its members.
 //        assertEquals("Validation should have been called for a new notification during alert def update", 1, TestAlertSender.getValidateMethodCallCount());
@@ -1264,28 +1317,28 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //    public void testCorrectSubjectPassedOnTemplateLevelAlertDefinitionUpdate() throws Exception {
 //        TestAlertSender.setExpectedSubject(subject);
 //        TestAlertSender.resetValidateMethodCallCount();
-//        
+//
 //        AlertDefinitionManagerLocal adm = LookupUtil.getAlertDefinitionManager();
-//        
+//
 //        AlertDefinitionCriteria crit = new AlertDefinitionCriteria();
 //        crit.addFilterId(templateLevelAlertDefinitionId);
 //        crit.fetchAlertNotifications(true);
 //        crit.fetchConditions(true);
-//        
+//
 //        List<AlertDefinition> foundDefs = adm.findAlertDefinitionsByCriteria(subject, crit);
-//        
+//
 //        assertEquals("Failed to find the previously created template level alert definition.", 1, foundDefs.size());
-//        
+//
 //        AlertDefinition foundDef = foundDefs.get(0);
 //
 //        AlertNotification newNotif = createAlertNotificationForTest(foundDef, false);
 //        //just add some dummy config property so that the 2 notifs are distinguishable from each other
 //        //and are saved separately
 //        newNotif.getConfiguration().put(new PropertySimple("foo-template", "bar"));
-//        
+//
 //        AlertTemplateManagerLocal atm = LookupUtil.getAlertTemplateManager();
 //        atm.updateAlertTemplate(subject, foundDef, true);
-//        
+//
 //        //notice that the validation should be called just once, even though in effect we're creating 11 notifs
 //        //1 for template and 10 for its members.
 //        assertEquals("Validation should have been called for a new notification during alert def update", 1, TestAlertSender.getValidateMethodCallCount());
@@ -1330,34 +1383,34 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //
 //    private AlertNotification createAlertNotificationForTest(AlertDefinition alertDefinition, boolean precanned) {
 //        AlertNotification notif = new AlertNotification("Test Alert Sender");
-//        
+//
 //        Configuration alertConfig = new Configuration();
-//        
+//
 //        if (precanned) {
 //            alertConfig.put(new PropertySimple(TestAlertSender.PERSISTENT_PROPERTY_NAME, TestAlertSender.PERSISTEN_PROPERTY_EXPECTED_VALUE));
 //        } else {
 //            alertConfig.put(new PropertySimple(TestAlertSender.PERSISTENT_PROPERTY_NAME, "persistent"));
 //            alertConfig.put(new PropertySimple(TestAlertSender.EPHEMERAL_PROPERTY_NAME, "ephemeral"));
 //        }
-//        
+//
 //        Configuration extraConfig = new Configuration();
-//        
+//
 //        if (precanned) {
 //            extraConfig.put(new PropertySimple(TestAlertSender.PERSISTENT_PROPERTY_NAME, TestAlertSender.PERSISTEN_PROPERTY_EXPECTED_VALUE));
 //        } else {
 //            extraConfig.put(new PropertySimple(TestAlertSender.PERSISTENT_PROPERTY_NAME, "persistent"));
 //            extraConfig.put(new PropertySimple(TestAlertSender.EPHEMERAL_PROPERTY_NAME, "ephemeral"));
 //        }
-//        
+//
 //        notif.setConfiguration(alertConfig);
 //        notif.setExtraConfiguration(extraConfig);
-//        
+//
 //        alertDefinition.addAlertNotification(notif);
 //        notif.setAlertDefinition(alertDefinition);
-//        
+//
 //        return notif;
 //    }
-//    
+//
 //    private void testMainAlertDefinition(int id) {
 //        AlertDefinitionCriteria crit = new AlertDefinitionCriteria();
 //        crit.addFilterId(id);
@@ -1394,9 +1447,9 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //        } else if (parentType == ParentType.GROUP) {
 //            crit.addFilterGroupAlertDefinitionId(expectedParentId);
 //        }
-//        
+//
 //        crit.fetchAlertNotifications(true);
-//        
+//
 //        List<AlertDefinition> checkList =
 //            LookupUtil.getAlertDefinitionManager().findAlertDefinitionsByCriteria(subject, crit);
 //
@@ -1409,7 +1462,7 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //
 //        return checkList;
 //    }
-//    
+//
 //    private void testSingleDependentAlertDefinition(AlertDefinition alertDef, ParentType parentType, int expectedParentId) {
 //        assertEquals("There should be exactly 1 notification on the definition " + alertDef, 1, alertDef
 //            .getAlertNotifications().size());
@@ -1427,13 +1480,13 @@ public class AlertDefinitionWithComplexNotificationsTest extends AbstractEJB3Tes
 //            assertEquals("The parent id has unexpected value", Integer.valueOf(expectedParentId), alertDef.getParentId());
 //        }
 //    }
-//    
+//
 //    private Resource createResourceForTest(String resourceKey) {
 //        Resource res = new ResourceBuilder().createPlatform().withRandomUuid().withResourceKey(resourceKey)
 //            .withResourceType(resourceType).withName(resourceKey)
 //            .withInventoryStatus(InventoryStatus.COMMITTED).build();
-//        res.setAgent(agent);        
-//        
+//        res.setAgent(agent);
+//
 //        return res;
 //    }
 //}

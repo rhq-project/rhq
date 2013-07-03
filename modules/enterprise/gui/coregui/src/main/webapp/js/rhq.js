@@ -11,8 +11,35 @@ if (!window.console.log) window.console.log = function () { };
  * Contains all of the data required to render a chart.
  * A ChartContext can be passed to multiple chart renders to display different chart types
  * of that data.
+ * @param chartId
+ * @param chartHeight
+ * @param metricsData
+ * @param xAxisLabel
+ * @param chartTitle
+ * @param yAxisUnits
+ * @param minChartTitle
+ * @param avgChartTitle
+ * @param peakChartTitle
+ * @param dateLabel
+ * @param timeLabel
+ * @param downLabel
+ * @param unknownLabel
+ * @param noDataLabel
+ * @param hoverStartLabel
+ * @param hoverEndLabel
+ * @param hoverPeriodLabel
+ * @param hoverBarLabel
+ * @param chartHoverTimeFormat
+ * @param chartHoverDateFormat
+ * @param isPortalGraph
+ * @param portalId
+ * @param buttonBarDateTimeFormat
+ * @param singleValueLabel
+ * @param chartXaxisTimeFormatHours
+ * @param chartXaxisTimeFormatHoursMinutes
+ * @constructor
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId )
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel,hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes )
 {
     "use strict";
     if(!(this instanceof ChartContext)){
@@ -31,6 +58,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
     this.timeLabel = timeLabel;
     this.downLabel = downLabel;
     this.unknownLabel = unknownLabel;
+    this.singleValueLabel = singleValueLabel;
     this.noDataLabel = noDataLabel;
     this.hoverStartLabel = hoverStartLabel;
     this.hoverEndLabel = hoverEndLabel;
@@ -46,9 +74,30 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
         this.chartHandle =  "rChart-"+chartId;
     }
     this.chartSelection = this.chartHandle + " svg";
+    this.buttonBarDateTimeFormat = buttonBarDateTimeFormat;
+    this.chartXaxisTimeFormatHours = chartXaxisTimeFormatHours;
+    this.chartXaxisTimeFormatHoursMinutes = chartXaxisTimeFormatHoursMinutes;
 
 },
-AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel) {
+/**
+ * Availability Context object constructor
+ * @param chartId
+ * @param availData
+ * @param dateLabel
+ * @param timeLabel
+ * @param hoverStartLabel
+ * @param hoverBarLabel
+ * @param availabilityLabel
+ * @param chartHoverTimeFormat
+ * @param chartHoverDateFormat
+ * @param chartTitle
+ * @param chartUpLabel
+ * @param chartDownLabel
+ * @param chartXaxisTimeFormatHours
+ * @param chartXaxisTimeFormatHoursMinutes
+ * @constructor
+ */
+AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes) {
     "use strict";
     if (!(this instanceof AvailChartContext)) {
         throw new Error("AvailChartContext function cannot be called as a function.")
@@ -67,5 +116,24 @@ AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverSta
     this.chartTitle = chartTitle;
     this.chartDownLabel = chartDownLabel;
     this.chartUpLabel = chartUpLabel;
+    this.chartXaxisTimeFormatHours = chartXaxisTimeFormatHours;
+    this.chartXaxisTimeFormatHoursMinutes = chartXaxisTimeFormatHoursMinutes;
 
+},
+
+/**
+ * GraphDateContext object constructor.
+ * @param startDate moment object representing startDate range
+ * @param endDate moment object representing endDate range
+ * @constructor
+ */
+GraphDateContext = function (startDate, endDate){
+    "use strict";
+    if (!(this instanceof GraphDateContext)) {
+        throw new Error("GraphDateContext function cannot be called as a function.")
+    }
+    this.startDate = startDate;
+    this.endDate = endDate;
 };
+
+

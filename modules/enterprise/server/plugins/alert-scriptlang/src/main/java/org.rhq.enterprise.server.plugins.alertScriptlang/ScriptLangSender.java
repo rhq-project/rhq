@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.plugins.alertScriptlang;
 
@@ -32,7 +32,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.Alert;
-import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.alert.notification.SenderResult;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
@@ -51,7 +50,7 @@ public class ScriptLangSender extends AlertSender<ScriptLangComponent> {
 
         String scriptName = alertParameters.getSimpleValue("name", null);
         if (scriptName == null) {
-            return new SenderResult(ResultState.FAILURE, "No script given");
+            return SenderResult.getSimpleFailure("No script given");
         }
         String language = alertParameters.getSimpleValue("language", "jruby");
 
@@ -62,13 +61,13 @@ public class ScriptLangSender extends AlertSender<ScriptLangComponent> {
 
 
         if (engine==null) {
-            return new SenderResult(ResultState.FAILURE,"Script engine with name [" + language + "] does not exist");
+            return SenderResult.getSimpleFailure("Script engine with name [" + language + "] does not exist");
         }
 
         File file = new File(pluginComponent.baseDir + scriptName);
         if (!file.exists() || !file.canRead()) {
-            return new SenderResult(ResultState.FAILURE,
-                    "Script [" + scriptName + "] does not exist or is not readable at [" + file.getAbsolutePath()+"]");
+            return SenderResult.getSimpleFailure(
+                "Script [" + scriptName + "] does not exist or is not readable at [" + file.getAbsolutePath() + "]");
         }
 
         Object result;
@@ -97,15 +96,15 @@ public class ScriptLangSender extends AlertSender<ScriptLangComponent> {
             result = ((Invocable) engine).invokeFunction("sendAlert", args);
 
             if (result == null) {
-                return new SenderResult(ResultState.FAILURE,"Script ]" + scriptName + "] returned null, so success is unknown");
+                return SenderResult.getSimpleFailure("Script ]" + scriptName + "] returned null, so success is unknown");
             }
             if (result instanceof SenderResult)
                 return (SenderResult) result;
 
-            return new SenderResult(ResultState.SUCCESS, "Sending via script resulted in " + result.toString());
+            return SenderResult.getSimpleSuccess("Sending via script resulted in " + result.toString());
         } catch (Exception e) {
             e.printStackTrace();
-            return new SenderResult(ResultState.FAILURE, "Sending via [" + scriptName + "] failed: " + e.getMessage());
+            return SenderResult.getSimpleFailure("Sending via [" + scriptName + "] failed: " + e.getMessage());
         }
     }
 }

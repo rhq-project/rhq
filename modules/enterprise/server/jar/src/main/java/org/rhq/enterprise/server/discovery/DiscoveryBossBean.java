@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.discovery;
 
@@ -63,6 +63,7 @@ import org.rhq.core.clientapi.server.discovery.StaleTypeException;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
@@ -90,6 +91,8 @@ import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ProductVersionManagerLocal;
@@ -154,6 +157,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     private PluginManagerLocal pluginManager;
     @EJB
     private AvailabilityManagerLocal availabilityManager;
+    @EJB
+    private StorageNodeManagerLocal storageNodeManager;
+    @EJB
+    private ConfigurationManagerLocal configurationManager;
 
     // Do not start in a transaction.  A single transaction may timeout if the report size is too large
     @TransactionAttribute(TransactionAttributeType.NEVER)
@@ -651,7 +658,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
     }
 
     /**
-     * @param resource NotNull 
+     * @param resource NotNull
      * @param upgradeRequest
      * @param allowGenericPropertiesUpgrade name and description are only upgraded if this is true
      * @return response to the upgrade request detailing what has been accepted on the server side
@@ -669,11 +676,12 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         ResourceUpgradeResponse ret = new ResourceUpgradeResponse();
         ret.setResourceId(resource.getId());
 
-        String resourceKey = upgradeRequest.getNewResourceKey();
-        String name = upgradeRequest.getNewName();
-        String description = upgradeRequest.getNewDescription();
+        if (upgradeRequest.hasSomethingToUpgrade()) {
 
-        if (resourceKey != null || name != null || description != null) {
+            String resourceKey = upgradeRequest.getNewResourceKey();
+            String name = upgradeRequest.getNewName();
+            String description = upgradeRequest.getNewDescription();
+
             StringBuilder logMessage = new StringBuilder("Resource [").append(resource.toString()).append(
                 "] upgraded its ");
 
@@ -695,6 +703,22 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             }
             ret.setUpgradedResourceDescription(resource.getDescription());
 
+            // If provided, assume the new plugin config should replace the old plugin config in its entirety.
+            // Use a deep copy without ids as the updgardeRequest config may contain entity config props. 
+            // Note: we explicitly do not call configurationManager.updatePluginConfiguration() because the
+            // agent is already updated to the new configuration. Instead we call the dedicated local method
+            // supporting this use case.   
+            Configuration pluginConfig = upgradeRequest.getNewPluginConfiguration();
+            if (null != pluginConfig) {
+                pluginConfig = pluginConfig.deepCopy(false);
+                PluginConfigurationUpdate update = configurationManager.upgradePluginConfiguration(
+                    subjectManager.getOverlord(), resource.getId(), pluginConfig);
+                ret.setUpgradedResourcePluginConfiguration(update.getResource().getPluginConfiguration());
+
+            } else {
+                ret.setUpgradedResourcePluginConfiguration(resource.getPluginConfiguration());
+            }
+
             // finally let's remove the potential previous upgrade error. we've now successfully
             // upgraded the resource.
             List<ResourceError> upgradeErrors = resourceManager.findResourceErrors(subjectManager.getOverlord(),
@@ -708,6 +732,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
             log.info(logMessage.toString());
         }
+
         return ret;
     }
 
@@ -745,11 +770,11 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     /**
      * <p>Should Not Be Called With Existing Transaction !!!</p>
-     *  
+     *
      * <p>Merges the specified resource and its children into inventory. If the resource already exists in inventory,
      * it is updated; if it does not already exist in inventory, it is added and its parent is set to the specified, already inventoried,
      * parent resource.</p>
-     * 
+     *
      * <p>Does not require an existing transaction.  The resource and each child will be merged in an isolated
      * transaction</p>
      *
@@ -866,7 +891,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     /**
      * Recursively set the agent on the resource tree.
-     *  
+     *
      * @param resource pojo, the parent
      * @param agent pojo, the agent
      */
@@ -879,7 +904,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
 
     /**
      * <p>Requires A Transaction</p>
-     * 
+     *
      * Given a resource, will attempt to find it in the server's inventory (that is, finds it in the database). If the
      * given resource's ID does not exist in the database, it will be looked up by its resource key. If the resource
      * cannot be found either via ID or resource key then SIDE EFFECT: the given resource's ID will be reset to 0 and null
@@ -938,7 +963,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
             while (null != parent && null == existingResource) {
                 parent = parent.getParentResource();
 
-                // check if the parent is in inventory. This might not be the case during initial sync-up for resource upgrade. 
+                // check if the parent is in inventory. This might not be the case during initial sync-up for resource upgrade.
                 Resource existingParent = null;
                 if (null != parent) {
                     int parentId = parent.getId();
@@ -1162,7 +1187,7 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         Resource parentResource = null;
 
         if (null != parentId) {
-            // look in our map cache first 
+            // look in our map cache first
             if (null != parentMap) {
                 parentResource = parentMap.get(parentId);
             }
@@ -1171,9 +1196,10 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
                 // Find the parent resource entity
                 parentResource = entityManager.find(Resource.class, parentId);
             }
-            // if the parent exists, create the parent-child relationship
+            // if the parent exists, create the parent-child relationship and add it to the map
             if (null != parentResource) {
                 parentResource.addChildResource(resource);
+                parentMap.put(parentId, parentResource);
             }
         }
 
@@ -1192,23 +1218,58 @@ public class DiscoveryBossBean implements DiscoveryBossLocal, DiscoveryBossRemot
         resource.setItime(System.currentTimeMillis());
         resource.setModifiedBy(overlord.getName());
 
-        // Ensure the new resource has the proper inventory status
-        if ((null != parentResource)
-            && (parentResource.getInventoryStatus() == InventoryStatus.COMMITTED)
-            && ((resource.getResourceType().getCategory() == ResourceCategory.SERVICE) || (parentResource
-                .getResourceType().getCategory() == ResourceCategory.SERVER))) {
-
-            // Auto-commit services whose parent resources have already been imported by the user
-            resource.setInventoryStatus(InventoryStatus.COMMITTED);
-
-        } else {
-            resource.setInventoryStatus(InventoryStatus.NEW);
-        }
+        setInventoryStatus(parentResource, resource);
 
         // Extend implicit (recursive) group membership of the parent to the new child
         if (null != parentResource) {
             groupManager.updateImplicitGroupMembership(overlord, resource);
         }
+    }
+
+    // Resources are set to either NEW or COMMITTED
+    // We autocommit in the following scenarios:
+    // - The parent resource is not a platform and is already committed
+    // - The resource is a platform and has an RHQ Storage Node child
+    // - The resource is an RHQ Storage Node child
+    // Ensure the new resource has the proper inventory status
+    private void setInventoryStatus(Resource parentResource, Resource resource) {
+        // never autocommit a platform
+        if (null == parentResource) {
+            resource.setInventoryStatus(InventoryStatus.NEW);
+            return;
+        }
+
+        ResourceType resourceType = resource.getResourceType();
+        boolean isParentCommitted = InventoryStatus.COMMITTED == parentResource.getInventoryStatus();
+        boolean isService = ResourceCategory.SERVICE == resourceType.getCategory();
+        boolean isParentServer = ResourceCategory.SERVER == parentResource.getResourceType().getCategory();
+
+        // always autocommit non-top-level-server children of committed parents
+        if (isParentCommitted && (isService || isParentServer)) {
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+            return;
+        }
+
+        // always autocommit top-level-server if it's an RHQ Storage Node (and the platform, if necessary)
+        boolean isStorageNodePlugin = "RHQStorage".equals(resourceType.getPlugin());
+        boolean isStorageNode = (isStorageNodePlugin && "RHQ Storage Node".equals(resourceType.getName()));
+
+        if (isStorageNode) {
+            resource.setInventoryStatus(InventoryStatus.COMMITTED);
+
+            if (!isParentCommitted) {
+                parentResource.setInventoryStatus(InventoryStatus.COMMITTED);
+            }
+
+            storageNodeManager.linkResource(resource);
+
+            return;
+        }
+
+        // otherwise, set NEW
+        resource.setInventoryStatus(InventoryStatus.NEW);
+
+        return;
     }
 
     public void importResources(Subject subject, int[] resourceIds) {

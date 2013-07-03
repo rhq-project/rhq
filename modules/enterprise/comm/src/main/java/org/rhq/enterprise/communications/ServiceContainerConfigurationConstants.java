@@ -195,7 +195,8 @@ public interface ServiceContainerConfigurationConstants {
     /**
      * Default algorithm for the keystore.
      */
-    String DEFAULT_CONNECTOR_SECURITY_KEYSTORE_ALGORITHM = "SunX509";
+    String DEFAULT_CONNECTOR_SECURITY_KEYSTORE_ALGORITHM = (System.getProperty("java.vendor", "").contains("IBM") ? "IbmX509"
+        : "SunX509");
 
     /**
      * The type of keystore which defines the keystore file format.
@@ -246,7 +247,8 @@ public interface ServiceContainerConfigurationConstants {
     /**
      * Default algorithm for the truststore.
      */
-    String DEFAULT_CONNECTOR_SECURITY_TRUSTSTORE_ALGORITHM = "SunX509";
+    String DEFAULT_CONNECTOR_SECURITY_TRUSTSTORE_ALGORITHM = (System.getProperty("java.vendor", "").contains("IBM") ? "IbmX509"
+        : "SunX509");
 
     /**
      * The type of truststore file.

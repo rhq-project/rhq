@@ -23,12 +23,15 @@ import java.util.LinkedHashMap;
 import com.google.gwt.dom.client.Document;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.FormLayoutType;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedEvent;
 import com.smartgwt.client.widgets.form.events.FormSubmitFailedHandler;
 import com.smartgwt.client.widgets.form.fields.ButtonItem;
 import com.smartgwt.client.widgets.form.fields.CanvasItem;
+import com.smartgwt.client.widgets.form.fields.PasswordItem;
 import com.smartgwt.client.widgets.form.fields.TextAreaItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
@@ -58,18 +61,24 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
     private DynamicForm mainCanvasForm;
     private TextItem urlTextItem;
+    private TextItem urlUserNameItem;
+    private PasswordItem urlPasswordItem;
     private BundleDistributionFileUploadForm uploadDistroForm;
     private DynamicCallbackForm recipeForm;
     private RadioGroupWithComponentsItem radioGroup;
 
-    private final String URL_OPTION = MSG.view_bundle_createWizard_urlOption();
-    private final String UPLOAD_OPTION = MSG.view_bundle_createWizard_uploadOption();
-    private final String RECIPE_OPTION = MSG.view_bundle_createWizard_recipeOption();
+    private static final String URL_OPTION = MSG.view_bundle_createWizard_urlOption();
+    private static final String UPLOAD_OPTION = MSG.view_bundle_createWizard_uploadOption();
+    private static final String RECIPE_OPTION = MSG.view_bundle_createWizard_recipeOption();
+    private static final String URL_OPTION_USERNAME = MSG.view_bundle_createWizard_urlUserName();
+    private static final String URL_OPTION_PASSWORD = MSG.view_bundle_createWizard_urlPassword();
+    private static final String URL_OPTION_TOOLTIP = MSG.view_bundle_createWizard_urlTooltip();
 
     public BundleUploadDistroFileStep(AbstractBundleCreateWizard bundleCreationWizard) {
         this.wizard = bundleCreationWizard;
     }
 
+    @Override
     public Canvas getCanvas() {
         if (mainCanvasForm == null) {
             LinkedHashMap<String, DynamicForm> radioItems = new LinkedHashMap<String, DynamicForm>();
@@ -95,6 +104,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         return mainCanvasForm;
     }
 
+    @Override
     public boolean nextPage() {
         wizard.getView().hideMessage();
 
@@ -127,19 +137,40 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         }
     }
 
+    @Override
     public String getName() {
         return MSG.view_bundle_createWizard_provideBundleDistro();
     }
 
     private DynamicForm createUrlForm() {
         urlTextItem = new TextItem("url", URL_OPTION);
+        urlTextItem.setTooltip(URL_OPTION_TOOLTIP);
         urlTextItem.setRequired(false);
         urlTextItem.setShowTitle(false);
         urlTextItem.setWidth(400);
+        urlTextItem.setColSpan(4);
+        urlUserNameItem = new TextItem("username", URL_OPTION_USERNAME);
+        urlUserNameItem.setTooltip(URL_OPTION_TOOLTIP);
+        urlUserNameItem.setRequired(false);
+        urlUserNameItem.setShowTitle(true);
+        urlUserNameItem.setWidth(100);
+        urlUserNameItem.setColSpan(1);
+        urlUserNameItem.setAlign(Alignment.LEFT);
+        urlPasswordItem = new PasswordItem("password", URL_OPTION_PASSWORD);
+        urlPasswordItem.setTooltip(URL_OPTION_TOOLTIP);
+        urlPasswordItem.setRequired(false);
+        urlPasswordItem.setShowTitle(true);
+        urlPasswordItem.setWidth(100);
+        urlPasswordItem.setColSpan(1);
+        urlUserNameItem.setAlign(Alignment.RIGHT);
+
         DynamicForm urlForm = new DynamicForm();
+        urlForm.setItemLayout(FormLayoutType.TABLE);
+        urlForm.setNumCols(4);
         urlForm.setPadding(20);
         urlForm.setWidth100();
-        urlForm.setItems(urlTextItem);
+
+        urlForm.setItems(urlTextItem, urlUserNameItem, urlPasswordItem);
         return urlForm;
     }
 
@@ -148,11 +179,13 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         uploadDistroForm.setPadding(20);
         uploadDistroForm.setWidth(400);
         uploadDistroForm.addFormHandler(new DynamicFormHandler() {
+            @Override
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 processUpload();
             }
         });
         uploadDistroForm.addFormSubmitFailedHandler(new FormSubmitFailedHandler() {
+            @Override
             public void onFormSubmitFailed(FormSubmitFailedEvent event) {
                 return; // the distro form component will log an error for us
             }
@@ -177,6 +210,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         upload.setCanvas(textFileRetrieverForm);
 
         showUpload.addClickHandler(new ClickHandler() {
+            @Override
             public void onClick(ClickEvent clickEvent) {
                 showUpload.hide();
                 upload.show();
@@ -201,6 +235,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 return e.getInnerText();
             }
 
+            @Override
             public void onSubmitComplete(DynamicFormSubmitCompleteEvent event) {
                 wizard.setRecipe(htmlUnescape(event.getResults()));
                 recipe.setValue(htmlUnescape(event.getResults()));
@@ -218,6 +253,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
     private void processUrl() {
         String urlString = (String) this.urlTextItem.getValue();
+        String urlUserName = (String) this.urlUserNameItem.getValue();
+        String urlPassword = (String) this.urlPasswordItem.getValue();
 
         if (urlString == null || urlString.trim().length() == 0) {
             wizard.getView().showMessage(MSG.view_bundle_createWizard_enterUrl());
@@ -227,7 +264,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         }
 
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(10 * 60 * 1000); // if upload takes more than 10m, you have other things to worry about
-        bundleServer.createBundleVersionViaURL(urlString, new AsyncCallback<BundleVersion>() {
+        bundleServer.createBundleVersionViaURL(urlString, urlUserName, urlPassword, new AsyncCallback<BundleVersion>() {
+            @Override
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
@@ -237,6 +275,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 wizard.getView().incrementStep(); // go to the next step
             }
 
+            @Override
             public void onFailure(Throwable caught) {
                 // Escape it, since it contains the URL, which the user entered.
                 String message = StringUtility.escapeHtml(caught.getMessage());
@@ -256,6 +295,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             criteria.fetchBundle(true);
             BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
             bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+                @Override
                 public void onSuccess(PageList<BundleVersion> result) {
                     BundleVersion bv = result.get(0);
                     CoreGUI.getMessageCenter().notify(
@@ -266,6 +306,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                     wizard.getView().incrementStep(); // go to the next step
                 }
 
+                @Override
                 public void onFailure(Throwable caught) {
                     wizard.getView().showMessage(caught.getMessage());
                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
@@ -294,6 +335,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         this.wizard.setRecipe(recipeString);
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
         bundleServer.createBundleVersionViaRecipe(this.wizard.getRecipe(), new AsyncCallback<BundleVersion>() {
+            @Override
             public void onSuccess(BundleVersion result) {
                 CoreGUI.getMessageCenter().notify(
                     new Message(MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
@@ -303,6 +345,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 wizard.getView().incrementStep(); // go to the next step
             }
 
+            @Override
             public void onFailure(Throwable caught) {
                 wizard.getView().showMessage(caught.getMessage());
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);

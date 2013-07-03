@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server;
 
@@ -31,6 +31,7 @@ public class RHQConstants {
     public static final String EAR_FILE_NAME = EAR_NAME + ".ear";
     public static final String ENTITY_MANAGER_JNDI_NAME = "java:jboss/RHQEntityManagerFactory";
     public static final String DATASOURCE_JNDI_NAME = "java:jboss/datasources/RHQDS";
+    public static final String NO_TX_DATASOURCE_JNDI_NAME = "java:jboss/datasources/NoTxRHQDS";
     public static final String PERSISTENCE_UNIT_NAME = "rhqpu";
     public static final String TRANSACTION_MANAGER_JNDI_NAME = "java:jboss/TransactionManager";
 

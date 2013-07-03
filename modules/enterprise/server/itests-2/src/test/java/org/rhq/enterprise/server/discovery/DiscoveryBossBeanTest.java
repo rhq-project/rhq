@@ -98,6 +98,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
     private ResourceType serviceType2;
 
+    private ResourceType storagePlatformType;
+
+    private ResourceType storageServerType;
+
     private Agent agent;
 
     private TestServerCommunicationsService agentServiceContainer;
@@ -111,11 +115,14 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         initDB();
 
-        platformType = getEntityManager().find(ResourceType.class, 1);
-        serverType = getEntityManager().find(ResourceType.class, 2);
-        serviceType1 = getEntityManager().find(ResourceType.class, 3);
-        serviceType2 = getEntityManager().find(ResourceType.class, 4);
-        agent = getEntityManager().find(Agent.class, 1);
+        platformType = getEntityManager().find(ResourceType.class, 15641);
+        serverType = getEntityManager().find(ResourceType.class, 15642);
+        serviceType1 = getEntityManager().find(ResourceType.class, 15643);
+        serviceType2 = getEntityManager().find(ResourceType.class, 15644);
+        agent = getEntityManager().find(Agent.class, 15641);
+
+        storagePlatformType = getEntityManager().find(ResourceType.class, 15651);
+        storageServerType = getEntityManager().find(ResourceType.class, 15652);
 
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.discoveryService = Mockito.mock(DiscoveryAgentService.class);
@@ -128,8 +135,8 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
                 ResourceType resourceType = (ResourceType) invocation.getArguments()[0];
                 resource.setResourceType(resourceType);
                 long randomLong = UUID.randomUUID().getLeastSignificantBits();
-                resource.setResourceKey(String.valueOf("key-" + randomLong));
-                resource.setName("name-" + randomLong);
+                resource.setResourceKey(prefix("key-" + randomLong));
+                resource.setName(prefix("name-" + randomLong));
                 int parentResourceId = (Integer) invocation.getArguments()[1];
                 Resource parentResource = resourceManager.getResource(subjectManager.getOverlord(), parentResourceId);
                 resource.setParentResource(parentResource);
@@ -156,11 +163,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     public void testBasicInventoryReport() throws Exception {
         InventoryReport inventoryReport = new InventoryReport(agent);
 
-        Resource platform = new Resource("alpha", "platform", platformType);
-        Resource server = new Resource("bravo", "server", serverType);
+        Resource platform = new Resource(prefix("alpha"), prefix("platform"), platformType);
+        Resource server = new Resource(prefix("bravo"), prefix("server"), serverType);
         platform.addChildResource(server);
-        Resource service1 = new Resource("charlie", "service 1", serviceType1);
-        Resource service2 = new Resource("delta", "service 2", serviceType2);
+        Resource service1 = new Resource(prefix("charlie"), prefix("service 1"), serviceType1);
+        Resource service2 = new Resource(prefix("delta"), prefix("service 2"), serviceType2);
         server.addChildResource(service1);
         server.addChildResource(service2);
 
@@ -182,7 +189,7 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     public void testUpdateInventoryReport() throws Exception {
         // First just submit the platform
         InventoryReport inventoryReport = new InventoryReport(agent);
-        Resource platform = new Resource("alpha", "platform", platformType);
+        Resource platform = new Resource(prefix("alpha"), prefix("platform"), platformType);
         platform.setUuid(String.valueOf(new Random().nextInt()));
         inventoryReport.addAddedRoot(platform);
         MergeInventoryReportResults results = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
@@ -195,10 +202,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // Now submit the server and its children as an update report
         inventoryReport = new InventoryReport(agent);
-        Resource server = new Resource("bravo", "server", serverType);
+        Resource server = new Resource(prefix("bravo"), prefix("server"), serverType);
         platform.addChildResource(server);
-        Resource service1 = new Resource("charlie", "service 1", serviceType1);
-        Resource service2 = new Resource("delta", "service 2", serviceType2);
+        Resource service1 = new Resource(prefix("charlie"), prefix("service 1"), serviceType1);
+        Resource service2 = new Resource(prefix("delta"), prefix("service 2"), serviceType2);
         server.addChildResource(service1);
         server.addChildResource(service2);
 
@@ -219,10 +226,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     public void testManuallyAddResource() throws Exception {
         InventoryReport inventoryReport = new InventoryReport(agent);
 
-        Resource platform = new Resource("alpha", "platform", platformType);
-        Resource server = new Resource("bravo", "server", serverType);
+        Resource platform = new Resource(prefix("alpha"), prefix("platform"), platformType);
+        Resource server = new Resource(prefix("bravo"), prefix("server"), serverType);
         platform.addChildResource(server);
-        Resource service2 = new Resource("delta", "service 2", serviceType2);
+        Resource service2 = new Resource(prefix("delta"), prefix("service 2"), serviceType2);
         server.addChildResource(service2);
 
         platform.setUuid(String.valueOf(new Random().nextInt()));
@@ -258,10 +265,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         InventoryReport inventoryReport = new InventoryReport(agent);
 
-        Resource platform = new Resource("platform", "platform", platformType);
+        Resource platform = new Resource(prefix("platform"), prefix("platform"), platformType);
         platform.setUuid(String.valueOf(new Random().nextInt()));
         for (int i = 0; i < 17; i++) {
-            String serverString = "server " + String.valueOf(i);
+            String serverString = prefix("server " + String.valueOf(i));
             Resource server = new Resource(serverString, serverString, serverType);
             server.setUuid(String.valueOf(new Random().nextInt()));
             platform.addChildResource(server);
@@ -333,9 +340,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // create an inventory report with a platform and a server - the server will be of the ignored type
         InventoryReport inventoryReport = new InventoryReport(agent);
-        Resource platform = new Resource("platform", "platform", platformType);
+        Resource platform = new Resource(prefix("platform"), prefix("platform"), platformType);
         platform.setUuid(String.valueOf(new Random().nextInt()));
-        Resource server = new Resource("server0", "server0", serverType);
+        Resource server = new Resource(prefix("server0"), prefix("server0"), serverType);
         server.setUuid(String.valueOf(new Random().nextInt()));
         platform.addChildResource(server);
         inventoryReport.addAddedRoot(platform);
@@ -365,9 +372,9 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // create an inventory report with just a platform and a server
         InventoryReport inventoryReport = new InventoryReport(agent);
-        Resource platform = new Resource("platform", "platform", platformType);
+        Resource platform = new Resource(prefix("platform"), prefix("platform"), platformType);
         platform.setUuid(String.valueOf(new Random().nextInt()));
-        Resource server = new Resource("server0", "server0", serverType);
+        Resource server = new Resource(prefix("server0"), prefix("server0"), serverType);
         server.setUuid(String.valueOf(new Random().nextInt()));
         platform.addChildResource(server);
         inventoryReport.addAddedRoot(platform);
@@ -391,10 +398,10 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
         // First create an inventory report for a new platform with servers - nothing is ignored yet
         InventoryReport inventoryReport = new InventoryReport(agent);
-        Resource platform = new Resource("platform", "platform", platformType);
+        Resource platform = new Resource(prefix("platform"), prefix("platform"), platformType);
         platform.setUuid(String.valueOf(new Random().nextInt()));
         for (int i = 0; i < 17; i++) {
-            String serverString = "server " + String.valueOf(i);
+            String serverString = prefix("server " + String.valueOf(i));
             Resource server = new Resource(serverString, serverString, serverType);
             server.setUuid(String.valueOf(new Random().nextInt()));
             platform.addChildResource(server);
@@ -454,6 +461,39 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         assertEquals(platformSyncInfo.getChildSyncInfos().size(), 0); // notice there are no server children now
     }
 
+    @Test(groups = "integration.ejb3")
+    public void testAutoImportStorageNode() throws Exception {
+
+        // create an inventory report for a storage node
+        InventoryReport inventoryReport = new InventoryReport(agent);
+
+        Resource storagePlatform = new Resource(prefix("storagePlatform"), prefix("storagePlatform"),
+            storagePlatformType);
+        storagePlatform.setUuid(String.valueOf(new Random().nextInt()));
+
+        Resource storageNode = new Resource(prefix("storageNode"), prefix("storageNode"), storageServerType);
+        storageNode.setUuid(String.valueOf(new Random().nextInt()));
+        storagePlatform.addChildResource(storageNode);
+
+        inventoryReport.addAddedRoot(storagePlatform);
+
+        // Merge this inventory report
+        MergeInventoryReportResults mergeResults = discoveryBoss.mergeInventoryReport(serialize(inventoryReport));
+        assert mergeResults != null;
+        assert mergeResults.getIgnoredResourceTypes() == null : "nothing should have been ignored";
+        ResourceSyncInfo platformSyncInfo = mergeResults.getResourceSyncInfo();
+        assert platformSyncInfo != null;
+
+        // Check merge result
+        assertEquals(InventoryStatus.COMMITTED, platformSyncInfo.getInventoryStatus());
+        assertEquals(storagePlatform.getChildResources().size(), platformSyncInfo.getChildSyncInfos().size());
+
+        storageNode = resourceManager.getResourceById(subjectManager.getOverlord(), platformSyncInfo
+            .getChildSyncInfos().iterator().next().getId());
+        assertNotNull(storageNode);
+        assertEquals(InventoryStatus.COMMITTED, storageNode.getInventoryStatus());
+    }
+
     /**
      * Use this to fake like your remoting objects. Can be used to keep your own copy of objects locally transient.
      *
@@ -500,7 +540,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
 
             Query q;
             List<?> doomed;
-            q = em.createQuery("SELECT r FROM Resource r WHERE r.resourceType.id <= 4 ORDER BY r.id DESC");
+            q = em.createQuery("" //
+                + "SELECT r FROM Resource r" //
+                + "    WHERE r.resourceType.name LIKE '" + getPrefix() + "%'" //
+                + "       OR r.resourceType.name = 'RHQ Storage Node'" //
+                + " ORDER BY r.id DESC");
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 Resource res = em.getReference(Resource.class, ((Resource) removeMe).getId());
@@ -558,7 +602,14 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
     }
 
     String getDataSetFile() {
-        return getClass().getSimpleName() + ".xml";
+        return getPrefix() + ".xml";
     }
 
+    String prefix(String suffix) {
+        return getPrefix() + "-" + suffix;
+    }
+
+    String getPrefix() {
+        return getClass().getSimpleName();
+    }
 }

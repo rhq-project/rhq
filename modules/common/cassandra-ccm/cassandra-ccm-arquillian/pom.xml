@@ -1,0 +1,33 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-cassandra-ccm</artifactId>
+    <version>4.9.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>rhq-cassandra-ccm-arquillian</artifactId>
+  <name>RHQ Cassandra CCM Arquillian</name>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-cassandra-ccm-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-cassandra-schema</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.jboss.arquillian.container</groupId>
+      <artifactId>arquillian-container-test-impl-base</artifactId>
+    </dependency>
+  </dependencies>
+</project>

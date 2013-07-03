@@ -303,6 +303,35 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
     }
 
     @Override
+    public PluginConfigurationUpdate upgradePluginConfiguration(Subject subject, int resourceId,
+        Configuration newPluginConfiguration) throws ResourceNotFoundException {
+
+        Subject overlord = subjectManager.getOverlord();
+        Resource resource = resourceManager.getResourceById(overlord, resourceId);
+
+        // make sure the user has the proper permissions to do this
+        ensureModifyPermission(subject, resource);
+
+        // Make sure to unmask the configuration before persisting the update.
+        Configuration existingPluginConfiguration = resource.getPluginConfiguration();
+        ConfigurationMaskingUtility.unmaskConfiguration(newPluginConfiguration, existingPluginConfiguration);
+
+        // create our new update request and assign it to our resource - its status will initially be "in progress"
+        PluginConfigurationUpdate update = new PluginConfigurationUpdate(resource, newPluginConfiguration,
+            subject.getName());
+
+        update.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        entityManager.persist(update);
+
+        resource.addPluginConfigurationUpdates(update);
+        resource.setPluginConfiguration(update.getConfiguration());
+
+        entityManager.merge(update);
+
+        return update;
+    }
+
+    @Override
     public Configuration getResourceConfiguration(Subject subject, int resourceId) {
         Resource resource = entityManager.find(Resource.class, resourceId);
 
@@ -2608,7 +2637,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 }
 
                 if (resources != null) {//process resources
-                for (Resource resource : resources) {
+                    for (Resource resource : resources) {
                         processPropertyOptionsSource(pds, tt, expression, filterPattern, resource);
                     }
                 } else {// process resourcesPaged(CriteriaQuery parsing)

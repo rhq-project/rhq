@@ -32,6 +32,9 @@ import javax.ejb.TimerService;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.domain.cloud.Server;
+import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+
 /**
  * This startup singleton EJB is here to work around bug AS7-5530 and to
  * schedule the real StartupBean's work in a delayed fashion (this is to allow
@@ -50,6 +53,9 @@ public class StrippedDownStartupBeanPreparation {
     @EJB
     private StrippedDownStartupBean startupBean;
 
+    @EJB
+    private ServerManagerLocal serverManager;
+
     @Resource
     private TimerService timerService; // needed to schedule our startup bean init call
 
@@ -57,6 +63,27 @@ public class StrippedDownStartupBeanPreparation {
     public void initWithTransactionBecauseAS75530() throws RuntimeException {
         log.info("Scheduling the initialization of the testing RHQ deployment");
         timerService.createSingleActionTimer(1, new TimerConfig(null, false)); // call StartupBean in 1ms
+
+        startupBean.purgeTestServerAndStorageNodes();
+        createTestServer();
+    }
+
+    /**
+     * The storage client initialization performed by {@link org.rhq.enterprise.server.storage.StorageClientManagerBean#init()}
+     * requires having a server entity in the database which will be the case with a regular deployment. This method
+     * persists a server before any tests execute. If the server entity does not exist or cannot be loaded, then the
+     * storage client will not initialize properly and any tests that depend on the storage client will fail.
+     */
+    private void createTestServer() {
+        Server server = new Server();
+        server.setName(TestConstants.RHQ_TEST_SERVER_NAME);
+        server.setAddress("127.0.0.1");
+        server.setOperationMode(Server.OperationMode.INSTALLED);
+        server.setPort(7080);
+        server.setSecurePort(7443);
+
+        serverManager.create(server);
+        System.setProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY, TestConstants.RHQ_TEST_SERVER_NAME);
     }
 
     @Timeout
@@ -72,4 +99,5 @@ public class StrippedDownStartupBeanPreparation {
             log.fatal("The server failed to start up properly", t);
         }
     }
+
 }

@@ -7,7 +7,7 @@
   <context-param>
     <param-name>resteasy.media.type.mappings</param-name>
     <param-value>html : text/html, json : application/json, xml : application/xml, csv : text/csv, txt: text/plain,
-      yaml: application/yaml
+      yaml: application/yaml, jsonw: application/vnd.rhq.wrapped+json
     </param-value>
   </context-param>
 

@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.common.framework;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.rhq.core.domain.auth.Subject;
@@ -80,8 +81,8 @@ public class UserPreferencesUIBean {
 
     public String getLeftResourceNavState() {
         updateRecentVisits();
-        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences().getPreference(LEFT_RESOURCE_NAV_SHOWING,
-            "30");
+        return EnterpriseFacesContextUtility.getWebUser().getWebPreferences()
+            .getPreference(LEFT_RESOURCE_NAV_SHOWING, "30");
     }
 
     public void setLeftResourceNavState(String state) {
@@ -145,37 +146,55 @@ public class UserPreferencesUIBean {
     }
 
     public List<Resource> getResourceFavorites() {
+        // ignore this for users that are in the process of being created
+        Subject subject = getSubject();
+        if (0 == subject.getId()) {
+            return new ArrayList();
+        }
+
         if (resourceFavorites == null) {
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             WebUserPreferences.FavoriteResourcePortletPreferences favoriteResources = user.getWebPreferences()
                 .getFavoriteResourcePortletPreferences();
 
-            resourceFavorites = resourceManager.findResourceByIds(getSubject(), favoriteResources.asArray(), false,
+            resourceFavorites = resourceManager.findResourceByIds(subject, favoriteResources.asArray(), false,
                 PageControl.getUnlimitedInstance());
         }
         return resourceFavorites;
     }
 
     public List<SavedSearch> getSavedSearches() {
+        // ignore this for users that are in the process of being created
+        Subject subject = getSubject();
+        if (0 == subject.getId()) {
+            return new ArrayList();
+        }
+
         if (savedSearches == null) {
             SavedSearchCriteria criteria = new SavedSearchCriteria();
-            criteria.addFilterSubjectId(getSubject().getId());
+            criteria.addFilterSubjectId(subject.getId());
             criteria.addFilterGlobal(false);
             criteria.addSortName(PageOrdering.ASC); // each sublist is alphabetical
 
-            savedSearches = savedSearchManager.findSavedSearchesByCriteria(getSubject(), criteria);
+            savedSearches = savedSearchManager.findSavedSearchesByCriteria(subject, criteria);
         }
         return savedSearches;
     }
 
     public List<ResourceGroup> getGroupFavorites() {
+        // ignore this for users that are in the process of being created
+        Subject subject = getSubject();
+        if (0 == subject.getId()) {
+            return new ArrayList();
+        }
+
         if (groupFavorites == null) {
             WebUser user = EnterpriseFacesContextUtility.getWebUser();
             WebUserPreferences.FavoriteGroupPortletPreferences favoriteGroups = user.getWebPreferences()
                 .getFavoriteGroupPortletPreferences();
 
-            groupFavorites = groupManager.findResourceGroupByIds(getSubject(), favoriteGroups.asArray(), PageControl
-                .getUnlimitedInstance());
+            groupFavorites = groupManager.findResourceGroupByIds(subject, favoriteGroups.asArray(),
+                PageControl.getUnlimitedInstance());
         }
         return groupFavorites;
     }
@@ -199,9 +218,9 @@ public class UserPreferencesUIBean {
                 WebUserPreferences.ResourceVisit.Kind.valueOf(res.getResourceType().getCategory().name()));
         } else if (groupId != null) {
             ResourceGroup group = groupManager.getResourceGroupById(getSubject(), Integer.parseInt(groupId), null);
-            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(groupId), group.getName(), (group
-                .getResourceType() != null ? WebUserPreferences.ResourceVisit.Kind.COMPATIBLE_GROUP
-                : WebUserPreferences.ResourceVisit.Kind.MIXED_GROUP));
+            visit = new WebUserPreferences.ResourceVisit(Integer.parseInt(groupId), group.getName(),
+                (group.getResourceType() != null ? WebUserPreferences.ResourceVisit.Kind.COMPATIBLE_GROUP
+                    : WebUserPreferences.ResourceVisit.Kind.MIXED_GROUP));
         }
 
         if (visit != null) {

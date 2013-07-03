@@ -62,6 +62,38 @@
 
     <dependency>
       <groupId>org.rhq</groupId>
+      <artifactId>rhq-cassandra-schema</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hyperic</groupId>
+          <artifactId>sigar-dist</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.datastax.cassandra</groupId>
+          <artifactId>cassandra-driver-core</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>org.rhq</groupId>
+          <artifactId>rhq-core-plugin-api</artifactId>
+        </exclusion>
+       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-core-plugin-api</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hyperic</groupId>
+          <artifactId>sigar-dist</artifactId>
+        </exclusion>
+       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
       <artifactId>rhq-core-client-api</artifactId>
       <version>${project.version}</version>
     </dependency>
@@ -88,6 +120,41 @@
       <groupId>org.rhq</groupId>
       <artifactId>rhq-common-drift</artifactId>
       <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-server-metrics</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.hyperic</groupId>
+          <artifactId>sigar-dist</artifactId>
+        </exclusion>
+        <exclusion>
+          <groupId>com.datastax.cassandra</groupId>
+          <artifactId>cassandra-driver-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-cassandra-util</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.datastax.cassandra</groupId>
+          <artifactId>cassandra-driver-core</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>${cassandra.driver.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -435,7 +502,7 @@
         <configuration>
           <ejbVersion>3.0</ejbVersion>
           <generateClient>true</generateClient>
-          <!-- We shoudn't need Class-Path manifest entry, at least when deployed in AS
+          <!-- We shouldn't need Class-Path manifest entry, at least when deployed in AS
                but we might need it for CLI. If we don't need the manifest entry in CLI,
                then we should uncomment this because we get annoying errors in AS7 logs
                with the manifest entry.
@@ -621,7 +688,7 @@
 
   <repositories>
     <repository>
-      <!-- TODO change when the annotations are puplished. This is temporary for the swagger annotations for REST-docu -->
+      <!-- TODO change when the annotations are published. This is temporary for the swagger annotations for REST-docu -->
       <id>sonatype-oss-snapshot</id>
       <name>Sonatype OSS Snapshot repository</name>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
@@ -717,7 +784,7 @@
 
       <properties>
         <rhq.rootDir>../../../..</rhq.rootDir>
-        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
         <rhq.deploymentName>${project.build.finalName}-ejb3.jar</rhq.deploymentName>
         <rhq.deploymentDir>${rhq.containerDir}/${rhq.earDeployDir}/${rhq.deploymentName}</rhq.deploymentDir>
       </properties>
@@ -927,6 +994,30 @@
                 </parameters>
                 <outputDir>${project.build.directory}/docs/html</outputDir>
                 <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
+                    <targetExtension>.html</targetExtension>
+                  </fileMapper>
+                </fileMappers>
+              </transformationSet>
+              <transformationSet>
+                <!-- Generate a html renderingof a short form -->
+                <!-- org.rhq.helpers.rest_docs_generator.test plugin wrote to target/docs/xml (see -AtargetDirectory above) -->
+                <dir>target/docs/xml</dir>
+                <includes>
+                  <include>rest-api-out.xml</include>
+                </includes>
+                <stylesheet>src/main/xsl/apiout2html_overview.xsl</stylesheet>
+                <parameters>
+                  <parameter>
+                    <name>basePath</name>
+                    <value>http://localhost:7080/rest</value>
+                  </parameter>
+                </parameters>
+                <outputDir>${project.build.directory}/docs/html</outputDir>
+                <fileMappers>
+                  <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.MergeFileMapper">
+                      <targetName>rest-api-overview</targetName>
+                    </fileMapper>
                   <fileMapper implementation="org.codehaus.plexus.components.io.filemappers.FileExtensionMapper">
                     <targetExtension>.html</targetExtension>
                   </fileMapper>

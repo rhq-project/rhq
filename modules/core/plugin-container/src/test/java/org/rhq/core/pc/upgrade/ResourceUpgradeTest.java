@@ -107,7 +107,8 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
         assertEquals(discoveredResource.getName(), "resource-name-v2");
         assertEquals(discoveredResource.getDescription(), "resource-description-v2");
-        
+        assertEquals(discoveredResource.getPluginConfiguration().getSimpleValue("test-property"), "test-property-v2");
+
         checkUpgradeInactive();
     }
 
@@ -173,7 +174,8 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
         assertEquals(discoveredResource.getName(), "resource-name-v1");
         assertEquals(discoveredResource.getDescription(), "resource-description-v1");
-        
+        assertEquals(discoveredResource.getPluginConfiguration().getSimpleValue("test-property"), "test-property-v1");
+
         checkUpgradeInactive();
     }
 
@@ -221,6 +223,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
         assertEquals(discoveredResource.getName(), "resource-name-v2");
         assertEquals(discoveredResource.getDescription(), "resource-description-v2");
+        assertEquals(discoveredResource.getPluginConfiguration().getSimpleValue("test-property"), "test-property-v2");
 
         ResourceContainer container = PluginContainer.getInstance().getInventoryManager()
             .getResourceContainer(discoveredResource);
@@ -230,7 +233,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
         assertFalse(marker.exists(),
             "The upgrade seems to have occured even though there shouldn't have been a resource to upgrade.");
-        
+
         checkUpgradeInactive();
     }
 
@@ -278,7 +281,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
         assertFalse(marker.exists(),
             "The discovery of the resource type with a failed upgraded resource must not be executed but it was.");
-        
+
         checkUpgradeInactive();
     }
 
@@ -305,7 +308,6 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
         Resource discoveredResource = resources.iterator().next();
 
-        assertEquals(discoveredResource.getResourceKey(), "resource-key-v1");
         assertEquals(discoveredResource.getName(), "resource-name-v1");
         assertEquals(discoveredResource.getDescription(), "resource-description-v1");
 
@@ -348,6 +350,7 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
         assertEquals(discoveredResource.getResourceKey(), "resource-key-v2");
         assertEquals(discoveredResource.getName(), "resource-name-v2");
         assertEquals(discoveredResource.getDescription(), "resource-description-v2");
+        assertEquals(discoveredResource.getPluginConfiguration().getSimpleValue("test-property"), "test-property-v2");
 
         ResourceContainer container = PluginContainer.getInstance().getInventoryManager()
             .getResourceContainer(discoveredResource);
@@ -357,12 +360,13 @@ public class ResourceUpgradeTest extends ResourceUpgradeTestBase {
 
         assertTrue(marker.exists(),
             "The upgrade success marker file wasn't found. This means the upgrade didn't actually run.");
-        
+
         checkUpgradeInactive();
-    }    
+    }
 
     private void checkUpgradeInactive() {
         InventoryManager im = PluginContainer.getInstance().getInventoryManager();
-        assertFalse(im.isResourceUpgradeActive(), "Resource upgrade shouldn't be active once plugin container has initialized");
+        assertFalse(im.isResourceUpgradeActive(),
+            "Resource upgrade shouldn't be active once plugin container has initialized");
     }
 }

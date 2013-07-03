@@ -497,6 +497,21 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 pd.setDefaultValue("objectclass=groupOfNames");
                 break;
 
+            case LDAP_GROUP_PAGING:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupUsePaging_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupUsePaging_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.setDefaultValue("false");
+                break;
+
+            case LDAP_GROUP_QUERY_PAGE_SIZE:
+                pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupPageSize_desc());
+                pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupPageSize_name());
+                pd.setPropertyGroupDefinition(ldapGroup);
+                pd.addConstraints(new IntegerRangeConstraint(Long.valueOf(1), null));
+                pd.setDefaultValue("1000");
+                break;
+
             case LDAP_GROUP_MEMBER:
                 pd.setDescription(MSG.view_admin_systemSettings_LDAPGroupMember_desc());
                 pd.setDisplayName(MSG.view_admin_systemSettings_LDAPGroupMember_name());
@@ -600,10 +615,6 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
             MSG.view_admin_systemSettings_serverDetails_dbDriverName());
         final StaticTextItem dbDriverVersion = new StaticTextItem("dbDriverVersion",
             MSG.view_admin_systemSettings_serverDetails_dbDriverVersion());
-        final StaticTextItem currentMeasRawTable = new StaticTextItem("currentMeasRawTable",
-            MSG.view_admin_systemSettings_serverDetails_currentTable());
-        final StaticTextItem nextMeasTableRotation = new StaticTextItem("nextMeasTableRotation",
-            MSG.view_admin_systemSettings_serverDetails_nextRotation());
 
         productName.setWrapTitle(false);
         productVersion.setWrapTitle(false);
@@ -617,12 +628,9 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
         dbProductVersion.setWrapTitle(false);
         dbDriverName.setWrapTitle(false);
         dbDriverVersion.setWrapTitle(false);
-        currentMeasRawTable.setWrapTitle(false);
-        nextMeasTableRotation.setWrapTitle(false);
 
         form.setItems(productName, productVersion, productBuildNumber, serverName, serverTimezone, serverTime,
-            serverInstallDir, dbUrl, dbProductName, dbProductVersion, dbDriverName, dbDriverVersion,
-            currentMeasRawTable, nextMeasTableRotation);
+            serverInstallDir, dbUrl, dbProductName, dbProductVersion, dbDriverName, dbDriverVersion);
 
         GWTServiceLookup.getSystemService().getServerDetails(new AsyncCallback<ServerDetails>() {
 
@@ -643,10 +651,6 @@ public class SystemSettingsView extends EnhancedVLayout implements PropertyValue
                 form.setValue(dbProductVersion.getName(), details.get(ServerDetails.Detail.DATABASE_PRODUCT_VERSION));
                 form.setValue(dbDriverName.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_NAME));
                 form.setValue(dbDriverVersion.getName(), details.get(ServerDetails.Detail.DATABASE_DRIVER_VERSION));
-                form.setValue(currentMeasRawTable.getName(),
-                    details.get(ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE));
-                form.setValue(nextMeasTableRotation.getName(),
-                    details.get(ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION));
             }
 
             @Override

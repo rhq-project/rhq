@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7;
 
@@ -71,6 +71,7 @@ import org.rhq.modules.plugins.jbossas7.json.ReadAttribute;
 import org.rhq.modules.plugins.jbossas7.json.ReadChildrenNames;
 import org.rhq.modules.plugins.jbossas7.json.ReadResource;
 import org.rhq.modules.plugins.jbossas7.json.Remove;
+import org.rhq.modules.plugins.jbossas7.json.ResolveExpression;
 import org.rhq.modules.plugins.jbossas7.json.Result;
 
 /**
@@ -81,8 +82,12 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
 public class BaseComponent<T extends ResourceComponent<?>> implements AS7Component<T>, MeasurementFacet,
     ConfigurationFacet, DeleteResourceFacet, CreateChildResourceFacet, OperationFacet {
 
-    private static final String INTERNAL = "_internal:";
-    private static final int INTERNAL_SIZE = INTERNAL.length();
+    static final String INTERNAL = "_internal:";
+    static final int INTERNAL_SIZE = INTERNAL.length();
+    static final String EXPRESSION = "_expr:";
+    static final int EXPRESSION_SIZE = EXPRESSION.length();
+    static final String EXPRESSION_VALUE_KEY = "EXPRESSION_VALUE";
+
     public static final String MANAGED_SERVER = "Managed Server";
 
     final Log log = LogFactory.getLog(this.getClass());
@@ -170,12 +175,17 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 // Metrics from the application server
 
                 String reqName = req.getName();
+                boolean resolveExpression = false;
+                if (reqName.startsWith(EXPRESSION)) {
+                    resolveExpression = true;
+                    reqName = reqName.substring(EXPRESSION_SIZE);
+                }
 
-                ComplexRequest request = null;
+                ComplexRequest complexRequest = null;
                 Operation op;
                 if (reqName.contains(":")) {
-                    request = ComplexRequest.create(reqName);
-                    op = new ReadAttribute(address, request.getProp());
+                    complexRequest = ComplexRequest.create(reqName);
+                    op = new ReadAttribute(address, complexRequest.getProp());
                 } else {
                     op = new ReadAttribute(address, reqName); // TODO batching
                 }
@@ -195,32 +205,60 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                     if (val instanceof String && ((String) val).startsWith("JBAS018003")) // AS7 way of saying "no value available"
                         continue;
                     try {
-                        if (request != null) {
+                        if (complexRequest != null) {
                             HashMap<String, Number> myValues = (HashMap<String, Number>) val;
                             for (String key : myValues.keySet()) {
-                                String sub = request.getSub();
+                                String sub = complexRequest.getSub();
                                 if (key.equals(sub)) {
-                                    addMetric2Report(report, req, myValues.get(key));
+                                    addMetric2Report(report, req, myValues.get(key), resolveExpression);
                                 }
                             }
                         } else {
-                            addMetric2Report(report, req, val);
+                            addMetric2Report(report, req, val, resolveExpression);
                         }
                     } catch (NumberFormatException e) {
                         log.warn("Non numeric input for [" + req.getName() + "] : [" + val + "]");
                     }
                 } else if (req.getDataType() == DataType.TRAIT) {
 
-                    String realVal = getStringValue(val);
+                    if (resolveExpression && val instanceof Map && ((Map) val).containsKey(EXPRESSION_VALUE_KEY)) {
+                        String expression = (String) ((Map) val).get(EXPRESSION_VALUE_KEY);
+                        ResolveExpression resolveExpressionOperation = new ResolveExpression(expression);
+                        Result result = getASConnection().execute(resolveExpressionOperation);
+                        if (!result.isSuccess()) {
+                            if (log.isWarnEnabled()) {
+                                log.warn("Skipping trait [" + req.getName()
+                                    + "] in measurement report. Could not resolve expression [" + expression
+                                    + "], failureDescription:" + result.getFailureDescription());
+                                continue;
+                            }
+                        }
+                        val = result.getResult();
+                    }
 
-                    MeasurementDataTrait data = new MeasurementDataTrait(req, realVal);
+                    MeasurementDataTrait data = new MeasurementDataTrait(req, getStringValue(val));
                     report.addData(data);
                 }
             }
         }
     }
 
-    private void addMetric2Report(MeasurementReport report, MeasurementScheduleRequest req, Object val) {
+    private void addMetric2Report(MeasurementReport report, MeasurementScheduleRequest req, Object val,
+        boolean resolveExpression) {
+        if (resolveExpression && val instanceof Map && ((Map) val).containsKey(EXPRESSION_VALUE_KEY)) {
+            String expression = (String) ((Map) val).get(EXPRESSION_VALUE_KEY);
+            ResolveExpression resolveExpressionOperation = new ResolveExpression(expression);
+            Result result = getASConnection().execute(resolveExpressionOperation);
+            if (!result.isSuccess()) {
+                if (log.isWarnEnabled()) {
+                    log.warn("Skipping metric [" + req.getName()
+                        + "] in measurement report. Could not resolve expression [" + expression
+                        + "], failureDescription:" + result.getFailureDescription());
+                    return;
+                }
+            }
+            val = result.getResult();
+        }
         Double d = Double.parseDouble(getStringValue(val));
         MeasurementDataNumeric data = new MeasurementDataNumeric(req, d);
         report.addData(data);

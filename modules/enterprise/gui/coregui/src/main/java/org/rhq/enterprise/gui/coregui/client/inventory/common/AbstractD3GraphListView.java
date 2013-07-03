@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common;
 
+import java.util.Date;
 import java.util.List;
 
 import com.google.gwt.user.client.Timer;
@@ -26,31 +27,37 @@ import com.smartgwt.client.widgets.Label;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3Graph;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Provide the shared stuff for create GraphListViews like Availability graphs
  * and User Preferences pickers for the date range.
  */
-public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh {
+public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh,RedrawGraphs {
     protected final static int SINGLE_CHART_HEIGHT = 225;
-    protected final static int MULTI_CHART_HEIGHT = 195;
+    protected final static int MULTI_CHART_HEIGHT = 210;
+    protected static Label loadingLabel = new Label(MSG.common_msg_loading());
     protected List<Availability> availabilityList;
     protected List<ResourceGroupAvailability> groupAvailabilityList;
-    protected AvailabilityD3Graph availabilityGraph;
-    protected static Label loadingLabel = new Label(MSG.common_msg_loading());
-    protected UserPreferencesMeasurementRangeEditor measurementRangeEditor;
+    protected AvailabilityD3GraphView availabilityGraph;
+    protected MeasurementUserPreferences measurementUserPrefs;
     protected boolean showAvailabilityGraph = false;
+    protected ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     protected Timer refreshTimer;
 
     public AbstractD3GraphListView() {
         super();
-        measurementRangeEditor = new UserPreferencesMeasurementRangeEditor();
+        measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
         startRefreshCycle();
     }
 
@@ -81,6 +88,13 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
     @Override
     public void refresh() {
         if (isVisible() && !isRefreshing()) {
+            Date now = new Date();
+            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
+            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+            Date newStartDate = new Date(now.getTime() - timeRange);
+            buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
+            buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
+
             redrawGraphs();
         }
     }

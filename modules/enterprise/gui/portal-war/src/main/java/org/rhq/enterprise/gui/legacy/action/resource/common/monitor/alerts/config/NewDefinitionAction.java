@@ -92,12 +92,14 @@ public class NewDefinitionAction extends BaseAction {
                 alertDefinitionId = alertTemplateManager.createAlertTemplate(subject, alertDef, defForm.getType());
             } else if (context == FormContext.Resource) {
                 AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
-                alertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(subject, alertDef, defForm.getId(), true);
+                AlertDefinition alertDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(subject,
+                    alertDef, defForm.getId(), true);
+                alertDefinitionId = alertDefinition.getId();
             } else if (context == FormContext.Group) {
                 GroupAlertDefinitionManagerLocal groupAlertDefinitionManager = LookupUtil
                     .getGroupAlertDefinitionManager();
-                alertDefinitionId = groupAlertDefinitionManager.createGroupAlertDefinitions(subject, alertDef, defForm
-                    .getGroupId());
+                alertDefinitionId = groupAlertDefinitionManager.createGroupAlertDefinitions(subject, alertDef,
+                    defForm.getGroupId());
             } else {
                 throw new IllegalArgumentException("Unsupported context: " + context);
             }

@@ -132,7 +132,8 @@
             <!-- define the location of your RHQ root directory - typically rhq.rootDir is overridden in Maven's settings.xml -->
             <rhq.rootDir>/rhq/trunk</rhq.rootDir>
             <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
-            <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+            <rhq.devContainerServerPath>${rhq.defaultDevContainerPath}/rhq-server</rhq.devContainerServerPath>
+            <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
             <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
          </properties>
          <build>

@@ -22,8 +22,10 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -41,8 +43,20 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
+import org.apache.commons.httpclient.params.DefaultHttpParams;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.DefaultedHttpParams;
+import org.apache.http.params.HttpParams;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
 import org.rhq.core.clientapi.agent.bundle.BundleAgentService;
@@ -584,38 +598,71 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
+        return createBundleVersionViaURL(subject, distributionFileUrl, null, null);
+    }
 
-        // validate by immediately creating a URL
-        URL url = new URL(distributionFileUrl);
-
-        // get the distro file into a tmp dir
-        // create temp file
-        File tempDistributionFile = null;
-        InputStream is = null;
-        OutputStream os = null;
-        BundleVersion bundleVersion = null;
-
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
+        String password) throws Exception {
+        File file = null;
         try {
-            tempDistributionFile = File.createTempFile("bundle-distribution", ".zip");
+            file = downloadFile(distributionFileUrl, username, password);
 
-            is = url.openStream();
-            os = new FileOutputStream(tempDistributionFile);
-            long len = StreamUtil.copy(is, os);
-            is = null;
-            os = null;
-            log.debug("Copied [" + len + "] bytes from [" + distributionFileUrl + "] into ["
-                + tempDistributionFile.getPath() + "]");
+            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into ["
+                + file.getPath() + "]");
 
-            bundleVersion = createBundleVersionViaFile(subject, tempDistributionFile);
+            return createBundleVersionViaFile(subject, file);
         } finally {
-            if (null != tempDistributionFile) {
-                tempDistributionFile.delete();
+            if (file != null) {
+                file.delete();
             }
-            safeClose(is);
-            safeClose(os);
+        }
+    }
+
+    private File downloadFile(String fileUrl, String username, String password) throws IOException, URISyntaxException {
+        URL url = new URL(fileUrl);
+
+        if ("http".equalsIgnoreCase(url.getProtocol()) || "https".equalsIgnoreCase(url.getProtocol())) {
+            return downloadFileFromHttp(url, username, password);
+        } else {
+            return slurp(url.openStream());
+        }
+    }
+
+    private File downloadFileFromHttp(URL url, String username, String password) throws URISyntaxException,
+        IOException {
+
+        HttpParams params = new BasicHttpParams();
+        HttpClientParams.setRedirecting(params, true);
+
+        HttpClient httpClient = new DefaultHttpClient(params);
+
+        HttpGet get = new HttpGet(url.toURI());
+
+        if (username != null) {
+            get.addHeader(BasicScheme.authenticate(new UsernamePasswordCredentials(username, password), "UTF-8", false));
         }
 
-        return bundleVersion;
+        HttpResponse response = httpClient.execute(get);
+        if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
+            throw new IllegalArgumentException(
+                "Failed to download the file from the URL [" + url + "]. The server responded: " +
+                    response.getStatusLine().toString());
+        }
+
+        InputStream contents = response.getEntity().getContent();
+
+        return slurp(contents);
+    }
+
+    private File slurp(InputStream is) throws IOException {
+        File file = File.createTempFile("bundle-distribution", ".zip");
+
+        StreamUtil.copy(is, new FileOutputStream(file));
+
+        return file;
     }
 
     private BundleVersion createBundleVersionViaDistributionInfo(Subject subject, BundleDistributionInfo info)
@@ -832,6 +879,31 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         return addBundleFile(subject, bundleVersionId, name, version, architecture, url.openStream());
     }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
+        Architecture architecture, String bundleFileUrl, String userName, String password) throws Exception {
+
+        File file = null;
+        FileInputStream fis = null;
+        try {
+            file = downloadFile(bundleFileUrl, userName, password);
+            fis = new FileInputStream(file);
+
+            return addBundleFile(subject, bundleVersionId, name, version, architecture, fis);
+        } finally {
+            if (fis != null) {
+                safeClose(fis);
+            }
+
+            if (file != null) {
+                file.delete();
+            }
+        }
+    }
+
 
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)

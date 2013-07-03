@@ -208,23 +208,16 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public int createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition,
-        Integer resourceId, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
-        AlertDefinition newAlertDefinition = createAlertDefinitionInternal(subject, alertDefinition, resourceId, true,
-            validateNotificationConfiguration);
-        return newAlertDefinition.getId();
-    }
-    
-    @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public AlertDefinition createAlertDefinitionAndRerurnIt(Subject subject, AlertDefinition alertDefinition,
+    public AlertDefinition createAlertDefinitionInNewTransaction(Subject subject, AlertDefinition alertDefinition,
         Integer resourceId, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
         AlertDefinition newAlertDefinition = createAlertDefinitionInternal(subject, alertDefinition, resourceId, true,
             validateNotificationConfiguration);
         return newAlertDefinition;
     }
 
-    private AlertDefinition createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition, Integer resourceId, boolean checkPerms, boolean validateNotificationConfiguration) throws InvalidAlertDefinitionException {
+    private AlertDefinition createAlertDefinitionInternal(Subject subject, AlertDefinition alertDefinition,
+        Integer resourceId, boolean checkPerms, boolean validateNotificationConfiguration)
+        throws InvalidAlertDefinitionException {
         checkAlertDefinition(subject, null, alertDefinition, resourceId, validateNotificationConfiguration);
 
         // if this is an resource alert definition, set up the link to a resource
@@ -233,7 +226,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             // they should have already been attached to the resourceType or resourceGroup by the caller
 
             // use proxy trick to subvert having to load the entire resource into memory
-            // Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);            
+            // Resource resource = LookupUtil.getResourceManager().getResourceById(user, resourceId);
             alertDefinition.setResource(new Resource(resourceId));
         }
 
@@ -245,8 +238,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                     + alertDefinition.getResourceType() + "]");
             } else if (alertDefinition.getGroup() != null) {
                 throw new PermissionException("User [" + subject.getName()
-                    + "] does not have permission to create alert definitions for group ["
- + alertDefinition.getGroup()
+                    + "] does not have permission to create alert definitions for group [" + alertDefinition.getGroup()
                     + "]");
             } else {
                 throw new PermissionException("User [" + subject.getName()
@@ -275,8 +267,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             if (alertDefinition.getRecoveryId() != 0) {
                 // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
                 // use entityManager direct to bypass security checks, we already know this user is authorized
-                AlertDefinition toBeRecoveredDefinition = entityManager.find(AlertDefinition.class, alertDefinition
-                    .getRecoveryId());
+                AlertDefinition toBeRecoveredDefinition = entityManager.find(AlertDefinition.class,
+                    alertDefinition.getRecoveryId());
                 if (toBeRecoveredDefinition.getEnabled() == false) {
                     addToCache = true;
                 }
@@ -335,7 +327,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
             // TODO GH: Can be more efficient
-            if (checkPermission(subject, alertDefinition)) {
+            if (alertDefinition!=null && checkPermission(subject, alertDefinition)) {
                 alertDefinition.setDeleted(true);
                 modifiedCount++;
 
@@ -486,15 +478,16 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public AlertDefinition updateDependentAlertDefinition(Subject subject, int alertDefinitionId, AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
+    public AlertDefinition updateDependentAlertDefinition(Subject subject, int alertDefinitionId,
+        AlertDefinition alertDefinition, boolean resetMatching) throws InvalidAlertDefinitionException,
+        AlertDefinitionUpdateException {
         return updateAlertDefinitionInternal(subject, alertDefinitionId, alertDefinition, resetMatching, false, false);
     }
 
     @Override
     public AlertDefinition updateAlertDefinitionInternal(Subject subject, int alertDefinitionId,
-                                                         AlertDefinition alertDefinition, boolean resetMatching,
-                                                         boolean checkPerms, boolean finalizeNotifications) throws InvalidAlertDefinitionException,
-        AlertDefinitionUpdateException {
+        AlertDefinition alertDefinition, boolean resetMatching, boolean checkPerms, boolean finalizeNotifications)
+        throws InvalidAlertDefinitionException, AlertDefinitionUpdateException {
         if (resetMatching) {
             alertDefinitionManager.purgeInternals(alertDefinitionId);
         }
@@ -527,8 +520,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
          */
         boolean isResourceLevel = (oldAlertDefinition.getResource() != null);
 
-        checkAlertDefinition(subject, oldAlertDefinition, alertDefinition, isResourceLevel ? oldAlertDefinition.getResource().getId()
-            : null, finalizeNotifications);
+        checkAlertDefinition(subject, oldAlertDefinition, alertDefinition, isResourceLevel ? oldAlertDefinition
+            .getResource().getId() : null, finalizeNotifications);
 
         /*
          * Should not be able to update an alert definition if the old alert definition is in an invalid state
@@ -594,8 +587,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             // if this was a recovery alert, or was recently turned into one
             if (newAlertDefinition.getRecoveryId() != 0) {
                 // only add to the cache if the to-be-recovered definition is disabled, and thus needs recovering
-                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(subject, newAlertDefinition
-                    .getRecoveryId());
+                AlertDefinition toBeRecoveredDefinition = getAlertDefinitionById(subject,
+                    newAlertDefinition.getRecoveryId());
                 if (toBeRecoveredDefinition.getEnabled() == false) {
                     addToCache = true;
                 }
@@ -646,7 +639,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
-    private void checkAlertDefinition(Subject subject, AlertDefinition persistedAlertDefinition, AlertDefinition alertDefinition, Integer resourceId, boolean finalizeNotifications)
+    private void checkAlertDefinition(Subject subject, AlertDefinition persistedAlertDefinition,
+        AlertDefinition alertDefinition, Integer resourceId, boolean finalizeNotifications)
         throws InvalidAlertDefinitionException {
         // if someone enters a really long description, we need to truncate it - the column is only 250 chars
         if (alertDefinition.getDescription() != null && alertDefinition.getDescription().length() > 250) {
@@ -662,6 +656,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             if (alertConditionCategory == AlertConditionCategory.BASELINE) {
 
                 MeasurementDefinition def = alertCondition.getMeasurementDefinition();
+                def = entityManager.getReference(MeasurementDefinition.class, def.getId());
                 NumericType numType = def.getNumericType();
                 if (numType == null) {
                     def = entityManager.getReference(MeasurementDefinition.class, def.getId());
@@ -675,11 +670,13 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
 
         if (finalizeNotifications) {
-            List<AlertNotification> notifications = new ArrayList<AlertNotification>(alertDefinition.getAlertNotifications());
+            List<AlertNotification> notifications = new ArrayList<AlertNotification>(
+                alertDefinition.getAlertNotifications());
 
             //now remove the notifications that have not changed
             if (persistedAlertDefinition != null) {
-                List<AlertNotification> persistedNotifications =  persistedAlertDefinition.getAlertNotifications() == null ? Collections.<AlertNotification>emptyList() : persistedAlertDefinition.getAlertNotifications();
+                List<AlertNotification> persistedNotifications = persistedAlertDefinition.getAlertNotifications() == null ? Collections
+                    .<AlertNotification> emptyList() : persistedAlertDefinition.getAlertNotifications();
 
                 if (persistedNotifications.size() > 0) {
                     Iterator<AlertNotification> it = notifications.iterator();
@@ -691,10 +688,11 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
                             continue;
                         }
 
-                        for(AlertNotification persistedNotification : persistedNotifications) {
+                        for (AlertNotification persistedNotification : persistedNotifications) {
                             //ignore the ids on the notifications as they may vary if we are comparing parent alert def with its children
                             //it's enough for us they they are semantically the same.
-                            if (newNotification.getSenderName().equals(persistedNotification.getSenderName()) && newNotification.equalsData(persistedNotification)) {
+                            if (newNotification.getSenderName().equals(persistedNotification.getSenderName())
+                                && newNotification.equalsData(persistedNotification)) {
                                 it.remove();
                                 break;
                             }
@@ -802,7 +800,8 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             generator.setAuthorizationResourceFragment(tokenType, subject.getId());
         }
 
-        CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner<AlertDefinition>(criteria, generator, entityManager);
+        CriteriaQueryRunner<AlertDefinition> queryRunner = new CriteriaQueryRunner<AlertDefinition>(criteria,
+            generator, entityManager);
         return queryRunner.execute();
     }
 

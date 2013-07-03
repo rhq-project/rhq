@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,21 +13,32 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.enterprise.server.alert.engine.mbean;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import javax.management.MBeanRegistration;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
 import javax.management.ObjectName;
 
+import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.alert.engine.internal.AlertConditionCacheCoordinator;
+import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -35,7 +46,13 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * 
  * @author Joseph Marques
  */
-public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBean, MBeanRegistration {
+@Singleton
+@Startup
+@LocalBean
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBean {
+    private static final ObjectName OBJECT_NAME = ObjectNameFactory.create("rhq:service=AlertConditionCacheMonitor");
 
     public AtomicInteger availabilityCacheElementMatches = new AtomicInteger();
     public AtomicInteger availabilityDurationCacheElementMatches = new AtomicInteger();
@@ -286,20 +303,18 @@ public class AlertConditionCacheMonitor implements AlertConditionCacheMonitorMBe
         LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
     }
 
-    public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
-        objectName = name;
-        mbeanServer = server;
-        return name;
+    @PostConstruct
+    private void init() {
+        JMXUtil.registerMBean(this, OBJECT_NAME);
+        mbeanServer = JMXUtil.getPlatformMBeanServer();
+        objectName = OBJECT_NAME;
     }
 
-    public void postRegister(Boolean registrationDone) {
-    }
-
-    public void preDeregister() throws Exception {
-    }
-
-    public void postDeregister() {
+    @PreDestroy
+    private void destroy() {
         mbeanServer = null;
+        objectName = null;
+        JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
     }
 
 }

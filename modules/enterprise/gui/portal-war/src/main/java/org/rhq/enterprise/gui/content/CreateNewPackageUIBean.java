@@ -51,6 +51,7 @@ import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.gui.util.EnterpriseFacesContextUtility;
 import org.rhq.enterprise.server.content.ContentException;
+import org.rhq.enterprise.server.content.ContentManagerHelper;
 import org.rhq.enterprise.server.content.ContentManagerLocal;
 import org.rhq.enterprise.server.content.ContentUIManagerLocal;
 import org.rhq.enterprise.server.content.RepoManagerLocal;
@@ -238,9 +239,18 @@ public class CreateNewPackageUIBean {
                         packageUploadDetails.put(ContentManagerLocal.UPLOAD_SHA256, sha);
                         packageUploadDetails.put(ContentManagerLocal.UPLOAD_DISPLAY_VERSION, displayVersion);
 
+                        //For package types that handle their own versioning, etc. let's use what the user passed in
+                        //as a version. For the standard, i.e. agent-plugin defined, package types use what we want
+                        //to use for them - sha-based versions to deal with improper versions discovered/declared by
+                        //the packages (i.e. versions in MANIFEST.MF not properly updated)
+                        //
+                        //Did I say I can't wait for all this to disappear with the new provisioning? :)
+                        boolean nonStandardPackageType = ContentManagerHelper.getPackageTypePluginContainer().getPluginManager().getBehavior(packageTypeId) != null;
+                        String versionToUse = nonStandardPackageType ? displayVersion : formatVersion(sha);
+
                         Integer iRepoId = usingARepo ? Integer.parseInt(repoId) : null;
                         packageVersion = contentManager.getUploadedPackageVersion(subject, packageName, packageTypeId,
-                            formatVersion(sha), architectureId, packageStream, packageUploadDetails, iRepoId);
+                            versionToUse, architectureId, packageStream, packageUploadDetails, iRepoId);
 
                     } catch (NoResultException nre) {
                         //eat the exception.  Some of the queries return no results if no package yet exists which is fine.

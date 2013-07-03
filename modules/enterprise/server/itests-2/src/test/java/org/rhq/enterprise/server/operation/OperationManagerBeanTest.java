@@ -1795,10 +1795,11 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         Resource resource = newResource;
         Calendar calendar = new GregorianCalendar();
         calendar.add(Calendar.SECOND, 2);
-        ResourceOperationSchedule schedule = operationManager.scheduleResourceOperationUsingCron(overlord(),
+        Subject overlord = overlord();
+        ResourceOperationSchedule schedule = operationManager.scheduleResourceOperationUsingCron(overlord,
             resource.getId(), "testOp", calendar.get(Calendar.SECOND) + " " + calendar.get(Calendar.MINUTE)
                 + " * * * ?", 20, null, "desc");
-        
+
         assert schedule != null;
         assert schedule.getDescription().equals("desc");
         assert schedule.getOperationName().equals("testOp");
@@ -1806,7 +1807,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getResource().getId() == resource.getId();
 
         List<ResourceOperationSchedule> results;
-        results = operationManager.findScheduledResourceOperations(overlord(), resource.getId());
+        results = operationManager.findScheduledResourceOperations(overlord, resource.getId());
         assert results != null;
         assert results.size() == 1;
         ResourceOperationSchedule returnedSchedule = results.get(0);
@@ -1818,9 +1819,9 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getOperationName().equals("testOp");
         assert returnedSchedule.getParameters() != null;
         assert returnedSchedule.getResource().getId() == resource.getId();
-        
-        System.out.println("WAITING FOR 4s FOR THE SCHEDULED OPERATION TO FINISH");
-        Thread.sleep(4000L);
+
+        System.out.println("WAITING FOR 4.5s FOR THE SCHEDULED OPERATION TO FINISH");
+        Thread.sleep(4500L);
 
         PageList<ResourceOperationHistory> resultsHist;
         resultsHist = operationManager.findCompletedResourceOperationHistories(overlord(), resource.getId(), null,
@@ -1857,17 +1858,17 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
             PageControl.getUnlimitedInstance());
         assert list.size() == 0;
     }
-    
+
     @Test(enabled = ENABLE_TESTS)
     public void testCronGroupScheduling() throws Exception {
         Resource resource = newResource;
         ResourceGroup group = newGroup;
         Calendar calendar = new GregorianCalendar();
         calendar.add(Calendar.SECOND, 2);
-        GroupOperationSchedule schedule = operationManager.scheduleGroupOperationUsingCron(overlord(),
-            newGroup.getId(), new int[] { resource.getId() }, true, "testOp", null, calendar.get(Calendar.SECOND) + " "
-                + calendar.get(Calendar.MINUTE)
-            + " * * * ?", 20, "desc");
+        Subject overlord = overlord();
+        GroupOperationSchedule schedule = operationManager.scheduleGroupOperationUsingCron(overlord, newGroup.getId(),
+            new int[] { resource.getId() }, true, "testOp", null,
+            calendar.get(Calendar.SECOND) + " " + calendar.get(Calendar.MINUTE) + " * * * ?", 20, "desc");
 
         assert schedule != null;
         assert schedule.getDescription().equals("desc");
@@ -1876,7 +1877,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getGroup().getId() == group.getId();
 
         List<GroupOperationSchedule> results;
-        results = operationManager.findScheduledGroupOperations(overlord(), group.getId());
+        results = operationManager.findScheduledGroupOperations(overlord, group.getId());
         assert results != null;
         assert results.size() == 1;
         GroupOperationSchedule returnedSchedule = results.get(0);
@@ -1889,13 +1890,12 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert returnedSchedule.getParameters() != null;
         assert returnedSchedule.getGroup().getId() == group.getId();
 
-        System.out.println("WAITING FOR 4s FOR THE SCHEDULED OPERATION TO FINISH");
-        Thread.sleep(4000L);
+        System.out.println("WAITING FOR 4.5s FOR THE SCHEDULED OPERATION TO FINISH");
+        Thread.sleep(4500L);
 
         PageList<ResourceOperationHistory> resultsHist;
         resultsHist = operationManager.findCompletedResourceOperationHistories(overlord(), resource.getId(), null,
-            null,
-            PageControl.getUnlimitedInstance());
+            null, PageControl.getUnlimitedInstance());
         assert resultsHist != null;
         assert resultsHist.size() == 1;
         ResourceOperationHistory history = resultsHist.get(0);
@@ -1918,8 +1918,7 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
 
         operationManager.deleteOperationHistory(overlord(), history.getId(), false);
         resultsHist = operationManager.findCompletedResourceOperationHistories(overlord(), resource.getId(), null,
-            null,
-            PageControl.getUnlimitedInstance());
+            null, PageControl.getUnlimitedInstance());
         assert resultsHist != null;
         assert resultsHist.size() == 0;
 

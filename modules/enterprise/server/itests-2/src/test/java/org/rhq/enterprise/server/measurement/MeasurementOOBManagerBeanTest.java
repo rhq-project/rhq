@@ -33,7 +33,6 @@ import static org.rhq.core.domain.resource.ResourceCategory.SERVER;
 import static org.rhq.test.AssertUtils.assertCollectionEqualsNoOrder;
 
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -56,14 +55,16 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.jdbc.JDBCUtil;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.test.TransactionCallbackReturnable;
 import org.rhq.enterprise.server.util.Overlord;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
  * @author John Sanda
@@ -106,6 +107,11 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     @EJB
     private MeasurementBaselineManagerLocal baselineManager;
 
+    @EJB
+    StorageClientManagerBean storageClientManagerBean;
+
+    private MetricsDAO metricsDAO;
+
     @Override
     protected void beforeMethod() throws Exception {
         // MeasurementDataManagerUtility looks up config settings from SystemManagerBean.
@@ -116,6 +122,7 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
 
         measurementDefs = new ArrayList<MeasurementDefinition>();
         schedules = new ArrayList<MeasurementSchedule>();
+        metricsDAO = storageClientManagerBean.getMetricsDAO();
         createInventory();
     }
 
@@ -144,16 +151,13 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
             baseline(schedule3, 3.2, 3.6, 2.95)
         ));
 
-        insert1HourData(asList(
-            // schedule1 should be out of bounds on the lower bound
-            new AggregateTestData(lastHour.getMillis(), schedule1.getId(), 3.8, 4.6, 2.11),
-            // schedule2 should be out of bounds on the upper bound
-            new AggregateTestData(lastHour.getMillis(), schedule2.getId(), 9.492, 9.53, 9.481),
-            // schedule3 should be in bounds
-            new AggregateTestData(lastHour.getMillis(), schedule3.getId(), 3.15, 3.59, 2.96)
-        ));
+        List<AggregateNumericMetric>  metrics = asList(
+            new AggregateNumericMetric(schedule1.getId(), 3.8, 2.11, 4.6, lastHour.getMillis()),
+            new AggregateNumericMetric(schedule2.getId(), 9.492, 9.481, 9.53, lastHour.getMillis()),
+            new AggregateNumericMetric(schedule3.getId(), 3.15, 2.96, 3.59, lastHour.getMillis())
+        );
 
-        oobManager.computeOOBsFromLastHour(overlord);
+        oobManager.computeOOBsForLastHour(overlord, metrics);
 
         executeInTransaction(new TransactionCallback() {
             @Override
@@ -198,10 +202,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
     }
 
     private void purgeDB() {
-        purgeRawData();
-        purge1HourData();
-        purge6HourData();
-        purge24HourData();
         purgeBaselines();
         purgeOOBs();
 
@@ -259,22 +259,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
         em.flush();
     }
 
-    public void purgeRawData() {
-        purgeTables(MeasurementDataManagerUtility.getAllRawTables());
-    }
-
-    public void purge1HourData() {
-        purgeTables("rhq_measurement_data_num_1h");
-    }
-
-    public void purge6HourData() {
-        purgeTables("rhq_measurement_data_num_6h");
-    }
-
-    public void purge24HourData() {
-        purgeTables("rhq_measurement_data_num_1d");
-    }
-
     public void purgeBaselines() {
         purgeTables("rhq_measurement_bline");
     }
@@ -312,39 +296,6 @@ public class MeasurementOOBManagerBeanTest extends AbstractEJB3Test {
                 throw new RuntimeException("Failed to rollback transaction", e1);
             }
             throw new RuntimeException("Failed to purge data from " + tables, e);
-        } finally {
-            JDBCUtil.safeClose(connection);
-        }
-    }
-
-    private void insert1HourData(List<AggregateTestData> data) {
-        Connection connection = null;
-
-        try {
-            connection = getConnection();
-            connection.setAutoCommit(false);
-            String sql = "insert into rhq_measurement_data_num_1h(time_stamp, schedule_id, value, minvalue, maxvalue) values(?, ?, ?, ?, ?)";
-            PreparedStatement statement = connection.prepareStatement(sql);
-
-            for (AggregateTestData datum : data) {
-                statement.setLong(1, datum.getTimestamp());
-                statement.setInt(2, datum.getScheduleId());
-                statement.setDouble(3, datum.getAvg());
-                statement.setDouble(4, datum.getMin());
-                statement.setDouble(5, datum.getMax());
-
-                statement.addBatch();
-            }
-
-            statement.executeBatch();
-            connection.commit();
-        } catch (SQLException e) {
-            try {
-                connection.rollback();
-            } catch (SQLException e1) {
-                throw new RuntimeException("Failed to rollback transaction", e1);
-            }
-            throw new RuntimeException("Failed to insert 1 hour data", e);
         } finally {
             JDBCUtil.safeClose(connection);
         }

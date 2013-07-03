@@ -421,7 +421,8 @@ public class RemoteClient implements RhqFacade {
         Map<String, String> config = new HashMap<String, String>();
         if (SecurityUtil.isTransportSecure(locatorURI)) {
             setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_FILE_PATH, "data/keystore.dat");
-            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, "SunX509");
+            setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_ALGORITHM, (System.getProperty("java.vendor", "")
+                .contains("IBM") ? "IbmX509" : "SunX509"));
             setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_TYPE, "JKS");
             setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_STORE_PASSWORD, "password");
             setConfigProp(config, SSLSocketBuilder.REMOTING_KEY_PASSWORD, "password");

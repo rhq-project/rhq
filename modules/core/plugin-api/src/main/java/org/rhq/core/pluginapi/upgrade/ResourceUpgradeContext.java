@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.core.pluginapi.upgrade;
 
@@ -52,7 +48,7 @@ public class ResourceUpgradeContext<T extends ResourceComponent<?>> extends Reso
     private final String description;
 
     /**
-     * @see ResourceContext#ResourceContext(org.rhq.core.domain.resource.Resource, org.rhq.core.pluginapi.inventory.ResourceComponent, org.rhq.core.pluginapi.inventory.ResourceContext, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, org.rhq.core.system.SystemInfo, java.io.File, java.io.File, String, org.rhq.core.pluginapi.event.EventContext, org.rhq.core.pluginapi.operation.OperationContext, org.rhq.core.pluginapi.content.ContentContext, java.util.concurrent.Executor, org.rhq.core.pluginapi.inventory.PluginContainerDeployment)
+     * @see ResourceContext#ResourceContext(org.rhq.core.domain.resource.Resource, org.rhq.core.pluginapi.inventory.ResourceComponent, org.rhq.core.pluginapi.inventory.ResourceContext, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, org.rhq.core.system.SystemInfo, java.io.File, java.io.File, String, org.rhq.core.pluginapi.event.EventContext, org.rhq.core.pluginapi.operation.OperationContext, org.rhq.core.pluginapi.content.ContentContext, org.rhq.core.pluginapi.availability.AvailabilityContext, org.rhq.core.pluginapi.inventory.InventoryContext, org.rhq.core.pluginapi.inventory.PluginContainerDeployment)
      *
      * @since 4.0
      */

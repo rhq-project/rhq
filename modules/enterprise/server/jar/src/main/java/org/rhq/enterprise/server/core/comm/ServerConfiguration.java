@@ -559,7 +559,7 @@ public class ServerConfiguration {
      */
     public String getClientSenderSecurityKeystoreAlgorithm() {
         String value = m_preferences.get(ServerConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_ALGORITHM,
-            "SunX509");
+            (isIBM() ? "IbmX509" : "SunX509"));
         return value;
     }
 
@@ -623,7 +623,7 @@ public class ServerConfiguration {
      */
     public String getClientSenderSecurityTruststoreAlgorithm() {
         String value = m_preferences.get(ServerConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_ALGORITHM,
-            "SunX509");
+            (isIBM() ? "IbmX509" : "SunX509"));
         return value;
     }
 
@@ -692,5 +692,9 @@ public class ServerConfiguration {
         buf.append(']');
 
         return buf.toString();
+    }
+
+    private boolean isIBM() {
+        return System.getProperty("java.vendor", "").contains("IBM");
     }
 }

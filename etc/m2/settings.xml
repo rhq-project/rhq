@@ -239,8 +239,10 @@
     <profile>
       <id>dev</id>
       <properties>
-        <!-- Set the below prop to the absolute path of your RHQ trunk dir (e.g. /home/bob/projects/rhq).
-             (${rhq.rootDir}/dev-container will be used as the dev container dir) -->
+        <!-- Set the below prop to the absolute path where you want RHQ to deploy stuff to (e.g. /home/bob/builds/rhq).
+             When built with the dev profile, RHQ will install its compontents under various directories underneath it:
+             ${rhq.rootDir}/dev-container - the RHQ installation itself
+             ${rhq.rootDir}/rhq-data - the metric data directory (will appear after successful "rhqctl install") -->
         <rhq.rootDir>SET_ME</rhq.rootDir>
 
         <!-- Alternatively, if you don't want to use the default location of {rhq.rootDir}/dev-container/

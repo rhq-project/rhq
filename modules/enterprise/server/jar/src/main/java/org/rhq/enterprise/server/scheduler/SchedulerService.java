@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,20 +13,27 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.scheduler;
 
+import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
-import javax.management.MBeanRegistration;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -47,19 +54,22 @@ import org.quartz.spi.JobFactory;
 
 import org.jboss.util.StringPropertyReplacer;
 
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.enterprise.server.util.JMXUtil;
+
 /**
  * Scheduler MBean service that simply wraps the Quartz scheduler.
  */
-public class SchedulerService implements SchedulerServiceMBean, MBeanRegistration {
-    // for why we need this in RHQ - see https://issues.jboss.org/browse/AS7-5336
-    static {
-        java.beans.PropertyEditorManager.registerEditor(Properties.class,
-            org.jboss.util.propertyeditor.PropertiesEditor.class);
-    }
+@Singleton
+@Startup
+@LocalBean
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+public class SchedulerService implements SchedulerServiceMBean {
 
-    private Log log = LogFactory.getLog(SchedulerService.class);
+    private static final Log LOG = LogFactory.getLog(SchedulerService.class);
 
-    private String TIMEOUT_PROPERTY_NAME = "rhq.server.operation-timeout";
+    private static final String TIMEOUT_PROPERTY_NAME = "rhq.server.operation-timeout";
 
     /**
      * The configuration properties for Quartz.
@@ -70,15 +80,11 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
     private StdSchedulerFactory schedulerFactory = new StdSchedulerFactory();
     private Scheduler scheduler;
 
-    public SchedulerService() {
-    }
-
     public Properties getQuartzProperties() {
         return quartzProperties;
     }
 
     public void setQuartzProperties(Properties quartzProps) throws SchedulerException {
-        // we need to replace ${var} notations because AS7 doesn't - see https://issues.jboss.org/browse/AS7-5343
         if (quartzProps != null) {
             Properties overrides = new Properties();
             for (Map.Entry<Object, Object> entry : quartzProps.entrySet()) {
@@ -93,7 +99,7 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
         this.quartzProperties = quartzProps;
         schedulerFactory.initialize(quartzProps);
 
-        log.info("Scheduler has a default operation timeout of [" + getDefaultOperationTimeout() + "] seconds.");
+        LOG.info("Scheduler has a default operation timeout of [" + getDefaultOperationTimeout() + "] seconds.");
     }
 
     public Integer getDefaultOperationTimeout() {
@@ -105,7 +111,7 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
             try {
                 timeout = Integer.valueOf(timeoutStr);
             } catch (Exception e) {
-                log.warn("Invalid operation timeout value specified in the quartz properties: " + TIMEOUT_PROPERTY_NAME
+                LOG.warn("Invalid operation timeout value specified in the quartz properties: " + TIMEOUT_PROPERTY_NAME
                     + "=" + timeoutStr);
             }
         }
@@ -116,16 +122,16 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
     public void initQuartzScheduler() throws SchedulerException {
         if (scheduler == null) {
             // TODO: if we are running in a server cluster, make sure we are using Quartz's clustering capability
-            log.debug("Scheduler service will initialize Quartz scheduler now.");
+            LOG.debug("Scheduler service will initialize Quartz scheduler now.");
             scheduler = schedulerFactory.getScheduler();
         } else {
-            log.debug("Quartz scheduler is initialized and can be started");
+            LOG.debug("Quartz scheduler is initialized and can be started");
         }
     }
 
     public void startQuartzScheduler() throws SchedulerException {
         initQuartzScheduler();
-        log.info("Scheduler service will start Quartz scheduler now - jobs will begin executing.");
+        LOG.info("Scheduler service will start Quartz scheduler now - jobs will begin executing.");
         scheduler.start();
 
         return;
@@ -138,7 +144,7 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
      */
     public synchronized void stop() throws SchedulerException {
         if ((scheduler != null) && !scheduler.isShutdown()) {
-            log.info("Stopping " + scheduler);
+            LOG.info("Stopping " + scheduler);
             shutdown();
             scheduler = null;
         }
@@ -165,7 +171,7 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
     }
 
     public void start() {
-        log.debug("Scheduler Service has started - however, Quartz is not going to be starting yet");
+        LOG.debug("Scheduler Service has started - however, Quartz is not going to be starting yet");
     }
 
     /**
@@ -374,30 +380,28 @@ public class SchedulerService implements SchedulerServiceMBean, MBeanRegistratio
         return scheduler.getSchedulerListeners();
     }
 
-    public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
-        return name;
-    }
-
-    public void postRegister(Boolean registrationDone) {
-    }
-
-    /**
-     * Ensures that the Quartz scheduler is shutdown.
-     *
-     * @see javax.management.MBeanRegistration#preDeregister()
-     */
-    public void preDeregister() throws Exception {
-        if (scheduler != null) {
-            shutdown();
+    @PostConstruct
+    private void init() {
+        Properties properties = new Properties();
+        InputStream propertiesStream = getClass().getClassLoader().getResourceAsStream("quartz.properties");
+        try {
+            properties.load(propertiesStream);
+            setQuartzProperties(properties);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            StreamUtil.safeClose(propertiesStream);
         }
+        JMXUtil.registerMBean(this, SCHEDULER_MBEAN_NAME);
     }
 
-    /**
-     * Delegates to the Quartz scheduler.
-     *
-     * @see javax.management.MBeanRegistration#postDeregister()
-     */
-    public void postDeregister() {
+    @PreDestroy
+    private void destroy() {
+        try {
+            stop();
+        } catch (SchedulerException ignore) {
+        }
+        JMXUtil.unregisterMBeanQuietly(SCHEDULER_MBEAN_NAME);
     }
 
     // Quartz methods that are new in 1.5.1 that were not in 1.0.7

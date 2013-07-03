@@ -29,6 +29,12 @@ import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
+import java.io.File;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -37,16 +43,37 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDataNumeric;
+import org.rhq.core.domain.measurement.MeasurementReport;
+import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jmx.JMXComponent;
 
 /**
  * @author John Sanda
  */
 public class StorageServiceComponent extends ComplexConfigurationResourceComponent {
-
+    
+    private static final String OWNERSHIP_METRIC_NAME = "Ownership";
+    private static final String DISK_USED_METRIC_NAME = "Calculated.DiskSpaceUsedPercentage";
+    private static final String DATA_FILE_LOCATIONS_NAME = "AllDataFileLocations";
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
-
+    private InetAddress host;
+    
+    @Override
+    public void start(ResourceContext<JMXComponent<?>> context) {
+        super.start(context);
+        CassandraNodeComponent parrent = (CassandraNodeComponent) context.getParentResourceComponent();
+        try {
+            host = InetAddress.getByName(parrent.getHost());
+        } catch (UnknownHostException e) {
+            log.error(
+                "Unable to convert hostname[" + parrent.getHost() + "] into IP address for " + context.getResourceKey(),
+                e);
+        }
+    }
+    
     @Override
     public AvailabilityType getAvailability() {
         ResourceContext<?> context = getResourceContext();
@@ -59,12 +86,12 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
 
             AvailabilityType availability = UP;
 
-            EmsAttribute thriftEnabledAttr = emsBean.getAttribute("RPCServerRunning");
-            Boolean thriftEnabled = (Boolean) thriftEnabledAttr.getValue();
+            EmsAttribute nativeTransportEnabledAttr = emsBean.getAttribute("NativeTransportRunning");
+            Boolean nativeTransportEnabled = (Boolean) nativeTransportEnabledAttr.getValue();
 
-            if (!thriftEnabled) {
+            if (!nativeTransportEnabled) {
                 if (log.isWarnEnabled()) {
-                    log.warn("Thrift RPC server is disabled for " + context.getResourceKey());
+                    log.warn("Native transport is disabled for " + context.getResourceKey());
                 }
                 availability = DOWN;
             }
@@ -120,5 +147,60 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
         operation.invoke(classQualifier, level);
 
         return new OperationResult();
+    }
+    
+    @Override
+    protected void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests, EmsBean bean) {
+        super.getValues(report, requests, bean);
+        for (MeasurementScheduleRequest request : requests) {
+            if (OWNERSHIP_METRIC_NAME.equals(request.getName()) && host != null) {
+                EmsAttribute attribute = bean.getAttribute(OWNERSHIP_METRIC_NAME);
+                Object valueObject = attribute.refresh();
+                if (valueObject instanceof Map<?, ?>) {
+                    @SuppressWarnings("unchecked")
+                    Map<InetAddress, Float> ownership = (Map<InetAddress, Float>) valueObject;
+                    Float value = ownership.get(host);
+                    if (value == null) {
+                        // the inet address wasn't probably resolved, scan the map
+                        for (Map.Entry<InetAddress, Float> entry : ownership.entrySet()) {
+                            if (entry.getKey().getHostAddress().equals(host.getHostAddress())) {
+                                value = entry.getValue();
+                                break;
+                            }
+                        }
+                    }
+                    if (value > 1) {
+                        value = 1f;
+                    }
+                    report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
+                }
+                break;
+            } else if (DISK_USED_METRIC_NAME.equals(request.getName())) {
+                EmsAttribute attribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
+                Object valueObject = attribute.refresh();
+                if (valueObject instanceof String[]) {
+                    String[] paths = (String[]) valueObject;
+                    double max = 0;
+                    for (String path : paths) {
+                        double taken = getUsage(path);
+                        if (taken > max) {
+                            max = taken;
+                        }
+                    }
+                    if (max > 0.0001d) {
+                        report.addData(new MeasurementDataNumeric(request, max));
+                    }
+                }
+            }
+        }
+    }
+    
+    private double getUsage(String path) {
+        File f = new File(path);
+        return ((double)f.getTotalSpace() - f.getUsableSpace()) /  f.getTotalSpace();
+    }
+    
+    public static boolean kindOfIP(final String addr) {
+        return addr.matches("^\\d{1,3}\\.\\d{1,3\\.\\d{1,3\\.\\d{1,3$"); // || addr.indexOf(":") >= 0) or IPv6
     }
 }

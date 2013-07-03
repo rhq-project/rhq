@@ -28,8 +28,10 @@ import java.util.Properties;
 
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.common.ServerDetails;
+import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.gui.coregui.client.gwt.SystemGWTService;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.core.RemoteClientManagerLocal;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
@@ -49,6 +51,7 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     private SystemManagerLocal systemManager = LookupUtil.getSystemManager();
     private AgentManagerLocal agentManager = LookupUtil.getAgentManager();
     private RemoteClientManagerLocal remoteClientManager = LookupUtil.getRemoteClientManager();
+    private SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
     @Override
     public ProductInfo getProductInfo() throws RuntimeException {
@@ -63,6 +66,17 @@ public class SystemGWTServiceImpl extends AbstractGWTServiceImpl implements Syst
     public ServerDetails getServerDetails() throws RuntimeException {
         try {
             return systemManager.getServerDetails(getSessionSubject());
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public String getSessionTimeout() throws RuntimeException {
+        try {
+            SystemSettings systemSettings = systemManager.getSystemSettings(subjectManager.getOverlord());
+            String sessionTimeout = systemSettings.get(SystemSetting.RHQ_SESSION_TIMEOUT);
+            return sessionTimeout;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

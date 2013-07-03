@@ -146,6 +146,12 @@ public class CoreJBossASClient extends JBossASClient {
         return dir;
     }
 
+    public String getAppServerDataDir() throws Exception {
+        final String[] address = { CORE_SERVICE, SERVER_ENVIRONMENT };
+        final String dir = getStringAttribute(true, "data-dir", Address.root().add(address));
+        return dir;
+    }
+
     public String getAppServerBaseDir() throws Exception {
         final String[] address = { CORE_SERVICE, SERVER_ENVIRONMENT };
         final String dir = getStringAttribute(true, "base-dir", Address.root().add(address));
@@ -167,12 +173,6 @@ public class CoreJBossASClient extends JBossASClient {
     public String getAppServerTmpDir() throws Exception {
         final String[] address = { CORE_SERVICE, SERVER_ENVIRONMENT };
         final String dir = getStringAttribute(true, "temp-dir", Address.root().add(address));
-        return dir;
-    }
-
-    public String getAppServerDataDir() throws Exception {
-        final String[] address = { CORE_SERVICE, SERVER_ENVIRONMENT };
-        final String dir = getStringAttribute(true, "data-dir", Address.root().add(address));
         return dir;
     }
 

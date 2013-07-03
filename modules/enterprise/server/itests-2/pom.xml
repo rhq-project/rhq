@@ -31,7 +31,10 @@
     <skip.postgres>false</skip.postgres>
     <skip.oracle>true</skip.oracle>
 
-    <liquibase.version>2.0.3</liquibase.version>
+    <!-- cassandra connection properties -->
+    <rhq.cassandra.username>rhqadmin</rhq.cassandra.username>
+    <rhq.cassandra.password>rhqadmin</rhq.cassandra.password>
+    <rhq.cassandra.seeds>127.0.0.1|9160|9042,127.0.0.2|9160|9042</rhq.cassandra.seeds>
   </properties>
 
   <dependencies>
@@ -298,6 +301,56 @@
     <dependencies>
         <module name="javax.api"/>
         <module name="javax.transaction.api"/>
+    </dependencies>
+</module>
+]]></echo>
+
+                <echo>Adding DataStax Java Cassandra Driver module to ${jboss.modules.dir}</echo>
+                <copy file="${settings.localRepository}/com/datastax/cassandra/cassandra-driver-core/${cassandra.driver.version}/cassandra-driver-core-${cassandra.driver.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/io/netty/netty/${cassandra.driver.netty.version}/netty-${cassandra.driver.netty.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-all/${cassandra.version}/cassandra-all-${cassandra.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/cassandra/cassandra-thrift/${cassandra.version}/cassandra-thrift-${cassandra.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/cassandra/deps/avro/1.4.0-cassandra-1/avro-1.4.0-cassandra-1.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/apache/thrift/libthrift/${cassandra.thrift.version}/libthrift-${cassandra.thrift.version}.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/com/google/guava/guava/14.0.1/guava-14.0.1.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/com/yammer/metrics/metrics-core/2.2.0/metrics-core-2.2.0.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/slf4j/slf4j-api/1.7.2/slf4j-api-1.7.2.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/slf4j/slf4j-log4j12/1.7.2/slf4j-log4j12-1.7.2.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+                <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/1.0.5-M3-p1/snappy-java-1.0.5-M3-p1.jar"
+                      toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
+
+                <echo file="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
+<module xmlns="urn:jboss:module:1.1" name="com.datastax.cassandra.cassandra-driver-core">
+    <resources>
+        <resource-root path="cassandra-driver-core-${cassandra.driver.version}.jar"/>
+        <resource-root path="netty-${cassandra.driver.netty.version}.jar"/>
+        <resource-root path="cassandra-all-${cassandra.version}.jar"/>
+        <resource-root path="cassandra-thrift-${cassandra.version}.jar"/>
+        <resource-root path="libthrift-${cassandra.thrift.version}.jar"/>
+        <resource-root path="guava-14.0.1.jar"/>
+        <resource-root path="metrics-core-2.2.0.jar"/>
+        <resource-root path="slf4j-api-1.7.2.jar"/>
+        <resource-root path="slf4j-log4j12-1.7.2.jar"/>
+        <resource-root path="snappy-java-1.0.5-M3-p1.jar"/>
+        <resource-root path="avro-1.4.0-cassandra-1.jar"/>
+    </resources>
+
+    <dependencies>
+        <module name="org.codehaus.jackson.jackson-core-asl"/>
+        <module name="org.codehaus.jackson.jackson-mapper-asl"/>
+        <module name="org.jboss.logmanager" services="import"/>
+        <module name="org.apache.log4j"/>
+        <module name="javax.api"/>
     </dependencies>
 </module>
 ]]></echo>
@@ -591,7 +644,7 @@
 
         <dependency>
           <groupId>org.rhq</groupId>
-          <artifactId>rhq-arquillian-suite-extension</artifactId>
+          <artifactId>rhq-cassandra-ccm-arquillian</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
         </dependency>
@@ -665,6 +718,16 @@
           <artifactId>perftest-support</artifactId>
           <version>${project.version}</version>
           <scope>test</scope>
+          <exclusions>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-api</artifactId>
+            </exclusion>
+            <exclusion>
+              <groupId>org.slf4j</groupId>
+              <artifactId>slf4j-jcl</artifactId>
+            </exclusion>
+          </exclusions>
         </dependency>
 
         <dependency>
@@ -694,7 +757,7 @@
         <dependency>
           <groupId>org.liquibase</groupId>
           <artifactId>liquibase-core</artifactId>
-          <version>${liquibase.version}</version>
+          <version>2.0.3</version>
           <scope>test</scope>
         </dependency>
 

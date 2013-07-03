@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +13,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.modules.plugins.jbossas7;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.rhq.core.domain.configuration.Configuration;
@@ -37,32 +36,35 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * @author Heiko W. Rupp
  */
 public class WebConnectorComponent extends BaseComponent<WebConnectorComponent> implements MeasurementFacet {
+    private static final String MAX_CONNECTIONS_METRIC_NAME = "_expr:max-connections";
+    private static final String MAX_CONNECTIONS_CONFIG_ATTRIBUTE = "max-connections:expr";
 
     @Override
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-        Set<MeasurementScheduleRequest> leftovers = new HashSet<MeasurementScheduleRequest>(metrics.size());
-        for (MeasurementScheduleRequest request : metrics) {
-            if (request.getName().equals("_maxConnections")) {
-                ReadAttribute op = new ReadAttribute(getAddress(), "max-connections");
-                Result res = getASConnection().execute(op);
-                int val;
-                if (res.isSuccess() && res.getResult() != null) {
-                    Object o = res.getResult(); // If the attribute was written as string, it stays string until :reload
-                    if (o instanceof String)
-                        val = Integer.valueOf((String) o);
-                    else
-                        val = (Integer) o;
-                } else { // this is not set in the server, we need to compute it ourselves
-                    val = computeMaxConnections();
-                }
+        super.getValues(report, metrics);
+        MeasurementScheduleRequest maxConnectionMetricRequest = getMaxConnectionMetricRequest(metrics);
+        if (maxConnectionMetricRequest != null && !hasMaxConnectionMetric(report)) {
+            report.addData(new MeasurementDataNumeric(maxConnectionMetricRequest, Double
+                    .valueOf(computeMaxConnections())));
+        }
+    }
 
-                MeasurementDataNumeric data = new MeasurementDataNumeric(request, (double) val);
-                report.addData(data);
-            } else {
-                leftovers.add(request);
+    private MeasurementScheduleRequest getMaxConnectionMetricRequest(Set<MeasurementScheduleRequest> metrics) {
+        for (MeasurementScheduleRequest metric : metrics) {
+            if (MAX_CONNECTIONS_METRIC_NAME.equals(metric.getName())) {
+                return metric;
             }
         }
-        super.getValues(report, leftovers);
+        return null;
+    }
+
+    private boolean hasMaxConnectionMetric(MeasurementReport report) {
+        for (MeasurementDataNumeric metric : report.getNumericData()) {
+            if (MAX_CONNECTIONS_METRIC_NAME.equals(metric.getName())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -74,10 +76,9 @@ public class WebConnectorComponent extends BaseComponent<WebConnectorComponent> 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
         Configuration configuration = super.loadResourceConfiguration();
-        PropertySimple maxConnProp = configuration.getSimple("max-connections");
+        PropertySimple maxConnProp = configuration.getSimple(MAX_CONNECTIONS_CONFIG_ATTRIBUTE);
         if (maxConnProp.getStringValue() == null) {
-            int val = computeMaxConnections();
-            maxConnProp.setIntegerValue(val);
+            maxConnProp.setIntegerValue(computeMaxConnections());
         }
         return configuration;
     }

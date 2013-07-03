@@ -30,7 +30,6 @@
     <java.tieredCompilation>-Dxxx</java.tieredCompilation>
     <java.useCompressedOOPS>-Dxxx</java.useCompressedOOPS>
     <rhq.internal>false</rhq.internal>
-    <as7.itest.mock.http.management.server.port>32259</as7.itest.mock.http.management.server.port>
   </properties>
 
 
@@ -616,6 +615,7 @@
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/StandaloneServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/InterruptibleOperationsTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/DeploymentTest.java</include>-->
+                <!--<include>org/rhq/modules/plugins/jbossas7/itest/standalone/WebConnectorComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/DomainServerComponentTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/ManagedServerTest.java</include>-->
                 <!--<include>org/rhq/modules/plugins/jbossas7/itest/domain/SecurityModuleOptionsTest.java</include>-->
@@ -638,7 +638,6 @@
                 <jboss.domain.portOffset>${jboss.domain.portOffset}</jboss.domain.portOffset>
                 <jboss.domain.httpManagementPort>${jboss.domain.httpManagementPort}</jboss.domain.httpManagementPort>
                 <settings.localRepository>${settings.localRepository}</settings.localRepository>
-                <as7.itest.mock.http.management.server.port>${as7.itest.mock.http.management.server.port}</as7.itest.mock.http.management.server.port>
               </systemPropertyVariables>
             </configuration>
             <executions>
@@ -673,7 +672,7 @@
 
       <properties>
         <rhq.rootDir>../../..</rhq.rootDir>
-        <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
         <rhq.deploymentDir>${rhq.containerDir}/${rhq.agentPluginDir}</rhq.deploymentDir>
       </properties>
 

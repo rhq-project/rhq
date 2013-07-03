@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ContentsType;
@@ -51,7 +52,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -282,12 +282,6 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                                 graphView = D3GraphListView
                                                                     .createSingleGraph(resourceComposite.getResource(),
                                                                         md.getId(), true);
-                                                                graphView.addSetButtonClickHandler(new ClickHandler() {
-                                                                    @Override
-                                                                    public void onClick(ClickEvent event) {
-                                                                        graphView.redrawGraphs();
-                                                                    }
-                                                                });
 
                                                                 window.addItem(graphView);
                                                                 window.show();
@@ -329,7 +323,12 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                                                     AbstractActivityView.addSeeMoreLink(row, link, column);
                                                 }
                                                 //call out to 3rd party javascript lib
-                                                BrowserUtility.graphSparkLines();
+                                                new Timer(){
+                                                    @Override
+                                                    public void run() {
+                                                        BrowserUtility.graphSparkLines();
+                                                    }
+                                                }.schedule(200);
                                             } else {
                                                 DynamicForm row = AbstractActivityView
                                                     .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_NONE);

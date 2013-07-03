@@ -43,6 +43,9 @@
       <!-- Currently Quartz actually does some direct manipulation with Oracle classes -->
       <module name="org.rhq.oracle" export="true" optional="true" />
 
+      <!-- for Cassandra driver -->
+      <module name="com.datastax.cassandra.cassandra-driver-core" export="true"/>
+
       <!-- for REST -->
       <module name="org.codehaus.jackson.jackson-core-asl" export="true"/>
       <module name="org.codehaus.jackson.jackson-jaxrs" export="true"/>

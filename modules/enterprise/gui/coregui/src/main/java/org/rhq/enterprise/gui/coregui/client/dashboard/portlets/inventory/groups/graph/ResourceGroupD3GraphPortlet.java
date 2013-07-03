@@ -60,9 +60,9 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletWindow;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.MetricGraphData;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.charttype.StackedBarMetricGraphImpl;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.ResourceScheduledMetricDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.SingleResourceGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -75,7 +75,7 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
  * @author Jay Shaughnessy
  * @author Mike Thompson
  */
-public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements AutoRefreshPortlet, CustomSettingsPortlet {
+public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRefreshPortlet, CustomSettingsPortlet {
 
     // A non-displayed, persisted identifier for the portlet
     public static final String KEY = "ResourceGroupMetricD3";
@@ -84,6 +84,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements Au
 
     // set on initial configuration, the window for this portlet view.
     private PortletWindow portletWindow;
+
 
     public static final String CFG_RESOURCE_GROUP_ID = "resourceGroupId";
     public static final String CFG_DEFINITION_ID = "definitionId";
@@ -123,16 +124,20 @@ public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements Au
         graph.setMetricGraphData(MetricGraphData.createForDashboard(portletWindow.getStoredPortlet().getId()));
 
         if (storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID) != null) {
-            PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
-            PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
-            if (resourceIdProperty != null && measurementDefIdProperty != null) {
-                final Integer entityId = resourceIdProperty.getIntegerValue();
-                final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
-                if (entityId != null && measurementDefId != null) {
-                    queryResourceGroup(entityId, measurementDefId);
-                }
+            refreshFromConfiguration(storedPortlet);
+        }
+    }
 
+    private void refreshFromConfiguration(DashboardPortlet storedPortlet) {
+        PropertySimple resourceIdProperty = storedPortlet.getConfiguration().getSimple(CFG_RESOURCE_GROUP_ID);
+        PropertySimple measurementDefIdProperty = storedPortlet.getConfiguration().getSimple(CFG_DEFINITION_ID);
+        if (resourceIdProperty != null && measurementDefIdProperty != null) {
+            final Integer entityId = resourceIdProperty.getIntegerValue();
+            final Integer measurementDefId = measurementDefIdProperty.getIntegerValue();
+            if (entityId != null && measurementDefId != null) {
+                queryResourceGroup(entityId, measurementDefId);
             }
+
         }
     }
 
@@ -334,7 +339,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3GraphView implements Au
     @Override
     public void refresh() {
         if (isVisible() && !isRefreshing()) {
-            redraw();
+            refreshFromConfiguration(portletWindow.getStoredPortlet());
         }
     }
 

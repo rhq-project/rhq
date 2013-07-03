@@ -48,6 +48,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
@@ -92,6 +93,9 @@ import org.rhq.enterprise.server.rest.helper.ConfigurationHelper;
 @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
 @Stateless
 @Interceptors(SetCallerInterceptor.class)
+@Api(value = "Endpoints for operations - EXPERIMENTAL",
+    description = "These endpoints deal with scheduling of operations and retrieval of operation results. " +
+        "These are working, but may still change in the next RHQ release.")
 public class OperationsHandlerBean extends AbstractRestBean  {
 
     @EJB
@@ -438,11 +442,25 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
     @DELETE
     @Path("history/{id}")
-    @ApiOperation(value = "Delete the operation history item with the passed id")
-    public Response deleteOperationHistoryItem(@ApiParam("Name fo the submitted job") @PathParam("id") String jobName) {
+    @ApiOperation(value = "Delete the operation history item with the passed id", notes = "This operation is by default idempotent, returning 204." +
+                "If you want to check if the job existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Item was deleted or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Item did not exist and validate was set"),
+        @ApiError(code = 406, reason = "Passed Job ID did not pass name validation")
+    })
+    public Response deleteOperationHistoryItem(@ApiParam("Name fo the submitted job") @PathParam("id") String jobName,
+                                               @ApiParam("Validate if the job exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
 
         ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
-        criteria.addFilterJobId(new JobId(jobName));
+        JobId filterJobId;
+        try {
+            filterJobId = new JobId(jobName);
+        } catch (Exception e) {
+            // jobName most likely did not match the expected format
+            throw new BadArgumentException("jobName","Does not match the format for job history items");
+        }
+        criteria.addFilterJobId(filterJobId);
         criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
         List<ResourceOperationHistory> list = opsManager.findResourceOperationHistoriesByCriteria(caller,criteria);
@@ -450,6 +468,11 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
             ResourceOperationHistory history = list.get(0);
             opsManager.deleteOperationHistory(caller,history.getId(),false);
+        }
+        else {
+            if (validate) {
+                throw new StuffNotFoundException("Job with id " + jobName);
+            }
         }
         return Response.noContent().build();
 

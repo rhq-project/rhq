@@ -24,9 +24,6 @@ import javax.xml.bind.annotation.XmlRootElement;
 import com.wordnik.swagger.annotations.ApiClass;
 import com.wordnik.swagger.annotations.ApiProperty;
 
-import org.rhq.core.domain.alert.AlertConditionCategory;
-import org.rhq.core.domain.alert.AlertConditionOperator;
-
 /**
  * One condition for an alert definition.
  * An alert definition can have any number of definitions
@@ -36,8 +33,8 @@ import org.rhq.core.domain.alert.AlertConditionOperator;
 @XmlRootElement(name = "condition")
 public class AlertConditionRest {
 
-    private AlertConditionOperator name;
-    private AlertConditionCategory category;
+    private String conditionName;
+    private String category;
     private int id;
     private Double threshold;
     private String option;
@@ -48,21 +45,22 @@ public class AlertConditionRest {
     public AlertConditionRest() {
     }
 
-    @ApiProperty("Comparator to use with this definition")
-    public AlertConditionOperator getName() {
-        return name;
+    @ApiProperty("Comparator to use with this definition. See POST /alert/defintion/{id}/condition for details.")
+    public String getName() {
+        return conditionName;
     }
 
-    public void setName(AlertConditionOperator name) {
-        this.name = name;
+    public void setName(String name) {
+        this.conditionName = name;
     }
 
-    @ApiProperty("The category")
-    public AlertConditionCategory getCategory() {
+    @ApiProperty(value = "The category. See POST /alert/defintion/{id}/condition for details.",
+        allowableValues = "AVAILABILITY, THRESHOLD, BASELINE, CHANGE, TRAIT, CONTROL, ALERT, RESOURCE_CONFIG, EVENT, DRIFT, RANGE, AVAIL_DURATION")
+    public String getCategory() {
         return category;
     }
 
-    public void setCategory(AlertConditionCategory category) {
+    public void setCategory(String category) {
         this.category = category;
     }
 
@@ -70,12 +68,12 @@ public class AlertConditionRest {
         this.id = id;
     }
 
-    @ApiProperty("Id of the condition.Note that this is not stable - when you update the condition, its id will change")
+    @ApiProperty("Id of the condition. Note that this is not stable - when you update the condition, its id will change")
     public int getId() {
         return id;
     }
 
-    @ApiProperty("THe threshold to compare against")
+    @ApiProperty("The threshold to compare against. See POST /alert/defintion/{id}/condition for details.")
     public Double getThreshold() {
         return threshold;
     }
@@ -84,7 +82,7 @@ public class AlertConditionRest {
         this.threshold = threshold;
     }
 
-    @ApiProperty("Options to this condition. Depends on the category used")
+    @ApiProperty("Options to this condition. Depends on the category used. See POST /alert/defintion/{id}/condition for details.")
     public String getOption() {
         return option;
     }
@@ -101,6 +99,7 @@ public class AlertConditionRest {
         this.triggerId = triggerId;
     }
 
+    @ApiProperty("Comparator for conditions. See POST /alert/defintion/{id}/condition for details.")
     public String getComparator() {
         return comparator;
     }
@@ -109,7 +108,7 @@ public class AlertConditionRest {
         this.comparator = comparator;
     }
 
-    @ApiProperty("The id of the measurement definition, this comparator should apply to. A metric schedule can be identified by a resource id and a definition id.")
+    @ApiProperty("The id of the measurement *definition*, this comparator should apply to. A metric schedule can be identified by a resource id and a definition id.")
     public int getMeasurementDefinition() {
         return measurementDefinition;
     }

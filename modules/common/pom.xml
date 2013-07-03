@@ -28,7 +28,12 @@
       <module>jboss-as</module>
       <module>filetemplate-bundle</module>
       <module>ant-bundle</module>
-      <module>drift</module>      
+      <module>drift</module>
       <module>jboss-as-dmr-client</module>
+      <module>cassandra-util</module>
+      <module>cassandra-jmx</module>
+      <module>cassandra-schema</module>
+      <module>cassandra-ccm</module>
+      <module>cassandra-installer</module>
    </modules>
 </project>

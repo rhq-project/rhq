@@ -1,27 +1,30 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.jbossas5;
 
+import static org.rhq.core.pluginapi.util.ResponseTimeConfiguration.RESPONSE_TIME_LOG_FILE_CONFIG_PROP;
+import static org.rhq.core.pluginapi.util.ResponseTimeLogFinder.FALLBACK_RESPONSE_TIME_LOG_FILE_DIRECTORY;
+import static org.rhq.core.pluginapi.util.ResponseTimeLogFinder.findResponseTimeLogFileInDirectory;
+import static org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties.SERVER_HOME_DIR;
+
+import java.io.File;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -46,6 +49,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.util.StringUtil;
 import org.rhq.plugins.jbossas5.helper.MoreKnownComponentTypes;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 import org.rhq.plugins.jbossas5.util.RegularExpressionNameMatcher;
@@ -107,6 +111,8 @@ public class WebApplicationContextDiscoveryComponent implements
             pluginConfig.put(new PropertySimple(ManagedComponentComponent.Config.COMPONENT_NAME,
                 webApplicationManagerComponentName));
 
+            discoverResponseTimeLogFile(parentWarComponent, contextPath, pluginConfig);
+
             DiscoveredResourceDetails resource = new DiscoveredResourceDetails(resourceType, resourceKey, resourceName,
                 resourceVersion, resourceType.getDescription(), pluginConfig, null);
 
@@ -115,6 +121,29 @@ public class WebApplicationContextDiscoveryComponent implements
 
         log.trace("Discovered " + discoveredResources.size() + " " + resourceType.getName() + " Resources.");
         return discoveredResources;
+    }
+
+    private void discoverResponseTimeLogFile(AbstractManagedDeploymentComponent parentWarComponent, String contextPath,
+        Configuration pluginConfig) {
+        String rtFilePath = null;
+        // First search in SERVER_HOME_DIR/log/rt directory
+        ApplicationServerComponent applicationServerComponent = ApplicationServerComponent
+            .findApplicationServerComponent(parentWarComponent);
+        if (applicationServerComponent != null) {
+            String serverHomeDir = applicationServerComponent.getResourceContext().getPluginConfiguration()
+                .getSimpleValue(SERVER_HOME_DIR);
+            if (StringUtil.isNotBlank(serverHomeDir)) {
+                File rtDirectory = new File(serverHomeDir + File.separator + "log" + File.separator + "rt");
+                rtFilePath = findResponseTimeLogFileInDirectory(contextPath, rtDirectory);
+            }
+        }
+        if (rtFilePath == null) {
+            // Search again in FALLBACK_RESPONSE_TIME_LOG_FILE_DIRECTORY
+            rtFilePath = findResponseTimeLogFileInDirectory(contextPath, FALLBACK_RESPONSE_TIME_LOG_FILE_DIRECTORY);
+        }
+        if (rtFilePath != null) {
+            pluginConfig.setSimpleValue(RESPONSE_TIME_LOG_FILE_CONFIG_PROP, rtFilePath);
+        }
     }
 
     /**

@@ -1,0 +1,59 @@
+{
+    "simulationTime": 10,
+    "collectionInterval": 500,
+    "aggregationInterval": 1000,
+    "numMeasurementCollectors": 8,
+    "threadPoolSize": 10,
+    "schedules": [
+        {
+            "count": 5000,
+            "interval": 500
+        },
+        {
+            "count": 1000,
+            "interval": 1000
+        }
+    ],
+    "ttl": [
+        {
+            "table": "raw_metrics",
+            "value": 180
+        },
+        {
+            "table": "one_hour_metrics",
+            "value": 360
+        },
+        {
+            "table": "six_hour_metrics",
+            "value": 540
+        },
+        {
+            "table": "twenty_four_hour_metrics",
+            "value": 720
+        }
+    ],
+    "timeSliceDuration": {
+        "units": "minutes",
+        "values": [
+            {
+                "table": "raw_metrics",
+                "value": 1
+            },
+            {
+                "table": "one_hour_metrics",
+                "value": 6
+            },
+            {
+                "table": "six_hour_metrics",
+                "value": 24
+            }
+        ]
+    },
+    "cluster": {
+        "embedded": true,
+        "clusterDir": "target",
+        "numNodes": 2,
+        "heapSize": "64M",
+        "heapNewSize": "8M"
+    }
+}

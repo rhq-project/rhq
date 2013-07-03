@@ -51,11 +51,14 @@ import org.rhq.enterprise.server.util.TimingVoodoo;
 /**
  * Compresses data that increases in size over time to maintain the system for long durations. Any table that
  * continuously grows in a non-negligible manner should be compressed and/or purged in this job.
+ * <br/><br/>
+ * The functionality provided by this class is being replaced by {@link org.rhq.server.metrics.MetricsServer}
  *
  * @author Greg Hinkle
  * @author jay shaughnessy
  */
 @Stateless
+@Deprecated
 public class MeasurementCompressionManagerBean implements MeasurementCompressionManagerLocal {
     private final Log log = LogFactory.getLog(MeasurementCompressionManagerBean.class);
 

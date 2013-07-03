@@ -22,10 +22,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.net.URI;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -40,7 +36,6 @@ import javax.ejb.Stateless;
 import javax.interceptor.Interceptors;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.sql.DataSource;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -73,6 +68,7 @@ import org.jboss.resteasy.annotations.GZIP;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.DataType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataPK;
@@ -83,35 +79,35 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
-import org.rhq.core.util.jdbc.JDBCUtil;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.measurement.MeasurementAggregate;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
-import org.rhq.enterprise.server.measurement.util.MeasurementDataManagerUtility;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.domain.Baseline;
 import org.rhq.enterprise.server.rest.domain.Datapoint;
+import org.rhq.enterprise.server.rest.domain.DoubleValue;
 import org.rhq.enterprise.server.rest.domain.Link;
 import org.rhq.enterprise.server.rest.domain.MetricAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricDefinitionAggregate;
 import org.rhq.enterprise.server.rest.domain.MetricSchedule;
 import org.rhq.enterprise.server.rest.domain.NumericDataPoint;
 import org.rhq.enterprise.server.rest.domain.StringValue;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * Deal with metrics
  * @author Heiko W. Rupp
  */
 @Api(value = "Deal with metrics",
-        description = "This part of the API deals with exporting metrics")
+        description = "This part of the API deals with exporting and adding metrics")
 @Produces({"application/json","application/xml", "text/html"})
 @Path("/metric")
 @Interceptors(SetCallerInterceptor.class)
 @Stateless
-@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MetricHandlerBean  extends AbstractRestBean  {
 
     static final String NO_RESOURCE_FOR_ID = "If no resource with the passed id exists";
@@ -127,28 +123,28 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     ResourceManagerLocal resMgr;
     @EJB
     ResourceGroupManagerLocal groupMgr;
+
+    @EJB
+    private StorageClientManagerBean sessionManager;
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     EntityManager em;
 
-    @javax.annotation.Resource(name = "RHQ_DS")
-    private DataSource rhqDs;
-
 
     private static final long EIGHT_HOURS = 8 * 3600L * 1000L;
-
+    private static final long SEVEN_DAYS = 7L*86400*1000;
     @GZIP
     @GET
     @Path("data/{scheduleId}")
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML,MediaType.TEXT_HTML})
-    @ApiOperation(value = "Get the bucketized metric values for the schedule ")
+    @ApiOperation(value = "Get the bucketized metric values for the schedule.")
     @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
     public Response getMetricData(
             @ApiParam("Schedule Id of the values to query") @PathParam("scheduleId") int scheduleId,
             @ApiParam(value = "Start time since epoch.", defaultValue = "End time - 8h") @QueryParam(
                     "startTime") long startTime,
             @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
-            @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue(
-                    "60") int dataPoints,
+            @ApiParam("Number of buckets") @QueryParam("dataPoints") @DefaultValue("60") int dataPoints,
             @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam(
                     "hideEmpty") boolean hideEmpty,
             @Context HttpHeaders headers) {
@@ -206,7 +202,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             @ApiParam(value = "Start time since epoch.", defaultValue = "End time - 8h") @QueryParam(
                     "startTime") long startTime,
             @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
-            @ApiParam("Number of buckets - currently fixed at 60") @QueryParam("dataPoints") @DefaultValue(
+            @ApiParam("Number of buckets") @QueryParam("dataPoints") @DefaultValue(
                     "60") int dataPoints,
             @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam(
                     "hideEmpty") boolean hideEmpty,
@@ -266,8 +262,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
      * Get the schedule for the passed schedule id
      *
      * @param scheduleId id to look up
-     * @param force
-     * @param type
+     * @param force If true always go to the DB, otherwise search in the cache first
+     * @param type Type of schedule to look for
      * @return schedule
      * @throws StuffNotFoundException if there is no schedule with the passed id
      */
@@ -341,10 +337,22 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GET
     @Path("data")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, MediaType.TEXT_HTML})
-    public Response getMetricDataMulti(@QueryParam("sid") String schedules, @QueryParam("startTime") long startTime,
-                                       @QueryParam("endTime") long endTime, @QueryParam("dataPoints") int dataPoints,
-                                       @QueryParam("hideEmpty") boolean hideEmpty,
-                                       @Context HttpHeaders headers) {
+    @ApiOperation(value = "Return bucketized metric data (60 points) for the passed schedules")
+    @ApiErrors({
+        @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID),
+        @ApiError(code = 406, reason = "No schedules requested"),
+        @ApiError(code = 406, reason = "Schedule Ids are not numeric")
+    })
+    public Response getMetricDataMulti(
+        @ApiParam("A comma separated list of schedule ids") @QueryParam("sid") String schedules,
+        @ApiParam("Start time in ms since epoch. Default is now -8h") @QueryParam("startTime") long startTime,
+        @ApiParam("End time in ms since epoch. Default is now") @QueryParam("endTime") long endTime,
+        @ApiParam("Number of buckets") @QueryParam("dataPoints") @DefaultValue( "60") int dataPoints,
+        @ApiParam("Should empty datapoints be hidden") @DefaultValue("false") @QueryParam("hideEmpty") boolean hideEmpty,
+        @Context HttpHeaders headers) {
+
+        if (dataPoints<=0)
+            throw new BadArgumentException("dataPoints","must be >0");
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
@@ -357,6 +365,9 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             startTime = endTime - EIGHT_HOURS;
         }
 
+        if (schedules==null) {
+            throw new ParameterMissingException("sid");
+        }
         String[] tmp = schedules.split(",");
         Integer[] scheduleIds = new Integer[tmp.length];
         try {
@@ -376,10 +387,11 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             List<List<MeasurementDataNumericHighLowComposite>> listList =
                 dataManager.findDataForContext(caller, EntityContext.forResource(sched.getResource().getId()),definitionId,startTime,endTime,dataPoints);
             if (!listList.isEmpty()) {
+                MeasurementAggregate measurementAggregate = dataManager.getAggregate(caller,scheduleId,startTime,endTime);
                 List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
-                MetricAggregate res = new MetricAggregate();
+                MetricAggregate res = new MetricAggregate(scheduleId,measurementAggregate.getMin(),measurementAggregate.getAvg(),measurementAggregate.getMax());
                 boolean isHtml = mediaType.equals(MediaType.TEXT_HTML_TYPE);
-                fillInDatapoints(res, list, scheduleId, hideEmpty, isHtml);
+                res = fillInDatapoints(res, list, scheduleId, hideEmpty, isHtml);
                 resList.add(res);
             }
             else
@@ -394,7 +406,6 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
     /**
      * Return a metric schedule with the respective status codes for cache validation
-     *
      *
      * @param scheduleId ID of the schedule
      * @param request the REST request - injected by the REST framework
@@ -511,15 +522,17 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GZIP
     @GET
     @Path("data/resource/{resourceId}")
-    @ApiOperation("Retrieve a list of high/low/average/data aggregate for the resource")
+    @ApiOperation("Retrieve a list of high/low/average/data aggregates for the resource")
     @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID)
     public List<MetricAggregate> getAggregatesForResource(
-            @ApiParam("Id of the resource to query") @PathParam("resourceId") int resourceId,
-            @ApiParam(value = "Start time since epoch.", defaultValue="End time - 8h") @QueryParam("startTime") long startTime,
-            @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
-            @ApiParam(value = "Include data points") @DefaultValue("false") @QueryParam("includeDataPoints") boolean includeDataPoints,
-            @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam( "hideEmpty") boolean hideEmpty,
-                        @Context HttpHeaders headers)
+        @ApiParam("Id of the resource to query") @PathParam("resourceId") int resourceId,
+        @ApiParam(value = "Start time since epoch.", defaultValue = "End time - 8h") @QueryParam(
+            "startTime") long startTime,
+        @ApiParam(value = "End time since epoch.", defaultValue = "Now") @QueryParam("endTime") long endTime,
+        @ApiParam(value = "Include data points") @DefaultValue("false") @QueryParam("includeDataPoints") boolean includeDataPoints,
+        @ApiParam("Number of buckets (if include data points))") @QueryParam("dataPoints") @DefaultValue( "60") int dataPoints,
+        @ApiParam(value = "Hide rows that are NaN only", defaultValue = "false") @QueryParam(
+            "hideEmpty") boolean hideEmpty)
     {
 
         long now = System.currentTimeMillis();
@@ -545,7 +558,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
             if (includeDataPoints) {
                 int definitionId = schedule.getDefinition().getId();
                 List<List<MeasurementDataNumericHighLowComposite>> listList = dataManager.findDataForResource(caller,
-                        schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, 60); // TODO number data points
+                        schedule.getResource().getId(), new int[]{definitionId}, startTime, endTime, dataPoints);
 
                 if (!listList.isEmpty()) {
                     List<MeasurementDataNumericHighLowComposite> list = listList.get(0);
@@ -562,7 +575,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @GZIP
     @GET
     @Path("data/group/{groupId}")
-    @ApiOperation("Retrieve a list of high/low/average/data aggregate for the group")
+    @ApiOperation("Retrieve a list of high/low/average/data aggregates for the group")
     @ApiError(code = 404, reason = "There is no group with the passed id")
     public List<MetricDefinitionAggregate> getAggregatesForGroup(
             @ApiParam("Id of the group to query") @PathParam("groupId") int groupId,
@@ -647,7 +660,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         if (duration>0) // overrides start time
             startTime = endTime - duration*1000L; // duration is in seconds
 
-        if (startTime < now -7L*86400*1000)
+        if (startTime < now - SEVEN_DAYS)
             throw new IllegalArgumentException("(Computed) start time is older than 7 days");
 
         // Check if the schedule exists
@@ -658,7 +671,6 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         so.startTime = startTime;
         so.endTime = endTime;
         so.mediaType = mediaType;
-        so.now = now-1; // pass this so that the for the 7days case is still handled from raw tables.
 
         return so;
     }
@@ -667,19 +679,26 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @Consumes({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     @ApiOperation("Submit a single (numerical) metric to the server")
-    @ApiError(code=404, reason = NO_SCHEDULE_FOR_ID)
+    @ApiErrors({
+	@ApiError(code=404, reason = NO_SCHEDULE_FOR_ID),
+	@ApiError(code=406, reason = "Timestamp is older than 7 days")
+    })
     @Path("data/{scheduleId}/raw/{timeStamp}")
     public Response putMetricValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
                                 @ApiParam("Timestamp of the metric") @PathParam("timeStamp") long timestamp,
-                                @ApiParam(value = "Data point", required = true) NumericDataPoint point,
+                                @ApiParam(value = "Data value", required = true) DoubleValue value,
                                 @Context HttpHeaders headers,
                                 @Context UriInfo uriInfo) {
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
-        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
+        obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
+
+        long now = System.currentTimeMillis();
+        if (timestamp < now - SEVEN_DAYS)
+            throw new IllegalArgumentException("Timestamp is older than 7 days");
 
         Set<MeasurementDataNumeric> data = new HashSet<MeasurementDataNumeric>(1);
-        data.add(new MeasurementDataNumeric(point.getTimeStamp(),scheduleId,point.getValue()));
+        data.add(new MeasurementDataNumeric(timestamp,scheduleId,value.getValue()));
 
         dataManager.addNumericData(data);
 
@@ -693,15 +712,25 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     }
 
     @PUT
-    @Path("data/{scheduleId}/trait")
+    @Path("data/{scheduleId}/trait/{timeStamp}")
     @Consumes({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @ApiOperation(value = "Submit a new trait value for the passed schedule id")
-    @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
-    public Response putTraitValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId, StringValue value) {
-        MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.TRAIT);
+    @ApiErrors({
+	@ApiError(code=404, reason = NO_SCHEDULE_FOR_ID),
+	@ApiError(code=406, reason = "Timestamp is older than 7 days")
+    })
+    public Response putTraitValue(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
+	    @ApiParam("Timestamp of the metric") @PathParam("timeStamp") long timestamp,
+	    @ApiParam(value = "Data value", required = true) StringValue value) {
+
+        obtainSchedule(scheduleId, false, DataType.TRAIT);
+
+        long now = System.currentTimeMillis();
+        if (timestamp < now - SEVEN_DAYS)
+            throw new IllegalArgumentException("Timestamp is older than 7 days");
 
         Set<MeasurementDataTrait> traits = new HashSet<MeasurementDataTrait>(1);
-        MeasurementDataPK pk = new MeasurementDataPK(System.currentTimeMillis(),scheduleId);
+        MeasurementDataPK pk = new MeasurementDataPK(timestamp,scheduleId);
         traits.add(new MeasurementDataTrait(pk,value.getValue()));
 
         dataManager.addTraitData(traits);
@@ -775,6 +804,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
 
     private int findScheduleId(int resourceId, String metric) {
         CacheKey key = new CacheKey("schedulesForResource",resourceId);
+        @SuppressWarnings("unchecked")
         Map<String,Integer> schedulesForResource = (Map<String, Integer>) cache.get(key);
         if (schedulesForResource!=null && schedulesForResource.containsKey(metric)) {
             return schedulesForResource.get(metric);
@@ -804,9 +834,7 @@ public class MetricHandlerBean  extends AbstractRestBean  {
     @Produces({MediaType.APPLICATION_JSON,MediaType.APPLICATION_XML})
     @ApiOperation(value = "Get the current baseline for the schedule")
     @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID)
-    public Baseline getBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
-                                @Context HttpHeaders headers,
-                                @Context UriInfo uriInfo) {
+    public Baseline getBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId) {
         MeasurementSchedule schedule = obtainSchedule(scheduleId, true, DataType.MEASUREMENT);
         MeasurementBaseline mBase = schedule.getBaseline();
 
@@ -827,8 +855,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         @ApiError(code = 404, reason = NO_SCHEDULE_FOR_ID),
         @ApiError(code = 406 ,reason = "Baseline data is incorrect")
     })
-    public Response setBaseline(@ApiParam("Id of the schedule")  @PathParam("scheduleId") int scheduleId,
-                                Baseline baseline, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
+    public Response setBaseline(@ApiParam("Id of the schedule") @PathParam("scheduleId") int scheduleId,
+                                Baseline baseline, @Context UriInfo uriInfo) {
         MeasurementSchedule schedule = obtainSchedule(scheduleId, false, DataType.MEASUREMENT);
 
         // little bit of sanity checking
@@ -866,107 +894,73 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         int scheduleId;
         long startTime;
         long endTime;
-        long now;
         MediaType mediaType;
 
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
+            MetricsDAO metricsDAO = sessionManager.getMetricsDAO();
+            Iterable<RawNumericMetric> resultSet = metricsDAO.findRawMetrics(scheduleId, startTime, endTime);
 
-            String[] tables = MeasurementDataManagerUtility.getTables(startTime,endTime,now);
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0 ; i < tables.length ; i ++) {
-                sb.append("SELECT time_stamp,value FROM ");
-                sb.append(tables[i]);
-                sb.append(" WHERE schedule_id = ? AND time_stamp BETWEEN ? AND ?");
-                if (i < tables.length-1)
-                    sb.append(" UNION ALL ");
+            PrintWriter pw = new PrintWriter(outputStream);
+
+            if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
+                boolean needsComma = false;
+                pw.println("[");
+                for (RawNumericMetric metric : resultSet) {
+                    if (needsComma) {
+                        pw.print(",\n");
+                    }
+                    needsComma = true;
+                    pw.print("{");
+                    pw.print("\"scheduleId\":");
+                    pw.print(scheduleId);
+                    pw.print(", ");
+                    pw.print("\"timeStamp\":");
+                    pw.print(metric.getTimestamp());
+                    pw.print(", ");
+                    pw.print("\"value\":");
+                    pw.print(metric.getValue());
+                    pw.print("}");
+                }
+                pw.println("]");
+            } else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
+                pw.println("<collection>");
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print("  <numericDataPoint scheduleId=\"");
+                    pw.print(scheduleId);
+                    pw.print("\" timeStamp=\"");
+                    pw.print(metric.getTimestamp());
+                    pw.print("\" value=\"");
+                    pw.print(metric.getValue());
+                    pw.println("\"/>");
+                }
+                pw.println("</collection>");
+            } else if (mediaType.toString().equals("text/csv")) {
+                pw.println("#schedule,timestamp,value");
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print(scheduleId);
+                    pw.print(',');
+                    pw.print(metric.getTimestamp());
+                    pw.print(',');
+                    pw.println(metric.getValue());
+                }
+            } else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
+                pw.println("<table>");
+                pw.print("<tr><th>time</th><th>value</th></tr>\n");
+                for (RawNumericMetric metric : resultSet) {
+                    pw.print("  <tr>");
+                    pw.print("<td>");
+                    pw.print(new Date(metric.getTimestamp()));
+                    pw.print("</td><td>");
+                    pw.print(metric.getValue());
+                    pw.print("</td>");
+                    pw.println("</tr>");
+                }
+                pw.println("</table>");
+
             }
-
-            sb.append(" ORDER BY time_stamp ASC");
-
-
-
-            Connection connection = null;
-            PreparedStatement ps = null;
-            ResultSet rs = null;
-            try {
-                connection = rhqDs.getConnection();
-                ps = connection.prepareStatement( sb.toString() );
-                for (int i = 0; i < tables.length ; i++) {
-                    ps.setInt(i * 3 + 1, scheduleId);
-                    ps.setLong(i*3+2,startTime);
-                    ps.setLong(i*3+3,endTime);
-                }
-                rs = ps.executeQuery();
-
-                PrintWriter pw = new PrintWriter(outputStream);
-
-                if (mediaType.equals(MediaType.APPLICATION_JSON_TYPE)) {
-                    boolean needsComma = false;
-                    pw.println("[");
-                    while (rs.next()) {
-                        if (needsComma) {
-                            pw.print(",\n");
-                        }
-                        needsComma = true;
-                        pw.print("{");
-                        pw.print("\"scheduleId\":");
-                        pw.print(scheduleId);
-                        pw.print(", ");
-                        pw.print("\"timeStamp\":");
-                        pw.print(rs.getLong(1));
-                        pw.print(", ");
-                        pw.print("\"value\":");
-                        pw.print(rs.getDouble(2));
-                        pw.print("}");
-                    }
-                    pw.println("]");
-                }
-                else if (mediaType.equals(MediaType.APPLICATION_XML_TYPE)) {
-                    pw.println("<collection>");
-                    while(rs.next()) {
-                        pw.print("  <numericDataPoint scheduleId=\"");
-                        pw.print(scheduleId);
-                        pw.print("\" timeStamp=\"");
-                        pw.print(rs.getLong(1));
-                        pw.print("\" value=\"");
-                        pw.print(rs.getDouble(2));
-                        pw.println("\"/>");
-                    }
-                    pw.println("</collection>");
-                }
-                else if (mediaType.toString().equals("text/csv")) {
-                    pw.println("#schedule,timestamp,value");
-                    while (rs.next()) {
-                        pw.print(scheduleId);
-                        pw.print(',');
-                        pw.print(rs.getLong(1));
-                        pw.print(',');
-                        pw.println(rs.getDouble(2));
-                    }
-                }
-                else if (mediaType.equals(MediaType.TEXT_HTML_TYPE)) {
-                    pw.println("<table>");
-                    pw.print("<tr><th>time</th><th>value</th></tr>\n");
-                    while (rs.next()) {
-                        pw.print("  <tr>");
-                        pw.print("<td>");
-                        pw.print(new Date(rs.getLong(1)));
-                        pw.print("</td><td>");
-                        pw.print(rs.getDouble(2));
-                        pw.print("</td>");
-                        pw.println("</tr>");
-                    }
-                    pw.println("</table>");
-
-                }
-                pw.flush();
-                pw.close();
-            } catch (SQLException e) {
-                log.error(e);
-            } finally {
-                JDBCUtil.safeClose(connection, ps, rs);
-            }
+            pw.flush();
+            pw.close();
         }
     }
 }

@@ -1,8 +1,7 @@
 /*
  * RHQ Management Platform
- * Copyright 2010, Red Hat Middleware LLC, and individual contributors
- * as indicated by the @author tags. See the copyright.txt file in the
- * distribution for a full listing of individual contributors.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -14,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.coregui.client.alert;
 
@@ -47,6 +46,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
@@ -181,7 +181,8 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
 
         StaticTextItem resourceItem = new StaticTextItem("resourceName",
             MSG.view_alert_details_field_watched_resource());
-        resourceItem.setValue(record.getAttribute("resourceName"));
+        String resourceUrl = LinkManager.getResourceLink(Integer.parseInt(record.getAttribute("resourceId")));
+        resourceItem.setValue(LinkManager.getHref(resourceUrl, record.getAttribute("resourceName")));
         items.add(resourceItem);
 
         StaticTextItem resourceAncestryItem = new StaticTextItem("resourceAncestry",

@@ -1,0 +1,326 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.rhq</groupId>
+    <artifactId>rhq-cassandra-ccm</artifactId>
+    <version>4.9.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>rhq-cassandra-ccm-core</artifactId>
+  <name>RHQ Cassandra CCM Core</name>
+
+  <properties>
+    <local.repo>${settings.localRepository}</local.repo>
+    <cassandra.jna.version>3.5.1</cassandra.jna.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-core-plugin-api</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-cassandra-jmx</artifactId>
+      <version>${project.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>com.sun</groupId>
+          <artifactId>rt</artifactId>
+        </exclusion>
+       </exclusions>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.cassandra</groupId>
+      <artifactId>cassandra-thrift</artifactId>
+      <version>${cassandra.version}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-api</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+    <dependency>
+      <groupId>com.datastax.cassandra</groupId>
+      <artifactId>cassandra-driver-core</artifactId>
+      <version>${cassandra.driver.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>jna</artifactId>
+      <version>${cassandra.jna.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>net.java.dev.jna</groupId>
+      <artifactId>platform</artifactId>
+      <version>${cassandra.jna.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.googlecode.java-diff-utils</groupId>
+      <artifactId>diffutils</artifactId>
+      <version>1.2.1</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+        <filtering>true</filtering>
+      </resource>
+      <resource>
+        <directory>src/main/bundle</directory>
+        <filtering>false</filtering>
+      </resource>
+    </resources>
+
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+          <resources>
+            <resource>
+              <directory>src/main/resources</directory>
+              <filtering>true</filtering>
+              <excludes>
+                <exclude>src/main/resources/cassandra/conf/cassandra-env.sh</exclude>
+              </excludes>
+            </resource>
+            <!--<resource>-->
+              <!--<directory>src/main/cassandra/cql</directory>-->
+            <!--</resource>-->
+          </resources>
+          <delimiters>
+            <delimiter>${*}</delimiter>
+          </delimiters>
+          <escapeString>[escape]</escapeString>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <executions>
+          <execution>
+            <!--
+              This execution is a place holder or stub to do some pre-processing before
+              packaging up the bundle. See the snappy-mac-workaround profile below for more
+              details.
+            -->
+            <id>setup-pkg</id>
+          </execution>
+          <execution>
+            <id>get-cassandra</id>
+            <phase>generate-resources</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <property name="cassandra.download.dir"
+                          value="${project.build.directory}/cassandra-download"/>
+                <mkdir dir="${cassandra.download.dir}"/>
+                <mkdir dir="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}"/>
+                <get src="http://repo1.maven.org/maven2/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
+                     dest="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
+                     skipexisting="true"
+                     verbose="true"/>
+                <gunzip src="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
+                        dest="${cassandra.download.dir}"/>
+                <untar src="${cassandra.download.dir}/apache-cassandra-${cassandra.version}-bin.tar"
+                       dest="${cassandra.download.dir}"/>
+                <move file="${cassandra.download.dir}/apache-cassandra-${cassandra.version}"
+                      tofile="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+                <delete dir="${cassandra.download.dir}"/>
+              </target>
+            </configuration>
+          </execution>
+          <execution>
+            <id>create-cassandra-pkg</id>
+            <phase>prepare-package</phase>
+            <goals>
+              <goal>run</goal>
+            </goals>
+            <configuration>
+              <target>
+                <property name="cassandra.dir"
+                          value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+                <property name="cassandra.distro.filename" value="cassandra.zip"/>
+                <property name="cassandra.distro.zip"
+                          value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
+                <copy file="${settings.localRepository}/net/java/dev/jna/platform/${cassandra.jna.version}/platform-${cassandra.jna.version}.jar"
+                      todir="${cassandra.dir}/lib"/>
+                <copy file="${settings.localRepository}/net/java/dev/jna/jna/${cassandra.jna.version}/jna-${cassandra.jna.version}.jar"
+                      todir="${cassandra.dir}/lib"/>
+                <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
+                <delete dir="${cassandra.dir}/javadoc"/>
+                <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
+                <delete dir="${cassandra.dir}"/>
+                <delete file="${project.build.outputDirectory}/deploy.xml"/>
+              </target>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>**/*ITest.java</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.13</version>
+        <executions>
+          <execution>
+            <id>integration-test</id>
+            <goals>
+              <goal>integration-test</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*ITest.java</include>
+              </includes>
+              <systemPropertyVariables>
+                <rhq.storage.deploy-dir>${project.build.directory}/rhq-storage</rhq.storage.deploy-dir>
+              </systemPropertyVariables>
+            </configuration>
+          </execution>
+          <execution>
+            <id>verify</id>
+            <goals>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <testFailureIgnore>false</testFailureIgnore>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>dev</id>
+      <properties>
+        <rhq.rootDir>../../..</rhq.rootDir>
+        <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
+        <rhq.deploymentDir>${rhq.containerDir}/${rhq.earLibDir}</rhq.deploymentDir>
+      </properties>
+
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>deploy</id>
+                <phase>package</phase>
+                <configuration>
+                  <target>
+                    <mkdir dir="${rhq.deploymentDir}"/>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Updating ${deployment.file}...</echo>
+                    <jar destfile="${deployment.file}" basedir="${project.build.outputDirectory}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+              <execution>
+                <id>undeploy</id>
+                <phase>clean</phase>
+                <configuration>
+                  <target>
+                    <property name="deployment.file" location="${rhq.deploymentDir}/${project.build.finalName}.jar"/>
+                    <echo>*** Deleting ${deployment.file}...</echo>
+                    <delete file="${deployment.file}"/>
+                  </target>
+                </configuration>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+              </execution>
+
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <!--
+      Cassandra uses the snappy-java compression library, and it uses a native library that
+      is packaged in the snappy-java JAR. Running on Mac OS X with Java 7 will result in,
+
+        NoClassDefFoundError Could not initialize class org.xerial.snappy.Snappy
+
+      due to the file name extension that the Java 7 JVM looks for on Mac OS X. This issue
+      was logged and fixed under https://github.com/xerial/snappy-java/issues/6. Cassandra
+      however does not yet bundle a newer version of snappy-java. This profile is activated
+      when running on Mac OS X and replaces the packaged version of snappy-java with a newer
+      version so that snappy compression can still be used during development. Note that
+      this is **not** an issue when running on Java 6.
+
+      - jsanda 10/03/2012
+    -->
+    <profile>
+      <id>snappy-mac-workaround</id>
+      <activation>
+        <os>
+          <family>Mac</family>
+        </os>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-antrun-plugin</artifactId>
+            <inherited>false</inherited>
+            <dependencies>
+              <dependency>
+                <groupId>org.xerial.snappy</groupId>
+                <artifactId>snappy-java</artifactId>
+                <version>1.1.0-M3</version>
+              </dependency>
+            </dependencies>
+            <executions>
+              <execution>
+                <id>setup-pkg-mac</id>
+                <phase>process-resources</phase>
+                <goals>
+                  <goal>run</goal>
+                </goals>
+                <configuration>
+                  <target>
+                    <property name="cassandra.dir"
+                              value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
+                    <property name="cassandra.lib.dir" value="${cassandra.dir}/lib"/>
+                    <property name="snappy.jar.original" value="${cassandra.lib.dir}/snappy-java-1.0.4.1.jar"/>
+                    <property name="snappy.jar.updated"
+                              value="${local.repo}/org/xerial/snappy/snappy-java/${cassandra.driver.snappy.version}/snappy-java-${cassandra.driver.snappy.version}.jar"/>
+                    <delete file="${snappy.jar.original}"/>
+                    <copy file="${snappy.jar.updated}" todir="${cassandra.lib.dir}"/>
+                  </target>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>

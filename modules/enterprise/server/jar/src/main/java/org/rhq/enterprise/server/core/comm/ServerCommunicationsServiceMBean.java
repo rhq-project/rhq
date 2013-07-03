@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core.comm;
 
@@ -83,7 +83,7 @@ public interface ServerCommunicationsServiceMBean extends ServiceContainerMetric
      * set, then the settings specified by the configuration preferences file take effect as-is. If this is set,
      * this file is a properties file whose values will override the config file prefs.
      *
-     * @param overrides configuration settings file that override the configuration preferences (may be<code>null</code>)
+     * @param overridesFile configuration settings file that override the configuration preferences (may be<code>null</code>)
      */
     void setConfigurationOverridesFile(String overridesFile);
 

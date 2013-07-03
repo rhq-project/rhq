@@ -750,7 +750,7 @@ public class ContentProviderManager {
         }
 
         if (adapter == null) {
-            throw new RuntimeException("There is no adapter for content source [" + adapter + "]");
+            throw new RuntimeException("There is no adapter for content source [" + contentSource + "]");
         }
 
         ServerPluginEnvironment env = this.pluginManager.getPluginEnvironment(contentSource.getContentSourceType());

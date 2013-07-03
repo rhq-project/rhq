@@ -2030,9 +2030,46 @@
 
             <schemaSpec version="2.132">
                 <schema-directSQL>
-                    <statement desc="Adding drift file purge system setting">
+                    <statement desc="Adding session timeout system setting">
                         INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
                         VALUES (59, 'RHQ_SESSION_TIMEOUT', '3600000', '3600000')
+                    </statement>
+                </schema-directSQL>
+            </schemaSpec>
+
+            <schemaSpec version="2.133">
+                <!-- RHQ_STORAGE_NODE -->
+                <schema-createSequence name="RHQ_STORAGE_NODE_ID_SEQ" initial="10001" />
+                <schema-directSQL>
+                    <statement desc="Creating table RHQ_STORAGE_NODE">
+                        CREATE TABLE RHQ_STORAGE_NODE (
+                            ID INTEGER PRIMARY KEY)
+                    </statement>
+                </schema-directSQL>
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="ADDRESS" columnType="VARCHAR2" precision="255" />
+                <schema-alterColumn table="RHQ_STORAGE_NODE" column="ADDRESS" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="JMX_PORT" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_STORAGE_NODE" column="JMX_PORT" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="CQL_PORT" columnType="INTEGER" />
+                <schema-alterColumn table="RHQ_STORAGE_NODE" column="CQL_PORT" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="OPERATION_MODE" columnType="VARCHAR2" precision="32"/>
+                <schema-alterColumn table="RHQ_STORAGE_NODE" column="OPERATION_MODE" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="CTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_STORAGE_NODE" column="CTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="MTIME" columnType="LONG" />
+                <schema-alterColumn table="RHQ_STORAGE_NODE" column="MTIME" nullable="FALSE" />
+                <schema-addColumn   table="RHQ_STORAGE_NODE" column="RESOURCE_ID" columnType="INTEGER" />
+                <schema-directSQL>
+                    <statement desc="Creating RHQ_STORAGE_NODE foreign key to RHQ_RESOURCE">
+                        ALTER TABLE RHQ_STORAGE_NODE
+                        ADD CONSTRAINT RHQ_SN_RESOURCE_ID_FK
+                        FOREIGN KEY (RESOURCE_ID)
+                        REFERENCES RHQ_RESOURCE (ID)
+                    </statement>
+                </schema-directSQL>
+                <schema-directSQL ignoreError="true">
+                    <statement desc="Creating unique index on ADDRESS column">
+                        CREATE UNIQUE INDEX RHQ_ADDRESS ON RHQ_STORAGE_NODE ( ADDRESS )
                     </statement>
                 </schema-directSQL>
             </schemaSpec>

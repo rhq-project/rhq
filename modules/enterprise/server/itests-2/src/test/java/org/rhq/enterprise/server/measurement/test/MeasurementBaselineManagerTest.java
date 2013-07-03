@@ -18,12 +18,18 @@
  */
 package org.rhq.enterprise.server.measurement.test;
 
+import static java.util.Arrays.asList;
+
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
+import javax.inject.Inject;
 import javax.persistence.Query;
+
+import com.datastax.driver.core.Session;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.testng.annotations.Test;
 
@@ -39,11 +45,16 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
+import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.AggregateType;
+import org.rhq.server.metrics.domain.MetricsTable;
 
 @Test
 public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
@@ -59,6 +70,11 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     private MeasurementOOBManagerLocal oobManager;
     private Subject overlord;
 
+    @Inject
+    private StorageClientManagerBean storageClientManager;
+
+    private MetricsDAO metricsDAO;
+
     // for the large inventory test
     private List<Resource> allResources;
     private List<MeasurementDefinition> allDefs;
@@ -70,6 +86,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
         this.baselineManager = LookupUtil.getMeasurementBaselineManager();
         this.oobManager = LookupUtil.getOOBManager();
         this.overlord = LookupUtil.getSubjectManager().getOverlord();
+        metricsDAO = storageClientManager.getMetricsDAO();
 
         this.prepareScheduler();
         this.prepareForTestAgents();
@@ -129,14 +146,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             System.out.println(">>>>>>> b) [" + allScheds.size() + "] baselines calculated in ["
                 + (System.currentTimeMillis() - startingTime) + "] ms");
-
-            deleteManyResources();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
             throw t;
         } finally {
             try {
+                deleteManyResources();
                 getTransactionManager().rollback();
             } catch (Exception e) {
             }
@@ -284,14 +300,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             assert bl2.getComputeTime().after(bl2ComputeTime);
 
             commit();
-
-            deleteResources();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
             throw t;
         } finally {
             try {
+                deleteResources();
                 getTransactionManager().rollback();
             } catch (Exception e) {
             }
@@ -299,10 +314,12 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
     }
 
     /**
-     * Calculate Out of Bound values. Those need to use baselines, so they are tested here
-     * @throws Throwable If anything goes wrong.
+     * This test is disabled as the implementation of MeasurementOOBManagerBean is
+     * getting refactored. MeasurementOOBManagerBeanTest has been added to exercise the new
+     * implementation.
      */
     @SuppressWarnings("unchecked")
+    @Test(enabled = false)
     public void testCalculateOOB() throws Throwable {
 
         begin();
@@ -329,6 +346,20 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             insertMeasurementDataNumeric1H(young, measSched2, 2000.0, 1000.0, 3000.0);
             insertMeasurementDataNumeric1H(youngest, measSched2, 1500.0, 500.0, 2500.0);
 
+            List<AggregateNumericMetric> aggregates = asList(
+                new AggregateNumericMetric(measSched.getId(), 0.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched.getId(), 30.0, 20.0, 40.0, eldest),
+                new AggregateNumericMetric(measSched.getId(), 5.0, 2.0, 8.0, elder),
+                new AggregateNumericMetric(measSched.getId(), 6.0, 3.0, 9.0, young),
+                new AggregateNumericMetric(measSched.getId(), 40.0, 30.0, 50.0, youngest),
+
+                new AggregateNumericMetric(measSched2.getId(), 40.0, 0.0, 0.0, 0),
+                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3500.0, 6500.0, eldest),
+                new AggregateNumericMetric(measSched2.getId(), 5000.0, 3000.0, 7000.0, elder),
+                new AggregateNumericMetric(measSched2.getId(), 2000.0, 1000.0, 3000.0, young),
+                new AggregateNumericMetric(measSched2.getId(), 1500.0, 500.0, 2500.0, youngest)
+            );
+
             commit();
 
             long computeTime = baselineManager.calculateAutoBaselines(30000, System.currentTimeMillis());
@@ -336,7 +367,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
             begin();
             // check the 2 values at 5000 against their bands computed between [500 and 1000]
-            oobManager.computeOOBsFromHourBeginingAt(overlord, eldest);
+            oobManager.computeOOBsForLastHour(overlord, aggregates);
 
             // check results
             Query q = em.createQuery("SELECT oo FROM MeasurementOOB oo");
@@ -380,14 +411,13 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
             q.setParameter("sched2", measSched2.getId());
             q.executeUpdate();
             commit();
-
-            deleteResources();
         } catch (Throwable t) {
             System.out.println("TEST FAILURE STACK TRACE FOLLOWS:");
             t.printStackTrace();
             throw t;
         } finally {
             try {
+                deleteResources();
                 getTransactionManager().rollback();
             } catch (Exception e) {
             }
@@ -438,7 +468,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
         try {
             // perform in-band and out-of-band work in quick succession
-            // deleteResource will remove platform and platform2, as well as the agent 
+            // deleteResource will remove platform and platform2, as well as the agent
             List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, platform.getId());
             for (Integer deletedResourceId : deletedIds) {
                 resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
@@ -596,18 +626,31 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 
     private void insertMeasurementDataNumeric1H(long timeStamp, MeasurementSchedule schedule, double value, double min,
         double max) {
-        String sql = "INSERT INTO RHQ_measurement_data_num_1h "
-            + "(time_stamp, schedule_id, value, minvalue, maxvalue) " + "VALUES (" + timeStamp + "," + schedule.getId()
-            + "," + value + "," + min + "," + max + ")";
+        AggregateNumericMetric metric = new AggregateNumericMetric(schedule.getId(), value, min, max, timeStamp);
+        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MIN, min);
+        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.MAX, max);
+        metricsDAO.insertOneHourData(schedule.getId(), timeStamp, AggregateType.AVG, value);
 
-        Query q = em.createNativeQuery(sql);
-        assert q.executeUpdate() == 1;
+//        String sql = "INSERT INTO RHQ_measurement_data_num_1h "
+//            + "(time_stamp, schedule_id, value, minvalue, maxvalue) " + "VALUES (" + timeStamp + "," + schedule.getId()
+//            + "," + value + "," + min + "," + max + ")";
+//
+//        Query q = em.createNativeQuery(sql);
+//        assert q.executeUpdate() == 1;
     }
 
     private void deleteMeasurementDataNumeric1H(MeasurementSchedule schedule) {
-        String sql = "DELETE FROM RHQ_measurement_data_num_1h WHERE schedule_id = " + schedule.getId();
-
-        Query q = em.createNativeQuery(sql);
-        q.executeUpdate();
+//        String sql = "DELETE FROM RHQ_measurement_data_num_1h WHERE schedule_id = " + schedule.getId();
+//
+//        Query q = em.createNativeQuery(sql);
+//        q.executeUpdate();
+        try {
+            Session session = storageClientManager.getSession();
+            session.execute("DELETE FROM " + MetricsTable.ONE_HOUR.getTableName() + " WHERE schedule_id = " +
+                schedule.getId());
+        } catch (NoHostAvailableException e) {
+            throw new RuntimeException("An error occurred while trying to deleted data from " +
+                MetricsTable.ONE_HOUR + " for " + schedule, e);
+        }
     }
 }

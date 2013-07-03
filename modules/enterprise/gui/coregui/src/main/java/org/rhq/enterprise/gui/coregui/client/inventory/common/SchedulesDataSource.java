@@ -78,7 +78,7 @@ public class SchedulesDataSource extends RPCDataSource<MeasurementScheduleCompos
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>();
         
-        ListGridField scheduleIdField = new ListGridField(ATTR_DEFINITION_ID, MSG.dataSource_operationSchedule_field_id());
+        ListGridField scheduleIdField = new ListGridField(ATTR_DEFINITION_ID, MSG.dataSource_traits_field_definitionID());
         scheduleIdField.setHidden(true);
         fields.add(scheduleIdField);
 

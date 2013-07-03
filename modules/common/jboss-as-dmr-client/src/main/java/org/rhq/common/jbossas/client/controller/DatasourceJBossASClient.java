@@ -42,6 +42,30 @@ public class DatasourceJBossASClient extends JBossASClient {
         super(client);
     }
 
+    /**
+     * Completely removes the named datasource. If the datasource does not exist,
+     * this returns silently (in other words, no exception is thrown).
+     * 
+     * Note that no distinguishing between XA and non-XA datasource is needed - if any datasource
+     * (XA or non-XA) exists with the given name, it will be removed.
+     *
+     * @param name the name of the datasource to remove
+     * @throws Exception
+     */
+    public void removeDatasource(String name) throws Exception {
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES);
+        if (isDatasource(name)) {
+            addr.add(DATA_SOURCE, name);
+        } else if (isXADatasource(name)) {
+            addr.add(XA_DATA_SOURCE, name);
+        } else {
+            return; // there is no datasource (XA or non-XA) with the given name, just return silently
+        }
+
+        remove(addr);
+        return;
+    }
+
     public boolean isDatasourceEnabled(String name) throws Exception {
         return isDatasourceEnabled(false, name);
     }
@@ -241,6 +265,53 @@ public class DatasourceJBossASClient extends JBossASClient {
             requestN.get(OPERATION).set(ADD);
             requestN.get(ADDRESS).set(addr.getAddressNode());
             setPossibleExpression(requestN, VALUE, entry.getValue());
+            batch[n++] = requestN;
+        }
+
+        return createBatchRequest(batch);
+    }
+
+    public ModelNode createNewDatasourceRequest(String name, String connectionUrlExpression, String driverName,
+        boolean jta, Map<String, String> connectionProperties) {
+
+        String jndiName = "java:jboss/datasources/" + name;
+
+        String dmrTemplate = "" //
+            + "{" //
+            + "\"connection-url\" => expression \"%s\" " //
+            + ", \"driver-name\" => \"%s\" " //
+            + ", \"jndi-name\" => \"%s\" " //
+            + ", \"jta\" => %s " //
+            + ", \"use-java-context\" => true " //
+            + "}";
+
+        String dmr = String.format(dmrTemplate, connectionUrlExpression, driverName, jndiName, jta);
+
+        Address addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, DATA_SOURCE, name);
+        final ModelNode request1 = ModelNode.fromString(dmr);
+        request1.get(OPERATION).set(ADD);
+        request1.get(ADDRESS).set(addr.getAddressNode());
+
+        // if there are no conn properties, no need to create a batch request, there is only one ADD request to make
+        if (connectionProperties == null || connectionProperties.size() == 0) {
+            return request1;
+        }
+
+        // create a batch of requests - the first is the main one, the rest create each conn property
+        ModelNode[] batch = new ModelNode[1 + connectionProperties.size()];
+        batch[0] = request1;
+        int n = 1;
+        for (Map.Entry<String, String> entry : connectionProperties.entrySet()) {
+            addr = Address.root().add(SUBSYSTEM, SUBSYSTEM_DATASOURCES, DATA_SOURCE, name, CONNECTION_PROPERTIES,
+                entry.getKey());
+            final ModelNode requestN = new ModelNode();
+            requestN.get(OPERATION).set(ADD);
+            requestN.get(ADDRESS).set(addr.getAddressNode());
+            if (entry.getValue().indexOf("${") > -1) {
+                requestN.get(VALUE).setExpression(entry.getValue());
+            } else {
+                requestN.get(VALUE).set(entry.getValue());
+            }
             batch[n++] = requestN;
         }
 

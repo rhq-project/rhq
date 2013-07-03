@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<differences>
+  <difference>
+    <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.bundle.BundleFile addBundleFileViaURL(org.rhq.core.domain.auth.Subject, int, java.lang.String, java.lang.String, org.rhq.core.domain.content.Architecture, java.lang.String, java.lang.String, java.lang.String)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.bundle.BundleVersion createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, java.lang.String, java.lang.String, java.lang.String)</method>
+    <justification>Adding a method to a remote API interface is safe. This class is never to be implemented by users.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/measurement/MeasurementDataManagerRemote</className>
+    <differenceType>7006</differenceType>  <!-- method return type changed -->
+    <method>org.rhq.enterprise.server.measurement.MeasurementAggregate getAggregate(org.rhq.core.domain.auth.Subject, int, long, long)</method>
+    <to>org.rhq.core.domain.measurement.MeasurementAggregate</to>
+    <justification>The MeasurementAggregate class was moved from server jar module to core domain module. This change is backward compatible with CLI scripts, but Java clients using the remote EJB api may need to fix the imports. This change was introduced by commit 2f6e74080e2299.</justification>
+  </difference>
+
+</differences>

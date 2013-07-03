@@ -26,6 +26,7 @@ import javax.ejb.Remote;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.MeasurementDataTraitCriteria;
 import org.rhq.core.domain.measurement.DisplayType;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
 import org.rhq.core.domain.measurement.MeasurementDefinition;

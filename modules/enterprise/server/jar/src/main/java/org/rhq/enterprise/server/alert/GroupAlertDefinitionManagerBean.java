@@ -146,18 +146,16 @@ public class GroupAlertDefinitionManagerBean implements GroupAlertDefinitionMana
         ResourceGroup group = resourceGroupManager.getResourceGroupById(subject, resourceGroupId, null);
         groupAlertDefinition.setGroup(group);
 
+        AlertDefinition persistedDefinition = null;
         int groupAlertDefinitionId = 0;
         try {
-            groupAlertDefinitionId = alertDefinitionManager.createAlertDefinitionInNewTransaction(subject,
+            persistedDefinition = alertDefinitionManager.createAlertDefinitionInNewTransaction(subject,
                 groupAlertDefinition, null, true);
+            groupAlertDefinitionId = persistedDefinition.getId();
         } catch (Throwable t) {
             throw new AlertDefinitionCreationException("Could not create groupAlertDefinitions for " + group
                 + " with data " + groupAlertDefinition.toSimpleString(), t);
         }
-
-        //get the alert definition we just created.. this is so that we can create copies of it
-        AlertDefinition persistedDefinition = alertDefinitionManager
-            .getAlertDefinition(subject, groupAlertDefinitionId);
 
         Throwable firstThrowable = null;
 

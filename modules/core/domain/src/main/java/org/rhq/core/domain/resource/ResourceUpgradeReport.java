@@ -31,34 +31,37 @@ import org.rhq.core.domain.configuration.Configuration;
  * Represents the changes that should be applied to the existing resource 
  * in order to upgrade it to conform to the new requirements set by the 
  * changed resource component.
- * <p>
+ * </p>
  * Null values of the properties mean no change, non-null values represent
  * the desired new values.
+ * </p>
+ * Configuration updates are limited to only changing values for existing
+ * properties. The Configuration must still reflect the types configuration
+ * definition. Also, updates must be judicious as config values can also
+ * be updated by users. 
  * 
  * @author Lukas Krejci
  */
 public class ResourceUpgradeReport implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-    
+    private static final long serialVersionUID = 2L;
+
     private String newResourceKey;
     private String newName;
-    
-// version changes are handled differently.    
-//    private String newVersion;
-    
-// upgrading configurations would have large consequences.
-// it would be difficult to synchronize the upgrade process
-// with the agent or server initiated configuration updates.
-// It could also be difficult for the UI to reflect more complicated
-// structural changes as currently, it is assumed that 
-// the configurations are kept backwards compatible.
-//    private Configuration newPluginConfiguration;
-//    private Configuration newResourceConfiguration;
+
+    // version changes are handled differently.    
+    //    private String newVersion;
+
+    // Plugin configuration changes must still conform to the configuration definition.
+    private Configuration newPluginConfiguration;
+
+    // Is resource config update useful?  Wouldn't resource config change discovery handle this?
+    //    private Configuration newResourceConfiguration;
+
     private String newDescription;
 
     public ResourceUpgradeReport() {
-        
+
     }
 
     public String getNewResourceKey() {
@@ -77,29 +80,21 @@ public class ResourceUpgradeReport implements Serializable {
         this.newName = newName;
     }
 
-//    public String getNewVersion() {
-//        return newVersion;
-//    }
-//
-//    public void setNewVersion(String newVersion) {
-//        this.newVersion = newVersion;
-//    }
-//
-//    public Configuration getNewPluginConfiguration() {
-//        return newPluginConfiguration;
-//    }
-//
-//    public void setNewPluginConfiguration(Configuration newPluginConfiguration) {
-//        this.newPluginConfiguration = newPluginConfiguration;
-//    }
-//
-//    public Configuration getNewResourceConfiguration() {
-//        return newResourceConfiguration;
-//    }
-//
-//    public void setNewResourceConfiguration(Configuration newResourceConfiguration) {
-//        this.newResourceConfiguration = newResourceConfiguration;
-//    }
+    //    public String getNewVersion() {
+    //        return newVersion;
+    //    }
+    //
+    //    public void setNewVersion(String newVersion) {
+    //        this.newVersion = newVersion;
+    //    }
+    //
+    //    public Configuration getNewResourceConfiguration() {
+    //        return newResourceConfiguration;
+    //    }
+    //
+    //    public void setNewResourceConfiguration(Configuration newResourceConfiguration) {
+    //        this.newResourceConfiguration = newResourceConfiguration;
+    //    }
 
     public String getNewDescription() {
         return newDescription;
@@ -108,14 +103,24 @@ public class ResourceUpgradeReport implements Serializable {
     public void setNewDescription(String newDescription) {
         this.newDescription = newDescription;
     }
-    
-    public boolean hasSomethingToUpgrade() {
-        return newResourceKey != null ||
-            newName != null ||
-            newDescription != null;
+
+    public Configuration getNewPluginConfiguration() {
+        return newPluginConfiguration;
     }
-    
+
+    /**
+     * See class javadoc for restrictions. 
+     */
+    public void setNewPluginConfiguration(Configuration newPluginConfiguration) {
+        this.newPluginConfiguration = newPluginConfiguration;
+    }
+
+    public boolean hasSomethingToUpgrade() {
+        return newResourceKey != null || newName != null || newDescription != null || newPluginConfiguration != null;
+    }
+
     public String toString() {
-    	return "ResourceUpgradeReport[newResourceKey = '" + newResourceKey + "', newName = '" + newName + "', newDescription = '" + newDescription + "']";
+        return "ResourceUpgradeReport[newResourceKey = '" + newResourceKey + "', newName = '" + newName
+            + "', newDescription = '" + newDescription + "']";
     }
 }

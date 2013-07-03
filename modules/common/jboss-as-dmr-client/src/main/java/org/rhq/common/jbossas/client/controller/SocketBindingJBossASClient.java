@@ -31,6 +31,7 @@ public class SocketBindingJBossASClient extends JBossASClient {
     public static final String SOCKET_BINDING_GROUP = "socket-binding-group";
     public static final String SOCKET_BINDING = "socket-binding";
     public static final String PORT = "port";
+    public static final String INTERFACE = "interface";
     public static final String PORT_OFFSET = "port-offset";
     public static final String STANDARD_SOCKETS = "standard-sockets";
     public static final String JBOSS_SYSPROP_PORT_OFFSET = "jboss.socket.binding.port-offset";
@@ -157,6 +158,78 @@ public class SocketBindingJBossASClient extends JBossASClient {
         Address addr = Address.root().add(SOCKET_BINDING_GROUP, socketBindingGroupName, SOCKET_BINDING,
             socketBindingName);
         ModelNode request = createWriteAttributeRequest(PORT, portValue, addr);
+        ModelNode results = execute(request);
+        if (!isSuccess(results)) {
+            throw new FailureException(results);
+        }
+        return; // everything is OK
+    }
+
+    /**
+     * Sets the interface name for the named standard socket binding.
+     * 
+     * @param socketBindingName the name of the standard socket binding whose interface is to be set
+     * @param interfaceName the new interface name
+     * @throws Exception
+     */
+    public void setStandardSocketBindingInterface(String socketBindingName, String interfaceName) throws Exception {
+        setStandardSocketBindingInterfaceExpression(socketBindingName, null, interfaceName);
+    }
+
+    /**
+     * Sets the interface name for the named standard socket binding.
+     * If sysPropName is null, this simply sets the interface name explicitly.
+     * If sysPropName is not null, this sets the interface to the expression "${sysPropName:interfaceName}".
+     * 
+     * @param socketBindingName the name of the standard socket binding whose interface is to be set
+     * @param sysPropName the name of the system property whose value is to be the interface name
+     * @param interfaceName the default interface name if the sysPropName is not defined
+     * @throws Exception
+     */
+    public void setStandardSocketBindingInterfaceExpression(String socketBindingName, String sysPropName,
+        String interfaceName) throws Exception {
+        setSocketBindingInterfaceExpression(STANDARD_SOCKETS, socketBindingName, sysPropName, interfaceName);
+    }
+
+    /**
+     * Sets the interface name for the named socket binding found in the named socket binding group.
+     * 
+     * @param socketBindingGroupName the name of the socket binding group that has the named socket binding
+     * @param socketBindingName the name of the socket binding whose interface is to be set
+     * @param interfaceName the new interface name
+     * @throws Exception
+     */
+    public void setSocketBindingPort(String socketBindingGroupName, String socketBindingName, String interfaceName)
+        throws Exception {
+        setSocketBindingInterfaceExpression(socketBindingGroupName, socketBindingName, null, interfaceName);
+    }
+
+    /**
+     * Sets the interface name for the named socket binding found in the named socket binding group.
+     * If sysPropName is null, this simply sets the interface name explicitly to the given name.
+     * If sysPropName is not null, this sets the interface name to the expression "${sysPropName:interfaceName}".
+     *
+     * @param socketBindingGroupName the name of the socket binding group that has the named socket binding
+     * @param socketBindingName the name of the socket binding whose interface is to be set
+     * @param sysPropName the name of the system property whose value is to be the interface name
+     * @param interfaceName the default interface name if the sysPropName is not defined
+     * @throws Exception
+     */
+    public void setSocketBindingInterfaceExpression(String socketBindingGroupName, String socketBindingName,
+        String sysPropName, String interfaceName) throws Exception {
+
+        // /socket-binding-group=standard-sockets/socket-binding=messaging/:write-attribute(name=interface,value=unsecure)
+
+        String interfaceNameValue;
+        if (sysPropName != null) {
+            interfaceNameValue = "${" + sysPropName + ":" + interfaceName + "}";
+        } else {
+            interfaceNameValue = String.valueOf(interfaceName);
+        }
+
+        Address addr = Address.root().add(SOCKET_BINDING_GROUP, socketBindingGroupName, SOCKET_BINDING,
+            socketBindingName);
+        ModelNode request = createWriteAttributeRequest(INTERFACE, interfaceNameValue, addr);
         ModelNode results = execute(request);
         if (!isSuccess(results)) {
             throw new FailureException(results);

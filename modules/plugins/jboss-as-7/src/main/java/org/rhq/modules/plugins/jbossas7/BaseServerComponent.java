@@ -19,6 +19,8 @@
 
 package org.rhq.modules.plugins.jbossas7;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -43,6 +45,7 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -279,8 +282,6 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
     protected boolean waitUntilDown() throws InterruptedException {
         boolean notAnswering = false;
-        int count = 0;
-
         while (!notAnswering) {
             Operation op = new ReadAttribute(new Address(), "release-version");
 
@@ -288,21 +289,18 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                 Result res = getASConnection().execute(op);
                 if (!res.isSuccess()) { // If op succeeds, server is not down
                     notAnswering = true;
-                } else if (count > 20) {
-                    break;
                 }
             } catch (Exception e) {
                 notAnswering = true;
             }
 
             if (!notAnswering) {
-                try {
-                    Thread.sleep(1000); // Wait 1s
-                } catch (InterruptedException e) {
-                    // ignore
+                if (context.getComponentInvocationContext().isInterrupted()) {
+                    // Operation canceled or timed out
+                    throw new InterruptedException();
                 }
+                Thread.sleep(SECONDS.toMillis(1));
             }
-            count++;
         }
 
         // BZ 893802: wait until server (the process) is really down
@@ -314,8 +312,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
 
         if (hostPort.isLocal) {
             // lets be paranoid here
-            for (; count <= 20; count++) {
-                ProcessInfo processInfo = context.getNativeProcess();
+            for (ProcessInfo processInfo = context.getNativeProcess(); ; processInfo = context.getNativeProcess()) {
                 if (processInfo == null) {
                     // Process not found, so it died, that's fine
                     break;
@@ -324,16 +321,14 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
                     // Process info says process is no longer running, that's fine
                     break;
                 }
-                // Process is still running, wait a second and check again
-                try {
-                    Thread.sleep(1000); // Wait 1s
-                } catch (InterruptedException e) {
-                    // ignore
+                if (context.getComponentInvocationContext().isInterrupted()) {
+                    // Operation canceled or timed out
+                    throw new InterruptedException();
                 }
+                // Process is still running, wait a second and check again
+                Thread.sleep(SECONDS.toMillis(1));
             }
         }
-
-        log.debug("waitUntilDown: Used " + count + " delay round(s) to shut down. Server down=" + notAnswering);
         return notAnswering;
     }
 
@@ -342,7 +337,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
      *
      * @return the result of the operation
      */
-    protected OperationResult startServer() {
+    protected OperationResult startServer() throws InterruptedException {
         OperationResult operationResult = new OperationResult();
         if (isManuallyAddedServer(operationResult, "Starting")) {
             return operationResult;
@@ -383,8 +378,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         // standalone.bat.conf and domain.bat.conf respectively.
         processExecution.setWorkingDirectory(startScriptFile.getParent());
         processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(15000L); // 15 seconds // TODO: Should we wait longer than 15 seconds?
-        processExecution.setKillOnTimeout(false);
+        processExecution.setWaitForCompletion(0);
 
         if (log.isDebugEnabled()) {
             log.debug("About to execute the following process: [" + processExecution + "]");
@@ -411,8 +405,15 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return operationResult;
     }
 
-    private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
+    public boolean isManuallyAddedServer() {
         if (pluginConfiguration.get("manuallyAdded") != null) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isManuallyAddedServer(OperationResult operationResult, String operation) {
+        if (isManuallyAddedServer()) {
             operationResult.setErrorMessage(operation + " is not enabled for manually added servers");
             return true;
         }
@@ -477,17 +478,14 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         return startScriptFile;
     }
 
-    private boolean waitForServerToStart() {
+    private boolean waitForServerToStart() throws InterruptedException {
         boolean up = false;
-        int count = 0;
         while (!up) {
             Operation op = new ReadAttribute(new Address(), "release-version");
             try {
                 Result res = getASConnection().execute(op);
                 if (res.isSuccess()) { // If op succeeds, server is not down
                     up = true;
-                } else if (count > 20) {
-                    break;
                 }
             } catch (Exception e) {
                 //do absolutely nothing
@@ -496,13 +494,12 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
             }
 
             if (!up) {
-                try {
-                    Thread.sleep(1000); // Wait 1s
-                } catch (InterruptedException e) {
-                    // ignore
+                if (context.getComponentInvocationContext().isInterrupted()) {
+                    // Operation canceled or timed out
+                    throw new InterruptedException();
                 }
+                Thread.sleep(SECONDS.toMillis(1));
             }
-            count++;
         }
         return up;
     }

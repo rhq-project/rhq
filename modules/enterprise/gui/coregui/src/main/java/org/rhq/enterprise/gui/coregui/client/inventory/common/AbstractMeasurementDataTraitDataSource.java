@@ -77,7 +77,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
         DataSourceIntegerField idField = new DataSourceIntegerField(FIELD_METRIC_SCHED_ID, MSG.dataSource_traits_field_definitionID());
         idField.setHidden(true);
         fields.add(idField);
-        
+
         DataSourceIntegerField nameField = new DataSourceIntegerField(FIELD_METRIC_NAME, MSG.common_title_name());
         nameField.setHidden(true);
         fields.add(nameField);
@@ -88,7 +88,7 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
     /**
      * The view that contains the list grid which will display this datasource's data will call this
      * method to get the field information which is used to control the display of the data.
-     * 
+     *
      * @return list grid fields used to display the datasource data
      */
     public ArrayList<ListGridField> getListGridFields() {
@@ -164,6 +164,8 @@ public abstract class AbstractMeasurementDataTraitDataSource extends
                     criteria.addFilterDefinitionId(definitionId);
                 } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP)) {
                     criteria.addFilterMaxTimestamp();
+                } else if (fieldName.equals(MeasurementDataTraitCriteria.FILTER_FIELD_ENABLED)) {
+                    criteria.addFilterEnabled(true);
                 }
             }
         }

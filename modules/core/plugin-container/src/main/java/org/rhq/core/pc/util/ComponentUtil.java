@@ -1,25 +1,21 @@
  /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 package org.rhq.core.pc.util;
 
 import org.rhq.core.clientapi.agent.PluginContainerException;
@@ -84,6 +80,8 @@ public class ComponentUtil {
      *                        it; value must be positive
      * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
      * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
+     * @param transferInterrupt whether or not interruption of the calling thread should be transfered to the executor
+     *                          thread
      *
      * @return the resource's <code>T</code> component interface
      *
@@ -91,18 +89,19 @@ public class ComponentUtil {
      *                                  interface or it is not started and <code>onlyIfStarted</code> is <code>
      *                                  true</code>
      *
-     * @see    ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean, boolean)
+     * @see    ResourceContainer#createResourceComponentProxy(Class, FacetLockType, long, boolean, boolean, boolean)
      */
     @SuppressWarnings("unchecked")
-    public static <T> T getComponent(int resourceId, Class<T> facetInterface, FacetLockType lockType,
-                                     long timeout, boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
+    public static <T> T getComponent(int resourceId, Class<T> facetInterface, FacetLockType lockType, long timeout,
+        boolean daemonThread, boolean onlyIfStarted, boolean transferInterrupt) throws PluginContainerException {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         ResourceContainer resourceContainer = inventoryManager.getResourceContainer(resourceId);
         if (resourceContainer == null) {
             throw new PluginContainerException("Resource component container could not be retrieved for resource: "
                 + resourceId);
         }
-        return resourceContainer.createResourceComponentProxy(facetInterface, lockType, timeout, daemonThread, onlyIfStarted);
+        return resourceContainer.createResourceComponentProxy(facetInterface, lockType, timeout, daemonThread,
+            onlyIfStarted, transferInterrupt);
     }
 
     @SuppressWarnings("unchecked")

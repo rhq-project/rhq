@@ -34,6 +34,7 @@ import org.rhq.enterprise.server.rest.domain.Link;
  * clients to access the link.
  * See also https://bugzilla.redhat.com/show_bug.cgi?id=845244
  * @author Heiko W. Rupp
+ * @see LinkDeserializer
  */
 public class LinkSerializer extends JsonSerializer<Link> {
 

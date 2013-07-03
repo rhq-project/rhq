@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.enterprise.server.test;
 
 import java.io.File;
@@ -130,6 +149,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test-assist-color-number.txt");
         testClassesJar.addAsResource("test-ldap.properties");
         testClassesJar.addAsResource("test-scheduler.properties");
+        testClassesJar.addAsResource("cassandra-test.properties");
         testClassesJar
             .addAsResource("org/rhq/enterprise/server/configuration/metadata/configuration_metadata_manager_bean_test_v1.xml");
         testClassesJar
@@ -308,8 +328,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // create test ear by starting with rhq.ear and thinning it
         String projectVersion = System.getProperty("project.version");
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
-        earResolver.offline();
         // this must be named rhq.ear because the "rhq" portion is used in the jndi names
+        earResolver.offline();
         EnterpriseArchive testEar = ShrinkWrap.create(EnterpriseArchive.class, "rhq.ear");
         EnterpriseArchive rhqEar = earResolver.resolve("org.rhq:rhq-enterprise-server-ear:ear:" + projectVersion)
             .withoutTransitivity().asSingle(EnterpriseArchive.class);
@@ -323,8 +343,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBean.class"));
         testEar.delete(ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBean$1.class"));
-        testEar.delete(ArchivePaths
-            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBeanPreparation.class"));
         testEar.delete(ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/ShutdownListener.class"));
 

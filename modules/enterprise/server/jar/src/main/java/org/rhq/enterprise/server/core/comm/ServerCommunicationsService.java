@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core.comm;
 
@@ -35,10 +35,17 @@ import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.prefs.Preferences;
 
-import javax.management.MBeanRegistration;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.management.MBeanServer;
 import javax.management.MBeanServerInvocationHandler;
-import javax.management.ObjectName;
 
 import mazz.i18n.Logger;
 
@@ -70,6 +77,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.agentclient.impl.AgentClientImpl;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.remote.RemoteSafeInvocationHandler;
+import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -79,12 +87,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author John Mazzitelli
  */
-public class ServerCommunicationsService implements ServerCommunicationsServiceMBean, MBeanRegistration {
+@Singleton
+@Startup
+@LocalBean
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+public class ServerCommunicationsService implements ServerCommunicationsServiceMBean {
 
     /**
      * A log for subclasses to be able to use.
      */
-    private static Logger LOG = ServerI18NFactory.getLogger(ServerCommunicationsService.class);
+    private static final Logger LOG = ServerI18NFactory.getLogger(ServerCommunicationsService.class);
 
     private static final String DEFAULT_OVERRIDES_PROPERTIES_FILE = "server-comm-configuration-overrides.properties";
 
@@ -156,26 +169,6 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
      * The invocation handler used to process incoming remote API requests from things such as the CLI.
      */
     private RemoteSafeInvocationHandler m_remoteApiHandler;
-
-    /**
-     * Sets up some internal state.
-     *
-     * @see MBeanRegistration#preRegister(MBeanServer, ObjectName)
-     */
-    public ObjectName preRegister(MBeanServer mbs, ObjectName name) throws Exception {
-        m_mbs = mbs;
-
-        return name;
-    }
-
-    /**
-     * This method does nothing - it is a no-op.
-     *
-     * @see javax.management.MBeanRegistration#postRegister(java.lang.Boolean)
-     */
-    public void postRegister(Boolean arg0) {
-        return; // NO-OP
-    }
 
     /**
      * Actually starts the communications services. Once this returns, agents can communicate with the server. This
@@ -258,21 +251,18 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         return m_started;
     }
 
-    /**
-     * This method does nothing - it is a no-op.
-     *
-     * @see javax.management.MBeanRegistration#preDeregister()
-     */
-    public void preDeregister() throws Exception {
-        return; // NO-OP
+    @PostConstruct
+    private void init() {
+        m_mbs = JMXUtil.getPlatformMBeanServer();
+        JMXUtil.registerMBean(this, OBJECT_NAME);
     }
 
     /**
      * Cleans up the internal state of this service.
-     *
-     * @see javax.management.MBeanRegistration#postDeregister()
      */
-    public void postDeregister() {
+    @PreDestroy
+    private void destroy() {
+        JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
         m_mbs = null;
         m_container = null;
         m_configuration = null;
@@ -283,8 +273,6 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         m_knownAgents.removeAllAgents();
         m_knownAgentClients.clear();
         m_started = false;
-
-        return;
     }
 
     @Override
@@ -820,6 +808,9 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                 // allow ${var} notation in the values so we can provide variable replacements in the values
                 value = replaceProperties(value);
 
+                // there are a few settings that normally aren't set but can be set at runtime - set them now
+                value = determineSecurityAlgorithm(value);
+
                 preferences_node.put(key, value);
                 LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCE_OVERRIDE, key, value);
             }
@@ -849,13 +840,19 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
                     .valueOf(bindPort));
             }
         } catch (Exception e) {
-            LOG.error("Unable to set explicit connector address/port, using defaults: ", e);
+            LOG.error(ServerI18NResourceKeys.ERROR_SETTING_CONNECTOR_COMM_PREFS, e);
 
             ServiceContainerConfiguration scConfig = new ServiceContainerConfiguration(config.getPreferences());
             preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_ADDRESS, scConfig
                 .getConnectorBindAddress());
             preferences_node.put(ServiceContainerConfigurationConstants.CONNECTOR_BIND_PORT, String.valueOf(scConfig
                 .getConnectorBindPort()));
+        } finally {
+            try {
+                preferences_node.flush();
+            } catch (Exception e) {
+                LOG.error(ServerI18NResourceKeys.ERROR_FLUSHING_SERVER_PREFS, e);
+            }
         }
 
         // let's make sure our configuration is upgraded to the latest schema
@@ -864,6 +861,23 @@ public class ServerCommunicationsService implements ServerCommunicationsServiceM
         LOG.debug(ServerI18NResourceKeys.CONFIG_PREFERENCES, config);
 
         return config;
+    }
+
+    private String determineSecurityAlgorithm(String value) {
+        String[] algorithmPropNames = new String[] {
+            ServerConfigurationConstants.CLIENT_SENDER_SECURITY_KEYSTORE_ALGORITHM,
+            ServerConfigurationConstants.CLIENT_SENDER_SECURITY_TRUSTSTORE_ALGORITHM,
+            ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_KEYSTORE_ALGORITHM,
+            ServiceContainerConfigurationConstants.CONNECTOR_SECURITY_TRUSTSTORE_ALGORITHM };
+
+        for (String algorithmPropName : algorithmPropNames) {
+            // if the value is still the ${x} token, it means that setting was not set - let's set it now
+            if (value.startsWith("${" + algorithmPropName)) {
+                return System.getProperty("java.vendor", "").contains("IBM") ? "IbmX509" : "SunX509";
+            }
+        }
+
+        return value;
     }
 
     /**

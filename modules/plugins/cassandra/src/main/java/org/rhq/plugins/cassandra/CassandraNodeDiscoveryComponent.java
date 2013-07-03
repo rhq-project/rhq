@@ -23,17 +23,25 @@
 package org.rhq.plugins.cassandra;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
+import org.yaml.snakeyaml.Yaml;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
 import org.rhq.core.system.ProcessInfo;
 import org.rhq.plugins.jmx.JMXDiscoveryComponent;
 
@@ -42,9 +50,39 @@ import org.rhq.plugins.jmx.JMXDiscoveryComponent;
  */
 public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
+    private static final Log log = LogFactory.getLog(CassandraNodeDiscoveryComponent.class);
+
+    protected static final String HOST_PROPERTY = "host";
+    protected static final String CLUSTER_NAME_PROPERTY = "clusterName";
+    protected static final String NATIVE_TRANSPORT_PORT_PROPERTY = "nativeTransportPort";
+    protected static final String JMX_PORT_PROPERTY = "jmxPort";
+    protected static final String AUTHENTICATOR_PROPERTY = "authenticator";
+    protected static final String USERNAME_PROPERTY = "username";
+    protected static final String PASSWORD_PROPERTY = "password";
+    protected static final String YAML_PROPERTY = "yamlConfiguration";
+    protected static final String BASEDIR_PROPERTY = "baseDir";
+
+    protected static final String DEFAULT_RHQ_CLUSTER = "rhq";
+
+    private static final String RESOURCE_NAME = "Cassandra";
+
+
+    @SuppressWarnings({ "rawtypes" })
     @Override
     public Set<DiscoveredResourceDetails> discoverResources(ResourceDiscoveryContext context) {
+        Set<DiscoveredResourceDetails> cassandraNodes = new HashSet<DiscoveredResourceDetails>();
+
+        for (DiscoveredResourceDetails discoveredResource : this.scanForResources(context)) {
+            if (isCassandraNode(discoveredResource)) {
+                cassandraNodes.add(discoveredResource);
+            }
+        }
+
+        return cassandraNodes;
+    }
+
+    @SuppressWarnings({ "rawtypes", "unchecked" })
+    protected Set<DiscoveredResourceDetails> scanForResources(ResourceDiscoveryContext context) {
         Set<DiscoveredResourceDetails> details = new HashSet<DiscoveredResourceDetails>();
         List<ProcessScanResult> processScanResults = context.getAutoDiscoveredProcesses();
 
@@ -58,38 +96,140 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         return details;
     }
 
+    protected boolean isCassandraNode(DiscoveredResourceDetails discoveredResource) {
+        if (DEFAULT_RHQ_CLUSTER.equals(discoveredResource.getPluginConfiguration()
+            .getSimpleValue(CLUSTER_NAME_PROPERTY))) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @SuppressWarnings({ "unchecked", "deprecation" })
     private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext<?> context,
         ProcessScanResult processScanResult) {
-        ProcessInfo processInfo = processScanResult.getProcessInfo();
-        String jmxPort = null;
 
-        for (String arg : processInfo.getCommandLine()) {
+        Configuration pluginConfig = context.getDefaultPluginConfiguration();
+
+        String jmxPort = null;
+        StringBuilder commandLineBuilder = new StringBuilder(400);
+        int classpathIndex = -1;
+
+        ProcessInfo processInfo = processScanResult.getProcessInfo();
+        String[] arguments = processInfo.getCommandLine();
+        for (int i = 0; i < arguments.length; i++) {
+            String arg = arguments[i];
+
             if (arg.startsWith("-Dcom.sun.management.jmxremote.port")) {
                 String[] jmxPortArg = arg.split("=");
                 jmxPort = jmxPortArg[1];
-                break;
+            }
+            if (arg.startsWith("-cp") || (arg.startsWith("-classpath"))) {
+                classpathIndex = i;
+            }
+
+            commandLineBuilder.append(arg);
+            commandLineBuilder.append(' ');
+        }
+
+        pluginConfig.put(new PropertySimple(COMMAND_LINE_CONFIG_PROPERTY, commandLineBuilder.toString()));
+
+        if (classpathIndex != -1 && classpathIndex + 1 < arguments.length) {
+            String[] classpathEntries = arguments[classpathIndex + 1].split(File.pathSeparator);
+
+            File yamlConfigurationPath = null;
+            for (String classpathEntry : classpathEntries) {
+                if (classpathEntry.endsWith("conf")) {
+                    yamlConfigurationPath = new File(classpathEntry);
+                    if (!yamlConfigurationPath.isAbsolute()) {
+                        try {
+                            //relative path, use process CWD to find absolute path of the conf directory
+                            yamlConfigurationPath = new File(processInfo.getExecutable().getCwd(), classpathEntry);
+                        } catch (Exception e) {
+                            log.error("Error creating path for yaml file.", e);
+                        }
+                    }
+                }
+            }
+
+            if (yamlConfigurationPath != null) {
+                InputStream inputStream = null;
+                try {
+                    File yamlConfigurationFile = new File(yamlConfigurationPath, "cassandra.yaml");
+                    pluginConfig.put(new PropertySimple(YAML_PROPERTY, yamlConfigurationFile.getAbsolutePath()));
+
+                    inputStream = new FileInputStream(yamlConfigurationFile);
+                    Yaml yaml = new Yaml();
+                    Map<String, String> parsedProperties = (Map<String, String>) yaml.load(inputStream);
+
+                    if (parsedProperties.get("cluster_name") != null) {
+                        pluginConfig
+                            .put(new PropertySimple(CLUSTER_NAME_PROPERTY, parsedProperties.get("cluster_name")));
+                    }
+
+                    if (parsedProperties.get("listen_address") != null) {
+                        pluginConfig.put(new PropertySimple(HOST_PROPERTY, parsedProperties.get("listen_address")));
+                    }
+
+                    if (parsedProperties.get("native_transport_port") != null) {
+                        pluginConfig.put(new PropertySimple(NATIVE_TRANSPORT_PORT_PROPERTY, parsedProperties
+                            .get("native_transport_port")));
+                    }
+
+                    if (parsedProperties.get("authenticator") != null) {
+                        pluginConfig.put(new PropertySimple(AUTHENTICATOR_PROPERTY, parsedProperties
+                            .get("authenticator")));
+                    }
+                } catch (Exception e) {
+                    log.error("YAML Configuration load exception ", e);
+                } finally {
+                    try {
+                        if ( inputStream != null){
+                            inputStream.close();
+                        }
+                    } catch (Exception e) {
+                        log.error("Unable to close stream for yaml configuration", e);
+                    }
+                }
             }
         }
 
-        if (jmxPort == null) {
-            return null;
+        if (jmxPort != null) {
+            pluginConfig.put(new PropertySimple(JMX_PORT_PROPERTY, jmxPort));
+
+            pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
+                J2SE5ConnectionTypeDescriptor.class.getName()));
+            pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
+                "service:jmx:rmi:///jndi/rmi://" + pluginConfig.getSimpleValue(HOST_PROPERTY) + ":" + jmxPort
+                    + "/jmxrmi"));
         }
 
-        String resourceKey = "CassandraDaemon:" + jmxPort;
-        String resourceName = "CassandraDaemon";
-
-        Configuration pluginConfig = new Configuration();
-        pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTION_TYPE,
-            J2SE5ConnectionTypeDescriptor.class.getName()));
-        pluginConfig.put(new PropertySimple(JMXDiscoveryComponent.CONNECTOR_ADDRESS_CONFIG_PROPERTY,
-            "service:jmx:rmi:///jndi/rmi://127.0.0.1:" + jmxPort + "/jmxrmi"));
+        String resourceKey = "Cassandra (" + pluginConfig.getSimpleValue(HOST_PROPERTY) + ") " + jmxPort;
+        String resourceName = RESOURCE_NAME;
 
         String path = processInfo.getExecutable().getCwd();
-        pluginConfig.put(new PropertySimple("baseDir", new File(path).getParentFile().getAbsolutePath()));
+        pluginConfig.put(new PropertySimple(BASEDIR_PROPERTY, new File(path).getParentFile().getAbsolutePath()));
 
-        pluginConfig.put(new PropertySimple("thriftPort", "9160"));
+        pluginConfig.put(new PropertySimple(USERNAME_PROPERTY, getDefaultUserName()));
+        pluginConfig.put(new PropertySimple(PASSWORD_PROPERTY, getDefaultPassword()));
 
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);
     }
+
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+
+        // don't use super's impl because the resource key is not a JvmResourceKey
+        return null;
+    }
+
+    protected String getDefaultUserName() {
+        return "cassandra";
+    }
+
+    protected String getDefaultPassword() {
+        return "cassandra";
+    }
+
 }

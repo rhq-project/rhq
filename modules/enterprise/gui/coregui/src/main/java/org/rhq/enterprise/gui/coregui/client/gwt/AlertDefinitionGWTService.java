@@ -30,10 +30,7 @@ public interface AlertDefinitionGWTService extends RemoteService {
 
     PageList<AlertDefinition> findAlertDefinitionsByCriteria(AlertDefinitionCriteria criteria) throws RuntimeException;
 
-    int createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException;
-
-    AlertDefinition createAlertDefinitionAndReturn(AlertDefinition alertDefinition, Integer resourceId)
-        throws RuntimeException;
+    AlertDefinition createAlertDefinition(AlertDefinition alertDefinition, Integer resourceId) throws RuntimeException;
 
     AlertDefinition updateAlertDefinition(int alertDefinitionId, AlertDefinition alertDefinition, boolean purgeInternals)
         throws RuntimeException;

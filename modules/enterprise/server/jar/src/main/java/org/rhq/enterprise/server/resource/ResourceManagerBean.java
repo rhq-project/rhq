@@ -58,6 +58,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.PluginConfigurationUpdate;
 import org.rhq.core.domain.configuration.ResourceConfigurationUpdate;
 import org.rhq.core.domain.content.ContentServiceRequest;
@@ -573,7 +574,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
         String[] namedQueriesToExecute = new String[] { //
-        ResourceRepo.DELETE_BY_RESOURCES, //
+            StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES, //remove storage node resource links
+            ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
             CallTimeDataValue.QUERY_DELETE_BY_RESOURCES, // call time data values BEFORE schedules & call time data keys

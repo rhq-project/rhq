@@ -1,5 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<!--
+  ~ RHQ Management Platform
+  ~ Copyright (C) 2005-2013 Red Hat, Inc.
+  ~ All rights reserved.
+  ~
+  ~ This program is free software; you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation version 2 of the License.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program; if not, write to the Free Software Foundation, Inc.,
+  ~ 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+  -->
+
 <!DOCTYPE plugin [
 
     <!ENTITY pluginName 'JBossAS7'>
@@ -421,7 +440,8 @@
         <c:simple-property name="url-delimiter" type="string" readOnly="false" description="Specifies the delimiter for URLs in connection-url for HA datasources" required="false"/>
         <c:simple-property name="url-selector-strategy-class-name" type="string" readOnly="false" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy" required="false"/>
         <c:simple-property name="use-java-context" type="boolean" readOnly="false" required="false" default="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <c:simple-property name="enabled" type="boolean" readOnly="true" required="false" description="Specifies if the datasource should be enabled"/>
+        <!-- The component class manually handles this property which is read-only on the server side  -->
+        <c:simple-property name="enabled" type="boolean" readOnly="false" default="true" required="false" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="jta" type="boolean" readOnly="false" required="false" default="true" description="Enable JTA integration"/>
         <c:simple-property name="max-pool-size" type="integer" readOnly="false" required="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
         <c:simple-property name="min-pool-size" type="integer" readOnly="false" required="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
@@ -473,7 +493,7 @@
         <c:simple-property name="exception-sorter-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
         <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
         <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="false" required="false" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
-        <c:simple-property name="background-validation-millis" type="long" readOnly="false" required="false" defaultValue="600000" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation-millis" type="long" readOnly="false" required="false" defaultValue="600000" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart."/>
         <c:simple-property name="background-validation" type="boolean" readOnly="false" required="false" defaultValue="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
         <c:simple-property name="use-fast-fail" type="boolean" readOnly="false" required="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
         <c:simple-property name="validate-on-match" type="boolean" readOnly="false" required="false" default="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
@@ -549,7 +569,7 @@
         <c:simple-property name="exception-sorter-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.ExceptionSorter that provides a boolean isExceptionFatal(SQLException e) method to validate is an exception should be broadcast to all javax.resource.spi.ConnectionEventListener as a connectionErrorOccurred"/>
         <c:simple-property name="stale-connection-checker-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.StaleConnectionChecker that provides a boolean isStaleConnection(SQLException e) method which if it it returns true will wrap the exception in an org.jboss.jca.adapters.jdbc.StaleConnectionException"/>
         <c:simple-property name="valid-connection-checker-class-name" type="string" readOnly="true" required="false" description="An org.jboss.jca.adapters.jdbc.ValidConnectionChecker that provides a SQLException isValidConnection(Connection e) method to validate is a connection is valid. An exception means the connection is destroyed. This overrides the check-valid-connection-sql when present."/>
-        <c:simple-property name="background-validation-minutes" type="long" readOnly="true" required="false" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation-millis" type="long" readOnly="true" required="false" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart."/>
         <c:simple-property name="background-validation" type="boolean" readOnly="true" required="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
         <c:simple-property name="use-fast-fail" type="boolean" readOnly="true" required="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
         <c:simple-property name="validate-on-match" type="boolean" readOnly="true" required="false" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
@@ -580,7 +600,8 @@
         <c:simple-property name="url-delimiter" required="false" type="string" readOnly="true" description="Specifies the delimiter for URLs in connection-url for HA datasources"/>
         <c:simple-property name="url-selector-strategy-class-name" required="false" type="string" readOnly="true" description="A class that implements org.jboss.jca.adapters.jdbc.URLSelectorStrategy"/>
         <c:simple-property name="use-java-context" required="false" type="boolean" readOnly="true" description="Setting this to false will bind the DataSource into global JNDI;"/>
-        <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" description="Specifies if the datasource should be enabled"/>
+        <!-- The component class manually handles this property which is read-only on the server side  -->
+        <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" default="true" description="Specifies if the datasource should be enabled"/>
         <c:simple-property name="max-pool-size" required="false" type="integer" readOnly="false" defaultValue="20" description="The max-pool-size element indicates the maximum number of connections for a pool. No more connections will be created in each sub-pool."/>
         <c:simple-property name="min-pool-size" required="false" type="integer" readOnly="false" defaultValue="0" description="The min-pool-size element indicates the minimum number of connections a pool should hold. These are not created until a Subject is known from a request for a connection."/>
         <c:simple-property name="pool-prefill" required="false" type="boolean" readOnly="false" defaultValue="false" description="Whether to attempt to prefill the connection pool. Changing this value require a server restart."/>
@@ -648,7 +669,7 @@
                             configuration
                         </c:map-property>
         -->
-        <c:simple-property name="background-validation-minutes" required="false" type="long" readOnly="false" defaultValue="10" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation-millis" required="false" type="long" readOnly="false" defaultValue="10" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart."/>
         <c:simple-property name="background-validation" required="false" type="boolean" readOnly="false" defaultValue="false" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
         <c:simple-property name="use-fast-fail" required="false" type="boolean" readOnly="false" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
         <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
@@ -758,7 +779,7 @@
                             configuration
                         </c:map-property>
         -->
-        <c:simple-property name="background-validation-minutes" required="false" type="long" readOnly="true" description="The background-validation-minutes element specifies the amount of time, in minutes, that background validation will run. Changing this value require a server restart."/>
+        <c:simple-property name="background-validation-millis" required="false" type="long" readOnly="true" description="The background-validation-millis element specifies the amount of time, in milliseconds, that background validation will run. Changing this value require a server restart."/>
         <c:simple-property name="background-validation" required="false" type="boolean" readOnly="true" description="An element to specify that connections should be validated on a background thread versus being validated prior to use. Changing this value require a server restart."/>
         <c:simple-property name="use-fast-fail" required="false" type="boolean" readOnly="true" description="Whether fail a connection allocation on the first connection if it is invalid (true) or keep trying until the pool is exhausted of all potential connections (false)"/>
         <c:simple-property name="validate-on-match" required="false" type="boolean" readOnly="true" description="The validate-on-match element indicates whether or not connection level validation should be done when a connection factory attempts to match a managed connection for a given set. This is typically exclusive to the use of background validation"/>
@@ -2369,7 +2390,7 @@
         <metric property="errorCount" measurementType="trendsup" displayType="summary" description="Number of error that occurs when processing requests by the connector."/>
         <metric property="maxTime" units="milliseconds" description="Max time spent to process a requests."/>
         <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
-        <metric property="_maxConnections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
+        <metric property="_expr:max-connections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
         <resource-configuration>
           <c:simple-property name="scheme" required="true" type="string" readOnly="true" description="The web connector scheme.">
@@ -2385,7 +2406,7 @@
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="true" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="true" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
           <c:simple-property name="executor" required="false" type="string" readOnly="true" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections" required="false" type="integer" readOnly="true" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="true" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
           <c:simple-property name="max-post-size" required="false" type="integer" readOnly="true" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
           <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="true" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -2398,7 +2419,7 @@
           </c:simple-property>
           <c:simple-property name="proxy-name" required="false" type="string" readOnly="true" description="The host name that will be used when sending a redirect. The default value is null."/>
           <c:simple-property name="proxy-port" required="false" type="integer" readOnly="true" description="The port that will be used when sending a redirect."/>
-          <c:simple-property name="redirect-port" required="false" type="integer" readOnly="true" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
+          <c:simple-property name="redirect-port:expr" displayName="Redirect Port" required="false" type="string" readOnly="true" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
           <c:simple-property name="secure" required="false" type="boolean" readOnly="true" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
           <c:simple-property name="virtual-server" required="false" type="string" readOnly="true" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
@@ -5358,7 +5379,7 @@
           <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
           <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
           <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-          <c:simple-property name="max-connections" required="false" type="integer" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+          <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
           <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
           <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -5372,7 +5393,7 @@
           </c:simple-property>
           <c:simple-property name="proxy-name" required="false" type="string" readOnly="false" description="The host name that will be used when sending a redirect. The default value is null."/>
           <c:simple-property name="proxy-port" required="false" type="integer" readOnly="false" description="The port that will be used when sending a redirect."/>
-          <c:simple-property name="redirect-port" required="false" type="integer" readOnly="false" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
+          <c:simple-property name="redirect-port:expr" displayName="Redirect Port" required="false" type="string" readOnly="false" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
           <c:simple-property name="secure" required="false" type="boolean" readOnly="false" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
           <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
@@ -7395,7 +7416,7 @@
       <metric property="errorCount" measurementType="trendsup" displayType="summary" description="Number of error that occurs when processing requests by the connector."/>
       <metric property="maxTime" units="milliseconds" description="Max time spent to process a requests."/>
       <metric property="requestCount" measurementType="trendsup" displayType="summary" description="Number of the request processed by the connector."/>
-      <metric property="_maxConnections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
+      <metric property="_expr:max-connections" displayName="Max connections" description="Number of max connections this connector can handle (see configuration to set it)" defaultOn="true" defaultInterval="14400000"/>
 
       <resource-configuration>
         <c:simple-property name="scheme" required="true" type="string" readOnly="false" description="The web connector scheme.">
@@ -7411,7 +7432,7 @@
         <c:simple-property name="enabled" required="false" type="boolean" readOnly="false" defaultValue="true" description="Defines whether the connector should be started on startup. The default value is true."/>
         <c:simple-property name="enable-lookups" required="false" type="boolean" readOnly="false" defaultValue="false" description="Enable DNS lookups for Servlet API. The default value is false."/>
         <c:simple-property name="executor" required="false" type="string" readOnly="false" description="The name of the executor that should be used for the processing threads of this connector. If undefined defaults to using an internal pool."/>
-        <c:simple-property name="max-connections" required="false" type="integer" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
+        <c:simple-property name="max-connections:expr" displayName="Max connections" required="false" type="string" readOnly="false" description="Amount of concurrent connections that can be processed by the connector with optimum performance. The default value depends on the connector used and the number of cpu cores (512*cores for HTTP, 32*cores for AJP)."/>
         <c:simple-property name="max-post-size" required="false" type="integer" readOnly="false" defaultValue="2097152" description="Maximum size in bytes of a POST request that can be parsed by the container. The default value is 2097152."/>
         <c:simple-property name="max-save-post-size" required="false" type="integer" readOnly="false" defaultValue="4096" description="Maximum size in bytes of a POST request that will be saved during certain authentication schemes. The default value is 4096."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="A unique name for the connector."/>
@@ -7425,7 +7446,7 @@
         </c:simple-property>
         <c:simple-property name="proxy-name" required="false" type="string" readOnly="false" description="The host name that will be used when sending a redirect. The default value is null."/>
         <c:simple-property name="proxy-port" required="false" type="integer" readOnly="false" description="The port that will be used when sending a redirect."/>
-        <c:simple-property name="redirect-port" required="false" type="integer" readOnly="false" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
+        <c:simple-property name="redirect-port:expr" displayName="Redirect Port" required="false" type="string" readOnly="false" defaultValue="8433" description="The port for redirection to a secure connector. The default value is 8433."/>
         <c:simple-property name="secure" required="false" type="boolean" readOnly="false" defaultValue="false" description="Indicates if content sent or received by the connector is secured from the user perspective. The default value is false."/>
         <c:simple-property name="virtual-server" required="false" type="string" readOnly="false" description="The list of virtual servers that can be accessed through this connector. The default is to allow all virtual servers."/>
 
@@ -8862,7 +8883,7 @@
 
   <service name="Web Runtime"
            class="WebRuntimeComponent"
-           discovery="SubsystemDiscovery"
+           discovery="WebRuntimeDiscoveryComponent"
            description="Runtime resources exposed by web components in the deployment."
            singleton="true">
 
@@ -8885,8 +8906,8 @@
       </c:group>
     </plugin-configuration>
 
-    <metric property="virtual-host" dataType="trait" displayName="Virtual Host" description="the virtual host this webapp is deployed to"/>
-    <metric property="context-root" dataType="trait" displayName="Context Root" description="the context root of this webapp"/>
+    <metric property="virtual-host" dataType="trait" defaultOn="true" displayName="Virtual Host" description="the virtual host this webapp is deployed to"/>
+    <metric property="context-root" dataType="trait" defaultOn="true" displayName="Context Root" description="the context root of this webapp"/>
     <metric property="responseTime"
             dataType="calltime" defaultOn="false" units="milliseconds" destinationType="URL"
             description="the minimum, maximum, and average response times for requests serviced by this webapp"/>

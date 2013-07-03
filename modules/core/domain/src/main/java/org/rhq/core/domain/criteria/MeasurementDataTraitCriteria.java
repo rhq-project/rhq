@@ -51,12 +51,14 @@ public class MeasurementDataTraitCriteria extends Criteria {
     public static final String FILTER_FIELD_GROUP_ID = "groupId";
     public static final String FILTER_FIELD_DEFINITION_ID = "definitionId";
     public static final String FILTER_FIELD_MAX_TIMESTAMP = "maxTimestamp";
+    public static final String FILTER_FIELD_ENABLED = "enabled";
 
     private Integer filterScheduleId; // requires overrides
     private Integer filterResourceId; // requires overrides
     private Integer filterGroupId; // requires overrides
     private Integer filterDefinitionId; // requires overrides
     private Integer filterMaxTimestamp; // requires overrides
+    private Boolean filterEnabled; // requires overrides
 
     private boolean fetchSchedule;
 
@@ -78,6 +80,7 @@ public class MeasurementDataTraitCriteria extends Criteria {
             + "    FROM MeasurementDataTrait mdt "
             + "   WHERE mdt.id.scheduleId = " + getAlias() + ".id.scheduleId ) " //
             + "     AND 1 = ?");
+        filterOverrides.put(FILTER_FIELD_ENABLED, "schedule.enabled = ?");
 
         sortOverrides.put(SORT_FIELD_TIMESTAMP, "id.timestamp");
         sortOverrides.put(SORT_FIELD_DISPLAY_NAME, "schedule.definition.displayName");
@@ -113,6 +116,10 @@ public class MeasurementDataTraitCriteria extends Criteria {
 
     public void addFilterMaxTimestamp() {
         this.filterMaxTimestamp = 1;
+    }
+
+    public void addFilterEnabled(boolean filterEnabled) {
+        this.filterEnabled = filterEnabled;
     }
 
     public void fetchSchedule(boolean fetchSchedule) {

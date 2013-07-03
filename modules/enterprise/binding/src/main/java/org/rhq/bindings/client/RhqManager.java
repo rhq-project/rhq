@@ -24,6 +24,7 @@ import org.rhq.enterprise.server.alert.AlertManagerRemote;
 import org.rhq.enterprise.server.auth.SubjectManagerRemote;
 import org.rhq.enterprise.server.authz.RoleManagerRemote;
 import org.rhq.enterprise.server.bundle.BundleManagerRemote;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerRemote;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
 import org.rhq.enterprise.server.content.ContentManagerRemote;
 import org.rhq.enterprise.server.content.RepoManagerRemote;
@@ -40,11 +41,11 @@ import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
 import org.rhq.enterprise.server.operation.OperationManagerRemote;
 import org.rhq.enterprise.server.report.DataAccessManagerRemote;
-import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceManagerRemote;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
+import org.rhq.enterprise.server.resource.group.definition.GroupDefinitionManagerRemote;
 import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
 import org.rhq.enterprise.server.support.SupportManagerRemote;
 import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
@@ -83,6 +84,7 @@ public enum RhqManager {
     ResourceTypeManager(ResourceTypeManagerRemote.class, "${ResourceTypeManager}"), //
     RoleManager(RoleManagerRemote.class, "${RoleManager}"), //
     SavedSearchManager(SavedSearchManagerRemote.class, "${SavedSearchManager}"), //
+    StorageNodeManager(StorageNodeManagerRemote.class, "${StorageNodeManager}"), //
     SubjectManager(SubjectManagerRemote.class, "${SubjectManager}"), //
     SupportManager(SupportManagerRemote.class, "${SupportManager}"), //
     SystemManager(SystemManagerRemote.class, "${SystemManager}"), //

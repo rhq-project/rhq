@@ -43,7 +43,7 @@ import com.wordnik.swagger.annotations.ApiResponse;
 @Path("/biz-ejb")
 public interface SomeEjbInterface {
 
-    @ApiOperation(value="Gives the current status", responseClass = "com.acme.MyResponse")
+    @ApiOperation(value="Gives the current status", responseClass = "com.acme.MyResponse", notes = "bla bla")
     @ApiErrors({
             @ApiError(code = 404,reason = "If there is no resource or group with the passed id "),
             @ApiError(code = 409,reason =" Resource type does not match the group one")
@@ -51,4 +51,19 @@ public interface SomeEjbInterface {
     @GET
     @Path("/")
     Response getStatus(@Context HttpHeaders httpHeaders);
+
+    @ApiOperation(value = "Returns hello world", notes = "<xml><simpara>This is XML</simpara></xml>")
+    @GET
+    @Path("/hello")
+    public String helloWorld();
+
+    @ApiOperation(value = "Returns hello world", notes = "<xml><simpara>This is XML</simpara></xml><xml>Bla</xml>")
+    @GET
+    @Path("/hello2")
+    public String helloBogusWorld();
+
+    @ApiOperation(value = "Returns hello world", notes = "<simpara>This is XML</simpara>")
+    @GET
+    @Path("/hello3")
+    public String helloBogusWorld2();
 }

@@ -71,6 +71,7 @@ public class TraitsView extends AbstractMeasurementDataTraitListView {
 
         criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_RESOURCE_ID, resourceId);
         criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_MAX_TIMESTAMP, true);
+        criteria.addCriteria(MeasurementDataTraitCriteria.FILTER_FIELD_ENABLED, true);
 
         return criteria;
     }

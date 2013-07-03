@@ -31,6 +31,10 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -58,6 +62,25 @@ public class SystemInfoFactory {
     private static Throwable nativeLibraryLoadThrowable;
     private static boolean disabled;
     private static boolean initialized = false;
+
+    private static final ThreadFactory threadFactory = new ThreadFactory() {
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r);
+            t.setName("systeminfo-" + threadNumber.getAndIncrement());
+            return t;
+        }
+    };
+
+    /**
+     * Used for mainly process execution within the plugin container.
+     * This should be 'final' but shutdown() is not really final either.
+     */
+    private static ExecutorService executor = Executors.newCachedThreadPool(threadFactory);
+
+    private static SystemInfo javaSystemInfo = new JavaSystemInfo(executor);
 
     private static SystemInfo cachedSystemInfo;
 
@@ -203,7 +226,7 @@ public class SystemInfoFactory {
             }
 
             if (nativePlatform == null) {
-                nativePlatform = new JavaSystemInfo();
+                nativePlatform = javaSystemInfo;
             }
 
             cachedSystemInfo = nativePlatform;
@@ -220,7 +243,7 @@ public class SystemInfoFactory {
      * @return Java-only {@link SystemInfo} implementation
      */
     public static SystemInfo createJavaSystemInfo() {
-        return new JavaSystemInfo();
+        return javaSystemInfo;
     }
 
     /**
@@ -228,6 +251,13 @@ public class SystemInfoFactory {
      * time it would be appropriate to give the native libraries a chance to clean up after themselves.
      */
     public static synchronized void shutdown() {
+        // Unclear if this should be 'shutdownNow()' or not
+        // This is used to execute sub processes; so it seems polite to wait for completion
+        executor.shutdown();
+        // This is needed by tests
+        executor = Executors.newCachedThreadPool(threadFactory);
+        javaSystemInfo = new JavaSystemInfo(executor);
+
         if (initialized) {
             // initialized is only ever set to true if the native layer was actually initialized
             // we don't want or need to check enabled/disabled here; we could have disabled after
@@ -402,7 +432,7 @@ public class SystemInfoFactory {
                 }
             }
 
-            // create a base IP address - this one is known to java and should always exist no matter what platform we are on 
+            // create a base IP address - this one is known to java and should always exist no matter what platform we are on
             try {
                 try {
                     tokens.put(TOKEN_PREFIX + "interfaces.java.address", InetAddress
@@ -420,4 +450,5 @@ public class SystemInfoFactory {
             return new TemplateEngine(new HashMap<String, String>());
         }
     }
+
 }

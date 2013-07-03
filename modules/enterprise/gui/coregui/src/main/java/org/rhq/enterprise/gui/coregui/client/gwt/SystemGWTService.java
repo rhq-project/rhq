@@ -38,6 +38,8 @@ public interface SystemGWTService extends RemoteService {
 
     ServerDetails getServerDetails() throws RuntimeException;
 
+    String getSessionTimeout() throws RuntimeException;
+
     SystemSettings getSystemSettings() throws RuntimeException;
 
     void setSystemSettings(SystemSettings settings) throws RuntimeException;

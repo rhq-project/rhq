@@ -5,7 +5,7 @@
     <parent>
         <groupId>org.rhq</groupId>
         <artifactId>rhq-enterprise-server-plugins-parent</artifactId>
-        <version>4.6.0-SNAPSHOT</version>
+        <version>4.7.0-SNAPSHOT</version>
     </parent>
 
     <groupId>org.rhq</groupId>
@@ -138,7 +138,7 @@
 
             <properties>
                 <rhq.rootDir>../../../../..</rhq.rootDir>
-                <rhq.containerDir>${rhq.rootDir}/${rhq.defaultDevContainerPath}</rhq.containerDir>
+                <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
                 <rhq.deploymentDir>${rhq.containerDir}/${rhq.serverPluginDir}</rhq.deploymentDir>
             </properties>
 

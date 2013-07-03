@@ -37,7 +37,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.Abs
  * @author John Mazzitelli
  * @author Simeon Pinder
  */
-public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSource> {
+public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource> {
 
     private final int groupId;
     private final boolean isAutogroup;
@@ -46,7 +46,7 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
         super();
         this.groupId = groupId;
         this.isAutogroup = groupComposite.getResourceGroup().getAutoGroupParentResource() != null;
-        setDataSource(new GroupMeasurementTableDataSource(groupComposite, groupId));
+        setDataSource(new GroupMetricsTableDataSource(groupComposite, groupId));
         //disable fields used when is full screen
         setShowFooterRefresh(true);
         setTitle(MSG.common_title_numeric_metrics());
@@ -61,9 +61,9 @@ public class GroupMeasurementTableView extends Table<GroupMeasurementTableDataSo
             @Override
             public void onCellClick(CellClickEvent event) {
                 Record record = event.getRecord();
-                String title = record.getAttribute(GroupMeasurementTableDataSource.FIELD_METRIC_LABEL);
+                String title = record.getAttribute(GroupMetricsTableDataSource.FIELD_METRIC_LABEL);
                 ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
-                int defId = record.getAttributeAsInt(GroupMeasurementTableDataSource.FIELD_METRIC_DEF_ID);
+                int defId = record.getAttributeAsInt(GroupMetricsTableDataSource.FIELD_METRIC_DEF_ID);
 
                 CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(groupId, defId, isAutogroup);
                 window.addItem(graph);

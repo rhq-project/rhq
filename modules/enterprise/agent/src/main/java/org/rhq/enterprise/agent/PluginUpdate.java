@@ -278,9 +278,9 @@ public class PluginUpdate {
      * of streaming the plugin, the download will fail.  When this happens, this method will simply
      * attempt to download the plugin again (this time, hopefully, we will remain connected to the
      * new server and the download will succeed).
-     * 
+     *
      * @param plugin the plugin to download
-     * 
+     *
      * @throws Exception if, despite our best efforts, the plugin could not be downloaded
      */
     private void downloadPluginWithRetries(Plugin plugin) throws Exception {
@@ -446,9 +446,8 @@ public class PluginUpdate {
             if (!latest_plugins_map.containsKey(current_plugin.getPath())) {
                 File plugin = getPluginFile(current_plugin);
                 if (plugin.exists()) {
-                    File plugin_dir = this.config.getPluginDirectory();
                     String plugin_filename = plugin.getPath();
-                    File plugin_backup = new File(plugin_dir, plugin_filename + ".REJECTED");
+                    File plugin_backup = new File(plugin_filename + ".REJECTED");
                     LOG.warn(AgentI18NResourceKeys.PLUGIN_NOT_ON_SERVER, plugin_filename, plugin_backup.getName());
                     try {
                         plugin_backup.delete(); // in case an old backup is for some reason still here, get rid of it

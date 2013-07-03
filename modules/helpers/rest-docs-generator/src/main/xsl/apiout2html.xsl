@@ -44,6 +44,12 @@
     </h3>
     <em><xsl:value-of select="@description"/></em>
     <br/>
+    <xsl:if test="notes">
+      Notes:<br/>
+      <xsl:value-of select="notes"/>
+      <br/>
+    </xsl:if>
+
     <xsl:choose>
     <xsl:when test="param">
     Parameters:

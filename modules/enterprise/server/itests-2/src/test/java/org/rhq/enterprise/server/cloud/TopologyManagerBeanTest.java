@@ -34,6 +34,7 @@ import org.rhq.core.domain.criteria.ServerCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestConstants;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
@@ -57,16 +58,17 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
     @Test(groups = "integration.ejb3")
     public void testParsingCriteriaQueryResults1() throws Exception {
 
-        final int serverCount = 205;
+        final int serverCount = 208;
         executeInTransaction(new TransactionCallback() {
 
             public void execute() throws Exception {
                 // verify that all server objects are actually parsed. 
                 final Set<String> serverNames = new HashSet<String>(serverCount);
+                serverNames.add(TestConstants.RHQ_TEST_SERVER_NAME);
 
                 final String prefix = "server";
 
-                for (int i = 0; i < serverCount; i++) {
+                for (int i = 0; i < serverCount - 1; i++) {
                     String name = prefix + String.format(" %03d", i + 1);
                     Server server = new Server();
                     server.setName(name);
@@ -113,7 +115,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 // iterate over the entire result set efficiently
                 int actualCount = 0;
                 for (Server s : servers) {
-                    assert null == prevName || s.getName().compareTo(prevName) < 0 : "Results should be sorted by name DESC, something is out of order";
+                    assert null == prevName || s.getName().compareTo(prevName) < 0 || s.getName().equals(TestConstants.RHQ_TEST_SERVER_NAME) : "Results should be sorted by name DESC, something is out of order";
                     prevName = s.getName();
                     actualCount++;
                     serverNames.remove(s.getName());
@@ -138,18 +140,19 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
     @Test(groups = "integration.ejb3")
     public void testParsingCriteriaQueryResults2() throws Exception {
 
-        final int serverCount = 305;
+        final int serverCount = 307;
         executeInTransaction(new TransactionCallback() {
 
             public void execute() throws Exception {
                 // verify that all server objects are actually parsed. 
                 final Set<String> serverNames = new HashSet<String>(serverCount);
+                serverNames.add(TestConstants.RHQ_TEST_SERVER_NAME);
 
                 final String prefix = "server";
 
-                int shouldBeFoundCount = 0;
+                int shouldBeFoundCount = 1;
                 
-                for (int i = 0; i < serverCount; i++) {
+                for (int i = 0; i < serverCount - 1; i++) {
                     String name = prefix + String.format(" %03d", i + 1);
                     Server server = new Server();
                     server.setName(name);
@@ -213,7 +216,7 @@ public class TopologyManagerBeanTest extends AbstractEJB3Test {
                 // iterate over the entire result set efficiently
                 int actualCount = 0;
                 for (Server s : servers) {
-                    assert null == prevName || s.getName().compareTo(prevName) < 0 : "Results should be sorted by name DESC, something is out of order";
+                    assert null == prevName || s.getName().compareTo(prevName) < 0 || s.getName().equals(TestConstants.RHQ_TEST_SERVER_NAME) : "Results should be sorted by name DESC, something is out of order";
                     prevName = s.getName();
                     actualCount++;
                     if (!serverNames.contains(prevName)) {

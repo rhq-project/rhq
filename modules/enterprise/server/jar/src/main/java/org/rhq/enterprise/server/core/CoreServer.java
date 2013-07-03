@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,22 +13,29 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.management.ManagementFactory;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Properties;
 
-import javax.management.MBeanServer;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.management.ObjectName;
 
 import org.apache.commons.logging.Log;
@@ -41,15 +48,21 @@ import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.util.ObjectNameFactory;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.core.service.ManagementService;
+import org.rhq.enterprise.server.util.JMXUtil;
 
 /**
  * Get information about RHQ's underlying AS Server.
  */
+@Singleton
+@Startup
+@LocalBean
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class CoreServer implements CoreServerMBean {
     private static final String PRODUCT_INFO_PROPERTIES_RESOURCE_PATH =
             "org/rhq/enterprise/server/core/ProductInfo.properties";
 
-    private final Log log = LogFactory.getLog(CoreServer.class);
+    private static final Log LOG = LogFactory.getLog(CoreServer.class);
 
     /**
      * The name of the version file as found in this class's classloader
@@ -93,7 +106,10 @@ public class CoreServer implements CoreServerMBean {
 
     private Date bootTime;
 
-    protected void start() throws Exception {
+    @PostConstruct
+    private void init() {
+        JMXUtil.registerMBean(this, OBJECT_NAME);
+
         this.buildProps = loadBuildProperties();
         this.bootTime = new Date();
 
@@ -101,7 +117,12 @@ public class CoreServer implements CoreServerMBean {
         String version = getVersion();
         String buildNumber = getBuildNumber();
         String buildDate = this.buildProps.getProperty(PROP_BUILD_DATE, "?");
-        log.info("Version=[" + version + "], Build Number=[" + buildNumber + "], Build Date=[" + buildDate + "]");
+        LOG.info("Version=[" + version + "], Build Number=[" + buildNumber + "], Build Date=[" + buildDate + "]");
+    }
+
+    @PreDestroy
+    private void destroy() {
+        JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
     }
 
     public String getName() {
@@ -220,16 +241,10 @@ public class CoreServer implements CoreServerMBean {
         }
     }
 
-    private MBeanServer getMBeanServer() {
-        MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-        return mbs;
-    }
-
     private String getServerEnvironmentAttribute(String attributeName) {
         try {
-            MBeanServer mbs = getMBeanServer();
             ObjectName name = ObjectNameFactory.create("jboss.as:core-service=server-environment");
-            Object value = mbs.getAttribute(name, attributeName);
+            Object value = JMXUtil.getPlatformMBeanServer().getAttribute(name, attributeName);
             return (value != null) ? value.toString() : null;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -247,7 +262,7 @@ public class CoreServer implements CoreServerMBean {
                 stream.close();
             }
         } catch (Exception e) {
-            log.fatal("Failed to load [" + VERSION_FILE + "] via class loader [" + classLoader + "]");
+            LOG.fatal("Failed to load [" + VERSION_FILE + "] via class loader [" + classLoader + "]");
         }
 
         return buildProps;

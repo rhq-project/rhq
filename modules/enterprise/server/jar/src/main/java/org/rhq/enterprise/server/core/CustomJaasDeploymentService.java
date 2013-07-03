@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core;
 
@@ -24,9 +24,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.management.MBeanRegistration;
-import javax.management.MBeanServer;
-import javax.management.ObjectName;
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
+import javax.ejb.LocalBean;
+import javax.ejb.Singleton;
+import javax.ejb.Startup;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.naming.AuthenticationException;
 import javax.naming.Context;
 import javax.naming.NamingException;
@@ -47,6 +53,7 @@ import org.rhq.enterprise.server.core.jaas.JDBCLoginModule;
 import org.rhq.enterprise.server.core.jaas.JDBCPrincipalCheckLoginModule;
 import org.rhq.enterprise.server.core.jaas.LdapLoginModule;
 import org.rhq.enterprise.server.core.service.ManagementService;
+import org.rhq.enterprise.server.util.JMXUtil;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
@@ -54,27 +61,26 @@ import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
  * Deploy the JAAS login modules that are configured. The JDBC login module is always deployed, however, the LDAP login
  * module is only deployed if LDAP is enabled in the RHQ configuration.
  */
-public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean, MBeanRegistration {
+@Singleton
+@Startup
+@LocalBean
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
+@TransactionAttribute(TransactionAttributeType.SUPPORTS)
+public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceMBean {
 
-    private Log log = LogFactory.getLog(CustomJaasDeploymentService.class.getName());
-
-    /**
-     * Constructor for {@link CustomJaasDeploymentService}.
-     */
-    public CustomJaasDeploymentService() {
-    }
+    private static final Log LOG = LogFactory.getLog(CustomJaasDeploymentService.class.getName());
 
     /**
      * @see org.rhq.enterprise.server.core.CustomJaasDeploymentServiceMBean#installJaasModules()
      */
     public void installJaasModules() {
         try {
-            log.info("Updating RHQ Server's JAAS login modules");
+            LOG.info("Updating RHQ Server's JAAS login modules");
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
             updateJaasModules(systemConfig);
         } catch (Exception e) {
-            log.fatal("Error deploying JAAS login modules", e);
+            LOG.fatal("Error deploying JAAS login modules", e);
             throw new RuntimeException(e);
         }
     }
@@ -99,40 +105,25 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
 
 
                 if (!ldapModulesPresent) {
-                    log.info("Updating RHQ Server's JAAS login modules with LDAP support");
+                    LOG.info("Updating RHQ Server's JAAS login modules with LDAP support");
                     updateJaasModules(systemConfig);
                 }
             }
         } catch (Exception e) {
-            log.fatal("Error deploying JAAS login modules", e);
+            LOG.fatal("Error deploying JAAS login modules", e);
             throw new RuntimeException(e);
         }
 
     }
 
-    /**
-     * @see javax.management.MBeanRegistration#preRegister(javax.management.MBeanServer,javax.management.ObjectName)
-     */
-    public ObjectName preRegister(MBeanServer server, ObjectName name) throws Exception {
-        return name;
+    @PostConstruct
+    private void init() {
+        JMXUtil.registerMBean(this, OBJECT_NAME);
     }
 
-    /**
-     * @see javax.management.MBeanRegistration#postRegister(java.lang.Boolean)
-     */
-    public void postRegister(Boolean registrationDone) {
-    }
-
-    /**
-     * @see javax.management.MBeanRegistration#preDeregister()
-     */
-    public void preDeregister() {
-    }
-
-    /**
-     * @see javax.management.MBeanRegistration#postDeregister()
-     */
-    public void postDeregister() {
+    @PreDestroy
+    private void destroy() {
+        JMXUtil.unregisterMBeanQuietly(OBJECT_NAME);
     }
 
     /**
@@ -150,7 +141,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             final SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
 
             if (client.isSecurityDomain(RHQ_USER_SECURITY_DOMAIN)) {
-                log.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] already exists, it will be replaced.");
+                LOG.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] already exists, it will be replaced.");
             }
 
             List<LoginModuleRequest> loginModules = new ArrayList<LoginModuleRequest>(3);
@@ -188,7 +179,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
                         descriptiveMessage = "Problems encountered when communicating with LDAP server."
                             + " Contact the Administrator:" + e;
                     }
-                    this.log.error(descriptiveMessage, e);
+                    this.LOG.error(descriptiveMessage, e);
                 }
 
                 // Enable the login module even if the LDAP properties have issues
@@ -200,7 +191,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,
                 loginModules.toArray(new LoginModuleRequest[loginModules.size()]));
             client.flushSecurityDomainCache("RHQRESTSecurityDomain");
-            log.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] re-created with login modules " + loginModules);
+            LOG.info("Security domain [" + RHQ_USER_SECURITY_DOMAIN + "] re-created with login modules " + loginModules);
 
         } catch (Exception e) {
             throw new Exception("Error registering RHQ JAAS modules", e);
@@ -278,7 +269,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
         try {
             bindPW = Obfuscator.decode(bindPW);
         } catch (Exception e) {
-            log.debug("Failed to decode bindPW, binding using undecoded value [" + bindPW + "]", e);
+            LOG.debug("Failed to decode bindPW, binding using undecoded value [" + bindPW + "]", e);
         }
         if ((bindDN != null) && (bindDN.length() != 0) && (bindPW != null) && (bindPW.length() != 0)) {
             env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
@@ -286,7 +277,7 @@ public class CustomJaasDeploymentService implements CustomJaasDeploymentServiceM
             env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
         }
 
-        log.debug("Validating LDAP properties. Initializing context...");
+        LOG.debug("Validating LDAP properties. Initializing context...");
         new InitialLdapContext(env, null).close();
 
         return;

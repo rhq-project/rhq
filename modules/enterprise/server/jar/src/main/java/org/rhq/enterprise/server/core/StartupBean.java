@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.core;
 
@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Properties;
 
 import javax.annotation.Resource;
+import javax.ejb.ConcurrencyManagement;
+import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
 import javax.ejb.Timeout;
@@ -86,6 +88,10 @@ import org.rhq.enterprise.server.scheduler.jobs.DynaGroupAutoRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
+import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
+import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.storage.StorageClusterHeartBeatJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
@@ -97,13 +103,16 @@ import org.rhq.enterprise.server.util.concurrent.AvailabilityReportSerializer;
  * specifically, all EJBs must have been deployed and available.
  *
  * This bean is not meant for client consumption - it is only for startup initialization.
+ *
+ * BEAN ConcurrencyManagement is enough: the {@link #initialized} property is only modified on startup.
  */
 @Singleton
-//@Startup // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
+@TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+@ConcurrencyManagement(ConcurrencyManagementType.BEAN)
 public class StartupBean implements StartupLocal {
     private Log log = LogFactory.getLog(this.getClass());
 
-    private boolean initialized = false;
+    private volatile boolean initialized = false;
 
     @EJB
     private AgentManagerLocal agentManager;
@@ -132,6 +141,12 @@ public class StartupBean implements StartupLocal {
     @EJB
     private ShutdownListener shutdownListener;
 
+    @EJB
+    private StorageClientManagerBean storageClientManager;
+
+    @EJB
+    private StorageClusterHeartBeatJob storageClusterHeartBeatJob;
+
     @Resource
     private TimerService timerService; // needed to schedule our plugin scanner
 
@@ -139,7 +154,6 @@ public class StartupBean implements StartupLocal {
     private DataSource dataSource;
 
     @Override
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean isInitialized() {
         return this.initialized;
     }
@@ -156,8 +170,7 @@ public class StartupBean implements StartupLocal {
      *
      * @throws RuntimeException
      */
-    //@PostConstruct // when AS7-5530 is fixed, uncomment this and remove class StartupBeanToWorkaroundAS7_5530
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
+    @Override
     public void init() throws RuntimeException {
         secureNaming();
 
@@ -196,6 +209,7 @@ public class StartupBean implements StartupLocal {
         startPluginDeployer(); // make sure this is initialized before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         upgradeRhqUserSecurityDomainIfNeeded();
+        initStorageClient();
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
@@ -367,8 +381,6 @@ public class StartupBean implements StartupLocal {
     }
 
     @Timeout
-    // does AS7 EJB3 container allow this? We do not want a tx here!
-    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void scanForPlugins(final Timer timer) {
         try {
             PluginDeploymentScannerMBean deployer = getPluginDeploymentScanner();
@@ -424,6 +436,21 @@ public class StartupBean implements StartupLocal {
         } catch (SchedulerException e) {
             throw new RuntimeException("Cannot initialize the scheduler!", e);
         }
+    }
+
+    /**
+     * Initalizes the storage client subsystem which is needed for reading/writing metric data.
+     */
+    private void initStorageClient() {
+        try {
+            //add the cluster maintenance job to the list of available jobs.
+            schedulerBean.scheduleTriggeredJob(StorageNodeMaintenanceJob.class, false, null);
+        } catch (Exception e) {
+            log.error("Cannot create storage node maintenance job.", e);
+        }
+
+        storageClientManager.init();
+        storageClusterHeartBeatJob.scheduleJob();
     }
 
     /**
@@ -576,7 +603,8 @@ public class StartupBean implements StartupLocal {
             // Do not check until we are up at least 10 mins, but check every 60 secs thereafter.
             final long initialDelay = 1000L * 60 * 10; // 10 mins
             final long interval = 1000L * 60; // 60 secs
-            schedulerBean.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay, interval);
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForSuspectedAgentsJob.class, true, false, initialDelay,
+                interval);
         } catch (Exception e) {
             log.error("Cannot schedule suspected Agents job.", e);
         }
@@ -606,8 +634,8 @@ public class StartupBean implements StartupLocal {
         try {
             final long initialDelay = 1000L * 60 * 5; // 5 mins
             final long interval = 1000L * 60 * 15; // 15 mins
-            schedulerBean.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false, initialDelay,
-                interval);
+            schedulerBean.scheduleSimpleRepeatingJob(CheckForTimedOutContentRequestsJob.class, true, false,
+                initialDelay, interval);
         } catch (Exception e) {
             log.error("Cannot schedule check-for-timed-out-artifact-requests job.", e);
         }
@@ -638,10 +666,15 @@ public class StartupBean implements StartupLocal {
             log.error("Cannot create alert availability duration job.", e);
         }
 
-        return;
+        try {
+            String cronString = "0 30 0 ? * SUN *";  // every sunday starting at 00:30.
+            schedulerBean.scheduleSimpleCronJob(StorageClusterReadRepairJob.class, true, true, cronString);
+        } catch (Exception e) {
+            log.error("Cannot create storage cluster read repair job", e);
+        }
     }
-
-    /**
+    
+   /**
      * This seeds the agent clients cache with clients for all known agents. These clients will be started so they can
      * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called
      * at a time when the server is ready to accept messages from agents because any guaranteed messages that are

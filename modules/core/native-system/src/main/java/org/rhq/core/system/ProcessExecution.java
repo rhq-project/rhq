@@ -76,7 +76,8 @@ public class ProcessExecution {
      *
      * @param executable the full path to the executable that will be run
      */
-    public void setExecutable(@NotNull String executable) {
+    public void setExecutable(@NotNull
+    String executable) {
         this.executable = executable;
     }
 
@@ -107,11 +108,27 @@ public class ProcessExecution {
 
     /**
      * Sets an optional set of arguments to pass to the executable.
-     *
+     * <p/>
+     * Windows Note! This will overwrite internal arguments set by the constructor. Use {@link #addArguments} on Windows.
+     *  
      * @param arguments an optional set of arguments to pass to the executable
      */
-    public void setArguments(@Nullable List<String> arguments) {
+    public void setArguments(@Nullable
+    List<String> arguments) {
         this.arguments = arguments;
+    }
+
+    /**
+     * Adds an optional set of arguments to the current arguments passed to the executable.
+     *  
+     * @param arguments an optional set of arguments to pass to the executable. Not null.
+     */
+    public void addArguments(List<String> arguments) {
+        if (null == this.arguments) {
+            this.arguments = arguments;
+        } else {
+            this.arguments.addAll(arguments);
+        }
     }
 
     /**
@@ -119,7 +136,8 @@ public class ProcessExecution {
      *
      * @param arguments an optional set of arguments to pass to the executable
      */
-    public void setArguments(@Nullable String[] arguments) {
+    public void setArguments(@Nullable
+    String[] arguments) {
         this.arguments = new ArrayList<String>(Arrays.asList(arguments));
     }
 
@@ -157,7 +175,8 @@ public class ProcessExecution {
      *
      * @param environmentVariables an optional set of environment variables to pass to the process
      */
-    public void setEnvironmentVariables(@Nullable Map<String, String> environmentVariables) {
+    public void setEnvironmentVariables(@Nullable
+    Map<String, String> environmentVariables) {
         this.environmentVariables = environmentVariables;
     }
 
@@ -172,7 +191,8 @@ public class ProcessExecution {
      *
      * @param workingDirectory The directory the process should get as working directory.
      */
-    public void setWorkingDirectory(@Nullable String workingDirectory) {
+    public void setWorkingDirectory(@Nullable
+    String workingDirectory) {
         this.workingDirectory = workingDirectory;
     }
 

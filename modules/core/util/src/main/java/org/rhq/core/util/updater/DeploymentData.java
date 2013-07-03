@@ -23,6 +23,7 @@
 package org.rhq.core.util.updater;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -115,7 +116,18 @@ public class DeploymentData {
         this.deploymentProps = deploymentProps;
         this.zipFiles = zipFiles;
         this.rawFiles = rawFiles;
-        this.destinationDir = getCanonicalFile(destinationDir);
+
+        //specifically do NOT resolve symlinks here. This must to be the last thing one needs to do before deploying
+        //the files. The problem is that we use the destination dir as root for the paths of the individual files to
+        //lay down. If the destinationDir uses symlinks and the individual paths of the files were relative
+        // including ..'s, it could happen that the files would be laid down on a different place than expected.
+        //Consider this scenario:
+        //destinationDir = /opt/my/destination -> /tmp/deployments
+        //file = ../conf/some.properties
+        //One expects the file to end up in /opt/my/conf/some.properties
+        //but if we canonicalized the destination dir upfront, we'd end up with /tmp/conf/some.properties.
+        this.destinationDir = destinationDir.getAbsoluteFile();
+
         this.sourceDir = sourceDir;
         this.ignoreRegex = ignoreRegex;
         this.manageRootDir = manageRootDir;
@@ -133,15 +145,14 @@ public class DeploymentData {
         }
 
         // We need to "normalize" all raw file paths that have ".." in them to ensure everything works properly.
-        // Any raw file pathname (the values in this.rawFiles) that needs to be normalized will be converted to
-        // a canonical path. Note that any pathname that is relative but have ".." paths that end up taking the file
+        // Note that any pathname that is relative but have ".." paths that end up taking the file
         // above the destination directory needs to be normalized and will end up being an absolute path
         // (so all log messages will indicate the full absolute path and if the file
         // needs to be backed up it will be backed up as if it was an external file that was specified with an absolute path).
         // If the relative path has ".." but does not take the file above the destination directory will simply have its ".."
         // normalized out but will still be a relative path (relative to destination directory) (we can't make it absolute
         // otherwise Deployer's update will run into errors while backing up and scanning for deleted files).
-        // See BZ 917085.
+        // See BZs 917085 and 917765.
         for (Map.Entry<File, File> entry : this.rawFiles.entrySet()) {
             File rawFile = entry.getValue();
             String rawFilePath = rawFile.getPath();
@@ -149,10 +160,10 @@ public class DeploymentData {
             boolean doubledot = rawFilePath.replace('\\', '/').matches(".*((/\\.\\.)|(\\.\\./)).*"); // finds "/.." or "../" in the string
 
             if (doubledot) {
-                File fileToCanonicalize;
+                File fileToNormalize;
 
                 if (rawFile.isAbsolute()) {
-                    fileToCanonicalize = rawFile;
+                    fileToNormalize = rawFile;
                 } else {
                     boolean isWindows = (File.separatorChar == '\\');
                     if (isWindows) {
@@ -169,33 +180,37 @@ public class DeploymentData {
                         // figure out what the absolute, normalized path is for the raw file
                         if ((destDirDriveLetter == null || rawFileDriveLetter == null)
                             || rawFileDriveLetter.equals(destDirDriveLetter)) {
-                            fileToCanonicalize = new File(this.destinationDir, rawFilePathBuilder.toString());
+                            fileToNormalize = new File(this.destinationDir, rawFilePathBuilder.toString());
                         } else {
                             throw new IllegalArgumentException("Cannot normalize relative path [" + rawFilePath
                                 + "]; its drive letter is different than the destination directory ["
                                 + this.destinationDir.getAbsolutePath() + "]");
                         }
                     } else {
-                        fileToCanonicalize = new File(this.destinationDir, rawFilePath);
+                        fileToNormalize = new File(this.destinationDir, rawFilePath);
                     }
                 }
 
-                fileToCanonicalize = getCanonicalFile(fileToCanonicalize);
+                fileToNormalize = getNormalizedFile(fileToNormalize);
 
-                if (isPathUnderBaseDir(this.destinationDir, fileToCanonicalize)) {
+                if (isPathUnderBaseDir(this.destinationDir, fileToNormalize)) {
                     // we can keep rawFile path relative, but we need to normalize out the ".." paths
                     String baseDir = this.destinationDir.getAbsolutePath();
-                    String absRawFilePath = fileToCanonicalize.getAbsolutePath();
-                    String canonicalRelativePath = absRawFilePath.substring(baseDir.length() + 1); // should always return a valid path; if not, let it throw exception (which likely means there is a bug here)
-                    entry.setValue(new File(canonicalRelativePath));
+                    String absRawFilePath = fileToNormalize.getAbsolutePath();
+                    String relativePath = absRawFilePath.substring(baseDir.length() + 1); // should always return a valid path; if not, let it throw exception (which likely means there is a bug here)
+                    entry.setValue(new File(relativePath));
                 } else {
                     // raw file path has ".." such that the file is really above destination dir - use an absolute, canonical path
-                    entry.setValue(fileToCanonicalize);
+                    entry.setValue(fileToNormalize);
                 }
             }
         }
 
         return;
+    }
+
+    private static File getNormalizedFile(File fileToNormalize) {
+        return FileUtil.normalizePath(fileToNormalize);
     }
 
     public DeploymentProperties getDeploymentProps() {
@@ -240,17 +255,6 @@ public class DeploymentData {
 
     public Map<File, Boolean> getZipsExploded() {
         return zipsExploded;
-    }
-
-    private File getCanonicalFile(File file) {
-        try {
-            file = file.getCanonicalFile();
-        } catch (Exception e) {
-            // ignore this - this really should never happen, but if it does,
-            // we want to continue and hope using the non-normalized file is ok;
-            file = file.getAbsoluteFile();
-        }
-        return file;
     }
 
     private boolean isPathUnderBaseDir(File base, File path) {

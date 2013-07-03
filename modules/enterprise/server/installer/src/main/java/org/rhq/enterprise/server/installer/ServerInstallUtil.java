@@ -95,18 +95,27 @@ public class ServerInstallUtil {
         public String sysprop;
         public int port;
         public boolean required = true;
+        public String interfaceName = null; // not null if we know we want it to be changed from its default setting
 
         public SocketBindingInfo(String n, String s, int p) {
-            name = n;
-            sysprop = s;
-            port = p;
+            this.name = n;
+            this.sysprop = s;
+            this.port = p;
         }
 
-        public SocketBindingInfo(String name, String sysprop, int port, boolean required) {
+        public SocketBindingInfo(String n, String s, int p, String i) {
+            this.name = n;
+            this.sysprop = s;
+            this.port = p;
+            this.interfaceName = i;
+        }
+
+        public SocketBindingInfo(String name, String sysprop, int port, String interfaceName, boolean required) {
             this.name = name;
-            this.port = port;
-            this.required = required;
             this.sysprop = sysprop;
+            this.port = port;
+            this.interfaceName = interfaceName;
+            this.required = required;
         }
     }
 
@@ -126,9 +135,9 @@ public class ServerInstallUtil {
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_JACORB_SSL,
             "rhq.server.socket.binding.port.jacorb-ssl", 2529));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MESSAGING,
-            "rhq.server.socket.binding.port.messaging", 4445));
+            "rhq.server.socket.binding.port.messaging", 4445, "management"));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MESSAGING_THRUPUT,
-            "rhq.server.socket.binding.port.messaging-throughput", 4455));
+            "rhq.server.socket.binding.port.messaging-throughput", 4455, "management"));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_HTTP,
             "jboss.management.http.port", 6990));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_HTTPS,
@@ -136,7 +145,7 @@ public class ServerInstallUtil {
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_MGMT_NATIVE,
             "jboss.management.native.port", 6999));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_REMOTING,
-            "rhq.server.socket.binding.port.remoting", 3447));
+            "rhq.server.socket.binding.port.remoting", 3447, "management"));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_TXN_RECOVERY_ENV,
             "rhq.server.socket.binding.port.txn-recovery-environment", 3712));
         defaultSocketBindings.add(new SocketBindingInfo(SocketBindingJBossASClient.DEFAULT_BINDING_TXN_STATUS_MGR,
@@ -532,7 +541,6 @@ public class ServerInstallUtil {
         default:
             throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
         }
-
     }
 
     /**
@@ -558,7 +566,6 @@ public class ServerInstallUtil {
         default:
             throw new RuntimeException("bad db type"); // this should never happen; should have never gotten to this point with a bad type
         }
-
         LOG.info("Created datasources");
 
         final DatasourceJBossASClient client = new DatasourceJBossASClient(mcc);
@@ -1516,6 +1523,7 @@ public class ServerInstallUtil {
 
     public static void setSocketBindings(ModelControllerClient mcc, HashMap<String, String> serverProperties)
         throws Exception {
+
         final SocketBindingJBossASClient client = new SocketBindingJBossASClient(mcc);
         for (SocketBindingInfo binding : defaultSocketBindings) {
             // use the port defined by the server's properties if set, otherwise, just use our hardcoded default
@@ -1537,9 +1545,30 @@ public class ServerInstallUtil {
                     throw e;
                 }
                 else {
-                    LOG.info(String.format("Setting socket binding: [%s] resulted in [%s] -- this is harmless " , binding.name , e.getMessage())); // TODO log at debug level only?
+                    LOG.info(String.format("Setting socket binding port for [%s] resulted in [%s] - this is harmless ",
+                        binding.name, e.getMessage())); // TODO log at debug level only?
+                }
+            }
+
+            // if we need to switch the binding's interface, do it now
+            if (binding.interfaceName != null) {
+                LOG.info(String.format("Setting socket binding [%s] to use interface [%s]", binding.name,
+                    binding.interfaceName));
+                try {
+                    client.setStandardSocketBindingInterface(binding.name, binding.interfaceName);
+                } catch (Exception e) {
+                    // If the binding is required, we re-throw a possible exception. Otherwise just log
+                    if (binding.required) {
+                        throw e;
+                    } else {
+                        LOG.info(String.format(
+                            "Setting socket binding interface for [%s] resulted in [%s] - this is harmless ",
+                            binding.name, e.getMessage())); // TODO log at debug level only?
+                    }
                 }
             }
         }
+
+        return;
     }
 }

@@ -1,6 +1,6 @@
 #
-# Additional dev-only options for the RHQ Server Java Service Wrapper. Numbering should at N+1 where N is the
-# last wrapper.java.additional.N entry in rhq-agent-wrapper.conf.
+# Additional dev-only options for the RHQ Server Java Service Wrapper. Numbering should start at N+1 where N is the
+# last wrapper.java.additional.N entry in rhq-server-wrapper.conf.
 #
 
 # enable remote debugging

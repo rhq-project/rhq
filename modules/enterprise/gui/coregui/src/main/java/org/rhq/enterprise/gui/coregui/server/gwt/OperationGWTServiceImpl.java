@@ -100,7 +100,7 @@ public class OperationGWTServiceImpl extends AbstractGWTServiceImpl implements O
         }
     }
 
-    public void invokeResourceOperation(int resourceId, String operationName, Configuration parameters,
+    public void scheduleResourceOperation(int resourceId, String operationName, Configuration parameters,
         String description, int timeout) throws RuntimeException {
         try {
             ResourceOperationSchedule opSchedule = operationManager.scheduleResourceOperation(getSessionSubject(),

@@ -19,6 +19,10 @@
 
 package org.rhq.modules.integrationTests.restApi;
 
+import java.util.List;
+
+import com.jayway.restassured.config.RedirectConfig;
+import com.jayway.restassured.config.RestAssuredConfig;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.response.Response;
@@ -37,6 +41,7 @@ import static com.jayway.restassured.RestAssured.expect;
 import static com.jayway.restassured.RestAssured.given;
 import static org.hamcrest.CoreMatchers.anyOf;
 import static org.hamcrest.CoreMatchers.containsString;
+import static org.hamcrest.CoreMatchers.endsWith;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -209,6 +214,47 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testListAllAlertDefinitionsRedirects() throws Exception {
+
+        given()
+            .config(RestAssuredConfig.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
+        .expect()
+            .statusCode(303)
+            .log().ifError()
+            .header("Location",endsWith("rest/alert/definitions"))
+        .when()
+            .get("/alert/definition");
+
+        given()
+            .config(RestAssuredConfig.config().redirect(RedirectConfig.redirectConfig().followRedirects(false)))
+        .expect()
+            .statusCode(303)
+            .log().ifError()
+            .header("Location",endsWith("rest/alert/definitions.json"))
+        .when()
+            .get("/alert/definition.json");
+
+        // This time follow redirect
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/alert/definition.json");
+
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/alert/definition");
+
+        expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/alert/definition.xml");
+    }
+
+    @Test
     public void testListAllAlertDefinitionsWithWrapping() throws Exception {
 
         given()
@@ -285,7 +331,7 @@ public class AlertTest extends AbstractBase {
     public void testGetUnknownSenderByName() throws Exception {
         given()
             .header(acceptJson)
-            .pathParam("name","Frobnitz")
+            .pathParam("name", "Frobnitz")
         .expect()
             .statusCode(404)
             .log().everything()
@@ -471,7 +517,7 @@ public class AlertTest extends AbstractBase {
                 .queryParam("resourceId", _platformId)
             .expect()
                 .statusCode(201)
-                .body("dampeningCategory",is("DURATION_COUNT"))
+                .body("dampeningCategory", is("DURATION_COUNT"))
                 .body("dampeningCount", is(1))
                 .body("dampeningPeriod", is(3))
                 .body("dampeningUnit", is("MINUTES"))
@@ -487,19 +533,308 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
-    public void testCreateDeleteAlertDefinitionWith1Condition() throws Exception {
+    public void testCreateDeleteAlertDefinitionWith1ConditionAvail() throws Exception {
 
         int definitionId = createEmptyAlertDefinition(false);
 
         // Now add a condition
         try {
 
-            AlertCondition alertCondition = new AlertCondition("AVAIL_GOES_UP","AVAILABILITY");
+            AlertCondition alertCondition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_UP");
+            addConditionToDefinition(definitionId, alertCondition);
+
+            // Retrieve the definition with the added condition
+            AlertDefinition updatedDefinition =
+            given()
+                .pathParam("id",definitionId)
+                .queryParam("full",true)
+            .expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .get("/alert/definition/{id}")
+                .as(AlertDefinition.class);
+
+            int size = updatedDefinition.getConditions().size();
+            assert size ==1 : "Did not find 1 condition, but " + size;
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionAvailDuration() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("AVAIL_DURATION", "AVAIL_DURATION_NOT_UP");
+            alertCondition.setOption("300"); // duration in seconds
+            addConditionToDefinition(definitionId, alertCondition);
+
+            // Retrieve the definition with the added condition
+            AlertDefinition updatedDefinition =
+            given()
+                .pathParam("id",definitionId)
+                .queryParam("full",true)
+            .expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .get("/alert/definition/{id}")
+                .as(AlertDefinition.class);
+
+            int size = updatedDefinition.getConditions().size();
+            assert size ==1 : "Did not find 1 condition, but " + size;
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionAvailDurationBadOption() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("AVAIL_DURATION", "AVAIL_DURATION_DOWN");
+            alertCondition.setOption("300 sec");
             given()
                 .header(acceptJson)
                 .contentType(ContentType.JSON)
                 .body(alertCondition)
                 .pathParam("defId",definitionId)
+            .expect()
+                .statusCode(406)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionEvent() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("EVENT", "DEBUG");
+            alertCondition.setOption(".*lala.*"); // RegEx to match
+            addConditionToDefinition(definitionId, alertCondition);
+
+            // Retrieve the definition with the added condition
+            AlertDefinition updatedDefinition =
+            given()
+                .pathParam("id",definitionId)
+                .queryParam("full",true)
+            .expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .get("/alert/definition/{id}")
+                .as(AlertDefinition.class);
+
+            int size = updatedDefinition.getConditions().size();
+            assert size ==1 : "Did not find 1 condition, but " + size;
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionBaseline() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        int metricDefinitionId = findAMetricDefinition(_platformTypeId, "metric");
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("BASELINE");
+            alertCondition.setOption("mean");
+            alertCondition.setComparator("<");
+            alertCondition.setThreshold(0.10); // %
+            alertCondition.setMeasurementDefinition(metricDefinitionId);
+
+            addConditionToDefinition(definitionId, alertCondition);
+
+            // Retrieve the definition with the added condition
+            AlertDefinition updatedDefinition =
+            given()
+                .pathParam("id",definitionId)
+                .queryParam("full",true)
+            .expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .get("/alert/definition/{id}")
+                .as(AlertDefinition.class);
+
+            int size = updatedDefinition.getConditions().size();
+            assert size ==1 : "Did not find 1 condition, but " + size;
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionBaselineBadComparator() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        int metricDefinitionId = findAMetricDefinition(_platformTypeId, "metric");
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("BASELINE");
+            alertCondition.setOption("mean");
+            alertCondition.setComparator("==");
+            alertCondition.setThreshold(0.10); // %
+            alertCondition.setMeasurementDefinition(metricDefinitionId);
+
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId",definitionId)
+            .expect()
+                .statusCode(406)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionBaselineBadMeticDef() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        int metricDefinitionId = -42;
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("BASELINE");
+            alertCondition.setOption("mean");
+            alertCondition.setComparator("==");
+            alertCondition.setThreshold(0.10); // %
+            alertCondition.setMeasurementDefinition(metricDefinitionId);
+
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId",definitionId)
+            .expect()
+                .statusCode(404) // definition not found
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    private int findAMetricDefinition(int resourceId, String type) {
+        Response response =
+        given()
+            .pathParam("id",resourceId)
+            .queryParam("type",type)
+            .header(acceptJson)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/resource/{id}/schedules");
+
+        int scheduleId = response.jsonPath().getInt("[0].definitionId");
+
+        return scheduleId;
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionDrift() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("DRIFT", "CHANGES");
+            addConditionToDefinition(definitionId, alertCondition);
+
+            // Retrieve the definition with the added condition
+            AlertDefinition updatedDefinition =
+            given()
+                .pathParam("id",definitionId)
+                .queryParam("full",true)
+            .expect()
+                .statusCode(200)
+                .log().everything()
+            .when()
+                .get("/alert/definition/{id}")
+                .as(AlertDefinition.class);
+
+            int size = updatedDefinition.getConditions().size();
+            assert size ==1 : "Did not find 1 condition, but " + size;
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionOperation() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("CONTROL", "CHANGES");
+            alertCondition.setOption("SUCCESS");
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId", definitionId)
+                .log().everything()
             .expect()
                 .statusCode(201)
                 .log().ifError()
@@ -528,6 +863,94 @@ public class AlertTest extends AbstractBase {
         }
     }
 
+    @Test
+    public void testCreateDeleteAlertDefinitionWith1ConditionOperationBadOption() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("CONTROL", "CHANGES");
+            alertCondition.setOption("Frobnitz");
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId", definitionId)
+                .log().everything()
+            .expect()
+                .statusCode(406)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWithBadConditionOperation() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("CONTROL", "LA_LA");
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId", definitionId)
+                .log().everything()
+            .expect()
+                .statusCode(406)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
+    public void testCreateDeleteAlertDefinitionWithBadCategory() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("OOPS", "CHANGES");
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(alertCondition)
+                .pathParam("defId",definitionId)
+                .log().everything()
+            .expect()
+                .statusCode(406)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
 
     @Test
     public void testCreateDeleteAlertDefinitionWith2Conditions() throws Exception {
@@ -537,17 +960,8 @@ public class AlertTest extends AbstractBase {
 
         try {
             // Now add a 1st condition
-            AlertCondition alertCondition = new AlertCondition("AVAIL_GOES_UP","AVAILABILITY");
-            given()
-                .header(acceptJson)
-                .contentType(ContentType.JSON)
-                .body(alertCondition)
-                .pathParam("defId", definitionId)
-            .expect()
-                .statusCode(201)
-                .log().ifError()
-            .when()
-                .post("/alert/definition/{defId}/conditions");
+            AlertCondition alertCondition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_UP");
+            addConditionToDefinition(definitionId, alertCondition);
 
             // Retrieve the definition with the added condition
             AlertDefinition updatedDefinition =
@@ -565,17 +979,8 @@ public class AlertTest extends AbstractBase {
             assert size ==1 : "Did not find 1 condition, but " + size;
 
             // Now add a 2nd condition
-            AlertCondition secondCondition = new AlertCondition("AVAIL_GOES_DOWN","AVAILABILITY");
-            given()
-                .header(acceptJson)
-                .contentType(ContentType.JSON)
-                .body(secondCondition)
-                .pathParam("defId",definitionId)
-            .expect()
-                .statusCode(201)
-                .log().ifError()
-            .when()
-                .post("/alert/definition/{defId}/conditions");
+            AlertCondition secondCondition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_DOWN");
+            addConditionToDefinition(definitionId, secondCondition);
 
             // Retrieve the definition with the added condition
             updatedDefinition =
@@ -724,7 +1129,7 @@ public class AlertTest extends AbstractBase {
         // Now add a condition
         try {
 
-            AlertCondition condition = new AlertCondition("LESS_THAN","THRESHOLD");
+            AlertCondition condition = new AlertCondition("THRESHOLD", "LESS_THAN");
             condition.setOption("12345");
             condition.setComparator(">");
             condition.setMeasurementDefinition(10173);
@@ -896,6 +1301,35 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testDeleteNonExistingDefinition() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+        .expect()
+            .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/definition/{cid}");
+
+    }
+
+    @Test
+    public void testDeleteNonExistingDefinitionWithValidate() throws Exception {
+
+        given()
+            .header(acceptXml)
+            .pathParam("cid",14)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .delete("/alert/definition/{cid}");
+
+    }
+
+    @Test
     public void testDeleteNonExistingNotification() throws Exception {
 
         given()
@@ -909,6 +1343,20 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testDeleteNonExistingNotificationWithValidate() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+            .log().ifError()
+        .when()
+            .delete("/alert/notification/{cid}");
+    }
+
+    @Test
     public void testDeleteNonExistingCondition() throws Exception {
 
         given()
@@ -916,6 +1364,20 @@ public class AlertTest extends AbstractBase {
             .pathParam("cid",14)
         .expect()
             .statusCode(204)
+            .log().ifError()
+        .when()
+            .delete("/alert/condition/{cid}");
+    }
+
+    @Test
+    public void testDeleteNonExistingConditionWithValidate() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .pathParam("cid",14)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
             .log().ifError()
         .when()
             .delete("/alert/condition/{cid}");
@@ -1009,7 +1471,7 @@ public class AlertTest extends AbstractBase {
         try {
 
             AlertNotification notification = new AlertNotification("Direct Emails"); // short-name from server plugin descriptor
-            notification.getConfig().put("emailAddress","root@eruditorium.org");
+            notification.getConfig().put("emailAddress", "root@eruditorium.org");
 
             given()
                 .header(acceptJson)
@@ -1087,7 +1549,7 @@ public class AlertTest extends AbstractBase {
             notification.getConfig().put("emailAddress","enoch@root.org");
             alertDefinition.getNotifications().add(notification);
 
-            AlertCondition condition = new AlertCondition("AVAIL_GOES_DOWN","AVAILABILITY");
+            AlertCondition condition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_DOWN");
             alertDefinition.getConditions().add(condition);
 
             AlertDefinition result =
@@ -1141,6 +1603,80 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testNewFullDefinition2() throws Exception {
+
+        int definitionId = 0;
+        try {
+            AlertDefinition alertDefinition = new AlertDefinition();
+            alertDefinition.setName("-x-test-full-definition");
+            alertDefinition.setEnabled(false);
+            alertDefinition.setPriority("HIGH");
+
+            AlertNotification notification = new AlertNotification("Direct Emails");
+            notification.getConfig().put("emailAddress","enoch@root.org");
+            alertDefinition.getNotifications().add(notification);
+
+            List<AlertCondition> conditions = alertDefinition.getConditions();
+
+            AlertCondition condition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_DOWN");
+            conditions.add(condition);
+
+            condition = new AlertCondition("AVAIL_DURATION","AVAIL_DURATION_DOWN");
+            condition.setOption("300"); // seconds
+            conditions.add(condition);
+
+            AlertDefinition result =
+            given()
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+                .body(alertDefinition)
+                .log().everything()
+                .queryParam("resourceId", _platformId)
+            .expect()
+                .statusCode(201)
+                .log().ifError()
+            .when()
+                .post("/alert/definitions")
+            .as(AlertDefinition.class);
+
+            assert result != null;
+            definitionId = result.getId();
+
+            int numberConditions = result.getConditions().size();
+            assert numberConditions ==2 : "Expected 2 conditions but got " + numberConditions;
+            assert result.getNotifications().size()==1;
+
+            // Now retrieve the condition and notification individually
+
+            given()
+                .header(acceptJson)
+                .pathParam("id",result.getNotifications().get(0).getId())
+            .expect()
+                .statusCode(200)
+                .body("id",is(result.getNotifications().get(0).getId()))
+                .body("senderName",is(result.getNotifications().get(0).getSenderName()))
+                .log().ifError()
+            .when()
+                .get("/alert/notification/{id}");
+
+            given()
+                .header(acceptJson)
+                .pathParam("id",result.getConditions().get(0).getId())
+            .expect()
+                .statusCode(200)
+                .body("id",is(result.getConditions().get(0).getId()))
+                .body("name",is(result.getConditions().get(0).getName()))
+                .log().ifError()
+            .when()
+                .get("/alert/condition/{id}");
+
+
+        } finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    @Test
     public void testNewFullDefinitionPlusRemovals() throws Exception {
 
         int definitionId = 0;
@@ -1154,7 +1690,7 @@ public class AlertTest extends AbstractBase {
             notification.getConfig().put("emailAddress","enoch@root.org");
             alertDefinition.getNotifications().add(notification);
 
-            AlertCondition condition = new AlertCondition("AVAIL_GOES_DOWN","AVAILABILITY");
+            AlertCondition condition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_DOWN");
             alertDefinition.getConditions().add(condition);
 
             AlertDefinition result =
@@ -1439,17 +1975,8 @@ public class AlertTest extends AbstractBase {
         // Now add a condition
         try {
 
-            AlertCondition alertCondition = new AlertCondition("AVAIL_GOES_UP","AVAILABILITY");
-            given()
-                .header(acceptJson)
-                .contentType(ContentType.JSON)
-                .body(alertCondition)
-                .pathParam("defId",definitionId)
-            .expect()
-                .statusCode(201)
-                .log().ifError()
-            .when()
-                .post("/alert/definition/{defId}/conditions");
+            AlertCondition alertCondition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_UP");
+            addConditionToDefinition(definitionId, alertCondition);
 
             System.out.println("Definition created, waiting 60s for it to become active");
 
@@ -1585,17 +2112,8 @@ public class AlertTest extends AbstractBase {
         // Now add a condition
         try {
 
-            AlertCondition alertCondition = new AlertCondition("AVAIL_GOES_UP","AVAILABILITY");
-            given()
-                .header(acceptJson)
-                .contentType(ContentType.JSON)
-                .body(alertCondition)
-                .pathParam("defId",definitionId)
-            .expect()
-                .statusCode(201)
-                .log().ifError()
-            .when()
-                .post("/alert/definition/{defId}/conditions");
+            AlertCondition alertCondition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_UP");
+            addConditionToDefinition(definitionId, alertCondition);
 
             AlertNotification notification = new AlertNotification("Direct Emails"); // short-name from server plugin descriptor
             notification.getConfig().put("emailAddress", "root@eruditorium.org");
@@ -1703,6 +2221,163 @@ public class AlertTest extends AbstractBase {
         }
     }
 
+    @Test
+    public void testCreateDeleteAlertDefinitionWithManyConditionsAndFire() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(true);
+
+        // Now add a condition
+        try {
+
+            AlertCondition alertCondition = new AlertCondition("AVAILABILITY", "AVAIL_GOES_UP");
+            addConditionToDefinition(definitionId, alertCondition);
+
+            alertCondition = new AlertCondition("EVENT","ERROR");
+            alertCondition.setOption(".*JBAS123.*");
+            addConditionToDefinition(definitionId, alertCondition);
+
+            int metricDef = findAMetricDefinition(_platformId,"metric");
+            assert metricDef != 0;
+            alertCondition = new AlertCondition("THRESHOLD");
+            alertCondition.setComparator("<");
+            alertCondition.setThreshold(12345.0);
+            alertCondition.setMeasurementDefinition(metricDef);
+            addConditionToDefinition(definitionId, alertCondition);
+
+            alertCondition = new AlertCondition("BASELINE");
+            alertCondition.setThreshold(0.5);
+            alertCondition.setOption("mean");
+            alertCondition.setComparator("<");
+            alertCondition.setMeasurementDefinition(metricDef);
+            addConditionToDefinition(definitionId, alertCondition);
+
+            alertCondition = new AlertCondition("AVAIL_DURATION","AVAIL_DURATION_DOWN");
+            alertCondition.setOption("240"); // 4 min
+            addConditionToDefinition(definitionId, alertCondition);
+
+            alertCondition = new AlertCondition("CHANGE");
+            alertCondition.setMeasurementDefinition(metricDef);
+            addConditionToDefinition(definitionId, alertCondition);
+
+            int traitDef = findAMetricDefinition(_platformId,"trait");
+            assert traitDef!=0;
+            alertCondition = new AlertCondition("TRAIT");
+            alertCondition.setOption("10.*");
+            alertCondition.setMeasurementDefinition(traitDef);
+            addConditionToDefinition(definitionId, alertCondition);
+
+            alertCondition = new AlertCondition("RANGE");
+            alertCondition.setMeasurementDefinition(metricDef);
+            alertCondition.setThreshold(4.0); // lower bound
+            alertCondition.setOption("7.0"); // upper bound
+            alertCondition.setComparator(">=");
+            addConditionToDefinition(definitionId, alertCondition);
+
+            alertCondition = new AlertCondition("CONTROL","discovery");
+            alertCondition.setOption("FAILURE");
+            addConditionToDefinition(definitionId, alertCondition);
+
+            System.out.println("Definition created, waiting 60s for it to become active");
+
+            // Wait a while - see https://bugzilla.redhat.com/show_bug.cgi?id=830299
+            Thread.sleep(60*1000);
+
+            // Send a avail down/up sequence -> alert definition should fire
+            long now = System.currentTimeMillis();
+            Availability a = new Availability(_platformId,now-2000,"DOWN");
+            given()
+                .contentType(ContentType.JSON)
+                .pathParam("id", _platformId)
+                .body(a)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
+
+            a = new Availability(_platformId,now-1000,"UP");
+            given()
+                .contentType(ContentType.JSON)
+                .pathParam("id", _platformId)
+                .body(a)
+            .expect()
+                .statusCode(204)
+                .log().ifError()
+            .when()
+                .put("/resource/{id}/availability");
+
+            // wait a little
+            Thread.sleep(5000);
+
+            int alertId =
+            given()
+                .header(acceptJson)
+                .queryParam("definitionId",definitionId)
+                .queryParam("since", now - 3000)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("alertDefinition.name",contains("-x-test-definition"))
+                .body("",iterableWithSize(1))
+            .when()
+                .get("/alert")
+            .body().jsonPath().getInt("id[0]");
+
+            System.out.println(alertId);
+
+            // Find this alert by id and then its condition logs and notification logs
+            given()
+                .header(acceptJson)
+                .pathParam("id",alertId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("id",is(alertId))
+            .when()
+                .get("/alert/{id}");
+
+
+            // Check that one condition matched in the generated alert
+            given()
+                .header(acceptJson)
+                .pathParam("id", alertId)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("", iterableWithSize(1))
+            .when()
+                .get("/alert/{id}/conditions");
+
+            // Check that the definition indeed has 5 conditions
+            given()
+                .header(acceptJson)
+                .pathParam("id", definitionId)
+            .expect()
+                .statusCode(200)
+                .body("conditions",iterableWithSize(9))
+            .when()
+                .get("/alert/definition/{id}");
+
+        }
+
+        finally {
+            // delete the definition again
+            cleanupDefinition(definitionId);
+        }
+    }
+
+    private void addConditionToDefinition(int definitionId, AlertCondition alertCondition) {
+        given()
+            .header(acceptJson)
+            .contentType(ContentType.JSON)
+            .body(alertCondition)
+            .pathParam("defId", definitionId)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/alert/definition/{defId}/conditions");
+    }
 
     private void cleanupDefinition(int definitionId) {
 

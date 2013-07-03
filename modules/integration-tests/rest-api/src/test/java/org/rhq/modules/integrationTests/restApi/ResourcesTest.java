@@ -24,8 +24,11 @@ package org.rhq.modules.integrationTests.restApi;
 
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.jayway.restassured.http.ContentType;
@@ -33,12 +36,12 @@ import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.path.xml.element.Node;
 import com.jayway.restassured.response.Response;
-import com.jayway.restassured.response.ResponseBody;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Availability;
+import org.rhq.modules.integrationTests.restApi.d.Link;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -50,6 +53,7 @@ import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.Matchers.anyOf;
+import static org.hamcrest.Matchers.iterableWithSize;
 import static org.hamcrest.Matchers.not;
 
 /**
@@ -344,6 +348,22 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testGetResourcesWithPagingAndWrappingByExtension() throws Exception {
+
+        given()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+            .body("pageSize",is(2))
+            .body("currentPage",is(1))
+        .when()
+            .get("/resource.jsonw");
+    }
+
+    @Test
     public void testGetPlatformsWithPaging() throws Exception {
 
         given()
@@ -441,7 +461,7 @@ public class ResourcesTest extends AbstractBase {
         .expect()
             .statusCode(201)
             .log().everything()
-            .body("resourceId",instanceOf(Number.class))
+            .body("resourceId", instanceOf(Number.class))
         .when()
             .post("/resource/platforms");
 
@@ -493,6 +513,133 @@ public class ResourcesTest extends AbstractBase {
             .expect().statusCode(HttpStatus.SC_NO_CONTENT)
             .when().delete("/resource/{id}");
 
+    }
+
+    @Test
+    public void testCreateUpdateRemovePlatform() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        Response response =
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+        int platformId=0;
+        try {
+            XmlPath xmlPath = response.xmlPath();
+            Node resource1 = xmlPath.get("resource");
+            Node platformIdNode =  resource1.get("resourceId");
+            platformId = Integer.parseInt(platformIdNode.value());
+
+            // Now update the description
+            resource.setDescription("li la lu");
+            resource.setLocation("Datacenter 1");
+            resource.setResourceName("DummY");
+
+            given()
+                .pathParam("id",platformId)
+                .body(resource)
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+            .expect()
+                .statusCode(200)
+                .log().ifError()
+                .body("location",is("Datacenter 1"))
+                .body("description",is("li la lu"))
+                .body("resourceName",is("DummY"))
+            .when()
+                .put("/resource/{id}");
+
+        } finally {
+            given()
+                .pathParam("id", platformId)
+            .expect()
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+            .when()
+                .delete("/resource/{id}");
+        }
+    }
+
+    @Test
+    public void testCreateUpdateWithLinksRemovePlatform() throws Exception {
+
+        Resource resource = new Resource();
+        resource.setResourceName("dummy-test");
+        resource.setTypeName("Linux");
+
+        Response response =
+        given()
+            .header(acceptXml)
+            .contentType(ContentType.JSON)
+            .body(resource)
+        .expect()
+            .statusCode(201)
+            .log().ifError()
+        .when()
+            .post("/resource/platforms");
+
+        int platformId=0;
+        try {
+            XmlPath xmlPath = response.xmlPath();
+            Node resource1 = xmlPath.get("resource");
+            Node platformIdNode =  resource1.get("resourceId");
+            platformId = Integer.parseInt(platformIdNode.value());
+
+            // Now update the description
+            resource.setDescription("li la lu");
+            resource.setLocation("Datacenter 1");
+            resource.setResourceName("DummY");
+
+            /* Now add links -- JSON looks like this:
+            "links": [
+                  {
+                      "operationDefinitions": {
+                          "href": "http://localhost:7080/rest/operation/definitions?resourceId=10584"
+                      }
+                  },
+            */
+
+            List<Map> links = new ArrayList<Map>(1);
+            Map<String,Map<String,String>> map = new HashMap<String, Map<String,String>>(1);
+            Map<String,String> link = new HashMap<String, String>(1);
+            link.put("href","http:/abc");
+            map.put("self",link);
+            links.add(map);
+            resource.setLinks(links);
+
+
+            given()
+                .pathParam("id",platformId)
+                .body(resource)
+                .contentType(ContentType.JSON)
+                .header(acceptJson)
+                .log().everything()
+            .expect()
+                .statusCode(200)
+                .log().everything()
+                .body("location",is("Datacenter 1"))
+                .body("description",is("li la lu"))
+                .body("resourceName",is("DummY"))
+            .when()
+                .put("/resource/{id}");
+
+        } finally {
+            given()
+                .pathParam("id", platformId)
+            .expect()
+                .statusCode(HttpStatus.SC_NO_CONTENT)
+            .when()
+                .delete("/resource/{id}");
+        }
     }
 
     @Test
@@ -939,6 +1086,39 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testTypeByNameAndPlugin() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .queryParam("q","CPU")
+            .queryParam("plugin","Platforms")
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("",iterableWithSize(1))
+            .body("[0].name",is("CPU"))
+            .header("X-collection-size",is("1"))
+        .when()
+            .get("/resource/type");
+    }
+
+    @Test
+    public void testTypeByNameAndPlugin2() throws Exception {
+
+        given()
+            .header(acceptJson)
+            .queryParam("q","C P U")
+            .queryParam("plugin","Frobnitz")
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+            .body("",iterableWithSize(0))
+            .header("X-collection-size",is("0"))
+        .when()
+            .get("/resource/type");
+    }
+
+    @Test
     public void testUnknownCreateResourceStatusId() throws Exception {
 
         given()
@@ -948,6 +1128,30 @@ public class ResourcesTest extends AbstractBase {
         .when()
             .get("/resource/creationStatus/{id}");
 
+    }
+
+    @Test
+    public void testDeleteUnknownResource() throws Exception {
+
+        given()
+            .pathParam("id",22)
+        .expect()
+            .statusCode(204)
+        .when()
+            .delete("/resource/{id}");
+
+    }
+
+    @Test
+    public void testDeleteUnknownResourceWithValidate() throws Exception {
+
+        given()
+            .pathParam("id",22)
+            .queryParam("validate",true)
+        .expect()
+            .statusCode(404)
+        .when()
+            .delete("/resource/{id}");
 
     }
 }

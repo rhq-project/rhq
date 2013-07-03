@@ -185,11 +185,13 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
         FileInputStream fin = new FileInputStream(serverVersionFile);
         FileOutputStream fout = new FileOutputStream(agentPropertiesFile);
         //build out the version for the agent jar
-        StreamUtil.copy(fin, fout, false);
+        StreamUtil.copy(fin, fout, true);
 
         //generate fake agent file.
         File agentBinaryFile = new File(testLocation, DOWNLOADS_AGENT + "/agent.jar");
         buildFakeAgentJar(agentVersionFile, agentBinaryFile);
+        // make sure this is older than the version file
+        agentBinaryFile.setLastModified(System.currentTimeMillis() - 600000);
 
         // this mocks out the endpoint ping - the server will think the agent that is registering is up and pingable
         prepareForTestAgents();
@@ -567,7 +569,7 @@ public class CoreServerServiceImplTest extends AbstractEJB3Test {
  DOWNLOADS_AGENT + "/" + AGENT_UPDATE_PROPERTIES);
             FileInputStream fin = new FileInputStream(serverVersionFile);
             FileOutputStream fout = new FileOutputStream(agentVersionFile);
-            StreamUtil.copy(fin, fout, false);
+            StreamUtil.copy(fin, fout, true);
             serverVersionFile.delete();
             assert !serverVersionFile.exists() : "The default test file location still exists. Unable to proceed.";
             assert agentVersionFile.exists() : "The agent properties file was not created. Unable to proceed.";

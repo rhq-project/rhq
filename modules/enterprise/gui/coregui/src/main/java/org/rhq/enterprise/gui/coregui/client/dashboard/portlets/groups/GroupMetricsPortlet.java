@@ -448,7 +448,12 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                         AbstractActivityView.addSeeMoreLink(row, link, column);
                                                     }
                                                     //call out to 3rd party javascript lib
-                                                    BrowserUtility.graphSparkLines();
+                                                    new Timer(){
+                                                        @Override
+                                                        public void run() {
+                                                            BrowserUtility.graphSparkLines();
+                                                        }
+                                                    }.schedule(200);
                                                 } else {
                                                     DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
 

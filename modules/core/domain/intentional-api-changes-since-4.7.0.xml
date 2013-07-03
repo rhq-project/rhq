@@ -1,0 +1,43 @@
+<?xml version="1.0"?>
+<differences>
+    <difference>
+        <className>org/rhq/core/domain/common/ServerDetails$Detail</className>
+        <differenceType>6001</differenceType><!-- removed field -->
+        <field>CURRENT_MEASUREMENT_TABLE</field>
+        <justification>
+            Removing ServerDetails.Detail.CURRENT_MEASUREMENT_TABLE. It is no longer needed after Cassandra integration.
+        </justification>
+    </difference>
+    <difference>
+        <className>org/rhq/core/domain/common/ServerDetails$Detail</className>
+        <differenceType>6001</differenceType> <!-- removed field -->
+        <field>NEXT_MEASUREMENT_TABLE_ROTATION</field>
+        <justification>
+            Removing ServerDetails.Detail.NEXT_MEASUREMENT_TABLE_ROTATION. It is no longer needed after Cassandra integration.
+        </justification>
+    </difference>
+    <difference>
+        <className>org/rhq/core/domain/measurement/MeasurementBaseline</className>
+        <differenceType>6001</differenceType><!-- removed field -->
+        <field>NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE</field>
+        <justification>
+            Removing MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_ORACLE. The constants for native queries shouldn't be exposed at all.
+        </justification>
+    </difference>
+    <difference>
+        <className>org/rhq/core/domain/measurement/MeasurementBaseline</className>
+        <differenceType>6001</differenceType><!-- removed field -->
+        <field>NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES</field>
+        <justification>
+            Removing MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_POSTGRES. The constants for native queries shouldn't be exposed at all.        
+        </justification>
+    </difference>
+    <difference>
+        <className>org/rhq/core/domain/measurement/MeasurementBaseline</className>
+        <differenceType>6001</differenceType><!-- removed field -->
+        <field>NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_SQLSERVER</field>
+        <justification>
+            Removing MeasurementBaseline.NATIVE_QUERY_CALC_FIRST_AUTOBASELINE_SQLSERVER. The constants for native queries shouldn't be exposed at all.
+        </justification>
+    </difference>
+</differences>

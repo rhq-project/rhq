@@ -60,9 +60,10 @@
       }
       else if ("calculateOOBs".equals(mode))
       {
-          DataPurgeJob dpj = new DataPurgeJob();
-          dpj.calculateOOBs();
-         result = "Calculate OOBs done";
+          //DataPurgeJob dpj = new DataPurgeJob();
+          //dpj.calculateOOBs();
+          //result = "Calculate OOBs done";
+          result = "Cannot calculate OOBs currently";
       }
       else if ("checkForSuspectAgents".equals(mode))
       {

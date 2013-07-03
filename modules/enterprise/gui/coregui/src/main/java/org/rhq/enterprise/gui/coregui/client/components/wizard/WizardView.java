@@ -57,6 +57,9 @@ public class WizardView extends EnhancedVLayout {
     private Wizard wizard;
     private int currentStep;
 
+    private int dialogWidth;
+    private int dialogHeight;
+
     HLayout titleBar;
     HTMLFlow titleLabel;
     Label stepLabel;
@@ -79,9 +82,16 @@ public class WizardView extends EnhancedVLayout {
     HashSet<Canvas> createdCanvases = new HashSet<Canvas>();
 
     public WizardView(Wizard wizard) {
+        this(wizard, 800, 600);
+    }
+
+    public WizardView(Wizard wizard, int dialogWidth, int dialogHeight) {
         super(10);
 
         this.wizard = wizard;
+
+        this.dialogWidth = dialogWidth;
+        this.dialogHeight = dialogHeight;
     }
 
     @Override
@@ -304,8 +314,8 @@ public class WizardView extends EnhancedVLayout {
     public void displayDialog() {
         wizardWindow = new Window();
         wizardWindow.setTitle(wizard.getWindowTitle());
-        wizardWindow.setWidth(800);
-        wizardWindow.setHeight(600);
+        wizardWindow.setWidth(dialogWidth);
+        wizardWindow.setHeight(dialogHeight);
         wizardWindow.setIsModal(true);
         wizardWindow.setShowModalMask(true);
         wizardWindow.setCanDragResize(true);

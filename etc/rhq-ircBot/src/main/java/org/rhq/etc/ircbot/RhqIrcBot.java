@@ -45,7 +45,7 @@ public class RhqIrcBot extends PircBotX {
     
     public RhqIrcBot(RhqIrcBotListener rhqBot) {
         setName("rhq-bot");
-        setVersion("1.1");
+        setVersion("1.1.1");
         setFinger("RHQ IRC bot (source code in RHQ git under etc/rhq-ircBot/)");
 
         setVerbose(true);
@@ -96,7 +96,7 @@ public class RhqIrcBot extends PircBotX {
 
         PircBotX bot = new RhqIrcBot(rhqBotListener);
         bot.connect(server);
-        bot.joinChannel(channel);
+        bot.joinChannel(channel.trim());
     }
     
     private static void setupTrustStore() {

@@ -63,6 +63,7 @@ import javax.ws.rs.core.UriInfo;
 
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
+import com.wordnik.swagger.annotations.ApiErrors;
 import com.wordnik.swagger.annotations.ApiOperation;
 import com.wordnik.swagger.annotations.ApiParam;
 
@@ -96,6 +97,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
+import org.rhq.enterprise.server.discovery.DiscoveryBossLocal;
 import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceAlreadyExistsException;
 import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
@@ -136,6 +138,8 @@ public class ResourceHandlerBean extends AbstractRestBean {
     AgentManagerLocal agentMgr;
     @EJB
     ResourceFactoryManagerLocal resourceFactory;
+    @EJB
+    DiscoveryBossLocal discoveryBoss;
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -174,6 +178,52 @@ public class ResourceHandlerBean extends AbstractRestBean {
         return builder.build();
     }
 
+    @PUT
+    @Path("/{id:\\d+}")
+    @ApiOperation(value = "Update a single resource or import a new resource from the discovery queue.",
+        notes = "You can either update a resource that is already in inventory, in which case the fields" +
+            "name, description and location can be updated. Or you can import a Platform or Server resource that is in state NEW." +
+            "To do this you need to PUT the resource retrieved with a COMMITTED state",
+        responseClass = "ResourceWithType")
+    @ApiErrors({
+        @ApiError(code = 404, reason = NO_RESOURCE_FOR_ID),
+        @ApiError(code = 406, reason = "Tried to update a resource that is not COMMITTED")
+    })
+    public Response updateResource(@ApiParam("Id of the resource to import") @PathParam("id") int resourceId,
+                                   @ApiParam("Resource to update" ) ResourceWithType resourceWithType,
+                                   @Context UriInfo uriInfo) {
+
+        Resource res = fetchResource(resourceId);
+
+        if (res.getInventoryStatus()==InventoryStatus.NEW && res.getResourceType().getCategory()!=ResourceCategory.SERVICE && resourceWithType.getStatus().equalsIgnoreCase("COMMITTED")) {
+            // Import
+            discoveryBoss.importResources(caller,new int[] { resourceId});
+
+            res = fetchResource(resourceId);
+
+            ResourceWithType outWithType = fillRWT(res,uriInfo);
+
+            return Response.ok(outWithType).build();
+        }
+
+        // Import was handled above, so we require committed state now
+        if (res.getInventoryStatus()!=InventoryStatus.COMMITTED) {
+            throw new BadArgumentException("Can only update resources in committed state");
+        }
+
+        // No import, so update some of the allowed items
+        Resource in = new Resource(res.getId());
+        in.setName(resourceWithType.getResourceName());
+        in.setDescription(resourceWithType.getDescription());
+        in.setLocation(resourceWithType.getLocation());
+        Resource out = resMgr.updateResource(caller,in);
+
+        ResourceWithType outWithType = fillRWT(out,uriInfo);
+
+        return Response.ok(outWithType).build();
+
+    }
+
     @GET @GZIP
     @Path("/")
     @ApiError(code = 406, reason = "The passed inventory status was invalid")
@@ -189,7 +239,6 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addSortName(PageOrdering.ASC);
-        criteria.addSortId(PageOrdering.ASC);
         if (!status.toLowerCase().equals("all")) {
             try {
                 criteria.addFilterInventoryStatus(InventoryStatus.valueOf(status.toUpperCase()));
@@ -270,7 +319,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         } else {
             if (mediaType.equals(wrappedCollectionJsonType)) {
-                wrapForPaging(builder,uriInfo,resources,rwtList);
+                wrapForPaging(builder, uriInfo, resources, rwtList);
             } else {
                 GenericEntity<List<ResourceWithType>> list = new GenericEntity<List<ResourceWithType>>(rwtList) {
             };
@@ -672,11 +721,13 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/")
-    @ApiOperation("Create a new resource as a child of an existing resource. If a handle is given, a content based resource is created.")
+    @ApiOperation(value = "Create a new resource as a child of an existing resource. ",
+        notes= "If a handle is given, a content based resource is created; the content identified by the handle is not removed from the content store." +
+            "If no handle is given, a resource is created from the data of the passed 'resource' object.")
     public Response createResource(
         @ApiParam("The info about the resource. You need to supply resource name, resource type name, plugin name, id of the parent") CreateCBRresourceRequest resource,
+        @ApiParam("A handle that identifies content that has been uploaded to the server before.") @QueryParam("handle") String handle,
         @Context HttpHeaders headers,
-        @QueryParam("handle") String handle,
         @Context UriInfo uriInfo) throws IOException
     {
 
@@ -876,10 +927,26 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @DELETE
     @Path("/{id}")
-    @ApiOperation("Remove a resource from inventory")
+    @ApiOperation(value = "Remove a resource from inventory", notes = "This operation is by default idempotent, returning 204." +
+                "If you want to check if the resource existed at all, you need to pass the 'validate' query parameter.")
+    @ApiErrors({
+        @ApiError(code = 204, reason = "Resource was removed or did not exist with validation not set"),
+        @ApiError(code = 404, reason = "Resource did not exist and validate was set")
+    })
     public Response uninventoryOrDeleteResource(
-            @PathParam("id") int resourceId
-            ,@DefaultValue("false") @QueryParam("physical") boolean delete) {
+            @PathParam("id") int resourceId,
+            @ApiParam@DefaultValue("false") @QueryParam("physical") boolean delete,
+            @ApiParam("Validate that the resource exists") @QueryParam("validate") @DefaultValue("false") boolean validate) {
+
+        try {
+            fetchResource(resourceId);
+        } catch (Exception e) {
+            if (validate) {
+                throw new StuffNotFoundException("Resource with id " + resourceId);
+            } else {
+                return Response.noContent().build();
+            }
+        }
 
         if (delete==false) {
             resMgr.uninventoryResource(caller,resourceId);
@@ -888,7 +955,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
             resourceFactory.deleteResource(caller,resourceId);
         }
 
-        return Response.status(Response.Status.NO_CONTENT).build();
+        return Response.noContent().build();
 
     }
 

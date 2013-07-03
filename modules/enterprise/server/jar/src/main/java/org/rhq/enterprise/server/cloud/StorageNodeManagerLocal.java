@@ -27,6 +27,7 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -85,5 +86,14 @@ public interface StorageNodeManagerLocal {
      * </p>
      */
     void runReadRepair();
+
+    /**
+     * This method assumes the storage node resource group already exists; as such, it should only be called from places
+     * in the code that are after the point(s) where the group has been created.
+     *
+     * @return The storage node resource group.
+     * @throws IllegalStateException if the group is not found or does not exist.
+     */
+    ResourceGroup getStorageNodeGroup();
 
 }

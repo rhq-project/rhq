@@ -129,7 +129,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         if (annotation.waitForSchemaAgreement()) {
             clusterInitService.waitForSchemaAgreement(nodes);
         }
-        schemaManager.updateTopology();
+        schemaManager.updateTopology(true);
     }
 
     private void shutdownCluster() throws Exception {

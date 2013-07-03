@@ -39,6 +39,7 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDataMap;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
@@ -200,7 +201,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         this.updateStorageNodes(storageNodeMap);
 
         if (clusterMaintenanceNeeded) {
-            this.scheduleQuartzJob();
+            this.scheduleQuartzJob(existingStorageNodes.size());
         }
 
         return new ArrayList<StorageNode>(storageNodeMap.values());
@@ -214,6 +215,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         String configAddress = resourceConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
 
         if (configAddress != null) {
+            // TODO Do not add the node to the group until we have verified it has joined the cluster
+            // StorageNodeMaintenanceJob currently determines if a new node has successfully joined the cluster.
+            addStorageNodeToGroup(resource);
+
             boolean storageNodeFound = false;
             if (storageNodes != null) {
                 for (StorageNode storageNode : storageNodes) {
@@ -239,10 +244,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
                 entityManager.persist(storageNode);
 
-                scheduleQuartzJob();
+                scheduleQuartzJob(storageNodes.size());
             }
-
-            addStorageNodeToGroup(resource);
         }
     }
 
@@ -306,13 +309,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
      * @return The storage node resource group.
      * @throws IllegalStateException if the group is not found or does not exist.
      */
-    private ResourceGroup getStorageNodeGroup() {
+    public ResourceGroup getStorageNodeGroup() {
         Subject overlord = subjectManager.getOverlord();
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterResourceTypeName(STORAGE_NODE_RESOURCE_TYPE_NAME);
         criteria.addFilterPluginName(STORAGE_NODE_PLUGIN_NAME);
         criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
+        criteria.fetchExplicitResources(true);
 
         List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(overlord, criteria);
 
@@ -472,7 +476,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return newNodes;
     }
 
-    private void scheduleQuartzJob() {
+    private void scheduleQuartzJob(int clusterSize) {
         String jobName = StorageNodeMaintenanceJob.class.getName();
         String jobGroupName = StorageNodeMaintenanceJob.class.getName();
         String triggerName = StorageNodeMaintenanceJob.class.getName();
@@ -482,6 +486,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         trigger.setJobName(jobName);
         trigger.setJobGroup(jobGroupName);
         try {
+            JobDataMap jobDataMap = new JobDataMap();
+            jobDataMap.put(StorageNodeMaintenanceJob.JOB_DATA_PROPERTY_CLUSTER_SIZE, Integer.toString(clusterSize));
+            trigger.setJobDataMap(jobDataMap);
+
             quartzScheduler.scheduleJob(trigger);
         } catch (Throwable t) {
             log.warn("Unable to schedule storage node maintenance job", t);

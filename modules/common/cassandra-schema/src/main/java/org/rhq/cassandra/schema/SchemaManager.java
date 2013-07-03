@@ -93,9 +93,9 @@ public class SchemaManager {
         version.drop();
     }
 
-    public boolean updateTopology() throws Exception {
+    public boolean updateTopology(boolean isNewSchema) throws Exception {
         TopologyManager topology = new TopologyManager(username, password, nodes);
-        return topology.updateTopology();
+        return topology.updateTopology(isNewSchema);
     }
 
     private static List<StorageNode> parseNodeInformation(String... nodes) {
@@ -139,7 +139,7 @@ public class SchemaManager {
             } else if ("drop".equalsIgnoreCase(command)) {
                 schemaManager.drop();
             } else if ("topology".equalsIgnoreCase(command)) {
-                schemaManager.updateTopology();
+                schemaManager.updateTopology(true);
             } else {
                 throw new IllegalArgumentException(command + " not available.");
             }

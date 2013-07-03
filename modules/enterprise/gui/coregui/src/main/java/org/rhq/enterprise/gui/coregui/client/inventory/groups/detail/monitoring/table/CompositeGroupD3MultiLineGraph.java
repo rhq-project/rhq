@@ -92,11 +92,6 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                     adjustedChartHeight = chartContext.chartHeight - 50,
                     height = adjustedChartHeight - margin.top - margin.bottom,
                     titleHeight = 30, titleSpace = 10,
-                    chartData,
-                    lowBound,
-                    min, high,
-                    newLow = 0,
-                    highBound,
                     yScale,
                     yAxis,
                     timeScale,
@@ -104,40 +99,21 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                     chart,
                     svg;
 
-            // adjust the min scale so blue low line is not in axis
-            function determineLowBound(min, peak) {
-                //var newLow = min - ((peak - min) * 0.1);
-                newLow = min;
-                if (newLow < 0) {
-                    return 0;
-                }
-                else {
-                    return newLow;
-                }
-            }
-
 
             function determineScale() {
                 var xTicks, xTickSubDivide;
-                console.log("DetermineScale!");
+                console.log("DetermineScale for # resources: "+ chartContext.data.length);
 
                 if (chartContext.data.length > 0) {
                     xTicks = 8;
                     xTickSubDivide = 5;
-                    chartData = chartContext.data;
-                    min = $wnd.d3.min(function (d) {
-                        return d.y;
-                    });
-                    high = $wnd.d3.max(function (d) {
-                        return d.y;
-                    });
 
                     yScale = $wnd.d3.scale.linear()
                             .clamp(true)
                             .rangeRound([height, 0])
-                            .domain([$wnd.d3.min(chartContext.data, function (d) {
+                            .domain([$wnd.d3.min(chartContext.data[0], function (d) {
                                 return d.y;
-                            }), $wnd.d3.max(chartContext.data, function (d) {
+                            }), $wnd.d3.max(chartContext.data[0], function (d) {
                                 return d.y;
                             })]);
 
@@ -151,7 +127,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
                     timeScale = $wnd.d3.time.scale()
                             .range([0, width])
-                            .domain($wnd.d3.extent(chartData, function (d) {
+                            .domain($wnd.d3.extent(chartContext.data[0], function (d) {
                                 return d.x;
                             }));
 
@@ -187,33 +163,33 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
             }
 
             function createXandYAxes() {
-//                var customTimeFormat = timeFormat([
-//                    [$wnd.d3.time.format("%Y"), function () {
-//                        return true;
-//                    }],
-//                    [$wnd.d3.time.format("%B"), function (d) {
-//                        return d.getMonth();
-//                    }],
-//                    [$wnd.d3.time.format("%b %d"), function (d) {
-//                        return d.getDate() != 1;
-//                    }],
-//                    [$wnd.d3.time.format("%a %d"), function (d) {
-//                        return d.getDay() && d.getDate() != 1;
-//                    }],
-//                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHours), function (d) {
-//                        return d.getHours();
-//                    }],
-//                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHoursMinutes), function (d) {
-//                        return d.getMinutes();
-//                    }],
-//                    [$wnd.d3.time.format(":%S"), function (d) {
-//                        return d.getSeconds();
-//                    }],
-//                    [$wnd.d3.time.format(".%L"), function (d) {
-//                        return d.getMilliseconds();
-//                    }]
-//                ]);
-//                xAxis.tickFormat(customTimeFormat);
+                var customTimeFormat = timeFormat([
+                    [$wnd.d3.time.format("%Y"), function () {
+                        return true;
+                    }],
+                    [$wnd.d3.time.format("%B"), function (d) {
+                        return d.getMonth();
+                    }],
+                    [$wnd.d3.time.format("%b %d"), function (d) {
+                        return d.getDate() != 1;
+                    }],
+                    [$wnd.d3.time.format("%a %d"), function (d) {
+                        return d.getDay() && d.getDate() != 1;
+                    }],
+                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHours), function (d) {
+                        return d.getHours();
+                    }],
+                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHoursMinutes), function (d) {
+                        return d.getMinutes();
+                    }],
+                    [$wnd.d3.time.format(":%S"), function (d) {
+                        return d.getSeconds();
+                    }],
+                    [$wnd.d3.time.format(".%L"), function (d) {
+                        return d.getMilliseconds();
+                    }]
+                ]);
+                xAxis.tickFormat(customTimeFormat);
 
                 // create x-axis
                 svg.append("g")
@@ -269,8 +245,8 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
             }
 
-            function createAvgLines() {
-                var  barAvgLine = $wnd.d3.svg.line()
+            function createMultiLines(chartContext) {
+                var  graphLine = $wnd.d3.svg.line()
                                 .interpolate("linear")
                                 .x(function (d) {
                                     return timeScale(d.x);
@@ -279,15 +255,16 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                                         return yScale(d.y);
                                 });
 
-                // Bar avg line
-                svg.append("path")
-                        .datum(chartData)
-                        .attr("class", "barAvgLine")
+                 chart.selectAll(".multiLine")
+                        .data(chartContext.data)
+                        .enter()
+                        .append('path')
+                        .attr("class", "multiLine")
                         .attr("fill", "none")
                         .attr("stroke", "#2e376a")
                         .attr("stroke-width", "1.5")
-                        .attr("stroke-opacity", ".7")
-                        .attr("d", barAvgLine);
+                        .attr("stroke-opacity", ".9")
+                        .attr("d", function(d) { return graphLine(d.value);});
 
             }
 
@@ -305,7 +282,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                         createHeader(chartContext.chartTitle);
                         console.log("created multi-header");
                         createYAxisGridLines();
-                        createAvgLines();
+                        createMultiLines(chartContext);
                         createXandYAxes();
                     }
                 }

@@ -339,7 +339,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     }
 
     public int getChartHeight() {
-        return chartHeight != null ? chartHeight : 210;
+        return chartHeight != null ? chartHeight : 300;
     }
 
     public void setChartHeight(Integer chartHeight) {
@@ -369,7 +369,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
             sb.append("{ \"key\": \"");
             sb.append(multiLineGraphData.getResourceName());
-            sb.append("\",\"values\" : ");
+            sb.append("\",\"value\" : ");
             sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
             sb.append("},");
         }

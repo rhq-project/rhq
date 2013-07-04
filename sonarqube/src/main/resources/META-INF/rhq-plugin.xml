@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<plugin name="sonarqube"
+        displayName="SonarQube"
+        package="org.rhq.plugins.sonarqube"
+        description="Monitoring of SonarQube code quality servers"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+    
+    
+    <server name="SonarQube Server"
+        discovery="SonarQubeDiscoveryComponent"
+        class="SonarQubeServerComponent"
+        supportsManualAdd="true">
+
+        <plugin-configuration>
+            <c:simple-property name="urlBase" description="The root url path to your sonarqube server interface (e.g. http://localhost:9000/)"/>
+        </plugin-configuration>
+        
+        <service name="SonarQube Project"
+            discovery="SonarQubeProjectDiscoveryComponent"
+            class="SonarQubeProjectComponent">
+            
+            <metric property="lastAnalysis" dataType="trait" displayType="summary"/>
+            <metric property="lastAnalysisTime" dataType="trait" units="epoch_milliseconds"/>
+            <metric property="lastAnalysisElapsedTime" units="seconds"/>            
+        </service>
+        
+    </server>
+
+</plugin>

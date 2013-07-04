@@ -25,6 +25,10 @@
 
 package org.rhq.enterprise.server.cloud;
 
+import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_GROUP_NAME;
+import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_PLUGIN_NAME;
+import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_RESOURCE_TYPE_NAME;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,27 +36,30 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.ejb.EJB;
 import javax.persistence.Query;
 import javax.transaction.Transaction;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Jirka Kremser
@@ -60,17 +67,19 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test
 public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
+    @EJB
     private StorageNodeManagerLocal nodeManager;
-    private ResourceTypeManagerLocal typeManager;
-    private Subject overlord;
-    private static final String TEST_PREFIX = "test-";
 
-    @Override
-    protected void beforeMethod() throws Exception {
-        nodeManager = LookupUtil.getStorageNodeManager();
-        typeManager = LookupUtil.getResourceTypeManager();
-        overlord = LookupUtil.getSubjectManager().getOverlord();
-    }
+    @EJB
+    private ResourceTypeManagerLocal typeManager;
+
+    @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
+    private static final String TEST_PREFIX = "test-";
 
     @Test
     public void testInit() throws Exception {
@@ -79,6 +88,7 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
         try {
             prepareScheduler();
+            cleanDatabase();
             executeInTransaction(new TransactionCallback() {
 
                 @Override
@@ -88,8 +98,6 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
                         TEST_PREFIX + "secondHostWithNoFoundResource");
                     System.setProperty(cassandraSeedsProperty, addresses.get(0) + "|123|123," + addresses.get(1)
                         + "|987|987," + addresses.get(2) + "|123|123");
-
-                    cleanDatabase();
 
                     // create the resource type if it doesn't exist
                     ResourceType testResourceType = typeManager.getResourceTypeByNameAndPlugin("RHQ Storage Node",
@@ -175,7 +183,8 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
                 criteria.addFilterAddress(prefix);
                 // use DESC just to make sure sorting on name is different than insert order
                 criteria.addSortAddress(PageOrdering.DESC);
-                PageList<StorageNode> list = nodeManager.findStorageNodesByCriteria(overlord, criteria);
+                PageList<StorageNode> list = nodeManager.findStorageNodesByCriteria(subjectManager.getOverlord(),
+                    criteria);
 
                 assertTrue("The number of found storage nodes should be " + storageNodeCount + ". Was: " + list.size(),
                     storageNodeCount == list.size());
@@ -204,6 +213,26 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
     private void cleanDatabase() throws Exception {
         // this method is still needed, because tests calls SLSB methods that are executed in their own transaction
         // and the  rollback performed once the TransactionCallback is finished just wont clean everything
+
+        // We can only filter on the group name because the resource type info might not exist in the test
+        // database.
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
+
+        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(subjectManager.getOverlord(),
+            criteria);
+
+        if (!groups.isEmpty()) {
+            resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), groups.get(0).getId());
+        }
+
+//        for (ResourceGroup group : groups) {
+//            if (group.getName().equals(STORAGE_NODE_GROUP_NAME)) {
+//                resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), group.getId());
+//                break;
+//            }
+//        }
+
 
         // pause the currently running TX
         Transaction runningTransaction = getTransactionManager().suspend();

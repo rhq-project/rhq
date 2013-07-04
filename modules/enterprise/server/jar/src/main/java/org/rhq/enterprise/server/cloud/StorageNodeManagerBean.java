@@ -96,11 +96,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     private static final String SEEDS_PROP = "rhq.cassandra.seeds";
 
-    private static final String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
+    // The following have package visibility to make accessible to StorageNodeManagerBeanTest
+    static final String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
 
-    private static final String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
+    static final String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
 
-    private static final String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
+    static final String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;

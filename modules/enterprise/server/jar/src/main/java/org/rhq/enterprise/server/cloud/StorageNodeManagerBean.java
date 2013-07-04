@@ -332,71 +332,96 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
-        StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
-        final String tokensMetric = "Tokens", ownershipMetric = "Ownership", loadMetric = "Load", diskUsedPercentageMetric = "Calculated.DiskSpaceUsedPercentage";
-        final String heapCommittedMetric = "{HeapMemoryUsage.committed}", heapUsedMetric = "{HeapMemoryUsage.used}", heapUsedPercentageMetric = "Calculated.HeapUsagePercentage";
-
         int resourceId = getResourceIdFromStorageNode(node);
+        Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
         // get the schedule ids for Storage Service resource
+        final String tokensMetric = "Tokens", ownershipMetric = "Ownership", diskUsedPercentageMetric = "Calculated.PartitionDiskUsedPercentage";
+        final String loadMetric = "Load", keyCacheSize = "KeyCacheSize", rowCacheSize = "RowCacheSize", totalCommitLogSize = "TotalCommitlogSize";
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
         query.setParameter("parrentId", resourceId).setParameter("metricNames",
-            Arrays.asList(tokensMetric, ownershipMetric, loadMetric, diskUsedPercentageMetric));
-        List<Object[]> scheduleIds = query.getResultList();
-        Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>(4);
-        for (Object[] pair : scheduleIds) {
+            Arrays.asList(tokensMetric, ownershipMetric, diskUsedPercentageMetric, loadMetric, keyCacheSize,
+                rowCacheSize, totalCommitLogSize));
+        for (Object[] pair : query.getResultList()) {
             scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
         }
 
         // get the schedule ids for Memory Subsystem resource
+        final String heapCommittedMetric = "{HeapMemoryUsage.committed}", heapUsedMetric = "{HeapMemoryUsage.used}", heapUsedPercentageMetric = "Calculated.HeapUsagePercentage";
         query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
             Object[].class);
         query.setParameter("grandparrentId", resourceId).setParameter("metricNames",
             Arrays.asList(heapCommittedMetric, heapUsedMetric, heapUsedPercentageMetric));
-        scheduleIds = query.getResultList();
-        for (Object[] pair : scheduleIds) {
+        for (Object[] pair : query.getResultList()) {
             scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
         }
 
+
+        StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
+        MeasurementAggregate totalDiskUsedaggregate = new MeasurementAggregate(0d, 0d, 0d);
+        Integer scheduleId = null;
+
         // find the aggregates and enrich the result instance
         if (!scheduleIdsMap.isEmpty()) {
-            if (scheduleIdsMap.get(tokensMetric) != null) {
-                MeasurementAggregate tokensAggregate = measurementManager.getAggregate(subject,
-                    scheduleIdsMap.get(tokensMetric), beginTime, endTime);
+            if ((scheduleId = scheduleIdsMap.get(tokensMetric)) != null) {
+                MeasurementAggregate tokensAggregate = measurementManager.getAggregate(subject, scheduleId, beginTime,
+                    endTime);
                 result.setTokens(tokensAggregate);
             }
-            if (scheduleIdsMap.get(ownershipMetric) != null) {
+            if ((scheduleId = scheduleIdsMap.get(ownershipMetric)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits ownershipAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleIdsMap.get(ownershipMetric), MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setActuallyOwns(ownershipAggregateWithUnits);
             }
-            if (scheduleIdsMap.get(loadMetric) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits loadAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleIdsMap.get(loadMetric), MeasurementUnits.BYTES, beginTime, endTime);
-                result.setLoad(loadAggregateWithUnits);
-            }
-            if (scheduleIdsMap.get(diskUsedPercentageMetric) != null) {
+            if ((scheduleId = scheduleIdsMap.get(diskUsedPercentageMetric)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits diskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleIdsMap.get(diskUsedPercentageMetric), MeasurementUnits.PERCENTAGE, beginTime,
-                    endTime);
-                result.setDiskSpacePercentageUsed(diskUsedPercentageAggregateWithUnits);
+                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                result.setPartitionDiskUsedPercentage(diskUsedPercentageAggregateWithUnits);
             }
 
-            if (scheduleIdsMap.get(heapCommittedMetric) != null) {
+            if ((scheduleId = scheduleIdsMap.get(loadMetric)) != null) {
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits loadAggregateWithUnits = getMeasurementAggregateWithUnits(
+                    subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
+                result.setLoad(loadAggregateWithUnits);
+
+                updateAggregateTotal(totalDiskUsedaggregate, loadAggregateWithUnits.getAggregate());
+            }
+            if ((scheduleId = scheduleIdsMap.get(keyCacheSize)) != null) {
+                updateAggregateTotal(totalDiskUsedaggregate,
+                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            }
+            if ((scheduleId = scheduleIdsMap.get(rowCacheSize)) != null) {
+                updateAggregateTotal(totalDiskUsedaggregate,
+                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            }
+            if ((scheduleId = scheduleIdsMap.get(totalCommitLogSize)) != null) {
+                updateAggregateTotal(totalDiskUsedaggregate,
+                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            }
+
+            if (totalDiskUsedaggregate.getMax() > 0) {
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
+                    totalDiskUsedaggregate, MeasurementUnits.BYTES);
+                totalDiskUsedAggregateWithUnits.setFormattedValue(getSummaryString(totalDiskUsedaggregate,
+                    MeasurementUnits.BYTES));
+                result.setDataDiskUsed(totalDiskUsedAggregateWithUnits);
+            }
+
+            if ((scheduleId = scheduleIdsMap.get(heapCommittedMetric)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapCommittedAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleIdsMap.get(heapCommittedMetric), MeasurementUnits.BYTES, beginTime, endTime);
+                    subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setHeapCommitted(heapCommittedAggregateWithUnits);
             }
-            if (scheduleIdsMap.get(heapUsedMetric) != null) {
+            if ((scheduleId = scheduleIdsMap.get(heapUsedMetric)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleIdsMap.get(heapUsedMetric), MeasurementUnits.BYTES, beginTime, endTime);
+                    subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setHeapUsed(heapUsedAggregateWithUnits);
             }
-            if (scheduleIdsMap.get(heapUsedPercentageMetric) != null) {
+            if ((scheduleId = scheduleIdsMap.get(heapUsedPercentageMetric)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
-                    subject, scheduleIdsMap.get(heapUsedPercentageMetric), MeasurementUnits.PERCENTAGE, beginTime,
+                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
                     endTime);
                 result.setHeapPercentageUsed(heapUsedPercentageAggregateWithUnits);
             }
@@ -405,13 +430,28 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return result;
     }
 
+    /**
+     * @param accumulator
+     * @param input
+     */
+    private void updateAggregateTotal(MeasurementAggregate accumulator, MeasurementAggregate input) {
+        if (accumulator != null && input != null
+                && input.getMax() != null && !Double.isNaN(input.getMax())
+                && input.getMin() != null && !Double.isNaN(input.getMin())
+                && input.getAvg() != null && !Double.isNaN(input.getAvg())) {
+            accumulator.setAvg(accumulator.getAvg() + input.getAvg());
+            accumulator.setMax(accumulator.getMax() + input.getMax());
+            accumulator.setMin(accumulator.getMin() + input.getMin());
+        }
+    }
+
     @Override
     public List<StorageNode> getStorageNodes() {
         TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_ALL,
             StorageNode.class);
         return query.getResultList();
     }
-    
+
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria) {
@@ -432,7 +472,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         Server server = serverManager.getServer();
         // setting the server mode to maintenance
         topologyManager.updateServerMode(subject, new Integer[] { server.getId() }, Server.OperationMode.MAINTENANCE);
-        
+
         Configuration parameters = new Configuration();
         parameters.setSimpleValue("snapshotName", String.valueOf(System.currentTimeMillis()));
         // scheduling the operation
@@ -543,7 +583,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
     }
-    
+
     private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
         int schedId, MeasurementUnits units, long beginTime, long endTime) {
         MeasurementAggregate measurementAggregate = measurementManager.getAggregate(subject, schedId, beginTime,
@@ -553,7 +593,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         measurementAggregateWithUnits.setFormattedValue(getSummaryString(measurementAggregate, units));
         return measurementAggregateWithUnits;
     }
-    
+
     private int getResourceIdFromStorageNode(StorageNode storageNode) {
         int resourceId;
         if (storageNode.getResource() == null) {

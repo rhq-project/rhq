@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.inventory;
 
@@ -26,24 +22,33 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
+import com.smartgwt.client.rpc.RPCResponse;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.ResourceDatasource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.selection.ResourceSelector;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository.TypesLoadedCallback;
+import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 
 /**
  * @author Jay Shaughnessy
  */
 public class ResourceGroupResourceSelector extends ResourceSelector {
+    private static final int MAX_AVAILABLE_RECORDS = 300;
 
-    Collection<Resource> resources;
+    private Collection<Resource> resources;
 
     public ResourceGroupResourceSelector(Collection<Resource> resources, ResourceType resourceTypeFilter,
         boolean forceResourceTypeFilter) {
@@ -96,4 +101,44 @@ public class ResourceGroupResourceSelector extends ResourceSelector {
         }
     }
 
+    @Override
+    protected int getMaxAvailableRecords() {
+        return MAX_AVAILABLE_RECORDS;
+    }
+
+    @Override
+    protected RPCDataSource<Resource, ResourceCriteria> getDataSource() {
+        return new SelectedResourcesAwareDataSource();
+    }
+
+    private class SelectedResourcesAwareDataSource extends SelectedResourceDataSource {
+
+        @Override
+        public void executeFetch(final DSRequest request, final DSResponse response, final ResourceCriteria criteria) {
+            getResourceService().findGroupMemberCandidateResources(criteria, getSelectedResourceIds(),
+                new AsyncCallback<PageList<Resource>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resources_loadFailed(), caught);
+                        response.setStatus(RPCResponse.STATUS_FAILURE);
+                        processResponse(request.getRequestId(), response);
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<Resource> result) {
+                        dataRetrieved(result, response, request);
+                    }
+                });
+        }
+
+        private int[] getSelectedResourceIds() {
+            ListGridRecord[] assignedRecords = assignedGrid.getRecords();
+            int[] selectedResourceIds = new int[assignedRecords.length];
+            for (int i = 0; i < assignedRecords.length; i++) {
+                ListGridRecord assignedRecord = assignedRecords[i];
+                selectedResourceIds[i] = assignedRecord.getAttributeAsInt(getSelectorKey());
+            }
+            return selectedResourceIds;
+        }
+    }
 }

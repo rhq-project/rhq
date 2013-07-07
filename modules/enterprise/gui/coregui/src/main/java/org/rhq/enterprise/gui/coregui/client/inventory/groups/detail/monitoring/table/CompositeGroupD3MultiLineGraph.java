@@ -163,33 +163,8 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
             }
 
             function createXandYAxes() {
-                var customTimeFormat = timeFormat([
-                    [$wnd.d3.time.format("%Y"), function () {
-                        return true;
-                    }],
-                    [$wnd.d3.time.format("%B"), function (d) {
-                        return d.getMonth();
-                    }],
-                    [$wnd.d3.time.format("%b %d"), function (d) {
-                        return d.getDate() != 1;
-                    }],
-                    [$wnd.d3.time.format("%a %d"), function (d) {
-                        return d.getDay() && d.getDate() != 1;
-                    }],
-                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHours), function (d) {
-                        return d.getHours();
-                    }],
-                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHoursMinutes), function (d) {
-                        return d.getMinutes();
-                    }],
-                    [$wnd.d3.time.format(":%S"), function (d) {
-                        return d.getSeconds();
-                    }],
-                    [$wnd.d3.time.format(".%L"), function (d) {
-                        return d.getMilliseconds();
-                    }]
-                ]);
-                xAxis.tickFormat(customTimeFormat);
+
+                xAxis.tickFormat($wnd.rhqCommon.getD3CustomTimeFormat(chartContext.chartXaxisTimeFormatHours, chartContext.chartXaxisTimeFormatHoursMinutes));
 
                 // create x-axis
                 svg.append("g")
@@ -213,13 +188,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
             }
 
-            function timeFormat(formats) {
-                return function (date) {
-                    var i = formats.length - 1, f = formats[i];
-                    while (!f[1](date)) f = formats[--i];
-                    return f[0](date);
-                }
-            }
+
 
 
             function createHeader(titleName) {

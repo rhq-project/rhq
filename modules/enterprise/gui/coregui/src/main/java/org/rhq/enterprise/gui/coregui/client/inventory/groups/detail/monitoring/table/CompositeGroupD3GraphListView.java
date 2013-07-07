@@ -73,7 +73,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private final String chartHoverDateFormat = MSG.chart_hover_date_format();
     private int groupId;
     private int definitionId;
-    private boolean isAutogroup;
+    private boolean isAutoGroup;
     private MeasurementDefinition definition;
     private MeasurementUserPreferences measurementUserPreferences;
     private ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
@@ -86,10 +86,10 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private String chartTitle;
     private Integer chartHeight;
 
-    public CompositeGroupD3GraphListView(int groupId, int defId, boolean isAutogroup) {
+    public CompositeGroupD3GraphListView(int groupId, int defId, boolean isAutoGroup) {
         super();
         this.groupId = groupId;
-        this.isAutogroup = isAutogroup;
+        this.isAutoGroup = isAutoGroup;
         setDefinitionId(defId);
         measurementForEachResource = new ArrayList<MultiLineGraphData>();
         measurementUserPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
@@ -105,7 +105,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(groupId);
         criteria.fetchResourceType(true);
-        criteria.addFilterVisible(!isAutogroup);
+        criteria.addFilterVisible(!isAutoGroup);
         criteria.fetchExplicitResources(true);
 
         measurementForEachResource.clear();

@@ -171,7 +171,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                                 .tickSize(13, 0, 0)
                                 .orient("bottom"),
 
-                        customTimeFormat,
 
                         calcBarY = function (d) {
                             var ABOVE = -6,
@@ -253,17 +252,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                             return calcBarFill(d);
                         });
 
-                 customTimeFormat = timeFormat([
-                    [$wnd.d3.time.format("%Y"), function() { return true; }],
-                    [$wnd.d3.time.format("%B"), function(d) { return d.getMonth(); }],
-                    [$wnd.d3.time.format("%b %d"), function(d) { return d.getDate() != 1; }],
-                    [$wnd.d3.time.format("%a %d"), function(d) { return d.getDay() && d.getDate() != 1; }],
-                    [$wnd.d3.time.format(availChartContext.chartXaxisTimeFormatHours), function(d) { return d.getHours(); }],
-                    [$wnd.d3.time.format(availChartContext.chartXaxisTimeFormatHoursMinutes), function(d) { return d.getMinutes(); }],
-                    [$wnd.d3.time.format(":%S"), function(d) { return d.getSeconds(); }],
-                    [$wnd.d3.time.format(".%L"), function(d) { return d.getMilliseconds(); }]
-                ]);
-                xAxis.tickFormat(customTimeFormat);
+                xAxis.tickFormat($wnd.rhqCommon.getD3CustomTimeFormat(availChartContext.chartXaxisTimeFormatHours, availChartContext.chartXaxisTimeFormatHoursMinutes));
 
                 // create x-axis
                 svg.append("g")

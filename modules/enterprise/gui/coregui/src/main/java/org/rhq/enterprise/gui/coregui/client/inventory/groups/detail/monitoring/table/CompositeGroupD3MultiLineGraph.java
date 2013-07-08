@@ -96,26 +96,25 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                     yAxis,
                     timeScale,
                     xAxis,
+                    colorScale = $wnd.d3.scale.category20(),
                     chart,
                     svg;
 
 
             function determineScale() {
-                var xTicks, xTickSubDivide;
+                var xTicks, xTickSubDivide, minY, maxY;
                 console.log("DetermineScale for # resources: "+ chartContext.data.length);
 
                 if (chartContext.data.length > 0) {
                     xTicks = 8;
                     xTickSubDivide = 5;
+                    var myExtent = getExtentFromNestedValues(chartContext.data);
+                    console.info("minY, maxY: "+myExtent[0] + ", "+myExtent[1] );
 
                     yScale = $wnd.d3.scale.linear()
                             .clamp(true)
                             .rangeRound([height, 0])
-                            .domain([$wnd.d3.min(chartContext.data[0], function (d) {
-                                return d.y;
-                            }), $wnd.d3.max(chartContext.data[0], function (d) {
-                                return d.y;
-                            })]);
+                            .domain([myExtent[0],myExtent[1]]);
 
                     yAxis = $wnd.d3.svg.axis()
                             .scale(yScale)
@@ -124,10 +123,10 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                             .tickSize(4, 4, 0)
                             .orient("left");
 
-
+                    var firstDataset = chartContext.data[0].value;
                     timeScale = $wnd.d3.time.scale()
                             .range([0, width])
-                            .domain($wnd.d3.extent(chartContext.data[0], function (d) {
+                            .domain($wnd.d3.extent(firstDataset, function(d){
                                 return d.x;
                             }));
 
@@ -150,6 +149,24 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
             }
 
+            function getExtentFromNestedValues(data){
+                var tempArray = [],
+                        mergedArray = [],
+                        resultArray = [],
+                        max = 0,
+                        min = 0;
+
+                for(var i=0; i< data.length;i++){
+                    tempArray.push(data[i].value);
+                }
+                mergedArray = $wnd.d3.merge(tempArray, function(d){ return d.y;});
+                max = $wnd.d3.max(mergedArray, function(d){ return d.y});
+                min = $wnd.d3.min(mergedArray, function(d){ return d.y});
+                resultArray.push(min);
+                resultArray.push(max);
+                return resultArray;
+            }
+
             function createYAxisGridLines() {
                 // create the y axis grid lines
                 svg.append("g").classed("grid y_grid", true)
@@ -164,7 +181,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
             function createXandYAxes() {
 
-                xAxis.tickFormat($wnd.rhqCommon.getD3CustomTimeFormat(chartContext.chartXaxisTimeFormatHours, chartContext.chartXaxisTimeFormatHoursMinutes));
+                //xAxis.tickFormat($wnd.rhqCommon.getD3CustomTimeFormat(chartContext.chartXaxisTimeFormatHours, chartContext.chartXaxisTimeFormatHoursMinutes));
 
                 // create x-axis
                 svg.append("g")
@@ -187,8 +204,6 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
 
             }
-
-
 
 
             function createHeader(titleName) {
@@ -224,14 +239,14 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                                         return yScale(d.y);
                                 });
 
-                 chart.selectAll(".multiLine")
+                 svg.selectAll(".multiLine")
                         .data(chartContext.data)
                         .enter()
                         .append('path')
                         .attr("class", "multiLine")
                         .attr("fill", "none")
-                        .attr("stroke", "#2e376a")
-                        .attr("stroke-width", "1.5")
+                        .attr("stroke", function(d,i){ return colorScale(i);})
+                        .attr("stroke-width", "2")
                         .attr("stroke-opacity", ".9")
                         .attr("d", function(d) { return graphLine(d.value);});
 
@@ -244,21 +259,20 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     console.log("multi-resource chart handle:" + chartContext.chartHandle);
-                    //console.dir(chartContext.data);
                     if (chartContext.data.length > 0) {
                         console.log("Creating MultiLine Chart: " + chartContext.chartSelection + " --> " + chartContext.chartTitle);
                         determineScale();
                         createHeader(chartContext.chartTitle);
-                        console.log("created multi-header");
                         createYAxisGridLines();
                         createMultiLines(chartContext);
                         createXandYAxes();
+                        console.log("finished drawing multi-line graph");
                     }
                 }
             }; // end public closure
         }();
 
-        if (chartContext.data !== undefined && chartContext.data.length > 0) {
+        if (typeof chartContext.data !== 'undefined' && chartContext.data.length > 0) {
             multiLineGraph.draw(chartContext);
         }
 

@@ -249,9 +249,8 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
     @Override
     public void redrawGraphs() {
-        drawGraph();
         populateData();
-        markForRedraw();
+        drawGraph();
     }
 
     private void drawGraph() {
@@ -281,7 +280,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
                 @Override
                 public void run() {
-                    //markForRedraw();
                     drawJsniChart();
                 }
             }.schedule(200);
@@ -375,7 +373,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         }
         sb.setLength(sb.length() - 1); // delete the last ','
         sb.append("]");
-        Log.debug("*** Multi-resource Graph json: "+ sb.toString());
+        Log.debug("Multi-resource Graph json: "+ sb.toString());
         return sb.toString();
     }
 

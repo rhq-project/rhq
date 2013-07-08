@@ -251,7 +251,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase)
                         .text(highLabel + " - ");
 
-                if(highValue !== undefined){
+                if(typeof highValue !== 'undefined'){
                     chart.append("text")
                         .attr("class", "highText")
                         .attr("x", xValue)
@@ -267,7 +267,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + yInc)
                         .text(avgLabel + " - ");
 
-                if(avgValue !== undefined){
+                if(typeof avgValue !== 'undefined'){
                     chart.append("text")
                         .attr("class", "avgText")
                         .attr("x", xValue)
@@ -282,7 +282,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + 2 * yInc)
                         .text(minLabel + " - ");
 
-                if(minValue !== undefined){
+                if(typeof minValue !== 'undefined'){
                     chart.append("text")
                         .attr("class", "minText")
                         .attr("x", xValue)
@@ -606,7 +606,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             function formatHovers(chartContext, d) {
                 var hoverString,
-                        xValue = (d.x == undefined) ? 0 : +d.x,
+                        xValue = (typeof d.x === 'undefined') ? 0 : +d.x,
                         date = new Date(+xValue),
                         barDuration = d.barDuration,
                         timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),

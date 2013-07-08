@@ -675,6 +675,8 @@ rhq.cassandra.password=${rhq.cassandra.password}
 #
 #    hostname|jmxPort|nativeTransportPort|
 #
+# Note that this is actually an installer setting. Changing the value after
+# installation will have no effect.
 rhq.cassandra.seeds=
 
 # If enabled data sent to and from storage nodes will be compressed using

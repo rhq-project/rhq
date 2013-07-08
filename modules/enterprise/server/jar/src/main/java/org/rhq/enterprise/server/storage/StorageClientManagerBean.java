@@ -86,10 +86,10 @@ public class StorageClientManagerBean {
 
         log.info("Initializing storage client subsystem");
 
-        //decide if there are no storage nodes persisted before doing anything
-        boolean isNewServerInstall = storageNodeManager.getStorageNodes().isEmpty();
-
-        storageNodeManager.scanForStorageNodes();
+        boolean isNewServerInstall = !storageNodeManager.storageNodeGroupExists();
+        if (isNewServerInstall) {
+            storageNodeManager.createStorageNodeGroup();
+        }
 
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);

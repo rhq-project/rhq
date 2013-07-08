@@ -98,6 +98,10 @@ public class SchemaManager {
         return topology.updateTopology(isNewSchema);
     }
 
+    public List<StorageNode> getStorageNodes() {
+        return nodes;
+    }
+
     private static List<StorageNode> parseNodeInformation(String... nodes) {
         List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
         for (String node : nodes) {

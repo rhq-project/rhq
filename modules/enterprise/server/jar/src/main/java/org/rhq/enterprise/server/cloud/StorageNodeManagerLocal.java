@@ -33,7 +33,10 @@ import org.rhq.core.domain.util.PageList;
 @Local
 public interface StorageNodeManagerLocal {
 
-    List<StorageNode> scanForStorageNodes();
+    // The following have package visibility to make accessible to StorageNodeManagerBeanTest
+    String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
+    String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
+    String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
     List<StorageNode> getStorageNodes();
 
@@ -86,6 +89,21 @@ public interface StorageNodeManagerLocal {
      * </p>
      */
     void runReadRepair();
+
+    /**
+     * Creates the storage node resource group which will be named {@link #STORAGE_NODE_GROUP_NAME}. This method should
+     * only be called at start up by {@link org.rhq.enterprise.server.storage.StorageClientManagerBean StorageClientManagerBean}.
+     * Storage node entities created during installation will be added to the group.
+     */
+    void createStorageNodeGroup();
+
+    /**
+     * Checks whether or not the storage node resource group exists. This method is very similar to
+     * {@link #getStorageNodeGroup()} but may be called prior to the group being created.
+     *
+     * @return true if the storage node resource group exists, false otherwise.
+     */
+    boolean storageNodeGroupExists();
 
     /**
      * This method assumes the storage node resource group already exists; as such, it should only be called from places

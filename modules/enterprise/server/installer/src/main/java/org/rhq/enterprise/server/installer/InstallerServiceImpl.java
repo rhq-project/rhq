@@ -499,6 +499,9 @@ public class InstallerServiceImpl implements InstallerService {
 
         // ensure the server info is up to date and stored in the DB
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
+
+        ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
+            storageNodeSchemaManager.getStorageNodes());
     }
 
     @Override

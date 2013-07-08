@@ -53,16 +53,13 @@ import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
-import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
-import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
@@ -88,21 +85,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     private final Log log = LogFactory.getLog(StorageNodeManagerBean.class);
 
-    private static final String RHQ_STORAGE_RESOURCE_TYPE = "RHQ Storage Node";
-    private static final String RHQ_STORAGE_PLUGIN = "RHQStorage";
-
     private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
-
-    private static final String SEEDS_PROP = "rhq.cassandra.seeds";
-
-    // The following have package visibility to make accessible to StorageNodeManagerBeanTest
-    static final String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
-
-    static final String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
-
-    static final String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -124,89 +109,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private OperationManagerLocal operationManager;
-
-    @Override
-    public synchronized List<StorageNode> scanForStorageNodes() {
-        List<StorageNode> existingStorageNodes = getStorageNodes();
-        if (log.isDebugEnabled()) {
-            log.debug("Found existing storage nodes [" + StringUtil.listToString(existingStorageNodes)
-                + "] in the database");
-        }
-
-        String seeds = System.getProperty(SEEDS_PROP);
-
-        if (StringUtil.isEmpty(seeds) && existingStorageNodes.isEmpty()) {
-            // We need to find storage node connection info from one or the other but not
-            // necessarily both. If this is a single server deployment where the storage
-            // node(s) is running on a separate machine, then SEEDS_PROP will have to be set
-            // manually. And in this scenario during the initial deployment, there will not
-            // be any storage nodes in the db. In a HA deployment, where there are already
-            // storage nodes in the db, an RHQ server does not have to have SEEDS_PROP set
-            // since it can obtain connection info from the storage node table.
-            throw new IllegalStateException("There are no existing storage nodes defined in the RHQ database and "
-                + "the system property [" + SEEDS_PROP + "] is not set. The RHQ server will not be able to connect "
-                + "to the RHQ storage node(s). The [" + SEEDS_PROP + "] property should be defined in "
-                + "rhq-server.properties.");
-        }
-
-        List<StorageNode> seedNodes = parseSeedsProperty(seeds);
-        boolean clusterMaintenanceNeeded = false;
-        List<StorageNode> newNodes = null;
-
-        if (existingStorageNodes.isEmpty()) {
-            // This should only happen on the very first server start upon installation.
-            if (log.isDebugEnabled()) {
-                log.debug("No storage node entities exist in the database");
-                log.debug("Persisting seed nodes [" + StringUtil.listToString(seedNodes) + "]");
-            }
-            createStorageNodeGroup();
-        } else {
-            // There are existing storage nodes but we need to check if the storage node
-            // group exists. In the case of an upgrade, the group would not yet exist so it
-            // has to be created now.
-            if (!storageNodeGroupExists()) {
-                createStorageNodeGroup();
-                addExistingStorageNodesToGroup();
-            }
-
-            newNodes = findNewStorageNodes(existingStorageNodes, seedNodes);
-            if (!newNodes.isEmpty()) {
-                log.info("Detected topology change. New seed nodes will be persisted.");
-                if (log.isDebugEnabled()) {
-                    log.debug("Persisting new seed nodes [" + StringUtil.listToString(newNodes));
-                }
-
-                clusterMaintenanceNeeded = true;
-            }
-        }
-
-        Map<String, StorageNode> storageNodeMap = new HashMap<String, StorageNode>(existingStorageNodes.size()
-            + seedNodes.size());
-        for (StorageNode existingStorageNode : existingStorageNodes) {
-            storageNodeMap.put(existingStorageNode.getAddress(), existingStorageNode);
-        }
-        // possibly overide the existing storage nodes with up to date data
-        for (StorageNode seedNode : seedNodes) {
-            StorageNode existing = storageNodeMap.get(seedNode.getAddress());
-            if (existing != null) {
-                if (existing.getJmxPort() != seedNode.getJmxPort() || existing.getCqlPort() != seedNode.getCqlPort()
-                    || existing.getResource() != seedNode.getResource()) {
-                    existing.setMtime(new Date().getTime());
-                }
-                seedNode.setResource(existing.getResource());
-            }
-            storageNodeMap.put(seedNode.getAddress(), seedNode);
-        }
-
-        this.discoverResourceInformation(storageNodeMap);
-        this.updateStorageNodes(storageNodeMap);
-
-        if (clusterMaintenanceNeeded) {
-            this.scheduleQuartzJob(existingStorageNodes.size());
-        }
-
-        return new ArrayList<StorageNode>(storageNodeMap.values());
-    }
 
     @Override
     public void linkResource(Resource resource) {
@@ -250,7 +152,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
-    private void createStorageNodeGroup() {
+    @Override
+    public void createStorageNodeGroup() {
         log.info("Creating resource group [" + STORAGE_NODE_GROUP_NAME + "]");
 
         ResourceGroup group = new ResourceGroup(STORAGE_NODE_GROUP_NAME);
@@ -261,6 +164,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         group.setRecursive(false);
 
         resourceGroupManager.createResourceGroup(subjectManager.getOverlord(), group);
+
+        addExistingStorageNodesToGroup();
     }
 
     private void addExistingStorageNodesToGroup() {
@@ -283,13 +188,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             new int[] {resource.getId()});
     }
 
-    /**
-     * This method is very similar to {@link #getStorageNodeGroup()} but may be called
-     * prior to the group being created.
-     *
-     * @return true if the storage node resource group exists, false otherwise.
-     */
-    private boolean storageNodeGroupExists() {
+    @Override
+    public boolean storageNodeGroupExists() {
         Subject overlord = subjectManager.getOverlord();
 
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
@@ -302,14 +202,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return !groups.isEmpty();
     }
 
-    /**
-     * Note that this method assumes the storage node resource group already exists; as
-     * such, it should only be called from places in the code that are after the point(s)
-     * where the group has been created.
-     *
-     * @return The storage node resource group.
-     * @throws IllegalStateException if the group is not found or does not exist.
-     */
+    @Override
     public ResourceGroup getStorageNodeGroup() {
         Subject overlord = subjectManager.getOverlord();
 
@@ -499,24 +392,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return storageNodes;
     }
 
-    private List<StorageNode> findNewStorageNodes(List<StorageNode> nodes, List<StorageNode> seedNodes) {
-        if (log.isDebugEnabled()) {
-            log.debug("Checking system property [" + SEEDS_PROP + "] for any new nodes to be persisted");
-        }
-        List<StorageNode> newNodes = new ArrayList<StorageNode>();
-        for (StorageNode seedNode : seedNodes) {
-            // The contains call should be ok even though it is an O(N) operation because
-            // the number of storage nodes will be small and this is only done at start up.
-            if (!nodes.contains(seedNode)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Detected new storage node [" + seedNode + "]");
-                }
-                newNodes.add(seedNode);
-            }
-        }
-        return newNodes;
-    }
-
     private void scheduleQuartzJob(int clusterSize) {
         String jobName = StorageNodeMaintenanceJob.class.getName();
         String jobGroupName = StorageNodeMaintenanceJob.class.getName();
@@ -552,38 +427,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         entityManager.flush();
     }
-
-    private void discoverResourceInformation(Map<String, StorageNode> storageNodeMap) {
-        TypedQuery<ResourceType> query = entityManager.<ResourceType>createNamedQuery(ResourceType.QUERY_FIND_BY_NAME_AND_PLUGIN, ResourceType.class)
-            .setParameter("name", RHQ_STORAGE_RESOURCE_TYPE).setParameter("plugin", RHQ_STORAGE_PLUGIN);
-        List<ResourceType> resourceTypes = query.getResultList();
-
-        if (resourceTypes.isEmpty()) {
-            return;
-        }
-
-        TypedQuery<Resource> resourceQuery = entityManager.<Resource>createNamedQuery(Resource.QUERY_FIND_BY_TYPE_ADMIN, Resource.class).setParameter("type",
-            resourceTypes.get(0));
-        List<Resource> cassandraResources = resourceQuery.getResultList();
-
-        for (Resource resource : cassandraResources) {
-            Configuration resourceConfiguration = resource.getPluginConfiguration();
-            String host = resourceConfiguration.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
-
-            if (host != null && storageNodeMap.containsKey(host)) {
-                StorageNode storageNode = storageNodeMap.get(host);
-
-                storageNode.setResource(resource);
-                if (resource.getInventoryStatus() == InventoryStatus.NEW) {
-                    storageNode.setOperationMode(OperationMode.INSTALLED);
-                } else if (resource.getInventoryStatus() == InventoryStatus.COMMITTED
-                    && resource.getCurrentAvailability().getAvailabilityType() == AvailabilityType.UP) {
-                    storageNode.setOperationMode(OperationMode.NORMAL);
-                }
-            }
-        }
-    }
-
+    
     private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
         int schedId, MeasurementUnits units, long beginTime, long endTime) {
         MeasurementAggregate measurementAggregate = measurementManager.getAggregate(subject, schedId, beginTime,

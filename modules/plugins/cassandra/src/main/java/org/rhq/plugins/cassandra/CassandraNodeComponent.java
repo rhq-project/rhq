@@ -128,18 +128,28 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     @Override
     public AvailabilityType getAvailability() {
-        ResourceContext<?> context = getResourceContext();
-        ProcessInfo processInfo = context.getNativeProcess();
+        long start = System.currentTimeMillis();
+        try {
+            ResourceContext<?> context = getResourceContext();
+            ProcessInfo processInfo = context.getNativeProcess();
 
-        if (processInfo == null) {
-            return UNKNOWN;
-        } else {
-            // It is safe to read prior snapshot as getNativeProcess always return a fresh instance
-            ProcessInfoSnapshot processInfoSnaphot = processInfo.freshSnapshot();
-            if (processInfoSnaphot.isRunning()) {
-                return UP;
+            if (processInfo == null) {
+                return UNKNOWN;
             } else {
-                return DOWN;
+                // It is safe to read prior snapshot as getNativeProcess always return a fresh instance
+    //            ProcessInfoSnapshot processInfoSnaphot = processInfo.freshSnapshot();
+                if (processInfo.priorSnaphot().isRunning()) {
+                    return UP;
+                } else {
+                    return DOWN;
+                }
+            }
+        } finally {
+            long end = System.currentTimeMillis();
+            long totalTime = end - start;
+            log.debug("Finished availability check in " + totalTime + " ms");
+            if (totalTime > (1000 * 5)) {
+                log.warn("Availability check exceeded five seconds. Total time was " + totalTime + " ms");
             }
         }
     }

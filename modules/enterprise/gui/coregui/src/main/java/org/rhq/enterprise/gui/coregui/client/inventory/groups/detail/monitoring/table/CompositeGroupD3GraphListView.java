@@ -142,7 +142,6 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
                                 Log.warn("# of charted graphs: " + measurementForEachResource.size());
                             }
                             drawGraph();
-                            redraw();
                         }
                     });
 

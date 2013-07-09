@@ -205,6 +205,44 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
             }
 
+            function createLegend() {
+
+                // add legend
+                var legend = svg.append("g")
+                        .attr("class", "legend")
+                        .attr("x", width + 30)
+                        .attr("y", 70)
+                        .attr("height", 240)
+                        .attr("width", 150);
+
+                legend.selectAll('g').data(chartContext.data)
+                        .enter()
+                        .append('g')
+                        .each(function (d, i) {
+                            var g = $wnd.d3.select(this);
+                            g.append("rect")
+                                    .attr("x", width + 10)
+                                    .attr("y", (i * 15) - 8)
+                                    .attr("width", 10)
+                                    .attr("height", 10)
+                                    .style("fill", function(){return colorScale(i);});
+
+                            g.append("text")
+                                    .attr("x", width + 30)
+                                    .attr("y", i * 15)
+                                    .attr("height", 10)
+                                    .attr("width", 135)
+                                    .style("font-size", "10px")
+                                    .style("font-family", "Arial, Helvetica, sans-serif")
+                                    .style("fill", "#50505A")
+                                    .text(function (d) {
+                                        return d.key;
+                                    });
+
+
+                        });
+            }
+
 
             function createHeader(titleName) {
                 var title = chart.append("g").append("rect")
@@ -266,6 +304,7 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                         createYAxisGridLines();
                         createMultiLines(chartContext);
                         createXandYAxes();
+                        createLegend();
                         console.log("finished drawing multi-line graph");
                     }
                 }

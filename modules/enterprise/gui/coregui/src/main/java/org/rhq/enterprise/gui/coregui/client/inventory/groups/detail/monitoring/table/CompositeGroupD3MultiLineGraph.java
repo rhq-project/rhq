@@ -40,7 +40,9 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
             }
             this.chartId = chartId;
             this.chartHeight = chartHeight;
-            this.data = $wnd.jQuery.parseJSON(metricsData); // make into json
+            if(typeof metricsData !== 'undefined' && metricsData.length > 0){
+                this.data = $wnd.jQuery.parseJSON(metricsData);
+            }
             this.xAxisLabel = xAxisLabel;
             this.chartTitle = chartTitle;
             this.yAxisUnits = yAxisUnits;
@@ -57,14 +59,13 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
             this.chartXaxisTimeFormatHours = chartXaxisTimeFormatHours;
             this.chartXaxisTimeFormatHoursMinutes = chartXaxisTimeFormatHoursMinutes;
 
-        };
-
-        var global = this,
+        },
+        global = this;
 
         // create a chartContext object (from rhq.js) with the data required to render to a chart
         // this same data could be passed to different chart types
         // This way, we are decoupled from the dependency on globals and JSNI and kept all the java interaction right here.
-                chartContext = new MultiLineChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
+        chartContext = new MultiLineChartContext(global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartHeight()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getJsonMetrics()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getXAxisTitle()(),
@@ -102,14 +103,13 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
 
 
             function determineScale() {
-                var xTicks, xTickSubDivide, minY, maxY;
+                var xTicks, xTickSubDivide;
                 console.log("DetermineScale for # resources: "+ chartContext.data.length);
 
                 if (chartContext.data.length > 0) {
                     xTicks = 8;
                     xTickSubDivide = 5;
                     var myExtent = getExtentFromNestedValues(chartContext.data);
-                    console.info("minY, maxY: "+myExtent[0] + ", "+myExtent[1] );
 
                     yScale = $wnd.d3.scale.linear()
                             .clamp(true)
@@ -210,13 +210,14 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                 // add legend
                 var legend = svg.append("g")
                         .attr("class", "legend")
-                        .attr("x", width + 30)
+                        .attr("x", width + 100)
                         .attr("y", 70)
                         .attr("height", 240)
                         .attr("width", 150);
 
                 legend.selectAll('g').data(chartContext.data)
                         .enter()
+
                         .append('g')
                         .each(function (d, i) {
                             var g = $wnd.d3.select(this);
@@ -276,6 +277,8 @@ public class CompositeGroupD3MultiLineGraph extends CompositeGroupD3GraphListVie
                                 .y(function (d) {
                                         return yScale(d.y);
                                 });
+
+                chartContext.data.sort(function(a,b){return ((a.key < b.key) ? -1 : ((a.key > b.key) ? 1 : 0));});
 
                  svg.selectAll(".multiLine")
                         .data(chartContext.data)

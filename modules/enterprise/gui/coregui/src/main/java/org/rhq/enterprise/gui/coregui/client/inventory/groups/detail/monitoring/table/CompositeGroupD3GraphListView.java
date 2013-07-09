@@ -363,17 +363,20 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
 
     @Override
     public String getJsonMetrics() {
-        StringBuilder sb = new StringBuilder("[");
-        for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
-            sb.append("{ \"key\": \"");
-            sb.append(multiLineGraphData.getResourceName());
-            sb.append("\",\"value\" : ");
-            sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
-            sb.append("},");
+        StringBuilder sb = new StringBuilder();
+        if (null != measurementForEachResource && !measurementForEachResource.isEmpty()) {
+            sb = new StringBuilder("[");
+            for (MultiLineGraphData multiLineGraphData : measurementForEachResource) {
+                sb.append("{ \"key\": \"");
+                sb.append(multiLineGraphData.getResourceName());
+                sb.append("\",\"value\" : ");
+                sb.append(produceInnerValuesArray(multiLineGraphData.getMeasurementData()));
+                sb.append("},");
+            }
+            sb.setLength(sb.length() - 1); // delete the last ','
+            sb.append("]");
         }
-        sb.setLength(sb.length() - 1); // delete the last ','
-        sb.append("]");
-        Log.debug("Multi-resource Graph json: "+ sb.toString());
+        Log.debug("Multi-resource Graph json: " + sb.toString());
         return sb.toString();
     }
 

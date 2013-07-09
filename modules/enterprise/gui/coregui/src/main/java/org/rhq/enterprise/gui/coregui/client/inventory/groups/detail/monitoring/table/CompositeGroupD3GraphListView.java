@@ -32,6 +32,7 @@ import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.measurement.composite.MeasurementNumericValueAndUnits;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -47,6 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDat
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
@@ -77,6 +79,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     private MeasurementDefinition definition;
     private MeasurementUserPreferences measurementUserPreferences;
     private ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
+    private String adjustedMeasurementUnits;
     /**
      * measurementForEachResource is a list of a list of single Measurement data for multiple resources.
      */
@@ -292,9 +295,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         return definition.getName();
     }
 
-    public String getYAxisUnits() {
-        return definition.getUnits().toString();
-    }
+
 
     public String getXAxisTitle() {
         return MSG.view_charts_time_axis_label();
@@ -353,7 +354,11 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         for (MeasurementDataNumericHighLowComposite measurement : measurementList) {
             if (!Double.isNaN(measurement.getValue())) {
                 sb.append("{ \"x\":" + measurement.getTimestamp() + ",");
-                sb.append(" \"y\":" + MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits()) + "},");
+                MeasurementNumericValueAndUnits dataValue = normalizeUnitsAndValues(measurement.getValue(),
+                        definition.getUnits());
+                //sb.append(" \"y\":" + MeasurementUnits.scaleUp(measurement.getValue(), definition.getUnits()) + "},");
+                sb.append(" \"y\":" + dataValue.getValue() + "},");
+                adjustedMeasurementUnits = dataValue.getUnits().toString();
             }
         }
         sb.setLength(sb.length() - 1); // delete the last ','
@@ -378,6 +383,29 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
         }
         Log.debug("Multi-resource Graph json: " + sb.toString());
         return sb.toString();
+    }
+
+    protected MeasurementNumericValueAndUnits normalizeUnitsAndValues(double value, MeasurementUnits measurementUnits) {
+        MeasurementNumericValueAndUnits newValue = MeasurementConverterClient.fit(value, measurementUnits);
+        MeasurementNumericValueAndUnits returnValue;
+
+        // adjust for percentage numbers
+        if (measurementUnits.equals(MeasurementUnits.PERCENTAGE)) {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue() * 100, newValue.getUnits());
+        } else {
+            returnValue = new MeasurementNumericValueAndUnits(newValue.getValue(), newValue.getUnits());
+        }
+
+        return returnValue;
+    }
+
+    public String getYAxisUnits() {
+        if (adjustedMeasurementUnits == null) {
+            Log.warn("ResourceMetricD3GraphView.adjustedMeasurementUnits is populated by getJsonMetrics. Make sure it is called first.");
+            return "";
+        } else {
+            return adjustedMeasurementUnits;
+        }
     }
 
     protected String getXAxisTimeFormatHoursMinutes() {

@@ -113,6 +113,24 @@ public class StorageNodeLoadComposite implements Serializable {
     public void setHeapPercentageUsed(MeasurementAggregateWithUnits heapPercentageUsed) {
         this.heapPercentageUsed = heapPercentageUsed;
     }
+    
+    /**
+     * @deprecated use {@link #getPartitionDiskUsedPercentage() getPartitionDiskUsedPercentage()} instead
+     * 
+     * @return partitionDiskUsedPercentage
+     */
+    public MeasurementAggregateWithUnits getDiskSpacePercentageUsed() {
+        return getPartitionDiskUsedPercentage();
+    }
+    
+    /**
+     * @deprecated use {@link #setPartitionDiskUsedPercentage() setPartitionDiskUsedPercentage()} instead
+     * 
+     * @param partitionDiskUsedPercentage
+     */
+    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits partitionDiskUsedPercentage) {
+        setPartitionDiskUsedPercentage(partitionDiskUsedPercentage);
+    }
 
     /**
      * @return A computed metric for the percentage of disk space used on the partition that contains the SSTables.

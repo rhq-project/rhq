@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.plugin.pc.alert;
 
@@ -30,7 +30,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.enterprise.server.plugin.pc.ControlResults;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginComponent;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginEnvironment;
 
@@ -103,7 +102,7 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
 
     /**
      * Validates the alert and extra parameters. The results should be initialized with the current
-     * parameters of this alert sender and the erroneous properties should have their 
+     * parameters of this alert sender and the erroneous properties should have their
      * {@link Property#getErrorMessage() error messages} set.
      * <p>
      * The implementation is free to change (add/update/delete) properties in either of the configurations
@@ -111,14 +110,14 @@ public abstract class AlertSender<T extends ServerPluginComponent> {
      * further processed in an alert sender specific way before they get stored into the database.
      * <p>
      * The default implementation makes no changes to the configurations.
-     * 
+     *
      * @param subject the subject requesting the changes in the configuration
      * @return the validation results
      */
     public AlertSenderValidationResults validateAndFinalizeConfiguration(Subject subject) {
         return new AlertSenderValidationResults(alertParameters, extraParameters);
     }
-    
+
     private String printProperty(Property property) {
         if (property instanceof PropertySimple) {
             return ((PropertySimple) property).getStringValue();

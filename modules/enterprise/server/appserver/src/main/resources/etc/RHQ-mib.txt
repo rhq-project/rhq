@@ -3,39 +3,51 @@ RHQ-MIB DEFINITIONS ::= BEGIN
 IMPORTS
     MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, snmpModules, enterprises
         FROM SNMPv2-SMI
-    coldStart
-        FROM SNMPv2-MIB
     OBJECT-GROUP, NOTIFICATION-GROUP, MODULE-COMPLIANCE
         FROM SNMPv2-CONF
     DisplayString
         FROM SNMPv2-TC;
 
 rhqMIB MODULE-IDENTITY
-    LAST-UPDATED    "201112200000Z"
+    LAST-UPDATED    "201307020000Z"
     ORGANIZATION    "RHQ-Project"
     CONTACT-INFO    "http://www.jboss.org/rhq"
     DESCRIPTION
         "The MIB module for RHQ alerts.
 
         This file is part of the RHQ management platform
-        Copyright (C) 2005-2012 Red Hat, Inc.
+        Copyright (C) 2005-2013 Red Hat, Inc.
         All rights reserved.
     "
 
-    REVISION        "200807110000Z"
-    DESCRIPTION     "Initial version"
-    REVISION        "201010180000Z"
-    DESCRIPTION     "Better trap support"
+    REVISION        "201307020000Z"
+    DESCRIPTION	    "Bug fixes"
     REVISION        "201112200000Z"
     DESCRIPTION     "Also emit resource lineage"
+    REVISION        "201010180000Z"
+    DESCRIPTION     "Better trap support"
+    REVISION        "200807110000Z"
+    DESCRIPTION     "Initial version"
     ::= { snmpModules 1 }
 
+-- 1.3.6.1.4.1.18016
 jboss       OBJECT IDENTIFIER ::= {enterprises 18016 }
 
+-- 1.3.6.1.4.1.18016.2
 rhq         OBJECT IDENTIFIER ::= {jboss 2 }
 
+-- 1.3.6.1.4.1.18016.2.1
 alert       OBJECT IDENTIFIER ::= {rhq 1 }
 
+-- 1.3.6.1.4.1.18016.2.1.2
+alertNotifications OBJECT IDENTIFIER ::= {rhq 2}
+
+-- 1.3.6.1.4.1.18016.2.3
+rhqServer   OBJECT IDENTIFIER ::= {rhq 3}
+
+
+-- 1.3.6.1.4.1.18016.2.1.2.0
+alertNotifPrefix   OBJECT IDENTIFIER ::= {alertNotifications 0 }
 
 alertName OBJECT-TYPE
     SYNTAX      DisplayString (SIZE (0..255))
@@ -93,28 +105,10 @@ alertHierarchy        OBJECT-TYPE
     STATUS      current
     DESCRIPTION
         "The hierarchy of the resource that triggered the alert"
-    ::= { alert 6 }
+    ::= { alert 7 }
 
--- conformance information
-
-snmpMIBConformance
-               OBJECT IDENTIFIER ::= { rhqMIB 2 }
-
-snmpMIBCompliances
-               OBJECT IDENTIFIER ::= { snmpMIBConformance 1 }
-snmpMIBGroups  OBJECT IDENTIFIER ::= { snmpMIBConformance 2 }
-
--- compliance statements
-
-snmpBasicCompliance MODULE-COMPLIANCE
-    STATUS  current
-    DESCRIPTION "TODO"
-    MODULE
-        MANDATORY-GROUPS { alertGroup, trapGroup }
-
-    ::= { snmpMIBCompliances 2 }
-
-alertGroup OBJECT-GROUP
+-- 1.3.6.1.4.1.18016.2.1.2.0.1
+alertNotification NOTIFICATION-TYPE
     OBJECTS {   alertName,
                 alertResourceName,
                 alertPlatformName,
@@ -124,12 +118,46 @@ alertGroup OBJECT-GROUP
                 alertHierarchy }
     STATUS  current
     DESCRIPTION "A collection of objects providing information about an alert"
-    ::= { snmpMIBGroups 1 }
+    ::= { alertNotifPrefix 1 }
 
-trapGroup NOTIFICATION-GROUP
-    NOTIFICATIONS { coldStart }
+
+-- conformance information
+
+rhqMIBConformance    OBJECT IDENTIFIER ::= { rhqMIB 2 }
+rhqTraps             OBJECT IDENTIFIER ::= { rhqMIB 3 }
+rhqTrapPrefix        OBJECT IDENTIFIER ::= { rhqTraps 0 }
+
+rhqMIBCompliances    OBJECT IDENTIFIER ::= { rhqMIBConformance 1 }
+rhqMIBGroups         OBJECT IDENTIFIER ::= { rhqMIBConformance 2 }
+
+-- compliance statements
+
+rhqMibBasicCompliance MODULE-COMPLIANCE
+    STATUS  current
+    DESCRIPTION "Module compliance definition for the RHQ-MIB extension module"
+    MODULE
+        MANDATORY-GROUPS { rhqAlertGroup, rhqNotificationGroup }
+
+    ::= { rhqMIBCompliances 2 }
+
+rhqAlertGroup OBJECT-GROUP
+        OBJECTS {   alertName,
+                    alertResourceName,
+                    alertPlatformName,
+                    alertCondition,
+                    alertSeverity,
+                    alertUrl,
+                    alertHierarchy
+                     }
+    STATUS  current
+    DESCRIPTION "A collection of entries for a notifications for alerts"
+        ::= { rhqMIBGroups 2 }
+
+rhqNotificationGroup NOTIFICATION-GROUP
+        NOTIFICATIONS {   alertNotification }
     STATUS  current
     DESCRIPTION "A collection of notifications for alerts"
-    ::= { snmpMIBGroups 2 }
+        ::= { rhqMIBGroups 3 }
+
 
 END

@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import javax.ejb.EJB;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -87,6 +88,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.MatchResult;
@@ -113,6 +115,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     @ArquillianResource
     protected InitialContext initialContext;
+
+    @EJB
+    private StorageClientManagerBean storageClientManager;
 
     // We originally (in 4.2.3 days) ran these tests as "unit" tests in the server/jar module using
     // the embedded container.  With Arquillian it makes sense to actually deploy an EAR because
@@ -518,7 +523,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                         }
                     }
                 }
-
+                storageClientManager.init();
                 beforeMethod();
                 beforeMethod(method);
 

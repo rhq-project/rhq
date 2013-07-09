@@ -20,21 +20,26 @@
 
 package org.rhq.enterprise.server.test;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import static org.rhq.enterprise.server.cloud.StorageNodeManagerLocal.STORAGE_NODE_GROUP_NAME;
+
+import java.util.List;
 
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.enterprise.server.RHQConstants;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.core.StartupBean;
 import org.rhq.enterprise.server.naming.NamingHack;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 
 /**
  * This is a replacement for the fullblown {@link StartupBean} of the actual RHQ server.
@@ -45,9 +50,6 @@ public class StrippedDownStartupBean {
 
     public static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
 
-    @EJB
-    StorageClientManagerBean storageClientManager;
-
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -55,46 +57,30 @@ public class StrippedDownStartupBean {
         NamingHack.bruteForceInitialContextFactoryBuilder();
     }
 
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void init() {
         secureNaming();
-        // TODO Find a better way to load system properties
-        // Cassandra connection info is currently obtained from system properties. I have
-        // yet to find a good way to set system properties for the deployment under test.
-        // https://github.com/arquillian/arquillian-showcase/tree/master/extensions/systemproperties
-        // might be worth looking at.
-        //
-        // jsanda
-        loadCassandraConnectionProps();
-        storageClientManager.init();
     }
 
     /**
-     * Purges the test server and any storage nodes created during server initialization
+     * <p>
+     * Purges the storage node resource group, test server, and any storage nodes created during server initialization
      * from a prior test run.
+     * </p>
+     * <p>
+     * Note that the storage node group deletion simply removes the entity from the rhq_resource_group table. At this
+     * point in the deployment, {@link ResourceGroupManagerLocal#deleteResourceGroup(org.rhq.core.domain.auth.Subject, int)}
+     * cannot be used; therefore, any test that added storage node resources to the group should take care of removing
+     * them as well.
+     * </p>
      */
     public void purgeTestServerAndStorageNodes() {
+        entityManager.createQuery("DELETE FROM " + ResourceGroup.class.getName() + " WHERE name = :storageNodeGroup")
+            .setParameter("storageNodeGroup", STORAGE_NODE_GROUP_NAME)
+            .executeUpdate();
         entityManager.createQuery("DELETE FROM " + StorageNode.class.getName()).executeUpdate();
         entityManager.createQuery("DELETE FROM " + Server.class.getName() + " WHERE name = :serverName")
             .setParameter("serverName", TestConstants.RHQ_TEST_SERVER_NAME)
             .executeUpdate();
-    }
-
-    public void loadCassandraConnectionProps() {
-        InputStream stream = null;
-        try {
-            stream = getClass().getResourceAsStream("/cassandra-test.properties");
-            Properties props = new Properties();
-            props.load(stream);
-
-            // DO NOT use System.setProperties(Properties). I previously tried that and it
-            // caused some arquillian deployment exception.
-            //
-            // jsanda
-            System.setProperty("rhq.cassandra.username", props.getProperty("rhq.cassandra.username"));
-            System.setProperty("rhq.cassandra.password", props.getProperty("rhq.cassandra.password"));
-            System.setProperty("rhq.cassandra.seeds", props.getProperty("rhq.cassandra.seeds"));
-        } catch (IOException e) {
-            throw new RuntimeException(("Failed to load cassandra-test.properties"));
-        }
     }
 }

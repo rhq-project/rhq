@@ -148,26 +148,6 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
         // this method is still needed, because tests calls SLSB methods that are executed in their own transaction
         // and the  rollback performed once the TransactionCallback is finished just wont clean everything
 
-        // We can only filter on the group name because the resource type info might not exist in the test
-        // database.
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
-
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(subjectManager.getOverlord(),
-            criteria);
-
-        if (!groups.isEmpty()) {
-            resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), groups.get(0).getId());
-        }
-
-//        for (ResourceGroup group : groups) {
-//            if (group.getName().equals(STORAGE_NODE_GROUP_NAME)) {
-//                resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), group.getId());
-//                break;
-//            }
-//        }
-
-
         // pause the currently running TX
         Transaction runningTransaction = getTransactionManager().suspend();
         getTransactionManager().begin();

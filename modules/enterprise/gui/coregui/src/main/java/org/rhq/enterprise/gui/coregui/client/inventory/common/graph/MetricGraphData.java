@@ -294,9 +294,10 @@ public class MetricGraphData implements JsonMetricProducer {
      * @todo: future: this should really use GSON or some Json marshaller
      */
     public String getJsonMetrics() {
-        StringBuilder sb = new StringBuilder("[");
+        StringBuilder sb = new StringBuilder();
         boolean gotAdjustedMeasurementUnits = false;
         if (null != metricData) {
+            sb = new StringBuilder("[");
             long firstBarTime = metricData.get(0).getTimestamp();
             long secondBarTime = metricData.get(1).getTimestamp();
             long barDuration = secondBarTime - firstBarTime;
@@ -341,8 +342,8 @@ public class MetricGraphData implements JsonMetricProducer {
                 }
             }
             sb.setLength(sb.length() - 1); // delete the last ','
+            sb.append("]");
         }
-        sb.append("]");
         Log.debug("Json data for: "+getChartTitle());
         Log.debug(sb.toString());
         return sb.toString();

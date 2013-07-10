@@ -22,7 +22,11 @@
 <?xml version="1.0"?>
 <plugin name="${props.pluginName}"
         displayName="${props.pluginName}Plugin"
+<#if props.pluginDescription??>
         description="${props.pluginDescription}"
+<#else>
+        description="TODO provide a description for the plugin"
+</#if>
 <#if props.usePluginLifecycleListenerApi>
         pluginLifecycleListener="${props.componentClass}"
 </#if>

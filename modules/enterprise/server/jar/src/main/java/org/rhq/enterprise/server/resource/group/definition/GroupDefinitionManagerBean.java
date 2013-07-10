@@ -162,6 +162,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    // required for the recalculation thread (same like calculateGroupMembership) this fixes BZ 976265
     public GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition groupDefinition)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
         ResourceGroupUpdateException {

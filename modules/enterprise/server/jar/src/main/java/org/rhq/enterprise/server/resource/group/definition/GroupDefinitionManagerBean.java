@@ -230,26 +230,24 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         if (name.equals("")) {
             throw new GroupDefinitionException("Name is a required property");
         }
-
         if (name.length() > 100) {
             throw new GroupDefinitionException("Name is limited to 100 characters");
         }
-
         if (description.length() > 100) {
             throw new GroupDefinitionException("Description is limited to 100 characters");
         }
-
         if (name.contains("<") || name.contains("$") || name.contains("'") || name.contains("{") || name.contains("[")) {
             throw new GroupDefinitionException("Name must not contain <,$,',[,{ characters");
         }
-        
         if (definition.getRecalculationInterval() < 0) {
             throw new GroupDefinitionException("Recalculation interval cannot be negative");
         }
-        
         if (definition.getRecalculationInterval() > 0 && definition.getRecalculationInterval() < 60 * 1000) {
             throw new GroupDefinitionException(
                 "Recalculation interval cannot be a positive number lower than 1 minute (60000ms)");
+        }
+        if (definition.getExpression() == null || definition.getExpression().isEmpty()) {
+            throw new GroupDefinitionException("Expression is empty");
         }
 
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);

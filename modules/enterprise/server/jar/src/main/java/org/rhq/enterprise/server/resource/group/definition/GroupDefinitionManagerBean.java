@@ -242,6 +242,15 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         if (name.contains("<") || name.contains("$") || name.contains("'") || name.contains("{") || name.contains("[")) {
             throw new GroupDefinitionException("Name must not contain <,$,',[,{ characters");
         }
+        
+        if (definition.getRecalculationInterval() < 0) {
+            throw new GroupDefinitionException("Recalculation interval cannot be negative");
+        }
+        
+        if (definition.getRecalculationInterval() > 0 && definition.getRecalculationInterval() < 60 * 1000) {
+            throw new GroupDefinitionException(
+                "Recalculation interval cannot be a positive number lower than 1 minute (60000ms)");
+        }
 
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);
         query.setParameter("name", name);

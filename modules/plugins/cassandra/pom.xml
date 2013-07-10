@@ -27,7 +27,7 @@
     <dependency>
       <groupId>org.xerial.snappy</groupId>
       <artifactId>snappy-java</artifactId>
-      <version>1.0.5-M3-p1</version>
+      <version>${cassandra.snappy.version}</version>
     </dependency>
     <dependency>
       <groupId>org.apache.cassandra</groupId>
@@ -141,7 +141,7 @@
                 <artifactItem>
                   <groupId>org.xerial.snappy</groupId>
                   <artifactId>snappy-java</artifactId>
-                  <version>1.0.5-M3-p1</version>
+                  <version>${cassandra.snappy.version}</version>
                 </artifactItem>
                 <artifactItem>
                   <groupId>org.codehaus.jackson</groupId>

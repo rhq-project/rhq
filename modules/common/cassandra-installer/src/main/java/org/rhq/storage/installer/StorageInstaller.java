@@ -32,6 +32,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +55,7 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -89,6 +91,8 @@ public class StorageInstaller {
     private final String STORAGE_BASEDIR = "rhq-storage";
 
     private final Log log = LogFactory.getLog(StorageInstaller.class);
+
+    private final String VERIFY_DATA_DIRS_EMPTY = "verify-data-dirs-empty";
 
     private Options options;
 
@@ -191,12 +195,15 @@ public class StorageInstaller {
             + "where the existing RHQ server is installed.");
         upgradeOption.setArgName("RHQ_SERVER_DIR");
 
+        Option verifyDataDirsEmptyOption = new Option(null, VERIFY_DATA_DIRS_EMPTY, true, "Will cause the installer " +
+            "to abort if any of the data directories is not empty. Defaults to true.");
+
         options = new Options().addOption(new Option("h", "help", false, "Show this message.")).addOption(hostname)
             .addOption(seeds).addOption(jmxPortOption).addOption(startOption).addOption(checkStatus)
             .addOption(commitLogOption).addOption(dataDirOption).addOption(savedCachesDirOption)
             .addOption(nativeTransportPortOption).addOption(storagePortOption).addOption(sslStoragePortOption)
             .addOption(basedirOption).addOption(heapSizeOption).addOption(heapNewSizeOption).addOption(stackSizeOption)
-            .addOption(upgradeOption);
+            .addOption(upgradeOption).addOption(verifyDataDirsEmptyOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -296,21 +303,25 @@ public class StorageInstaller {
                 File dataDirFile = new File(dataDir);
                 File savedCachesDirFile = new File(savedCachesDir);
 
-                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
-                if (!isDirectoryEmpty(commitLogDirFile)) {
-                    log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
-                        + commitLogDirFile.getAbsolutePath() + "]");
-                    return STATUS_DATA_DIR_NOT_EMPTY;
-                }
-                if (!isDirectoryEmpty(dataDirFile)) {
-                    log.error("Data directory is not empty. It should not exist for a new Storage Node ["
-                        + dataDirFile.getAbsolutePath() + "]");
-                    return STATUS_DATA_DIR_NOT_EMPTY;
-                }
-                if (!isDirectoryEmpty(savedCachesDirFile)) {
-                    log.error("Saved caches directory is not empty. It should not exist for a new Storage Node ["
-                        + savedCachesDirFile.getAbsolutePath() + "]");
-                    return STATUS_DATA_DIR_NOT_EMPTY;
+                boolean verifyDataDirsEmpty = Boolean.valueOf(cmdLine.getOptionValue(VERIFY_DATA_DIRS_EMPTY, "true"));
+                if (verifyDataDirsEmpty) {
+                    // validate the three data directories are empty - if they are not, we are probably stepping on
+                    // another storage node
+                    if (!isDirectoryEmpty(commitLogDirFile)) {
+                        log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
+                            + commitLogDirFile.getAbsolutePath() + "]");
+                        return STATUS_DATA_DIR_NOT_EMPTY;
+                    }
+                    if (!isDirectoryEmpty(dataDirFile)) {
+                        log.error("Data directory is not empty. It should not exist for a new Storage Node ["
+                            + dataDirFile.getAbsolutePath() + "]");
+                        return STATUS_DATA_DIR_NOT_EMPTY;
+                    }
+                    if (!isDirectoryEmpty(savedCachesDirFile)) {
+                        log.error("Saved caches directory is not empty. It should not exist for a new Storage Node ["
+                            + savedCachesDirFile.getAbsolutePath() + "]");
+                        return STATUS_DATA_DIR_NOT_EMPTY;
+                    }
                 }
 
                 jmxPort = getPort(cmdLine, "jmx-port", defaultJmxPort);
@@ -438,12 +449,7 @@ public class StorageInstaller {
     }
 
     private boolean isDirectoryEmpty(File dir) {
-        if (dir.isDirectory()) {
-            File[] files = dir.listFiles();
-            return (files == null || files.length == 0);
-        } else {
-            return true;
-        }
+        return FileUtils.sizeOf(dir) == 0;
     }
 
     private int getPort(CommandLine cmdLine, String option, int defaultValue) {
@@ -709,12 +715,22 @@ public class StorageInstaller {
     }
 
     public void printUsage() {
-        Options options = getOptions();
         HelpFormatter helpFormatter = new HelpFormatter();
         String syntax = "rhq-storage-installer.sh|bat [options]";
         String header = "";
 
-        helpFormatter.printHelp(syntax, header, options, null);
+        helpFormatter.printHelp(syntax, header, getHelpOptions(), null);
+    }
+
+    public Options getHelpOptions() {
+        Options helpOptions = new Options();
+        for (Option option : (Collection<Option>)options.getOptions()) {
+            if (option.getLongOpt().equals(VERIFY_DATA_DIRS_EMPTY)) {
+                continue;
+            }
+            helpOptions.addOption(option);
+        }
+        return helpOptions;
     }
 
     public Options getOptions() {

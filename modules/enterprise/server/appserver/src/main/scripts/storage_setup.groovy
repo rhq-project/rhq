@@ -97,6 +97,7 @@ heap-new-size=${heapNewSize}
 hostname=127.0.0.$nodeId
 jmx-port=${defaultJmxPort + (nodeId - 1)}
 seeds=${seeds}
+verify-data-dirs-empty=false
 """
     )
   }

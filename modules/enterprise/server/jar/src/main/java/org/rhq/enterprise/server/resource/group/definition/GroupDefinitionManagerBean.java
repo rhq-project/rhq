@@ -175,11 +175,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
             throw new GroupDefinitionUpdateException(gde.getMessage());
         }
 
-        ExpressionEvaluator evaluator = new ExpressionEvaluator();
-        for (String expression : groupDefinition.getExpressionAsList()) {
-            evaluator.addExpression(expression);
-        }
-
         RecursivityChangeType changeType = RecursivityChangeType.None;
         GroupDefinition attachedGroupDefinition = null;
         try {
@@ -250,6 +245,15 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         }
         if (definition.getExpression() == null || definition.getExpression().isEmpty()) {
             throw new GroupDefinitionException("Expression is empty");
+        }
+        
+        try {
+            ExpressionEvaluator evaluator = new ExpressionEvaluator();
+            for (String expression : definition.getExpressionAsList()) {
+                evaluator.addExpression(expression);
+            }
+        } catch (InvalidExpressionException e) {
+            throw new GroupDefinitionException("Cannot parse the expression: " + e.getMessage());
         }
 
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);

@@ -130,7 +130,13 @@ public class GroupDefinitionDataSource extends RPCDataSource<GroupDefinition, Re
                 @Override
                 public void onFailure(Throwable caught) {
                     Map<String, String> errors = new HashMap<String, String>();
-                    errors.put("name", MSG.view_dynagroup_definitionAlreadyExists());
+                    String msg = caught.getMessage();
+                    String cannotParse = "Cannot parse the expression: ";
+                    if (msg != null && msg.contains(cannotParse)) {
+                        errors.put("expression", msg.substring(msg.indexOf(cannotParse) + cannotParse.length()));
+                    } else {
+                        errors.put("name", MSG.view_dynagroup_definitionAlreadyExists());
+                    }
                     response.setErrors(errors);
                     response.setStatus(RPCResponse.STATUS_VALIDATION_ERROR);
                     processResponse(request.getRequestId(), response);

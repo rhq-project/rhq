@@ -199,6 +199,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
                     boolean hasDuplicateNameError = false;
+                    boolean hasParseExpressionError = false;
                     if (form.isNewRecord()) {
                         Record[] results = response.getData();
                         if (results.length != 1) {
@@ -212,10 +213,14 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                                     String errorValue = (String) thisEntry.getValue();
                                     CoreGUI.getErrorHandler().handleError(errorValue);
                                     hasDuplicateNameError = true;
+                                } else if (fieldKey.equals("expression")) {
+                                    String errorValue = (String) thisEntry.getValue();
+                                    CoreGUI.getErrorHandler().handleError(errorValue);
+                                    hasParseExpressionError = true;
                                 }
                             }
 
-                            if (!hasDuplicateNameError) {
+                            if (!hasDuplicateNameError && !hasParseExpressionError) {
                                 CoreGUI.getErrorHandler().handleError(
                                     MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
                             }

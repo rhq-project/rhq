@@ -62,7 +62,6 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
     private final Log log = LogFactory.getLog(AlertDefinitionServerPluginComponent.class);
 
     private static final String PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.PartitionDiskUsedPercentage";
-    private static final String DATA_FILE_LOCATIONS_NAME = "AllDataFileLocations";
 
     static private final List<InjectedTemplate> injectedTemplates;
     static private final InjectedTemplate storageNodeHighHeapTemplate;
@@ -309,8 +308,6 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
                 measurementDefinitionIds.add(d.getId());
                 ac.setMeasurementDefinition(d);
                 ac.setName(d.getDisplayName());
-            } else if (DATA_FILE_LOCATIONS_NAME.equals(d.getName())) {
-                measurementDefinitionIds.add(d.getId());
             }
         }
         assert null != ac.getMeasurementDefinition() : "Did not find expected measurement definition "
@@ -331,7 +328,8 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         // is set by default.
         MeasurementScheduleManagerLocal measurementManager = LookupUtil.getMeasurementScheduleManager();
         measurementManager.updateDefaultCollectionIntervalAndEnablementForMeasurementDefinitions(
-            subjectManager.getOverlord(), ArrayUtils.toPrimitive(measurementDefinitionIds.toArray(new Integer[2])),
+            subjectManager.getOverlord(),
+            ArrayUtils.toPrimitive(measurementDefinitionIds.toArray(new Integer[measurementDefinitionIds.size()])),
             60000L, true, true);
 
         return newTemplateId;

@@ -1,14 +1,23 @@
 #!/bin/bash
 
-if [ "x$1" = "x" ]; then
-  echo "Usage: $0 <rhq-server-dir>"
+function usage() {
+  echo "Usage: $0 <rhq-server-dir> <storage-ip-address> <cql-port> <jmx-port>"
+}
+
+if [ $# -ne 4 ]; then
+  usage
+  exit 1
+fi
+
+if [[ "x$1" = "x"  ]] || [[ "x$2" = "x" ]] || [[ "x$3" = "x" ]] || [[ "x$4" = "x" ]]; then
+  usage
   exit 1
 fi
 
 RHQ_SERVER_DIR=$1
 CQL_HOSTNAME=$2
-CQL_PORT=9142
-JMX_PORT=7299
+CQL_PORT=$3
+JMX_PORT=$4
 
 PATCH="apache-cassandra-1.2.4-patch-1.jar"
 

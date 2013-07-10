@@ -25,6 +25,8 @@
 
 package org.rhq.enterprise.server.cloud;
 
+import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_GROUP_NAME;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -32,27 +34,30 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import javax.ejb.EJB;
 import javax.persistence.Query;
 import javax.transaction.Transaction;
 
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
-import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * @author Jirka Kremser
@@ -60,82 +65,19 @@ import org.rhq.enterprise.server.util.LookupUtil;
 @Test
 public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
 
+    @EJB
     private StorageNodeManagerLocal nodeManager;
+
+    @EJB
     private ResourceTypeManagerLocal typeManager;
-    private Subject overlord;
+
+    @EJB
+    private ResourceGroupManagerLocal resourceGroupManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
+
     private static final String TEST_PREFIX = "test-";
-
-    @Override
-    protected void beforeMethod() throws Exception {
-        nodeManager = LookupUtil.getStorageNodeManager();
-        typeManager = LookupUtil.getResourceTypeManager();
-        overlord = LookupUtil.getSubjectManager().getOverlord();
-    }
-
-    @Test
-    public void testInit() throws Exception {
-        final String cassandraSeedsProperty = "rhq.cassandra.seeds";
-        final String originalSeedValue = System.getProperty(cassandraSeedsProperty);
-
-        try {
-            prepareScheduler();
-            executeInTransaction(new TransactionCallback() {
-
-                @Override
-                public void execute() throws Exception {
-                    String testHostName = TEST_PREFIX + "hostname";
-                    List<String> addresses = Arrays.asList(testHostName, TEST_PREFIX + "hostWithNoFoundResource",
-                        TEST_PREFIX + "secondHostWithNoFoundResource");
-                    System.setProperty(cassandraSeedsProperty, addresses.get(0) + "|123|123," + addresses.get(1)
-                        + "|987|987," + addresses.get(2) + "|123|123");
-
-                    cleanDatabase();
-
-                    // create the resource type if it doesn't exist
-                    ResourceType testResourceType = typeManager.getResourceTypeByNameAndPlugin("RHQ Storage Node",
-                        "RHQStorage");
-                    if (testResourceType == null) {
-                        testResourceType = createResourceType();
-                    }
-                    Resource testResource = createResource(testResourceType, testHostName);
-
-                    // finds the storage nodes and pairs them w/ the associated resources
-                    nodeManager.scanForStorageNodes();
-
-                    // get the storage nodes and checks some properties on them
-                    List<StorageNode> storageNodes = nodeManager.getStorageNodes();
-                    Assert.assertNotNull(storageNodes, "The list of storage nodes shouldn't be null.");
-                    Assert.assertFalse(storageNodes.isEmpty(), "The list of storage nodes shouldn't be empty.");
-                    Assert.assertTrue(storageNodes.size() >= addresses.size(),
-                        "The size of the list of storage nodes should be at least " + addresses.size());
-
-                    List<String> obtainedAddresses = new ArrayList<String>(storageNodes.size());
-                    for (StorageNode storageNode : storageNodes) {
-                        Assert.assertNotNull(storageNode.getAddress(), "Address of storage node cannot be null.");
-                        obtainedAddresses.add(storageNode.getAddress());
-                        if (storageNode.getAddress().equals(testHostName)) {
-                            Assert.assertEquals(storageNode.getResource().getId(), testResource.getId());
-                            Assert.assertNotNull(storageNode.getResource(), "Associated resource cannot be null.");
-                        } else {
-                            Assert.assertNull(storageNode.getResource(),
-                                "The resource field should be null at this point.");
-                        }
-                    }
-
-                    Assert.assertTrue(obtainedAddresses.containsAll(addresses),
-                        "There are some storage nodes that should be created but were not discovered and returned."
-                            + " The storage nodes that should be returned: " + addresses
-                            + "  The storage nodes that were returned: " + obtainedAddresses
-                            + "  (the second should be a super-set (not necessarily strict) of the first.)");
-
-                }
-            });
-        } finally {
-            unprepareScheduler();
-            cleanDatabase();
-            System.setProperty(cassandraSeedsProperty, originalSeedValue);
-        }
-    }
 
     @Test(groups = "integration.ejb3")
     public void testStorageNodeCriteriaFinder() throws Exception {
@@ -175,7 +117,8 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
                 criteria.addFilterAddress(prefix);
                 // use DESC just to make sure sorting on name is different than insert order
                 criteria.addSortAddress(PageOrdering.DESC);
-                PageList<StorageNode> list = nodeManager.findStorageNodesByCriteria(overlord, criteria);
+                PageList<StorageNode> list = nodeManager.findStorageNodesByCriteria(subjectManager.getOverlord(),
+                    criteria);
 
                 assertTrue("The number of found storage nodes should be " + storageNodeCount + ". Was: " + list.size(),
                     storageNodeCount == list.size());

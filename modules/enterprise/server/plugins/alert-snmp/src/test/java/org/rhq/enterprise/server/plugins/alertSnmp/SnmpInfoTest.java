@@ -29,6 +29,7 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * @author Thomas Segismont
@@ -62,6 +63,29 @@ public class SnmpInfoTest {
         configuration.setSimpleValue(PARAM_VARIABLE_BINDING_PREFIX, "molo");
 
         SnmpInfo snmpInfo = SnmpInfo.load(configuration);
+        assertNull(snmpInfo.error, "SnmpInfo#load should not have detected an error");
+        assertEquals(snmpInfo.host, "pipo");
+        assertEquals(snmpInfo.oid, "molo");
+        assertEquals(snmpInfo.port, SnmpInfo.DEFAULT_PORT);
+    }
+
+    @Test
+    public void fallBackToGlobalValues() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setSimpleValue(PARAM_VARIABLE_BINDING_PREFIX, "molo");
+
+        Configuration preferences = new Configuration();
+        preferences.put(new PropertySimple("defaultTargetHost","hugo"));
+        SnmpInfo snmpInfo = SnmpInfo.load(configuration,preferences);
+        assertNull(snmpInfo.error, "SnmpInfo#load should not have detected an error");
+        assertEquals(snmpInfo.host, "hugo");
+        assertEquals(snmpInfo.oid, "molo");
+        assertEquals(snmpInfo.port, SnmpInfo.DEFAULT_PORT);
+
+
+        configuration.setSimpleValue(PARAM_HOST, "pipo");
+
+        snmpInfo = SnmpInfo.load(configuration,preferences);
         assertNull(snmpInfo.error, "SnmpInfo#load should not have detected an error");
         assertEquals(snmpInfo.host, "pipo");
         assertEquals(snmpInfo.oid, "molo");

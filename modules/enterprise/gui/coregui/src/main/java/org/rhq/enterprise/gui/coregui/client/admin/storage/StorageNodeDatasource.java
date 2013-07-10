@@ -61,7 +61,7 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
  * Datasource for @see StorageNode.
- * 
+ *
  * @author Jirka Kremser
  */
 public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNodeCriteria>  {
@@ -104,7 +104,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         ListGridField createdTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(createdTimeField);
         fields.add(createdTimeField);
-        
+
         ListGridField lastUpdateTimeField = FIELD_MTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(lastUpdateTimeField);
         fields.add(lastUpdateTimeField);
@@ -142,7 +142,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
      */
     @Override
     protected PageControl getPageControl(DSRequest request) {
-        // Initialize paging.         
+        // Initialize paging.
         PageControl pageControl = new PageControl(0, getDataPageSize());
 
         // Initialize sorting.
@@ -197,7 +197,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
         return criteria;
     }
-    
+
     public static class StorageNodeLoadCompositeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
         public static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
         public static final String DISK_SPACE_PERCENTAGE_KEY = "diskSpacePercentage";
@@ -205,12 +205,12 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
         public static StorageNodeLoadCompositeDatasource getInstance(int id) {
 //            if (instance == null) {
-//                instance = 
+            //                instance =
                     return new StorageNodeLoadCompositeDatasource(id);
 //            }
 //            return instance;
         }
-        
+
         public StorageNodeLoadCompositeDatasource(int id) {
             super();
             this.id = id;
@@ -235,7 +235,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             fields.add(idField);
             return fields;
         }
-        
+
         public List<ListGridField> getListGridFields() {
             List<ListGridField> fields = new ArrayList<ListGridField>();
             ListGridField idField = FIELD_ID.getListGridField();
@@ -259,8 +259,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             fields.add(hoverField);
             return fields;
         }
-        
-        
+
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
 //            Integer id = getFilter(request, FIELD_ID.propertyName(), Integer.class);
@@ -286,7 +285,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {
             List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6);
-            @SuppressWarnings("unchecked")
             List<List<Object>> loadFields = Arrays
                 .<List<Object>> asList(
                     Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Maximum",
@@ -298,10 +296,16 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
                         "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY),
                     Arrays.<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"),
                     Arrays.<Object> asList(
-                        loadComposite.getDiskSpacePercentageUsed(),
+                        loadComposite.getPartitionDiskUsedPercentage(),
                         "Disk Space Percent Used",
-                        "How much of diskspace is already used. This takes into account the installation path, where Cassandra was installed.",
-                        DISK_SPACE_PERCENTAGE_KEY), Arrays.<Object> asList(loadComposite.getActuallyOwns(),
+                        "Percentage of total disk space used for the partition that contains the data files.If multiple data locations are specified then this will report the average utilization accross all the partitions.",
+                        DISK_SPACE_PERCENTAGE_KEY),
+                    Arrays.<Object> asList(
+                        loadComposite.getDataDiskUsed(),
+                        "Total Disk Space Used",
+                        "Total space used on disk by all data files, commit logs, and saved caches.",
+                        "totaldisk"),
+                    Arrays.<Object> asList(loadComposite.getActuallyOwns(),
                         "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
             for (List<Object> aggregateWithUnitsList : loadFields) {
                 if (aggregateWithUnitsList.get(0) != null) {
@@ -346,14 +350,13 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             record.setAttribute("hover", hover);
             return record;
         }
-        
-        
+
         @Override
         protected StorageNodeCriteria getFetchCriteria(DSRequest request) {
             return new StorageNodeCriteria();
 //            throw new UnsupportedOperationException("StorageNodeDatasource.StorageNodeLoadCompositeDatasource.getFetchCriteria()");
         }
-        
+
         @Override
         public StorageNodeLoadComposite copyValues(Record from) {
             throw new UnsupportedOperationException("StorageNodeDatasource.StorageNodeLoadCompositeDatasource.copyValues(Record from)");
@@ -363,6 +366,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         public ListGridRecord copyValues(StorageNodeLoadComposite from) {
             throw new UnsupportedOperationException("StorageNodeDatasource.StorageNodeLoadCompositeDatasource.copyValues(StorageNodeLoadComposite from)");
         }
-        
+
     }
 }

@@ -65,7 +65,7 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
                 ChartViewWindow window = new ChartViewWindow("MeasurementTableFrame", title);
                 int defId = record.getAttributeAsInt(GroupMetricsTableDataSource.FIELD_METRIC_DEF_ID);
 
-                CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(groupId, defId, isAutogroup);
+                CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(groupId, defId, isAutogroup);
                 window.addItem(graph);
                 graph.populateData();
                 window.show();

@@ -55,8 +55,12 @@ public class TopologyManager extends AbstractManager {
             this.file = file;
         }
 
-        protected String getFile() {
-            return TOPOLOGY_BASE_FOLDER + "/" + this.file;
+        protected String getFile(boolean isNewSchema) {
+            if (isNewSchema) {
+                return TOPOLOGY_BASE_FOLDER + "/create/" + this.file;
+            }
+
+            return TOPOLOGY_BASE_FOLDER + "/update/" + this.file;
         }
     }
 
@@ -64,14 +68,14 @@ public class TopologyManager extends AbstractManager {
         super(username, password, nodes);
     }
 
-    public boolean updateTopology() throws Exception {
+    public boolean updateTopology(boolean isNewSchema) throws Exception {
         boolean result = false;
 
         initCluster();
         if (schemaExists()) {
             log.info("Applying topology updates...");
-            result = this.updateReplicationFactor(nodes.size());
-            this.updateGCGrace(nodes.size());
+            result = this.updateReplicationFactor(isNewSchema, nodes.size());
+            this.updateGCGrace(isNewSchema, nodes.size());
         } else {
             log.info("Topology updates cannot be applied because the schema is not installed.");
         }
@@ -80,7 +84,7 @@ public class TopologyManager extends AbstractManager {
         return result;
     }
 
-    private boolean updateReplicationFactor(int numberOfNodes) throws Exception {
+    private boolean updateReplicationFactor(boolean isNewSchema, int numberOfNodes) throws Exception {
         log.info("Starting to execute " + Task.UpdateReplicationFactor + " task.");
 
         int replicationFactor = 1;
@@ -97,19 +101,19 @@ public class TopologyManager extends AbstractManager {
             return false;
         }
 
-        log.info("Applying file " + Task.UpdateReplicationFactor.getFile() + " for " + Task.UpdateReplicationFactor
-            + " task.");
-        for (String query : this.getSteps(Task.UpdateReplicationFactor.getFile())) {
+        log.info("Applying file " + Task.UpdateReplicationFactor.getFile(isNewSchema) + " for " +
+            Task.UpdateReplicationFactor + " task.");
+        for (String query : this.getSteps(Task.UpdateReplicationFactor.getFile(isNewSchema))) {
             executedPreparedStatement(query, replicationFactor);
         }
-        log.info("File " + Task.UpdateReplicationFactor.getFile() + " applied for " + Task.UpdateReplicationFactor
-            + " task.");
+        log.info("File " + Task.UpdateReplicationFactor.getFile(isNewSchema) + " applied for " +
+            Task.UpdateReplicationFactor + " task.");
 
         log.info("Successfully executed " + Task.UpdateReplicationFactor + " task.");
         return true;
     }
 
-    private boolean updateGCGrace(int numberOfNodes) throws Exception {
+    private boolean updateGCGrace(boolean isNewSchema, int numberOfNodes) throws Exception {
         log.info("Starting to execute " + Task.UpdateGCGrace + " task.");
 
         int gcGraceSeconds = 864000;
@@ -120,11 +124,11 @@ public class TopologyManager extends AbstractManager {
         }
 
 
-        log.info("Applying file " + Task.UpdateGCGrace.getFile() + " for " + Task.UpdateGCGrace + " task.");
-        for (String query : this.getSteps(Task.UpdateGCGrace.getFile())) {
+        log.info("Applying file " + Task.UpdateGCGrace.getFile(isNewSchema) + " for " + Task.UpdateGCGrace + " task.");
+        for (String query : this.getSteps(Task.UpdateGCGrace.getFile(isNewSchema))) {
             executedPreparedStatement(query, gcGraceSeconds);
         }
-        log.info("File " + Task.UpdateGCGrace.getFile() + " applied for " + Task.UpdateGCGrace + " task.");
+        log.info("File " + Task.UpdateGCGrace.getFile(isNewSchema) + " applied for " + Task.UpdateGCGrace + " task.");
 
         log.info("Successfully executed " + Task.UpdateGCGrace + " task.");
         return true;

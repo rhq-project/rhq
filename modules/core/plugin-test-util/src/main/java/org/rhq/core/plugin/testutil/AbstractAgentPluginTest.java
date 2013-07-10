@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.core.plugin.testutil;
 
@@ -204,7 +204,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
         AvailabilityFacet availFacet = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-            FacetLockType.READ, timeoutMillis, false, false);
+            FacetLockType.READ, timeoutMillis, false, false, false);
         AvailabilityType avail;
         try {
             avail = availFacet.getAvailability();
@@ -239,7 +239,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = timeout * 1000;
         OperationFacet operationFacet = resourceContainer.createResourceComponentProxy(OperationFacet.class,
-            FacetLockType.WRITE, timeoutMillis, false, false);
+            FacetLockType.WRITE, timeoutMillis, false, false, false);
         OperationResult operationResult;
         try {
             operationResult = operationFacet.invokeOperation(operationName, params);
@@ -263,7 +263,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
         ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(
-            ConfigurationFacet.class, FacetLockType.READ, timeoutMillis, false, false);
+            ConfigurationFacet.class, FacetLockType.READ, timeoutMillis, false, false, false);
         return configurationFacet.loadResourceConfiguration();
     }
 
@@ -277,7 +277,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
         ResourceContainer resourceContainer = this.pluginContainer.getInventoryManager().getResourceContainer(resource);
         long timeoutMillis = 5000;
         ConfigurationFacet configurationFacet = resourceContainer.createResourceComponentProxy(
-            ConfigurationFacet.class, FacetLockType.WRITE, timeoutMillis, false, false);
+            ConfigurationFacet.class, FacetLockType.WRITE, timeoutMillis, false, false, false);
         ConfigurationUpdateReport report = new ConfigurationUpdateReport(resourceConfig);
         configurationFacet.updateResourceConfiguration(report);
         return report;
@@ -547,7 +547,7 @@ public abstract class AbstractAgentPluginTest extends Arquillian {
             throw new IllegalStateException("Resource component for " + resource + " has not yet been started.");
         }
         MeasurementFacet measurementFacet = resourceContainer.createResourceComponentProxy(MeasurementFacet.class,
-            FacetLockType.READ, timeoutMillis, false, false);
+            FacetLockType.READ, timeoutMillis, false, false, false);
         MeasurementReport report = new MeasurementReport();
         MeasurementScheduleRequest request = new MeasurementScheduleRequest(-1, metricName, -1, true,
             measurementDefinition.getDataType(), measurementDefinition.getRawNumericType());

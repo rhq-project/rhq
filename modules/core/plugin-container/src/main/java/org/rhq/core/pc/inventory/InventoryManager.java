@@ -1,25 +1,22 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.inventory;
 
 import java.io.File;
@@ -91,6 +88,7 @@ import org.rhq.core.pc.agent.AgentRegistrar;
 import org.rhq.core.pc.agent.AgentService;
 import org.rhq.core.pc.availability.AvailabilityCollectorThreadPool;
 import org.rhq.core.pc.availability.AvailabilityContextImpl;
+import org.rhq.core.pc.component.ComponentInvocationContextImpl;
 import org.rhq.core.pc.content.ContentContextImpl;
 import org.rhq.core.pc.drift.sync.DriftSyncManager;
 import org.rhq.core.pc.event.EventContextImpl;
@@ -107,6 +105,7 @@ import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
@@ -680,7 +679,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
                         long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 10000 : 5000;
                         // We already possess the lock, so tell the proxy not to do any locking of its own.
                         resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-                            FacetLockType.NONE, componentTimeout, true, true);
+                            FacetLockType.NONE, componentTimeout, true, true, true);
                         availType = resourceComponent.getAvailability();
                     } catch (PluginContainerException e) {
                         log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
@@ -1839,7 +1838,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 // Wrap the component in a proxy that will provide locking and a timeout for the call to start().
                 component = container.createResourceComponentProxy(ResourceComponent.class, FacetLockType.READ,
-                    COMPONENT_START_TIMEOUT, true, false);
+                    COMPONENT_START_TIMEOUT, true, false, true);
             } catch (Throwable t) {
                 container.setResourceComponentState(ResourceComponentState.STOPPED);
                 throw new PluginContainerException("Failed getting proxy for resource " + resource + ".", t);
@@ -1896,7 +1895,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
             getOperationContext(resource), // for operation manager access
             getContentContext(resource), // for content manager access
             getAvailabilityContext(resource, this.availabilityCollectors), // for components that want to perform async avail checking
-            getInventoryContext(resource), this.configuration.getPluginContainerDeployment()); // helps components make determinations of what to do
+            getInventoryContext(resource), this.configuration.getPluginContainerDeployment(), // helps components make determinations of what to do
+            new ComponentInvocationContextImpl());
     }
 
     public <T extends ResourceComponent<?>> ResourceUpgradeContext<T> createResourceUpgradeContext(Resource resource,
@@ -2121,7 +2121,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
                 try {
                     ResourceComponent<?> component = container.createResourceComponentProxy(ResourceComponent.class,
-                        FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, true);
+                        FacetLockType.WRITE, COMPONENT_STOP_TIMEOUT, true, true, true);
                     component.stop();
                     if (log.isDebugEnabled()) {
                         log.debug("Successfully deactivated resource with id [" + resource.getId() + "].");
@@ -2760,7 +2760,8 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
     private void updateResourceVersion(Resource resource, String version) {
         String existingVersion = resource.getVersion();
-        boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null;
+        boolean versionChanged = (existingVersion != null) ? !existingVersion.equals(version) : version != null
+            && !version.isEmpty();
         if (versionChanged) {
             if (log.isDebugEnabled()) {
                 log.debug("Discovery reported that version of [" + resource + "] changed from [" + existingVersion

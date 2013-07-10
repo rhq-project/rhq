@@ -76,7 +76,9 @@ import org.rhq.core.util.StringUtil;
 
 /**
  * @author Ian Springer
+ * @author Heiko W. Rupp
  */
+@SuppressWarnings("unused")
 public class SnmpTrapSender implements PDUFactory {
     public static final int DEFAULT = 0;
     private static final String UDP_TRANSPORT = "udp";
@@ -104,7 +106,10 @@ public class SnmpTrapSender implements PDUFactory {
 
     private TimeTicks sysUpTime = new TimeTicks(0);
 
-    private OID trapOID = SnmpConstants.coldStart;
+    public static final OID enterpriseSpecificTrap =
+        new OID(new int[] { 1,3,6,1,6,3,1,1,5,6 });
+
+    private OID trapOID = enterpriseSpecificTrap;
 
     private PDUv1 v1TrapPDU = new PDUv1();
 
@@ -338,14 +343,33 @@ public class SnmpTrapSender implements PDUFactory {
         return octetString;
     }
 
-    private static Address createAddress(Configuration properties) {
-        // TODO: Make transport configurable (ips, 09/12/07).
+    private Address createAddress(Configuration properties) {
 
         String host = properties.getSimpleValue("host",null);
-        String portS = properties.getSimpleValue("port","162");
-        Integer port = Integer.valueOf(portS);
+        String portS = properties.getSimpleValue("port",null);
 
-        final String transport = UDP_TRANSPORT;
+
+        if (host==null) {
+            String tmp = systemConfig.getSimpleValue("defaultTargetHost",null);
+            if ((tmp != null) && (tmp.length() > 0)) {
+                host=tmp;
+            }
+        }
+
+        if (portS==null) {
+            String tmp = systemConfig.getSimpleValue("defaultPort","162");
+            if ((tmp != null) && (tmp.length() > 0)) {
+                portS = tmp;
+            }
+        }
+        Integer port = Integer.valueOf(portS);
+        if (port==0) {
+            port = 162; // just to make sure
+        }
+
+        String transport = systemConfig.getSimpleValue("transport","UDP");
+
+
         String address = host + "/" + port;
         if (transport.equalsIgnoreCase(UDP_TRANSPORT)) {
             return new UdpAddress(address);
@@ -357,7 +381,7 @@ public class SnmpTrapSender implements PDUFactory {
     }
 
     protected String getVariableBindings(PDU response) {
-        StringBuffer strBuf = new StringBuffer();
+        StringBuilder strBuf = new StringBuilder();
         for (int i = 0; i < response.size(); i++) {
             VariableBinding vb = response.get(i);
             strBuf.append(vb.toString());
@@ -473,7 +497,7 @@ public class SnmpTrapSender implements PDUFactory {
 
         String variableBindingPrefix = alertParameters.getSimpleValue(SnmpInfo.PARAM_VARIABLE_BINDING_PREFIX, null);
 
-        // TODO add a request id and a timestamp
+        // request id and a timestamp are added below in setSysUpTime..
 
         this.address = createAddress(alertParameters);
         // bind the alert definitions name on the oid set in the alert
@@ -532,7 +556,7 @@ public class SnmpTrapSender implements PDUFactory {
             delta = now - bootTime.getTime();
         } else
             delta = 0;
-        setSysUpTime(new TimeTicks(delta / 1000)); // TT is 100th of a second TODO : fix this !!!
+        setSysUpTime(new TimeTicks(delta / 100)); // TT is 100th of a second
 
     }
 
@@ -571,6 +595,8 @@ public class SnmpTrapSender implements PDUFactory {
                 this.authProtocol = AuthMD5.ID;
             } else if (tmp.equals("SHA")) {
                 this.authProtocol = AuthSHA.ID;
+            } else if (tmp.equals("none")) {
+                this.authProtocol=null;
             } else {
                 throw new IllegalStateException("SNMP authentication protocol unsupported: " + tmp);
             }

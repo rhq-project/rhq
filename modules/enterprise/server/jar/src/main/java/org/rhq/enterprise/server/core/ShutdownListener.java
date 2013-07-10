@@ -24,11 +24,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-import javax.annotation.PreDestroy;
 import javax.annotation.Resource;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
-import javax.ejb.Startup;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.sql.DataSource;
@@ -62,7 +60,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
  * @author Joseph Marques
  */
 @Singleton
-@Startup
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 public class ShutdownListener {
     private final Log log = LogFactory.getLog(ShutdownListener.class);
@@ -94,10 +91,7 @@ public class ShutdownListener {
      * This is called when the shutdown notification is received from the JBoss server. This gives a chance for us to
      * cleanly shutdown our application in an orderly fashion.
      */
-    @PreDestroy
     public void handleNotification() {
-        // JBossAS 4.2.3 used to send us this JMX notification on shutdown - AS7 does not have shutdown notifications.
-        // So we are using the @PreDestroy mechanism on a singleton EJB to attempt to clean up the application before it is shutdown
         log.info("Shutdown listener has been told we are shutting down - starting to clean up now...");
         logShutdownTime();
         stopScheduler();
@@ -157,6 +151,7 @@ public class ShutdownListener {
             }
         }
     }
+
     /**
      * This will shutdown the scheduler.
      */

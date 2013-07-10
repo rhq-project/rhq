@@ -240,8 +240,8 @@ public class ProcessExecutor {
             threadNamePrefix = process.getProgramExecutable();
         }
 
-        StreamRedirector stdoutThread = new StreamRedirector(threadNamePrefix + "-stdout", stdout, fileOutputStream);
-        StreamRedirector stderrThread = new StreamRedirector(threadNamePrefix + "-stderr", stderr, fileOutputStream);
+        StreamRedirectorRunnable stdoutThread = new StreamRedirectorRunnable(threadNamePrefix + "-stdout", stdout, fileOutputStream);
+        StreamRedirectorRunnable stderrThread = new StreamRedirectorRunnable(threadNamePrefix + "-stderr", stderr, fileOutputStream);
 
         Future<?> out = threadPool.submit(stdoutThread);
         Future<?> err = threadPool.submit(stderrThread);

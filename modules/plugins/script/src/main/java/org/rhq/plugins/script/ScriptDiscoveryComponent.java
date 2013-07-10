@@ -31,11 +31,11 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.pluginapi.inventory.ManualAddFacet;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.util.exception.ThrowableUtil;
 
@@ -125,6 +125,9 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
                     } else if (results.getCapturedOutput() != null) {
                         String regex = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_DESC_REGEX, null);
                         String output = results.getCapturedOutput();
+                        if (output != null) {
+                            output = output.trim();
+                        }
                         if (regex == null) {
                             description = output;
                         } else {
@@ -176,6 +179,9 @@ public class ScriptDiscoveryComponent implements ResourceDiscoveryComponent, Man
                         String regex = pluginConfig.getSimpleValue(ScriptServerComponent.PLUGINCONFIG_VERSION_REGEX,
                             null);
                         String output = results.getCapturedOutput();
+                        if (output != null) {
+                            output = output.trim();
+                        }
                         if (regex == null) {
                             version = output;
                         } else {

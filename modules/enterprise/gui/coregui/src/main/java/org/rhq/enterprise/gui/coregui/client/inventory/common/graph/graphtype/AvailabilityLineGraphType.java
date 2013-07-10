@@ -32,9 +32,12 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
+ * This is now old and for demonstration purposes only.
  * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
  * just a line that changes color based on availability type: up=green, down=red, orange=disabled, unknown=grey,
  * empty=grey, warn=yellow.  This version of the availability graph shows continuous intervals.
+ * @deprecated
+ * @see AvailabilityOverUnderGraphType
  *
  * @author Mike Thompson
  */

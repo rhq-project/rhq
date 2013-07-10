@@ -183,7 +183,8 @@
       </operation>
 
       <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
-      <metric property="Calculated.DiskSpaceUsedPercentage" dataType="measurement" units="percentage" displayType="summary" description="How much of diskspace is already used. This takes into account the installation path, where Cassandra was installed."/>
+      <metric property="Calculated.PartitionDiskUsedPercentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of total disk space used for the partition that contains the data files.
+                                                                                                                                   If multiple data locations are specified then this will report the average utilization accross all the partitions."/>
       <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
       <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
       <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>
@@ -272,7 +273,7 @@
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Commit Log" />
       </plugin-configuration>
 
-      <metric property="TotalCommitlogSize" measurementType="trendsup" dataType="measurement" displayType="summary" description="Size of all commit log segments"/>
+      <metric property="TotalCommitlogSize" measurementType="dynamic" displayType="summary" description="Size of all commit log segments"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
       <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed tasks"/>
     </service>
@@ -393,8 +394,8 @@
       <metric property="KeyCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Key cache capacity in bytes"/>
       <metric property="RowCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Row cache capacity in bytes"/>
 
-      <metric property="KeyCacheSize" measurementType="dynamic" displayType="detail" description="Key cache size"/>
-      <metric property="RowCacheSize" measurementType="dynamic" displayType="detail" description="Row cache size"/>
+      <metric property="KeyCacheSize" measurementType="dynamic" displayType="summary" description="Key cache size"/>
+      <metric property="RowCacheSize" measurementType="dynamic" displayType="summary" description="Row cache size"/>
 
       <resource-configuration>
         <c:simple-property name="KeyCacheCapacityInMB" type="long" required="true" displayName="Key Cache Capacity In MB" description="Key cache capacity in MB"/>

@@ -316,22 +316,6 @@
         </delete>
         <delete dir="${jboss.home}/bin/init.d" />
 
-        <!--TODO - embedded agent isn't working now - we need to:
-            1) add AS7's jars jboss-as-[jmx,server]-7.x.x.Final.jar to META-INF/embedded-agent/lib
-            2) get the agent to successfully see that the server is started (AgentMain.waitForServer was hanging for me)
-            So until we fix this we need to not deploy this at all.
-            Note that I also took out the sysprops for embedded agent from rhq-server.properties.
-            If we resurrect embedded agent, add this to the rhq-server.properties created down below:
-            # Embedded RHQ Agent
-            rhq.server.embedded-agent.enabled=false
-            rhq.server.embedded-agent.name=
-            rhq.server.embedded-agent.reset-configuration=true
-            rhq.server.embedded-agent.disable-native-system=false
-
-        <unjar src="${settings.localRepository}/org/rhq/rhq-enterprise-server-agent-sar/${rhq.version}/rhq-enterprise-server-agent-sar-${rhq.version}.sar"
-               dest="....todo..../rhq-agent.sar" />
-        -->
-
         <echo>Delete docs, README, et. al. files</echo>
         <delete dir="${jboss.home}/docs/examples" />
         <delete>
@@ -691,6 +675,8 @@ rhq.cassandra.password=${rhq.cassandra.password}
 #
 #    hostname|jmxPort|nativeTransportPort|
 #
+# Note that this is actually an installer setting. Changing the value after
+# installation will have no effect.
 rhq.cassandra.seeds=
 
 # If enabled data sent to and from storage nodes will be compressed using

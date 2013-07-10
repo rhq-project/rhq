@@ -31,7 +31,7 @@ import java.io.OutputStream;
  *
  * @author John Mazzitelli
  */
-public class StreamRedirector implements Runnable {
+public class StreamRedirector extends Thread {
     /**
      * the stream where we read data from
      */
@@ -41,8 +41,6 @@ public class StreamRedirector implements Runnable {
      * the stream where we write data to
      */
     private final OutputStream m_output;
-
-    private final String m_name;
 
     /**
      * Constructor for {@link StreamRedirector} that takes an input stream where we read data in and an output stream
@@ -56,14 +54,18 @@ public class StreamRedirector implements Runnable {
      * @throws IllegalArgumentException if input stream is <code>null</code>
      */
     public StreamRedirector(String name, InputStream is, OutputStream os) throws IllegalArgumentException {
+        super(name);
 
         if (is == null) {
             throw new IllegalArgumentException("is=null");
         }
 
-        m_name = name;
+        setDaemon(true);
+
         m_input = is;
         m_output = os;
+
+        return;
     }
 
     /**
@@ -71,9 +73,6 @@ public class StreamRedirector implements Runnable {
      */
     @Override
     public void run() {
-        Thread t = Thread.currentThread();
-        t.setName(m_name);
-
         final int bufferSize = 4096;
         byte[] buffer = new byte[bufferSize];
         boolean keepGoing = true;

@@ -184,11 +184,13 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                         continue;
                     }
                 } else if (regex != null) {
-                    final String output = exeResults.getCapturedOutput();
+                    String output = exeResults.getCapturedOutput();
                     if (output == null) {
                         log.error("Could not get output for metric property [" + metricPropertyName
                             + "] -- metric will not be collected");
                         continue;
+                    } else {
+                        output = output.trim();
                     }
 
                     Pattern pattern = Pattern.compile(regex);
@@ -336,7 +338,7 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
             resultsConfig.put(new PropertySimple(OPERATION_RESULT_EXITCODE, exitcode));
         }
         if (output != null) {
-            resultsConfig.put(new PropertySimple(OPERATION_RESULT_OUTPUT, output));
+            resultsConfig.put(new PropertySimple(OPERATION_RESULT_OUTPUT, output.trim()));
         }
 
         return result;
@@ -498,6 +500,8 @@ public class ScriptServerComponent implements ResourceComponent, MeasurementFace
                 String output = results.getCapturedOutput();
                 if (output == null) {
                     output = "";
+                } else {
+                    output = output.trim();
                 }
 
                 boolean outputMatches = output.matches(availOutputRegex);

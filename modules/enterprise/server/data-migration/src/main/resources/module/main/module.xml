@@ -28,5 +28,6 @@
     <module name="org.rhq.oracle" optional="true" />
     <module name="com.datastax.cassandra.cassandra-driver-core"/>
     <module name="org.hibernate.commons-annotations" services="import"/>
+    <module name="org.picketbox"/>
   </dependencies>
 </module>

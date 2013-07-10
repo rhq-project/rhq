@@ -27,12 +27,16 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 
 @Local
 public interface StorageNodeManagerLocal {
 
-    List<StorageNode> scanForStorageNodes();
+    // The following have package visibility to make accessible to StorageNodeManagerBeanTest
+    String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
+    String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
+    String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
     List<StorageNode> getStorageNodes();
 
@@ -72,5 +76,42 @@ public interface StorageNodeManagerLocal {
      * @param storageNode storage node on which the prepareForUpgrade operation should be run
      */
     void prepareNodeForUpgrade(Subject subject, StorageNode storageNode);
+
+    /**
+     * <p>
+     * Schedules read repair to run on the storage cluster. The repair operation is executed one node at a time. This
+     * method is invoked from {@link org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob StorageClusterReadRepairJob}
+     * as part of regularly scheduled maintenance.
+     * </p>
+     * <p>
+     * <strong>NOTE:</strong> Repair is one of the most resource-intensive operations that a storage node performs. Make
+     * sure you know what you are doing if you invoke this method outside of the regularly scheduled maintenance window.
+     * </p>
+     */
+    void runReadRepair();
+
+    /**
+     * Creates the storage node resource group which will be named {@link #STORAGE_NODE_GROUP_NAME}. This method should
+     * only be called at start up by {@link org.rhq.enterprise.server.storage.StorageClientManagerBean StorageClientManagerBean}.
+     * Storage node entities created during installation will be added to the group.
+     */
+    void createStorageNodeGroup();
+
+    /**
+     * Checks whether or not the storage node resource group exists. This method is very similar to
+     * {@link #getStorageNodeGroup()} but may be called prior to the group being created.
+     *
+     * @return true if the storage node resource group exists, false otherwise.
+     */
+    boolean storageNodeGroupExists();
+
+    /**
+     * This method assumes the storage node resource group already exists; as such, it should only be called from places
+     * in the code that are after the point(s) where the group has been created.
+     *
+     * @return The storage node resource group.
+     * @throws IllegalStateException if the group is not found or does not exist.
+     */
+    ResourceGroup getStorageNodeGroup();
 
 }

@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -588,4 +589,183 @@ public class FileUtil {
         return s == null || s.length() == 0;
     }
 
+    /**
+     * Normalizes the path of the file by removing any ".." and "."
+     * <p/>
+     * This method behaves very similar to Java7's {@code Path.normalize()} method with the exception of dealing with
+     * paths jumping "above" the FS root.
+     * <p/>
+     * Java7's normalization will normalize a path  like {@code C:\..\asdf} to {@code C:\asdf}, while this method will
+     * return null, because it understands {@code C:\..\asdf} as an attempt to "go above" the file system root.
+     *
+     * @return the file with the normalized path or null if the ".."s would jump further up than the number of preceding
+     * path elements (e.g. passing files with paths like ".." or "path/../.." will return null).
+     */
+    public static File normalizePath(File file) {
+        String path = file.getPath();
+
+        int rootLength = FileSystem.get().getPathRootLength(path);
+        File root = rootLength == 0 ? null : new File(path.substring(0, rootLength));
+
+        StringTokenizer tokenizer = new StringTokenizer(path.substring(rootLength), FileSystem.get().getSeparatorChars(), true);
+        LinkedList<String> pathStack = new LinkedList<String>();
+
+        boolean previousWasDelimiter = false;
+
+        while (tokenizer.hasMoreTokens()) {
+            String token = tokenizer.nextToken();
+
+            if (File.separator.equals(token)) {
+                if (!previousWasDelimiter) {
+                    pathStack.push(token);
+                    previousWasDelimiter = true;
+                }
+            } else if ("..".equals(token)) {
+                //yes, this is correct - ".." will jump up the stack to the next-previous delimiter, so we should
+                //declare that we're at a delimiter position.
+                previousWasDelimiter = true;
+                if (pathStack.isEmpty()) {
+                    return null;
+                } else {
+                    //pop the previous delimiter(s)
+                    pathStack.pop();
+
+                    //and pop the previous path element
+                    if (pathStack.isEmpty()) {
+                        return null;
+                    }
+                    pathStack.pop();
+                }
+            } else if (".".equals(token)) {
+                previousWasDelimiter = true;
+            } else if (token.length() > 0) {
+                previousWasDelimiter = false;
+                pathStack.push(token);
+            } else {
+                previousWasDelimiter = false;
+            }
+        }
+
+        StringBuilder normalizedPath = new StringBuilder();
+
+        for (int i = pathStack.size(); --i >= 0; ) {
+            normalizedPath.append(pathStack.get(i));
+        }
+
+        File ret = root == null ? new File(normalizedPath.toString()) : new File(root, normalizedPath.toString());
+
+        if (file.isAbsolute() != ret.isAbsolute()) {
+            // if the normalization changed the path such that it is not absolute anymore
+            // (or that it wasn't absolute but now is, which shouldn't ever happen), return null.
+            // The fact that the original file was absolute and the normalized path isn't can be caused by
+            // the normalization "climbing past" the prefix of the absolute path which is the drive letter of Windows
+            // for example.
+            return null;
+        } else {
+            return ret;
+        }
+    }
+
+    private enum FileSystem {
+        UNIX {
+            @Override
+            public int getPathRootLength(String path) {
+                if (path != null && path.charAt(0) == '/') {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+
+            @Override
+            public String getSeparatorChars() {
+                return "/";
+            }
+        },
+        WINDOWS {
+            @Override
+            public int getPathRootLength(String path) {
+                if (path == null || path.length() < 3) {
+                    return 0;
+                }
+
+                // C:\asdf
+                // C:asdf
+                // \\host\share\asdf
+
+                char c0 = path.charAt(0);
+                char c1 = path.charAt(1);
+                char c2 = path.charAt(2);
+
+                switch (c0) {
+                case '\\':
+                case '/':
+                    if (isSlash(c1)) {
+                        //UNC
+                        int nextSlash = nextSlash(path, 2);
+                        if (nextSlash < 3) {
+                            throw new IllegalArgumentException("Invalid UNC path - no host specified");
+                        }
+
+                        int hostSlash = nextSlash;
+                        nextSlash = nextSlash(path, nextSlash + 1);
+
+                        if (nextSlash <= hostSlash) {
+                            throw new IllegalArgumentException("Invalid UNC path - no share specified");
+                        }
+
+                        return nextSlash;
+                    } else {
+                        return 0;
+                    }
+                default:
+                    if (c1 == ':') {
+                        char driveLetter = Character.toLowerCase(c0);
+                        if ('a' <= driveLetter && 'z' >= driveLetter) {
+                            return c2 == '\\' ? 3 : 2;
+                        } else {
+                            return 0;
+                        }
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+
+            @Override
+            public String getSeparatorChars() {
+                return "\\/";
+            }
+        };
+
+        private static boolean isSlash(char c) {
+            return c == '\\' || c == '/';
+        }
+
+        private static int nextSlash(String str, int from) {
+            int len = str.length();
+            for(int i = from; i < len; ++i) {
+                if (isSlash(str.charAt(i))) {
+                    return i;
+                }
+            }
+
+           return -1;
+        }
+
+        public static FileSystem get() {
+            switch (File.separatorChar) {
+            case '/':
+                return UNIX;
+            case '\\':
+                return WINDOWS;
+            default:
+                throw new IllegalStateException("Unsupported filesystem");
+            }
+        }
+
+        public abstract int getPathRootLength(String path);
+
+        public abstract String getSeparatorChars();
+    }
 }

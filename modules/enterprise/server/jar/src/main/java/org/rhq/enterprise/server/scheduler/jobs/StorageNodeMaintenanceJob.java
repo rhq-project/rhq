@@ -24,6 +24,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.quartz.JobDataMap;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
@@ -36,13 +37,11 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.ResourceCriteria;
-import org.rhq.core.domain.operation.OperationRequestStatus;
-import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageControl;
-import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.util.StringUtil;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -57,6 +56,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
 
     private final Log log = LogFactory.getLog(StorageNodeMaintenanceJob.class);
+
+    public static final String JOB_DATA_PROPERTY_CLUSTER_SIZE = "clusterSize";
+
+    public static final String JOB_DATA_PROPERTY_TOPOLOGY_CHANGED = "topologyChanged";
 
     private final static int MAX_ITERATIONS = 5;
     private final static int TIMEOUT = 10000;
@@ -73,7 +76,10 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
     private static final String PASSWORD_PROP = "rhq.cassandra.password";
 
     @Override
-    public void executeJobCode(JobExecutionContext arg0) throws JobExecutionException {
+    public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
+        JobDataMap jobDataMap = context.getMergedJobDataMap();
+        int clusterSize = Integer.parseInt(jobDataMap.getString(JOB_DATA_PROPERTY_CLUSTER_SIZE));
+
         //1. Wait for resouces to be linked to node storage nodes
         waitForResouceLinks();
 
@@ -84,21 +90,50 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
         //3. Wait for the all storage nodes to be part of the same cluster
         storageNodes = waitForClustering(storageNodes);
 
-        //4. Update topology
-        boolean topologyUpdated = updateTopology(storageNodes);
+        boolean isReadRepairNeeded;
 
-        //5. Run repair operation on all the storage nodes if topology(replication factor was updated)
-        if (topologyUpdated) {
-            List<String> seedList = new ArrayList<String>();
-            for (StorageNode storageNode : storageNodes) {
-                seedList.add(storageNode.getAddress());
+        if (clusterSize >= 4) {
+            // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
+            // that for additional nodes; so, there is no need to run repair if we are
+            // expanding from a 4 node cluster since the RF remains the same.
+            isReadRepairNeeded = false;
+        } else if (clusterSize == 1) {
+            // The RF will increase since we are going from a single to a multi-node
+            // cluster; therefore, we want to run repair.
+            isReadRepairNeeded = true;
+        } else if (clusterSize == 2) {
+            if (storageNodes.size() > 3) {
+                // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
+                // we want to run repair.
+                isReadRepairNeeded = true;
+            } else {
+                // If we go from 2 to 3 nodes, we keep the RF at 2 so there is no need
+                // to run repair.
+                isReadRepairNeeded = false;
             }
-
-            for (StorageNode storageNode : storageNodes) {
-                Resource resource = storageNode.getResource();
-                runNodeMaintenance(resource, seedList);
-            }
+        } else if (clusterSize == 3) {
+            // We are increasing the cluster size > 3 which means the RF will be
+            // updated to 3; therefore, we want to run repair.
+            isReadRepairNeeded = true;
+        } else {
+            // If we cluster size of zero, then something is really screwed up. It
+            // should always be > 0.
+            log.error("The job data property [" + JOB_DATA_PROPERTY_CLUSTER_SIZE + "] should always be greater " +
+                "than zero. This may be a bug in the code that scheduled this job.");
+            isReadRepairNeeded = storageNodes.size() > 1;
         }
+
+        if (isReadRepairNeeded) {
+            updateTopology(storageNodes);
+        }
+
+        //5. run maintenance on each node
+        List<String> seedList = new ArrayList<String>();
+        for (StorageNode storageNode : storageNodes) {
+            seedList.add(storageNode.getAddress());
+        }
+
+        runNodeMaintenance(seedList, isReadRepairNeeded);
     }
 
     private boolean updateTopology(List<StorageNode> storageNodes) throws JobExecutionException {
@@ -106,9 +141,9 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
         String password = getRequiredStorageProperty(PASSWORD_PROP);
         SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
         try{
-            return schemaManager.updateTopology();
+            return schemaManager.updateTopology(false);
         } catch (Exception e) {
-            log.error(e);
+            log.error("An error occurred while applying schema topology changes", e);
         }
 
         return false;
@@ -147,7 +182,7 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
                                 List<Property> actualList = propertyList.getList();
                                 for (Property property : actualList) {
                                     PropertyMap map = (PropertyMap) property;
-                                    endpoints.add(map.get(ENDPOINT_PROPERTY).toString());
+                                    endpoints.add(map.getSimpleValue(ENDPOINT_PROPERTY, null));
                                 }
                             } catch (Exception e) {
                                 log.error("Error fetching live configuration for resource " + resource.getId());
@@ -157,7 +192,7 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
                         }
                     }
                 } catch (Exception e) {
-                    log.error(e);
+                    log.error("An exception occurred while waiting for nodes to cluster", e);
                 }
 
                 Collections.sort(endpoints);
@@ -184,67 +219,38 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
         return storageNodes;
     }
 
-    private void runNodeMaintenance(Resource resource, List<String> seedList) {
+    private void runNodeMaintenance(List<String> seedList, boolean runRepair) {
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
+        StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
 
-        try {
-            ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
-            newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
-            newSchedule.setResource(resource);
-            newSchedule.setOperationName(MAINTENANCE_OPERATION);
-            newSchedule.setDescription(MAINTENANCE_OPERATION_NOTE);
+        ResourceGroup storageNodeGroup = storageNodeManager.getStorageNodeGroup();
 
-            List<Property> properties = new ArrayList<Property>();
-            properties.add(new PropertySimple(RUN_REPAIR_PROPERTY, Boolean.TRUE));
-            properties.add(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
+        GroupOperationSchedule schedule = new GroupOperationSchedule();
+        schedule.setGroup(storageNodeGroup);
+        schedule.setHaltOnFailure(false);
+        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
+        schedule.setJobTrigger(JobTrigger.createNowTrigger());
+        schedule.setSubject(subjectManager.getOverlord());
+        schedule.setOperationName(MAINTENANCE_OPERATION);
+        schedule.setDescription(MAINTENANCE_OPERATION_NOTE);
 
-            PropertyList seedListProperty = new PropertyList(SEEDS_LIST);
-            for (String seed : seedList) {
-                seedListProperty.add(new PropertySimple("seed", seed));
-            }
-            properties.add(seedListProperty);
+        List<Property> properties = new ArrayList<Property>();
+        properties.add(new PropertySimple(RUN_REPAIR_PROPERTY, runRepair));
+        properties.add(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
 
-            Configuration config = new Configuration();
-            config.setProperties(properties);
-            newSchedule.setParameters(config);
-
-            long operationStartTime = System.currentTimeMillis();
-            operationManager.scheduleResourceOperation(LookupUtil.getSubjectManager().getOverlord(), newSchedule);
-
-            int iteration = 0;
-            boolean resultFound = false;
-            while (iteration < MAX_ITERATIONS && !resultFound) {
-                PageList<ResourceOperationHistory> results = operationManager.findCompletedResourceOperationHistories(
-                    LookupUtil.getSubjectManager().getOverlord(), resource.getId(), operationStartTime, null,
-                    PageControl.getUnlimitedInstance());
-
-                for (ResourceOperationHistory operationHistory : results) {
-                    if (MAINTENANCE_OPERATION.equals(operationHistory.getOperationDefinition().getName())) {
-                        if (OperationRequestStatus.SUCCESS.equals(operationHistory.getStatus())) {
-                            Configuration operationResults = operationHistory.getResults();
-                            if ("true".equals(operationResults.getSimpleValue(SUCCEED_PROPERTY))) {
-                                resultFound = true;
-                            }
-                        }
-                    }
-                }
-
-                if (resultFound) {
-                    break;
-                } else {
-                    try {
-                        Thread.sleep(TIMEOUT);
-                    } catch (Exception e) {
-                        log.error(e);
-                    }
-                }
-
-                iteration++;
-            }
-
-        } catch (Exception e) {
-            log.error(e);
+        PropertyList seedListProperty = new PropertyList(SEEDS_LIST);
+        for (String seed : seedList) {
+            seedListProperty.add(new PropertySimple("seed", seed));
         }
+        properties.add(seedListProperty);
+
+        Configuration config = new Configuration();
+        config.setProperties(properties);
+
+        schedule.setParameters(config);
+
+        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
     }
 
     private List<StorageNode> getOnlyResourceLinkedStorageNodes() {

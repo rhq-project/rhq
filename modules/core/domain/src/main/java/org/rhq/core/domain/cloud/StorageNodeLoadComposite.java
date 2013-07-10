@@ -36,19 +36,20 @@ public class StorageNodeLoadComposite implements Serializable {
     private StorageNode storageNode;
     private long beginTime;
     private long endTime;
-    
+
     private MeasurementAggregateWithUnits heapCommitted;
     private MeasurementAggregateWithUnits heapUsed;
     private MeasurementAggregateWithUnits heapPercentageUsed;
     private MeasurementAggregateWithUnits load;
-    private MeasurementAggregateWithUnits diskSpacePercentageUsed;
-    private MeasurementAggregate tokens; 
+    private MeasurementAggregateWithUnits partitionDiskUsedPercentage;
+    private MeasurementAggregateWithUnits dataDiskUsed;
+    private MeasurementAggregate tokens;
     private MeasurementAggregateWithUnits actuallyOwns;
 
     public StorageNodeLoadComposite() {
         // GWT needs this
     }
-    
+
     public StorageNodeLoadComposite(StorageNode storageNode, long beginTime, long endTime) {
         this.storageNode = storageNode;
         this.beginTime = beginTime;
@@ -79,6 +80,9 @@ public class StorageNodeLoadComposite implements Serializable {
         this.endTime = endTime;
     }
 
+    /**
+     * @return heapCommitted A computed metric for the amount of memory that is committed for the JVM to use.
+     */
     public MeasurementAggregateWithUnits getHeapCommitted() {
         return heapCommitted;
     }
@@ -86,7 +90,10 @@ public class StorageNodeLoadComposite implements Serializable {
     public void setHeapCommitted(MeasurementAggregateWithUnits heapCommitted) {
         this.heapCommitted = heapCommitted;
     }
-    
+
+    /**
+     * @return A computed metric for the amount of JVM heap memory used
+     */
     public MeasurementAggregateWithUnits getHeapUsed() {
         return heapUsed;
     }
@@ -95,6 +102,10 @@ public class StorageNodeLoadComposite implements Serializable {
         this.heapUsed = heapUsed;
     }
 
+    /**
+     * @return A computed metric for the {@link #getHeapUsed() heapUsed} divided by the
+     * {@link #getHeapCommitted() heapCommitted} expressed as a percentage.
+     */
     public MeasurementAggregateWithUnits getHeapPercentageUsed() {
         return heapPercentageUsed;
     }
@@ -103,14 +114,50 @@ public class StorageNodeLoadComposite implements Serializable {
         this.heapPercentageUsed = heapPercentageUsed;
     }
     
+    /**
+     * @deprecated use {@link #getPartitionDiskUsedPercentage() getPartitionDiskUsedPercentage()} instead
+     * 
+     * @return partitionDiskUsedPercentage
+     */
     public MeasurementAggregateWithUnits getDiskSpacePercentageUsed() {
-        return diskSpacePercentageUsed;
-    }
-
-    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits diskSpacePercentageUsed) {
-        this.diskSpacePercentageUsed = diskSpacePercentageUsed;
+        return getPartitionDiskUsedPercentage();
     }
     
+    /**
+     * @deprecated use {@link #setPartitionDiskUsedPercentage() setPartitionDiskUsedPercentage()} instead
+     * 
+     * @param partitionDiskUsedPercentage
+     */
+    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits partitionDiskUsedPercentage) {
+        setPartitionDiskUsedPercentage(partitionDiskUsedPercentage);
+    }
+
+    /**
+     * @return A computed metric for the percentage of disk space used on the partition that contains the SSTables.
+     *         If multiple data locations are configured then the partition with the highest utilization will be reported.
+     */
+    public MeasurementAggregateWithUnits getPartitionDiskUsedPercentage() {
+        return partitionDiskUsedPercentage;
+    }
+
+    public void setPartitionDiskUsedPercentage(MeasurementAggregateWithUnits partitionDiskUsedPercentage) {
+        this.partitionDiskUsedPercentage = partitionDiskUsedPercentage;
+    }
+
+    /**
+     * @return A computed metric for the space used on disk by all data files, commit logs, and saved caches.
+     */
+    public MeasurementAggregateWithUnits getDataDiskUsed() {
+        return dataDiskUsed;
+    }
+
+    public void setDataDiskUsed(MeasurementAggregateWithUnits dataDiskUsed) {
+        this.dataDiskUsed = dataDiskUsed;
+    }
+
+    /**
+     * @return A computed metric for the the reported disk space used by all SSTables on disk for all column families.
+     */
     public MeasurementAggregateWithUnits getLoad() {
         return load;
     }
@@ -119,6 +166,10 @@ public class StorageNodeLoadComposite implements Serializable {
         this.load = load;
     }
 
+    /**
+     * @return A computed metric for the number of tokens owned by this node. The range of values between two tokens is
+     * the range of possible keys for that portion of the token ring.
+     */
     public MeasurementAggregate getTokens() {
         return tokens;
     }
@@ -127,6 +178,11 @@ public class StorageNodeLoadComposite implements Serializable {
         this.tokens = tokens;
     }
 
+    /**
+     * @return A computed metric for a percentage of keys owned by this node. This directly correlates to the
+     * number of {@link #getTokens() tokens}. For example, if you have a a two node cluster with each node having 256
+     * tokens, then with an even distribution, this metric should be right around 50%.
+     */
     public MeasurementAggregateWithUnits getActuallyOwns() {
         return actuallyOwns;
     }
@@ -135,38 +191,32 @@ public class StorageNodeLoadComposite implements Serializable {
         this.actuallyOwns = actuallyOwns;
     }
 
+    /* (non-Javadoc)
+     * @see java.lang.Object#toString()
+     */
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        // gwt doesn't support String.format
-//        builder.append("average values for last ");
-//        builder.append((endtime - begintime) / (1000 * 60 * 60));
-//        builder.append(" hours");
-//        builder.append("\naddress        load       tokens  owns (effective)\n");
-//        builder.append(string.format("%15s", storagenode.getaddress()));
-//        builder.append(string.format("%11s", load.getaggregate().getavg())).append(" ").append(load.getunits().getname());
-//        builder.append(string.format("%8s", tokens.getavg()));
-//        builder.append(string.format("%16s", actuallyowns.getavg()));
-        
         builder.append("storageNode.addresss=").append(storageNode.getAddress()).append(", ");
         builder.append("beginTime=").append(beginTime).append(", ");
         builder.append("heapCommitted=").append(heapCommitted).append(", ");
         builder.append("heapUsed=").append(heapUsed).append(", ");
         builder.append("heapPercentageUsed=").append(heapPercentageUsed).append(", ");
         builder.append("load=").append(load).append(", ");
-        builder.append("diskSpacePercentageUsed=").append(diskSpacePercentageUsed).append(", ");
+        builder.append("partitionDiskUsedPercentage=").append(partitionDiskUsedPercentage).append(", ");
+        builder.append("dataDiskUsed=").append(dataDiskUsed).append(", ");
         builder.append("tokens=").append(tokens).append(", ");
         builder.append("actuallyOwns=").append(actuallyOwns);
         return builder.toString();
     }
 
-    
+
     public static class MeasurementAggregateWithUnits implements Serializable {
         private static final long serialVersionUID = 1L;
-        
+
         private MeasurementAggregate aggregate;
         private MeasurementUnits units;
         private String formattedValue;
-        
+
         public MeasurementAggregateWithUnits() {
             // GWT needs this
         }
@@ -183,7 +233,7 @@ public class StorageNodeLoadComposite implements Serializable {
         public MeasurementUnits getUnits() {
             return units;
         }
-        
+
         public void setFormattedValue(String formattedValue) {
             this.formattedValue = formattedValue;
         }

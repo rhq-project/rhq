@@ -1,26 +1,25 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.pc.inventory;
+
+import static org.rhq.core.pc.component.ComponentInvocationContextImpl.LocalContext;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationHandler;
@@ -56,6 +55,7 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.pc.component.ComponentInvocationContextImpl;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pc.util.LoggingThreadFactory;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -407,13 +407,15 @@ public class ResourceContainer implements Serializable {
      *                        it; value must be positive
      * @param  daemonThread   whether or not the thread used for the invocation should be a daemon thread
      * @param  onlyIfStarted  if <code>true</code>, and the component is not started, an exception is thrown
+     * @param transferInterrupt whether or not interruption of the calling thread should be transfered to the executor
+     *                          thread
      *
      * @return a proxy that wraps the given component and exposes the given facet interface; will never be null
      *
      * @throws PluginContainerException if the component does not exist or does not implement the interface
      */
     public <T> T createResourceComponentProxy(Class<T> facetInterface, FacetLockType lockType, long timeout,
-        boolean daemonThread, boolean onlyIfStarted) throws PluginContainerException {
+        boolean daemonThread, boolean onlyIfStarted, boolean transferInterrupt) throws PluginContainerException {
         if (onlyIfStarted) {
             if (!ResourceComponentState.STARTED.equals(getResourceComponentState())) {
                 throw new PluginContainerException("Resource component could not be retrieved for resource ["
@@ -444,6 +446,7 @@ public class ResourceContainer implements Serializable {
         key = 31 * key + lockType.hashCode();
         key = 31 * key + (int) (timeout ^ (timeout >>> 32));
         key = 31 * key + (daemonThread ? 1 : 0);
+        key = 31 * key + (transferInterrupt ? 1 : 0);
 
         synchronized (this) {
             if (this.proxyCache == null) {
@@ -456,7 +459,7 @@ public class ResourceContainer implements Serializable {
 
                 // this is the handler that will actually acquire the lock and invoke the facet method call
                 ResourceComponentInvocationHandler handler = new ResourceComponentInvocationHandler(this, lockType,
-                    timeout, daemonThread, facetInterface);
+                    timeout, daemonThread, facetInterface, transferInterrupt);
 
                 // this is the proxy that will look like the facet interface that the caller will use
                 proxy = (T) Proxy.newProxyInstance(classLoader, new Class<?>[] { facetInterface }, handler);
@@ -501,6 +504,7 @@ public class ResourceContainer implements Serializable {
         private final long timeout;
         private final boolean daemonThread;
         private final Class facetInterface;
+        private final boolean transferInterrupt;
 
         /**
          *
@@ -511,9 +515,11 @@ public class ResourceContainer implements Serializable {
          *                value must be positive
          * @param daemonThread whether or not the thread used for the invocation should be a daemon thread
          * @param facetInterface the interface that the component implements that is being exposed by this proxy
+         * @param transferInterrupt whether or not interruption of the calling thread should be transfered to the
+         *                          executor thread
          */
         public ResourceComponentInvocationHandler(ResourceContainer container, FacetLockType lockType, long timeout,
-            boolean daemonThread, Class facetInterface) {
+            boolean daemonThread, Class facetInterface, boolean transferInterrupt) {
             this.container = container;
             switch (lockType) {
             case WRITE: {
@@ -535,6 +541,7 @@ public class ResourceContainer implements Serializable {
             this.timeout = timeout;
             this.daemonThread = daemonThread;
             this.facetInterface = facetInterface;
+            this.transferInterrupt = transferInterrupt;
         }
 
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -548,14 +555,15 @@ public class ResourceContainer implements Serializable {
 
         private Object invokeInNewThreadWithLock(Method method, Object[] args) throws Throwable {
             ExecutorService threadPool = this.daemonThread ? DAEMON_THREAD_POOL : NON_DAEMON_THREAD_POOL;
-            Callable invocationThread = new ComponentInvocationThread(this.container, method, args, this.lock);
-            Future<?> future = threadPool.submit(invocationThread);
+            ComponentInvocation componentInvocation = new ComponentInvocation(this.container, method, args, this.lock);
+            Future<?> future = threadPool.submit(componentInvocation);
             try {
                 return future.get(this.timeout, TimeUnit.MILLISECONDS);
             } catch (InterruptedException e) {
                 LOG.error("Thread [" + Thread.currentThread().getName() + "] was interrupted.");
-                if (this.daemonThread) {
+                if (this.transferInterrupt) {
                     future.cancel(true);
+                    componentInvocation.markContextInterrupted();
                 }
                 throw new RuntimeException(invokedMethodString(method, args, "was rudely interrupted."), e);
             } catch (ExecutionException e) {
@@ -568,6 +576,7 @@ public class ResourceContainer implements Serializable {
                         + " milliseconds - invocation thread will be interrupted.");
                 LOG.debug(msg);
                 future.cancel(true);
+                componentInvocation.markContextInterrupted();
                 if (LOG.isDebugEnabled()) {
                     LOG.debug(this.container.getFacetLockStatus());
                 }
@@ -599,17 +608,22 @@ public class ResourceContainer implements Serializable {
         }
     }
 
-    private static class ComponentInvocationThread implements Callable {
+    private static class ComponentInvocation implements Callable {
         private final ResourceContainer resourceContainer;
         private final Method method;
         private final Object[] args;
         private final Lock lock;
+        private final ComponentInvocationContextImpl componentInvocationContext;
+        private final LocalContext localContext;
 
-        ComponentInvocationThread(ResourceContainer resourceContainer, Method method, Object[] args, Lock lock) {
+        ComponentInvocation(ResourceContainer resourceContainer, Method method, Object[] args, Lock lock) {
             this.resourceContainer = resourceContainer;
             this.method = method;
             this.args = args;
             this.lock = lock;
+            this.componentInvocationContext = (ComponentInvocationContextImpl) resourceContainer.getResourceContext()
+                .getComponentInvocationContext();
+            localContext = new LocalContext();
         }
 
         public Object call() throws Exception {
@@ -623,7 +637,11 @@ public class ResourceContainer implements Serializable {
                 // If we made it here, we have acquired the lock.
             }
 
+            componentInvocationContext.setLocalContext(localContext);
+
             ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+
+            // The thread needs to run with a fresh invocation context
             try {
                 ClassLoader pluginClassLoader = this.resourceContainer.getResourceClassLoader();
                 if (pluginClassLoader == null) {
@@ -647,6 +665,10 @@ public class ResourceContainer implements Serializable {
                 }
                 Thread.currentThread().setContextClassLoader(originalContextClassLoader);
             }
+        }
+
+        public void markContextInterrupted() {
+            localContext.markInterrupted();
         }
     }
 }

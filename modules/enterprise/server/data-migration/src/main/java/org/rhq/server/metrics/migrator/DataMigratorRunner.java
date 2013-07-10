@@ -23,8 +23,11 @@ package org.rhq.server.metrics.migrator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 
@@ -53,6 +56,10 @@ import org.apache.log4j.PatternLayout;
 import org.hibernate.ejb.Ejb3Configuration;
 
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
+import org.rhq.server.metrics.migrator.workers.AggregateDataMigrator;
+import org.rhq.server.metrics.migrator.workers.DeleteAllData;
+import org.rhq.server.metrics.migrator.workers.MetricsIndexUpdateAccumulator;
+import org.rhq.server.metrics.migrator.workers.RawDataMigrator;
 
 
 /**
@@ -74,67 +81,83 @@ public class DataMigratorRunner {
     private final Log log = LogFactory.getLog(DataMigratorRunner.class);
 
     //Cassandra
-    private Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg().withType(String.class)
-        .withDescription("Cassandra user (default: rhqadmin)").create();
-    private Option cassandraPasswordOption = OptionBuilder.withLongOpt("cassandra-password").hasArg()
+    private final Option cassandraUserOption = OptionBuilder.withLongOpt("cassandra-user").hasArg()
+        .withType(String.class).withDescription("Cassandra user (default: rhqadmin)").create();
+    private final Option cassandraPasswordOption = OptionBuilder.withLongOpt("cassandra-password").hasArg()
         .withDescription("Cassandra password (default: rhqadmin)").withType(String.class).create();
-    private Option cassandraHostsOption = OptionBuilder.withLongOpt("cassandra-hosts").hasArg().withType(String.class)
-        .withDescription("Cassandra hosts, format host_ip_1,host_ip_2,... (default: 127.0.0.1")
+    private final Option cassandraHostsOption = OptionBuilder.withLongOpt("cassandra-hosts").hasArg()
+        .withType(String.class).withDescription("Cassandra hosts, format host_ip_1,host_ip_2,... (default: 127.0.0.1")
         .create();
-    private Option cassandraPortOption = OptionBuilder.withLongOpt("cassandra-port").hasArg().withType(Integer.class)
-        .withDescription("Cassandra native binary protocol port (default: 9142)").create();
-    private Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression").hasOptionalArg()
-        .withType(Boolean.class).withDescription("Enable compression for communication with Cassandra (default: true)")
+    private final Option cassandraPortOption = OptionBuilder.withLongOpt("cassandra-port").hasArg()
+        .withType(Integer.class).withDescription("Cassandra native binary protocol port (default: 9142)").create();
+    private final Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression")
+        .hasOptionalArg().withType(Boolean.class)
+        .withDescription("Enable compression for communication with Cassandra (default: true)")
         .create();
 
     //SQL
-    private Option sqlUserOption = OptionBuilder.withLongOpt("sql-user").hasArg().withType(String.class)
+    private final Option sqlUserOption = OptionBuilder.withLongOpt("sql-user").hasArg().withType(String.class)
         .withDescription("SQL server user (default: rhqadmin)").create();
-    private Option sqlPasswordOption = OptionBuilder.withLongOpt("sql-password").hasArg().withType(String.class)
+    private final Option sqlPasswordOption = OptionBuilder.withLongOpt("sql-password").hasArg().withType(String.class)
         .withDescription("SQL server password (default: rhqadmin)").create();
-    private Option sqlHostOption = OptionBuilder.withLongOpt("sql-host").hasArg().withType(String.class)
+    private final Option sqlConnectionUrlOption = OptionBuilder.withLongOpt("sql-connection-url").hasArg()
+        .withType(String.class)
+        .withDescription("SQL connection url. Not used by default. If specified will override host, port and db SQL options.")
+        .create();
+    private final Option sqlHostOption = OptionBuilder.withLongOpt("sql-host").hasArg().withType(String.class)
         .withDescription("SQL server host address (default: localhost)").create();
-    private Option sqlPortOption = OptionBuilder.withLongOpt("sql-port").hasArg().withType(String.class)
+    private final Option sqlPortOption = OptionBuilder.withLongOpt("sql-port").hasArg().withType(String.class)
         .withDescription("SQL server port (default: 5432)").create();
     private Option sqlDBOption = OptionBuilder.withLongOpt("sql-db").hasArg().withType(String.class)
         .withDescription("SQL database (default: rhq)").create();
 
-    private Option sqlServerType = OptionBuilder.withLongOpt("sql-server-type").hasArg().withType(String.class)
+    private final Option sqlServerTypeOption = OptionBuilder.withLongOpt("sql-server-type").hasArg().withType(String.class)
         .withDescription("SQL server type, only postgres and oracle are supported (default: postgres)").create();
-    private Option sqlPostgresServer = OptionBuilder.withLongOpt("sql-server-postgres").hasOptionalArg()
+    private final Option sqlPostgresServerOption = OptionBuilder.withLongOpt("sql-server-postgres").hasOptionalArg()
         .withType(Boolean.class).withDescription("Postgres SQL server.").create();
-    private Option sqlOracleServer = OptionBuilder.withLongOpt("sql-server-oracle").hasOptionalArg()
-        .withType(Boolean.class)
-        .withDescription("Oracle SQL server.").create();
+    private final Option sqlOracleServerOption = OptionBuilder.withLongOpt("sql-server-oracle").hasOptionalArg()
+        .withType(Boolean.class).withDescription("Oracle SQL server.").create();
 
     //Migration
-    private Option disableRawOption = OptionBuilder.withLongOpt("disable-raw-migration").hasOptionalArg().withType(Boolean.class)
+    private final Option disableRawOption = OptionBuilder.withLongOpt("disable-raw-migration").hasOptionalArg()
+        .withType(Boolean.class)
         .withDescription("Disable raw table migration (default: false)").create();
-    private Option disable1HOption = OptionBuilder.withLongOpt("disable-1h-migration").hasOptionalArg().withType(Boolean.class)
+    private final Option disable1HOption = OptionBuilder.withLongOpt("disable-1h-migration").hasOptionalArg()
+        .withType(Boolean.class)
         .withDescription("Disable 1 hour aggregates table migration (default: false)").create();
-    private Option disable6HOption = OptionBuilder.withLongOpt("disable-6h-migration").hasOptionalArg().withType(Boolean.class)
+    private final Option disable6HOption = OptionBuilder.withLongOpt("disable-6h-migration").hasOptionalArg()
+        .withType(Boolean.class)
         .withDescription("Disable 6 hours aggregates table migration (default: false)").create();
-    private Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").hasOptionalArg().withType(Boolean.class)
+    private final Option disable1DOption = OptionBuilder.withLongOpt("disable-1d-migration").hasOptionalArg()
+        .withType(Boolean.class)
         .withDescription("Disable 24 hours aggregates table migration (default: false)").create();
-    private Option deleteDataOption = OptionBuilder.withLongOpt("delete-data").hasOptionalArg().withType(Boolean.class)
+    private final Option deleteDataOption = OptionBuilder.withLongOpt("delete-data").hasOptionalArg()
+        .withType(Boolean.class)
         .withDescription("Delete SQL data at the end of migration (default: false)").create();
-    private Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only").hasOptionalArg().withType(Boolean.class)
+    private final Option estimateOnlyOption = OptionBuilder.withLongOpt("estimate-only").hasOptionalArg()
+        .withType(Boolean.class)
         .withDescription("Only estimate how long the migration will take (default: false)").create();
-    private Option deleteOnlyOption = OptionBuilder.withLongOpt("delete-only").hasOptionalArg().withType(Boolean.class)
+    private final Option deleteOnlyOption = OptionBuilder.withLongOpt("delete-only").hasOptionalArg()
+        .withType(Boolean.class)
         .withDescription("Only delete data from the old SQL server, no migration will be performed (default: false)")
         .create();
-    private Option experimentalExportOption = OptionBuilder.withLongOpt("experimental-export").hasOptionalArg().withType(Boolean.class)
+    private final Option experimentalExportOption = OptionBuilder
+        .withLongOpt("experimental-export").hasOptionalArg().withType(Boolean.class)
         .withDescription("Enable experimental bulk export for Postgres, option ignored for Oracle migration (default: false)")
         .create();
 
     //Runner
-    private Option helpOption = OptionBuilder.withLongOpt("help").create("h");
-    private Option debugLogOption = OptionBuilder.withLongOpt("debugLog")
+    private final Option helpOption = OptionBuilder.withLongOpt("help").create("h");
+    private final Option debugLogOption = OptionBuilder.withLongOpt("debugLog")
         .withDescription("Enable debug level logs for the communication with Cassandra and SQL Server (default: false)")
         .create("X");
-    private Option configFileOption = OptionBuilder.withLongOpt("config-file").hasArg()
+    private final Option configFileOption = OptionBuilder.withLongOpt("config-file").hasArg()
         .withDescription("Configuration file. All the command line options can be set in a typical properties file. " +
-                    "Command line arguments take precedence over default and configuration file options.")
+                    "Command line arguments take precedence over default, RHQ server properties,  and configuration file options.")
+        .create();
+    private final Option serverPropertiesFileOption = OptionBuilder.withLongOpt("rhq-server-properties-file").hasArg()
+        .withDescription("RHQ Server configuration file (rhq-server.properties). The RHQ server properties will be used for SQL server configuration. "
+                +"Command line arguments take precedence over default, RHQ server properties, and configuration file options.")
         .create();
 
     private Map<Object, Object> configuration = new HashMap<Object, Object>();
@@ -168,6 +191,7 @@ public class DataMigratorRunner {
         }
     }
 
+    @SuppressWarnings("rawtypes")
     private static void setLogLevel(Level level) {
         Logger root = Logger.getRootLogger();
         root.setLevel(level);
@@ -187,6 +211,18 @@ public class DataMigratorRunner {
         } else {
             migratorLogging.setLevel(level);
         }
+
+        //force change some of the logger levels
+        Class[] clazzes = new Class[] { DataMigratorRunner.class, DataMigrator.class, RawDataMigrator.class,
+            DeleteAllData.class, AggregateDataMigrator.class, MetricsIndexUpdateAccumulator.class };
+        for (Class clazz : clazzes) {
+            migratorLogging = root.getLogger(clazz);
+            if (Level.DEBUG.equals(level)) {
+                migratorLogging.setLevel(Level.ALL);
+            } else {
+                migratorLogging.setLevel(level);
+            }
+        }
     }
 
     private void configure(String args[]) throws Exception {
@@ -203,9 +239,10 @@ public class DataMigratorRunner {
         options.addOption(sqlHostOption);
         options.addOption(sqlPortOption);
         options.addOption(sqlDBOption);
-        options.addOption(sqlServerType);
-        options.addOption(sqlPostgresServer);
-        options.addOption(sqlOracleServer);
+        options.addOption(sqlServerTypeOption);
+        options.addOption(sqlPostgresServerOption);
+        options.addOption(sqlOracleServerOption);
+        options.addOption(sqlConnectionUrlOption);
 
         options.addOption(disableRawOption);
         options.addOption(disable1HOption);
@@ -219,6 +256,7 @@ public class DataMigratorRunner {
         options.addOption(helpOption);
         options.addOption(debugLogOption);
         options.addOption(configFileOption);
+        options.addOption(serverPropertiesFileOption);
 
         CommandLine commandLine;
         try {
@@ -242,6 +280,19 @@ public class DataMigratorRunner {
         }
 
         loadDefaultConfiguration();
+
+        if (commandLine.hasOption(serverPropertiesFileOption.getLongOpt())) {
+            log.debug("Server configuration file option enabled. Loading server configuration from file: "
+                + serverPropertiesFileOption.getLongOpt());
+            loadConfigurationFromServerPropertiesFile(commandLine.getOptionValue(serverPropertiesFileOption.getLongOpt()));
+            log.debug("Server configuration file from system properties will not be loaded even if set because of the manual override.");
+        } else if (System.getProperty("rhq.server.properties-file") != null) {
+            log.debug("Server configuration file system property detected. Loading the file: "
+                + System.getProperty("rhq.server.properties-file"));
+            loadConfigurationFromServerPropertiesFile(System.getProperty("rhq.server.properties-file"));
+            log.debug("Server configuration file loaded based on system properties options.");
+        }
+
         if (commandLine.hasOption(configFileOption.getLongOpt())) {
             loadConfigFile(commandLine.getOptionValue(configFileOption.getLongOpt()));
         }
@@ -249,16 +300,21 @@ public class DataMigratorRunner {
         parseCassandraOptions(commandLine);
         parseSQLOptions(commandLine);
         parseMigrationOptions(commandLine);
+
+        if (commandLine.hasOption(debugLogOption.getLongOpt()) || commandLine.hasOption(debugLogOption.getOpt())) {
+            printOptions();
+        }
     }
 
     /**
      * Add default configuration options to the configuration store.
+     * @throws Exception
      */
-    private void loadDefaultConfiguration() {
+    private void loadDefaultConfiguration() throws Exception {
         //default Cassandra configuration
         configuration.put(cassandraUserOption, "rhqadmin");
         configuration.put(cassandraPasswordOption, "rhqadmin");
-        configuration.put(cassandraHostsOption, new String[] { "127.0.0.1" });
+        configuration.put(cassandraHostsOption, new String[] { InetAddress.getLocalHost().getHostAddress() });
         configuration.put(cassandraPortOption, DEFAULT_CASSANDRA_PORT);
         configuration.put(cassandraCompressionOption, true);
 
@@ -268,7 +324,7 @@ public class DataMigratorRunner {
         configuration.put(sqlHostOption, "localhost");
         configuration.put(sqlPortOption, "5432");
         configuration.put(sqlDBOption, "rhq");
-        configuration.put(sqlServerType, "postgres");
+        configuration.put(sqlServerTypeOption, DatabaseType.Postgres);
 
         //default runner options
         configuration.put(disableRawOption, false);
@@ -279,6 +335,55 @@ public class DataMigratorRunner {
         configuration.put(deleteDataOption, false);
         configuration.put(deleteOnlyOption, false);
         configuration.put(experimentalExportOption, false);
+    }
+
+
+    private void loadConfigurationFromServerPropertiesFile(String file) throws Exception {
+        File configFile = new File(file);
+        if (!configFile.exists()) {
+            throw new FileNotFoundException("RHQ server properties file not found! File: " + file);
+        }
+
+        Properties serverProperties = new Properties();
+        FileInputStream stream = new FileInputStream(configFile);
+        serverProperties.load(stream);
+        stream.close();
+
+        String dbType = serverProperties.getProperty("rhq.server.database.type-mapping");
+        DatabaseType databaseType = DatabaseType.Postgres;
+        if (dbType != null && dbType.toLowerCase().contains("oracle")) {
+            databaseType = databaseType.Oracle;
+        }
+
+        configuration.put(sqlServerTypeOption, databaseType);
+        configuration.put(sqlUserOption, serverProperties.getProperty("rhq.server.database.user-name"));
+        String dbPasswordProperty = serverProperties.getProperty("rhq.server.database.password");
+        configuration.put(sqlPasswordOption, deobfuscatePassword(dbPasswordProperty));
+        configuration.put(sqlConnectionUrlOption, serverProperties.getProperty("rhq.server.database.connection-url"));
+
+        configuration.put(cassandraUserOption, serverProperties.getProperty("rhq.cassandra.username"));
+        configuration.put(cassandraPasswordOption, serverProperties.getProperty("rhq.cassandra.password"));
+
+        if (serverProperties.getProperty("rhq.cassandra.seeds") != null
+            && !serverProperties.getProperty("rhq.cassandra.seeds").trim().isEmpty()) {
+
+            String[] unparsedSeeds =serverProperties.getProperty("rhq.cassandra.seeds").split(",");
+            String[] seedHosts = new String[unparsedSeeds.length];
+            Integer cassandraPort = null;
+            for (int index = 0; index < unparsedSeeds.length; index++) {
+                String[] params = unparsedSeeds[index].split("\\|");
+                if (params.length != 3) {
+                    throw new IllegalArgumentException(
+                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + unparsedSeeds[index] + "]");
+                }
+
+                seedHosts[index] = params[0];
+                cassandraPort = tryParseInteger(params[2], DEFAULT_CASSANDRA_PORT);
+            }
+
+            configuration.put(cassandraHostsOption, seedHosts);
+            configuration.put(cassandraPortOption, cassandraPort);
+        }
     }
 
     /**
@@ -310,21 +415,21 @@ public class DataMigratorRunner {
                     if (option.equals(cassandraHostsOption)) {
                         String[] cassandraHosts = parseCassandraHosts(optionValue.toString());
                         configuration.put(option, cassandraHosts);
-                    } else if (option.equals(sqlServerType)) {
+                    } else if (option.equals(sqlServerTypeOption)) {
                         if ("oracle".equals(optionValue)) {
-                            configuration.put(option, "oracle");
+                            configuration.put(option, DatabaseType.Oracle);
                         } else {
-                            configuration.put(option, "postgres");
+                            configuration.put(option, DatabaseType.Postgres);
                         }
-                    } else if (option.equals(sqlPostgresServer)) {
+                    } else if (option.equals(sqlPostgresServerOption)) {
                         boolean value = tryParseBoolean(optionValue.toString(), true);
                         if (value == true) {
-                            configuration.put(sqlServerType, "postgres");
+                            configuration.put(sqlServerTypeOption, DatabaseType.Postgres);
                         }
-                    } else if (option.equals(sqlOracleServer)) {
+                    } else if (option.equals(sqlOracleServerOption)) {
                         boolean value = tryParseBoolean(optionValue.toString(), true);
                         if (value == true) {
-                            configuration.put(sqlServerType, "oracle");
+                            configuration.put(sqlServerTypeOption, DatabaseType.Oracle);
                         }
                     } else if (option.getType().equals(Boolean.class)) {
                         configuration.put(option, tryParseBoolean(optionValue.toString(), true));
@@ -339,8 +444,6 @@ public class DataMigratorRunner {
             log.error("Unable to load or process the configuration file.", e);
             System.exit(1);
         }
-
-        log.debug(configuration.toString());
     }
 
     /**
@@ -403,16 +506,20 @@ public class DataMigratorRunner {
             configuration.put(sqlDBOption, commandLine.getOptionValue(sqlDBOption.getLongOpt()));
         }
 
-        if (commandLine.hasOption(sqlServerType.getLongOpt())) {
-            if ("oracle".equals(commandLine.getOptionValue(sqlServerType.getLongOpt()))) {
-                configuration.put(sqlServerType, "oracle");
+        if (commandLine.hasOption(sqlConnectionUrlOption.getLongOpt())) {
+            configuration.put(sqlConnectionUrlOption, commandLine.getOptionValue(sqlConnectionUrlOption.getLongOpt()));
+        }
+
+        if (commandLine.hasOption(sqlServerTypeOption.getLongOpt())) {
+            if ("oracle".equals(commandLine.getOptionValue(sqlServerTypeOption.getLongOpt()))) {
+                configuration.put(sqlServerTypeOption, DatabaseType.Oracle);
             } else {
-                configuration.put(sqlServerType, "postgres");
+                configuration.put(sqlServerTypeOption, DatabaseType.Postgres);
             }
-        } else if (commandLine.hasOption(sqlPostgresServer.getLongOpt())) {
-            configuration.put(sqlServerType, "postgres");
-        } else if (commandLine.hasOption(sqlOracleServer.getLongOpt())) {
-            configuration.put(sqlServerType, "oracle");
+        } else if (commandLine.hasOption(sqlPostgresServerOption.getLongOpt())) {
+            configuration.put(sqlServerTypeOption, DatabaseType.Postgres);
+        } else if (commandLine.hasOption(sqlOracleServerOption.getLongOpt())) {
+            configuration.put(sqlServerTypeOption, DatabaseType.Oracle);
         }
     }
 
@@ -471,9 +578,10 @@ public class DataMigratorRunner {
         log.debug("Done creating Cassandra session");
 
         DatabaseType databaseType = DatabaseType.Postgres;
-        if ("oracle".equals(configuration.get(sqlServerType))) {
-            databaseType = databaseType.Oracle;
+        if (configuration.get(sqlServerTypeOption) != null) {
+            databaseType = (DatabaseType) configuration.get(sqlServerTypeOption);
         }
+
         DataMigrator migrator = new DataMigrator(entityManager, cassandraSession, databaseType, tryParseBoolean(
             configuration.get(experimentalExportOption), false));
 
@@ -596,7 +704,7 @@ public class DataMigratorRunner {
         properties.put("javax.persistence.query.timeout", DataMigrator.SQL_TIMEOUT);
         properties.put("hibernate.c3p0.timeout", DataMigrator.SQL_TIMEOUT);
 
-        if ("oracle".equals(configuration.get(sqlServerType))) {
+        if (DatabaseType.Oracle.equals(configuration.get(sqlServerTypeOption))) {
             String driverClassName = "oracle.jdbc.driver.OracleDriver";
 
             try {
@@ -610,9 +718,15 @@ public class DataMigratorRunner {
 
             properties.put("hibernate.dialect", "org.hibernate.dialect.Oracle10gDialect");
             properties.put("hibernate.driver_class", driverClassName);
-            properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
-                + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
-            properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
+
+            if (configuration.get(sqlConnectionUrlOption) != null) {
+                properties.put("hibernate.connection.url", (String) configuration.get(sqlConnectionUrlOption));
+            } else {
+                properties.put("hibernate.connection.url", "jdbc:oracle:thin:@" + (String) configuration.get(sqlHostOption)
+                    + ":" + (String) configuration.get(sqlPortOption) + ":" + (String) configuration.get(sqlDBOption));
+                properties.put("hibernate.default_schema", (String) configuration.get(sqlDBOption));
+            }
+
             properties.put("hibernate.connection.oracle.jdbc.ReadTimeout", DataMigrator.SQL_TIMEOUT);
         } else {
             String driverClassName = "org.postgresql.Driver";
@@ -628,8 +742,13 @@ public class DataMigratorRunner {
 
             properties.put("hibernate.dialect", "org.hibernate.dialect.PostgreSQLDialect");
             properties.put("hibernate.driver_class", driverClassName);
+
+            if (configuration.get(sqlConnectionUrlOption) != null) {
+                properties.put("hibernate.connection.url", (String) configuration.get(sqlConnectionUrlOption));
+            } else {
             properties.put("hibernate.connection.url", "jdbc:postgresql://" + (String) configuration.get(sqlHostOption)
                 + ":" + (String) configuration.get(sqlPortOption) + "/" + (String) configuration.get(sqlDBOption));
+            }
         }
 
         log.debug("Creating entity manager with the following configuration:");
@@ -639,6 +758,38 @@ public class DataMigratorRunner {
         configuration.setProperties(properties);
         EntityManagerFactory factory = configuration.buildEntityManagerFactory();
         return factory;
+    }
+
+
+    /**
+      * Print the options used to run the migration process
+      */
+    private void printOptions() {
+        log.debug("Running migration with the following optons: ");
+        for (Entry<Object, Object> configOption : this.configuration.entrySet()) {
+            Option option = (Option) configOption.getKey();
+            if (option.getLongOpt() != null && !option.getLongOpt().contains("pass")) {
+                if (!(configOption.getValue() instanceof Object[])) {
+                    log.debug("  " + option.getLongOpt() + " : " + configOption.getValue());
+                } else {
+                    StringBuffer arrayProperty = new StringBuffer();
+                    arrayProperty.append("  ").append(option.getLongOpt()).append(" : [");
+                    boolean first = true;
+                    for (Object value : (Object[]) configOption.getValue()){
+                        if (!first) {
+                            arrayProperty.append(", ");
+                        }
+                        arrayProperty.append(value);
+                        first = false;
+                    }
+                    arrayProperty.append("]");
+
+                    log.debug(arrayProperty.toString());
+                }
+            } else {
+                log.debug("  " + option.getLongOpt() + " : <obscured value>");
+            }
+        }
     }
 
     /**
@@ -676,6 +827,20 @@ public class DataMigratorRunner {
             return Integer.parseInt(value.toString());
         } catch (Exception e) {
             return defaultValue;
+        }
+    }
+
+    private String deobfuscatePassword(String dbPassword) {
+        try {
+            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
+            Class<?> clazz = Class.forName(className);
+            Object object = clazz.newInstance();
+            Method method = clazz.getDeclaredMethod("decode", String.class);
+            method.setAccessible(true);
+            char[] result = (char[]) method.invoke(object, dbPassword);
+            return new String(result);
+        } catch (Exception e) {
+            throw new RuntimeException("de-obfuscating db password failed: ", e);
         }
     }
 

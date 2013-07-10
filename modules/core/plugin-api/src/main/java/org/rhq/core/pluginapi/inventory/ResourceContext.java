@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.core.pluginapi.inventory;
 
@@ -40,6 +36,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.availability.AvailabilityCollectorRunnable;
 import org.rhq.core.pluginapi.availability.AvailabilityContext;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
+import org.rhq.core.pluginapi.component.ComponentInvocationContext;
 import org.rhq.core.pluginapi.content.ContentContext;
 import org.rhq.core.pluginapi.event.EventContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
@@ -86,6 +83,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private final InventoryContext inventoryContext;
     private final PluginContainerDeployment pluginContainerDeployment;
     private final ResourceTypeProcesses trackedProcesses;
+    private final ComponentInvocationContext componentInvocationContext;
 
     private static class Children {
         public ResourceType resourceType;
@@ -122,6 +120,32 @@ public class ResourceContext<T extends ResourceComponent<?>> {
     private static Map<Children, ResourceTypeProcesses> PROCESSES_PER_PARENT_PER_RESOURCE_TYPE = new HashMap<Children, ResourceTypeProcesses>();
 
     /**
+     * Creates a new {@link ResourceContext} object with a default {@link ComponentInvocationContext}.
+     *
+     * @deprecated as of RHQ 4.9.
+     */
+    @Deprecated
+    public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
+        ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
+        File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
+        ContentContext contentContext, AvailabilityContext availabilityContext, InventoryContext inventoryContext,
+        PluginContainerDeployment pluginContainerDeployment) {
+        this(resource, parentResourceComponent, parentResourceContext, resourceDiscoveryComponent, systemInfo,
+            temporaryDirectory, dataDirectory, pluginContainerName, eventContext, operationContext, contentContext,
+            availabilityContext, inventoryContext, pluginContainerDeployment, new ComponentInvocationContext() {
+                @Override
+                public boolean isInterrupted() {
+                    throw new UnsupportedOperationException();
+                }
+
+                @Override
+                public void markInterrupted() {
+                    throw new UnsupportedOperationException();
+                }
+            });
+    }
+
+    /**
      * Creates a new {@link ResourceContext} object.
      *
      * <b>NOTE:</b> The plugin container is responsible for instantiating these objects; plugin writers should never
@@ -154,7 +178,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,
         File dataDirectory, String pluginContainerName, EventContext eventContext, OperationContext operationContext,
         ContentContext contentContext, AvailabilityContext availabilityContext, InventoryContext inventoryContext,
-        PluginContainerDeployment pluginContainerDeployment) {
+        PluginContainerDeployment pluginContainerDeployment, ComponentInvocationContext componentInvocationContext) {
 
         this.resourceKey = resource.getResourceKey();
         this.resourceType = resource.getResourceType();
@@ -187,6 +211,7 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         this.trackedProcesses = getTrackedProcesses(parentResourceUuid, resourceType);
 
         this.resourceUuid = resource.getUuid();
+        this.componentInvocationContext = componentInvocationContext;
     }
 
     /**
@@ -561,5 +586,15 @@ public class ResourceContext<T extends ResourceComponent<?>> {
         }
 
         return messageDigest.getDigestString();
+    }
+
+    /**
+     * Return the {@link ComponentInvocationContext} object which plugins can use to determine if the component
+     * invocation has been interrupted.
+     *
+     * @return a {@link ComponentInvocationContext} object
+     */
+    public ComponentInvocationContext getComponentInvocationContext() {
+        return componentInvocationContext;
     }
 }

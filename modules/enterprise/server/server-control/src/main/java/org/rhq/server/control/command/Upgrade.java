@@ -31,8 +31,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FilenameFilter;
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.net.InetAddress;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -222,40 +220,8 @@ public class Upgrade extends AbstractInstall {
 
         // We deduct the database parameters from the server properties
         try {
-            File propertiesFile = new File(getBinDir(), "rhq-server.properties");
-            Properties serverProperties = new Properties();
-            FileInputStream is = new FileInputStream(propertiesFile);
-            serverProperties.load(is);
-
-            String dbName = serverProperties.getProperty("rhq.server.database.db-name");
-            String dbUser = serverProperties.getProperty("rhq.server.database.user-name");
-            String dbType = serverProperties.getProperty("rhq.server.database.type-mapping");
-            String dbServerName = serverProperties.getProperty("rhq.server.database.server-name");
-            String dbServerPort = serverProperties.getProperty("rhq.server.database.port");
-            String dbPasswordProperty = serverProperties.getProperty("rhq.server.database.password");
-
-            if (dbType.toLowerCase().contains("postgres")) {
-                dbType = "postgres";
-            } else if (dbType.toLowerCase().contains("oracle")) {
-                dbType = "oracle";
-            } else {
-                throw new RHQControlException("Unknown database type " + dbType + " can not migrate data");
-            }
-
             org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-data-migration");
-
-            String cassandraHost = InetAddress.getLocalHost().getCanonicalHostName();
-            // Password in the properties file is obfuscated
-            String dbPassword = deobfuscatePassword(dbPasswordProperty);
-
-            commandLine.addArgument("--sql-user").addArgument(dbUser)
-                .addArgument("--sql-db").addArgument(dbName)
-                .addArgument("--sql-host").addArgument(dbServerName)
-                .addArgument("--sql-port").addArgument(dbServerPort)
-                .addArgument("--sql-server-type").addArgument(dbType)
-                .addArgument("--cassandra-hosts").addArgument(cassandraHost)
-                .addArgument("--sql-password ").addArgument(dbPassword);
-
+            commandLine.addArgument("-X");
             if (migrationOption.equals("estimate")) {
                 commandLine.addArgument("--estimate-only");
             }
@@ -269,25 +235,6 @@ public class Upgrade extends AbstractInstall {
         } catch (Exception e) {
             log.error("Running the data migrator failed - please try to run it from the command line: "
                 + e.getMessage());
-        }
-
-    }
-
-    private String deobfuscatePassword(String dbPassword) {
-
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-
-        try {
-            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
-            Class<?> clazz = Class.forName(className);
-            Object object = clazz.newInstance();
-            Method method = clazz.getDeclaredMethod("decode", String.class);
-            method.setAccessible(true);
-            char[] result = (char[]) method.invoke(object, dbPassword);
-            return new String(result);
-        } catch (Exception e) {
-            throw new RuntimeException("de-obfuscating db password failed: ", e);
         }
     }
 

@@ -19,7 +19,7 @@
     <properties>
         <surefire-plugin.version>2.10</surefire-plugin.version>
         <jackson.version>1.9.5</jackson.version>
-      <rest-assured.version>1.7.2</rest-assured.version>
+        <rest-assured.version>1.8.1</rest-assured.version>
     </properties>
 
     <build>

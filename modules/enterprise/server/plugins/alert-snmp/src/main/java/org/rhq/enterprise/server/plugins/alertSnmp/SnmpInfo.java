@@ -79,6 +79,18 @@ public class SnmpInfo {
         return new SnmpInfo(host, port, oid, trapOid);
     }
 
+    protected static SnmpInfo load(Configuration configuration, Configuration preferences) {
+        String host = configuration.getSimpleValue(PARAM_HOST, null); // optional
+        if (host==null || host.isEmpty()) {
+            host = preferences.getSimpleValue("defaultTargetHost",null);
+        }
+        String port = configuration.getSimpleValue(PARAM_PORT, DEFAULT_PORT);
+        String oid = configuration.getSimpleValue(PARAM_VARIABLE_BINDING_PREFIX, null); // required
+        String trapOid = configuration.getSimpleValue(PARAM_TRAP_OID, null);
+        return new SnmpInfo(host, port, oid, trapOid);
+
+    }
+
     @Override
     public String toString() {
         String hostString = (host == null ? "UnknownHost" : host);

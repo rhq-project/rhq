@@ -171,7 +171,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     lowBound = determineLowBound(min, peak);
                     highBound = peak + ((peak - min) * 0.1);
                     oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
-                        if (d.baselineMax == undefined) {
+                        if (typeof d.baselineMax === 'undefined') {
                             return 0;
                         }
                         else {
@@ -216,7 +216,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("height", height + margin.top - titleHeight - titleSpace + margin.bottom)
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
-                    legendUnDefined = (typeof min === undefined) || (typeof avg === undefined) || (typeof peak === undefined);
+                    legendUnDefined = (typeof min === 'undefined') || (typeof avg === 'undefined') || (typeof peak === 'undefined');
                     if (!useSmallCharts() && !legendUnDefined) {
                         createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                     }
@@ -251,7 +251,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase)
                         .text(highLabel + " - ");
 
-                if(highValue !== undefined){
+                if(typeof highValue !== 'undefined'){
                     chart.append("text")
                         .attr("class", "highText")
                         .attr("x", xValue)
@@ -267,7 +267,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + yInc)
                         .text(avgLabel + " - ");
 
-                if(avgValue !== undefined){
+                if(typeof avgValue !== 'undefined'){
                     chart.append("text")
                         .attr("class", "avgText")
                         .attr("x", xValue)
@@ -282,7 +282,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("y", yBase + 2 * yInc)
                         .text(minLabel + " - ");
 
-                if(minValue !== undefined){
+                if(typeof minValue !== 'undefined'){
                     chart.append("text")
                         .attr("class", "minText")
                         .attr("x", xValue)
@@ -461,17 +461,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }
 
             function createXandYAxes() {
-                var customTimeFormat = timeFormat([
-                    [$wnd.d3.time.format("%Y"), function() { return true; }],
-                    [$wnd.d3.time.format("%B"), function(d) { return d.getMonth(); }],
-                    [$wnd.d3.time.format("%b %d"), function(d) { return d.getDate() != 1; }],
-                    [$wnd.d3.time.format("%a %d"), function(d) { return d.getDay() && d.getDate() != 1; }],
-                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHours), function(d) { return d.getHours(); }],
-                    [$wnd.d3.time.format(chartContext.chartXaxisTimeFormatHoursMinutes), function(d) { return d.getMinutes(); }],
-                    [$wnd.d3.time.format(":%S"), function(d) { return d.getSeconds(); }],
-                    [$wnd.d3.time.format(".%L"), function(d) { return d.getMilliseconds(); }]
-                ]);
-                xAxis.tickFormat(customTimeFormat);
+
+                xAxis.tickFormat($wnd.rhqCommon.getD3CustomTimeFormat(chartContext.chartXaxisTimeFormatHours, chartContext.chartXaxisTimeFormatHoursMinutes));
 
                 // create x-axis
                 svg.append("g")
@@ -494,15 +485,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
 
             }
-
-            function timeFormat(formats) {
-                return function(date) {
-                    var i = formats.length - 1, f = formats[i];
-                    while (!f[1](date)) f = formats[--i];
-                    return f[0](date);
-                }
-            }
-
 
             function createAvgLines() {
                 var showBarAvgTrendline =
@@ -624,7 +606,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             function formatHovers(chartContext, d) {
                 var hoverString,
-                        xValue = (d.x == undefined) ? 0 : +d.x,
+                        xValue = (typeof d.x === 'undefined') ? 0 : +d.x,
                         date = new Date(+xValue),
                         barDuration = d.barDuration,
                         timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
@@ -711,7 +693,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }; // end public closure
         }();
 
-        if(chartContext.data !== undefined && chartContext.data.length > 0){
+        if(typeof chartContext.data !== 'undefined' && chartContext.data.length > 0){
             metricStackedBarGraph.draw(chartContext);
         }
 

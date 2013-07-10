@@ -61,6 +61,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return nodeAdded(parameters);
         } else if (name.equals("prepareForUpgrade")) {
             return prepareForUpgrade(parameters);
+        } else if (name.equals("readRepair")) {
+            return readRepair();
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -133,20 +135,38 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         return result;
     }
 
+    private OperationResult readRepair() {
+        KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
+        OperationResult result = new OperationResult();
+        Configuration resultConfig = result.getComplexResults();
+        PropertyList resultsList = new PropertyList("results");
+
+        OpResult opResult = repairKeyspace(keyspaceService, RHQ_KEYSPACE);
+        resultsList.add(toPropertyMap(opResult));
+
+        opResult = repairKeyspace(keyspaceService, SYSTEM_AUTH_KEYSPACE);
+        resultsList.add(toPropertyMap(opResult));
+
+        resultConfig.put(resultsList);
+
+        return result;
+    }
+
     private OpResult repairKeyspace(KeyspaceService keyspaceService, String keyspace) {
         OpResult result = new OpResult();
         result.operation = "repair " + keyspace + " keyspace";
         try {
             if (log.isDebugEnabled()) {
-                log.debug("Running repair on " + keyspace + " keyspace");
+                log.debug("Running primary range repair on " + keyspace + " keyspace");
             }
             long start = System.currentTimeMillis();
             keyspaceService.repairPrimaryRange(keyspace);
             long end = System.currentTimeMillis();
             if (log.isDebugEnabled()) {
-                log.debug("Finsihed repair on " + keyspace + " keyspace in " + (end - start) + " ms");
+                log.debug("Finsihed primary range repair on " + keyspace + " keyspace in " + (end - start) + " ms");
             }
             result.succeeded = true;
+            result.details = "Completed repair operation in " + (end - start) + " ms.";
         } catch (Exception e) {
             log.error("An error occurred while running repair on " + keyspace, e);
             Throwable rootCause = ThrowableUtil.getRootCause(e);

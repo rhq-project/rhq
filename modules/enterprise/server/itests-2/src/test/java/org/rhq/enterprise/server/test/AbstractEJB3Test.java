@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.enterprise.server.test;
 
 import java.io.File;
@@ -18,6 +37,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import javax.ejb.EJB;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -68,6 +88,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.MatchResult;
@@ -94,6 +115,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     @ArquillianResource
     protected InitialContext initialContext;
+
+    @EJB
+    private StorageClientManagerBean storageClientManager;
 
     // We originally (in 4.2.3 days) ran these tests as "unit" tests in the server/jar module using
     // the embedded container.  With Arquillian it makes sense to actually deploy an EAR because
@@ -325,8 +349,6 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.delete(ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBean$1.class"));
         testEar.delete(ArchivePaths
-            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBeanPreparation.class"));
-        testEar.delete(ArchivePaths
             .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/ShutdownListener.class"));
 
         //replace the above startup beans with stripped down versions
@@ -501,7 +523,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                         }
                     }
                 }
-
+                storageClientManager.init();
                 beforeMethod();
                 beforeMethod(method);
 

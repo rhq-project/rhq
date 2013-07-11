@@ -23,7 +23,7 @@ PATCH="apache-cassandra-1.2.4-patch-1.jar"
 
 # swap out the Cassandra jar file with the patched version
 echo "Copying patch file to $RHQ_SERVER_DIR/rhq-storage/lib"
-mv $RHQ_SERVER_DIR/rhq-storage/lib/apache-cassandra-1.2.4.jar $TMPDIR
+mv $RHQ_SERVER_DIR/rhq-storage/lib/apache-cassandra-1.2.4.jar .
 cp $PATCH $RHQ_SERVER_DIR/rhq-storage/lib
 
 # restart the storage node
@@ -54,6 +54,6 @@ $RHQ_SERVER_DIR/bin/rhqctl stop
 
 echo "Removing patch file"
 rm $RHQ_SERVER_DIR/rhq-storage/lib/$PATCH
-mv $TMPDIR/apache-cassandra-1.2.4.jar $RHQ_SERVER_DIR/rhq-storage/lib
+mv ./apache-cassandra-1.2.4.jar $RHQ_SERVER_DIR/rhq-storage/lib
 
 echo "Table compression has been disabled for all keyspaces. You are now ready to upgrade your RHQ installation."

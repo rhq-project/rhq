@@ -132,7 +132,8 @@ public class StorageInstaller {
 
         Option hostname = new Option("n", "hostname", true,
             "The hostname or IP address on which the node will listen for "
-                + "requests. If not specified, defaults to the hostname for localhost.");
+                + "requests. Note that if a hostname is specified, the IP address is used. Defaults to the IP " +
+            "address of the local host (which depending on hostname configuration may not be localhost).");
         hostname.setArgName("HOSTNAME");
 
         Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that "
@@ -282,7 +283,7 @@ public class StorageInstaller {
                 }
 
                 if (cmdLine.hasOption("n")) {
-                    hostname = cmdLine.getOptionValue("n");
+                    hostname = InetAddress.getByName(cmdLine.getOptionValue("n")).getHostAddress();
                 } else {
                     hostname = InetAddress.getLocalHost().getHostAddress();
                 }

@@ -2074,6 +2074,11 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.134">
+              <!-- Make sure existing storage nodes are storing IP addresses and not hostnames -->
+              <schema-javaTask className="StorageNodeAddressUpgradeTask" />
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

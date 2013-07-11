@@ -217,6 +217,7 @@
 	<classpathentry kind="src" path="modules/enterprise/server/data-migration/src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3-sources.jar"/>
+	<classpathentry exported="true" kind="var" path="M2_REPO/commons-io/commons-io/2.1/commons-io-2.1.jar" sourcepath="M2_REPO/commons-io/commons-io/2.1/commons-io-2.1-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpcore/4.2.2/httpcore-4.2.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpmime/4.2.3/httpmime-4.2.3.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpmime/4.2.3/httpmime-4.2.3-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/integration/jboss-profileservice-spi/5.1.0.SP1/jboss-profileservice-spi-5.1.0.SP1.jar"/>

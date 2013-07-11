@@ -13,7 +13,7 @@
         <relativePath>../../../../pom.xml</relativePath>
     </parent>
 
-    <artifactId>rhq-enterprise-server-startup-subsystem</artifactId>
+    <artifactId>server-startup</artifactId>
 
     <name>RHQ Server Startup AS7 Subsystem</name>
 
@@ -106,7 +106,7 @@
             <artifactId>jboss-as-ee</artifactId>
             <scope>provided</scope>
         </dependency>
-        
+
         <!-- our startup subsystem will be deploying this -->
         <dependency>
             <groupId>org.rhq</groupId>

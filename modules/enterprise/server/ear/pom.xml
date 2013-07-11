@@ -238,7 +238,7 @@
                         <ejbModule>
                             <groupId>${project.groupId}</groupId>
                             <artifactId>rhq-enterprise-server</artifactId>
-                            <bundleFileName>rhq-enterprise-server-ejb3.jar</bundleFileName>
+                            <bundleFileName>rhq-server.jar</bundleFileName>
                         </ejbModule>
 
                         <ejbClientModule>
@@ -832,7 +832,7 @@
                 <rhq.rootDir>../../../..</rhq.rootDir>
                 <rhq.containerDir>${rhq.rootDir}/${rhq.devContainerServerPath}</rhq.containerDir>
                 <rhq.deploymentName>${project.build.finalName}.ear</rhq.deploymentName>
-                <rhq.deploymentDir>${rhq.containerDir}/modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.deploymentName}</rhq.deploymentDir>
+                <rhq.deploymentDir>${rhq.containerDir}/modules/org/rhq/server-startup/main/deployments/${rhq.deploymentName}</rhq.deploymentDir>
             </properties>
 
             <build>

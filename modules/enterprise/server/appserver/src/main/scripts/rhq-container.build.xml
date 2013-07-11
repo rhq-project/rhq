@@ -80,7 +80,7 @@
         <property name="jboss.modules.dir" location="${project.build.outputDirectory}/modules" />
         <mkdir dir="${jboss.modules.dir}" />
 
-        <property name="rhq.ear.dir" location="${jboss.modules.dir}/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}" />
+        <property name="rhq.ear.dir" location="${jboss.modules.dir}/org/rhq/server-startup/main/deployments/${rhq.earName}" />
 
         <condition property="use-postgres" value="true">
             <contains string="${rhq.server.database.type-mapping}" substring="postgres" casesensitive="false" />
@@ -164,7 +164,7 @@
         <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBossAS installation - aborting!" />
 
         <echo>Adding main EAR app module to ${jboss.modules.dir} ...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/rhq-enterprise-server-startup-subsystem/${project.version}/rhq-enterprise-server-startup-subsystem-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/server-startup/${project.version}/server-startup-${project.version}.zip"
                dest="${jboss.modules.dir}" />
 
         <echo>Adding installer module to ${jboss.modules.dir} ...</echo>

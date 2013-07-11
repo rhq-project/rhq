@@ -44,8 +44,8 @@ import org.rhq.enterprise.server.safeinvoker.HibernateDetachUtility;
  * Although, we execute only locals to bypass the serialization performed by a remote invocation. Even
  * though this handler is co-located, for remotes, remoting will serialize the return data immediately.
  * This is bad for us because since we return domain objects we ned to scrub the data, removing
- * hibernate proxies (see {@link HibernateDetachUtility}.  
- * 
+ * hibernate proxies (see {@link HibernateDetachUtility}.
+ *
  * @author Greg Hinkle
  * @autor Jay Shaughnessy
  */
@@ -103,7 +103,7 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
             Object target = ic.lookup(jndiName);
             Method m = target.getClass().getMethod(methodInfo[1], sig);
 
-            // switch to the local 
+            // switch to the local
             jndiName = getLocalJNDIName(remoteClass);
             target = ic.lookup(jndiName);
 
@@ -146,12 +146,12 @@ public class RemoteSafeInvocationHandler implements ServerInvocationHandler {
     }
 
     private static <T> String getLocalJNDIName(Class<?> remoteClass) {
-        return ("java:global/rhq/rhq-enterprise-server-ejb3/" + remoteClass.getSimpleName().replace("Remote", "Bean")
+        return ("java:global/rhq/rhq-server/" + remoteClass.getSimpleName().replace("Remote", "Bean")
             + "!" + remoteClass.getName().replace("Remote", "Local"));
     }
 
     private static <T> String getRemoteJNDIName(Class<?> remoteClass) {
-        return ("java:global/rhq/rhq-enterprise-server-ejb3/" + remoteClass.getSimpleName().replace("Remote", "Bean")
+        return ("java:global/rhq/rhq-server/" + remoteClass.getSimpleName().replace("Remote", "Bean")
             + "!" + remoteClass.getName());
     }
 

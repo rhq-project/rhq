@@ -482,7 +482,7 @@ public final class LookupUtil {
     public static TopologyManagerLocal getTopologyManager() {
         return lookupLocal(TopologyManagerBean.class);
     }
-    
+
     public static StorageNodeManagerLocal getStorageNodeManager() {
         return lookupLocal(StorageNodeManagerBean.class);
     }
@@ -636,10 +636,10 @@ public final class LookupUtil {
 
     /**
      * Generic method to lookup an Ejb bean by name and the interface name
-     * 
+     *
      * @param beanName the name of the EJB bean
      * @param interfaceName the full class name of either the remote or local interface
-     * 
+     *
      * @return the bean accessed through specified interface
      */
     public static Object getEjb(String beanName, String interfaceName) {
@@ -656,7 +656,7 @@ public final class LookupUtil {
     // Private Methods
 
     private static String getLocalJNDIName(String beanName, String interfaceName) {
-        return "java:global/rhq/rhq-enterprise-server-ejb3/" + beanName + "!" + interfaceName;
+        return "java:global/rhq/rhq-server/" + beanName + "!" + interfaceName;
     }
 
     private static <T> String getLocalJNDIName(@NotNull
@@ -673,7 +673,7 @@ public final class LookupUtil {
      */
     private static <T> String getRemoteJNDIName(@NotNull
                                                 Class<? extends T> beanClass) {
-        return ("java:global/rhq/rhq-enterprise-server-ejb3/" + beanClass.getSimpleName() + "!" + beanClass.getName()
+        return ("java:global/rhq/rhq-server/" + beanClass.getSimpleName() + "!" + beanClass.getName()
                 .replace("Bean", "Remote"));
     }
 

@@ -354,7 +354,7 @@ public class Install extends AbstractInstall {
 
     private File getAgentInstaller() {
         File agentDownloadDir = new File(getBaseDir(),
-            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
         return agentDownloadDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {

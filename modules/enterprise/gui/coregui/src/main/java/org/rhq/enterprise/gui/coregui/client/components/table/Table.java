@@ -1202,16 +1202,15 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             }
 
             if (hiddenItem != null) {
-                Log.debug("Found hidden items");
                 // Add the hidden item if it exists
                 FormItem[] tmpItems = new FormItem[items.length + 1];
                 System.arraycopy(items, 0, tmpItems, 0, items.length);
                 tmpItems[items.length] = hiddenItem;
                 items = tmpItems;
             }
-            for (FormItem item : items) {
-                Log.debug(" ********     Form Items sent: " + item.getName() + ": " + item.getValue());
-            }
+//            for (FormItem item : items) {
+//                Log.debug(" ********     Form Items sent: " + item.getName() + ": " + item.getValue());
+//            }
 
             super.setItems(items);
         }
@@ -1223,19 +1222,16 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         @Override
         public void onKeyPress(KeyPressEvent event) {
             if (event.getKeyName().equals("Enter")) {
-                Log.debug("Table.TableFilter Pressed Enter key");
 
                 if (null != searchBarItem) {
                     if (searchBarItem.getSearchBar().isFilterEnabled()) {
                         TextItem searchTextItem = searchBarItem.getSearchBar().getSearchTextItem();
                         String searchBarValue = searchTextItem.getValueAsString();
                         String hiddenValue = (String) hiddenItem.getValue();
-                        Log.debug("Table.TableFilter searchBarValue :" + searchBarValue + ", hiddenValue" + hiddenValue);
 
                         // Only send a fetch request if the user actually changed the search expression.
                         if (!equals(searchBarValue, hiddenValue)) {
                             hiddenItem.setValue(searchBarValue);
-                            Log.debug("Table.TableFilter fetchFilteredTableData");
                             fetchFilteredTableData();
                         }
                     }

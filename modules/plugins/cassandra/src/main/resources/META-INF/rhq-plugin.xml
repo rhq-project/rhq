@@ -187,8 +187,8 @@
       </operation>
 
       <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
-      <metric property="Calculated.PartitionDiskUsedPercentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of total disk space used for the partition that contains the data files.
-                                                                                                                                   If multiple data locations are specified then this will report the average utilization accross all the partitions."/>
+      <metric property="Calculated.PartitionDiskUsedPercentage" displayName="Data File Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of disk space used by the data files. If multiple data locations are specified then this will report
+                                                                                                                                                the average utilization accross all the partitions that contain data files."/>
       <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
       <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
       <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>

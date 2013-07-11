@@ -60,6 +60,8 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
     private static final String OWNERSHIP_METRIC_NAME = "Ownership";
     private static final String PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.PartitionDiskUsedPercentage";
     private static final String DATA_FILE_LOCATIONS_NAME = "AllDataFileLocations";
+    private static final String LOAD_NAME = "Load";
+
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
     private InetAddress host;
 
@@ -178,23 +180,30 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                 }
                 break;
             } else if (PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())) {
-                EmsAttribute attribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
-                Object valueObject = attribute.refresh();
-                if (valueObject instanceof String[]) {
+
+
+                EmsAttribute loadAttribute = bean.getAttribute(LOAD_NAME);
+                Object loadValue = loadAttribute.refresh();
+
+                EmsAttribute dataFileLocationAttribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
+                Object dataFileLocationValue = dataFileLocationAttribute.refresh();
+
+                if (loadValue != null && dataFileLocationValue != null && dataFileLocationValue instanceof String[]) {
                     //Please visit for details: https://issues.apache.org/jira/browse/CASSANDRA-2749
                     //The average usage of all partitions with the data will be reported.
                     //Cassandra selects the partition with most free space for SStable flush and compaction.
-                    report.addData(new MeasurementDataNumeric(request,
-                        getPartitionDiskUsedPercentage((String[]) valueObject)));
+                    double load = Double.parseDouble(loadValue.toString());
+
+                    report.addData(new MeasurementDataNumeric(request, getPartitionDiskUsedPercentage(load,
+                        (String[]) dataFileLocationValue)));
                 }
             }
         }
     }
 
-    private double getPartitionDiskUsedPercentage(String[] paths) {
+    private double getPartitionDiskUsedPercentage(double dataSize, String[] paths) {
         List<String> visitedMountPoints = new ArrayList<String>();
         long totalDiskSpace = 0;
-        long totalUsedDiskSpace = 0;
 
         for (String path : paths) {
             try {
@@ -202,7 +211,6 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                 if (!visitedMountPoints.contains(fileSystemInfo.getMountPoint())) {
                     visitedMountPoints.add(fileSystemInfo.getMountPoint());
                     totalDiskSpace += fileSystemInfo.getFileSystemUsage().getTotal();
-                    totalUsedDiskSpace += fileSystemInfo.getFileSystemUsage().getUsed();
                 }
             } catch (Exception e) {
                 log.error("Unable to determine file system usage information for data file location " + path, e);
@@ -210,7 +218,7 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
         }
 
         if (totalDiskSpace != 0) {
-            double rawPercentage = ((double) totalUsedDiskSpace) / ((double) totalDiskSpace);
+            double rawPercentage = dataSize / ((double) totalDiskSpace);
             return Math.round(rawPercentage * 100.0) / 100.0;
         }
 

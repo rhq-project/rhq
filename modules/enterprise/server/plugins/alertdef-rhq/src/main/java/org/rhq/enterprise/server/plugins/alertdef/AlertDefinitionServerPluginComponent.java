@@ -300,7 +300,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         AlertCondition ac = new AlertCondition();
         ac.setCategory(AlertConditionCategory.THRESHOLD);
         ac.setComparator(">");
-        ac.setThreshold(0.75D);
+        ac.setThreshold(0.5D);
 
         List<Integer> measurementDefinitionIds = new ArrayList<Integer>(1);
         for (MeasurementDefinition d : resourceType.getMetricDefinitions()) {

@@ -75,7 +75,11 @@
       </results>
     </operation>
 
-    <operation name="updateSeedsList" description="Updatess the node's seeds property in cassandra.yaml">
+    <operation name="updateSeedsList"
+               description="Updates the node's seeds property in cassandra.yaml. seedsList must be a list of valid
+               hostnames or IP addresses that are reachable from the agent machine. Note that if hostnames are
+               specified they will be converted to IP addresses so that the seeds property will consist solely of IP
+               addresses.">
       <parameters>
         <c:list-property name="seedsList">
           <c:simple-property name="seed" type="string"/>

@@ -151,6 +151,7 @@
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <freemarker.version>2.3.18</freemarker.version>
+    <swagger-annotations.version>1.2.5</swagger-annotations.version>
     <powermock.version>1.4.12</powermock.version>
     <arquillian.version>1.0.3.Final</arquillian.version>
     <arquillian.jboss.container.version>7.2.0.Final</arquillian.jboss.container.version>
@@ -901,7 +902,7 @@
          <artifactId>javax.servlet-api</artifactId>
          <version>3.0.1</version>
       </dependency>
-   
+
       <dependency>
          <groupId>org.yaml</groupId>
          <artifactId>snakeyaml</artifactId>

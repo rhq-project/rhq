@@ -439,7 +439,7 @@
     <dependency>
       <groupId>com.wordnik</groupId>
       <artifactId>swagger-annotations_2.9.1</artifactId>
-      <version>1.1.1-SNAPSHOT</version>
+      <version>${swagger-annotations.version}</version>
       <scope>provided</scope>
     </dependency>
 
@@ -686,15 +686,6 @@
 
   </build>
 
-  <repositories>
-    <repository>
-      <!-- TODO change when the annotations are published. This is temporary for the swagger annotations for REST-docu -->
-      <id>sonatype-oss-snapshot</id>
-      <name>Sonatype OSS Snapshot repository</name>
-      <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-    </repository>
-
-  </repositories>
 
   <profiles>
 

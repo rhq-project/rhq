@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.cloud;
 
 import javax.ejb.Remote;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
@@ -28,7 +29,7 @@ import org.rhq.core.domain.util.PageList;
 
 /**
  * Remote interface to the manager responsible for creating and managing storage nodes.
- *  
+ *
  * @author Jirka Kremser
  */
 @Remote
@@ -36,9 +37,9 @@ public interface StorageNodeManagerRemote {
 
     /**
      * <p>Returns the summary of load of the storage node.</p>
-     * 
+     *
      * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
-     * 
+     *
      * @param subject   user that must have proper permissions
      * @param node      storage node entity (it can be a new object, but the id should be set properly)
      * @param beginTime the start time
@@ -58,4 +59,19 @@ public interface StorageNodeManagerRemote {
      */
     PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
 
+    /**
+     * Fetches the list of Storage Node related alerts that have not yet been acknowledged.
+     *
+     * @param subject subject
+     * @return storage nodes alerts not acknowledged
+     */
+    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject);
+
+    /**
+     * Fetches all the Storage Node related alerts.
+     *
+     * @param subject subject
+     * @return all storage nodes alerts
+     */
+    PageList<Alert> findAllStorageNodeAlerts(Subject subject);
 }

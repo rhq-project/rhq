@@ -28,8 +28,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -43,6 +45,7 @@ import org.quartz.JobDataMap;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
@@ -51,6 +54,7 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
@@ -59,8 +63,11 @@ import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RequiredPermissions;
@@ -109,6 +116,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private OperationManagerLocal operationManager;
+
+    @EJB
+    private AlertManagerLocal alertManager;
 
     @Override
     public void linkResource(Resource resource) {
@@ -427,7 +437,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         entityManager.flush();
     }
-    
+
     private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
         int schedId, MeasurementUnits units, long beginTime, long endTime) {
         MeasurementAggregate measurementAggregate = measurementManager.getAggregate(subject, schedId, beginTime,
@@ -471,5 +481,82 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         schedule.setDescription("Run scheduled read repair on storage node");
 
         operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
+    }
+
+    @Override
+    public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject) {
+        return findStorageNodeAlerts(subject, false);
+    }
+
+    @Override
+    public PageList<Alert> findAllStorageNodeAlerts(Subject subject) {
+        return findStorageNodeAlerts(subject, true);
+    }
+
+    /**
+     * Find the set of alerts related to Storage Node resources and sub-resources.
+     *
+     * @param subject subject
+     * @param allAlerts if [true] then return all alerts; if [false] then return only alerts that are not acknowledged
+     * @return alerts
+     */
+    private PageList<Alert> findStorageNodeAlerts(Subject subject, boolean allAlerts) {
+        Integer[] resouceIdsWithAlertDefinitions = findResourcesWithAlertDefinitions();
+        PageList<Alert> alerts = new PageList<Alert>();
+
+        if( resouceIdsWithAlertDefinitions != null && resouceIdsWithAlertDefinitions.length != 0 ){
+            AlertCriteria criteria = new AlertCriteria();
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            criteria.addFilterResourceIds(resouceIdsWithAlertDefinitions);
+            criteria.addSortCtime(PageOrdering.DESC);
+
+            alerts = alertManager.findAlertsByCriteria(subject, criteria);
+
+            if (!allAlerts) {
+                //select on alerts that are not acknowledge
+                PageList<Alert> trimmedAlerts = new PageList<Alert>();
+                for (Alert alert : alerts) {
+                    if (alert.getAcknowledgeTime() == null || alert.getAcknowledgeTime() <= 0) {
+                        trimmedAlerts.add(alert);
+                    }
+                }
+
+                alerts = trimmedAlerts;
+            }
+        }
+
+        return alerts;
+    }
+
+    /**
+     * Return resource Ids for all resources and sub-resources of Storage Nodes that
+     * have alert definitions. This will be used by the resource criteria to find
+     * all alerts triggered for storage nodes.
+     *
+     * @return
+     */
+    private Integer[] findResourcesWithAlertDefinitions() {
+        List<Integer> resourceIdsWithAlertDefinitions = new ArrayList<Integer>();
+        List<StorageNode> test2 = getStorageNodes();
+
+        Queue<Resource> unvisitedResources = new LinkedList<Resource>();
+        for (StorageNode node : test2) {
+            if (node.getResource() != null) {
+                unvisitedResources.add(node.getResource());
+            }
+        }
+
+        while(!unvisitedResources.isEmpty()){
+            Resource resource = unvisitedResources.poll();
+            if (resource.getAlertDefinitions() != null) {
+                resourceIdsWithAlertDefinitions.add(resource.getId());
+            }
+
+            for(Resource child: resource.getChildResources()){
+                unvisitedResources.add(child);
+            }
+        }
+
+        return resourceIdsWithAlertDefinitions.toArray(new Integer[resourceIdsWithAlertDefinitions.size()]);
     }
 }

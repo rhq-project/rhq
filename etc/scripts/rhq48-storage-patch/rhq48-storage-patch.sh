@@ -30,24 +30,31 @@ cp $PATCH $RHQ_SERVER_DIR/rhq-storage/lib
 echo "Starting RHQ Storage node"
 $RHQ_SERVER_DIR/bin/rhqctl start --storage
 
+# sleep for a few seconds while Cassandra starts up
+echo "Waiting for RHQ Storage Node to start up..."
+sleep 3
+
 # run the CQL script
 echo "Running CQL script to disable table compression"
 export CQLSH_HOST=$CQLSH_HOST
 export CQL_PORT=$CQL_PORT
 $RHQ_SERVER_DIR/rhq-storage/bin/cqlsh -u rhqadmin -p rhqadmin -f ./disable_compression.cql
 
-# scrub all keyspaces
+# rewrite all sstables
 echo "Rebuilding data files for system keyspace"
-$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT scrub system
+$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT upgradesstables --include-all-sstables system
 
 echo "Rebuilding data files for system_traces keyspace"
-$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT scrub system_traces
+$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT upgradesstables --include-all-sstables system_traces
 
 echo "Rebuilding data files for system_auth keyspace"
-$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT scrub system_auth
+$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT upgradesstables --include-all-sstables system_auth
 
 echo "Rebuilding data files for rhq keyspace"
-$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT scrub rhq
+$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT upgradesstables --include-all-sstables rhq
+
+# flush memtables and commit log to ensure no data loss prior to upgrade
+$RHQ_SERVER_DIR/rhq-storage/bin/nodetool -u rhqadmin -pw rhqadmin -p $JMX_PORT drain
 
 echo "Shutting down the RHQ Storage node"
 $RHQ_SERVER_DIR/bin/rhqctl stop

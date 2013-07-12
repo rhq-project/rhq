@@ -89,7 +89,6 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
                 if (value == null) {
                     return "";
                 }
-                //String formattedValue = StringUtility.escapeHtml(value.toString());
                 String contents = "<span id='sparkline_" + resourceId + "-"
                     + record.getAttributeAsInt(FIELD_METRIC_DEF_ID) + "' class='dynamicsparkline' width='70' "
                     + "values='" + record.getAttribute(FIELD_SPARKLINE) + "'></span>";
@@ -158,25 +157,25 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
     }
 
     private String getCsvMetricsForSparkline() {
-       StringBuilder sb = new StringBuilder();
-        Log.debug("getCsvMetricsForSparkline.metricsDataList: "+metricsDataList.size());
-        for (List<MeasurementDataNumericHighLowComposite> measurementData: metricsDataList) {
-            int i = 0;
-            for (MeasurementDataNumericHighLowComposite measurementDataComposite : measurementData) {
-                // take the last 10 values
-                if(i >= 50) {
-                    sb.append(measurementDataComposite.getValue());
-                    sb.append(",");
-                    i++;
+        StringBuilder sb = new StringBuilder();
+        Log.debug("getCsvMetricsForSparkline.metricsDataList: " + metricsDataList.size());
+        for (List<MeasurementDataNumericHighLowComposite> measurementData : metricsDataList) {
+            for (int i = 0; i < measurementData.size(); i++) {
+                // take the last 20 values
+                if (i >= measurementData.size() - 20) {
+                    if (!Double.isNaN(measurementData.get(i).getValue())) {
+                        sb.append((int) measurementData.get(i).getValue());
+                        sb.append(",");
+                    }
                 }
             }
-            if(sb.toString().endsWith(",")){
+            if (sb.toString().endsWith(",")) {
                 sb.setLength(sb.length() - 1);
             }
         }
-        Log.debug("getCsvMetricsForSparkline: "+sb.toString());
+        Log.debug("getCsvMetricsForSparkline: " + sb.toString());
 
-       return sb.toString();
+        return sb.toString();
     }
 
     protected String getMetricStringValue(MetricDisplayValue value) {
@@ -216,28 +215,28 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
                                     BrowserUtility.graphSparkLines();
                                 }
                             }.schedule(150);
-                            Log.debug("*** Finished CountdownLatch for metrics loaded: "+ metricsDataList.size());
+                            Log.debug("*** Finished CountdownLatch for metrics loaded: " + metricsDataList.size());
                         }
                     });
 
                     retrieveResourceMetrics(resourceId, countDownLatch);
 
-                    GWTServiceLookup.getMeasurementChartsService().
-                    getMetricDisplaySummariesForResource(resourceId, scheduleIds,
-                            measurementUserPrefs.getMetricRangePreferences().begin, measurementUserPrefs.getMetricRangePreferences().end,
-                        new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
-                            @Override
-                            public void onSuccess(ArrayList<MetricDisplaySummary> metricDisplaySummaries) {
-                                setMetricDisplaySummaries(metricDisplaySummaries);
-                                countDownLatch.countDown();
-                            }
+                    GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForResource(resourceId,
+                            scheduleIds, measurementUserPrefs.getMetricRangePreferences().begin,
+                            measurementUserPrefs.getMetricRangePreferences().end,
+                            new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
+                                @Override
+                                public void onSuccess(ArrayList<MetricDisplaySummary> metricDisplaySummaries) {
+                                    setMetricDisplaySummaries(metricDisplaySummaries);
+                                    countDownLatch.countDown();
+                                }
 
-                            @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError("Cannot load metrics", caught);
-                                countDownLatch.countDown();
+                                @Override
+                                public void onFailure(Throwable caught) {
+                                    CoreGUI.getErrorHandler().handleError("Cannot load metrics", caught);
+                                    countDownLatch.countDown();
+                                }
                             }
-                        }
 
                     );
                 }
@@ -253,86 +252,82 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
         this.metricDisplaySummaries = metricDisplaySummaries;
     }
 
-
-
-    public void retrieveResourceMetrics(final Integer resourceId, final CountDownLatch countDownLatch){
+    public void retrieveResourceMetrics(final Integer resourceId, final CountDownLatch countDownLatch) {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
 
         //locate the resource
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceComposite>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Log.debug("Error retrieving resource resource composite for resource [" + resourceId + "]:"
-                                + caught.getMessage());
-                    }
+            new AsyncCallback<PageList<ResourceComposite>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Log.debug("Error retrieving resource resource composite for resource [" + resourceId + "]:"
+                        + caught.getMessage());
+                }
 
-                    @Override
-                    public void onSuccess(PageList<ResourceComposite> resourceCompositePageList) {
-                        if (!resourceCompositePageList.isEmpty()) {
-                            final ResourceComposite resourceComposite = resourceCompositePageList.get(0);
-                            final Resource resource = resourceComposite.getResource();
-                            // Load the fully fetched ResourceType.
-                            ResourceType resourceType = resource.getResourceType();
-                            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-                                    resourceType.getId(),
-                                    EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-                                    new ResourceTypeRepository.TypeLoadedCallback() {
-                                        public void onTypesLoaded(ResourceType type) {
-                                            resource.setResourceType(type);
-                                            //metric definitions
-                                            Set<MeasurementDefinition> definitions = type.getMetricDefinitions();
+                @Override
+                public void onSuccess(PageList<ResourceComposite> resourceCompositePageList) {
+                    if (!resourceCompositePageList.isEmpty()) {
+                        final ResourceComposite resourceComposite = resourceCompositePageList.get(0);
+                        final Resource resource = resourceComposite.getResource();
+                        // Load the fully fetched ResourceType.
+                        ResourceType resourceType = resource.getResourceType();
+                        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resourceType.getId(),
+                            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                            new ResourceTypeRepository.TypeLoadedCallback() {
+                                public void onTypesLoaded(ResourceType type) {
+                                    resource.setResourceType(type);
+                                    //metric definitions
+                                    Set<MeasurementDefinition> definitions = type.getMetricDefinitions();
 
-                                            //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
-                                            final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
-                                            for (MeasurementDefinition definition : definitions) {
-                                                measurementDefMap.put(definition.getDisplayName(), definition);
+                                    //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+                                    final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
+                                    for (MeasurementDefinition definition : definitions) {
+                                        measurementDefMap.put(definition.getDisplayName(), definition);
+                                    }
+                                    //bundle definition ids for asynch call.
+                                    int[] definitionArrayIds = new int[definitions.size()];
+                                    final String[] displayOrder = new String[definitions.size()];
+                                    measurementDefMap.keySet().toArray(displayOrder);
+                                    //sort the charting data ex. Free Memory, Free Swap Space,..System Load
+                                    Arrays.sort(displayOrder);
+
+                                    //organize definitionArrayIds for ordered request on server.
+                                    int index = 0;
+                                    for (String definitionToDisplay : displayOrder) {
+                                        definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
+                                            .getId();
+                                    }
+
+                                    GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId,
+                                        definitionArrayIds, measurementUserPrefs.getMetricRangePreferences().begin,
+                                        measurementUserPrefs.getMetricRangePreferences().end, 60,
+                                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                                            @Override
+                                            public void onFailure(Throwable caught) {
+                                                Log.warn("Error retrieving recent metrics charting data for resource ["
+                                                    + resourceId + "]:" + caught.getMessage());
                                             }
-                                            //bundle definition ids for asynch call.
-                                            int[] definitionArrayIds = new int[definitions.size()];
-                                            final String[] displayOrder = new String[definitions.size()];
-                                            measurementDefMap.keySet().toArray(displayOrder);
-                                            //sort the charting data ex. Free Memory, Free Swap Space,..System Load
-                                            Arrays.sort(displayOrder);
 
-                                            //organize definitionArrayIds for ordered request on server.
-                                            int index = 0;
-                                            for (String definitionToDisplay : displayOrder) {
-                                                definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
-                                                        .getId();
+                                            @Override
+                                            public void onSuccess(
+                                                List<List<MeasurementDataNumericHighLowComposite>> measurementDataList) {
+
+                                                if (!measurementDataList.isEmpty()) {
+                                                    metricsDataList = measurementDataList;
+                                                    Log.debug("*** Setting metricsDataList.size: "
+                                                        + metricsDataList.size());
+                                                    countDownLatch.countDown();
+                                                }
                                             }
+                                        });
 
-
-                                            GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId, definitionArrayIds,
-                                                    measurementUserPrefs.getMetricRangePreferences().begin,
-                                                    measurementUserPrefs.getMetricRangePreferences().end, 60,
-                                             new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                                                @Override
-                                                public void onFailure(Throwable caught) {
-                                                    Log.warn("Error retrieving recent metrics charting data for resource ["
-                                                            + resourceId + "]:" + caught.getMessage());
-                                                }
-
-                                                @Override
-                                                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> measurementDataList) {
-
-                                                    if (!measurementDataList.isEmpty()) {
-                                                        metricsDataList = measurementDataList;
-                                                        Log.debug("*** Setting metricsDataList.size: "+metricsDataList.size());
-                                                        countDownLatch.countDown();
-                                                    }
-                                                }
-                                            });
-
-
-
-                                        }
-                                    });
-                        }
+                                }
+                            });
                     }
-                });
+                }
+            });
 
     }
 }

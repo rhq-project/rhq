@@ -285,7 +285,7 @@ public class MetricsTableView extends Table<MetricsTableDataSource> implements R
 
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
-            setExpansionMode(ExpansionMode.RELATED);
+            setExpansionMode(ExpansionMode.DETAIL_FIELD);
         }
 
         @Override

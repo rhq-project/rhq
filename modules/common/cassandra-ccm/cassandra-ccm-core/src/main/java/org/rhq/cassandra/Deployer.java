@@ -31,10 +31,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -83,10 +85,13 @@ public class Deployer {
 
         applyConfigChanges(confDir, "cassandra.yaml", tokens);
         applyConfigChanges(confDir, "log4j-server.properties", tokens);
-        applyConfigChanges(confDir, "cassandra-env.sh", tokens);
+        applyChangesToCassandraJvmProps(confDir, deploymentOptions);
+//        applyConfigChanges(confDir, "cassandra-env.sh", tokens);
     }
 
-    private void applyConfigChanges(File confDir, String fileName, Map<String, String> tokens) throws DeploymentException {
+    private void applyConfigChanges(File confDir, String fileName, Map<String, String> tokens)
+        throws DeploymentException {
+
         File filteredFile = new File(confDir, fileName);
         try {
             if (log.isInfoEnabled()) {
@@ -101,6 +106,29 @@ public class Deployer {
             log.error("An unexpected error occurred while apply configuration changes to " + filteredFile, e);
             throw new DeploymentException("An unexpected error occurred while apply configuration changes to " +
                 filteredFile, e);
+        }
+    }
+
+    private void applyChangesToCassandraJvmProps(File confDir, DeploymentOptions deploymentOptions)
+        throws DeploymentException {
+
+        File jvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+        try {
+            log.info("Applying configuration changes to " + jvmPropsFile);
+
+            PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(jvmPropsFile.getAbsolutePath());
+            Properties properties = propertiesUpdater.loadExistingProperties();
+
+            properties.setProperty("heap_min", "-Xms" + deploymentOptions.getHeapSize());
+            properties.setProperty("heap_max", "-Xmx" + deploymentOptions.getHeapSize());
+            properties.setProperty("heap_new", "-Xmn" + deploymentOptions.getHeapNewSize());
+            properties.setProperty("thread_stack_size", "-Xss" + deploymentOptions.getStackSize());
+            properties.setProperty("jmx_port", deploymentOptions.getJmxPort().toString());
+
+            propertiesUpdater.update(properties);
+        } catch (IOException e) {
+            log.error("An error occurred while updating " + jvmPropsFile, e);
+            throw new DeploymentException("An error occurred while updating " + jvmPropsFile, e);
         }
     }
 

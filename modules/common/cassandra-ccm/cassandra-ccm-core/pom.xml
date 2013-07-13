@@ -167,6 +167,9 @@
                 <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
                       todir="${cassandra.dir}/lib"/>
                 <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
+                <delete file="${cassandra.dir}/bin/cassandra"/>
+                <move file="${project.build.outputDirectory}/cassandra/bin/cassandra" todir="${cassandra.dir}/bin"/>
+                <delete dir="${project.build.outputDirectory}/cassandra"/>
                 <delete dir="${cassandra.dir}/javadoc"/>
 
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>

@@ -103,8 +103,8 @@ public class DeployerITest {
     }
 
     @Test(dependsOnMethods = "applyConfigChanges")
-    public void verifyConfigChangesToCassandraEnv() throws Exception {
-        assertFileDeployedAndUpdated("cassandra-env.sh");
+    public void verifyConfigChangesToCassandraJvmOpts() throws Exception {
+        assertFileDeployedAndUpdated("cassandra-jvm.properties");
     }
 
     private void assertFileDeployedAndUpdated(String fileName) throws Exception {

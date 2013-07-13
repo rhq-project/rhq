@@ -111,6 +111,21 @@
       </parameters>
     </operation>
 
+    <resource-configuration>
+      <c:group name="MemorySettings">
+        <c:simple-property name="minHeapSize"
+                           description="The minimum heap size. This value will be used with the -Xms JVM option. This
+                           should always be the same as Max Heap Size."/>
+        <c:simple-property name="maxHeapSize"
+                           description="The maximum heap size. This value will be used with the -Xmx JVM option."/>
+        <c:simple-property name="heapNewSize"
+                           description="The size of the new generation portion of the heap. This value will be used with
+                           the -Xmn JVM option."/>
+        <c:simple-property name="threadStackSize"
+                           description="The thread stack size. This memory is allocated to each thread off heap."/>
+      </c:group>
+    </resource-configuration>
+
     <server name="Cassandra Server JVM"
             sourcePlugin="JMX" sourceType="JMX Server"
             discovery="org.rhq.plugins.jmx.EmbeddedJMXServerDiscoveryComponent"

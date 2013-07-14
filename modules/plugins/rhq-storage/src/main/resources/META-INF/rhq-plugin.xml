@@ -114,8 +114,9 @@
     <resource-configuration>
       <c:group name="MemorySettings">
         <c:simple-property name="minHeapSize"
+                           readOnly="true"
                            description="The minimum heap size. This value will be used with the -Xms JVM option. This
-                           should always be the same as Max Heap Size."/>
+                           is read only because it is automatically set to the same value as Max Heap Size."/>
         <c:simple-property name="maxHeapSize"
                            description="The maximum heap size. This value will be used with the -Xmx JVM option."/>
         <c:simple-property name="heapNewSize"

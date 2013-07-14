@@ -26,9 +26,7 @@
 package org.rhq.plugins.storage;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -62,34 +60,18 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        File confDir = new File(getBasedir(), "conf");
-        File jvmOptsFile = new File(confDir, "cassandra-jvm.properties");
+        return new StorageNodeConfigDelegate(getBasedir()).loadResourceConfiguration();
+    }
 
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(jvmOptsFile));
-
-        Configuration config = new Configuration();
-
-        String heapMinProp = properties.getProperty("heap_min");
-        String heapMaxProp = properties.getProperty("heap_max");
-        String heapNewProp = properties.getProperty("heap_new");
-        String threadStackSizeProp = properties.getProperty("thread_stack_size");
-
-        config.put(new PropertySimple("minHeapSize", heapMinProp.substring(4)));
-        config.put(new PropertySimple("maxHeapSize", heapMaxProp.substring(4)));
-        config.put(new PropertySimple("heapNewSize", heapNewProp.substring(4)));
-        config.put(new PropertySimple("threadStackSize", threadStackSizeProp.substring(4)));
-
-        return config;
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
+        StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(getBasedir());
+        configDelegate.updateResourceConfiguration(configurationUpdateReport);
     }
 
     private File getBasedir() {
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         return new File(pluginConfig.getSimpleValue("baseDir"));
-    }
-
-    @Override
-    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
     }
 
     @Override

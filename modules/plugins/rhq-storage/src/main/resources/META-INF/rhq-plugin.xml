@@ -124,6 +124,11 @@
                            the -Xmn JVM option."/>
         <c:simple-property name="threadStackSize"
                            description="The thread stack size. This memory is allocated to each thread off heap."/>
+        <c:simple-property name="heapDumpOnOOMError" displayName="Heap Dump on OutOfMemoryError" type="boolean"
+                           default="true"
+                           description="Generate a heap dump when an OutOfMemoryError occurs"/>
+        <c:simple-property name="heapDumpDir" displayName="Heap Dump Directory" required="false"
+                           description="The directory in which heap dumps will be written."/>
       </c:group>
     </resource-configuration>
 

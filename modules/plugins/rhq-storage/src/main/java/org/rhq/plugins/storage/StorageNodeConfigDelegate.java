@@ -11,6 +11,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 
 /**
  * @author John Sanda
@@ -35,11 +36,26 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         String heapMaxProp = properties.getProperty("heap_max");
         String heapNewProp = properties.getProperty("heap_new");
         String threadStackSizeProp = properties.getProperty("thread_stack_size");
+        String heapDumpOnOOMError = properties.getProperty("heap_dump_on_OOMError");
+        String heapDumpDir = properties.getProperty("heap_dump_dir");
 
         config.put(new PropertySimple("minHeapSize", heapMinProp.substring(4)));
         config.put(new PropertySimple("maxHeapSize", heapMaxProp.substring(4)));
         config.put(new PropertySimple("heapNewSize", heapNewProp.substring(4)));
         config.put(new PropertySimple("threadStackSize", threadStackSizeProp.substring(4)));
+
+        if (!StringUtil.isEmpty(heapDumpOnOOMError)) {
+            config.put(new PropertySimple("heapDumpOnOOMError", true));
+        } else {
+            config.put(new PropertySimple("heapDumpOnOOMError", false));
+        }
+
+        if (!StringUtil.isEmpty(heapDumpDir)) {
+            config.put(new PropertySimple("heapDumpDir", heapDumpDir));
+        } else {
+            File basedir = jvmOptsFile.getParentFile().getParentFile();
+            config.put(new PropertySimple("heapDumpDir", new File(basedir, "bin").getAbsolutePath()));
+        }
 
         return config;
     }
@@ -57,6 +73,14 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             properties.setProperty("heap_max", "-Xmx" + config.getSimpleValue("maxHeapSize"));
             properties.setProperty("heap_new", "-Xmn" + config.getSimpleValue("heapNewSize"));
             properties.setProperty("thread_stack_size", "-Xss" + config.getSimpleValue("threadStackSize"));
+
+            if (config.getSimple("heapDumpOnOOMError").getBooleanValue()) {
+                properties.setProperty("heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
+            } else {
+                properties.setProperty("heap_dump_on_OOMError", "");
+            }
+
+            properties.setProperty("heap_dump_dir", config.getSimpleValue("heapDumpDir"));
 
             propertiesUpdater.update(properties);
 

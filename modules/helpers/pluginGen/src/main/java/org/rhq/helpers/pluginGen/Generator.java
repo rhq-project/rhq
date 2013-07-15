@@ -210,11 +210,13 @@ public class Generator extends Application{
                 choiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
                     @Override
                     public void changed(ObservableValue<? extends String> observableValue, String s, String newValue) {
-                        setPropsValue(prop.getVariableName(),newValue.equals("Yes"),propType);
+                        setPropsValue(prop.getVariableName(), newValue.equals("Yes"), propType);
                     }
                 });
+                Tooltip tooltip = new Tooltip(prop.getDescription()); // TODO make this a hover listener
+                choiceBox.setTooltip(tooltip);
 
-                root.add(choiceBox,1,row);
+                root.add(choiceBox, 1, row);
             } else if (propType.equals(ResourceCategory.class)) {
                 final ChoiceBox choiceBox = new ChoiceBox();
                 for (ResourceCategory cat : ResourceCategory.values()) {
@@ -228,14 +230,17 @@ public class Generator extends Application{
                         setPropsValue(prop.getVariableName(),newCategory,propType);
                     }
                 });
-
+                Tooltip tooltip = new Tooltip(prop.getDescription()); // TODO make this a hover listener
+                               choiceBox.setTooltip(tooltip);
                 root.add(choiceBox,1,row);
             } else if (propType.equals(File.class)) {
                 // Can not add this directly, so add a button to trigger it
                 final Text text = new Text();
                 text.setText("Pick a directory");
                 root.add(text,1,row);
+                Tooltip tooltip = new Tooltip("Pick the (parent) directory where the plugin will be put in.");
                 Button pickButton = new Button("Pick");
+                pickButton.setTooltip(tooltip);
                 pickButton.setOnAction(new EventHandler<ActionEvent>() {
                     @Override
                     public void handle(ActionEvent actionEvent) {

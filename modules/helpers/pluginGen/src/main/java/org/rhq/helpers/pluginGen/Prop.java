@@ -38,7 +38,7 @@ public enum Prop {
     DESCRIPTION("description", String.class, "Description of the type", ".*"),
     DISCOVERY_CLASS("discoveryClass", String.class, "Discovery class", "[A-Z][a-zA-Z0-9]*"),
     COMPONENT_CLASS("componentClass", String.class, "Discovery class", "[A-Z][a-zA-Z0-9]*"),
-    IS_SINGLETON("singleton",Boolean.class,"Is this type a singleton, which means that" +
+    IS_SINGLETON("singleton",boolean.class,"Is this type a singleton, which means that" +
         " there can only be one resource of that type for the given parent?",null),
     HAS_METRICS("hasMetrics",boolean.class,"Does this type support taking metrics?",null),
     HAS_OPERATIONS("hasOperations",boolean.class,"Does this type support operations?",null),

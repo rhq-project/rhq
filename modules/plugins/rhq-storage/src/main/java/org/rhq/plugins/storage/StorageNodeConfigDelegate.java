@@ -68,19 +68,36 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
             Configuration config = configurationUpdateReport.getConfiguration();
 
-            // We want min and max heap to be the same
-            properties.setProperty("heap_min", "-Xms" + config.getSimpleValue("maxHeapSize"));
-            properties.setProperty("heap_max", "-Xmx" + config.getSimpleValue("maxHeapSize"));
-            properties.setProperty("heap_new", "-Xmn" + config.getSimpleValue("heapNewSize"));
-            properties.setProperty("thread_stack_size", "-Xss" + config.getSimpleValue("threadStackSize"));
-
-            if (config.getSimple("heapDumpOnOOMError").getBooleanValue()) {
-                properties.setProperty("heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
-            } else {
-                properties.setProperty("heap_dump_on_OOMError", "");
+            String maxHeapSize = config.getSimpleValue("maxHeapSize");
+            if (!StringUtil.isEmpty(maxHeapSize)) {
+                // We want min and max heap to be the same
+                properties.setProperty("heap_min", "-Xms" + maxHeapSize);
+                properties.setProperty("heap_max", "-Xmx" + maxHeapSize);
             }
 
-            properties.setProperty("heap_dump_dir", config.getSimpleValue("heapDumpDir"));
+            String heapNewSize = config.getSimpleValue("heapNewSize");
+            if (!StringUtil.isEmpty(heapNewSize)) {
+                properties.setProperty("heap_new", "-Xmn" + heapNewSize);
+            }
+
+            String threadStackSize = config.getSimpleValue("threadStackSize");
+            if (!StringUtil.isEmpty(threadStackSize)) {
+                properties.setProperty("thread_stack_size", "-Xss" + threadStackSize);
+            }
+
+            PropertySimple heapDumpOnOMMError = config.getSimple("heapDumpOnOOMError");
+            if (heapDumpOnOMMError != null) {
+                if (heapDumpOnOMMError.getBooleanValue()) {
+                    properties.setProperty("heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
+                } else {
+                    properties.setProperty("heap_dump_on_OOMError", "");
+                }
+            }
+
+            String heapDumpDir = config.getSimpleValue("heapDumpDir");
+            if (!StringUtil.isEmpty(heapDumpDir)) {
+                properties.setProperty("heap_dump_dir", heapDumpDir);
+            }
 
             propertiesUpdater.update(properties);
 

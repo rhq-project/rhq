@@ -23,10 +23,13 @@ public class StorageNodeConfigDelegateTest {
 
     private File basedir;
 
+    private StorageNodeConfigDelegate configDelegate;
+
     @BeforeMethod
     public void initDirs(Method test) throws Exception {
         File dir = new File(getClass().getResource(".").toURI());
         basedir = new File(dir, getClass().getSimpleName() + "/" + test.getName());
+        configDelegate = new StorageNodeConfigDelegate(basedir);
     }
 
 
@@ -34,7 +37,6 @@ public class StorageNodeConfigDelegateTest {
     public void loadValidConfig() throws Exception {
         createDefaultConfig();
 
-        StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(basedir);
         Configuration config = configDelegate.loadResourceConfiguration();
 
         assertEquals(config.getSimpleValue("minHeapSize"), "512M", "Failed to load property [minHeapSize]");
@@ -60,11 +62,9 @@ public class StorageNodeConfigDelegateTest {
 
         ConfigurationUpdateReport report = new ConfigurationUpdateReport(config);
 
-        StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(basedir);
         configDelegate.updateResourceConfiguration(report);
 
-        Properties properties = new Properties();
-        properties.load(new FileInputStream(new File(confDir(), "cassandra-jvm.properties")));
+        Properties properties = loadCassandraJvmProps();
 
         assertEquals(properties.getProperty("heap_min"), "-Xms1024M", "Failed to update property [minHeapSize]");
         assertEquals(properties.getProperty("heap_max"), "-Xmx1024M", "Failed to update property [maxHeapSize]");
@@ -77,6 +77,25 @@ public class StorageNodeConfigDelegateTest {
             "Failed to update property [heap_dump_dir]");
     }
 
+    @Test
+    public void minHeapSizeShouldBeTheSameAsMaxHeapSize() throws Exception {
+        createDefaultConfig();
+
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("minHeapSize", "512M"));
+        config.put(new PropertySimple("maxHeapSize", "768M"));
+
+        ConfigurationUpdateReport report = new ConfigurationUpdateReport(config);
+
+        configDelegate.updateResourceConfiguration(report);
+
+        Properties properties = loadCassandraJvmProps();
+
+        assertEquals(properties.getProperty("heap_max"), "-Xmx768M", "Failed to update property [maxHeapSize]");
+        assertEquals(properties.getProperty("heap_min"), "-Xms768M", "Failed to update property [maxHeapSize]. It " +
+            "should be the same as [maxHeapSize].");
+    }
+
     private void createDefaultConfig() throws IOException {
         Properties properties = new Properties();
         properties.setProperty("heap_min", "-Xms512M");
@@ -84,8 +103,16 @@ public class StorageNodeConfigDelegateTest {
         properties.setProperty("heap_new", "-Xmn128M");
         properties.setProperty("thread_stack_size", "-Xss180k");
         properties.setProperty("heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
+        properties.setProperty("heap_dump_dir", binDir().getAbsolutePath());
 
         properties.store(new FileOutputStream(new File(confDir(), "cassandra-jvm.properties")), "");
+    }
+
+    private Properties loadCassandraJvmProps() throws Exception {
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(new File(confDir(), "cassandra-jvm.properties")));
+
+        return properties;
     }
 
     private File confDir() {

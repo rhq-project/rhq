@@ -55,7 +55,6 @@ import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -450,7 +449,13 @@ public class StorageInstaller {
     }
 
     private boolean isDirectoryEmpty(File dir) {
-        return FileUtils.sizeOf(dir) == 0;
+        // TODO need to check subdirectories
+        if (dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            return (files == null || files.length == 0);
+        } else {
+            return true;
+        }
     }
 
     private int getPort(CommandLine cmdLine, String option, int defaultValue) {

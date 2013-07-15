@@ -115,7 +115,7 @@ public class PluginGen {
      * Do some post processing over the input received.
      * @param props The properties just recorded from the user input
      */
-    private void postprocess(Props props) {
+    protected void postprocess(Props props) {
 
         // Set the package
         String pkg = props.getPackagePrefix() + "." + props.getName();
@@ -231,7 +231,7 @@ public class PluginGen {
      * Trigger the generation of the directory hierarchy.
      * @param props Parameters to take into account
      */
-    private void generate(Props props) {
+    protected void generate(Props props) {
 
         log.info("Generating...");
 

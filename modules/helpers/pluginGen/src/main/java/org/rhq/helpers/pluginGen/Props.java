@@ -36,7 +36,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Units;
 public class Props {
 
    /** What category is this ? */
-   private ResourceCategory category;
+   private ResourceCategory category = ResourceCategory.SERVICE;
    /** The name of this item */
    private String name;
    /** A description of the plugin */

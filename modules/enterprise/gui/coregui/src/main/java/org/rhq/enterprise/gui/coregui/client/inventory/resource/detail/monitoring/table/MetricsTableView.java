@@ -76,6 +76,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  * @author John Mazzitelli
  * @author Mike Thompson
  */
+@Deprecated
 public class MetricsTableView extends Table<MetricsTableDataSource> implements RedrawGraphs {
 
     private final int resourceId;

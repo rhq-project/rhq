@@ -19,7 +19,7 @@
 
   <properties>
         <!-- dependency versions -->
-    <gwt.version>2.5.0</gwt.version>
+    <gwt.version>${gwt.version}</gwt.version>
     <smartgwt.version>3.0</smartgwt.version>
 
         <!--  If this is too much memory to allocate to your gwt:debug process then override this property in

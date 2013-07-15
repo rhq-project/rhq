@@ -32,18 +32,13 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
         Configuration config = new Configuration();
 
-        String heapMinProp = properties.getProperty("heap_min");
-        String heapMaxProp = properties.getProperty("heap_max");
-        String heapNewProp = properties.getProperty("heap_new");
-        String threadStackSizeProp = properties.getProperty("thread_stack_size");
         String heapDumpOnOOMError = properties.getProperty("heap_dump_on_OOMError");
         String heapDumpDir = properties.getProperty("heap_dump_dir");
 
-        config.put(new PropertySimple("minHeapSize", heapMinProp.substring(4)));
-        config.put(new PropertySimple("maxHeapSize", heapMaxProp.substring(4)));
-        config.put(new PropertySimple("heapNewSize", heapNewProp.substring(4)));
-        config.put(new PropertySimple("threadStackSize", threadStackSizeProp.substring(4,
-            threadStackSizeProp.length() - 1)));
+        config.put(new PropertySimple("minHeapSize", getHeapMinProp(properties)));
+        config.put(new PropertySimple("maxHeapSize", getHeapMaxProp(properties)));
+        config.put(new PropertySimple("heapNewSize", getHeapNewProp(properties)));
+        config.put(new PropertySimple("threadStackSize", getStackSizeProp(properties)));
 
         if (!StringUtil.isEmpty(heapDumpOnOOMError)) {
             config.put(new PropertySimple("heapDumpOnOOMError", true));
@@ -59,6 +54,62 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         }
 
         return config;
+    }
+
+    private String getHeapMinProp(Properties properties) {
+        String value = properties.getProperty("heap_min");
+
+        if (StringUtil.isEmpty(value)) {
+            return "";
+        }
+
+        if (!value.startsWith("-Xms")) {
+            return value;
+        }
+
+        return value.substring(4);
+    }
+
+    private String getHeapMaxProp(Properties properties) {
+        String value = properties.getProperty("heap_max");
+
+        if (StringUtil.isEmpty(value)) {
+            return "";
+        }
+
+        if (!value.startsWith("-Xmx")) {
+            return value;
+        }
+
+        return value.substring(4);
+    }
+
+    private String getHeapNewProp(Properties properties) {
+        String value = properties.getProperty("heap_new");
+
+        if (StringUtil.isEmpty(value)) {
+            return "";
+        }
+
+        if (!value.startsWith("-Xmn")) {
+            return value;
+        }
+
+        return value.substring(4);
+    }
+
+    private String getStackSizeProp(Properties properties) {
+        String value = properties.getProperty("thread_stack_size");
+
+        if (StringUtil.isEmpty(value)) {
+            return "";
+        }
+
+        if (!(value.startsWith("-Xss") || value.endsWith("k") || value.length() > 5)) {
+            return value;
+        }
+
+        return value.substring(4, value.length() - 1);
     }
 
     @Override

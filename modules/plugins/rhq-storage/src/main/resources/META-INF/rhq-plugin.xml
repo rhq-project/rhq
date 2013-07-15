@@ -118,12 +118,24 @@
                            description="The minimum heap size. This value will be used with the -Xms JVM option. This
                            is read only because it is automatically set to the same value as Max Heap Size."/>
         <c:simple-property name="maxHeapSize"
-                           description="The maximum heap size. This value will be used with the -Xmx JVM option."/>
+                           description="The maximum heap size. This value will be used with the -Xmx JVM option. The
+                           value should be an integer with a suffix of M or G to indicate megabytes or gigabytes.">
+          <c:constraint>
+            <c:regex-constraint expression="\d+[mMgG]"/>
+          </c:constraint>
+        </c:simple-property>
         <c:simple-property name="heapNewSize"
                            description="The size of the new generation portion of the heap. This value will be used with
-                           the -Xmn JVM option."/>
+                           the -Xmn JVM option. The value should be an integer with a suffix of M or G to indicate
+                           megabytes or gigabytes.">
+          <c:constraint>
+            <c:regex-constraint expression="\d+[mMgG]"/>
+          </c:constraint>
+        </c:simple-property>
         <c:simple-property name="threadStackSize"
-                           description="The thread stack size. This memory is allocated to each thread off heap."/>
+                           type="integer"
+                           description="The thread stack size. This memory is allocated to each thread off heap. The
+                           value should be an integer that will be interpreted in kilobytes."/>
         <c:simple-property name="heapDumpOnOOMError" displayName="Heap Dump on OutOfMemoryError" type="boolean"
                            default="true"
                            description="Generate a heap dump when an OutOfMemoryError occurs"/>

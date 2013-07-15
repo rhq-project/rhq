@@ -42,7 +42,8 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         config.put(new PropertySimple("minHeapSize", heapMinProp.substring(4)));
         config.put(new PropertySimple("maxHeapSize", heapMaxProp.substring(4)));
         config.put(new PropertySimple("heapNewSize", heapNewProp.substring(4)));
-        config.put(new PropertySimple("threadStackSize", threadStackSizeProp.substring(4)));
+        config.put(new PropertySimple("threadStackSize", threadStackSizeProp.substring(4,
+            threadStackSizeProp.length() - 1)));
 
         if (!StringUtil.isEmpty(heapDumpOnOOMError)) {
             config.put(new PropertySimple("heapDumpOnOOMError", true));
@@ -70,6 +71,7 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
             String maxHeapSize = config.getSimpleValue("maxHeapSize");
             if (!StringUtil.isEmpty(maxHeapSize)) {
+                validateHeapArg("maxHeapSize", maxHeapSize);
                 // We want min and max heap to be the same
                 properties.setProperty("heap_min", "-Xms" + maxHeapSize);
                 properties.setProperty("heap_max", "-Xmx" + maxHeapSize);
@@ -77,12 +79,14 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
             String heapNewSize = config.getSimpleValue("heapNewSize");
             if (!StringUtil.isEmpty(heapNewSize)) {
+                validateHeapArg("heapNewSize", heapNewSize);
                 properties.setProperty("heap_new", "-Xmn" + heapNewSize);
             }
 
             String threadStackSize = config.getSimpleValue("threadStackSize");
             if (!StringUtil.isEmpty(threadStackSize)) {
-                properties.setProperty("thread_stack_size", "-Xss" + threadStackSize);
+                validateStackArg(threadStackSize);
+                properties.setProperty("thread_stack_size", "-Xss" + threadStackSize + "k");
             }
 
             PropertySimple heapDumpOnOMMError = config.getSimple("heapDumpOnOOMError");
@@ -102,9 +106,36 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             propertiesUpdater.update(properties);
 
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
+        } catch (IllegalArgumentException e) {
+            configurationUpdateReport.setErrorMessage("No configuration update was applied: " + e.getMessage());
         } catch (IOException e) {
             configurationUpdateReport.setErrorMessageFromThrowable(e);
         }
+    }
 
+    private void validateHeapArg(String name, String value) {
+        if (value.length() < 2) {
+            throw new IllegalArgumentException(value + " is not a legal value for the property [" + name + "]");
+        }
+
+        char[] chars = value.toCharArray();
+        for (int i = 0; i < chars.length - 1; ++i) {
+            if (!Character.isDigit(chars[i])) {
+                throw new IllegalArgumentException(value + " is not a legal value for the property [" + name + "]");
+            }
+        }
+
+        char lastChar = Character.toUpperCase(chars[chars.length - 1]);
+        if (!(lastChar == 'M' || lastChar == 'G')) {
+            throw new IllegalArgumentException(value + " is not a legal value for the property [" + name + "]");
+        }
+    }
+
+    private void validateStackArg(String value) {
+        try {
+            Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(value + " is not a legal value for the property [threadStackSize]");
+        }
     }
 }

@@ -19,12 +19,15 @@
 
 package org.rhq.plugins.jbossas5;
 
+import static org.rhq.core.domain.resource.CreateResourceStatus.SUCCESS;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -47,13 +50,17 @@ import org.jboss.deployers.spi.management.deploy.ProgressEvent;
 import org.jboss.deployers.spi.management.deploy.ProgressListener;
 import org.jboss.managed.api.ComponentType;
 import org.jboss.managed.api.ManagedComponent;
+import org.jboss.managed.api.ManagedProperty;
+import org.jboss.metatype.api.values.MetaValue;
 import org.jboss.metatype.api.values.SimpleValue;
 import org.jboss.on.common.jbossas.JBPMWorkflowManager;
 import org.jboss.on.common.jbossas.JBossASPaths;
 import org.jboss.on.common.jbossas.JmxConnectionHelper;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.content.PackageType;
 import org.rhq.core.domain.content.transfer.DeployPackageStep;
 import org.rhq.core.domain.content.transfer.DeployPackagesResponse;
@@ -81,6 +88,8 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapter;
+import org.rhq.plugins.jbossas5.adapter.api.PropertyAdapterFactory;
 import org.rhq.plugins.jbossas5.connection.LocalProfileServiceConnectionProvider;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnection;
 import org.rhq.plugins.jbossas5.connection.ProfileServiceConnectionProvider;
@@ -88,6 +97,7 @@ import org.rhq.plugins.jbossas5.connection.RemoteProfileServiceConnectionProvide
 import org.rhq.plugins.jbossas5.helper.CreateChildResourceFacetDelegate;
 import org.rhq.plugins.jbossas5.helper.InPluginControlActionFacade;
 import org.rhq.plugins.jbossas5.helper.JBossAS5ConnectionTypeDescriptor;
+import org.rhq.plugins.jbossas5.util.ConversionUtils;
 import org.rhq.plugins.jbossas5.util.ManagedComponentUtils;
 
 /**
@@ -300,8 +310,58 @@ public class ApplicationServerComponent<T extends ResourceComponent<?>> implemen
 
     // CreateChildResourceFacet --------------------------------------------
 
-    public CreateResourceReport createResource(CreateResourceReport createResourceReport) {
-        return this.createChildResourceDelegate.createResource(createResourceReport);
+    public CreateResourceReport createResource(CreateResourceReport report) {
+        if (creatingDatasourceOrConnectionFactory(report)) {
+            report = preCreateDatasourceOrConnectionFactory(report);
+        }
+        report = this.createChildResourceDelegate.createResource(report);
+        if (report.getStatus() != SUCCESS) {
+            return report;
+        }
+        if (creatingDatasourceOrConnectionFactory(report)) {
+            report = postCreateDatasourceOrConnectionFactory(report);
+        }
+        return report;
+    }
+
+    private CreateResourceReport preCreateDatasourceOrConnectionFactory(CreateResourceReport report) {
+        Configuration resourceConfiguration = report.getResourceConfiguration();
+        PropertyMap securityDomainPropertyMap = (PropertyMap) resourceConfiguration.get("security-domain");
+        PropertySimple securityDeploymentType = securityDomainPropertyMap.getSimple("securityDeploymentType");
+        if (securityDeploymentType.getStringValue() == null) {
+            securityDeploymentType.setValue("NONE");
+        }
+        return report;
+    }
+
+    private CreateResourceReport postCreateDatasourceOrConnectionFactory(CreateResourceReport report) {
+        Configuration resourceConfiguration = report.getResourceConfiguration();
+        ConfigurationDefinition resourceConfigurationDefinition = report.getResourceType()
+            .getResourceConfigurationDefinition();
+        ComponentType componentType = ConversionUtils.getComponentType(report.getResourceType());
+        String componentName = report.getResourceKey();
+        try {
+            ManagementView managementView = getConnection().getManagementView();
+            ManagedComponent managedComponent = managementView.getComponent(componentName, componentType);
+            Map<String, ManagedProperty> managedProperties = managedComponent.getProperties();
+            ManagedProperty managedProperty = managedProperties.get("security-domain");
+            MetaValue metaValue = managedProperty.getValue();
+            PropertyAdapter propertyAdapter = PropertyAdapterFactory.getPropertyAdapter(metaValue);
+            propertyAdapter.populateMetaValueFromProperty(resourceConfiguration.get("security-domain"), metaValue,
+                    resourceConfigurationDefinition.get("security-domain"));
+            managementView.updateComponent(managedComponent);
+            managementView.load();
+        } catch (Exception e) {
+            report.setErrorMessage("Resource was created but an error occured while updating security-domain property");
+            report.setException(e);
+        }
+        return report;
+    }
+
+    private boolean creatingDatasourceOrConnectionFactory(CreateResourceReport report) {
+        String resourceTypeName = report.getResourceType().getName();
+        return Arrays.asList("No Tx Datasource", "Local Tx Datasource", "XA Datasource", "No Tx ConnectionFactory",
+            "Tx ConnectionFactory").contains(resourceTypeName);
     }
 
     // ProgressListener --------------------------------------------

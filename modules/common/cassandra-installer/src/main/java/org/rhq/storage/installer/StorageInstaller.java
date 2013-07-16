@@ -25,10 +25,8 @@
 
 package org.rhq.storage.installer;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
@@ -37,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -65,6 +64,7 @@ import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
 
@@ -244,24 +244,19 @@ public class StorageInstaller {
                 deployer.updateFilePerms();
 
                 // For upgrades we will copy the existing cassandra.yaml,
-                // log4j-server.properties, and cassandra-env.sh file from the existing
+                // log4j-server.properties, and cassandra-jvm.properties from the existing
                 // storage node installation. Going forward though we need to add support
-                // for merging in the existing cassandra.yaml with the new one. We also
-                // need to do something about cassandra-env.sh. There is no easy to parse
-                // it and merge in changes which is problematic since that is where heap
-                // settings and JMX port and other JMV options are specified. Maybe we can
-                // replace it with a cassandra-in.sh that is essentially a properties file
-                // which we can easily parse and update.
+                // for merging in the existing cassandra.yaml with the new one.
                 File oldConfDir = new File(existingStorageDir, "conf");
                 File newConfDir = new File(storageBasedir, "conf");
 
                 String cassandraYaml = "cassandra.yaml";
-                String cassandraEnv = "cassandra-env.sh";
-                File cassandraEnvFile = new File(newConfDir, cassandraEnv);
+                String cassandraJvmProps = "cassandra-jvm.properties";
+                File cassandraJvmPropsFile = new File(newConfDir, cassandraJvmProps);
                 String log4j = "log4j-server.properties";
 
                 replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
-                replaceFile(new File(oldConfDir, cassandraEnv), cassandraEnvFile);
+                replaceFile(new File(oldConfDir, cassandraJvmProps), cassandraJvmPropsFile);
                 replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
 
                 log.info("Finished installing RHQ Storage Node.");
@@ -274,7 +269,7 @@ public class StorageInstaller {
 
                 hostname = (String) config.get("listen_address");
 
-                jmxPort = parseJmxPort(cassandraEnvFile);
+                jmxPort = parseJmxPort(cassandraJvmPropsFile);
             } else {
                 if (cmdLine.hasOption("dir")) {
                     File basedir = new File(cmdLine.getOptionValue("dir"));
@@ -666,56 +661,26 @@ public class StorageInstaller {
         }
     }
 
-    private int parseJmxPort(File cassandraEnvFile) {
+    private int parseJmxPort(File cassandraJvmOptsFile) {
         Integer port = null;
         if (isWindows()) {
             // TODO
             return defaultJmxPort;
         } else {
-            BufferedReader reader = null;
             try {
-                reader = new BufferedReader(new FileReader(cassandraEnvFile));
-                String line = reader.readLine();
+                Properties properties = new Properties();
+                properties.load(new FileInputStream(cassandraJvmOptsFile));
 
-                while (line != null) {
-                    if (line.startsWith("JMX_PORT")) {
-                        int startIndex = line.indexOf("JMX_PORT=\"") + 1;
-                        int endIndex = line.lastIndexOf("\"");
-
-                        if (startIndex == -1 || endIndex == -1) {
-                            log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its "
-                                + "own line as follows, JMX_PORT=\"<jmx-port>\"");
-                            throw new RuntimeException("Cannot determine JMX port");
-                        }
-                        try {
-                            port = Integer.parseInt(line.substring(startIndex, endIndex));
-                        } catch (NumberFormatException e) {
-                            log.error("The JMX port must be an integer. [" + port + "] is an invalid value");
-                            throw new RuntimeException("The JMX port has an invalid value");
-                        }
-                        return port;
-                    }
-                    line = reader.readLine();
+                String jmxPort = properties.getProperty("jmx_port");
+                if (StringUtil.isEmpty(jmxPort)) {
+                    log.error("The property [jmx_port] is undefined.");
+                    throw new RuntimeException("Cannot determine JMX port");
                 }
-                log.error("Failed to parse the JMX port. Make sure that you have the JMX port defined on its "
-                    + "own line as follows, JMX_PORT=\"<jmx-port>\"");
-                throw new RuntimeException("Cannot determine JMX port");
+
+                return Integer.parseInt(jmxPort);
             } catch (IOException e) {
                 log.error("Failed to parse JMX port. There was an unexpected IO error", e);
                 throw new RuntimeException("Failed to parse JMX port due to IO error: " + e.getMessage());
-            } finally {
-                try {
-                    if (reader != null) {
-                        reader.close();
-                    }
-                } catch (IOException e) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("An error occurred closing the " + BufferedReader.class.getName() + " used to "
-                            + "parse the JMX port", e);
-                    } else {
-                        log.warn("There was error closing the reader used to parse the JMX port: " + e.getMessage());
-                    }
-                }
             }
         }
     }

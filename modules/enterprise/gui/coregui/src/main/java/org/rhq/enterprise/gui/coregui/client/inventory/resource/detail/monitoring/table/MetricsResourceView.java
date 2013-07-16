@@ -58,13 +58,14 @@ public class MetricsResourceView extends AbstractD3GraphListView {
     private Img expandCollapseArrow;
     private MetricsTableView metricsTableView;
     private MetricsViewDataSource dataSource;
-    private EnhancedHLayout availabilityDetails;
+    private ResourceMetricAvailabilityView availabilityDetails;
 
     public MetricsResourceView(Resource resource) {
         super();
         this.resource = resource;
         dataSource = new MetricsViewDataSource(resource);
         metricsTableView = new MetricsTableView(resource, this);
+        availabilityDetails = new ResourceMetricAvailabilityView(resource);
     }
 
     private EnhancedHLayout createAvailabilityDetails() {
@@ -115,7 +116,6 @@ public class MetricsResourceView extends AbstractD3GraphListView {
             }
         });
 
-        availabilityDetails = createAvailabilityDetails();
 
         availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
             new AvailabilityOverUnderGraphType(resource.getId()));
@@ -123,6 +123,7 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         expandCollapseHLayout.addMember(expandCollapseArrow);
         expandCollapseHLayout.addMember(availabilityGraph);
         vLayout.addMember(expandCollapseHLayout);
+        availabilityDetails.hide();
         vLayout.addMember(availabilityDetails);
 
         metricsTableView.setHeight100();

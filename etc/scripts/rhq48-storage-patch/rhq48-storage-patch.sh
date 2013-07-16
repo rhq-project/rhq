@@ -19,6 +19,9 @@ CQL_HOSTNAME=$2
 CQL_PORT=$3
 JMX_PORT=$4
 
+export CQLSH_HOST=$2
+export CQL_PORT=$3
+
 PATCH="apache-cassandra-1.2.4-patch-1.jar"
 
 # swap out the Cassandra jar file with the patched version
@@ -36,8 +39,6 @@ sleep 3
 
 # run the CQL script
 echo "Running CQL script to disable table compression"
-export CQLSH_HOST=$CQLSH_HOST
-export CQL_PORT=$CQL_PORT
 $RHQ_SERVER_DIR/rhq-storage/bin/cqlsh -u rhqadmin -p rhqadmin -f ./disable_compression.cql
 
 # rewrite all sstables

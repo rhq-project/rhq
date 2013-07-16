@@ -116,11 +116,11 @@ public class SnmpInfoTest {
         // String representation is constrained (even not strongly).
         Configuration configuration = new Configuration();
         assertEquals(SnmpInfo.load(configuration).toString(), "UnknownHost:" + DEFAULT_PORT
-            + " (UnknownOID) (DefaultTrapOID)");
+            + " (Unknown Binding Prefix) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_HOST, "pipo");
-        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:" + DEFAULT_PORT + " (UnknownOID) (DefaultTrapOID)");
+        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:" + DEFAULT_PORT + " (Unknown Binding Prefix) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_PORT, "35162");
-        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:35162 (UnknownOID) (DefaultTrapOID)");
+        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:35162 (Unknown Binding Prefix) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_VARIABLE_BINDING_PREFIX, "molo");
         assertEquals(SnmpInfo.load(configuration).toString(), "pipo:35162 (molo) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_TRAP_OID, "logo");

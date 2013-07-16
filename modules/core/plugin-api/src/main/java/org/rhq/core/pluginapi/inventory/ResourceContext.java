@@ -173,6 +173,8 @@ public class ResourceContext<T extends ResourceComponent<?>> {
      * @param availabilityContext        a {@link AvailabilityContext} the plugin can use to interoperate with the
      *                                   plugin container inventory manager
      * @param pluginContainerDeployment  indicates where the plugin container is running
+     * @param componentInvocationContext a {@link ComponentInvocationContext} the plugin can use to determine if the
+     *                                   current component invocation has been canceled or timed out.
      */
     public ResourceContext(Resource resource, T parentResourceComponent, ResourceContext<?> parentResourceContext,
         ResourceDiscoveryComponent<T> resourceDiscoveryComponent, SystemInfo systemInfo, File temporaryDirectory,

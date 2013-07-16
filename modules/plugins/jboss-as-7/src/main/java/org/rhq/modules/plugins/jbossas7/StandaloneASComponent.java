@@ -18,6 +18,8 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import java.io.File;
 import java.util.HashSet;
 import java.util.Map;
@@ -184,39 +186,28 @@ public class StandaloneASComponent<T extends ResourceComponent<?>> extends BaseS
         return operationResult;
     }
 
-    private boolean waitUntilReloaded() {
+    private boolean waitUntilReloaded() throws InterruptedException {
         boolean reloaded = false;
-        int count = 0;
-
         while (!reloaded) {
             Operation op = new ReadAttribute(new Address(), "release-version");
-            try{
+            try {
                 Result res = getASConnection().execute(op);
                 if (res.isSuccess() && !res.isReloadRequired()) {
                     reloaded = true;
-                } else if (count > 20) {
-                    break;
                 }
             } catch (Exception e) {
                 //do absolutely nothing
                 //if an exception is thrown that means the server is still reloading, so consider this
                 //a single failed attempt, equivalent to res.isSuccess == false
             }
-
             if (!reloaded) {
-                try {
-                    Thread.sleep(1000); // Wait 1s
-                } catch (InterruptedException e) {
-                    // ignore
+                if (context.getComponentInvocationContext().isInterrupted()) {
+                    // Operation canceled or timed out
+                    throw new InterruptedException();
                 }
+                Thread.sleep(SECONDS.toMillis(1));
             }
-            count++;
         }
-
-        if (log.isDebugEnabled()) {
-            log.debug("waitUntilReloaded: Used " + count + " delay round(s) to reload. Reload=" + reloaded);
-        }
-
         return reloaded;
     }
 

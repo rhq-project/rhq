@@ -18,43 +18,27 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.ExpansionMode;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
-import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
@@ -70,40 +54,17 @@ public class MetricsResourceView extends AbstractD3GraphListView {
     private static final String EXPANDED_TOOLTIP = MSG.chart_metrics_expand_tooltip();
 
     private Resource resource;
-    private Set<Integer> definitionIds = null;
     private VLayout vLayout;
     private Img expandCollapseArrow;
-    MetricsTableListGrid metricsGrid;
-    MetricsViewDataSource dataSource;
-    EnhancedHLayout availabilityDetails;
-
+    private MetricsTableView metricsTableView;
+    private MetricsViewDataSource dataSource;
+    private EnhancedHLayout availabilityDetails;
 
     public MetricsResourceView(Resource resource) {
         super();
         this.resource = resource;
         dataSource = new MetricsViewDataSource(resource);
-        metricsGrid = new MetricsTableListGrid();
-
-        ArrayList<ListGridField> fields = dataSource.getListGridFields();
-        metricsGrid.setFields(fields.toArray(new ListGridField[0]));
-        metricsGrid.setCanExpandRecords(true);
-        metricsGrid.addRecordExpandHandler(new RecordExpandHandler() {
-            @Override
-            public void onRecordExpand(RecordExpandEvent recordExpandEvent) {
-                Log.debug("Record Expanded: "
-                    + recordExpandEvent.getRecord().getAttribute(MetricsViewDataSource.FIELD_METRIC_LABEL));
-                new Timer() {
-
-                    @Override
-                    public void run() {
-                        BrowserUtility.graphSparkLines();
-                    }
-                }.schedule(150);
-
-            }
-
-        });
-
+        metricsTableView = new MetricsTableView(resource, this);
     }
 
     private EnhancedHLayout createAvailabilityDetails() {
@@ -123,11 +84,10 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         Log.debug("MetricResourceView.onDraw() for: " + resource.getName() + " id: " + resource.getId());
         destroyMembers();
 
-
         vLayout = new VLayout();
         vLayout.setOverflow(Overflow.AUTO);
         vLayout.setWidth100();
-        vLayout.setHeight(220);
+        vLayout.setHeight100();
         vLayout.addMember(buttonBarDateTimeRangeEditor);
 
         EnhancedHLayout expandCollapseHLayout = new EnhancedHLayout();
@@ -146,8 +106,7 @@ public class MetricsResourceView extends AbstractD3GraphListView {
                     expandCollapseArrow.setSrc(IconEnum.COLLAPSED_ICON.getIcon16x16Path());
                     expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
                     availabilityDetails.hide();
-                }
-                else {
+                } else {
                     expandCollapseArrow.setSrc(IconEnum.EXPANDED_ICON.getIcon16x16Path());
                     expandCollapseArrow.setTooltip(EXPANDED_TOOLTIP);
                     availabilityDetails.show();
@@ -166,13 +125,14 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         vLayout.addMember(expandCollapseHLayout);
         vLayout.addMember(availabilityDetails);
 
-        vLayout.addMember(metricsGrid);
+        metricsTableView.setHeight100();
+        vLayout.addMember(metricsTableView);
 
         addMember(vLayout);
 
         if (resource != null) {
             queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
-                    buttonBarDateTimeRangeEditor.getEndTime(), null);
+                buttonBarDateTimeRangeEditor.getEndTime(), null);
         }
     }
 
@@ -212,95 +172,4 @@ public class MetricsResourceView extends AbstractD3GraphListView {
             });
     }
 
-    private class MetricsTableListGrid extends ListGrid {
-        public MetricsTableListGrid() {
-            super();
-
-            setCanExpandRecords(true);
-            setCanExpandMultipleRecords(true);
-            setExpansionMode(ExpansionMode.DETAIL_FIELD);
-        }
-
-        @Override
-        protected Canvas getExpansionComponent(final ListGridRecord record) {
-            final Integer definitionId = record.getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
-            final Integer resourceId = record.getAttributeAsInt(MetricsViewDataSource.FIELD_RESOURCE_ID);
-            VLayout vLayout = new VLayout();
-            vLayout.setPadding(5);
-
-            final String chartId = "rChart" + resourceId + "-" + definitionId;
-            HTMLFlow htmlFlow = new HTMLFlow(MetricD3Graph.createGraphMarkerTemplate(chartId, 200));
-            vLayout.addMember(htmlFlow);
-
-            new Timer() {
-
-                @Override
-                public void run() {
-                    BrowserUtility.graphSparkLines();
-                }
-            }.schedule(150);
-
-
-            // Load the fully fetched ResourceType.
-            ResourceType resourceType = resource.getResourceType();
-
-            Set<MeasurementDefinition> definitions = resourceType.getMetricDefinitions();
-            final MeasurementDefinition measurementDefinition;
-
-            //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
-            final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>();
-            for (MeasurementDefinition definition : definitions) {
-                measurementDefMap.put(definition.getDisplayName(), definition);
-                if (definition.getId() == definitionId) {
-                    measurementDefinition = definition;
-                    break;
-                }
-            }
-
-            int[] definitionArrayIds = new int[1];
-            definitionArrayIds[0] = definitionId;
-            GWTServiceLookup.getMeasurementDataService().findDataForResource(resourceId, definitionArrayIds,
-                measurementUserPrefs.getMetricRangePreferences().begin,
-                measurementUserPrefs.getMetricRangePreferences().end, 60,
-                new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Log.debug("Error retrieving recent metrics charting data for resource [" + resourceId + "]:"
-                            + caught.getMessage());
-                    }
-
-                    @Override
-                    public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> results) {
-                        if (!results.isEmpty()) {
-
-                            //load the data results for the given metric definition
-                            List<MeasurementDataNumericHighLowComposite> data = results.get(0);
-                            Log.debug(" *** Metric Data Results: "+data.size());
-
-//                                                                                    MetricGraphData metricGraphData = MetricGraphData
-//                                                                                        .createForResource(resourceId, resource.getName(),
-//                                                                                            measurementDefinition, data, null);
-//
-//                                                                                    StackedBarMetricGraphImpl graph = GWT
-//                                                                                        .create(StackedBarMetricGraphImpl.class);
-//                                                                                    graph.setMetricGraphData(metricGraphData);
-//                                                                                    final MetricD3Graph graphView = new MetricD3Graph(graph, this);
-//                                                                                    new Timer() {
-//                                                                                        @Override
-//                                                                                        public void run() {
-//                                                                                            graphView.drawJsniChart();
-//
-//                                                                                        }
-//                                                                                    }.schedule(150);
-
-                        } else {
-                            Log.warn("No chart data retrieving for resource [" + resourceId + "]");
-
-                        }
-                    }
-                });
-
-            return vLayout;
-        }
-    }
 }

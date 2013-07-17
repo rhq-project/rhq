@@ -25,7 +25,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Img;
-import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -57,23 +56,15 @@ public class MetricsResourceView extends AbstractD3GraphListView {
     private VLayout vLayout;
     private Img expandCollapseArrow;
     private MetricsTableView metricsTableView;
-    private MetricsViewDataSource dataSource;
     private ResourceMetricAvailabilityView availabilityDetails;
 
     public MetricsResourceView(Resource resource) {
         super();
         this.resource = resource;
-        dataSource = new MetricsViewDataSource(resource);
         metricsTableView = new MetricsTableView(resource, this);
         availabilityDetails = new ResourceMetricAvailabilityView(resource);
     }
 
-    private EnhancedHLayout createAvailabilityDetails() {
-        EnhancedHLayout hLayout = new EnhancedHLayout();
-        hLayout.addMember(new Label("Availability Details"));
-        hLayout.hide();
-        return hLayout;
-    }
 
     public void redrawGraphs() {
         this.onDraw();
@@ -90,6 +81,10 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         vLayout.setWidth100();
         vLayout.setHeight100();
         vLayout.addMember(buttonBarDateTimeRangeEditor);
+
+
+        availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
+                new AvailabilityOverUnderGraphType(resource.getId()));
 
         EnhancedHLayout expandCollapseHLayout = new EnhancedHLayout();
 
@@ -111,14 +106,17 @@ public class MetricsResourceView extends AbstractD3GraphListView {
                     expandCollapseArrow.setSrc(IconEnum.EXPANDED_ICON.getIcon16x16Path());
                     expandCollapseArrow.setTooltip(EXPANDED_TOOLTIP);
                     availabilityDetails.show();
+
                 }
-                markForRedraw();
+                new Timer() {
+                    @Override
+                    public void run() {
+                        availabilityGraph.drawJsniChart();
+                    }
+                }.schedule(150);
             }
         });
 
-
-        availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
-            new AvailabilityOverUnderGraphType(resource.getId()));
 
         expandCollapseHLayout.addMember(expandCollapseArrow);
         expandCollapseHLayout.addMember(availabilityGraph);
@@ -138,8 +136,7 @@ public class MetricsResourceView extends AbstractD3GraphListView {
     }
 
     @Override
-    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime,
-        final CountDownLatch countDownLatch) {
+    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed ) {
 
         final long timerStart = System.currentTimeMillis();
 
@@ -149,26 +146,19 @@ public class MetricsResourceView extends AbstractD3GraphListView {
                 @Override
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                    if (countDownLatch != null) {
-                        countDownLatch.countDown();
-                    }
                 }
 
                 @Override
                 public void onSuccess(List<Availability> availList) {
                     Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
                         + " ms.");
-                    availabilityList = availList;
+                    availabilityGraph.setAvailabilityList(availList);
                     new Timer() {
                         @Override
                         public void run() {
                             availabilityGraph.drawJsniChart();
                         }
                     }.schedule(150);
-
-                    if (countDownLatch != null) {
-                        countDownLatch.countDown();
-                    }
                 }
             });
     }

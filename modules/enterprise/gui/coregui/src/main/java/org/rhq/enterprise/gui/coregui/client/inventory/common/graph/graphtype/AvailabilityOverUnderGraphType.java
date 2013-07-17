@@ -344,7 +344,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             console.log("Availability Chart Drawn");
         }
 
-                                       }-*/;
+    }-*/;
 
     public String getChartId() {
         return String.valueOf(entityId);

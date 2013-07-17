@@ -154,41 +154,35 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
     private String getCsvMetricsForSparkline(int definitionId) {
         StringBuilder sb = new StringBuilder();
-        Log.debug("getCsvMetricsForSparkline.metricsDataList("+definitionId+"): " + metricsDataList.size());
         List<MeasurementDataNumericHighLowComposite> selectedMetricsList = getMeasurementsForMeasurementDefId(definitionId);
 
         for (int i = 0; i < selectedMetricsList.size(); i++) {
-                // take the last 20 values
-                //if (i >= selectedMetricsList.size() - 20) {
-                    MeasurementDataNumericHighLowComposite measurementData = selectedMetricsList.get(i);
-                    if (!Double.isNaN(measurementData.getValue())) {
-                        sb.append((int) measurementData.getValue());
-                        sb.append(",");
-                    }
-                //}
+            MeasurementDataNumericHighLowComposite measurementData = selectedMetricsList.get(i);
+            if (!Double.isNaN(measurementData.getValue())) {
+                sb.append((int) measurementData.getValue());
+                sb.append(",");
             }
+        }
 
         if (sb.toString().endsWith(",")) {
             sb.setLength(sb.length() - 1);
         }
-        Log.debug("getCsvMetricsForSparkline: " + sb.toString());
 
         return sb.toString();
     }
 
-    List<MeasurementDataNumericHighLowComposite> getMeasurementsForMeasurementDefId(int definitionId){
-        List<MeasurementDataNumericHighLowComposite> selectedMetricsDataList;
+    List<MeasurementDataNumericHighLowComposite> getMeasurementsForMeasurementDefId(int definitionId) {
         int selectedIndex = 0;
 
         // find the ordinal position as specified when querying the metrics
         for (int i = 0; i < definitionArrayIds.length; i++) {
-            if(definitionArrayIds[i] == definitionId){
+            if (definitionArrayIds[i] == definitionId) {
                 selectedIndex = i;
                 break;
             }
         }
 
-        return  metricsDataList.get(selectedIndex);
+        return metricsDataList.get(selectedIndex);
     }
 
     protected String getMetricStringValue(MetricDisplayValue value) {
@@ -197,7 +191,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
     @Override
     protected Criteria getFetchCriteria(DSRequest request) {
-        // we don't use criterias for this datasource, just return null
+        // NOTE: we don't use criterias for this datasource, just return null
         return null;
     }
 
@@ -228,7 +222,6 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                                     BrowserUtility.graphSparkLines();
                                 }
                             }.schedule(150);
-                            Log.debug("Finished CountdownLatch for metrics loaded: " + metricsDataList.size());
                         }
                     });
 
@@ -305,7 +298,6 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
                     if (!measurementDataList.isEmpty()) {
                         metricsDataList = measurementDataList;
-                        Log.debug("Retrieved metrics metricsDataList.size: " + metricsDataList.size());
                         countDownLatch.countDown();
                     }
                 }

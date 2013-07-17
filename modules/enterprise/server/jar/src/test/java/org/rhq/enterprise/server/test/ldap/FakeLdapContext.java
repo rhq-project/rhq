@@ -99,7 +99,6 @@ public class FakeLdapContext implements LdapContext {
         try {
             return new FakeNamingEnumeration<SearchResult>(ldapTestData.getSearchResults(attributes));
         } catch (Exception e) {
-            // TODO Auto-generated catch block
             e.printStackTrace();
             return null;
         }
@@ -516,12 +515,12 @@ public class FakeLdapContext implements LdapContext {
             attr = new BasicAttribute("member");
             attr.add("cn=Robert Smith,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Cannon\\, Brett,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
-            attr.add("cn=Charles H\\\\Samlin,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
+            attr.add("cn=Charles H\\Samlin,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Craig \\#1 Sellers,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Beverly \\+1 Balanger,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Bethany \\<Stuart\\> Wallace,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Zachory S\\; Balanger,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
-            attr.add("cn=Allen \\\"The Hammer\\\" Callen,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
+            attr.add("cn=Allen \"The Hammer\" Callen,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Sam Not \\= Smitherson,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=\\ Billy The Kiddough\\ ,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=System/Integration API,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
@@ -557,12 +556,12 @@ public class FakeLdapContext implements LdapContext {
             attr = new BasicAttribute("member");
             attr.add("cn=John Smith,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Dr. Greg Hause\\, MD,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
-            attr.add("cn=Cindy\\\\Cynthia Groober,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
+            attr.add("cn=Cindy\\Cynthia Groober,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Biff \\# Rogers,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Steven \\+2 Reed,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Lisa \\<The Great\\> Toller,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Homer J Simpsonite\\; III,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
-            attr.add("cn=Jessica \\\"Crouching Tiger\\\" Mathers,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
+            attr.add("cn=Jessica \"Crouching Tiger\" Mathers,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Hope \\= Rein,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=\\ Sue Ferguson\\ ,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Phil/Susan Carlson,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
@@ -598,12 +597,12 @@ public class FakeLdapContext implements LdapContext {
             attr = new BasicAttribute("member");
             attr.add("cn=Sheri Smith,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Walsh\\, Brad,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
-            attr.add("cn=Jim\\\\James Kirk,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
+            attr.add("cn=Jim\\James Kirk,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Sandra \\# Phillips,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=William Tell Overture \\+1,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Craig \\<Bison\\> Allen,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Walter T Fredrick\\; The Second,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
-            attr.add("cn=Stanley \\\"Short\\\" Mein,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
+            attr.add("cn=Stanley \"Short\" Mein,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=Noah \\= Sadler,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=\\ Stuart Smiley\\ ,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
             attr.add("cn=System/Integration API 2,ou=users,dc=test,dc=rhq,dc=redhat,dc=com");
@@ -984,7 +983,7 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with backslash (\\) in 'cn' in the RHQ Admin Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=Charles H\\\\Samlin,ou=users", null, null, attrs, true);
+            sr = new SearchResult("cn=Charles H\\Samlin,ou=users", null, null, attrs, true);
             this.add(sr);
 
             // dn: cn=Cindy\\Cynthia Groober,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
@@ -1033,7 +1032,7 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with backslash (\\) in 'cn' in the JBoss Admin Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=Cindy\\\\Cynthia Groober,ou=users", null, null, attrs, true);
+            sr = new SearchResult("cn=Cindy\\Cynthia Groober,ou=users", null, null, attrs, true);
             this.add(sr);
 
             // dn: cn=Jim\\James Kirk,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
@@ -1082,7 +1081,7 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with backslash (\\) in 'cn' in the JBoss Monitor Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=Jim\\\\James Kirk,ou=users", null, null, attrs, true);
+            sr = new SearchResult("cn=Jim\\James Kirk,ou=users", null, null, attrs, true);
             this.add(sr);
 
             // dn: cn=Craig \#1 Sellers,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
@@ -1675,7 +1674,7 @@ public class FakeLdapContext implements LdapContext {
                 null, attrs, true);
             this.add(sr);
 
-            // dn: cn=Allen \"The Hammer\" Callen,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
+            // dn: cn=Allen "The Hammer" Callen,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
             attrs = new BasicAttributes();
 
             attr = new BasicAttribute("baseName");
@@ -1721,11 +1720,11 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with quote (\") in 'cn' in the RHQ Admin Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=Allen \\\"The Hammer\\\" Callen,ou=users", "javax.naming.directory.DirContext",
+            sr = new SearchResult("cn=Allen \"The Hammer\" Callen,ou=users", "javax.naming.directory.DirContext",
                 null, attrs, true);
             this.add(sr);
 
-            // dn: cn=Jessica \"Crouching Tiger\" Mathers,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
+            // dn: cn=Jessica "Crouching Tiger" Mathers,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
             attrs = new BasicAttributes();
 
             attr = new BasicAttribute("baseName");
@@ -1771,11 +1770,11 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with quote (\") in 'cn' in the JBoss Admin Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=Jessica \\\"Crouching Tiger\\\" Mathers,ou=users",
+            sr = new SearchResult("cn=Jessica \"Crouching Tiger\" Mathers,ou=users",
                 "javax.naming.directory.DirContext", null, attrs, true);
             this.add(sr);
 
-            // dn: cn=Stanley \"Short\" Mein,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
+            // dn: cn=Stanley "Short" Mein,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
             attrs = new BasicAttributes();
 
             attr = new BasicAttribute("baseName");
@@ -1821,7 +1820,7 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with quote (\") in 'cn' in the JBoss Monitor Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=Stanley \\\"Short\\\" Mein,ou=users", null, null, attrs, true);
+            sr = new SearchResult("cn=Stanley \"Short\" Mein,ou=users", null, null, attrs, true);
             this.add(sr);
 
             // dn: cn=Sam Not \= Smitherson,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
@@ -2160,7 +2159,7 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with slash (/) in 'cn' in the RHQ Admin Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=System/Integration API,ou=users", null, null, attrs, true);
+            sr = new SearchResult("cn=System\\/Integration API,ou=users", null, null, attrs, true);
             this.add(sr);
 
             // dn: cn=Phil/Susan Carlson,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
@@ -2209,7 +2208,7 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with slash (/) in 'cn' in the JBoss Admin Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=Phil/Susan Carlson,ou=users", null, null, attrs, true);
+            sr = new SearchResult("cn=Phil\\/Susan Carlson,ou=users", null, null, attrs, true);
             this.add(sr);
 
             // dn: cn=System/Integration API 2,ou=users,dc=test,dc=rhq,dc=redhat,dc=com
@@ -2254,7 +2253,7 @@ public class FakeLdapContext implements LdapContext {
             attr.add("User with slash (/) in 'cn' in the JBoss Monitor Group");
             attrs.put(attr);
 
-            sr = new SearchResult("cn=System/Integration API 2,ou=users", null, null, attrs, true);
+            sr = new SearchResult("cn=System\\/Integration API 2,ou=users", null, null, attrs, true);
             this.add(sr);
 
             // dn: cn=Lee -Fast- Croutche,ou=users,dc=test,dc=rhq,dc=redhat,dc=com

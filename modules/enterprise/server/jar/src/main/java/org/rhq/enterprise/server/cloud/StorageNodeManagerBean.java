@@ -650,7 +650,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 initialStorageNodes = new ArrayList<StorageNode>();
             }
         }
-
+         
         Queue<Resource> unvisitedResources = new LinkedList<Resource>();
         for (StorageNode initialStorageNode : initialStorageNodes) {
             if (initialStorageNode.getResource() != null) {

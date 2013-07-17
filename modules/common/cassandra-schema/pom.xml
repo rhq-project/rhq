@@ -15,6 +15,12 @@
   <dependencies>
     <dependency>
       <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-cassandra-ccm-core</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
       <artifactId>rhq-cassandra-util</artifactId>
       <version>${project.version}</version>
     </dependency>

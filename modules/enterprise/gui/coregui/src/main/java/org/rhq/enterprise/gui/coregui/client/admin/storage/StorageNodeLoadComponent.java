@@ -28,6 +28,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.StorageNodeLoadCompositeDatasource;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -43,7 +44,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         this(storageNodeId, null, null);
     }
 
-    public StorageNodeLoadComponent(int storageNodeId, final ListGrid parentGrid, final ListGridRecord record) {
+    public StorageNodeLoadComponent(final int storageNodeId, final ListGrid parentGrid, final ListGridRecord record) {
         super(5);
         setPadding(5);
         setBackgroundColor("#ffffff");
@@ -73,13 +74,24 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         loadGrid.setAutoFetchData(true);
 
+
+        ToolStrip toolStrip = new ToolStrip();
+        IButton settingsButton = new IButton("Settings");
+        settingsButton.addClickHandler(new ClickHandler() {
+            public void onClick(ClickEvent event) {
+                CoreGUI.goToView(StorageNodeAdminView.VIEW_PATH + "/" + storageNodeId + "/Config");
+            }
+        });
+        settingsButton.setExtraSpace(5);
+        toolStrip.addMember(settingsButton);
+        
         IButton refreshButton = new IButton(MSG.common_button_refresh());
         refreshButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent event) {
                 loadGrid.fetchData();
             }
         });
-        ToolStrip toolStrip = new ToolStrip();
+        refreshButton.setExtraSpace(5);
         toolStrip.addMember(refreshButton);
 
         if (parentGrid != null && record != null) {
@@ -90,6 +102,8 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                 }
             });
             toolStrip.addMember(closeButton);
+            
+
         }
         loadGrid.setDataSource(datasource);
         addMember(loadGrid);

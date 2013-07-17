@@ -41,14 +41,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
@@ -60,13 +57,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author Jirka Kremser
  */
-public class StorageNodeTableView extends TableSection<StorageNodeDatasource> implements HasViewName {
-
-    public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(),
-        IconEnum.STORAGE_NODE);
+public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
-        + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
+        + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + StorageNodeAdminView.VIEW_ID;
 
     public StorageNodeTableView() {
         super(null);
@@ -80,7 +74,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
         }
         criteria.addCriteria(StorageNodeDatasource.FILTER_OPERATION_MODE, modes);
         setInitialCriteria(criteria);
-        setDataSource(new StorageNodeDatasource());
+        setDataSource(StorageNodeDatasource.instance());
     }
 
     @Override
@@ -331,11 +325,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
             }
         }
         return true;
-    }
-
-    @Override
-    public ViewName getViewName() {
-        return VIEW_ID;
     }
 
     @Override

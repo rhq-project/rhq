@@ -18,328 +18,224 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.EnumSet;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.Criteria;
-import com.smartgwt.client.types.SortDirection;
-import com.smartgwt.client.util.BooleanCallback;
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.Canvas;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
+import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.collection.ArrayUtils;
+import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
-import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
+import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
+import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.async.Command;
-import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
- * Shows the table of all storage nodes.
+ * The main view for managing storage nodes.
  *
  * @author Jirka Kremser
  */
-public class StorageNodeAdminView extends TableSection<StorageNodeDatasource> implements HasViewName {
+public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName, BookmarkableView {
 
     public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(),
         IconEnum.STORAGE_NODE);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
+    
+    private static final String GROUP_NAME = "RHQ Storage Nodes";
+//    private static final String GROUP_NAME = "storage services";
+    
+    private final NamedTabSet tabset;
+    private TabInfo tableTabInfo = new TabInfo(0, new ViewName("Nodes"));
+    private TabInfo settingsTabInfo = new TabInfo(1, new ViewName("Settings", "Global Settings"));
+    private TabInfo alertsTabInfo = new TabInfo(2, new ViewName("Alerts", "Global Alerts"));
+    private TabInfo backupTabInfo = new TabInfo(3, new ViewName("Backup"));
+    private StorageNodeTableView table;
+
+    private int[] resIds;
 
     public StorageNodeAdminView() {
-        super(null);
+        super();
         setHeight100();
         setWidth100();
-        Criteria criteria = new Criteria();
-        String[] modes = new String[OperationMode.values().length];
-        int i = 0;
-        for (OperationMode value : OperationMode.values()) {
-            modes[i++] = value.name();
-        }
-        criteria.addCriteria(StorageNodeDatasource.FILTER_OPERATION_MODE, modes);
-        setInitialCriteria(criteria);
-        setDataSource(new StorageNodeDatasource());
-    }
-
-    @Override
-    protected void configureTable() {
-        super.configureTable();
-        List<ListGridField> fields = getDataSource().getListGridFields();
-        ListGrid listGrid = getListGrid();
-        listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
-        listGrid.sort(FIELD_ADDRESS.propertyName(), SortDirection.ASCENDING);
-        showCommonActions();
-
-        for (ListGridField field : fields) {
-            // adding the cell formatter for name field (clickable link)
-            if (field.getName() == FIELD_ADDRESS.propertyName()) {
-                field.setCellFormatter(new CellFormatter() {
-                    @Override
-                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                        if (value == null) {
-                            return "";
-                        }
-                        String detailsUrl = "#" + VIEW_PATH + "/" + getId(record);
-                        String formattedValue = StringUtility.escapeHtml(value.toString());
-                        return LinkManager.getHref(detailsUrl, formattedValue);
-
-                    }
-                });
-            } else if (field.getName() == FIELD_RESOURCE_ID.propertyName()) {
-                // adding the cell formatter for resource id field (clickable link)
-                field.setCellFormatter(new CellFormatter() {
-                    @Override
-                    public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
-                        if (value == null || value.toString().isEmpty()) {
-                            return "";
-                        }
-                        String rawUrl = null;
-                        try {
-                            rawUrl = LinkManager.getResourceLink(record.getAttributeAsInt(FIELD_RESOURCE_ID
-                                .propertyName()));
-                        } catch (NumberFormatException nfe) {
-                            rawUrl = MSG.common_label_none();
-                        }
-
-                        String formattedValue = StringUtility.escapeHtml(rawUrl);
-                        String label = StringUtility.escapeHtml("Link to Resource");
-                        return LinkManager.getHref(formattedValue, label);
-                    }
-                });
-            }
-        }
-    }
-
-    @Override
-    protected ListGrid createListGrid() {
-        ListGrid listGrid = new ListGrid() {
-            @Override
-            protected Canvas getExpansionComponent(final ListGridRecord record) {
-                int id = record.getAttributeAsInt(FIELD_ID);
-                return new StorageNodeLoadComponent(id, this, record);
-            }
-        };
-        listGrid.setCanExpandRecords(true);
-//        listGrid.setAutoFetchData(true);
-
-        return listGrid;
-    }
-
-    @Override
-    public Canvas getDetailsView(Integer id) {
-        return new StorageNodeDetailView(id);
-    }
-
-    private void showCommonActions() {
-        addInvokeOperationsAction();
-
-        //        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
-        //            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-        //            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-        //                final List<String> selectedAddresses = getSelectedAddresses(selections);
-        //                String message = MSG.view_adminTopology_message_removeServerConfirm(selectedAddresses.toString());
-        //                SC.ask(message, new BooleanCallback() {
-        //                    public void execute(Boolean confirmed) {
-        //                        if (confirmed) {
-        //                            SC.say("You've selected:\n\n" + selectedAddresses);
-        ////                            int[] selectedIds = getSelectedIds(selections);
-        ////                            GWTServiceLookup.getTopologyService().deleteServers(selectedIds, new AsyncCallback<Void>() {
-        ////                                public void onSuccess(Void arg0) {
-        ////                                    Message msg = new Message(MSG.view_adminTopology_message_removedServer(String
-        ////                                        .valueOf(selections.length)), Message.Severity.Info);
-        ////                                    CoreGUI.getMessageCenter().notify(msg);
-        ////                                    refresh();
-        ////                                }
-        ////
-        ////                                public void onFailure(Throwable caught) {
-        ////                                    CoreGUI.getErrorHandler().handleError(
-        ////                                        MSG.view_adminTopology_message_removeServerFail(String
-        ////                                            .valueOf(selections.length)) + " " + caught.getMessage(), caught);
-        ////                                    refreshTableInfo();
-        ////                                }
-        ////
-        ////                            });
-        //                        }
-        //                    }
-        //                });
-        //            }
-        //        });
-    }
-
-    private void addInvokeOperationsAction() {
-        Map<String, Object> operationsMap = new LinkedHashMap<String, Object>();
-        operationsMap.put("Start", "start");
-        operationsMap.put("Shutdown", "shutdown");
-        operationsMap.put("Restart", "restart");
-        operationsMap.put("Disable Debug Mode", "stopRPCServer");
-        operationsMap.put("Enable Debug Mode", "startRPCServer");
-        //        operationsMap.put("Decommission", "decommission");
-
-        addTableAction(MSG.common_title_operation(), null, operationsMap, new AuthorizedTableAction(this,
-            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-
-            @Override
-            public boolean isEnabled(ListGridRecord[] selection) {
-                return StorageNodeAdminView.this.isEnabled(super.isEnabled(selection), selection);
-            };
-
-            @Override
-            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                final String operationName = (String) actionValue;
-                final List<String> selectedAddresses = getSelectedAddresses(selections);
-                //                String message = MSG.view_adminTopology_message_setModeConfirm(selectedAddresses.toString(), mode.name());
-                SC.ask("Are you sure, you want to run operation " + operationName + "?", new BooleanCallback() {
-                    public void execute(Boolean confirmed) {
-                        if (confirmed) {
-                            final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {
-                                @Override
-                                public void execute() {
-                                    //                                    Message msg = new Message(MSG.view_adminTopology_message_setMode(
-                                    //                                      String.valueOf(selections.length), mode.name()), Message.Severity.Info);
-                                    Message msg = new Message("Operation" + operationName
-                                        + " was successfully scheduled for resources with ids"
-                                        + Arrays.asList(getSelectedIds(selections)), Message.Severity.Info);
-                                    CoreGUI.getMessageCenter().notify(msg);
-                                    refreshTableInfo();
-                                }
-                            });
-                            boolean isStopStartOrRestart = Arrays.asList("start", "shutdown", "restart").contains(
-                                operationName);
-                            for (ListGridRecord storageNodeRecord : selections) {
-                                // NFE should never happen, because of the condition for table action enablement
-                                int resourceId = storageNodeRecord.getAttributeAsInt(FIELD_RESOURCE_ID.propertyName());
-                                if (isStopStartOrRestart) {
-                                    // start, stop or restart the storage node
-                                    GWTServiceLookup.getOperationService().scheduleResourceOperation(resourceId,
-                                        operationName, null, "Run by Storage Node Administrations UI", 0,
-                                        new AsyncCallback<Void>() {
-                                            public void onSuccess(Void result) {
-                                                latch.countDown();
-                                            }
-
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError(
-                                                    "Scheduling operation " + operationName
-                                                        + " failed for resources with ids"
-                                                        + Arrays.asList(getSelectedIds(selections)) + " "
-                                                        + caught.getMessage(), caught);
-                                                latch.countDown();
-                                                refreshTableInfo();
-                                            }
-                                        });
-                                } else {
-                                    // invoke the operation on the storage service resource
-                                    GWTServiceLookup.getStorageService().invokeOperationOnStorageService(resourceId,
-                                        operationName, new AsyncCallback<Void>() {
-                                            public void onSuccess(Void result) {
-                                                latch.countDown();
-                                            }
-
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError(
-                                                    "Scheduling operation " + operationName
-                                                        + " failed for resources with ids"
-                                                        + Arrays.asList(getSelectedIds(selections)) + " "
-                                                        + caught.getMessage(), caught);
-                                                latch.countDown();
-                                                refreshTableInfo();
-                                            }
-                                        });
-                                }
-                            }
-
-                            //                            int[] selectedIds = getSelectedIds(selections);
-                            //                            GWTServiceLookup.getTopologyService().updateServerMode(selectedIds, mode,
-                            //                                new AsyncCallback<Void>() {
-                            //                                    public void onSuccess(Void result) {
-                            //                                        Message msg = new Message(MSG.view_adminTopology_message_setMode(
-                            //                                            String.valueOf(selections.length), mode.name()), Message.Severity.Info);
-                            //                                        CoreGUI.getMessageCenter().notify(msg);
-                            //                                        refresh();
-                            //                                    }
-                            //
-                            //                                    public void onFailure(Throwable caught) {
-                            //                                        CoreGUI.getErrorHandler().handleError(
-                            //                                            MSG.view_adminTopology_message_setModeFail(
-                            //                                                String.valueOf(selections.length), mode.name())
-                            //                                                + " " + caught.getMessage(), caught);
-                            //                                        refreshTableInfo();
-                            //                                    }
-                            //
-                            //                                });
-                        } else {
-                            refreshTableInfo();
-                        }
-                    }
-                });
+        setLayoutTopMargin(8);
+        tabset = new NamedTabSet();
+        NamedTab table = new NamedTab(tableTabInfo.name);
+        table.addTabSelectedHandler(new TabSelectedHandler() {
+            public void onTabSelected(TabSelectedEvent event) {
+                CoreGUI.goToView(VIEW_PATH);
             }
         });
-    }
 
-    private int[] getSelectedIds(ListGridRecord[] selections) {
-        if (selections == null) {
-            return new int[0];
-        }
-        int[] ids = new int[selections.length];
-        int i = 0;
-        for (ListGridRecord selection : selections) {
-            ids[i++] = selection.getAttributeAsInt(FIELD_ID);
-        }
-        return ids;
-    }
-
-    private List<String> getSelectedAddresses(ListGridRecord[] selections) {
-        if (selections == null) {
-            return new ArrayList<String>(0);
-        }
-        List<String> ids = new ArrayList<String>(selections.length);
-        for (ListGridRecord selection : selections) {
-            ids.add(selection.getAttributeAsString(FIELD_ADDRESS.propertyName()));
-        }
-        return ids;
-    }
-
-    private boolean isEnabled(boolean parentsOpinion, ListGridRecord[] selection) {
-        if (!parentsOpinion) {
-            return false;
-        }
-        for (ListGridRecord storageNodeRecord : selection) {
-            if (storageNodeRecord.getAttribute(FIELD_RESOURCE_ID.propertyName()) == null) {
-                return false;
+        NamedTab settings = new NamedTab(settingsTabInfo.name);
+        settings.addTabSelectedHandler(new TabSelectedHandler() {
+            public void onTabSelected(TabSelectedEvent event) {
+                CoreGUI.goToView(VIEW_PATH + "/" + settingsTabInfo.name);
             }
+        });
+
+        final NamedTab alerts = new NamedTab(alertsTabInfo.name);
+        alerts.addTabSelectedHandler(new TabSelectedHandler() {
+            public void onTabSelected(TabSelectedEvent event) {
+                CoreGUI.goToView(VIEW_PATH + "/" + alertsTabInfo.name);
+            }
+        });
+        
+        final NamedTab backup = new NamedTab(backupTabInfo.name);
+        backup.addTabSelectedHandler(new TabSelectedHandler() {
+            public void onTabSelected(TabSelectedEvent event) {
+                CoreGUI.goToView(VIEW_PATH + "/" + backupTabInfo.name);
+            }
+        });
+
+        tabset.setTabs(table, settings, alerts, backup);
+        addMember(tabset);
+    }
+
+    private void showTab(final TabInfo tabInfo) {
+        if (tabInfo.equals(tableTabInfo)) {
+            table = new StorageNodeTableView();
+            tabset.getTabByName(tabInfo.name.getName()).setPane(table);
+            tabset.selectTab(tabInfo.index);
+        } else if (tabInfo.equals(backupTabInfo)) {
+            tabset.getTabByName(tabInfo.name.getName()).setPane(new Label("in progress.."));
+        } else if (tabInfo.equals(alertsTabInfo)) {
+            if (resIds != null) {
+                tabset.getTabByName(tabInfo.name.getName()).setPane(new AlertHistoryView("storageNodesAlerts", resIds));
+            } else {
+                GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new AsyncCallback<Integer[]>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Message message = new Message("foobar",
+                            Message.Severity.Warning);
+                        CoreGUI.goToView(VIEW_ID.getName(), message);
+                    }
+
+                    @Override
+                    public void onSuccess(Integer[] result) {
+                        if (result == null || result.length == 0) {
+                            onFailure(new Exception("foobaz"));
+                        } else {
+                            resIds = ArrayUtils.unwrapArray(result);
+                            tabset.getTabByName(tabInfo.name.getName()).setPane(
+                                new AlertHistoryView("storageNodesAlerts", resIds));
+                            tabset.selectTab(tabInfo.index);
+                        }
+                    }
+                });
+            }
+        } else if (tabInfo.equals(settingsTabInfo)) {
+            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+            criteria.addFilterName(GROUP_NAME);
+            criteria.setStrict(true);
+            GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Message message = new Message(MSG.view_group_detail_failLoadComp(String.valueOf(GROUP_NAME)),
+                            Message.Severity.Warning);
+                        CoreGUI.goToView(VIEW_ID.getName(), message);
+                    }
+
+                    @Override
+                    public void onSuccess(PageList<ResourceGroupComposite> result) {
+                        if (result.isEmpty()) {
+                            onFailure(new Exception("Group with name [" + GROUP_NAME + "] does not exist."));
+                        } else {
+                            ResourceGroupComposite groupComposite = result.get(0);
+                            loadResourceType(groupComposite.getResourceGroup().getResourceType().getId());
+                            tabset.getTabByName(tabInfo.name.getName()).setPane(
+                                new GroupResourceConfigurationEditView(groupComposite));
+                            tabset.selectTab(tabInfo.index);
+                        }
+                    }
+                });
         }
-        return true;
+    }
+    
+    private void loadResourceType(int resourceTypeId) {
+        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+            resourceTypeId,
+            EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
+                ResourceTypeRepository.MetadataType.measurements, ResourceTypeRepository.MetadataType.events,
+                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+            new ResourceTypeRepository.TypeLoadedCallback() {
+                public void onTypesLoaded(ResourceType type) {
+
+                }
+            });
     }
 
     @Override
     public ViewName getViewName() {
         return VIEW_ID;
     }
+    
+    private static final class TabInfo {
+        private int index;
+        private ViewName name;
+
+        private TabInfo(int index, ViewName name) {
+            this.index = index;
+            this.name = name;
+        }
+
+        @Override
+        public int hashCode() {
+            final int prime = 31;
+            int result = 1;
+            result = prime * result + index;
+            return result;
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (this == obj)
+                return true;
+            if (obj == null)
+                return false;
+            if (getClass() != obj.getClass())
+                return false;
+            TabInfo other = (TabInfo) obj;
+            if (index != other.index)
+                return false;
+            return true;
+        }
+    }
 
     @Override
-    protected String getBasePath() {
-        return VIEW_PATH;
+    public void renderView(ViewPath viewPath) {
+        if (viewPath.getViewPath().size() == 3) {
+            showTab(tableTabInfo);
+        } else {
+            String viewId = viewPath.getCurrent().getPath();
+            if (settingsTabInfo.name.getName().equals(viewId)) {
+                showTab(settingsTabInfo);
+            } else if (alertsTabInfo.name.getName().equals(viewId)) {
+                showTab(alertsTabInfo);
+            } else if (backupTabInfo.name.getName().equals(viewId)) {
+                showTab(backupTabInfo);
+            } else {
+                showTab(tableTabInfo);
+                table.renderView(viewPath);
+            }
+        }
     }
 }

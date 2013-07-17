@@ -58,6 +58,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -79,6 +80,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private SectionStackSection detailsSection;
     private SectionStackSection loadSection;
     private SectionStackSection historySection;
+    private int expandedSection = -1;
 
     private volatile int initSectionCount = 0;
 
@@ -95,6 +97,11 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         sectionStack.setHeight100();
         sectionStack.setMargin(5);
         sectionStack.setOverflow(Overflow.VISIBLE);
+    }
+    
+    public StorageNodeDetailView(int storageNodeId, int expandedSection) {
+        this(storageNodeId);
+        this.expandedSection = expandedSection;
     }
 
     @Override
@@ -152,7 +159,9 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         initSectionCount = SECTION_COUNT;
                     } else {
                         final ResourceComposite resourceComposite = result.get(0);
-                        prepareOperationHistory(resourceComposite);
+//                        prepareOperationHistory(resourceComposite);
+                        prepareResourceConfigEditor(resourceComposite);
+                        
                     }
                 }
             });
@@ -182,6 +191,12 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     if (null != historySection) {
                         sectionStack.addSection(historySection);
                     }
+//                    if (expandedSection != -1) {
+//                        for (int i = 1; i < SECTION_COUNT; i++) {
+//                            sectionStack.collapseSection(i);
+//                        }
+//                        sectionStack.expandSection(expandedSection);
+//                    }
                     addMember(sectionStack);
                     markForRedraw();
 
@@ -268,7 +283,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         footer.addMember(saveButton);
 
         SectionStackSection section = new SectionStackSection(MSG.common_title_details());
-        section.setExpanded(true);
+        section.setExpanded(expandedSection != -1 ? expandedSection == 0 : true);
         
         section.setItems(form);
         detailsSection = section;
@@ -279,7 +294,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         StorageNodeLoadComponent loadDataComponent = new StorageNodeLoadComponent(storageNode.getId());
         SectionStackSection section = new SectionStackSection("Load");
         section.setItems(loadDataComponent);
-        section.setExpanded(true);
+        section.setExpanded(expandedSection != -1 ? expandedSection == 1 : true);
 
         loadSection = section;
         initSectionCount++;
@@ -294,9 +309,31 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         historySection = section;
         initSectionCount++;
     }
+    
+    private void prepareResourceConfigEditor(ResourceComposite resourceComposite) {
+        ResourceConfigurationEditView editorView = new ResourceConfigurationEditView(resourceComposite);
+        SectionStackSection section = new SectionStackSection("Configuration");
+        section.setItems(editorView);
+        section.setExpanded(expandedSection != -1 && expandedSection == 2);
+
+        historySection = section;
+        initSectionCount++;
+    }
+    
+    
 
     @Override
     public void renderView(ViewPath viewPath) {
+        if (viewPath.toString().endsWith("/Config")) {
+//            for (int i = 1; i < SECTION_COUNT; i++) {
+//                sectionStack.collapseSection(i);
+//            }
+            expandedSection = 2;
+//            sectionStack.expandSection(expandedSection);
+//            detailsSection.setExpanded(false);
+//            loadSection.setExpanded(false);
+//            historySection.setExpanded(true);
+        }
         Log.debug("StorageNodeDetailView: " + viewPath);
     }
 }

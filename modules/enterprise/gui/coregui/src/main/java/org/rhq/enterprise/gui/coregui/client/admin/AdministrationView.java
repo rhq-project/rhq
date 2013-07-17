@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.admin.agent.install.RemoteAgentInstallView;
 import org.rhq.enterprise.gui.coregui.client.admin.roles.RolesView;
-import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeTableView;
+import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeAdminView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.DriftDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.admin.templates.IgnoreResourceTypesView;
@@ -145,9 +145,9 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 
-        NavigationItem storageNodesItem = new NavigationItem(StorageNodeTableView.VIEW_ID, new ViewFactory() {
+        NavigationItem storageNodesItem = new NavigationItem(StorageNodeAdminView.VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new StorageNodeTableView();
+                return new StorageNodeAdminView();
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_SETTINGS));
 

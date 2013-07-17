@@ -24,12 +24,14 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.List;
 
+import org.rhq.core.clientapi.util.ArrayUtil;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.gwt.StorageGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
@@ -87,6 +89,25 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
             List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
             return SerialUtility.prepare(storageNodeManager.getLoad(getSessionSubject(), node, beginEnd.get(0), beginEnd.get(1)),
                 "StorageGWTServiceImpl.getLoad");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public PageList<StorageNodeLoadComposite> getStorageNodeComposites() throws RuntimeException {
+        try {
+            return SerialUtility.prepare(storageNodeManager.getStorageNodeComposites(),
+                "StorageGWTServiceImpl.getStorageNodeComposites");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public Integer[] findResourcesWithAlertDefinitions() throws RuntimeException {
+        try {
+            return storageNodeManager.findResourcesWithAlertDefinitions();
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

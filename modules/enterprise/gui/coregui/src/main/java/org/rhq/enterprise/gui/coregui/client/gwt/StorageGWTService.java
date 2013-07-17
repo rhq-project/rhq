@@ -66,4 +66,8 @@ public interface StorageGWTService extends RemoteService {
      * @return instance of {@link StorageNodeLoadComposite} with the aggregate measurement data of selected metrics
      */
     StorageNodeLoadComposite getLoad(StorageNode node, int lastN, int unit) throws RuntimeException;
+    
+    PageList<StorageNodeLoadComposite> getStorageNodeComposites() throws RuntimeException;
+    
+    Integer[] findResourcesWithAlertDefinitions() throws RuntimeException;
 }

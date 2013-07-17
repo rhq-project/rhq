@@ -21,7 +21,6 @@
             discovery="SonarQubeProjectDiscoveryComponent"
             class="SonarQubeProjectComponent">
             
-            <metric property="lastAnalysis" dataType="trait" displayType="summary"/>
             <metric property="lastAnalysisTime" dataType="trait" units="epoch_milliseconds"/>
             <metric property="lastAnalysisElapsedTime" units="seconds"/>            
         </service>

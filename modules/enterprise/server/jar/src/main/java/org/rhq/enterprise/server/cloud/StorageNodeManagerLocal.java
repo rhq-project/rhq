@@ -43,6 +43,8 @@ public interface StorageNodeManagerLocal {
     String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
     List<StorageNode> getStorageNodes();
+    
+    PageList<StorageNodeLoadComposite> getStorageNodeComposites();
 
     void linkResource(Resource resource);
 

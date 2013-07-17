@@ -478,6 +478,18 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             StorageNode.class);
         return query.getResultList();
     }
+    
+    @Override
+    public PageList<StorageNodeLoadComposite> getStorageNodeComposites() {
+        List<StorageNode> nodes = getStorageNodes();
+        PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
+        long endTime = System.currentTimeMillis();
+        long beginTime = endTime - (1 * 60 * 60 * 1000);
+        for (StorageNode node : nodes) {
+            result.add(getLoad(subjectManager.getOverlord(), node, beginTime, endTime));
+        }
+        return result;
+    }
 
     private List<StorageNode> getClusteredStorageNodes() {
         return entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE, StorageNode.class)

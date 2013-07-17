@@ -485,7 +485,7 @@ public class StorageInstaller {
     private PropertiesFileUpdate getServerProperties() {
         String sysprop = System.getProperty("rhq.server.properties-file");
         if (sysprop == null) {
-            throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
+            throw new RuntimeException("The required system property [rhq.server.properties-file] is not defined.");
         }
 
         File file = new File(sysprop);
@@ -605,7 +605,7 @@ public class StorageInstaller {
         return new File(binDir, "cassandra.pid").exists();
     }
 
-    private boolean verifyNodeIsUp(String address, int jmxPort, int retries, long timeout) throws Exception {
+    boolean verifyNodeIsUp(String address, int jmxPort, int retries, long timeout) throws Exception {
         String url = "service:jmx:rmi:///jndi/rmi://" + address + ":" + jmxPort + "/jmxrmi";
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         JMXConnector connector = null;

@@ -303,7 +303,7 @@ public class CassandraClusterManager {
         return nodeIds;
     }
 
-    private void killNode(File nodeDir) throws Exception {
+    public void killNode(File nodeDir) throws Exception {
         long pid = getPid(nodeDir);
         CLibrary.kill((int) pid, 9);
     }

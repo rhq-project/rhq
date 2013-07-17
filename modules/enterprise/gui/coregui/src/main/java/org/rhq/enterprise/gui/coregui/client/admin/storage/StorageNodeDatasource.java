@@ -119,7 +119,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         field.setShowHover(true);
         field.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                return "Average disk space taken for last one hour.";
+                return "Average memory taken for last one hour.";
             }
         });
         fields.add(field);
@@ -128,7 +128,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         field.setShowHover(true);
         field.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                return "Average memory taken for last one hour.";
+                return "Average disk space taken for last one hour.";
             }
         });
         fields.add(field);
@@ -335,7 +335,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         }
 
         private static void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
-            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS, callback);
+            GWTServiceLookup.getStorageService().getLoad(node, 1, MeasurementUtils.UNIT_HOURS, callback);
         }
 
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {

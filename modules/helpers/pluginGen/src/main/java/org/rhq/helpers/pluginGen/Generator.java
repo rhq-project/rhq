@@ -149,9 +149,12 @@ public class Generator extends Application{
         Label label = new Label("Messages:");
         msgBox.getChildren().add(label);
         errorMessage = new Text();
-        errorMessage.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 12));
+        errorMessage.setFont(Font.font("Arial", FontWeight.SEMI_BOLD, 15));
         errorMessage.setId("errorMessage");
         msgBox.getChildren().add(errorMessage);
+        msgBox.setPadding(new Insets(5));
+        msgBox.setSpacing(3);
+        msgBox.setAlignment(Pos.BASELINE_LEFT);
         return msgBox;
     }
 
@@ -172,94 +175,14 @@ public class Generator extends Application{
             // Now add the field itself
             final Class propType = prop.getType();
             if (propType.equals(String.class)) {
-                final Pattern pattern = Pattern.compile(prop.getValidationRegex());
-
-                final TextField input = new TextField();
-                // Add field leave event to fill in the props with the result
-                input.focusedProperty().addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observableValue, Boolean oldState,
-                                        Boolean newState) {
-                        if (newState) { // User entered input field
-                            descriptionField.setText(prop.getDescription());
-                        }
-                        else { // User left input field
-                            descriptionField.setText("");
-                            setPropsValue(prop.getVariableName(),input.getText(), propType); // TODO right place?
-                        }
-                    }
-                });
-                // Add validation of the input
-                input.textProperty().addListener(new ChangeListener<String>() {
-                    @Override
-                    public void changed(ObservableValue<? extends String> observableValue, String s, String newText) {
-                        Matcher m = pattern.matcher(newText);
-                        if (!m.matches()) {
-                            setErrorMessage("Input does not match " + prop.getValidationRegex());
-                        } else {
-                            clearErrorMessage();
-                        }
-
-                    }
-                });
-                root.add(input, 1, row);
+                addStringField(root, descriptionField, row, prop);
             } else if (propType.equals(Boolean.class) || propType.equals(boolean.class)) {
-                final ChoiceBox choiceBox = new ChoiceBox();
-                choiceBox.getItems().addAll("Yes", "No");
-                choiceBox.getSelectionModel().selectLast(); // NO is default
-                choiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-                    @Override
-                    public void changed(ObservableValue<? extends String> observableValue, String s, String newValue) {
-                        setPropsValue(prop.getVariableName(), newValue.equals("Yes"), propType);
-                    }
-                });
-                Tooltip tooltip = new Tooltip(prop.getDescription()); // TODO make this a hover listener
-                choiceBox.setTooltip(tooltip);
-
-                root.add(choiceBox, 1, row);
+                addBooleanField(root, row, prop);
             } else if (propType.equals(ResourceCategory.class)) {
-                final ChoiceBox choiceBox = new ChoiceBox();
-                for (ResourceCategory cat : ResourceCategory.values()) {
-                    choiceBox.getItems().add(cat.getLowerName());
-                }
-                choiceBox.getSelectionModel().selectLast(); // service is default
-                choiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
-                    @Override
-                    public void changed(ObservableValue<? extends String> observableValue, String s, String newValue) {
-                        ResourceCategory newCategory = ResourceCategory.valueOf(newValue.toUpperCase());
-                        setPropsValue(prop.getVariableName(),newCategory,propType);
-                    }
-                });
-                Tooltip tooltip = new Tooltip(prop.getDescription()); // TODO make this a hover listener
-                               choiceBox.setTooltip(tooltip);
-                root.add(choiceBox,1,row);
+                addResourceTypeChooser(root, row, prop);
             } else if (propType.equals(File.class)) {
-                // Can not add this directly, so add a button to trigger it
-                final Text text = new Text();
-                text.setText("Pick a directory");
-                root.add(text,1,row);
-                Tooltip tooltip = new Tooltip("Pick the (parent) directory where the plugin will be put in.");
-                Button pickButton = new Button("Pick");
-                pickButton.setTooltip(tooltip);
-                pickButton.setOnAction(new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent actionEvent) {
-                        DirectoryChooser chooser = new DirectoryChooser();
-                        chooser.setTitle("Pick a directory where the plugin will be put in.");
-                        File dir = chooser.showDialog(primaryStage);
-                        if (dir != null) {
-                            String dirName = dir.getAbsolutePath();
-                            props.setFileSystemRoot(dirName);
-                            clearErrorMessage();
-                            text.setText(dirName);
-                        } else {
-                            setErrorMessage("No directory selected");
-                            text.setText("Pick a directory");
-                        }
-                    }
-                });
+                addDirectoryChooserField(root, row, prop, descriptionField);
 
-                root.add(pickButton,2,row);
             }
 
             row++;
@@ -267,6 +190,115 @@ public class Generator extends Application{
         }
 
         return row;
+    }
+
+    private void addDirectoryChooserField(GridPane root, int row, final Prop prop, final Text descriptionField) {
+        // Can not add this directly, so add a button to trigger it
+        final TextField input = new TextField();
+        root.add(input,1,row);
+        Tooltip tooltip = new Tooltip(prop.getDescription());
+        Button pickButton = new Button("Pick");
+        input.setTooltip(tooltip);
+        pickButton.setTooltip(tooltip);
+        pickButton.setOnAction(new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent actionEvent) {
+                DirectoryChooser chooser = new DirectoryChooser();
+                chooser.setTitle(prop.getDescription());
+                File dir = chooser.showDialog(primaryStage);
+                if (dir != null) {
+                    String dirName = dir.getAbsolutePath();
+                    setPropsValue(prop.getVariableName(), dirName, String.class);
+                    clearErrorMessage();
+                    input.setText(dirName);
+                } else {
+                    setErrorMessage("No directory selected");
+                    input.setText("Pick a directory");
+                }
+            }
+        });
+        input.focusedProperty().addListener(new ShowFieldDescriptionHandler(prop,descriptionField,input));
+        // Add validation of the input
+        input.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String s, String newText) {
+                File file = new File(newText);
+                if (!file.isDirectory()) {
+                    setErrorMessage(newText + " is no directory");
+                } else if (prop.isDirectoryWriteable() && !file.canWrite()) {
+                    setErrorMessage(newText + " is not writable");
+                } else if (!prop.isDirectoryWriteable() && !file.canRead()) {
+                    setErrorMessage(newText + " is not readable");
+                } else {
+                    clearErrorMessage();
+                }
+
+            }
+        });
+
+
+
+        root.add(pickButton,2,row);
+    }
+
+    private void addResourceTypeChooser(GridPane root, int row, final Prop prop) {
+        final ChoiceBox choiceBox = new ChoiceBox();
+        for (ResourceCategory cat : ResourceCategory.values()) {
+            choiceBox.getItems().add(cat.getLowerName());
+        }
+        choiceBox.getSelectionModel().selectLast(); // service is default
+        choiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String s, String newValue) {
+                ResourceCategory newCategory = ResourceCategory.valueOf(newValue.toUpperCase());
+                setPropsValue(prop.getVariableName(),newCategory,prop.getType());
+            }
+        });
+        Tooltip tooltip = new Tooltip(prop.getDescription()); // TODO make this a hover listener
+        choiceBox.setTooltip(tooltip);
+        root.add(choiceBox,1,row);
+    }
+
+    private void addBooleanField(GridPane root, int row, final Prop prop) {
+        final ChoiceBox choiceBox = new ChoiceBox();
+        choiceBox.getItems().addAll("Yes", "No");
+        choiceBox.getSelectionModel().selectLast(); // NO is default
+        choiceBox.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String s, String newValue) {
+                setPropsValue(prop.getVariableName(), newValue.equals("Yes"), prop.getType());
+            }
+        });
+        Tooltip tooltip = new Tooltip(prop.getDescription()); // TODO make this a hover listener
+        choiceBox.setTooltip(tooltip);
+
+        root.add(choiceBox, 1, row);
+    }
+
+    private void addStringField(GridPane root, final Text descriptionField, int row, final Prop prop) {
+        final Pattern pattern = Pattern.compile(prop.getValidationRegex());
+
+        final TextField input = new TextField();
+        if (prop.getDefaultValue()!=null && !prop.getDefaultValue().isEmpty()) {
+            input.setText(prop.getDefaultValue());
+            setPropsValue(prop.getVariableName(),prop.getDefaultValue(),prop.getType());
+        }
+        // Add field leave event to fill in the props with the result
+        input.focusedProperty().addListener(new ShowFieldDescriptionHandler(prop,descriptionField,input));
+        // Add validation of the input
+        input.textProperty().addListener(new ChangeListener<String>() {
+            @Override
+            public void changed(ObservableValue<? extends String> observableValue, String s, String newText) {
+                Matcher m = pattern.matcher(newText);
+                if (!m.matches()) {
+                    setErrorMessage("Input does not match " + prop.getValidationRegex());
+                } else {
+                    clearErrorMessage();
+                }
+
+            }
+        });
+        root.add(input, 1, row);
     }
 
     private void setInfoMessage(String message) {
@@ -297,4 +329,29 @@ public class Generator extends Application{
         }
     }
 
+
+    private class ShowFieldDescriptionHandler implements ChangeListener<Boolean> {
+
+        private Prop prop;
+        private Text descriptionField;
+        private TextField input;
+
+        private ShowFieldDescriptionHandler(Prop prop,Text descriptionField, TextField input) {
+            this.prop = prop;
+            this.descriptionField = descriptionField;
+            this.input = input;
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observableValue, Boolean oldState,
+                            Boolean newState) {
+            if (newState) { // User entered input field
+                descriptionField.setText(prop.getDescription());
+            }
+            else { // User left input field
+                descriptionField.setText("");
+                setPropsValue(prop.getVariableName(),input.getText(), String.class); // TODO right place?
+            }
+        }
+    }
 }

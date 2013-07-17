@@ -30,48 +30,62 @@ public enum Prop {
     PLUGIN_NAME("pluginName", String.class,"Name of the plugin", "\\w+" , true ),
     PLUGIN_DESCRIPTION("pluginDescription", String.class,"Description of the plugin",".*" , true ),
     PACKAGE("packagePrefix", String.class,"Default Package","[a-zA-Z\\.]+",true ),
-    FILE_ROOT("fileSystemRoot", File.class,"Root directory to put the plugin",".*",true ),
+    FILE_ROOT("fileSystemRoot", File.class,"Root directory to put the plugin into",".*",true , true,null),
     RHQ_VERSION("rhqVersion",String.class,"RHQ version to use","[0-9][0-9\\.]+",true),
 
     CATEGORY("category", ResourceCategory.class, "Category of the resource type (platform = host level)",null),
     TYPE_NAME("name", String.class, "Name of the resource type", "\\w+"),
     DESCRIPTION("description", String.class, "Description of the type", ".*"),
-    DISCOVERY_CLASS("discoveryClass", String.class, "Discovery class", "[A-Z][a-zA-Z0-9]*"),
-    COMPONENT_CLASS("componentClass", String.class, "Discovery class", "[A-Z][a-zA-Z0-9]*"),
+    DISCOVERY_CLASS("discoveryClass", String.class, "Name of the Discovery class. '{name}' will be replaced with the type name", "[A-Z][a-zA-Z0-9]*",false,false,"{name}Discovery"),
+    COMPONENT_CLASS("componentClass", String.class, "Name of the Discovery class. '{name}' will be replaced with the type name", "[A-Z][a-zA-Z0-9]*",false,false,"{name}Component"),
     IS_SINGLETON("singleton",boolean.class,"Is this type a singleton, which means that" +
-        " there can only be one resource of that type for the given parent?",null),
-    HAS_METRICS("hasMetrics",boolean.class,"Does this type support taking metrics?",null),
-    HAS_OPERATIONS("hasOperations",boolean.class,"Does this type support operations?",null),
-    HAS_EVENTS("events",boolean.class,"Does this type support events?",null),
-    HAS_SUPPORT_FACET("supportFacet",boolean.class,"Does this type support the support facet?",null),
+        " there can only be one resource of that type for the given parent?"),
+    HAS_METRICS("hasMetrics",boolean.class,"Does this type support taking metrics?"),
+    HAS_OPERATIONS("hasOperations",boolean.class,"Does this type support operations?"),
+    HAS_EVENTS("events",boolean.class,"Does this type support events?"),
+    HAS_SUPPORT_FACET("supportFacet",boolean.class,"Does this type support the support facet?"),
     RESOURCE_CONFIGURATION("resourceConfiguration",boolean.class,"Does this type support " +
-        "configuring the resource?",".*"),
-    CAN_CREATE_CHILDREN("createChildren",boolean.class,"Can the type create child resources?",null),
-    CAN_DELETE_CHILDREN("deleteChildren",boolean.class,"Can the type delete child resources?",null),
+        "configuring the resource?"),
+    CAN_CREATE_CHILDREN("createChildren",boolean.class,"Can the type create child resources?"),
+    CAN_DELETE_CHILDREN("deleteChildren",boolean.class,"Can the type delete child resources?"),
+    USE_EXTENAL_JARS("usesExternalJarsInPlugin",boolean.class,"Will the plugin use external jars in the plugin jar?"),
+    ALLOW_MANUAL_ADD("manualAddOfResourceType",boolean.class,"Should manually adding resource be supported?"),
+    USE_LIFECYLE_API("usePluginLifecycleListenerApi",boolean.class,"Should the plugin lifecycle api be supported?"),
+    DEPENDS_ON_JMX_PLUGIN("dependsOnJmxPlugin",boolean.class,"Does the plugin use JMX and extend the JMX Plugin?"),
+    DEPENDS_ON_AS7_PLUGIN("dependsOnAs7Plugin",boolean.class,"Does the plugin use DMR and extend the AS7 Plugin?"),
+    USE_SUPPORT_FACET("supportFacet",boolean.class,"Will the support facet be used?"),
 
-    // TODO add the remaining properties from Prop.class
-
+    SCAN_FOR_ANNOTATIONS("scanForAnnotations",File.class,"Directory to scan for plugin annotations to include in type",null, false,false, null)
     ;
 
     private String variableName;
     private Class type;
     private String description;
     private boolean pluginLevel;
+    private boolean directoryWriteable;
+    private String defaultValue;
     private String validationRegex;
 
-    private Prop(String variableName, Class type, String description, String validationRegex, boolean pluginLevel) {
+    private Prop(String variableName, Class type, String description, String validationRegex, boolean pluginLevel, boolean directoryWriteable, String defaultValue) {
         this.variableName = variableName;
         this.type = type;
         this.description = description;
         this.validationRegex = validationRegex;
         this.pluginLevel = pluginLevel;
+        this.directoryWriteable = directoryWriteable;
+        this.defaultValue = defaultValue;
+    }
+
+    private Prop(String variableName, Class type, String description, String validationRegex, boolean pluginLevel) {
+        this(variableName,type,description,validationRegex,pluginLevel,false,null);
     }
 
     private Prop(String variableName, Class type, String description, String validationRegex) {
-        this.variableName = variableName;
-        this.type = type;
-        this.description = description;
-        this.validationRegex = validationRegex;
+        this(variableName,type,description,validationRegex,false,false,null);
+    }
+
+    private Prop(String variableName, Class type, String description) {
+        this(variableName,type,description,null,false,false,null);
     }
 
     public String getVariableName() {
@@ -111,4 +125,11 @@ public enum Prop {
         return builder.toString();
     }
 
+    public boolean isDirectoryWriteable() {
+        return directoryWriteable;
+    }
+
+    public String getDefaultValue() {
+        return defaultValue;
+    }
 }

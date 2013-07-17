@@ -2,7 +2,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-20012 Red Hat, Inc.
+ * Copyright (C) 2005-20013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -35,10 +35,10 @@
     </parent>
 
     <groupId>org.rhq</groupId>
-    <artifactId>${props.name}-plugin</artifactId>
+    <artifactId>${props.pluginName}-plugin</artifactId>
     <packaging>jar</packaging>
 
-    <name>RHQ ${props.name} Plugin</name>
+    <name>RHQ ${props.pluginName} Plugin</name>
     <#if props.description??>
     <description>${props.description}</description>
     </#if>
@@ -86,7 +86,6 @@
                 </executions>
             </plugin>
 </#if>
-
         </plugins>
     </build>
 
@@ -228,6 +227,14 @@
             <dependency>
                 <groupId>org.rhq</groupId>
                 <artifactId>rhq-jmx-plugin</artifactId>
+                <version>${r"${project.version}"}</version>
+                <scope>provided</scope>
+            </dependency>
+</#if>
+<#if props.dependsOnAs7Plugin>
+            <dependency>
+                <groupId>org.rhq</groupId>
+                <artifactId>rhq-jboss-as-7-plugin</artifactId>
                 <version>${r"${project.version}"}</version>
                 <scope>provided</scope>
             </dependency>

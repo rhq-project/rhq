@@ -18,6 +18,9 @@
  */
 package org.rhq.helpers.pluginGen;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -26,6 +29,9 @@ import java.util.Set;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.Metric;
+import org.rhq.helpers.pluginAnnotations.agent.Operation;
+import org.rhq.helpers.pluginAnnotations.agent.Parameter;
+import org.rhq.helpers.pluginAnnotations.agent.RhqType;
 import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 /**
@@ -33,6 +39,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Units;
  *
  * @author Heiko W. Rupp
  */
+@SuppressWarnings("unused")
 public class Props {
 
    /** What category is this ? */
@@ -69,7 +76,7 @@ public class Props {
    private boolean createChildren;
    /** Can the service delete children ? */
    private boolean deleteChildren;
-   /** Use externals chars in the plugin jar ? */
+   /** Use externals jars in the plugin jar ? */
    private boolean usesExternalJarsInPlugin;
    /** Does it support manual add of children ? */
    private boolean manualAddOfResourceType;
@@ -77,8 +84,12 @@ public class Props {
    private boolean usePluginLifecycleListenerApi;
    /** Depends on JMX plugin ? */
    private boolean dependsOnJmxPlugin;
+   /** Depends on AS7 plugin ? */
+   private boolean dependsOnAs7Plugin;
+   /** Directory with java files to scan for plugin annotations */
+   private String scanForAnnotations;
    /** What version of RHQ should this plugin's pom use ? */
-   private String rhqVersion = "3.0.0";
+   private String rhqVersion = "4.8.0";
 
    /** Embedded children */
    private Set<Props> children = new HashSet<Props>();
@@ -336,22 +347,97 @@ public class Props {
         this.runsInsides = runsInsides;
     }
 
+    public boolean isDependsOnAs7Plugin() {
+        return dependsOnAs7Plugin;
+    }
+
+    public void setDependsOnAs7Plugin(boolean dependsOnAs7Plugin) {
+        this.dependsOnAs7Plugin = dependsOnAs7Plugin;
+    }
+
+    public String getScanForAnnotations() {
+        return scanForAnnotations;
+    }
+
+    public void setScanForAnnotations(String scanForAnnotations) {
+        this.scanForAnnotations = scanForAnnotations;
+    }
+
     public void populateMetrics(List<Class> classes) {
-      for (Class<?> clazz : classes) {
-         Metric metricAnnot = clazz.getAnnotation(Metric.class);
-         if (metricAnnot != null) {
-            MetricProps metric = new MetricProps(metricAnnot.property());
+        for (Class<?> clazz : classes) {
+            for (Field field : clazz.getDeclaredFields()) {
+                Metric metricAnnot = field.getAnnotation(Metric.class);
+                addMetric(metricAnnot, field.getName());
+            }
+
+            for (Method method : clazz.getDeclaredMethods()) {
+                Metric metricAnnot = method.getAnnotation(Metric.class);
+                addMetric(metricAnnot, method.getName());
+            }
+        }
+    }
+
+    public void populateOperations(List<Class> classes) {
+        for (Class<?> clazz : classes) {
+            for (Method method : clazz.getDeclaredMethods()) {
+                Operation operationAnnot = method.getAnnotation(Operation.class);
+                if (operationAnnot != null) {
+                    String property = operationAnnot.name();
+                    if (property.isEmpty()) {
+                        property = method.getName();
+                    }
+                    OperationProps op = new OperationProps(property);
+                    op.setDisplayName(operationAnnot.displayName());
+                    op.setDescription(operationAnnot.description());
+                    RhqType type = RhqType.findType(method.getReturnType());
+                    if (type != RhqType.VOID) {
+                        SimpleProperty simpleProperty = new SimpleProperty(type.getRhqName());
+                        op.setResult(simpleProperty);
+                    }
+
+                    Class[] types = method.getParameterTypes();
+                    int i=0;
+                    for (Annotation[] annotations : method.getParameterAnnotations() ) {
+                        for (Annotation annotation : annotations) {
+                            if (annotation instanceof Parameter) {
+                                Parameter parameter = (Parameter) annotation;
+                                SimpleProperty simpleProperty = new SimpleProperty(parameter.name());
+                                simpleProperty.setDescription(parameter.description());
+                                Class typeClass = types[i];
+                                RhqType rhqType = RhqType.findType(typeClass);
+                                if (parameter.type()!=RhqType.VOID){
+                                    rhqType = parameter.type();
+                                }
+                                simpleProperty.setType(rhqType.getRhqName());
+                                op.getParams().add(simpleProperty);
+                            }
+                        }
+                        i++;
+                    }
+                    operations.add(op);
+                }
+
+            }
+        }
+    }
+
+    private void addMetric(Metric metricAnnot, String name) {
+        if (metricAnnot != null) {
+            String property = metricAnnot.property();
+            if (property.isEmpty()) {
+                property = name;
+            }
+            MetricProps metric = new MetricProps(property);
             metric.setDisplayName(metricAnnot.displayName());
             metric.setDisplayType(metricAnnot.displayType());
             metric.setDataType(metricAnnot.dataType());
             metric.setDescription(metricAnnot.description());
+            metric.setUnits(metricAnnot.units());
             metrics.add(metric);
-         }
+        }
+    }
 
-      }
-   }
-
-   @Override
+    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder();
       sb.append("Props");
@@ -387,7 +473,7 @@ public class Props {
       return sb.toString();
    }
 
-   public static class TypeKey {
+    public static class TypeKey {
        private String name;
        private String pluginName;
 

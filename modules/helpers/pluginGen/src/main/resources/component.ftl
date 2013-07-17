@@ -187,7 +187,6 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
 
 <#if props.operations??>
 
-
     public void startOperationFacet(OperationContext context) {
 
     }
@@ -203,12 +202,20 @@ public class ${props.componentClass} implements ResourceComponent<#if props.pare
     public OperationResult invokeOperation(String name, Configuration params) throws Exception {
 
         OperationResult res = new OperationResult();
+<#if props.operations?has_content>
+    <#list props.operations as operation>
+        if (name.equals("${operation.name}") {
+            // TODO implement me
+        }
+    </#list>
+<#else>
         if ("dummyOperation".equals(name)) {
             // TODO implement me
 
         }
         return res;
     }
+</#if>
 </#if>
 
 

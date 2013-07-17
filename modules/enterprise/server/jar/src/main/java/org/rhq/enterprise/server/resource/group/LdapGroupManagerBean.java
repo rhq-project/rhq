@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.resource.group;
@@ -33,6 +33,7 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.naming.CompositeName;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -345,12 +346,9 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 try {
                     userDN = si.getNameInNamespace();
                 } catch (UnsupportedOperationException use) {
-                    userDN = si.getName();
-                    if (userDN.startsWith("\"")) {
-                        userDN = userDN.substring(1, userDN.length());
-                    }
-                    if (userDN.endsWith("\"")) {
-                        userDN = userDN.substring(0, userDN.length() - 1);
+                    userDN = new CompositeName(si.getName()).get(0);
+                    if (si.isRelative()) {
+                        userDN += "," + baseDNs[x];
                     }
                     userDN = userDN + "," + baseDNs[x];
                 }
@@ -507,7 +505,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
     /** Translate SystemSettings to familiar Properties instance since we're
      *  passing not one but multiple values.
-     * 
+     *
      * @param systemSettings
      * @return
      */
@@ -532,7 +530,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     /** Executes the LDAP group query using the filters, context and search controls, etc. parameters passed in.
      *  The matching groups located during processing this pages of results are added as new entries to the
      *  groupDetailsMap passed in.
-     * 
+     *
      * @param filter
      * @param groupDetailsMap
      * @param ctx

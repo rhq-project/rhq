@@ -82,9 +82,17 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return prepareForUpgrade(parameters);
         } else if (name.equals("readRepair")) {
             return readRepair();
+        } else if (name.equals("updateConfiguration")) {
+            return updateConfiguration(parameters);
         } else {
             return super.invokeOperation(name, parameters);
         }
+    }
+
+    private OperationResult updateConfiguration(Configuration params) {
+        OperationResult result = new OperationResult("Configuration updated.");
+        //TODO: implement updates to various sub-resources here
+        return result;
     }
 
     private OperationResult nodeAdded(Configuration params) {
@@ -222,12 +230,12 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
         return result;
     }
-    
+
     private OperationResult prepareForUpgrade(Configuration parameters) throws Exception {
         EmsConnection emsConnection = getEmsConnection();
         EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
         Class<?>[] emptyParams = new Class<?>[0];
-        
+
         if (log.isDebugEnabled()) {
             log.debug("Disabling native transport...");
         }
@@ -249,7 +257,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             snapshotName = System.currentTimeMillis() + "";
         }
         operation.invoke(snapshotName, new String[] {});
-        
+
         // max 2 sec
         waitForTaskToComplete(500, 10, 150);
 
@@ -261,7 +269,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
         return new OperationResult();
     }
-    
+
     private void waitForTaskToComplete(int initialWaiting, int maxTries, int sleepMillis) {
         // initial waiting
         try {

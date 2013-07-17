@@ -23,6 +23,7 @@ import javax.ejb.Remote;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -47,6 +48,10 @@ public interface StorageNodeManagerRemote {
      * @return instance of {@link StorageNodeLoadComposite} with the aggregate measurement data of selected metrics
      */
     StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
+
+    StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode);
+
+    boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
 
     /**
      * <p>Fetches the list of {@link StorageNode} entities based on provided criteria.</p>

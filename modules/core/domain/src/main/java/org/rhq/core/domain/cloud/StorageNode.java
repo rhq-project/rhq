@@ -90,7 +90,7 @@ public class StorageNode implements Serializable {
     public static final long serialVersionUID = 1L;
 
     public static final String QUERY_FIND_ALL = "StorageNode.findAll";
-    public static final String QUERY_FIND_BY_ADDRESS = "StorageNode.findByName";
+    public static final String QUERY_FIND_BY_ADDRESS = "StorageNode.findByAddress";
     public static final String QUERY_FIND_ALL_NOT_INSTALLED = "StorageNode.findAllCloudMembers";
     public static final String QUERY_DELETE_BY_ID = "StorageNode.deleteById";
     public static final String QUERY_FIND_ALL_NORMAL = "StorageNode.findAllNormalCloudMembers";

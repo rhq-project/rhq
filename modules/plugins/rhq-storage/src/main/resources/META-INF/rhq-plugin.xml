@@ -73,7 +73,7 @@
         </c:list-property>
       </results>
     </operation>
-    
+
     <operation name="addNodeMaintenance">
       <parameters>
         <c:simple-property name="runRepair" type="boolean" default="true"/>
@@ -109,6 +109,16 @@
           <c:simple-property name="seed" type="string"/>
         </c:list-property>
       </parameters>
+    </operation>
+
+    <operation name="updateConfiguration" description="Updates the node configuration. Will require a separate server restart for the settings to take effect.">
+      <parameters>
+        <c:simple-property name="heapSize" type="string" description="The heap size to be used for both -Xms and -Xmx JVM options."/>
+        <c:simple-property name="jmxPort" type="integer" description="JMX port JVM option."/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of updating the configuration."/>
+      </results>
     </operation>
 
     <resource-configuration>
@@ -195,3 +205,4 @@
     <service name="Keyspace" sourcePlugin="Cassandra" sourceType="Keyspace"/>
   </server>
 </plugin>
+

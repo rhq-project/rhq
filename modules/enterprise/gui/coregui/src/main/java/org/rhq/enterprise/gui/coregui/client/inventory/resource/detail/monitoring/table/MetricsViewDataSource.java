@@ -61,6 +61,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     final private Resource resource;
     private List<MetricDisplaySummary> metricDisplaySummaries;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
+    private int[] definitionArrayIds;
     private MeasurementUserPreferences measurementUserPrefs;
 
     public MetricsViewDataSource(Resource resource) {
@@ -99,10 +100,6 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         nameField.setWidth("30%");
         fields.add(nameField);
 
-        ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.common_title_alerts());
-        alertsField.setWidth("10%");
-        fields.add(alertsField);
-
         ListGridField minField = new ListGridField(FIELD_MIN_VALUE, MSG.view_resource_monitor_table_min());
         minField.setWidth("15%");
         fields.add(minField);
@@ -118,6 +115,10 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         ListGridField lastField = new ListGridField(FIELD_LAST_VALUE, MSG.view_resource_monitor_table_last());
         lastField.setWidth("15%");
         fields.add(lastField);
+
+        ListGridField alertsField = new ListGridField(FIELD_ALERT_COUNT, MSG.common_title_alerts());
+        alertsField.setWidth("10%");
+        fields.add(alertsField);
 
         return fields;
     }
@@ -136,7 +137,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         MeasurementUtility.formatSimpleMetrics(from);
 
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_SPARKLINE, getCsvMetricsForSparkline());
+        record.setAttribute(FIELD_SPARKLINE, getCsvMetricsForSparkline(from.getDefinitionId()));
         record.setAttribute(FIELD_METRIC_LABEL, from.getLabel());
         record.setAttribute(FIELD_ALERT_COUNT, String.valueOf(from.getAlertCount()));
         record.setAttribute(FIELD_MIN_VALUE, getMetricStringValue(from.getMinMetric()));
@@ -151,26 +152,43 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         return record;
     }
 
-    private String getCsvMetricsForSparkline() {
+    private String getCsvMetricsForSparkline(int definitionId) {
         StringBuilder sb = new StringBuilder();
-        Log.debug("getCsvMetricsForSparkline.metricsDataList: " + metricsDataList.size());
-        for (List<MeasurementDataNumericHighLowComposite> measurementData : metricsDataList) {
-            for (int i = 0; i < measurementData.size(); i++) {
+        Log.debug("getCsvMetricsForSparkline.metricsDataList("+definitionId+"): " + metricsDataList.size());
+        List<MeasurementDataNumericHighLowComposite> selectedMetricsList = getMeasurementsForMeasurementDefId(definitionId);
+
+        for (int i = 0; i < selectedMetricsList.size(); i++) {
                 // take the last 20 values
-                if (i >= measurementData.size() - 20) {
-                    if (!Double.isNaN(measurementData.get(i).getValue())) {
-                        sb.append((int) measurementData.get(i).getValue());
+                //if (i >= selectedMetricsList.size() - 20) {
+                    MeasurementDataNumericHighLowComposite measurementData = selectedMetricsList.get(i);
+                    if (!Double.isNaN(measurementData.getValue())) {
+                        sb.append((int) measurementData.getValue());
                         sb.append(",");
                     }
-                }
+                //}
             }
-            if (sb.toString().endsWith(",")) {
-                sb.setLength(sb.length() - 1);
-            }
+
+        if (sb.toString().endsWith(",")) {
+            sb.setLength(sb.length() - 1);
         }
         Log.debug("getCsvMetricsForSparkline: " + sb.toString());
 
         return sb.toString();
+    }
+
+    List<MeasurementDataNumericHighLowComposite> getMeasurementsForMeasurementDefId(int definitionId){
+        List<MeasurementDataNumericHighLowComposite> selectedMetricsDataList;
+        int selectedIndex = 0;
+
+        // find the ordinal position as specified when querying the metrics
+        for (int i = 0; i < definitionArrayIds.length; i++) {
+            if(definitionArrayIds[i] == definitionId){
+                selectedIndex = i;
+                break;
+            }
+        }
+
+        return  metricsDataList.get(selectedIndex);
     }
 
     protected String getMetricStringValue(MetricDisplayValue value) {
@@ -186,7 +204,6 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, final Criteria unused) {
 
-        Log.debug("***** Fetching MetricsView data :");
         GWTServiceLookup.getMeasurementScheduleService().findSchedulesForResourceAndType(resource.getId(),
             DataType.MEASUREMENT, null, true, new AsyncCallback<ArrayList<MeasurementSchedule>>() {
                 @Override
@@ -211,7 +228,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                                     BrowserUtility.graphSparkLines();
                                 }
                             }.schedule(150);
-                            Log.debug("*** Finished CountdownLatch for metrics loaded: " + metricsDataList.size());
+                            Log.debug("Finished CountdownLatch for metrics loaded: " + metricsDataList.size());
                         }
                     });
 
@@ -262,7 +279,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
             measurementDefMap.put(definition.getDisplayName(), definition);
         }
         //bundle definition ids for asynch call.
-        int[] definitionArrayIds = new int[definitions.size()];
+        definitionArrayIds = new int[definitions.size()];
         final String[] displayOrder = new String[definitions.size()];
         measurementDefMap.keySet().toArray(displayOrder);
         //sort the charting data ex. Free Memory, Free Swap Space,..System Load
@@ -288,7 +305,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
 
                     if (!measurementDataList.isEmpty()) {
                         metricsDataList = measurementDataList;
-                        Log.debug("*** Setting metricsDataList.size: " + metricsDataList.size());
+                        Log.debug("Retrieved metrics metricsDataList.size: " + metricsDataList.size());
                         countDownLatch.countDown();
                     }
                 }

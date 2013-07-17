@@ -21,8 +21,10 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_DISK;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MEMORY;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
@@ -61,21 +63,28 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
- * Datasource for @see StorageNode.
+ * Datasource for @see StorageNodeDatasource + heap and disk usage.
  *
  * @author Jirka Kremser
  */
-public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNodeCriteria>  {
-
+public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
     public static final String FILTER_OPERATION_MODE = FIELD_OPERATION_MODE.propertyName();
-
-    public StorageNodeDatasource() {
+    private static StorageNodeDatasource instance;
+    
+    private StorageNodeDatasource() {
         super();
         setID("storageNode");
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
+    }
+    
+    public static StorageNodeDatasource instance() {
+        if (instance == null) {
+            instance = new StorageNodeDatasource();
+        }
+        return instance;
     }
 
     @Override
@@ -105,10 +114,24 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         ListGridField createdTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(createdTimeField);
         fields.add(createdTimeField);
-
-        ListGridField lastUpdateTimeField = FIELD_MTIME.getListGridField("120");
-        TimestampCellFormatter.prepareDateField(lastUpdateTimeField);
-        fields.add(lastUpdateTimeField);
+        
+        ListGridField field = FIELD_MEMORY.getListGridField("90");
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "Average disk space taken for last one hour.";
+            }
+        });
+        fields.add(field);
+        
+        field = FIELD_DISK.getListGridField("90");
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "Average memory taken for last one hour.";
+            }
+        });
+        fields.add(field);
 
         ListGridField resourceIdField = FIELD_RESOURCE_ID.getListGridField("120");
 //        resourceIdField.setHidden(true);
@@ -119,8 +142,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
-        GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria, new AsyncCallback<PageList<StorageNode>>() {
-            public void onSuccess(PageList<StorageNode> result) {
+        GWTServiceLookup.getStorageService().getStorageNodeComposites(new AsyncCallback<PageList<StorageNodeLoadComposite>>() {
+            public void onSuccess(PageList<StorageNodeLoadComposite> result) {                
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);
@@ -161,23 +184,55 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
     }
 
     @Override
-    public StorageNode copyValues(Record from) {
+    public StorageNodeLoadComposite copyValues(Record from) {
         throw new UnsupportedOperationException("StorageNodeDatasource.copyValues(Record from)");
     }
 
     @Override
-    public ListGridRecord copyValues(StorageNode from) {
+    public ListGridRecord copyValues(StorageNodeLoadComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_ID.propertyName(), from.getId());
-        record.setAttribute(FIELD_ADDRESS.propertyName(), from.getAddress());
-        record.setAttribute(FIELD_JMX_PORT.propertyName(), from.getJmxPort());
-        record.setAttribute(FIELD_CQL_PORT.propertyName(), from.getCqlPort());
-        record.setAttribute(FIELD_OPERATION_MODE.propertyName(), from.getOperationMode());
-        record.setAttribute(FIELD_CTIME.propertyName(), from.getCtime());
-        record.setAttribute(FIELD_MTIME.propertyName(), from.getMtime());
-        if (from.getResource() != null) {
-            record.setAttribute(FIELD_RESOURCE_ID.propertyName(), from.getResource().getId());
+        StorageNode node = from.getStorageNode();
+        if (node != null) {
+            record.setAttribute(FIELD_ID.propertyName(), node.getId());
+            record.setAttribute(FIELD_ADDRESS.propertyName(), node.getAddress());
+            record.setAttribute(FIELD_JMX_PORT.propertyName(), node.getJmxPort());
+            record.setAttribute(FIELD_CQL_PORT.propertyName(), node.getCqlPort());
+            record.setAttribute(FIELD_OPERATION_MODE.propertyName(), node.getOperationMode());
+            record.setAttribute(FIELD_CTIME.propertyName(), node.getCtime());
+            record.setAttribute(FIELD_MTIME.propertyName(), node.getMtime());
+            if (node.getResource() != null) {
+                record.setAttribute(FIELD_RESOURCE_ID.propertyName(), node.getResource().getId());
+            }
         }
+        String memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(),
+            from.getHeapPercentageUsed().getUnits(), true);
+        record.setAttribute(FIELD_MEMORY.propertyName(), memory);
+        String disk = MeasurementConverterClient.format(from.getPartitionDiskUsedPercentage().getAggregate().getAvg(),
+            from.getPartitionDiskUsedPercentage().getUnits(), true);
+        record.setAttribute(FIELD_DISK.propertyName(), disk);
+        return record;
+    }
+    
+    
+    private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
+        String hover, String id) {
+        ListGridRecord record = new ListGridRecord();
+        record.setAttribute("id", id);
+        record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);
+        record.setAttribute(
+            StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(),
+            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
+                aggregateWithUnits.getUnits(), true));
+        record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
+        record.setAttribute(
+            StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(),
+            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
+                aggregateWithUnits.getUnits(), true));
+        record.setAttribute(
+            StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(),
+            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
+                aggregateWithUnits.getUnits(), true));
+        record.setAttribute("hover", hover);
         return record;
     }
 
@@ -206,11 +261,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         private int id;
 
         public static StorageNodeLoadCompositeDatasource getInstance(int id) {
-//            if (instance == null) {
-            //                instance =
-                    return new StorageNodeLoadCompositeDatasource(id);
-//            }
-//            return instance;
+            return new StorageNodeLoadCompositeDatasource(id);
         }
 
         public StorageNodeLoadCompositeDatasource(int id) {
@@ -264,11 +315,9 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
-//            Integer id = getFilter(request, FIELD_ID.propertyName(), Integer.class);
             final StorageNode node = new StorageNode();
             node.setId(id);
-            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS,
-                new AsyncCallback<StorageNodeLoadComposite>() {
+            executeFetch(node, new AsyncCallback<StorageNodeLoadComposite>() {
                     public void onSuccess(final StorageNodeLoadComposite loadComposite) {
                         ListGridRecord[] records = makeListGridRecords(loadComposite);
                         response.setData(records);
@@ -283,6 +332,10 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
                         StorageNodeLoadCompositeDatasource.this.processResponse(request.getRequestId(), response);
                     }
                 });
+        }
+
+        private static void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
+            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS, callback);
         }
 
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {

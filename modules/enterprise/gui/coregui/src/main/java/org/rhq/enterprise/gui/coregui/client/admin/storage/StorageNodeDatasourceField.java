@@ -37,6 +37,10 @@ public enum StorageNodeDatasourceField {
     FIELD_CQL_PORT("cqlPort", "CQL Port"),
 
     FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_server_mode()),
+    
+    FIELD_MEMORY("memory", "Memory"),
+    
+    FIELD_DISK("disk", "Disk"),
 
     FIELD_CTIME("ctime", CoreGUI.getMessages().view_adminTopology_serverDetail_installationDate()),
 

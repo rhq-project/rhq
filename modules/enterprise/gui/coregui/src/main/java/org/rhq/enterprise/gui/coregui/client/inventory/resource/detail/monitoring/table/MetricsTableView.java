@@ -40,6 +40,8 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
+import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
 import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
 import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -99,26 +101,9 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     protected void configureTable() {
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
-        this.getListGrid().setCanExpandRecords(true);
-        this.getListGrid().addRecordExpandHandler(new RecordExpandHandler() {
-            @Override
-            public void onRecordExpand(RecordExpandEvent recordExpandEvent) {
-                Log.debug("Record Expanded: "
-                    + recordExpandEvent.getRecord().getAttribute(MetricsViewDataSource.FIELD_METRIC_LABEL));
-                new Timer() {
-
-                    @Override
-                    public void run() {
-                        BrowserUtility.graphSparkLines();
-                    }
-                }.schedule(150);
-
-            }
-
-        });
 
         addTableAction(MSG.view_measureTable_getLive(), new ShowLiveDataTableAction(this));
-        //addTableAction(MSG.view_measureTable_addToDashboard(), new AddToDashboardTableAction(this));
+        addTableAction(MSG.view_measureTable_addToDashboard(), new AddToDashboardTableAction(this));
 
     }
 
@@ -284,6 +269,21 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
             setExpansionMode(ExpansionMode.DETAIL_FIELD);
+            addRecordExpandHandler(new RecordExpandHandler() {
+                @Override
+                public void onRecordExpand(RecordExpandEvent recordExpandEvent) {
+                    Log.debug("Record Expanded: "
+                        + recordExpandEvent.getRecord().getAttribute(MetricsViewDataSource.FIELD_METRIC_LABEL));
+                    redrawGraphs();
+                }
+
+            });
+            addRecordCollapseHandler(new RecordCollapseHandler() {
+                @Override
+                public void onRecordCollapse(RecordCollapseEvent recordCollapseEvent) {
+                    redrawGraphs();
+                }
+            });
         }
 
         @Override
@@ -295,7 +295,8 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
             final String chartId = "rChart-" + resourceId + "-" + definitionId;
             Log.debug("getExpansionComponent for: " + chartId);
-            HTMLFlow htmlFlow = new HTMLFlow(MetricD3Graph.createGraphMarkerTemplate(chartId, TREEVIEW_DETAIL_CHART_HEIGHT));
+            HTMLFlow htmlFlow = new HTMLFlow(MetricD3Graph.createGraphMarkerTemplate(chartId,
+                TREEVIEW_DETAIL_CHART_HEIGHT));
             vLayout.addMember(htmlFlow);
 
             int[] definitionArrayIds = new int[1];
@@ -316,7 +317,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
                             //load the data results for the given metric definition
                             List<MeasurementDataNumericHighLowComposite> measurementList = results.get(0);
-                            Log.debug("getExpansionComponent MeasurementList.size: " + measurementList.size());
 
                             MeasurementDefinition measurementDefinition = null;
                             for (MeasurementDefinition definition : resource.getResourceType().getMetricDefinitions()) {
@@ -336,12 +336,13 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                                 @Override
                                 public void run() {
                                     graphView.drawJsniChart();
+                                    BrowserUtility.graphSparkLines();
 
                                 }
                             }.schedule(150);
 
                         } else {
-                            Log.warn("No chart data retrieving for resource [" + resourceId + "-"+definitionId+"]");
+                            Log.warn("No chart data retrieving for resource [" + resourceId + "-" + definitionId + "]");
 
                         }
                     }

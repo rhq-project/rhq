@@ -38,6 +38,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
@@ -68,6 +69,16 @@ public class MetricsResourceView extends AbstractD3GraphListView {
 
     public void redrawGraphs() {
         this.onDraw();
+    }
+
+    public void refreshGraphs(){
+        new Timer() {
+            @Override
+            public void run() {
+                availabilityGraph.drawJsniChart();
+                BrowserUtility.graphSparkLines();
+            }
+        }.schedule(150);
     }
 
     @Override
@@ -108,12 +119,7 @@ public class MetricsResourceView extends AbstractD3GraphListView {
                     availabilityDetails.show();
 
                 }
-                new Timer() {
-                    @Override
-                    public void run() {
-                        availabilityGraph.drawJsniChart();
-                    }
-                }.schedule(150);
+                refreshGraphs();
             }
         });
 

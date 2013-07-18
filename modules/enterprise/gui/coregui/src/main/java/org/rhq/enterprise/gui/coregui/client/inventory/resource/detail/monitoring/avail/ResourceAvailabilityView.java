@@ -62,7 +62,9 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author Jay Shaughnessy
  * @author John Mazzitelli
+ * @see org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.ResourceMetricAvailabilityView
  */
+@Deprecated
 public class ResourceAvailabilityView extends EnhancedVLayout {
 
     private ResourceComposite resourceComposite;

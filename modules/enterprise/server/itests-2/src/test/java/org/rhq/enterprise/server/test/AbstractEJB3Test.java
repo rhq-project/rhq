@@ -341,7 +341,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
         // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
         // we don't want the production services performing any unexpected work.
-        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*"));
+        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-server.jar.*"));
         // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
         // start/stop what they need, typically with test services or mocks.
         testEar.delete(ArchivePaths
@@ -413,7 +413,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
-        //exportZip(testEar, new File("c:/temp/test-ear.ear"));
+        exportZip(testEar, new File("/Users/jsanda/tmp/test-ear.ear"));
 
         return testEar;
     }

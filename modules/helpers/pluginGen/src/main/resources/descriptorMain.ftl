@@ -45,9 +45,9 @@ name="${props.name}"
           </runs-inside>
           </#if>
 
-          <#if props.simpleProps?has_content>
+          <#if props.pluginConfig?has_content>
             <plugin-configuration>
-                <#list props.simpleProps as simpleProps>
+                <#list props.pluginConfig as simpleProps>
                 <c:simple-property name="${simpleProps.name}" description="${simpleProps.description}" <#if simpleProps.type??>type="${simpleProps.type}"</#if> <#if simpleProps.readOnly>readOnly="true"</#if>/>
                 </#list>
                 <!-- The template section is only for manual resource additions, and default parameters and the ones presented to the user. -->
@@ -107,3 +107,11 @@ name="${props.name}"
                 <c:simple-property name="dummy"/>
             </resource-configuration>
         </#if>
+
+<#if props.resourceConfig?has_content>
+      <resource-configuration>
+          <#list props.resourceConfig as simpleProps>
+          <c:simple-property name="${simpleProps.name}" description="${simpleProps.description}" <#if simpleProps.type??>type="${simpleProps.type}"</#if> <#if simpleProps.readOnly>readOnly="true"</#if>/>
+          </#list>
+      </resource-configuration>
+</#if>

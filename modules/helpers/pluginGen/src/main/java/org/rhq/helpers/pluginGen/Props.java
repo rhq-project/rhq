@@ -18,20 +18,12 @@
  */
 package org.rhq.helpers.pluginGen;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
-import org.rhq.helpers.pluginAnnotations.agent.Operation;
-import org.rhq.helpers.pluginAnnotations.agent.Parameter;
-import org.rhq.helpers.pluginAnnotations.agent.RhqType;
 import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 /**
@@ -94,7 +86,8 @@ public class Props {
    /** Embedded children */
    private Set<Props> children = new HashSet<Props>();
 
-   private Set<SimpleProperty> simpleProps = new LinkedHashSet<SimpleProperty>();
+   private Set<SimpleProperty> pluginConfig = new LinkedHashSet<SimpleProperty>();
+   private Set<SimpleProperty> resourceConfig = new LinkedHashSet<SimpleProperty>();
 
    private Set<Template> templates = new HashSet<Template>();
 
@@ -291,12 +284,12 @@ public class Props {
       this.rhqVersion = rhqVersion;
    }
 
-   public Set<SimpleProperty> getSimpleProps() {
-      return simpleProps;
+   public Set<SimpleProperty> getPluginConfig() {
+      return pluginConfig;
    }
 
-   public void setSimpleProps(Set<SimpleProperty> simpleProps) {
-      this.simpleProps = simpleProps;
+   public void setPluginConfig(Set<SimpleProperty> pluginConfig) {
+      this.pluginConfig = pluginConfig;
    }
 
    public Set<Template> getTemplates() {
@@ -307,7 +300,15 @@ public class Props {
       this.templates = templates;
    }
 
-   public Set<MetricProps> getMetrics() {
+    public Set<SimpleProperty> getResourceConfig() {
+        return resourceConfig;
+    }
+
+    public void setResourceConfig(Set<SimpleProperty> resourceConfig) {
+        this.resourceConfig = resourceConfig;
+    }
+
+    public Set<MetricProps> getMetrics() {
       return metrics;
    }
 
@@ -363,79 +364,6 @@ public class Props {
         this.scanForAnnotations = scanForAnnotations;
     }
 
-    public void populateMetrics(List<Class> classes) {
-        for (Class<?> clazz : classes) {
-            for (Field field : clazz.getDeclaredFields()) {
-                Metric metricAnnot = field.getAnnotation(Metric.class);
-                addMetric(metricAnnot, field.getName());
-            }
-
-            for (Method method : clazz.getDeclaredMethods()) {
-                Metric metricAnnot = method.getAnnotation(Metric.class);
-                addMetric(metricAnnot, method.getName());
-            }
-        }
-    }
-
-    public void populateOperations(List<Class> classes) {
-        for (Class<?> clazz : classes) {
-            for (Method method : clazz.getDeclaredMethods()) {
-                Operation operationAnnot = method.getAnnotation(Operation.class);
-                if (operationAnnot != null) {
-                    String property = operationAnnot.name();
-                    if (property.isEmpty()) {
-                        property = method.getName();
-                    }
-                    OperationProps op = new OperationProps(property);
-                    op.setDisplayName(operationAnnot.displayName());
-                    op.setDescription(operationAnnot.description());
-                    RhqType type = RhqType.findType(method.getReturnType());
-                    if (type != RhqType.VOID) {
-                        SimpleProperty simpleProperty = new SimpleProperty(type.getRhqName());
-                        op.setResult(simpleProperty);
-                    }
-
-                    Class[] types = method.getParameterTypes();
-                    int i=0;
-                    for (Annotation[] annotations : method.getParameterAnnotations() ) {
-                        for (Annotation annotation : annotations) {
-                            if (annotation instanceof Parameter) {
-                                Parameter parameter = (Parameter) annotation;
-                                SimpleProperty simpleProperty = new SimpleProperty(parameter.name());
-                                simpleProperty.setDescription(parameter.description());
-                                Class typeClass = types[i];
-                                RhqType rhqType = RhqType.findType(typeClass);
-                                if (parameter.type()!=RhqType.VOID){
-                                    rhqType = parameter.type();
-                                }
-                                simpleProperty.setType(rhqType.getRhqName());
-                                op.getParams().add(simpleProperty);
-                            }
-                        }
-                        i++;
-                    }
-                    operations.add(op);
-                }
-
-            }
-        }
-    }
-
-    private void addMetric(Metric metricAnnot, String name) {
-        if (metricAnnot != null) {
-            String property = metricAnnot.property();
-            if (property.isEmpty()) {
-                property = name;
-            }
-            MetricProps metric = new MetricProps(property);
-            metric.setDisplayName(metricAnnot.displayName());
-            metric.setDisplayType(metricAnnot.displayType());
-            metric.setDataType(metricAnnot.dataType());
-            metric.setDescription(metricAnnot.description());
-            metric.setUnits(metricAnnot.units());
-            metrics.add(metric);
-        }
-    }
 
     @Override
    public String toString() {
@@ -466,7 +394,7 @@ public class Props {
       sb.append(", dependsOnJmxPlugin=").append(dependsOnJmxPlugin);
       sb.append(", rhqVersion='").append(rhqVersion).append('\'');
       sb.append(", children=").append(children);
-      sb.append(", simpleProps=").append(simpleProps);
+      sb.append(", simpleProps=").append(pluginConfig);
       sb.append(", templates=").append(templates);
       sb.append(", runsInsides=").append(runsInsides);
       sb.append('}');

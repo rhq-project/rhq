@@ -19,6 +19,7 @@
 
 package org.rhq.helpers.pluginGen.test;
 
+import org.rhq.helpers.pluginAnnotations.agent.ConfigProperty;
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
 import org.rhq.helpers.pluginAnnotations.agent.MeasurementType;
@@ -26,6 +27,7 @@ import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Operation;
 import org.rhq.helpers.pluginAnnotations.agent.Parameter;
 import org.rhq.helpers.pluginAnnotations.agent.RhqType;
+import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 /**
  * Just a sample
@@ -34,7 +36,8 @@ import org.rhq.helpers.pluginAnnotations.agent.RhqType;
 
 public class FooBean {
 
-    @Metric(description = "How often was this bean invoked", displayType = DisplayType.SUMMARY, measurementType = MeasurementType.DYNAMIC)
+    @Metric(description = "How often was this bean invoked", displayType = DisplayType.SUMMARY, measurementType = MeasurementType.DYNAMIC,
+        units = Units.SECONDS)
     int invocationCount;
 
     @Metric(description = "Just a foo", dataType = DataType.TRAIT)
@@ -51,5 +54,11 @@ public class FooBean {
         invocationCount -= by;
     }
 
+    @ConfigProperty(scope = ConfigProperty.Scope.PLUGIN, displayName="The Password",
+        readOnly = false, property="thePassword",description = "A password", rhqType = RhqType.PASSWORD)
+    String password;
+
+    @ConfigProperty(scope = ConfigProperty.Scope.RESOURCE)
+    int defaultSteps;
 
 }

@@ -73,7 +73,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getButtonBarDateTimeFormat()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getChartSingleValueLabel()(),
                         global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHours()(),
-                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHoursMinutes()()
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::getXAxisTimeFormatHoursMinutes()(),
+                        global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AbstractMetricGraph::isHideLegend()()
                 );
 
 
@@ -217,8 +218,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             .attr("transform", "translate(" + margin.left + "," + (+titleHeight + titleSpace + margin.top) + ")");
 
                     legendUnDefined = (typeof min === 'undefined') || (typeof avg === 'undefined') || (typeof peak === 'undefined');
-                    if (!useSmallCharts() && !legendUnDefined) {
-                        createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
+                    if (!(chartContext.hideLegend &&  !useSmallCharts())) {
+                            createMinAvgPeakSidePanel(chartContext.minChartTitle, min, chartContext.avgChartTitle, avg, chartContext.peakChartTitle, peak, chartContext.yAxisUnits);
                     }
                 }
 

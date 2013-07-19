@@ -272,8 +272,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             addRecordExpandHandler(new RecordExpandHandler() {
                 @Override
                 public void onRecordExpand(RecordExpandEvent recordExpandEvent) {
-                    Log.debug("Record Expanded: "
-                        + recordExpandEvent.getRecord().getAttribute(MetricsViewDataSource.FIELD_METRIC_LABEL));
                     redrawGraphs();
                 }
 
@@ -328,6 +326,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
                             MetricGraphData metricGraphData = MetricGraphData.createForResource(resourceId,
                                 resource.getName(), measurementDefinition, measurementList, null);
+                            metricGraphData.setHideLegend(true);
 
                             StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
                             graph.setMetricGraphData(metricGraphData);

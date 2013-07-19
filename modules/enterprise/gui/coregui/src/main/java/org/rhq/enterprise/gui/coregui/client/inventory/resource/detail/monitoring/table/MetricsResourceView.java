@@ -27,7 +27,6 @@ import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.measurement.Availability;
@@ -53,14 +52,16 @@ public class MetricsResourceView extends AbstractD3GraphListView {
     private static final String COLLAPSED_TOOLTIP = MSG.chart_metrics_collapse_tooltip();
     private static final String EXPANDED_TOOLTIP = MSG.chart_metrics_expand_tooltip();
 
-    private Resource resource;
-    private VLayout vLayout;
+    private final Resource resource;
     private Img expandCollapseArrow;
-    private MetricsTableView metricsTableView;
-    private ResourceMetricAvailabilityView availabilityDetails;
+    private final MetricsTableView metricsTableView;
+    private final ResourceMetricAvailabilityView availabilityDetails;
 
     public MetricsResourceView(Resource resource) {
         super();
+        setOverflow(Overflow.AUTO);
+        setWidth100();
+        setHeight100();
         this.resource = resource;
         metricsTableView = new MetricsTableView(resource, this);
         availabilityDetails = new ResourceMetricAvailabilityView(resource);
@@ -87,12 +88,8 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         Log.debug("MetricResourceView.onDraw() for: " + resource.getName() + " id: " + resource.getId());
         destroyMembers();
 
-        vLayout = new VLayout();
-        vLayout.setOverflow(Overflow.AUTO);
-        vLayout.setWidth100();
-        vLayout.setHeight100();
-        vLayout.addMember(buttonBarDateTimeRangeEditor);
 
+        addMember(buttonBarDateTimeRangeEditor);
 
         availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
                 new AvailabilityOverUnderGraphType(resource.getId()));
@@ -126,19 +123,17 @@ public class MetricsResourceView extends AbstractD3GraphListView {
 
         expandCollapseHLayout.addMember(expandCollapseArrow);
         expandCollapseHLayout.addMember(availabilityGraph);
-        vLayout.addMember(expandCollapseHLayout);
+        addMember(expandCollapseHLayout);
+
         availabilityDetails.hide();
-        vLayout.addMember(availabilityDetails);
+        addMember(availabilityDetails);
 
         metricsTableView.setHeight100();
-        vLayout.addMember(metricsTableView);
+        addMember(metricsTableView);
 
-        addMember(vLayout);
 
-        if (resource != null) {
-            queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
+        queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
                 buttonBarDateTimeRangeEditor.getEndTime(), null);
-        }
     }
 
     @Override

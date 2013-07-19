@@ -73,6 +73,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
     private boolean isPortalGraph;
+    private boolean hideLegend;
 
 
     private MetricGraphData(int portalId) {
@@ -247,6 +248,14 @@ public class MetricGraphData implements JsonMetricProducer {
 
     public boolean isPortalGraph() {
         return isPortalGraph;
+    }
+
+    public boolean isHideLegend() {
+        return hideLegend;
+    }
+
+    public void setHideLegend(boolean hideLegend) {
+        this.hideLegend = hideLegend;
     }
 
     public String getChartTitle() {

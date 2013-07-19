@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  */
 public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
 
-    public static final int NUMBER_OF_METRIC_POINTS = 60;
+    private static final int NUMBER_OF_METRIC_POINTS = 60;
     public static final String FIELD_SPARKLINE = "sparkline";
     public static final String FIELD_METRIC_LABEL = "label";
     public static final String FIELD_ALERT_COUNT = "alertCount";
@@ -58,11 +58,11 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     public static final String FIELD_METRIC_UNITS = "units";
     public static final String FIELD_METRIC_NAME = "name";
     public static final String FIELD_RESOURCE_ID = "resourceId";
-    final private Resource resource;
+    private final Resource resource;
     private List<MetricDisplaySummary> metricDisplaySummaries;
     private List<List<MeasurementDataNumericHighLowComposite>> metricsDataList;
     private int[] definitionArrayIds;
-    private MeasurementUserPreferences measurementUserPrefs;
+    private final MeasurementUserPreferences measurementUserPrefs;
 
     public MetricsViewDataSource(Resource resource) {
         this.resource = resource;

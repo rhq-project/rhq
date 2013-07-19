@@ -44,6 +44,8 @@ import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
 import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
 import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
 import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
+import com.smartgwt.client.widgets.grid.events.SortChangedHandler;
+import com.smartgwt.client.widgets.grid.events.SortEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -279,6 +281,13 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             addRecordCollapseHandler(new RecordCollapseHandler() {
                 @Override
                 public void onRecordCollapse(RecordCollapseEvent recordCollapseEvent) {
+                    redrawGraphs();
+                }
+            });
+            addSortChangedHandler(new SortChangedHandler() {
+                @Override
+                public void onSortChanged(SortEvent sortEvent) {
+                    Log.debug("SortChangeHandler");
                     redrawGraphs();
                 }
             });

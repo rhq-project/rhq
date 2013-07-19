@@ -1,7 +1,7 @@
 /*
  *
  *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
+ *  * Copyright (C) 2005-2013 Red Hat, Inc.
  *  * All rights reserved.
  *  *
  *  * This program is free software; you can redistribute it and/or modify
@@ -126,13 +126,13 @@ public class Stop extends AbstractInstall {
                 log.debug("Failed to stop storage service", e);
             }
         } else {
-            String pid = getStoragePid();
-            if (pid != null) {
+            if(isStorageRunning()) {
+                String pid = getStoragePid();
+
                 System.out.println("Stopping RHQ storage node...");
                 System.out.println("RHQ storage node (pid=" + pid + ") is stopping...");
 
-                commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
-                executor.execute(commandLine);
+                killPid(pid);
 
                 waitForProcessToStop(pid);
 

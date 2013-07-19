@@ -253,9 +253,8 @@ public class Alert implements Serializable {
     @ManyToOne
     private AlertDefinition alertDefinition;
 
-    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "alert", cascade = CascadeType.ALL, orphanRemoval=true)
     @OrderBy
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     // primary key
     private Set<AlertConditionLog> conditionLogs = new LinkedHashSet<AlertConditionLog>();
 

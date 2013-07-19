@@ -293,7 +293,6 @@ public class AlertDefinition implements Serializable {
 
     // do not cascade remove - group removal will be detaching children alert defs from the group def,
     // and then letting the children be deleted slowly by existing alert def removal mechanisms
-    @SuppressWarnings("unused")
     @OneToMany(mappedBy = "groupAlertDefinition", fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST })
     @OrderBy
     private Set<AlertDefinition> groupAlertDefinitionChildren = new LinkedHashSet<AlertDefinition>();
@@ -361,11 +360,10 @@ public class AlertDefinition implements Serializable {
     // referencing AlertConditionLog records.
     private Set<AlertCondition> conditions = new LinkedHashSet<AlertCondition>(1); // Most alerts will only have one condition.
 
-    @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "alertDefinition", cascade = CascadeType.ALL, orphanRemoval = true)
     // Although similar to AlertCondition, we do use DELETE_ORPHAN here.  The reason is because AlertNotificationLog
     // does not refer back to the AlertNotification record and therefore the notification logs are not affected
     // by the loss of the AlertNotification that spawned the notification.
-    @org.hibernate.annotations.Cascade(org.hibernate.annotations.CascadeType.DELETE_ORPHAN)
     private List<AlertNotification> alertNotifications = new ArrayList<AlertNotification>();
 
     /**

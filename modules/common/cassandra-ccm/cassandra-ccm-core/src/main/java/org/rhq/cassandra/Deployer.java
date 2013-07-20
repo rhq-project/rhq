@@ -125,11 +125,44 @@ public class Deployer {
             properties.setProperty("thread_stack_size", "-Xss" + deploymentOptions.getStackSize());
             properties.setProperty("jmx_port", deploymentOptions.getJmxPort().toString());
 
+            String javaVersion = System.getProperty("java.version");
+            // The check here is taken right from cassandra-env.sh
+            if ((!isOpenJDK() || javaVersion.compareTo("1.6.0") > 0) ||
+                (javaVersion.equals("1.6.0") && getJavaPatchVersion() > 23)) {
+                properties.put("java_agent", "-javaagent:$CASSANDRA_HOME/lib/jamm-0.2.5.jar");
+            }
+
             propertiesUpdater.update(properties);
         } catch (IOException e) {
             log.error("An error occurred while updating " + jvmPropsFile, e);
             throw new DeploymentException("An error occurred while updating " + jvmPropsFile, e);
         }
+    }
+
+    private boolean isOpenJDK() {
+        String javaVMName = System.getProperty("java.vm.name");
+        return javaVMName.startsWith("OpenJDK");
+    }
+
+    private boolean isJava1_6() {
+        String javaVersion = System.getProperty("java.version");
+        return javaVersion.startsWith("1.6.0");
+    }
+
+    private int getJavaPatchVersion() {
+        String javaVersion = System.getProperty("java.version");
+        int startIndex = javaVersion.indexOf('_');
+
+        if (startIndex == -1) {
+            return 0;
+        }
+
+        return Integer.parseInt(javaVersion.substring(startIndex + 1, javaVersion.length()));
+    }
+
+    private boolean isLaterThanJava1_6() {
+        String javaVersion = System.getProperty("java.version");
+        return javaVersion.compareTo("1.6.0") > 0;
     }
 
     public void updateFilePerms() {

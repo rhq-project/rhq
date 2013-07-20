@@ -47,12 +47,18 @@ import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
 import com.smartgwt.client.widgets.grid.events.SortChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SortEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -67,6 +73,7 @@ import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
  * Views a resource's metrics in a tabular view with sparkline graph and optional detailed d3 graph.
@@ -238,6 +245,57 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         @Override
         public void executeAction(ListGridRecord[] selection, Object actionValue) {
             //@todo: Add to Dashboard
+        }
+
+        public void abc(){
+
+            MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
+            defSubItem.addItem(addGraphItem);
+
+            addGraphItem.addClickHandler(new ClickHandler() {
+                public void onClick(MenuItemClickEvent menuItemClickEvent) {
+                    //generate javascript to call out to.
+                    //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
+                    if (getScheduleDefinitionId(resource, def.getName()) > -1) {
+                        final String resourceGraphElements = resource.getId() + ","
+                                + getScheduleDefinitionId(resource, def.getName());
+
+                        //Once, the portal-war will be rewritten to GWT and operations performed
+                        //within the iframe + JSF will update the user preferences, the following
+                        //2 lines could be uncommented and the lines below them refactorized
+                        //MeasurementUserPreferences measurementPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+                        //String selectedView = measurementPreferences.getSelectedView(String.valueOf(resource.getId()));
+
+                        final int sid = UserSessionManager.getSessionSubject().getId();
+                        SubjectCriteria c = new SubjectCriteria();
+                        c.addFilterId(sid);
+
+                        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(c,
+                                new AsyncCallback<PageList<Subject>>() {
+                                    public void onSuccess(PageList<Subject> result) {
+                                        if (result.size() > 0) {
+                                            UserPreferences uPreferences = new UserPreferences(result
+                                                    .get(0));
+                                            MeasurementUserPreferences mPreferences = new MeasurementUserPreferences(
+                                                    uPreferences);
+                                            String selectedView = mPreferences.getSelectedView(String
+                                                    .valueOf(resource.getId()));
+
+                                            addNewMetric(String.valueOf(resource.getId()),
+                                                    selectedView, resourceGraphElements);
+                                        } else {
+                                            Log.trace("Error obtaining subject with id:" + sid);
+                                        }
+                                    }
+
+                                    public void onFailure(Throwable caught) {
+                                        Log.trace("Error obtaining subject with id:" + sid, caught);
+                                    }
+                                });
+                    }
+                }
+            });
+
         }
 
     }

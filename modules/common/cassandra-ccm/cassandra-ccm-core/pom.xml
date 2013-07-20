@@ -113,6 +113,11 @@
             <artifactId>snappy-java</artifactId>
             <version>${cassandra.snappy.version}</version>
           </dependency>
+          <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-cassandra-auth</artifactId>
+            <version>${project.version}</version>
+          </dependency>
         </dependencies>
         <executions>
           <execution>
@@ -166,12 +171,15 @@
                 <delete file="${cassandra.dir}/lib/snappy-java-1.0.4.1.jar"/>
                 <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
                       todir="${cassandra.dir}/lib"/>
+                <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"
+                      todir="${cassandra.dir}/lib"/>
                 <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
                 <delete file="${cassandra.dir}/bin/cassandra"/>
                 <move file="${project.build.outputDirectory}/cassandra/bin/cassandra" todir="${cassandra.dir}/bin"/>
                 <delete dir="${project.build.outputDirectory}/cassandra"/>
                 <delete dir="${cassandra.dir}/javadoc"/>
                 <delete file="${cassandra.dir}/conf/cassandra-env.sh"/>
+                <touch file="${cassandra.dir}/conf/rhq-storage-auth.conf"/>
 
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
                 <delete dir="${cassandra.dir}"/>

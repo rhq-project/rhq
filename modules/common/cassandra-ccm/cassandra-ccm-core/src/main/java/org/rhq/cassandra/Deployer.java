@@ -160,11 +160,6 @@ public class Deployer {
         return Integer.parseInt(javaVersion.substring(startIndex + 1, javaVersion.length()));
     }
 
-    private boolean isLaterThanJava1_6() {
-        String javaVersion = System.getProperty("java.version");
-        return javaVersion.compareTo("1.6.0") > 0;
-    }
-
     public void updateFilePerms() {
         File deployDir = new File(deploymentOptions.getBasedir());
         File binDir = new File(deployDir, "bin");

@@ -159,7 +159,7 @@
       <operation name="takeSnapshot"
                  description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
                   link of each SSTable file for each keyspace. Note that a column family can have multiple
-                  SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                  SSTables on disk. By default snapshots are stored in the [cassandra_data_dir]/[keyspace_name]/[column_family_name]/snapshots
                   directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
         <parameters>
           <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"

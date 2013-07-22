@@ -36,12 +36,16 @@ import java.util.Properties;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
+
 import org.jboss.as.controller.client.ModelControllerClient;
+
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.MCCHelper;
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControlException;
 
 /**
  * Common code for commands that perform installs. Basically shared code for Install and Upgrade commands.
@@ -55,7 +59,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
-    protected void installWindowsService(File workingDir, String batFile) throws Exception {
+    protected void installWindowsService(File workingDir, String batFile, boolean start) throws Exception {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(workingDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -69,6 +73,11 @@ public abstract class AbstractInstall extends ControlCommand {
 
         commandLine = getCommandLine(batFile, "install");
         executor.execute(commandLine);
+
+        if (start) {
+            commandLine = getCommandLine(batFile, "start");
+            executor.execute(commandLine);
+        }
     }
 
     protected void validateCustomStorageDataDirectories(CommandLine commandLine, List<String> errors) {
@@ -98,6 +107,54 @@ public abstract class AbstractInstall extends ControlCommand {
         } else {
             return true;
         }
+    }
+
+    protected void waitForProcessToStop(String pid) throws Exception {
+
+        if (isWindows() || pid == null) {
+            // For the moment we have no better way to just wait some time
+            Thread.sleep(10 * 1000L);
+        } else {
+            int tries = 5;
+            while (tries > 0) {
+                log.debug(".");
+                if (!isUnixPidRunning(pid)) {
+                    break;
+                }
+                Thread.sleep(2 * 1000L);
+                tries--;
+            }
+            if (tries == 0) {
+                throw new RHQControlException("Process [" + pid
+                    + "] did not finish yet. Terminate it manually and retry.");
+            }
+        }
+
+    }
+
+    protected boolean isUnixPidRunning(String pid) {
+
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(getBinDir());
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
+
+        commandLine = new org.apache.commons.exec.CommandLine("/bin/kill").addArgument("-0").addArgument(pid);
+
+        try {
+            int code = executor.execute(commandLine);
+            if (code != 0) {
+                return false;
+            }
+        } catch (ExecuteException ee) {
+            if (ee.getExitValue() == 1) {
+                // return code 1 means process does not exist
+                return false;
+            }
+        } catch (IOException e) {
+            log.error("Checking for running process failed: " + e.getMessage());
+        }
+        return true;
     }
 
     protected void waitForRHQServerToInitialize() throws Exception {
@@ -286,7 +343,6 @@ public abstract class AbstractInstall extends ControlCommand {
         }
 
         log.debug("Stopping RHQ server...");
-
 
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(serverBinDir);

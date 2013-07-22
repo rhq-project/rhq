@@ -41,8 +41,8 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -116,7 +116,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
         if (!configurationUpdate.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
             result.setErrorMessage(configurationUpdate.getErrorMessage());
-       
+        }
+
         return result;
     }
 

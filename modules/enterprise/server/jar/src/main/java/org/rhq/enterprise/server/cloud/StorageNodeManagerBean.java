@@ -512,12 +512,22 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject) {
-        return findStorageNodeAlerts(subject, false);
+        return findStorageNodeAlerts(subject, false, null);
+    }
+
+    @Override
+    public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode) {
+        return findStorageNodeAlerts(subject, false, storageNode);
     }
 
     @Override
     public PageList<Alert> findAllStorageNodeAlerts(Subject subject) {
-        return findStorageNodeAlerts(subject, true);
+        return findStorageNodeAlerts(subject, true, null);
+    }
+
+    @Override
+    public PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode) {
+        return findStorageNodeAlerts(subject, true, storageNode);
     }
 
     /**
@@ -527,8 +537,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
      * @param allAlerts if [true] then return all alerts; if [false] then return only alerts that are not acknowledged
      * @return alerts
      */
-    private PageList<Alert> findStorageNodeAlerts(Subject subject, boolean allAlerts) {
-        Integer[] resouceIdsWithAlertDefinitions = findResourcesWithAlertDefinitions();
+    private PageList<Alert> findStorageNodeAlerts(Subject subject, boolean allAlerts, StorageNode storageNode) {
+        Integer[] resouceIdsWithAlertDefinitions = findResourcesWithAlertDefinitions(storageNode);
         PageList<Alert> alerts = new PageList<Alert>();
 
         if( resouceIdsWithAlertDefinitions != null && resouceIdsWithAlertDefinitions.length != 0 ){
@@ -555,31 +565,35 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return alerts;
     }
 
-    /**
-     * Return resource Ids for all resources and sub-resources of Storage Nodes that
-     * have alert definitions. This will be used by the resource criteria to find
-     * all alerts triggered for storage nodes.
-     *
-     * @return
-     */
-    private Integer[] findResourcesWithAlertDefinitions() {
-        List<Integer> resourceIdsWithAlertDefinitions = new ArrayList<Integer>();
-        List<StorageNode> test2 = getStorageNodes();
+    @Override
+    public Integer[] findResourcesWithAlertDefinitions() {
+        return this.findResourcesWithAlertDefinitions(null);
+    }
+
+    @Override
+    public Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) {
+        List<StorageNode> initialStorageNodes;
+        if (storageNode == null) {
+            initialStorageNodes = getStorageNodes();
+        } else {
+            initialStorageNodes = Arrays.asList(storageNode);
+        }
 
         Queue<Resource> unvisitedResources = new LinkedList<Resource>();
-        for (StorageNode node : test2) {
-            if (node.getResource() != null) {
-                unvisitedResources.add(node.getResource());
+        for (StorageNode initialStorageNode : initialStorageNodes) {
+            if (initialStorageNode.getResource() != null) {
+                unvisitedResources.add(initialStorageNode.getResource());
             }
         }
 
-        while(!unvisitedResources.isEmpty()){
+        List<Integer> resourceIdsWithAlertDefinitions = new ArrayList<Integer>();
+        while (!unvisitedResources.isEmpty()) {
             Resource resource = unvisitedResources.poll();
             if (resource.getAlertDefinitions() != null) {
                 resourceIdsWithAlertDefinitions.add(resource.getId());
             }
 
-            for(Resource child: resource.getChildResources()){
+            for (Resource child : resource.getChildResources()) {
                 unvisitedResources.add(child);
             }
         }

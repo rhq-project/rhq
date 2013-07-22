@@ -73,10 +73,27 @@ public interface StorageNodeManagerRemote {
     PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject);
 
     /**
+     * Fetches the list of Storage Node related alerts that have not yet been acknowledged for the
+     * specified storage node.
+     *
+     * @param subject subject
+     * @return storage nodes alerts not acknowledged
+     */
+    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode);
+
+    /**
      * Fetches all the Storage Node related alerts.
      *
      * @param subject subject
      * @return all storage nodes alerts
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject);
+
+    /**
+     * Fetches all the Storage Node related alerts for the specified storage node.
+     *
+     * @param subject subject
+     * @return all storage nodes alerts
+     */
+    PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
 }

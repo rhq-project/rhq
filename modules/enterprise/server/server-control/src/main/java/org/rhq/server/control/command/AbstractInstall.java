@@ -363,14 +363,14 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected void startRHQServerForInstallation() throws IOException {
         try {
-            log.info("The RHQ Server must be started to complete its upgrade. Starting the RHQ server in preparation of running the server installer...");
+            log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
             // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
             // to port 9999 for its native management subsystem. Make sure some other independent EAP server (or anything for that matter)
             // isn't already listening to that port.
             if (isPortInUse("127.0.0.1", 9999)) {
                 throw new IOException(
-                    "Something is already listening to port 9999 - shut it down before upgrading the server.");
+                    "Something is already listening to port 9999 - shut it down before installing the server.");
             }
 
             Executor executor = new DefaultExecutor();
@@ -400,7 +400,7 @@ public abstract class AbstractInstall extends ControlCommand {
             }
 
             // Wait for the server to complete it's startup
-            log.info("Waiting for the RHQ Server to start in preparation of running the server installer for upgrade...");
+            log.info("Waiting for the RHQ Server to start in preparation of running the server installer...");
             commandLine = getCommandLine("rhq-installer", "--test");
 
             Executor installerExecutor = new DefaultExecutor();

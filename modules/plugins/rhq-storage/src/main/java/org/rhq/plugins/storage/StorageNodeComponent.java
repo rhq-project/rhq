@@ -42,6 +42,7 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.Property;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -102,7 +103,20 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
     private OperationResult updateConfiguration(Configuration params) {
         OperationResult result = new OperationResult("Configuration updated.");
-        //TODO: implement updates to various sub-resources here
+
+        //update storage node jvm settings
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("minHeapSize", params.getSimpleValue("heapSize")));
+        config.put(new PropertySimple("maxHeapSize", params.getSimpleValue("heapSize")));
+        config.put(new PropertySimple("heapNewSize", params.getSimpleValue("heapNewSize")));
+        config.put(new PropertySimple("threadStackSize", params.getSimpleValue("threadStackSize")));
+
+        ConfigurationUpdateReport configurationUpdate = new ConfigurationUpdateReport(config);
+        this.updateResourceConfiguration(configurationUpdate);
+
+        if (!configurationUpdate.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
+            result.setErrorMessage(configurationUpdate.getErrorMessage());
+       
         return result;
     }
 

@@ -571,7 +571,7 @@ public class Upgrade extends AbstractInstall {
 
     private File getFileDownload(String directory, final String fileMatch) {
         File downloadDir = new File(getBaseDir(),
-            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/"
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/"
                 + directory);
         return downloadDir.listFiles(new FileFilter() {
             @Override

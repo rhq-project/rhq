@@ -10,12 +10,14 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.UnsupportedEncodingException;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.naming.CompositeName;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.Attribute;
@@ -257,7 +259,17 @@ public class TestLdapSettings extends JFrame {
 								SearchResult si = (SearchResult) answer.next();
 
 								// Construct the UserDN
-								userDN = si.getName() + "," + baseDNs[x];
+								userDN = null;
+
+								try {
+									userDN = si.getNameInNamespace();
+								} catch (UnsupportedOperationException use) {
+									userDN = new CompositeName(si.getName()).get(0);
+									if (si.isRelative()) {
+										userDN += "," + baseDNs[x];
+									}
+								}
+
 								msg = "STEP-2:PASS: The test user '"
 										+ testUserName
 										+ "' was succesfully located, and the following userDN will be used in authorization check:\n";
@@ -288,6 +300,21 @@ public class TestLdapSettings extends JFrame {
 							log(msg);
 							proceed=false;
 						}
+						try {
+						    ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, bindUserName);
+						    ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, bindPassword);
+						    ctx.addToEnvironment(Context.SECURITY_AUTHENTICATION, "simple");
+						    ctx.reconnect(null);
+						} catch (Exception ex) {
+							msg = "STEP-2:WARN: There was an error when switching back to the bind user '"
+									+ bindUserName + "'\n";
+							msg += ex.getMessage();
+							if(enableVerboseDebugging.isSelected()){
+								msg = appendStacktraceToMsg(msg, ex);
+							}
+							log(msg);
+						}
+						
 					}
 					// with authentication completed, now check authorization.
 					// validate filter components to list all available groups
@@ -433,7 +460,7 @@ public class TestLdapSettings extends JFrame {
 							Set<Map<String, String>> ret = new HashSet<Map<String, String>>();
 							String filter = String.format("(&(%s)(%s=%s))",
 									groupSearchFilter, groupMemberFilter,
-									userDN);
+									LDAPStringUtil.encodeForFilter(userDN));
 							msg = "STEP-4:TESTING: about to do ldap search with filter \n'"
 									+ filter
 									+ "'\n to locate groups that test user IS authorized to access.";
@@ -638,3 +665,74 @@ public class TestLdapSettings extends JFrame {
 		return constraints;
 	}
 }
+
+class LDAPStringUtil {
+
+    /**
+     * <p>Encode a string so that it can be used in an LDAP search filter.</p> 
+     *
+     * <p>The following table shows the characters that are encoded and their 
+     * encoded version.</p>
+     * 
+     * <table>
+     * <tr><th align="center">Character</th><th>Encoded As</th></tr>
+     * <tr><td align="center">*</td><td>\2a</td></tr>
+     * <tr><td align="center">(</td><td>\28</td></tr>
+     * <tr><td align="center">)</td><td>\29</td></tr>
+     * <tr><td align="center">\</td><td>\5c</td></tr>
+     * <tr><td align="center"><code>null</code></td><td>\00</td></tr>
+     * </table>
+     * 
+     * <p>In addition to encoding the above characters, any non-ASCII character 
+     * (any character with a hex value greater then <code>0x7f</code>) is also 
+     * encoded and rewritten as a UTF-8 character or sequence of characters in 
+     * hex notation.</p>
+     *  
+     * @param  filterString a string that is to be encoded
+     * @return the encoded version of <code>filterString</code> suitable for use
+     *         in a LDAP search filter
+     * @see <a href="http://tools.ietf.org/html/rfc4515">RFC 4515</a>
+     */
+    public static String encodeForFilter(final String filterString) {
+        if (filterString != null && filterString.length() > 0) {
+            StringBuilder encString = new StringBuilder(filterString.length());
+            for (int i = 0; i < filterString.length(); i++) {
+                char ch = filterString.charAt(i);
+                switch (ch) {
+                case '*': // encode a wildcard * character
+                    encString.append("\\2a");
+                    break;
+                case '(': // encode a open parenthesis ( character
+                    encString.append("\\28");
+                    break;
+                case ')': // encode a close parenthesis ) character
+                    encString.append("\\29");
+                    break;
+                case '\\': // encode a backslash \ character
+                    encString.append("\\5c");
+                    break;
+                case '\u0000': // encode a null character
+                    encString.append("\\00");
+                    break;
+                default:
+                    if (ch <= 0x7f) { // an ASCII character
+                        encString.append(ch);
+                    } else if (ch >= 0x80) { // encode to UTF-8
+                        try {
+                            byte[] utf8bytes = String.valueOf(ch).getBytes("UTF8");
+                            for (byte b : utf8bytes) {
+                                encString.append(String.format("\\%02x", b));
+                            }
+                        } catch (UnsupportedEncodingException e) {
+                            // ignore
+                        }
+                    }
+                }
+            }
+            return encString.toString();
+        }
+        return filterString;
+    }
+
+}
+

@@ -80,7 +80,7 @@
         <property name="jboss.modules.dir" location="${project.build.outputDirectory}/modules" />
         <mkdir dir="${jboss.modules.dir}" />
 
-        <property name="rhq.ear.dir" location="${jboss.modules.dir}/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}" />
+        <property name="rhq.ear.dir" location="${jboss.modules.dir}/org/rhq/server-startup/main/deployments/${rhq.earName}" />
 
         <condition property="use-postgres" value="true">
             <contains string="${rhq.server.database.type-mapping}" substring="postgres" casesensitive="false" />
@@ -164,7 +164,7 @@
         <fail unless="jboss.home.is.valid" message="${jboss.home} does not contain a valid JBossAS installation - aborting!" />
 
         <echo>Adding main EAR app module to ${jboss.modules.dir} ...</echo>
-        <unzip src="${settings.localRepository}/org/rhq/rhq-enterprise-server-startup-subsystem/${project.version}/rhq-enterprise-server-startup-subsystem-${project.version}.zip"
+        <unzip src="${settings.localRepository}/org/rhq/server-startup/${project.version}/server-startup-${project.version}.zip"
                dest="${jboss.modules.dir}" />
 
         <echo>Adding installer module to ${jboss.modules.dir} ...</echo>
@@ -243,7 +243,7 @@
             toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
       <copy file="${settings.localRepository}/org/slf4j/slf4j-log4j12/1.7.2/slf4j-log4j12-1.7.2.jar"
             toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
-      <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/1.0.5-M3-p1/snappy-java-1.0.5-M3-p1.jar"
+      <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
             toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
 
       <echo file="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
@@ -258,7 +258,7 @@
         <resource-root path="metrics-core-2.2.0.jar"/>
         <resource-root path="slf4j-api-1.7.2.jar"/>
         <resource-root path="slf4j-log4j12-1.7.2.jar"/>
-        <resource-root path="snappy-java-1.0.5-M3-p1.jar"/>
+        <resource-root path="snappy-java-${cassandra.snappy.version}.jar"/>
         <resource-root path="avro-1.4.0-cassandra-1.jar"/>
     </resources>
 

@@ -1,7 +1,7 @@
 /*
  *
  *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
+ *  * Copyright (C) 2005-2013 Red Hat, Inc.
  *  * All rights reserved.
  *  *
  *  * This program is free software; you can redistribute it and/or modify
@@ -26,7 +26,6 @@
 package org.rhq.server.control.command;
 
 import java.io.File;
-import java.io.FileReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -137,14 +136,13 @@ public class Start extends ControlCommand {
                 log.debug("Failed to start storage service", e);
             }
         } else {
-
             File storageBinDir = new File(getStorageBasedir(), "bin");
-            File pidFile = new File(storageBinDir, "cassandra.pid");
+            File pidFile = getStoragePidFile();
 
             // For now we are duplicating logic in the status command. This code will be
             // replaced when we implement a rhq-storage.sh script.
-            if (pidFile.exists()) {
-                String pid = StreamUtil.slurp(new FileReader(pidFile));
+            if (isStorageRunning()) {
+            	String pid = getStoragePid();
                 System.out.println("RHQ storage node (pid " + pid + ") is running");
             } else {
                 commandLine = getCommandLine(false, "cassandra", "-p", pidFile.getAbsolutePath());

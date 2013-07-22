@@ -162,6 +162,8 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
     }
 
     @RequiredPermission(Permission.MANAGE_INVENTORY)
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    // required for the recalculation thread (same like calculateGroupMembership) this fixes BZ 976265
     public GroupDefinition updateGroupDefinition(Subject subject, GroupDefinition groupDefinition)
         throws GroupDefinitionAlreadyExistsException, GroupDefinitionUpdateException, InvalidExpressionException,
         ResourceGroupUpdateException {
@@ -171,11 +173,6 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
             nameChanged = validate(groupDefinition, groupDefinition.getId());
         } catch (GroupDefinitionException gde) {
             throw new GroupDefinitionUpdateException(gde.getMessage());
-        }
-
-        ExpressionEvaluator evaluator = new ExpressionEvaluator();
-        for (String expression : groupDefinition.getExpressionAsList()) {
-            evaluator.addExpression(expression);
         }
 
         RecursivityChangeType changeType = RecursivityChangeType.None;
@@ -230,17 +227,33 @@ public class GroupDefinitionManagerBean implements GroupDefinitionManagerLocal, 
         if (name.equals("")) {
             throw new GroupDefinitionException("Name is a required property");
         }
-
         if (name.length() > 100) {
             throw new GroupDefinitionException("Name is limited to 100 characters");
         }
-
         if (description.length() > 100) {
             throw new GroupDefinitionException("Description is limited to 100 characters");
         }
-
         if (name.contains("<") || name.contains("$") || name.contains("'") || name.contains("{") || name.contains("[")) {
             throw new GroupDefinitionException("Name must not contain <,$,',[,{ characters");
+        }
+        if (definition.getRecalculationInterval() < 0) {
+            throw new GroupDefinitionException("Recalculation interval cannot be negative");
+        }
+        if (definition.getRecalculationInterval() > 0 && definition.getRecalculationInterval() < 60 * 1000) {
+            throw new GroupDefinitionException(
+                "Recalculation interval cannot be a positive number lower than 1 minute (60000ms)");
+        }
+        if (definition.getExpression() == null || definition.getExpression().isEmpty()) {
+            throw new GroupDefinitionException("Expression is empty");
+        }
+        
+        try {
+            ExpressionEvaluator evaluator = new ExpressionEvaluator();
+            for (String expression : definition.getExpressionAsList()) {
+                evaluator.addExpression(expression);
+            }
+        } catch (InvalidExpressionException e) {
+            throw new GroupDefinitionException("Cannot parse the expression: " + e.getMessage());
         }
 
         Query query = entityManager.createNamedQuery(GroupDefinition.QUERY_FIND_BY_NAME);

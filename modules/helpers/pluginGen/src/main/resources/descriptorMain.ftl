@@ -1,7 +1,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -39,10 +39,15 @@ name="${props.name}"
               </#list>
             </runs-inside>
           </#if>
+          <#if props.dependsOnAs7Plugin>
+          <runs-inside> <!-- TODO adjust type -->
+                <parent-resource-type name="JBossAS7 Standalone Server" plugin="JBossAS7"/>
+          </runs-inside>
+          </#if>
 
-          <#if props.simpleProps?has_content>
+          <#if props.pluginConfig?has_content>
             <plugin-configuration>
-                <#list props.simpleProps as simpleProps>
+                <#list props.pluginConfig as simpleProps>
                 <c:simple-property name="${simpleProps.name}" description="${simpleProps.description}" <#if simpleProps.type??>type="${simpleProps.type}"</#if> <#if simpleProps.readOnly>readOnly="true"</#if>/>
                 </#list>
                 <!-- The template section is only for manual resource additions, and default parameters and the ones presented to the user. -->
@@ -57,14 +62,14 @@ name="${props.name}"
             </plugin-configuration>
          </#if>
 
-     <#if props.hasOperations>
+     <#if props.hasOperations || props.operations?has_content>
         <#if props.operations?has_content>
            <#list props.operations as operation>
-           <operation name="${operation.name}" displayName="${operation.displayName}" description="${operation.description}">
+           <operation name="${operation.name}" <#if operation.displayName?has_content>displayName="${operation.displayName}"</#if> description="${operation.description}">
               <#if operation.params?has_content>
               <parameters>
               <#list operation.params as param>
-                 <c:simple-property name="${param.name}" <#if param.description??>description="${param.description}"</#if>/>
+                 <c:simple-property name="${param.name}" <#if param.description??>description="${param.description}"</#if> type="${param.type}"/>
               </#list>
               </parameters>
               </#if>
@@ -82,10 +87,10 @@ name="${props.name}"
         </#if>
      </#if>
 
-     <#if props.hasMetrics>
+     <#if props.hasMetrics || props.metrics?has_content>
         <#if props.metrics?has_content>
            <#list props.metrics as metric>
-           <metric property="${metric.property}" displayName="${metric.displayName}" displayType="${metric.displayType}" units="${metric.units}" dataType="${metric.dataType}"
+           <metric property="${metric.property}" <#if metric.displayName?has_content>displayName="${metric.displayName}"</#if> displayType="${metric.displayType}" units="${metric.units}" dataType="${metric.dataType}"
                    description="${metric.description}" />
            </#list>
         <#else>
@@ -102,3 +107,11 @@ name="${props.name}"
                 <c:simple-property name="dummy"/>
             </resource-configuration>
         </#if>
+
+<#if props.resourceConfig?has_content>
+      <resource-configuration>
+          <#list props.resourceConfig as simpleProps>
+          <c:simple-property name="${simpleProps.name}" description="${simpleProps.description}" <#if simpleProps.type??>type="${simpleProps.type}"</#if> <#if simpleProps.readOnly>readOnly="true"</#if>/>
+          </#list>
+      </resource-configuration>
+</#if>

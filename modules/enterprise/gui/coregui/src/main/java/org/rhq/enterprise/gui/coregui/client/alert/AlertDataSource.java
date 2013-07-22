@@ -57,6 +57,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.admin.templates.AlertDefinitionTemplateTypeView;
 import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.AlertGWTServiceAsync;
@@ -74,6 +75,8 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  * @author John Mazzitelli
  */
 public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
+    
+    private static final String FIELD_PARENT = "parent"; // may be template or group alert def parent
 
     public static final String PRIORITY_ICON_HIGH = ImageManager.getAlertIcon(AlertPriority.HIGH);
     public static final String PRIORITY_ICON_MEDIUM = ImageManager.getAlertIcon(AlertPriority.MEDIUM);
@@ -359,6 +362,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         }
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
+//        criteria.fetchGroupAlertDefinition(true);
 
         return criteria;
     }
@@ -409,6 +413,22 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
         record.setAttribute(AncestryUtil.RESOURCE_NAME, resource.getName());
         record.setAttribute(AncestryUtil.RESOURCE_ANCESTRY, resource.getAncestry());
         record.setAttribute(AncestryUtil.RESOURCE_TYPE_ID, resource.getResourceType().getId());
+
+        AlertDefinition groupAlertDefinition = alertDefinition.getGroupAlertDefinition();
+        Integer parentId = alertDefinition.getParentId();
+        if (groupAlertDefinition != null && groupAlertDefinition.getGroup() != null) {
+            boolean isAutogroup = groupAlertDefinition.getGroup().getAutoGroupParentResource() != null;
+            record.setAttribute(FIELD_PARENT, (isAutogroup ? "#Resource/AutoGroup/" : "#ResourceGroup/")
+                + groupAlertDefinition.getGroup().getId() + "/Alerts/Definitions/" + groupAlertDefinition.getId());
+            record.setLinkText(MSG.view_alert_definition_for_group());
+        } else if (parentId != null && parentId.intValue() != 0) {
+            record.setAttribute(
+                FIELD_PARENT,
+                LinkManager.getAdminTemplatesEditLink(AlertDefinitionTemplateTypeView.VIEW_ID.getName(), resource
+                    .getResourceType().getId())
+                    + "/" + parentId);
+            record.setLinkText(MSG.view_alert_definition_for_type());
+        }
 
         Set<AlertConditionLog> conditionLogs = from.getConditionLogs();
         String conditionText;

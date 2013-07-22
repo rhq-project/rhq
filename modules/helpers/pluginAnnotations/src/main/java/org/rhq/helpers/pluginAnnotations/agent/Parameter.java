@@ -29,13 +29,14 @@ import java.lang.annotation.Target;
 
 /**
  * Parameter.
- * 
+ *
  * @author Galder Zamarreño
  * @since 4.0
  */
 @Target(ElementType.PARAMETER)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Parameter {
-   String name() default "";
+   String name() ;
    String description() default "";
+    RhqType type() default RhqType.VOID;
 }

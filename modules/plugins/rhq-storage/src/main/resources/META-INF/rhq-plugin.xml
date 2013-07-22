@@ -73,7 +73,7 @@
         </c:list-property>
       </results>
     </operation>
-    
+
     <operation name="addNodeMaintenance">
       <parameters>
         <c:simple-property name="runRepair" type="boolean" default="true"/>
@@ -93,6 +93,14 @@
       </results>
     </operation>
 
+    <operation name="updateKnownNodes">
+      <parameters>
+        <c:list-property name="ipAddresses">
+          <c:simple-property name="ipAddress"/>
+        </c:list-property>
+      </parameters>
+    </operation>
+
     <operation name="prepareForUpgrade" description="Prepares the storage node for upgrade (this operation consists of following steps: 1) turning off the RPC server, 2) turning off the gossiper, 3) taking the snapshot (backuping the data), 4) invoking the drain operation">
         <parameters>
           <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
@@ -110,6 +118,49 @@
         </c:list-property>
       </parameters>
     </operation>
+
+    <operation name="updateConfiguration" description="Updates the node configuration. Will require a separate server restart for the settings to take effect.">
+      <parameters>
+        <c:simple-property name="heapSize" type="string" description="The heap size to be used for both -Xms and -Xmx JVM options."/>
+        <c:simple-property name="jmxPort" type="integer" description="JMX port JVM option."/>
+      </parameters>
+      <results>
+        <c:simple-property name="operationResult" description="Outcome of updating the configuration."/>
+      </results>
+    </operation>
+
+    <resource-configuration>
+      <c:group name="MemorySettings">
+        <c:simple-property name="minHeapSize"
+                           readOnly="true"
+                           description="The minimum heap size. This value will be used with the -Xms JVM option. This
+                           is read only because it is automatically set to the same value as Max Heap Size."/>
+        <c:simple-property name="maxHeapSize"
+                           description="The maximum heap size. This value will be used with the -Xmx JVM option. The
+                           value should be an integer with a suffix of M or G to indicate megabytes or gigabytes.">
+          <c:constraint>
+            <c:regex-constraint expression="\d+[mMgG]"/>
+          </c:constraint>
+        </c:simple-property>
+        <c:simple-property name="heapNewSize"
+                           description="The size of the new generation portion of the heap. This value will be used with
+                           the -Xmn JVM option. The value should be an integer with a suffix of M or G to indicate
+                           megabytes or gigabytes.">
+          <c:constraint>
+            <c:regex-constraint expression="\d+[mMgG]"/>
+          </c:constraint>
+        </c:simple-property>
+        <c:simple-property name="threadStackSize"
+                           type="integer"
+                           description="The thread stack size. This memory is allocated to each thread off heap. The
+                           value should be an integer that will be interpreted in kilobytes."/>
+        <c:simple-property name="heapDumpOnOOMError" displayName="Heap Dump on OutOfMemoryError" type="boolean"
+                           default="true"
+                           description="Generate a heap dump when an OutOfMemoryError occurs"/>
+        <c:simple-property name="heapDumpDir" displayName="Heap Dump Directory" required="false"
+                           description="The directory in which heap dumps will be written."/>
+      </c:group>
+    </resource-configuration>
 
     <server name="Cassandra Server JVM"
             sourcePlugin="JMX" sourceType="JMX Server"
@@ -162,3 +213,4 @@
     <service name="Keyspace" sourcePlugin="Cassandra" sourceType="Keyspace"/>
   </server>
 </plugin>
+

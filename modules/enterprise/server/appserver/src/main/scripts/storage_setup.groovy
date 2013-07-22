@@ -97,6 +97,7 @@ heap-new-size=${heapNewSize}
 hostname=127.0.0.$nodeId
 jmx-port=${defaultJmxPort + (nodeId - 1)}
 seeds=${seeds}
+verify-data-dirs-empty=false
 """
     )
   }
@@ -167,11 +168,11 @@ def prepareModulesDir(basedir) {
   )
   ant.symlink(link: "$modulesDir/org/rhq/rhq-server-control", resource: "$defaultModulesDir/org/rhq/rhq-server-control")
 
-  def downloadsDir = "$modulesDir/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads"
+  def downloadsDir = "$modulesDir/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads"
   ant.mkdir(dir: downloadsDir)
   ant.symlink(
     link: "$downloadsDir/rhq-agent",
-    resource: "$defaultModulesDir/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent"
+    resource: "$defaultModulesDir/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/rhq-agent"
   )
 }
 

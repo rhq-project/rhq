@@ -1,6 +1,6 @@
 /*
  * JBoss, Home of Professional Open Source.
- * Copyright 2009, Red Hat, Inc. and/or its affiliates, and
+ * Copyright 2009-2013, Red Hat, Inc. and/or its affiliates, and
  * individual contributors as indicated by the @author tags. See the
  * copyright.txt file in the distribution for a full listing of
  * individual contributors.
@@ -26,10 +26,18 @@ package org.rhq.helpers.pluginAnnotations.agent;
  * Metric Units.
  *
  * @author Galder Zamarreño
+ * @author Heiko W. Rupp
+ * See also org.rhq.core.domain.measurement.MeasurementUnits
  * @since 4.0
  */
+@SuppressWarnings("unused")
 public enum Units {
-   NONE, MILLISECONDS, SECONDS, PERCENTAGE;
+    NONE,  PERCENTAGE,
+    BYTES, KILOBYTES, MEGABYTES, GIGABYTES, TERABYTES, PETABYTES,
+    BITS, KILOBITS, MEGABITS, GIGABITS, TERABITS, PETABITS,
+    EPOCH_MILLISECONDS, EPOCH_SECONDS,
+    JIFFYS, NANOSECONDS, MICROSECONDS, MILLISECONDS, SECONDS, MINUTES, HOURS, DAYS,
+    CELSIUS, KELVIN, FAHRENHEIT;
 
    @Override
    public String toString() {

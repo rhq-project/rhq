@@ -51,6 +51,19 @@ public class PluginGen {
     private final Log log = LogFactory.getLog(PluginGen.class);
 
     public static void main(String[] arg) throws Exception {
+
+        if (arg.length>0) {
+            if (arg[0].equals("-ui")) {
+                Generator.main(arg);
+
+            }
+            else {
+                System.out.println("use option -ui to start the UI version");
+            }
+            System.exit(0);
+        }
+
+
         PluginGen pg = new PluginGen();
         pg.run();
 
@@ -115,16 +128,30 @@ public class PluginGen {
      * Do some post processing over the input received.
      * @param props The properties just recorded from the user input
      */
-    private void postprocess(Props props) {
+    protected void postprocess(Props props) {
 
         // Set the package
         String pkg = props.getPackagePrefix() + "." + props.getName();
         props.setPkg(pkg);
 
+        String name = props.getName(); // Type name
+
+        if (props.getComponentClass().contains("{name}")) {
+            props.setComponentClass(props.getComponentClass().replace("{name}",name));
+        }
+
+        if (props.getDiscoveryClass().contains("{name}")) {
+            props.setDiscoveryClass(props.getDiscoveryClass().replace("{name}",name));
+        }
+
         for (Props cProp : props.getChildren()) {
             cProp.setPkg(pkg);
         }
 
+        if (props.getScanForAnnotations()!=null) {
+            AnnotationProcessor ap = new AnnotationProcessor(props.getScanForAnnotations());
+            ap.populate(props);
+        }
     }
 
     /**
@@ -231,7 +258,7 @@ public class PluginGen {
      * Trigger the generation of the directory hierarchy.
      * @param props Parameters to take into account
      */
-    private void generate(Props props) {
+    protected void generate(Props props) {
 
         log.info("Generating...");
 
@@ -247,7 +274,7 @@ public class PluginGen {
         }
 
         boolean success;
-        File activeDirectory = new File(props.getFileSystemRoot(), props.getName());
+        File activeDirectory = new File(props.getFileSystemRoot(), props.getPluginName());
 
         if (!activeDirectory.exists()) {
             success = activeDirectory.mkdir();
@@ -260,7 +287,7 @@ public class PluginGen {
         // write pom.xml
         createFile(props, "pom", "pom.xml", activeDirectory.getAbsolutePath());
 
-        // Create java directory hierarchie
+        // Create java directory hierarchy
         String path = activeDirectory.getAbsolutePath() + File.separator + "src" + File.separator + "main"
             + File.separator;
 

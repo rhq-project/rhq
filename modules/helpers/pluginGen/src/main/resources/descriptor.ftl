@@ -1,7 +1,7 @@
 <#--
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,11 @@
 <?xml version="1.0"?>
 <plugin name="${props.pluginName}"
         displayName="${props.pluginName}Plugin"
+<#if props.pluginDescription??>
         description="${props.pluginDescription}"
+<#else>
+        description="TODO provide a description for the plugin"
+</#if>
 <#if props.usePluginLifecycleListenerApi>
         pluginLifecycleListener="${props.componentClass}"
 </#if>
@@ -33,6 +37,9 @@
 
 <#if props.dependsOnJmxPlugin>
    <depends plugin="JMX" useClasses="true"/>
+</#if>
+<#if props.dependsOnAs7Plugin>
+   <depends plugin="JBossAS7" useClasses="true"/>
 </#if>
 
    <${props.category.lowerName} <#include "descriptorMain.ftl"/>

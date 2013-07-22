@@ -2930,10 +2930,14 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     public PageList<Resource> findGroupMemberCandidateResources(Subject subject, ResourceCriteria criteria,
         int[] alreadySelectedResourceIds) {
 
-        Set<Integer> alreadySelectedResourceIdSet = new HashSet<Integer>(
-            ArrayUtils.wrapInList(alreadySelectedResourceIds));
-
         PageControl originalPageControl = getPageControl(criteria);
+        if (originalPageControl.isUnlimited()) {
+            throw new UnsupportedOperationException("Supplied criteria has an unlimited PageControl");
+        }
+
+        Set<Integer> alreadySelectedResourceIdSet = new HashSet<Integer>(
+            ArrayUtils.wrapInList(alreadySelectedResourceIds == null ? new int[0] : alreadySelectedResourceIds));
+
         PageControl pageControl = (PageControl) originalPageControl.clone();
         criteria.setPageControl(pageControl);
 

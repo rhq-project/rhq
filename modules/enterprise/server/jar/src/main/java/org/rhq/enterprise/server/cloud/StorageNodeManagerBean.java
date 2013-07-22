@@ -28,8 +28,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -43,28 +45,39 @@ import org.quartz.JobDataMap;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.operation.OperationRequestStatus;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
+import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RequiredPermissions;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
@@ -89,6 +102,11 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
+    private static final int OPERATION_QUERY_TIMEOUT = 20000;
+    private static final int MAX_ITERATIONS = 6;
+    private static final String UPDATE_CONFIGURATION_OPERATION = "updateConfiguration";
+    private static final String RESTART_OPERATION = "restart";
+
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
@@ -109,6 +127,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private OperationManagerLocal operationManager;
+
+    @EJB
+    private AlertManagerLocal alertManager;
+
+    @EJB
+    private ConfigurationManagerLocal configurationManager;
 
     @Override
     public void linkResource(Resource resource) {
@@ -147,7 +171,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
                 entityManager.persist(storageNode);
 
-                scheduleQuartzJob(storageNodes.size());
+//                scheduleQuartzJob(storageNodes.size());
             }
         }
     }
@@ -427,7 +451,20 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         entityManager.flush();
     }
-    
+
+    private StorageNode findStorageNodeByAddress(String address) {
+        TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
+            StorageNode.class);
+        query.setParameter("address", address);
+        List<StorageNode> result = query.getResultList();
+
+        if (result != null && result.size() > 0) {
+            return result.get(0);
+        }
+
+        return null;
+    }
+
     private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
         int schedId, MeasurementUnits units, long beginTime, long endTime) {
         MeasurementAggregate measurementAggregate = measurementManager.getAggregate(subject, schedId, beginTime,
@@ -471,5 +508,177 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         schedule.setDescription("Run scheduled read repair on storage node");
 
         operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
+    }
+
+    @Override
+    public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject) {
+        return findStorageNodeAlerts(subject, false);
+    }
+
+    @Override
+    public PageList<Alert> findAllStorageNodeAlerts(Subject subject) {
+        return findStorageNodeAlerts(subject, true);
+    }
+
+    /**
+     * Find the set of alerts related to Storage Node resources and sub-resources.
+     *
+     * @param subject subject
+     * @param allAlerts if [true] then return all alerts; if [false] then return only alerts that are not acknowledged
+     * @return alerts
+     */
+    private PageList<Alert> findStorageNodeAlerts(Subject subject, boolean allAlerts) {
+        Integer[] resouceIdsWithAlertDefinitions = findResourcesWithAlertDefinitions();
+        PageList<Alert> alerts = new PageList<Alert>();
+
+        if( resouceIdsWithAlertDefinitions != null && resouceIdsWithAlertDefinitions.length != 0 ){
+            AlertCriteria criteria = new AlertCriteria();
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+            criteria.addFilterResourceIds(resouceIdsWithAlertDefinitions);
+            criteria.addSortCtime(PageOrdering.DESC);
+
+            alerts = alertManager.findAlertsByCriteria(subject, criteria);
+
+            if (!allAlerts) {
+                //select on alerts that are not acknowledge
+                PageList<Alert> trimmedAlerts = new PageList<Alert>();
+                for (Alert alert : alerts) {
+                    if (alert.getAcknowledgeTime() == null || alert.getAcknowledgeTime() <= 0) {
+                        trimmedAlerts.add(alert);
+                    }
+                }
+
+                alerts = trimmedAlerts;
+            }
+        }
+
+        return alerts;
+    }
+
+    /**
+     * Return resource Ids for all resources and sub-resources of Storage Nodes that
+     * have alert definitions. This will be used by the resource criteria to find
+     * all alerts triggered for storage nodes.
+     *
+     * @return
+     */
+    private Integer[] findResourcesWithAlertDefinitions() {
+        List<Integer> resourceIdsWithAlertDefinitions = new ArrayList<Integer>();
+        List<StorageNode> test2 = getStorageNodes();
+
+        Queue<Resource> unvisitedResources = new LinkedList<Resource>();
+        for (StorageNode node : test2) {
+            if (node.getResource() != null) {
+                unvisitedResources.add(node.getResource());
+            }
+        }
+
+        while(!unvisitedResources.isEmpty()){
+            Resource resource = unvisitedResources.poll();
+            if (resource.getAlertDefinitions() != null) {
+                resourceIdsWithAlertDefinitions.add(resource.getId());
+            }
+
+            for(Resource child: resource.getChildResources()){
+                unvisitedResources.add(child);
+            }
+        }
+
+        return resourceIdsWithAlertDefinitions.toArray(new Integer[resourceIdsWithAlertDefinitions.size()]);
+    }
+
+    @Override
+    public StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode) {
+        StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite(storageNode);
+
+        if (storageNode != null && storageNode.getResource() != null) {
+            Resource storageNodeResource = storageNode.getResource();
+            Configuration storageNodeConfiguration = configurationManager.getResourceConfiguration(subject,
+                storageNodeResource.getId());
+
+            configuration.setHeapSize(storageNodeConfiguration.getSimpleValue("maxHeapSize"));
+            configuration.setJmxPort(storageNode.getJmxPort());
+        }
+
+        return configuration;
+    }
+
+    @Override
+    public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
+        StorageNode storageNode = findStorageNodeByAddress(storageNodeConfiguration.getStorageNode().getAddress());
+
+        if (storageNode != null && storageNode.getResource() != null) {
+            Resource storageNodeResource = storageNode.getResource();
+            Configuration parameters = new Configuration();
+            parameters.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
+            parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
+
+            boolean updateConfigurationResult = runOperationAndWaitForResult(subject, storageNodeResource,
+                UPDATE_CONFIGURATION_OPERATION, parameters);
+
+            if (updateConfigurationResult) {
+                boolean restartResult = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
+                    null);
+
+                if (restartResult) {
+                    storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
+                    entityManager.persist(storageNode);
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
+        Configuration parameters) {
+
+        //scheduling the operation
+        long operationStartTime = System.currentTimeMillis();
+
+        ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
+        newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
+        newSchedule.setResource(storageNodeResource);
+        newSchedule.setOperationName(operationToRun);
+        newSchedule.setDescription("Run by StorageNodeManagerBean");
+        newSchedule.setParameters(parameters);
+
+        operationManager.scheduleResourceOperation(subject, newSchedule);
+        entityManager.flush();
+
+        //waiting for the operation result then return it
+        int iteration = 0;
+        boolean successResultFound = false;
+        while (iteration < MAX_ITERATIONS && !successResultFound) {
+            ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+            criteria.addFilterResourceIds(storageNodeResource.getId());
+            criteria.addFilterStartTime(operationStartTime);
+            criteria.addFilterOperationName(operationToRun);
+            criteria.addFilterStatus(OperationRequestStatus.SUCCESS);
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+
+            PageList<ResourceOperationHistory> results = operationManager.findResourceOperationHistoriesByCriteria(
+                subject, criteria);
+
+            if (results != null && results.size() > 0) {
+                successResultFound = true;
+            }
+
+            if (successResultFound) {
+                break;
+            } else {
+                try {
+                    Thread.sleep(OPERATION_QUERY_TIMEOUT);
+                } catch (Exception e) {
+                    log.error(e);
+                }
+            }
+
+            iteration++;
+        }
+
+        return successResultFound;
     }
 }

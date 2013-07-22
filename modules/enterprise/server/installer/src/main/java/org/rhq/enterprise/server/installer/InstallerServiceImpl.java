@@ -49,7 +49,7 @@ import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseTy
  */
 public class InstallerServiceImpl implements InstallerService {
 
-    private static final String RHQ_EXTENSION_NAME = "org.rhq.rhq-enterprise-server-startup-subsystem";
+    private static final String RHQ_EXTENSION_NAME = "org.rhq.server-startup";
     private static final String RHQ_SUBSYSTEM_NAME = "rhq-startup";
     private static final String EAR_NAME = "rhq.ear";
     private static final String SYSPROP_PROPFILE = "rhq.server.properties-file";

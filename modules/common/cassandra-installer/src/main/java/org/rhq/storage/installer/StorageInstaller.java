@@ -32,10 +32,14 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -64,6 +68,7 @@ import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
 
@@ -89,6 +94,8 @@ public class StorageInstaller {
     private final String STORAGE_BASEDIR = "rhq-storage";
 
     private final Log log = LogFactory.getLog(StorageInstaller.class);
+
+    private final String VERIFY_DATA_DIRS_EMPTY = "verify-data-dirs-empty";
 
     private Options options;
 
@@ -128,7 +135,8 @@ public class StorageInstaller {
 
         Option hostname = new Option("n", "hostname", true,
             "The hostname or IP address on which the node will listen for "
-                + "requests. If not specified, defaults to the hostname for localhost.");
+                + "requests. Note that if a hostname is specified, the IP address is used. Defaults to the IP " +
+            "address of the local host (which depending on hostname configuration may not be localhost).");
         hostname.setArgName("HOSTNAME");
 
         Option seeds = new Option("s", "seeds", true, "A comma-delimited list of hostnames or IP addresses that "
@@ -191,12 +199,15 @@ public class StorageInstaller {
             + "where the existing RHQ server is installed.");
         upgradeOption.setArgName("RHQ_SERVER_DIR");
 
+        Option verifyDataDirsEmptyOption = new Option(null, VERIFY_DATA_DIRS_EMPTY, true, "Will cause the installer " +
+            "to abort if any of the data directories is not empty. Defaults to true.");
+
         options = new Options().addOption(new Option("h", "help", false, "Show this message.")).addOption(hostname)
             .addOption(seeds).addOption(jmxPortOption).addOption(startOption).addOption(checkStatus)
             .addOption(commitLogOption).addOption(dataDirOption).addOption(savedCachesDirOption)
             .addOption(nativeTransportPortOption).addOption(storagePortOption).addOption(sslStoragePortOption)
             .addOption(basedirOption).addOption(heapSizeOption).addOption(heapNewSizeOption).addOption(stackSizeOption)
-            .addOption(upgradeOption);
+            .addOption(upgradeOption).addOption(verifyDataDirsEmptyOption);
     }
 
     public int run(CommandLine cmdLine) throws Exception {
@@ -237,25 +248,37 @@ public class StorageInstaller {
                 deployer.updateFilePerms();
 
                 // For upgrades we will copy the existing cassandra.yaml,
-                // log4j-server.properties, and cassandra-env.sh file from the existing
+                // log4j-server.properties, and cassandra-jvm.properties from the existing
                 // storage node installation. Going forward though we need to add support
-                // for merging in the existing cassandra.yaml with the new one. We also
-                // need to do something about cassandra-env.sh. There is no easy to parse
-                // it and merge in changes which is problematic since that is where heap
-                // settings and JMX port and other JMV options are specified. Maybe we can
-                // replace it with a cassandra-in.sh that is essentially a properties file
-                // which we can easily parse and update.
+                // for merging in the existing cassandra.yaml with the new one.
                 File oldConfDir = new File(existingStorageDir, "conf");
                 File newConfDir = new File(storageBasedir, "conf");
 
+                File cassandraEnvFile = new File(oldConfDir, "cassandra-env.sh");
+
                 String cassandraYaml = "cassandra.yaml";
-                String cassandraEnv = "cassandra-env.sh";
-                File cassandraEnvFile = new File(newConfDir, cassandraEnv);
+                String cassandraJvmProps = "cassandra-jvm.properties";
+                File cassandraJvmPropsFile = new File(newConfDir, cassandraJvmProps);
                 String log4j = "log4j-server.properties";
 
                 replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
-                replaceFile(new File(oldConfDir, cassandraEnv), cassandraEnvFile);
                 replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
+
+                if (cassandraEnvFile.exists()) {
+                    // Then this is an RHQ 4.8 install
+                    jmxPort = parseJmxPortFromCassandrEnv(cassandraEnvFile);
+                    Properties jvmProps = new Properties();
+                    jvmProps.load(new FileInputStream(cassandraJvmPropsFile));
+                    PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(
+                        cassandraJvmPropsFile.getAbsolutePath());
+                    jvmProps.setProperty("jmx_port", Integer.toString(jmxPort));
+
+                    propertiesUpdater.update(jvmProps);
+
+                } else {
+                    jmxPort = parseJmxPort(cassandraJvmPropsFile);
+                    replaceFile(new File(oldConfDir, cassandraJvmProps), cassandraJvmPropsFile);
+                }
 
                 log.info("Finished installing RHQ Storage Node.");
 
@@ -266,8 +289,6 @@ public class StorageInstaller {
                 Map<String, Object> config = (Map<String, Object>) yaml.load(new FileInputStream(yamlFile));
 
                 hostname = (String) config.get("listen_address");
-
-                jmxPort = parseJmxPort(cassandraEnvFile);
             } else {
                 if (cmdLine.hasOption("dir")) {
                     File basedir = new File(cmdLine.getOptionValue("dir"));
@@ -275,7 +296,7 @@ public class StorageInstaller {
                 }
 
                 if (cmdLine.hasOption("n")) {
-                    hostname = cmdLine.getOptionValue("n");
+                    hostname = InetAddress.getByName(cmdLine.getOptionValue("n")).getHostAddress();
                 } else {
                     hostname = InetAddress.getLocalHost().getHostAddress();
                 }
@@ -296,21 +317,25 @@ public class StorageInstaller {
                 File dataDirFile = new File(dataDir);
                 File savedCachesDirFile = new File(savedCachesDir);
 
-                // validate the three data directories are empty - if they are not, we are probably stepping on another storage node
-                if (!isDirectoryEmpty(commitLogDirFile)) {
-                    log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
-                        + commitLogDirFile.getAbsolutePath() + "]");
-                    return STATUS_DATA_DIR_NOT_EMPTY;
-                }
-                if (!isDirectoryEmpty(dataDirFile)) {
-                    log.error("Data directory is not empty. It should not exist for a new Storage Node ["
-                        + dataDirFile.getAbsolutePath() + "]");
-                    return STATUS_DATA_DIR_NOT_EMPTY;
-                }
-                if (!isDirectoryEmpty(savedCachesDirFile)) {
-                    log.error("Saved caches directory is not empty. It should not exist for a new Storage Node ["
-                        + savedCachesDirFile.getAbsolutePath() + "]");
-                    return STATUS_DATA_DIR_NOT_EMPTY;
+                boolean verifyDataDirsEmpty = Boolean.valueOf(cmdLine.getOptionValue(VERIFY_DATA_DIRS_EMPTY, "true"));
+                if (verifyDataDirsEmpty) {
+                    // validate the three data directories are empty - if they are not, we are probably stepping on
+                    // another storage node
+                    if (!isDirectoryEmpty(commitLogDirFile)) {
+                        log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
+                            + commitLogDirFile.getAbsolutePath() + "]");
+                        return STATUS_DATA_DIR_NOT_EMPTY;
+                    }
+                    if (!isDirectoryEmpty(dataDirFile)) {
+                        log.error("Data directory is not empty. It should not exist for a new Storage Node ["
+                            + dataDirFile.getAbsolutePath() + "]");
+                        return STATUS_DATA_DIR_NOT_EMPTY;
+                    }
+                    if (!isDirectoryEmpty(savedCachesDirFile)) {
+                        log.error("Saved caches directory is not empty. It should not exist for a new Storage Node ["
+                            + savedCachesDirFile.getAbsolutePath() + "]");
+                        return STATUS_DATA_DIR_NOT_EMPTY;
+                    }
                 }
 
                 jmxPort = getPort(cmdLine, "jmx-port", defaultJmxPort);
@@ -363,6 +388,7 @@ public class StorageInstaller {
                 deployer.unzipDistro();
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
+                deployer.updateStorageAuthConf(getAddresses(hostname, seeds));
 
                 log.info("Finished installing RHQ Storage Node.");
 
@@ -438,6 +464,7 @@ public class StorageInstaller {
     }
 
     private boolean isDirectoryEmpty(File dir) {
+        // TODO need to check subdirectories
         if (dir.isDirectory()) {
             File[] files = dir.listFiles();
             return (files == null || files.length == 0);
@@ -475,10 +502,23 @@ public class StorageInstaller {
         return dir;
     }
 
+    private Set<InetAddress> getAddresses(String hostname, String seeds) throws IOException {
+        Set<InetAddress> addresses = new HashSet<InetAddress>();
+        addresses.add(InetAddress.getByName(hostname));
+
+        if (!StringUtil.isEmpty(seeds)) {
+            for (String seed : seeds.split(",")) {
+                addresses.add(InetAddress.getByName(seed));
+            }
+        }
+
+        return addresses;
+    }
+
     private PropertiesFileUpdate getServerProperties() {
         String sysprop = System.getProperty("rhq.server.properties-file");
         if (sysprop == null) {
-            throw new RuntimeException("The required system property [rhq.server.properties] is not defined.");
+            throw new RuntimeException("The required system property [rhq.server.properties-file] is not defined.");
         }
 
         File file = new File(sysprop);
@@ -598,7 +638,7 @@ public class StorageInstaller {
         return new File(binDir, "cassandra.pid").exists();
     }
 
-    private boolean verifyNodeIsUp(String address, int jmxPort, int retries, long timeout) throws Exception {
+    boolean verifyNodeIsUp(String address, int jmxPort, int retries, long timeout) throws Exception {
         String url = "service:jmx:rmi:///jndi/rmi://" + address + ":" + jmxPort + "/jmxrmi";
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         JMXConnector connector = null;
@@ -654,7 +694,7 @@ public class StorageInstaller {
         }
     }
 
-    private int parseJmxPort(File cassandraEnvFile) {
+    private int parseJmxPortFromCassandrEnv(File cassandraEnvFile) {
         Integer port = null;
         if (isWindows()) {
             // TODO
@@ -667,7 +707,7 @@ public class StorageInstaller {
 
                 while (line != null) {
                     if (line.startsWith("JMX_PORT")) {
-                        int startIndex = line.indexOf("JMX_PORT=\"") + 1;
+                        int startIndex = "JMX_PORT=\"".length();
                         int endIndex = line.lastIndexOf("\"");
 
                         if (startIndex == -1 || endIndex == -1) {
@@ -708,13 +748,47 @@ public class StorageInstaller {
         }
     }
 
+    private int parseJmxPort(File cassandraJvmOptsFile) {
+        Integer port = null;
+        if (isWindows()) {
+            // TODO
+            return defaultJmxPort;
+        } else {
+            try {
+                Properties properties = new Properties();
+                properties.load(new FileInputStream(cassandraJvmOptsFile));
+
+                String jmxPort = properties.getProperty("jmx_port");
+                if (StringUtil.isEmpty(jmxPort)) {
+                    log.error("The property [jmx_port] is undefined.");
+                    throw new RuntimeException("Cannot determine JMX port");
+                }
+
+                return Integer.parseInt(jmxPort);
+            } catch (IOException e) {
+                log.error("Failed to parse JMX port. There was an unexpected IO error", e);
+                throw new RuntimeException("Failed to parse JMX port due to IO error: " + e.getMessage());
+            }
+        }
+    }
+
     public void printUsage() {
-        Options options = getOptions();
         HelpFormatter helpFormatter = new HelpFormatter();
         String syntax = "rhq-storage-installer.sh|bat [options]";
         String header = "";
 
-        helpFormatter.printHelp(syntax, header, options, null);
+        helpFormatter.printHelp(syntax, header, getHelpOptions(), null);
+    }
+
+    public Options getHelpOptions() {
+        Options helpOptions = new Options();
+        for (Option option : (Collection<Option>)options.getOptions()) {
+            if (option.getLongOpt().equals(VERIFY_DATA_DIRS_EMPTY)) {
+                continue;
+            }
+            helpOptions.addOption(option);
+        }
+        return helpOptions;
     }
 
     public Options getOptions() {

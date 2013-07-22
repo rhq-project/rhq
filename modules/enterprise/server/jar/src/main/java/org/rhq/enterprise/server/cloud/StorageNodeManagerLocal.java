@@ -22,8 +22,10 @@ import java.util.List;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
@@ -55,6 +57,10 @@ public interface StorageNodeManagerLocal {
      */
     StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
 
+    StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode);
+
+    boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
+
     /**
      * Fetches the list of StorageNode entities based on provided criteria.
      *
@@ -65,13 +71,29 @@ public interface StorageNodeManagerLocal {
      * @return list of nodes
      */
     PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
-    
+
+    /**
+     * Fetches the list of Storage Node related alerts that have not yet been acknowledged.
+     *
+     * @param subject subject
+     * @return storage nodes alerts not acknowledged
+     */
+    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject);
+
+    /**
+     * Fetches all the Storage Node related alerts.
+     *
+     * @param subject subject
+     * @return all storage nodes alerts
+     */
+    PageList<Alert> findAllStorageNodeAlerts(Subject subject);
+
     /**
      * <p>Prepares the node for subsequent upgrade.</p>
      * <p> CAUTION: this method will set the RHQ server to maintenance mode, RHQ storage flushes all the data to disk
      * and backup of all the keyspaces is created</p>
      * <p>the subject needs to have <code>MANAGE_SETTINGS</code> and <code>MANAGE_INVENTORY</code> permissions.</p>
-     * 
+     *
      * @param subject caller
      * @param storageNode storage node on which the prepareForUpgrade operation should be run
      */

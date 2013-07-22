@@ -71,7 +71,6 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
     private final static String RUN_REPAIR_PROPERTY = "runRepair";
     private final static String UPDATE_SEEDS_LIST = "updateSeedsList";
     private final static String SEEDS_LIST = "seedsList";
-    private final static String SUCCEED_PROPERTY = "succeed";
     private static final String USERNAME_PROP = "rhq.cassandra.username";
     private static final String PASSWORD_PROP = "rhq.cassandra.password";
 
@@ -168,8 +167,6 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
                     c.addFilterParentResourceId(resource.getId());
                     List<Resource> childResources = LookupUtil.getResourceManager().findResourcesByCriteria(
                         LookupUtil.getSubjectManager().getOverlord(), c);
-
-
 
                     for (Resource childResource : childResources) {
                         if (STORAGE_SERVICE.equals(childResource.getName())) {

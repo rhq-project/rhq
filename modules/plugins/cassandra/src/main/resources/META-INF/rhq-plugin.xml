@@ -75,7 +75,11 @@
       </results>
     </operation>
 
-    <operation name="updateSeedsList" description="Updatess the node's seeds property in cassandra.yaml">
+    <operation name="updateSeedsList"
+               description="Updates the node's seeds property in cassandra.yaml. seedsList must be a list of valid
+               hostnames or IP addresses that are reachable from the agent machine. Note that if hostnames are
+               specified they will be converted to IP addresses so that the seeds property will consist solely of IP
+               addresses.">
       <parameters>
         <c:list-property name="seedsList">
           <c:simple-property name="seed" type="string"/>
@@ -155,7 +159,7 @@
       <operation name="takeSnapshot"
                  description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
                   link of each SSTable file for each keyspace. Note that a column family can have multiple
-                  SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                  SSTables on disk. By default snapshots are stored in the [cassandra_data_dir]/[keyspace_name]/[column_family_name]/snapshots
                   directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
         <parameters>
           <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
@@ -182,9 +186,11 @@
         </parameters>
       </operation>
 
+      <metric property="Calculated.DataDiskUsedPercentage" displayName="Data File Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of disk space used by Cassandra data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+      <metric property="Calculated.TotalDiskUsedPercentage" displayName="Total Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of total disk space used. The metric acounts overall disk usage (including system files), not just disk space used by Cassandra. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+      <metric property="Calculated.FreeDiskToDataSizeRatio" displayName="Free Disk to Data Size Ratio" dataType="measurement" displayType="summary" description="Ratio of (Amount of Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+
       <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
-      <metric property="Calculated.PartitionDiskUsedPercentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of total disk space used for the partition that contains the data files.
-                                                                                                                                   If multiple data locations are specified then this will report the average utilization accross all the partitions."/>
       <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
       <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
       <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>

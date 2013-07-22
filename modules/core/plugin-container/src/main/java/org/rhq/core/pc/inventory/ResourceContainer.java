@@ -609,6 +609,8 @@ public class ResourceContainer implements Serializable {
     }
 
     private static class ComponentInvocation implements Callable {
+        private static final Log LOG = LogFactory.getLog(ComponentInvocation.class);
+
         private final ResourceContainer resourceContainer;
         private final Method method;
         private final Object[] args;
@@ -669,6 +671,19 @@ public class ResourceContainer implements Serializable {
 
         public void markContextInterrupted() {
             localContext.markInterrupted();
+            LOG.warn(getContextInterruptedWarningMessage(LOG.isDebugEnabled()));
+        }
+
+        private String getContextInterruptedWarningMessage(boolean detailed) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Invocation has been marked interrupted for method [");
+            if (detailed) {
+                sb.append(method.toGenericString());
+            } else {
+                sb.append(method.getDeclaringClass().getSimpleName()).append(".").append(method.getName());
+            }
+            sb.append("] on resource [").append(resourceContainer.getResource()).append("]");
+            return sb.toString();
         }
     }
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.rest;
@@ -45,6 +45,9 @@ import javax.servlet.http.HttpServletResponseWrapper;
 
 /**
  * A filter to wrap json answers as jsonp
+ * For this to happen, the user has to pass ?&lt;filter.jsonp.callback>=&lt;name> in the url like
+ * <pre>http://localhost:7080/rest/metric/data/10001/raw.json?jsonp=foo</pre>
+ * The &lt;filter.jsonp.callback> is defined in web.xml and defaults to 'jsonp'.
  * @author Heiko W. Rupp
  */
 public class JsonPFilter implements Filter {
@@ -132,7 +135,6 @@ public class JsonPFilter implements Filter {
     private static class JsonPRequestWrapper extends HttpServletRequestWrapper {
         int contentLength;
         BufferedReader reader;
-        String method;
         ByteArrayInputStream bais;
         Map<String, String> headers = new HashMap<String, String>();
 
@@ -147,6 +149,11 @@ public class JsonPFilter implements Filter {
             Enumeration headers = request.getHeaderNames();
             while (headers.hasMoreElements()) {
                 String key = (String) headers.nextElement();
+                if (key.equalsIgnoreCase("Accept-Encoding")) {
+                    // Filter Content codings like compression, as we would end up
+                    // with compressed inner data and uncompressed wrapper
+                    continue;
+                }
                 String value = request.getHeader(key);
                 this.headers.put(key, value);
             }
@@ -156,14 +163,6 @@ public class JsonPFilter implements Filter {
             headers.put(key, value);
         }
 
-
-/*
-        public void setBody(String body) {
-            bais = new ByteArrayInputStream(body.getBytes());
-            contentLength = body.length();
-            headers.put("content-length", Integer.toString(contentLength));
-        }
-*/
 
         @Override
         public BufferedReader getReader() throws IOException {

@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import javax.naming.CompositeName;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.directory.SearchControls;
@@ -194,7 +195,18 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
                 SearchResult si = (SearchResult) answer.next();
 
                 // Construct the UserDN
-                String userDN = si.getName() + "," + baseDNs[x];
+                String userDN = null;
+
+                try {
+                    userDN = si.getNameInNamespace();
+                } catch (UnsupportedOperationException use) {
+                    userDN = new CompositeName(si.getName()).get(0);
+                    if (si.isRelative()) {
+                        userDN += "," + baseDNs[x];
+                    }
+                }
+
+                log.debug("Using LDAP userDN=" + userDN);
 
                 ctx.addToEnvironment(Context.SECURITY_PRINCIPAL, userDN);
                 ctx.addToEnvironment(Context.SECURITY_CREDENTIALS, inputPassword);
@@ -209,7 +221,7 @@ public class LdapLoginModule extends UsernamePasswordLoginModule {
             // If we try all the BaseDN's and have not found a match, return false
             return false;
         } catch (Exception e) {
-            log.info("Failed to validate password: " + e.getMessage());
+            log.info("Failed to validate password for [" + userName + "]: " + e.getMessage());
             return false;
         }
     }

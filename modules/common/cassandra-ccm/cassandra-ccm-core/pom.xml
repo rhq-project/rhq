@@ -97,9 +97,6 @@
                 <exclude>src/main/resources/cassandra/conf/cassandra-env.sh</exclude>
               </excludes>
             </resource>
-            <!--<resource>-->
-              <!--<directory>src/main/cassandra/cql</directory>-->
-            <!--</resource>-->
           </resources>
           <delimiters>
             <delimiter>${*}</delimiter>
@@ -110,6 +107,18 @@
 
       <plugin>
         <artifactId>maven-antrun-plugin</artifactId>
+        <dependencies>
+          <dependency>
+            <groupId>org.xerial.snappy</groupId>
+            <artifactId>snappy-java</artifactId>
+            <version>${cassandra.snappy.version}</version>
+          </dependency>
+          <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-cassandra-auth</artifactId>
+            <version>${project.version}</version>
+          </dependency>
+        </dependencies>
         <executions>
           <execution>
             <!--
@@ -158,12 +167,20 @@
                 <property name="cassandra.distro.filename" value="cassandra.zip"/>
                 <property name="cassandra.distro.zip"
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
-                <copy file="${settings.localRepository}/net/java/dev/jna/platform/${cassandra.jna.version}/platform-${cassandra.jna.version}.jar"
+                <delete file="${cassandra.dir}/lib/lz4-1.1.0.jar"/>
+                <delete file="${cassandra.dir}/lib/snappy-java-1.0.4.1.jar"/>
+                <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
                       todir="${cassandra.dir}/lib"/>
-                <copy file="${settings.localRepository}/net/java/dev/jna/jna/${cassandra.jna.version}/jna-${cassandra.jna.version}.jar"
+                <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"
                       todir="${cassandra.dir}/lib"/>
                 <move file="${project.build.outputDirectory}/cassandra/conf" todir="${cassandra.dir}"/>
+                <delete file="${cassandra.dir}/bin/cassandra"/>
+                <move file="${project.build.outputDirectory}/cassandra/bin/cassandra" todir="${cassandra.dir}/bin"/>
+                <delete dir="${project.build.outputDirectory}/cassandra"/>
                 <delete dir="${cassandra.dir}/javadoc"/>
+                <delete file="${cassandra.dir}/conf/cassandra-env.sh"/>
+                <touch file="${cassandra.dir}/conf/rhq-storage-auth.conf"/>
+
                 <zip basedir="${cassandra.dir}" destfile="${cassandra.distro.zip}"/>
                 <delete dir="${cassandra.dir}"/>
                 <delete file="${project.build.outputDirectory}/deploy.xml"/>
@@ -257,66 +274,6 @@
                 </goals>
               </execution>
 
-            </executions>
-          </plugin>
-        </plugins>
-      </build>
-    </profile>
-
-    <!--
-      Cassandra uses the snappy-java compression library, and it uses a native library that
-      is packaged in the snappy-java JAR. Running on Mac OS X with Java 7 will result in,
-
-        NoClassDefFoundError Could not initialize class org.xerial.snappy.Snappy
-
-      due to the file name extension that the Java 7 JVM looks for on Mac OS X. This issue
-      was logged and fixed under https://github.com/xerial/snappy-java/issues/6. Cassandra
-      however does not yet bundle a newer version of snappy-java. This profile is activated
-      when running on Mac OS X and replaces the packaged version of snappy-java with a newer
-      version so that snappy compression can still be used during development. Note that
-      this is **not** an issue when running on Java 6.
-
-      - jsanda 10/03/2012
-    -->
-    <profile>
-      <id>snappy-mac-workaround</id>
-      <activation>
-        <os>
-          <family>Mac</family>
-        </os>
-      </activation>
-      <build>
-        <plugins>
-          <plugin>
-            <artifactId>maven-antrun-plugin</artifactId>
-            <inherited>false</inherited>
-            <dependencies>
-              <dependency>
-                <groupId>org.xerial.snappy</groupId>
-                <artifactId>snappy-java</artifactId>
-                <version>1.1.0-M3</version>
-              </dependency>
-            </dependencies>
-            <executions>
-              <execution>
-                <id>setup-pkg-mac</id>
-                <phase>process-resources</phase>
-                <goals>
-                  <goal>run</goal>
-                </goals>
-                <configuration>
-                  <target>
-                    <property name="cassandra.dir"
-                              value="${project.build.outputDirectory}/cassandra-${cassandra.version}"/>
-                    <property name="cassandra.lib.dir" value="${cassandra.dir}/lib"/>
-                    <property name="snappy.jar.original" value="${cassandra.lib.dir}/snappy-java-1.0.4.1.jar"/>
-                    <property name="snappy.jar.updated"
-                              value="${local.repo}/org/xerial/snappy/snappy-java/${cassandra.driver.snappy.version}/snappy-java-${cassandra.driver.snappy.version}.jar"/>
-                    <delete file="${snappy.jar.original}"/>
-                    <copy file="${snappy.jar.updated}" todir="${cassandra.lib.dir}"/>
-                  </target>
-                </configuration>
-              </execution>
             </executions>
           </plugin>
         </plugins>

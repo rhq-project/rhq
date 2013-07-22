@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.jboss.on.plugins.tomcat;
 
@@ -195,10 +191,9 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
                 // to have a version compatible local install and set the install path to the local path, even though
                 // the server url was remote. 
                 String catalinaHome = pluginConfig.getSimpleValue(PLUGIN_CONFIG_CATALINA_HOME_PATH, null);
-                boolean hasLocalJars = new File(catalinaHome).isDirectory();
-
-                if (hasLocalJars) {
-                    connectionSettings.setLibraryURI(catalinaHome);
+                File libDir = getLibDir(catalinaHome);
+                if (libDir != null) {
+                    connectionSettings.setLibraryURI(libDir.getAbsolutePath());
                     connectionFactory.discoverServerClasses(connectionSettings);
 
                     // Tell EMS to make copies of jar files so that the ems classloader doesn't lock
@@ -274,6 +269,22 @@ public class TomcatServerComponent<T extends ResourceComponent<?>> implements JM
         }
 
         return connection;
+    }
+
+    private File getLibDir(String catalinaHome) {
+        if (catalinaHome != null) {
+            // Tomcat 6 and Tomcat 7 have Catalina JARS in CATALINA_HOME/lib
+            File libDir = new File(catalinaHome, "lib");
+            if (libDir.isDirectory()) {
+                return libDir;
+            }
+            // Tomcat 5.5 has Catalina JARS in CATALINA_HOME/server/lib
+            libDir = new File(catalinaHome, "server" + File.separator + "lib");
+            if (libDir.isDirectory()) {
+                return libDir;
+            }
+        }
+        return null;
     }
 
     public Configuration getPluginConfiguration() {

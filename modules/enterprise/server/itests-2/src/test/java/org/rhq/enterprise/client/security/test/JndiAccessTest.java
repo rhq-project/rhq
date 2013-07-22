@@ -34,7 +34,7 @@ import org.rhq.enterprise.server.system.SystemManagerBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
@@ -59,21 +59,21 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
     public void testEjbsAccessibleThroughPrivilegedCode() {
         LookupUtil.getSubjectManager().getOverlord();
     }
-    
+
     public void testEjbsAccessibleThroughLocalClient() throws ScriptException, IOException {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        
+
         ScriptEngine engine = getEngine(overlord);
-        
+
         engine.eval("SubjectManager.getSubjectByName('rhqadmin');");
     }
-    
+
     public void testLocalEjbsInaccessibleThroughJndiLookup() throws ScriptException, IOException {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        
+
         ScriptEngine engine = getEngine(overlord);
-        
-        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/"
+
+        String jndiName = "java:global/rhq/rhq-server/"
             + SystemManagerBean.class.getSimpleName()
             + "!"
             + SystemManagerBean.class.getName().replace("Bean", "Local");
@@ -85,19 +85,19 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + jndiName
                 + "');\n"
                 + "systemManager.isDebugModeEnabled();");
-            
+
             Assert.fail("The script shouldn't have been able to call local SLSB method.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
     }
-    
+
     public void testLocalEjbsInaccessibleThroughJndiLookupWithCustomUrlPackages() throws ScriptException, IOException {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
 
         ScriptEngine engine = getEngine(overlord);
 
-        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/"
+        String jndiName = "java:global/rhq/rhq-server/"
             + SystemManagerBean.class.getSimpleName()
             + "!"
             + SystemManagerBean.class.getName().replace("Bean", "Local");
@@ -122,10 +122,10 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
 
     public void testRemoteEjbsInaccessibleThroughJndiLookup() throws ScriptException, IOException {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        
+
         ScriptEngine engine = getEngine(overlord);
 
-        String jndiName = "java:global/rhq/rhq-enterprise-server-ejb3/"
+        String jndiName = "java:global/rhq/rhq-server/"
             + SystemManagerBean.class.getSimpleName()
             + "!"
             + SystemManagerBean.class.getName().replace("Bean", "Remote");
@@ -137,28 +137,28 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + jndiName
                 + "');\n"
                 + "systemManager.getSystemSettings(subject);");
-            
+
             Assert.fail("The script shouldn't have been able to call remote SLSB method directly.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
     }
-    
+
     public void testScriptCantUseSessionManagerMethods() throws Exception {
 
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
-        
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
         final ScriptEngine engine = getEngine(overlord);
-            
+
         class G {
             private String sessionManager = ""
                 + "org.rhq.enterprise.server.auth.SessionManager.getInstance().";
-            
+
             public void testInvoke(String methodCall) throws ScriptException {
                 String code = sessionManager + methodCall;
 
                 try {
-                    engine.eval(code);               
+                    engine.eval(code);
                     Assert.fail("The script shouldn't have been able to call a method on a SessionManager: " + methodCall);
                 } catch (ScriptException e) {
                     checkIsDesiredSecurityException(e);
@@ -166,7 +166,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
             }
         };
         G manager = new G();
-        
+
         manager.testInvoke("getLastAccess(0);");
         manager.testInvoke("getOverlord()");
         manager.testInvoke("getSubject(2);");
@@ -175,27 +175,27 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
         manager.testInvoke("put(new org.rhq.core.domain.auth.Subject());");
         manager.testInvoke("put(new org.rhq.core.domain.auth.Subject(), 0);");
     }
-    
+
     public void testScriptCantObtainRawJDBCConnectionsWithoutCredentials() throws Exception {
         Subject overlord = LookupUtil.getSubjectManager().getOverlord();
-        
+
         ScriptEngine engine = getEngine(overlord);
-        
+
         try {
             engine.eval(""
                 + "var ctx = new javax.naming.InitialContext();\n"
                 + "var datasource = ctx.lookup('" + RHQConstants.DATASOURCE_JNDI_NAME + "');\n"
                 + "con = datasource.getConnection();");
-            
+
             Assert.fail("The script shouldn't have been able to obtain the datasource from the JNDI.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
         }
     }
-    
+
     public void testScriptCantUseEntityManager() throws Exception {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
-        
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
         ScriptEngine engine = getEngine(overlord);
 
         try {
@@ -204,12 +204,12 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "var entityManagerFactory = ctx.lookup('" + RHQConstants.ENTITY_MANAGER_JNDI_NAME + "');\n"
                 + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
-            
+
             Assert.fail("The script shouldn't have been able to use the EntityManager.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
-        }   
-        
+        }
+
         //try harder with manually specifying the initial context factory
         try {
             engine.eval(""
@@ -220,20 +220,20 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
                 + "var entityManagerFactory = ctx.lookup('" + RHQConstants.ENTITY_MANAGER_JNDI_NAME + "');\n"
                 + "var entityManager = entityManagerFactory.createEntityManager();\n"
                 + "entityManager.find(java.lang.Class.forName('org.rhq.core.domain.resource.Resource'), java.lang.Integer.valueOf('10001'));");
-            
+
             Assert.fail("The script shouldn't have been able to use the EntityManager even using custom initial context factory.");
         } catch (ScriptException e) {
             checkIsDesiredSecurityException(e);
-        }           
+        }
     }
 
     public void testProxyFactoryWorksWithSecuredScriptEngine() throws Exception {
-        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
-        
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+
         ScriptEngine engine = getEngine(overlord);
-        
+
         try {
-            engine.eval("var resource = ProxyFactory.getResource(10001);");            
+            engine.eval("var resource = ProxyFactory.getResource(10001);");
         } catch (ScriptException e) {
             //if the script fails (there is no resource with ID 10001)
             //it should not be because of an access control exception
@@ -243,10 +243,10 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
 
     //THIS IS A NEW REQUIREMENT THAT DOESN'T CURRENTLY WORK...
     //    public void testInitialContextFactoryBuilderNotReplaceableUsingScripts() throws Exception {
-    //        Subject overlord = LookupUtil.getSubjectManager().getOverlord();        
-    //        
+    //        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+    //
     //        ScriptEngine engine = getEngine(overlord);
-    //        
+    //
     //        try {
     //            engine.eval(""
     //                + "var mgrCls = java.lang.Class.forName('javax.naming.spi.NamingManager');\n"
@@ -262,11 +262,11 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
     //            NamingHack.bruteForceInitialContextFactoryBuilder();
     //        }
     //    }
-    
+
     private static void checkIsDesiredSecurityException(ScriptException e) {
         String message = e.getMessage();
         String permissionTrace = "org.rhq.allow.server.internals.access";
-        
+
         if (!message.contains(permissionTrace)) {
             Assert
                 .fail(
@@ -278,7 +278,7 @@ public class JndiAccessTest extends ScriptableAbstractEJB3Test {
     private static void checkIsNotASecurityException(ScriptException e) {
         String message = e.getMessage();
         String permissionTrace = "org.rhq.allow.server.internals.access";
-        
+
         if (message.contains(permissionTrace)) {
             Assert
                 .fail(

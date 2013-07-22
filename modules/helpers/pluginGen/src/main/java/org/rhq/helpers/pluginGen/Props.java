@@ -20,12 +20,10 @@ package org.rhq.helpers.pluginGen;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.rhq.helpers.pluginAnnotations.agent.DataType;
 import org.rhq.helpers.pluginAnnotations.agent.DisplayType;
-import org.rhq.helpers.pluginAnnotations.agent.Metric;
 import org.rhq.helpers.pluginAnnotations.agent.Units;
 
 /**
@@ -33,10 +31,11 @@ import org.rhq.helpers.pluginAnnotations.agent.Units;
  *
  * @author Heiko W. Rupp
  */
+@SuppressWarnings("unused")
 public class Props {
 
    /** What category is this ? */
-   private ResourceCategory category;
+   private ResourceCategory category = ResourceCategory.SERVICE;
    /** The name of this item */
    private String name;
    /** A description of the plugin */
@@ -69,7 +68,7 @@ public class Props {
    private boolean createChildren;
    /** Can the service delete children ? */
    private boolean deleteChildren;
-   /** Use externals chars in the plugin jar ? */
+   /** Use externals jars in the plugin jar ? */
    private boolean usesExternalJarsInPlugin;
    /** Does it support manual add of children ? */
    private boolean manualAddOfResourceType;
@@ -77,13 +76,18 @@ public class Props {
    private boolean usePluginLifecycleListenerApi;
    /** Depends on JMX plugin ? */
    private boolean dependsOnJmxPlugin;
+   /** Depends on AS7 plugin ? */
+   private boolean dependsOnAs7Plugin;
+   /** Directory with java files to scan for plugin annotations */
+   private String scanForAnnotations;
    /** What version of RHQ should this plugin's pom use ? */
-   private String rhqVersion = "3.0.0";
+   private String rhqVersion = "4.8.0";
 
    /** Embedded children */
    private Set<Props> children = new HashSet<Props>();
 
-   private Set<SimpleProperty> simpleProps = new LinkedHashSet<SimpleProperty>();
+   private Set<SimpleProperty> pluginConfig = new LinkedHashSet<SimpleProperty>();
+   private Set<SimpleProperty> resourceConfig = new LinkedHashSet<SimpleProperty>();
 
    private Set<Template> templates = new HashSet<Template>();
 
@@ -280,12 +284,12 @@ public class Props {
       this.rhqVersion = rhqVersion;
    }
 
-   public Set<SimpleProperty> getSimpleProps() {
-      return simpleProps;
+   public Set<SimpleProperty> getPluginConfig() {
+      return pluginConfig;
    }
 
-   public void setSimpleProps(Set<SimpleProperty> simpleProps) {
-      this.simpleProps = simpleProps;
+   public void setPluginConfig(Set<SimpleProperty> pluginConfig) {
+      this.pluginConfig = pluginConfig;
    }
 
    public Set<Template> getTemplates() {
@@ -296,7 +300,15 @@ public class Props {
       this.templates = templates;
    }
 
-   public Set<MetricProps> getMetrics() {
+    public Set<SimpleProperty> getResourceConfig() {
+        return resourceConfig;
+    }
+
+    public void setResourceConfig(Set<SimpleProperty> resourceConfig) {
+        this.resourceConfig = resourceConfig;
+    }
+
+    public Set<MetricProps> getMetrics() {
       return metrics;
    }
 
@@ -336,22 +348,24 @@ public class Props {
         this.runsInsides = runsInsides;
     }
 
-    public void populateMetrics(List<Class> classes) {
-      for (Class<?> clazz : classes) {
-         Metric metricAnnot = clazz.getAnnotation(Metric.class);
-         if (metricAnnot != null) {
-            MetricProps metric = new MetricProps(metricAnnot.property());
-            metric.setDisplayName(metricAnnot.displayName());
-            metric.setDisplayType(metricAnnot.displayType());
-            metric.setDataType(metricAnnot.dataType());
-            metric.setDescription(metricAnnot.description());
-            metrics.add(metric);
-         }
+    public boolean isDependsOnAs7Plugin() {
+        return dependsOnAs7Plugin;
+    }
 
-      }
-   }
+    public void setDependsOnAs7Plugin(boolean dependsOnAs7Plugin) {
+        this.dependsOnAs7Plugin = dependsOnAs7Plugin;
+    }
 
-   @Override
+    public String getScanForAnnotations() {
+        return scanForAnnotations;
+    }
+
+    public void setScanForAnnotations(String scanForAnnotations) {
+        this.scanForAnnotations = scanForAnnotations;
+    }
+
+
+    @Override
    public String toString() {
       final StringBuilder sb = new StringBuilder();
       sb.append("Props");
@@ -380,14 +394,14 @@ public class Props {
       sb.append(", dependsOnJmxPlugin=").append(dependsOnJmxPlugin);
       sb.append(", rhqVersion='").append(rhqVersion).append('\'');
       sb.append(", children=").append(children);
-      sb.append(", simpleProps=").append(simpleProps);
+      sb.append(", simpleProps=").append(pluginConfig);
       sb.append(", templates=").append(templates);
       sb.append(", runsInsides=").append(runsInsides);
       sb.append('}');
       return sb.toString();
    }
 
-   public static class TypeKey {
+    public static class TypeKey {
        private String name;
        private String pluginName;
 

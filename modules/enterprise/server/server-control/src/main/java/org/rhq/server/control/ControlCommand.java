@@ -1,7 +1,7 @@
 /*
  *
  *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
+ *  * Copyright (C) 2005-2013 Red Hat, Inc.
  *  * All rights reserved.
  *  *
  *  * This program is free software; you can redistribute it and/or modify
@@ -41,6 +41,10 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
+import org.apache.commons.exec.Executor;
+import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -171,10 +175,15 @@ public abstract class ControlCommand {
         return getStorageBasedir().exists();
     }
 
-    protected String getStoragePid() throws IOException {
+    protected File getStoragePidFile() {
         File storageBasedir = getStorageBasedir();
         File storageBinDir = new File(storageBasedir, "bin");
         File pidFile = new File(storageBinDir, "cassandra.pid");
+        return pidFile;
+    }
+
+    protected String getStoragePid() throws IOException {
+    	File pidFile = getStoragePidFile();
 
         if (pidFile.exists()) {
             return StreamUtil.slurp(new FileReader(pidFile));
@@ -281,5 +290,78 @@ public abstract class ControlCommand {
         }
 
         return inUse;
+    }
+
+    protected void waitForProcessToStop(String pid) throws Exception {
+
+        if (isWindows() || pid==null) {
+            // For the moment we have no better way to just wait some time
+            Thread.sleep(10*1000L);
+        } else {
+            int tries = 5;
+            while (tries > 0) {
+                log.debug(".");
+                if (!isUnixPidRunning(pid)) {
+                    break;
+                }
+                Thread.sleep(2*1000L);
+                tries--;
+            }
+            if (tries==0) {
+                throw new RHQControlException("Process [" + pid + "] did not finish yet. Terminate it manually and retry.");
+            }
+        }
+
+    }
+
+    protected void killPid(String pid) throws IOException {
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(getBinDir());
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
+
+        commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
+        executor.execute(commandLine);
+    }
+
+    protected boolean isUnixPidRunning(String pid) {
+
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(getBinDir());
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine("/bin/kill")
+            .addArgument("-0")
+            .addArgument(pid);
+
+        try {
+            int code = executor.execute(commandLine);
+            if (code!=0) {
+                return false;
+            }
+        } catch (ExecuteException ee ) {
+            if (ee.getExitValue()==1) {
+                // return code 1 means process does not exist
+                return false;
+            }
+        } catch (IOException e) {
+            log.error("Checking for running process failed: " + e.getMessage());
+        }
+        return true;
+    }
+
+    protected boolean isStorageRunning() throws IOException {
+        String pid = getStoragePid();
+        if(pid == null) {
+        	return false;
+        } else if(pid != null && !isUnixPidRunning(pid)) {
+    		// There is a phantom pidfile
+    		File pidFile = getStoragePidFile();
+    		if(!pidFile.delete()) {
+    			throw new RHQControlException("Could not delete storage pidfile " + pidFile.getAbsolutePath());
+    		}
+    		return false;
+    	} else {
+    		return true;
+    	}
     }
 }

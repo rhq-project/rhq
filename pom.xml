@@ -42,7 +42,7 @@
     <rhq.defaultDevContainerPath>dev-container</rhq.defaultDevContainerPath>
     <rhq.devContainerServerPath>${rhq.defaultDevContainerPath}/rhq-server</rhq.devContainerServerPath>
     <!-- path relative to under dev container path where the EAR is deployed -->
-    <rhq.earDeployDir>modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/${rhq.earName}</rhq.earDeployDir>
+    <rhq.earDeployDir>modules/org/rhq/server-startup/main/deployments/${rhq.earName}</rhq.earDeployDir>
     <!-- path relative to under dev container path where other things are stored -->
     <rhq.agentPluginDir>${rhq.earDeployDir}/rhq-downloads/rhq-plugins</rhq.agentPluginDir>
     <rhq.serverPluginDir>${rhq.earDeployDir}/rhq-serverplugins</rhq.serverPluginDir>
@@ -151,6 +151,7 @@
     <augeas.zip.mask>*-${augeas.classifier}.zip</augeas.zip.mask>
     <ant.contrib.version>1.0b3</ant.contrib.version>
     <freemarker.version>2.3.18</freemarker.version>
+    <swagger-annotations.version>1.2.3</swagger-annotations.version>
     <powermock.version>1.4.12</powermock.version>
     <arquillian.version>1.0.3.Final</arquillian.version>
     <arquillian.jboss.container.version>7.2.0.Final</arquillian.jboss.container.version>
@@ -179,7 +180,7 @@
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
     <cassandra.driver.version>1.0.0-rhq-1.2.4</cassandra.driver.version>
     <cassandra.driver.netty.version>3.6.3.Final</cassandra.driver.netty.version>
-    <cassandra.driver.snappy.version>1.0.5-M3-p1</cassandra.driver.snappy.version>
+    <cassandra.snappy.version>1.0.4.1-rhq-p1</cassandra.snappy.version>
     <cassandra.snakeyaml.version>1.6</cassandra.snakeyaml.version>
 
     <rhq.db.admin.username>rhqadmin</rhq.db.admin.username>
@@ -901,7 +902,7 @@
          <artifactId>javax.servlet-api</artifactId>
          <version>3.0.1</version>
       </dependency>
-   
+
       <dependency>
          <groupId>org.yaml</groupId>
          <artifactId>snakeyaml</artifactId>

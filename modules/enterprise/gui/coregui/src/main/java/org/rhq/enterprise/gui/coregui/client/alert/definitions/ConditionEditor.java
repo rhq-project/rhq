@@ -44,6 +44,8 @@ import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.layout.HLayout;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
@@ -613,6 +615,7 @@ public class ConditionEditor extends EnhancedVLayout {
             }
             absoluteValue.setShowIfCondition(ifFunc);
             formItems.add(absoluteValue);
+            formItems.add(buildBaseUnitsItem(metricDropDownMenu, ifFunc, editMode));
         } else {
             String noMetricsStr = MSG.view_alert_definition_condition_editor_metric_nometrics();
             StaticTextItem noMetrics = buildHelpTextItem(THRESHOLD_NO_METRICS_ITEMNAME, noMetricsStr, ifFunc);
@@ -663,6 +666,7 @@ public class ConditionEditor extends EnhancedVLayout {
 
             formItems.add(absoluteLowValue);
             formItems.add(absoluteHighValue);
+            formItems.add(buildBaseUnitsItem(metricDropDownMenu, ifFunc, editMode));
         } else {
             String noMetricsStr = MSG.view_alert_definition_condition_editor_metric_nometrics();
             StaticTextItem noMetrics = buildHelpTextItem(RANGE_NO_METRICS_ITEMNAME, noMetricsStr, ifFunc);
@@ -1218,6 +1222,40 @@ public class ConditionEditor extends EnhancedVLayout {
         comparatorSelection.setHoverWidth(200);
         comparatorSelection.setShowIfCondition(ifFunc);
         return comparatorSelection;
+    }
+
+    private StaticTextItem buildBaseUnitsItem(final SelectItem metricDropDownMenu, FormItemIfFunction ifFunc,
+        boolean editMode) {
+        String baseUnits = MSG.view_alert_definition_condition_editor_common_baseUnits();
+        final StaticTextItem baseUnitsItem = new StaticTextItem("baseUnits", baseUnits);
+        baseUnitsItem.setHoverWidth(200);
+        baseUnitsItem.setShowIfCondition(ifFunc);
+
+        metricDropDownMenu.addChangedHandler(new ChangedHandler() {
+            public void onChanged(ChangedEvent event) {
+                MeasurementDefinition measDef = getMeasurementDefinition(form.getValueAsString(metricDropDownMenu
+                    .getName()));
+                baseUnitsItem.setValue(measDef.getUnits() == MeasurementUnits.NONE ? MSG
+                    .view_alert_definition_condition_editor_common_baseUnits_none()
+                    : measDef.getUnits() == MeasurementUnits.MILLISECONDS ? MeasurementUnits.SECONDS : measDef
+                        .getUnits());
+                List<MeasurementUnits> availableUnits = measDef.getUnits().getFamilyUnits();
+                baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
+                    + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG
+                        .view_alert_definition_condition_editor_common_baseUnits_none() : availableUnits));
+            }
+        });
+        // initialize the field with proper value
+        MeasurementUnits units = editMode ? existingCondition.getMeasurementDefinition().getUnits()
+            : ConditionEditor.this.resourceType.getMetricDefinitions().iterator().next().getUnits();
+        baseUnitsItem.setValue(units == MeasurementUnits.NONE ? MSG
+            .view_alert_definition_condition_editor_common_baseUnits_none()
+            : units == MeasurementUnits.MILLISECONDS ? MeasurementUnits.SECONDS : units);
+        List<MeasurementUnits> availableUnits = units.getFamilyUnits();
+        baseUnitsItem.setTooltip(MSG.view_alert_definition_condition_editor_common_baseUnits_availableUnits()
+            + (availableUnits.isEmpty() || availableUnits.get(0) == MeasurementUnits.NONE ? MSG
+                .view_alert_definition_condition_editor_common_baseUnits_none() : availableUnits));
+        return baseUnitsItem;
     }
 
     private StaticTextItem buildHelpTextItem(String itemName, String helpText, FormItemIfFunction ifFunc) {

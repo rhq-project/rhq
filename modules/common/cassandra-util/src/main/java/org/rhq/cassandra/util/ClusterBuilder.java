@@ -94,9 +94,10 @@ public class ClusterBuilder {
      * @see com.datastax.driver.core.Cluster.Builder#build()
      */
     public Cluster build() {
-        if (compression == null && !isIBMJRE()) {
-            builder.withCompression(ProtocolOptions.Compression.SNAPPY);
-        }
+//        if (compression == null && !isIBMJRE()) {
+//            builder.withCompression(ProtocolOptions.Compression.SNAPPY);
+//        }
+        builder.withCompression(ProtocolOptions.Compression.NONE);
         return builder.build();
     }
 

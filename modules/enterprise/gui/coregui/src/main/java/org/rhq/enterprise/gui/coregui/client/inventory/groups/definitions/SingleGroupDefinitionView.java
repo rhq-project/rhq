@@ -56,6 +56,8 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
+import com.smartgwt.client.widgets.form.validator.RegExpValidator;
+import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -82,10 +84,10 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.definitions.GroupDefinitionExpressionBuilder.AddExpressionHandler;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 /**
  * @author Joseph Marques
@@ -136,6 +138,10 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         description.setValue(groupDefinition.getDescription());
         recalculationInterval.setValue(groupDefinition.getRecalculationInterval() / (60 * 1000));
         expression.setValue(groupDefinition.getExpression());
+        
+        Validator nameValidator = new RegExpValidator("^[^\\<\\$\\'\\{\\[]{1,100}$");
+        nameValidator.setErrorMessage("Name must not contain following characters: < $ ' [ {");
+        name.setValidators(nameValidator);
 
         final DynamicForm form = new DynamicForm();
         form.setFields(id, name, description, templateSelectorTitleSpacer, templateSelector, expression, recursive,
@@ -193,6 +199,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                 @Override
                 public void execute(DSResponse response, Object rawData, DSRequest request) {
                     boolean hasDuplicateNameError = false;
+                    boolean hasParseExpressionError = false;
                     if (form.isNewRecord()) {
                         Record[] results = response.getData();
                         if (results.length != 1) {
@@ -206,10 +213,14 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                                     String errorValue = (String) thisEntry.getValue();
                                     CoreGUI.getErrorHandler().handleError(errorValue);
                                     hasDuplicateNameError = true;
+                                } else if (fieldKey.equals("expression")) {
+                                    String errorValue = (String) thisEntry.getValue();
+                                    CoreGUI.getErrorHandler().handleError(errorValue);
+                                    hasParseExpressionError = true;
                                 }
                             }
 
-                            if (!hasDuplicateNameError) {
+                            if (!hasDuplicateNameError && !hasParseExpressionError) {
                                 CoreGUI.getErrorHandler().handleError(
                                     MSG.view_dynagroup_singleSaveFailure(String.valueOf(results.length)));
                             }

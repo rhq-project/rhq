@@ -47,7 +47,7 @@ import org.rhq.enterprise.client.LocalClient;
 import org.rhq.test.JMockTest;
 
 /**
- * 
+ *
  *
  * @author Lukas Krejci
  */
@@ -59,29 +59,29 @@ public class LocalClientTest extends JMockTest {
             return CONTEXT_MOCK_FOR_TEST;
         }
     }
-    
+
     public static Context CONTEXT_MOCK_FOR_TEST = null;
-    
+
     @BeforeClass
     public void setUpNaming() {
         System.setProperty(Context.INITIAL_CONTEXT_FACTORY, FakeContextFactory.class.getName());
     }
-    
+
     /**
      * Needs to be called from within a test method so that the "context" variable is available.
-     * 
+     *
      * @throws NamingException
      */
     private void setupFakeJndiLookup() throws NamingException {
         CONTEXT_MOCK_FOR_TEST = context.mock(Context.class);
-        
+
         context.checking(new Expectations() {{
             allowing(CONTEXT_MOCK_FOR_TEST).lookup(with(any(String.class)));
                 will(new CustomAction("Fake JNDI lookup") {
 
                     @Override
                     public Object invoke(Invocation invocation) throws Throwable {
-                        // JNDI name format like: java:global/rhq/rhq-enterprise-server-ejb3/SystemManagerBean!org.rhq.enterprise.server.system.SystemManagerLocal 
+                        // JNDI name format like: java:global/rhq/rhq-server/SystemManagerBean!org.rhq.enterprise.server.system.SystemManagerLocal
                         String jndiName = (String) invocation.getParameter(0);
                         String beanName = jndiName.substring(0,jndiName.indexOf('!'));
                         beanName = beanName.substring(beanName.lastIndexOf('/') + 1);
@@ -105,7 +105,7 @@ public class LocalClientTest extends JMockTest {
                         });
                     }
                 });
-            
+
             allowing(CONTEXT_MOCK_FOR_TEST).close();
         }});
     }
@@ -130,15 +130,15 @@ public class LocalClientTest extends JMockTest {
     @Test
     public void testResilienceAgainstContextClassloaders() throws Exception {
         setupFakeJndiLookup();
-        
+
         ClassLoader origCl = Thread.currentThread().getContextClassLoader();
         try {
             ClassLoader differentCl = new URLClassLoader(new URL[0], getClass().getClassLoader());
-            
+
             Thread.currentThread().setContextClassLoader(differentCl);
 
             LocalClient lc = new LocalClient(null);
-            
+
             //this call creates the proxy and is theoretically prone to the context classloader
             Object am = lc.getScriptingAPI().get(RhqManager.AlertManager);
 

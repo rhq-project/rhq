@@ -143,6 +143,244 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     public static final String QUERY_DELETE_RAW_CONFIGURATIONS_CONFIGURATION_IDS = "Configuration.deleteRawByConfigurationIds";
     public static final String QUERY_DELETE_CONFIGURATIONS_BY_CONFIGURATION_IDs = "Configuration.deleteByConfigurationIdS";
 
+    private static abstract class AbstractPropertyMapBuilder<T extends AbstractPropertyMap, This extends AbstractPropertyMapBuilder<T, This>> {
+        private T map;
+
+        protected AbstractPropertyMapBuilder(T map) {
+            this.map = map;
+        }
+
+        /**
+         * Adds a simple property.
+         * @param name the name of the simple property
+         * @param value the value of the simple property
+         * @return continue with the definition
+         */
+        public This addSimple(String name, Object value) {
+            getMap().put(new PropertySimple(name, value));
+            return castThis();
+        }
+
+        /**
+         * Starts defining a new sub list.
+         * @param name the name of the sub list
+         * @param memberName the names of the member properties of the sub list
+         * @return the builder of the list
+         */
+        public Builder.ListInMap<This> openList(String name, String memberName) {
+            return new Builder.ListInMap<This>(castThis(), name, memberName);
+        }
+
+        /**
+         * Starts defining a new sub map.
+         * @param name the name of the sub map
+         * @return the builder of the map
+         */
+        public Builder.MapInMap<This> openMap(String name) {
+            return new Builder.MapInMap<This>(castThis(), name);
+        }
+
+        protected T getMap() {
+            return map;
+        }
+
+        @SuppressWarnings("unchecked")
+        private This castThis() {
+            return (This) this;
+        }
+    }
+
+    private static abstract class AbstractPropertyListBuilder<This extends AbstractPropertyListBuilder<This>> {
+        private PropertyList list;
+
+        private AbstractPropertyListBuilder(String name, String memberName) {
+            this.list = new PropertyList(name);
+            this.list.memberPropertyName = memberName;
+        }
+
+        /**
+         * Adds a simple property. The name of the property is the member name defined by this list.
+         * @param value the value of the simple property
+         * @return continue with the definition
+         */
+        public This addSimple(Object value) {
+            list.add(new PropertySimple(list.memberPropertyName, value));
+            return castThis();
+        }
+
+        /**
+         * Adds a number of simple properties. The names of the properties are the member name defined by this list.
+         * @param values the values of the simple properties
+         * @return continue with the definition
+         */
+        public This addSimples(Object... values) {
+            for(Object v : values) {
+                list.add(new PropertySimple(list.memberPropertyName, v));
+            }
+
+            return castThis();
+        }
+
+        /**
+         * Starts defining a new sub map.
+         * @return the builder of the map
+         */
+        public Builder.MapInList<This> openMap() {
+            return new Builder.MapInList<This>(castThis(), list.memberPropertyName);
+        }
+
+        /**
+         * Starts defining a new sub list.
+         * @param memberName the names of the member properties of the sub list
+         * @return the builder of the list
+         */
+        public Builder.ListInList<This> openList(String memberName) {
+            return new Builder.ListInList<This>(castThis(), list.memberPropertyName, memberName);
+        }
+
+        protected PropertyList getList() {
+            return list;
+        }
+
+        @SuppressWarnings("unchecked")
+        private This castThis() {
+            return (This) this;
+        }
+    }
+
+    /**
+     * A builder to easily build Configuration instances using a fluent API.
+     */
+    public static class Builder extends AbstractPropertyMapBuilder<Configuration, Builder> {
+
+        public static class MapInMap<Parent extends AbstractPropertyMapBuilder<?, ?>> extends AbstractPropertyMapBuilder<PropertyMap, MapInMap<Parent>> {
+            private Parent parent;
+
+            private MapInMap(Parent parent, String name) {
+                super(new PropertyMap(name));
+                this.parent = parent;
+            }
+
+            /**
+             * Closes the definition of the current map and returns to the parent context.
+             * @return the parent context
+             */
+            public Parent closeMap() {
+                parent.getMap().put(getMap());
+                return parent;
+            }
+        }
+
+        public static class MapInList<Parent extends AbstractPropertyListBuilder<?>> extends AbstractPropertyMapBuilder<PropertyMap, MapInList<Parent>> {
+            private Parent parent;
+
+            public MapInList(Parent parent, String name) {
+                super(new PropertyMap(name));
+                this.parent = parent;
+            }
+
+            /**
+             * Closes the definition of the current map and returns to the parent context.
+             * @return the parent context
+             */
+            public Parent closeMap() {
+                parent.getList().add(getMap());
+                return parent;
+            }
+        }
+
+        public static class ListInMap<Parent extends AbstractPropertyMapBuilder<?, ?>> extends AbstractPropertyListBuilder<ListInMap<Parent>> {
+            private Parent parent;
+
+            private ListInMap(Parent parent, String name, String memberName) {
+                super(name, memberName);
+                this.parent = parent;
+            }
+
+            /**
+             * Closes the definition of the current list and returns to the parent context.
+             * @return the parent context
+             */
+            public Parent closeList() {
+                parent.getMap().put(getList());
+                return parent;
+            }
+        }
+
+        public static class ListInList<Parent extends AbstractPropertyListBuilder<?>> extends AbstractPropertyListBuilder<ListInList<Parent>>  {
+            private Parent parent;
+
+            private ListInList(Parent parent, String name, String memberName) {
+                super(name, memberName);
+                this.parent = parent;
+            }
+
+            /**
+             * Closes the definition of the current list and returns to the parent context.
+             * @return the parent context
+             */
+            public Parent closeList() {
+                parent.getList().add(getList());
+                return parent;
+            }
+        }
+
+        public class RawConfigurationBuilder {
+
+            private RawConfiguration rawConfig;
+
+            public RawConfigurationBuilder() {
+                rawConfig = new RawConfiguration();
+                rawConfig.setConfiguration(getMap());
+            }
+
+            public RawConfigurationBuilder withPath(String path) {
+                rawConfig.setPath(path);
+                return this;
+            }
+
+            public RawConfigurationBuilder withContents(String content, String sha256) {
+                rawConfig.setContents(content, sha256);
+                return this;
+            }
+
+            /**
+             * Closes the definition of the current raw configuration and returns to the parent context.
+             * @return the parent context
+             */
+            public Builder closeRawConfiguration() {
+                getMap().getRawConfigurations().add(rawConfig);
+                return Builder.this;
+            }
+        }
+
+        public Builder() {
+            super(new Configuration());
+        }
+
+        public Builder withNotes(String notes) {
+            getMap().setNotes(notes);
+            return this;
+        }
+
+        public Builder withVersion(long version) {
+            getMap().setVersion(version);
+            return this;
+        }
+
+        /**
+         * Starts defining a new raw configuration that will become part of this configuration.
+         * @return the builder of the raw configuration
+         */
+        public RawConfigurationBuilder openRawConfiguration() {
+            return new RawConfigurationBuilder();
+        }
+
+        public Configuration build() {
+            return getMap();
+        }
+    }
+
     @GeneratedValue(generator = "RHQ_CONFIG_ID_SEQ", strategy = GenerationType.AUTO)
     @Id
     private int id;
@@ -282,6 +520,10 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
 
     @Column(name = "MTIME")
     private long mtime = System.currentTimeMillis();
+
+    public static Builder builder() {
+        return new Builder();
+    }
 
     public Configuration() {
     }
@@ -608,10 +850,9 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
      *
      * @return a clone of this configuration
      *
-     * @throws CloneNotSupportedException
-     *
      * @see    #deepCopy()
      */
+    @SuppressWarnings("override")
     //@Override //GWT trips over this, WTH!
     public Configuration clone() {
         return deepCopy();
@@ -760,7 +1001,7 @@ public class Configuration implements Serializable, Cloneable, AbstractPropertyM
     /**
      * Getter for the properties reference.
      *
-     * @return Map<String, Property>
+     * @return {@code Map&lt;String, Property&gt;}
      */
     public Map<String, Property> getAllProperties() {
         return this.properties;

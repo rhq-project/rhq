@@ -64,6 +64,7 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -101,8 +102,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
-    private static final int OPERATION_QUERY_TIMEOUT = 1000;
-    private static final int MAX_ITERATIONS = 5;
+    private static final int OPERATION_QUERY_TIMEOUT = 20000;
+    private static final int MAX_ITERATIONS = 6;
     private static final String UPDATE_CONFIGURATION_OPERATION = "updateConfiguration";
     private static final String RESTART_OPERATION = "restart";
 
@@ -636,8 +637,16 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         //scheduling the operation
         long operationStartTime = System.currentTimeMillis();
-        operationManager.scheduleResourceOperation(subject, storageNodeResource.getId(), operationToRun, 0, 0, 0, 0,
-            parameters, "Run by StorageNodeManagerBean");
+
+        ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
+        newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
+        newSchedule.setResource(storageNodeResource);
+        newSchedule.setOperationName(operationToRun);
+        newSchedule.setDescription("Run by StorageNodeManagerBean");
+        newSchedule.setParameters(parameters);
+
+        operationManager.scheduleResourceOperation(subject, newSchedule);
+        entityManager.flush();
 
         //waiting for the operation result then return it
         int iteration = 0;

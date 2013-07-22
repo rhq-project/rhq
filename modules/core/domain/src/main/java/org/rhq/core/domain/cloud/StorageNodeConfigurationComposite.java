@@ -33,6 +33,8 @@ public class StorageNodeConfigurationComposite implements Serializable {
     private StorageNode storageNode;
     private int jmxPort;
     private String heapSize;
+    private String threadStackSize;
+    private String heapNewSize;
 
     public StorageNodeConfigurationComposite() {
         // GWT needs this
@@ -85,14 +87,44 @@ public class StorageNodeConfigurationComposite implements Serializable {
         this.heapSize = heapSize;
     }
 
+    /**
+     * @return the threadStackSize
+     */
+    public String getThreadStackSize() {
+        return threadStackSize;
+    }
+
+    /**
+     * @param threadStackSize the threadStackSize to set
+     */
+    public void setThreadStackSize(String threadStackSize) {
+        this.threadStackSize = threadStackSize;
+    }
+
+    /**
+     * @return the heapNewSize
+     */
+    public String getHeapNewSize() {
+        return heapNewSize;
+    }
+
+    /**
+     * @param heapNewSize the heapNewSize to set
+     */
+    public void setHeapNewSize(String heapNewSize) {
+        this.heapNewSize = heapNewSize;
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("storageNode.addresss=").append(storageNode.getAddress()).append(", ");
+        builder.append("jmxPort=").append(jmxPort).append(",");
         builder.append("heapSize=").append(heapSize).append(", ");
-        builder.append("jmxPort=").append(jmxPort).append("");
+        builder.append("heapNewSize=").append(heapSize).append(", ");
+        builder.append("threadStackSize=").append(threadStackSize).append("");
         return builder.toString();
     }
 }

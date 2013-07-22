@@ -122,6 +122,9 @@
     <operation name="updateConfiguration" description="Updates the node configuration. Will require a separate server restart for the settings to take effect.">
       <parameters>
         <c:simple-property name="heapSize" type="string" description="The heap size to be used for both -Xms and -Xmx JVM options."/>
+        <c:simple-property name="heapNewSize" type="string" description="The heap new size to be used be used with -Xmn JVM option."/>
+        <c:simple-property name="threadStackSize" type="integer" description="The thread stack size. This memory is allocated to each thread off heap. The
+                                                                                value should be an integer that will be interpreted in kilobytes."/>
         <c:simple-property name="jmxPort" type="integer" description="JMX port JVM option."/>
       </parameters>
       <results>

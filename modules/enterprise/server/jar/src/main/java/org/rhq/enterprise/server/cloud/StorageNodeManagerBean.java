@@ -611,6 +611,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNodeResource.getId());
 
             configuration.setHeapSize(storageNodeConfiguration.getSimpleValue("maxHeapSize"));
+            configuration.setHeapNewSize(storageNodeConfiguration.getSimpleValue("heapNewSize"));
+            configuration.setThreadStackSize(storageNodeConfiguration.getSimpleValue("threadStackSize"));
             configuration.setJmxPort(storageNode.getJmxPort());
         }
 

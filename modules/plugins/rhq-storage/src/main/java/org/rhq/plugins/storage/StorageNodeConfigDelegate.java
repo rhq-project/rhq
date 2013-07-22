@@ -19,10 +19,17 @@ import org.rhq.core.util.StringUtil;
 public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
     private File jvmOptsFile;
+    private File wrapperEnvFile;
 
     public StorageNodeConfigDelegate(File basedir) {
         File confDir = new File(basedir, "conf");
         jvmOptsFile = new File(confDir, "cassandra-jvm.properties");
+
+        // for windows, config props also get propagated to the wrapper env
+        if (isWindows()) {
+            File wrapperDir = new File(basedir, "../bin/wrapper");
+            wrapperEnvFile = new File(wrapperDir, "rhq-storage-wrapper.env");
+        }
     }
 
     @Override
@@ -54,6 +61,16 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         }
 
         return config;
+    }
+
+    /**
+     * Ensure that the path uses only forward slash.
+     * @param path
+     * @return forward-slashed path, or null if path is null
+     */
+    private static String useForwardSlash(String path) {
+
+        return (null != path) ? path.replace('\\', '/') : null;
     }
 
     private String getHeapMinProp(Properties properties) {
@@ -115,46 +132,13 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
     @Override
     public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
         try {
-            PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(jvmOptsFile.getAbsolutePath());
-            Properties properties = propertiesUpdater.loadExistingProperties();
-
             Configuration config = configurationUpdateReport.getConfiguration();
 
-            String maxHeapSize = config.getSimpleValue("maxHeapSize");
-            if (!StringUtil.isEmpty(maxHeapSize)) {
-                validateHeapArg("maxHeapSize", maxHeapSize);
-                // We want min and max heap to be the same
-                properties.setProperty("heap_min", "-Xms" + maxHeapSize);
-                properties.setProperty("heap_max", "-Xmx" + maxHeapSize);
-            }
+            updateCassandraJvmProps(config);
 
-            String heapNewSize = config.getSimpleValue("heapNewSize");
-            if (!StringUtil.isEmpty(heapNewSize)) {
-                validateHeapArg("heapNewSize", heapNewSize);
-                properties.setProperty("heap_new", "-Xmn" + heapNewSize);
+            if (isWindows()) {
+                updateWrapperEnv(config);
             }
-
-            String threadStackSize = config.getSimpleValue("threadStackSize");
-            if (!StringUtil.isEmpty(threadStackSize)) {
-                validateStackArg(threadStackSize);
-                properties.setProperty("thread_stack_size", "-Xss" + threadStackSize + "k");
-            }
-
-            PropertySimple heapDumpOnOMMError = config.getSimple("heapDumpOnOOMError");
-            if (heapDumpOnOMMError != null) {
-                if (heapDumpOnOMMError.getBooleanValue()) {
-                    properties.setProperty("heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
-                } else {
-                    properties.setProperty("heap_dump_on_OOMError", "");
-                }
-            }
-
-            String heapDumpDir = config.getSimpleValue("heapDumpDir");
-            if (!StringUtil.isEmpty(heapDumpDir)) {
-                properties.setProperty("heap_dump_dir", heapDumpDir);
-            }
-
-            propertiesUpdater.update(properties);
 
             configurationUpdateReport.setStatus(ConfigurationUpdateStatus.SUCCESS);
         } catch (IllegalArgumentException e) {
@@ -162,6 +146,88 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         } catch (IOException e) {
             configurationUpdateReport.setErrorMessageFromThrowable(e);
         }
+    }
+
+    private void updateCassandraJvmProps(Configuration config) throws IOException {
+        PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(jvmOptsFile.getAbsolutePath());
+        Properties properties = propertiesUpdater.loadExistingProperties();
+
+        String maxHeapSize = config.getSimpleValue("maxHeapSize");
+        if (!StringUtil.isEmpty(maxHeapSize)) {
+            validateHeapArg("maxHeapSize", maxHeapSize);
+            // We want min and max heap to be the same
+            properties.setProperty("heap_min", "-Xms" + maxHeapSize);
+            properties.setProperty("heap_max", "-Xmx" + maxHeapSize);
+        }
+
+        String heapNewSize = config.getSimpleValue("heapNewSize");
+        if (!StringUtil.isEmpty(heapNewSize)) {
+            validateHeapArg("heapNewSize", heapNewSize);
+            properties.setProperty("heap_new", "-Xmn" + heapNewSize);
+        }
+
+        String threadStackSize = config.getSimpleValue("threadStackSize");
+        if (!StringUtil.isEmpty(threadStackSize)) {
+            validateStackArg(threadStackSize);
+            properties.setProperty("thread_stack_size", "-Xss" + threadStackSize + "k");
+        }
+
+        PropertySimple heapDumpOnOMMError = config.getSimple("heapDumpOnOOMError");
+        if (heapDumpOnOMMError != null) {
+            if (heapDumpOnOMMError.getBooleanValue()) {
+                properties.setProperty("heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
+            } else {
+                properties.setProperty("heap_dump_on_OOMError", "");
+            }
+        }
+
+        String heapDumpDir = useForwardSlash(config.getSimpleValue("heapDumpDir"));
+        if (!StringUtil.isEmpty(heapDumpDir)) {
+            properties.setProperty("heap_dump_dir", heapDumpDir);
+        }
+
+        propertiesUpdater.update(properties);
+    }
+
+    private void updateWrapperEnv(Configuration config) throws IOException {
+        PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(wrapperEnvFile.getAbsolutePath());
+        Properties properties = propertiesUpdater.loadExistingProperties();
+
+        String maxHeapSize = config.getSimpleValue("maxHeapSize");
+        if (!StringUtil.isEmpty(maxHeapSize)) {
+            validateHeapArg("maxHeapSize", maxHeapSize);
+            // We want min and max heap to be the same
+            properties.setProperty("set.heap_min", "-Xms" + maxHeapSize);
+            properties.setProperty("set.heap_max", "-Xmx" + maxHeapSize);
+        }
+
+        String heapNewSize = config.getSimpleValue("heapNewSize");
+        if (!StringUtil.isEmpty(heapNewSize)) {
+            validateHeapArg("heapNewSize", heapNewSize);
+            properties.setProperty("set.heap_new", "-Xmn" + heapNewSize);
+        }
+
+        String threadStackSize = config.getSimpleValue("threadStackSize");
+        if (!StringUtil.isEmpty(threadStackSize)) {
+            validateStackArg(threadStackSize);
+            properties.setProperty("set.thread_stack_size", "-Xss" + threadStackSize + "k");
+        }
+
+        PropertySimple heapDumpOnOMMError = config.getSimple("heapDumpOnOOMError");
+        if (heapDumpOnOMMError != null) {
+            if (heapDumpOnOMMError.getBooleanValue()) {
+                properties.setProperty("set.heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
+            } else {
+                properties.setProperty("set.heap_dump_on_OOMError", "");
+            }
+        }
+
+        String heapDumpDir = useForwardSlash(config.getSimpleValue("heapDumpDir"));
+        if (!StringUtil.isEmpty(heapDumpDir)) {
+            properties.setProperty("set.heap_dump_dir", heapDumpDir);
+        }
+
+        propertiesUpdater.update(properties);
     }
 
     private void validateHeapArg(String name, String value) {
@@ -188,5 +254,9 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(value + " is not a legal value for the property [threadStackSize]");
         }
+    }
+
+    private boolean isWindows() {
+        return File.separatorChar == '\\';
     }
 }

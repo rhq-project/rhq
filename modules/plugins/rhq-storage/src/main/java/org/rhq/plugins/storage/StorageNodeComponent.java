@@ -26,7 +26,12 @@
 package org.rhq.plugins.storage;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,6 +41,7 @@ import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -43,7 +49,10 @@ import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.cassandra.CassandraNodeComponent;
 import org.rhq.plugins.cassandra.util.KeyspaceService;
 
@@ -84,6 +93,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return readRepair();
         } else if (name.equals("updateConfiguration")) {
             return updateConfiguration(parameters);
+        } else if (name.equals("updateKnownNodes")) {
+            return updateKnownNodes(parameters);
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -92,6 +103,73 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     private OperationResult updateConfiguration(Configuration params) {
         OperationResult result = new OperationResult("Configuration updated.");
         //TODO: implement updates to various sub-resources here
+        return result;
+    }
+
+    private OperationResult updateKnownNodes(Configuration params) {
+        OperationResult result = new OperationResult();
+
+        PropertyList propertyList = params.getList("ipAddresses");
+        Set<String> ipAddresses = new HashSet<String>();
+
+        for (Property property : propertyList.getList()) {
+            PropertySimple propertySimple = (PropertySimple) property;
+            ipAddresses.add(propertySimple.getStringValue());
+        }
+
+        log.info("Updating known nodes to " + ipAddresses);
+
+        File confDir = new File(getBasedir(), "conf");
+        File authFile = new File(confDir, "rhq-storage-auth.conf");
+        File authBackupFile = new File(confDir, "." + authFile.getName() + ".bak");
+
+        if (authBackupFile.exists()) {
+            if (log.isDebugEnabled()) {
+                log.debug(authBackupFile + " already exists. Deleting it now in preparation of creating new backup " +
+                    "for " + authFile.getName());
+            }
+            if (!authBackupFile.delete()) {
+                String msg = "Failed to delete backup file " + authBackupFile + ". The operation will abort " +
+                    "since " + authFile + " cannot reliably be backed up before making changes. Please delete " +
+                    authBackupFile + " manually and reschedule the operation once the file has been removed.";
+                log.error(msg);
+                result.setErrorMessage(msg);
+
+                return result;
+            }
+        }
+
+        try {
+            FileUtil.copyFile(authFile, authBackupFile);
+        } catch (IOException e) {
+            String msg = "Failed to backup " + authFile + " prior to making updates. The operation will abort due " +
+                "to unexpected error";
+            log.error(msg, e);
+            result.setErrorMessage(msg + ": " + ThrowableUtil.getRootMessage(e));
+            return result;
+        }
+
+        try {
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(ipAddresses, "\n")),
+                new FileWriter(authFile), true);
+        } catch (IOException e) {
+            log.error("An error occurred while updating " + authFile, e);
+            try {
+                FileUtil.copyFile(authBackupFile, authFile);
+            } catch (IOException e1) {
+                log.error("Failed to revert backup of " + authFile, e1);
+            }
+            result.setErrorMessage("There was an unexpected error while updating " + authFile + ". Make sure that " +
+                "it matches " + authBackupFile + " and then reschedule the operation.");
+            return result;
+        }
+
+        EmsBean authBean = getEmsConnection().getBean("org.rhq.cassandra.auth:type=RhqInternodeAuthenticator");
+        EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
+        emsOperation.invoke();
+
+        result.setSimpleResult("Successfully updated the set of known nodes.");
+
         return result;
     }
 

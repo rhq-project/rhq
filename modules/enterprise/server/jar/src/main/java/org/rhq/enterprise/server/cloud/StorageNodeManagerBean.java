@@ -170,7 +170,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
                 entityManager.persist(storageNode);
 
-                scheduleQuartzJob(storageNodes.size());
+//                scheduleQuartzJob(storageNodes.size());
             }
         }
     }

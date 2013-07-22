@@ -413,7 +413,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
-        exportZip(testEar, new File("/Users/jsanda/tmp/test-ear.ear"));
+        //String tmpDir = System.getProperty("java.io.tmpdir");
+        //exportZip(testEar, new File(tmpDir, "test.ear"));
 
         return testEar;
     }

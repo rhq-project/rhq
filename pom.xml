@@ -2353,6 +2353,10 @@
             <timezone>+1</timezone>
         </contributor>
         <contributor>
+            <name>Michael Burman</name>
+            <timezone>+2</timezone>
+        </contributor>
+        <contributor>
             <name>Torben Jäger</name>
             <timezone>+1</timezone>
         </contributor>

@@ -186,9 +186,11 @@
         </parameters>
       </operation>
 
+      <metric property="Calculated.DataDiskUsedPercentage" displayName="Data File Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of disk space used by Cassandra data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+      <metric property="Calculated.TotalDiskUsedPercentage" displayName="Total Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of total disk space used. The metric acounts overall disk usage (including system files), not just disk space used by Cassandra. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+      <metric property="Calculated.FreeDiskToDataSizeRatio" displayName="Free Disk to Data Size Ratio" dataType="measurement" displayType="summary" description="Ratio of (Amount of Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+
       <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
-      <metric property="Calculated.PartitionDiskUsedPercentage" displayName="Data File Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of disk space used by the data files. If multiple data locations are specified then this will report
-                                                                                                                                                the average utilization accross all the partitions that contain data files."/>
       <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
       <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
       <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>

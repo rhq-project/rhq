@@ -58,7 +58,9 @@ import org.rhq.plugins.jmx.JMXComponent;
 public class StorageServiceComponent extends ComplexConfigurationResourceComponent {
 
     private static final String OWNERSHIP_METRIC_NAME = "Ownership";
-    private static final String PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.PartitionDiskUsedPercentage";
+    private static final String DATA_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.DataDiskUsedPercentage";
+    private static final String TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.TotalDiskUsedPercentage";
+    private static final String FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME = "Calculated.FreeDiskToDataSizeRatio";
     private static final String DATA_FILE_LOCATIONS_NAME = "AllDataFileLocations";
     private static final String LOAD_NAME = "Load";
 
@@ -156,6 +158,22 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
     @Override
     protected void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests, EmsBean bean) {
         super.getValues(report, requests, bean);
+
+        EmsAttribute loadAttribute = bean.getAttribute(LOAD_NAME);
+        Object loadValue = loadAttribute.refresh();
+
+        EmsAttribute dataFileLocationAttribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
+        Object dataFileLocationValue = dataFileLocationAttribute.refresh();
+
+        double load = 0;
+        if (loadValue != null && dataFileLocationValue != null && dataFileLocationValue instanceof String[]) {
+            //Please visit for details: https://issues.apache.org/jira/browse/CASSANDRA-2749
+            //The average usage of all partitions with the data will be reported.
+            //Cassandra selects the partition with most free space for SStable flush and compaction.
+            load = Double.parseDouble(loadValue.toString());
+            load = load / 1024d; //transform in MB
+        }
+
         for (MeasurementScheduleRequest request : requests) {
             if (OWNERSHIP_METRIC_NAME.equals(request.getName()) && host != null) {
                 EmsAttribute attribute = bean.getAttribute(OWNERSHIP_METRIC_NAME);
@@ -179,49 +197,53 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                     report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
                 }
                 break;
-            } else if (PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())) {
-
-
-                EmsAttribute loadAttribute = bean.getAttribute(LOAD_NAME);
-                Object loadValue = loadAttribute.refresh();
-
-                EmsAttribute dataFileLocationAttribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
-                Object dataFileLocationValue = dataFileLocationAttribute.refresh();
-
-                if (loadValue != null && dataFileLocationValue != null && dataFileLocationValue instanceof String[]) {
-                    //Please visit for details: https://issues.apache.org/jira/browse/CASSANDRA-2749
-                    //The average usage of all partitions with the data will be reported.
-                    //Cassandra selects the partition with most free space for SStable flush and compaction.
-                    double load = Double.parseDouble(loadValue.toString());
-
-                    report.addData(new MeasurementDataNumeric(request, getPartitionDiskUsedPercentage(load,
-                        (String[]) dataFileLocationValue)));
-                }
+            } else if (DATA_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())
+                || TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())
+                || FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME.equals(request.getName())) {
+                double metricValue = getDiskUsageMetric(request, load, (String[]) dataFileLocationValue);
+                report.addData(new MeasurementDataNumeric(request, metricValue));
             }
         }
     }
 
-    private double getPartitionDiskUsedPercentage(double dataSize, String[] paths) {
+    private double getDiskUsageMetric(MeasurementScheduleRequest request, double dataSize, String[] paths) {
         List<String> visitedMountPoints = new ArrayList<String>();
         long totalDiskSpace = 0;
+        long totalFreeDiskSpace = 0;
+        long totalUsedDiskSpace = 0;
 
         for (String path : paths) {
             try {
                 FileSystemInfo fileSystemInfo  = this.getResourceContext().getSystemInformation().getFileSystem(path);
                 if (!visitedMountPoints.contains(fileSystemInfo.getMountPoint())) {
                     visitedMountPoints.add(fileSystemInfo.getMountPoint());
+
+                    //contrary to Sigar documentation this values are reported in MB and not bytes
                     totalDiskSpace += fileSystemInfo.getFileSystemUsage().getTotal();
+                    totalFreeDiskSpace += fileSystemInfo.getFileSystemUsage().getFree();
+                    totalUsedDiskSpace += fileSystemInfo.getFileSystemUsage().getUsed();
                 }
             } catch (Exception e) {
                 log.error("Unable to determine file system usage information for data file location " + path, e);
             }
         }
 
+        double metricValue = 0;
+
+
         if (totalDiskSpace != 0) {
-            double rawPercentage = dataSize / ((double) totalDiskSpace);
-            return Math.round(rawPercentage * 100.0) / 100.0;
+            double rawPercentage = 0;
+            if (DATA_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())) {
+                rawPercentage = dataSize / ((double) totalDiskSpace);
+            } else if (TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())) {
+                rawPercentage = ((double) totalUsedDiskSpace) / ((double) totalDiskSpace);
+            } else if (FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME.equals(request.getName())) {
+                rawPercentage = ((double) totalFreeDiskSpace) / (double) dataSize;
+            }
+
+            metricValue = Math.round(rawPercentage * 100d) / 100d;
         }
 
-        return 0;
+        return metricValue;
     }
 }

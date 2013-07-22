@@ -61,7 +61,9 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
 
     private final Log log = LogFactory.getLog(AlertDefinitionServerPluginComponent.class);
 
-    private static final String PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.PartitionDiskUsedPercentage";
+    private static final String DATA_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.DataDiskUsedPercentage";
+    private static final String TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.TotalDiskUsedPercentage";
+    private static final String FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME = "Calculated.FreeDiskToDataSizeRatio";
 
     static private final List<InjectedTemplate> injectedTemplates;
     static private final InjectedTemplate storageNodeHighHeapTemplate;
@@ -297,23 +299,42 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         newTemplate.setRecoveryId(0);
         newTemplate.setEnabled(true);
 
-        AlertCondition ac = new AlertCondition();
-        ac.setCategory(AlertConditionCategory.THRESHOLD);
-        ac.setComparator(">");
-        ac.setThreshold(0.5D);
+
+        AlertCondition dataDiskUsedAlertCondition = new AlertCondition();
+        dataDiskUsedAlertCondition.setCategory(AlertConditionCategory.THRESHOLD);
+        dataDiskUsedAlertCondition.setComparator(">");
+        dataDiskUsedAlertCondition.setThreshold(0.5D);
+
+        AlertCondition totalDiskUsedAlertCondition = new AlertCondition();
+        totalDiskUsedAlertCondition.setCategory(AlertConditionCategory.THRESHOLD);
+        totalDiskUsedAlertCondition.setComparator(">");
+        totalDiskUsedAlertCondition.setThreshold(0.75D);
+
+        AlertCondition freeSpaveDataRatioAlertCondition = new AlertCondition();
+        freeSpaveDataRatioAlertCondition.setCategory(AlertConditionCategory.THRESHOLD);
+        freeSpaveDataRatioAlertCondition.setComparator("<");
+        freeSpaveDataRatioAlertCondition.setThreshold(1.5D);
 
         List<Integer> measurementDefinitionIds = new ArrayList<Integer>(1);
         for (MeasurementDefinition d : resourceType.getMetricDefinitions()) {
-            if (PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME.equals(d.getName())) {
+            if (DATA_DISK_USED_PERCENTAGE_METRIC_NAME.equals(d.getName())) {
                 measurementDefinitionIds.add(d.getId());
-                ac.setMeasurementDefinition(d);
-                ac.setName(d.getDisplayName());
+                dataDiskUsedAlertCondition.setMeasurementDefinition(d);
+                dataDiskUsedAlertCondition.setName(d.getDisplayName());
+            } else if (TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME.equals(d.getName())) {
+                measurementDefinitionIds.add(d.getId());
+                totalDiskUsedAlertCondition.setMeasurementDefinition(d);
+                totalDiskUsedAlertCondition.setName(d.getDisplayName());
+            } else if (FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME.equals(d.getName())) {
+                measurementDefinitionIds.add(d.getId());
+                freeSpaveDataRatioAlertCondition.setMeasurementDefinition(d);
+                freeSpaveDataRatioAlertCondition.setName(d.getDisplayName());
             }
         }
-        assert null != ac.getMeasurementDefinition() : "Did not find expected measurement definition "
-            + PARTITION_DISK_USED_PERCENTAGE_METRIC_NAME + " for "
-            + resourceType;
-        newTemplate.addCondition(ac);
+
+        newTemplate.addCondition(dataDiskUsedAlertCondition);
+        newTemplate.addCondition(totalDiskUsedAlertCondition);
+        newTemplate.addCondition(freeSpaveDataRatioAlertCondition);
 
         AlertDampening dampener = new AlertDampening(AlertDampening.Category.PARTIAL_COUNT);
         dampener.setPeriod(15);

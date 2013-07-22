@@ -30,13 +30,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.net.InetAddress;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -168,6 +173,24 @@ public class Deployer {
 
         for (File f : binDir.listFiles()) {
             f.setExecutable(true);
+        }
+    }
+
+    public void updateStorageAuthConf(Set<InetAddress> ipAddresses) {
+        File confDir = new File(deploymentOptions.getBasedir(), "conf");
+        File authFile = new File(confDir, "rhq-storage-auth.conf");
+
+        Set<String> addresses = new HashSet<String>(ipAddresses.size());
+        for (InetAddress ipAddress : ipAddresses) {
+            addresses.add(ipAddress.getHostAddress());
+        }
+
+        try {
+            authFile.delete();
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(addresses, "\n")),
+                new FileWriter(authFile), true);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update " + authFile);
         }
     }
 

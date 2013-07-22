@@ -34,10 +34,12 @@ import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
@@ -386,6 +388,7 @@ public class StorageInstaller {
                 deployer.unzipDistro();
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
+                deployer.updateStorageAuthConf(getAddresses(hostname, seeds));
 
                 log.info("Finished installing RHQ Storage Node.");
 
@@ -497,6 +500,19 @@ public class StorageInstaller {
             dir = dir.getParentFile();
         }
         return dir;
+    }
+
+    private Set<InetAddress> getAddresses(String hostname, String seeds) throws IOException {
+        Set<InetAddress> addresses = new HashSet<InetAddress>();
+        addresses.add(InetAddress.getByName(hostname));
+
+        if (!StringUtil.isEmpty(seeds)) {
+            for (String seed : seeds.split(",")) {
+                addresses.add(InetAddress.getByName(seed));
+            }
+        }
+
+        return addresses;
     }
 
     private PropertiesFileUpdate getServerProperties() {

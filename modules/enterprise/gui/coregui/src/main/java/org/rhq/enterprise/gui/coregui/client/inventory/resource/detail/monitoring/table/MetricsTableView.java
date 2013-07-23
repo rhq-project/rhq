@@ -40,12 +40,12 @@ import com.smartgwt.client.widgets.events.CloseClickHandler;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
+import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
 import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
 import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
 import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
-import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.grid.events.SortChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SortEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -86,6 +86,8 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     private final MeasurementUserPreferences measurementUserPrefs;
     private final Menu addToDashboardMenu;
 
+    Set<Integer> expandedRows = new HashSet<Integer>();
+
     public MetricsTableView(Resource resource, AbstractD3GraphListView abstractD3GraphListView) {
         super();
         this.resource = resource;
@@ -106,7 +108,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      */
     @Override
     protected ListGrid createListGrid() {
-        return new MetricsTableListGrid(resource, addToDashboardMenu);
+        return new MetricsTableListGrid(this, resource, addToDashboardMenu);
     }
 
     protected void configureTable() {
@@ -255,18 +257,24 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         private static final int NUM_METRIC_POINTS = 60;
         private Resource resource;
         final private Menu addToDashboardMenu;
+        final MetricsTableView metricsTableView;
 
-        public MetricsTableListGrid(final Resource resource, final Menu dashboardMenu) {
+        public MetricsTableListGrid(final MetricsTableView metricsTableView, final Resource resource,
+            final Menu dashboardMenu) {
             super();
             this.resource = resource;
             this.addToDashboardMenu = dashboardMenu;
             this.addToDashboardMenu.disable();
+            this.metricsTableView = metricsTableView;
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
             setExpansionMode(ExpansionMode.DETAIL_FIELD);
+
             addRecordExpandHandler(new RecordExpandHandler() {
                 @Override
                 public void onRecordExpand(RecordExpandEvent recordExpandEvent) {
+                    metricsTableView.expandedRows.add(recordExpandEvent.getRecord().getAttributeAsInt(
+                        MetricsViewDataSource.FIELD_METRIC_DEF_ID));
                     redrawGraphs();
                 }
 
@@ -274,6 +282,8 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             addRecordCollapseHandler(new RecordCollapseHandler() {
                 @Override
                 public void onRecordCollapse(RecordCollapseEvent recordCollapseEvent) {
+                    metricsTableView.expandedRows.remove(recordCollapseEvent.getRecord().getAttributeAsInt(
+                        MetricsViewDataSource.FIELD_METRIC_DEF_ID));
                     redrawGraphs();
                 }
             });
@@ -283,8 +293,22 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                     redrawGraphs();
                 }
             });
+            addDataArrivedHandler(new DataArrivedHandler() {
+                @Override
+                public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
+                    int startRow = dataArrivedEvent.getStartRow();
+                    int endRow = dataArrivedEvent.getEndRow();
+                    for (int i = startRow; i < endRow; i++) {
+                        if (metricsTableView.expandedRows.contains(getRecord(i).getAttributeAsInt(
+                            MetricsViewDataSource.FIELD_METRIC_DEF_ID))) {
+                            expandRecord(getRecord(i));
+                        }
+                    }
+                }
+            });
 
         }
+
 
         @Override
         protected Canvas getExpansionComponent(final ListGridRecord record) {

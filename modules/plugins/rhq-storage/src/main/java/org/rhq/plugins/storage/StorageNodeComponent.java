@@ -111,6 +111,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private OperationResult updateConfiguration(Configuration params) {
+        boolean restartIsRequired = false;
+
         OperationResult result = new OperationResult("Configuration updated.");
 
         //update storage node jvm settings
@@ -125,6 +127,31 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
         if (!configurationUpdate.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
             result.setErrorMessage(configurationUpdate.getErrorMessage());
+        } else {
+            if (params.getSimpleValue("heapSize") != null
+                || params.getSimpleValue("heapNewSize") != null
+                || params.getSimpleValue("threadStackSize") != null) {
+                restartIsRequired = true;
+            }
+        }
+
+        //restart the server if:
+        //- requested by the user
+        //- the updates done require restart
+        boolean restartIfRequiredConfig = false;
+        if (params.getSimpleValue("restartIfRequired") != null) {
+            restartIfRequiredConfig = Boolean.parseBoolean(params.getSimpleValue("restartIfRequired"));
+        }
+
+        if (restartIfRequiredConfig && restartIsRequired) {
+            try {
+                OperationResult restartResult = this.invokeOperation("restart", null);
+                if (restartResult.getErrorMessage() != null) {
+                    result.setErrorMessage(restartResult.getErrorMessage());
+                }
+            } catch (Exception e) {
+                result.setErrorMessage(e.getMessage());
+            }
         }
 
         return result;

@@ -290,7 +290,7 @@
         <delete file="${jboss.home}/modules/system/layers/base/org/jgroups/main/jgroups-${jgroups.initial.version}.jar.index" />
         <!-- Update the module metadata to the patched version -->
         <replace file="${jboss.home}/modules/system/layers/base/org/jgroups/main/module.xml" 
-        token="jgroups-${jgroups.initial.version}.jar" value="${jgroups.patch.version}"/>
+        token="jgroups-${jgroups.initial.version}.jar" value="jgroups-${jgroups.patch.version}.jar"/>
         <!-- Copy in patched version -->
         <copy file="${settings.localRepository}/org/jgroups/jgroups/${jgroups.patch.version}/jgroups-${jgroups.patch.version}.jar"
             toDir="${jboss.home}/modules/system/layers/base/org/jgroups/main" verbose="true"/>

@@ -226,6 +226,7 @@ public class ExtensionModelTest {
         assert jbossServer.getCategory().equals(ResourceCategory.SERVER);
         assert jbossServer.getDescription().equals("JBoss Application Server Description");
         assert jbossServer.getParentResourceTypes().size() == 0;
+        assert jbossServer.getChildSubCategories().size() == 2;
 
         assert jbossServer.getChildResourceTypes().size() == 1;
         ResourceType embeddedTomcatServer = jbossServer.getChildResourceTypes().iterator().next();
@@ -263,6 +264,7 @@ public class ExtensionModelTest {
         assert hibernateService.getDescription().equals("Hibernate Service Description");
         assert hibernateService.getChildResourceTypes().size() == 0;
         assert hibernateService.getParentResourceTypes().size() == 3;
+        assert hibernateService.getSubCategory().getName().equals("Framework");
 
         ResourceType tomcatServer = metadataManager.getType("TomcatServer", "Tomcat");
         ResourceType jbossServer = metadataManager.getType("JBossASServer", "JBossAS");

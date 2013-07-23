@@ -42,10 +42,12 @@ public class BundleCriteria extends TaggedCriteria {
     private String filterBundleTypeName; // needs override    
     private String filterDescription;
     private List<Integer> filterDestinationIds; // needs overrides
+    private List<Integer> filterBundleGroupIds; // needs overrides
     private String filterName;
     private Integer filterPackageTypeId; // needs override
     private String filterPackageTypeName; // needs override    
 
+    private boolean fetchBundleGroups;
     private boolean fetchBundleVersions;
     private boolean fetchDestinations;
     private boolean fetchPackageType;
@@ -61,6 +63,10 @@ public class BundleCriteria extends TaggedCriteria {
             + "         WHERE bv.id IN ( ? ) )");
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("bundleTypeName", "bundleType.name like ?");
+        filterOverrides.put("bundleGroupIds", "" //
+            + "id IN ( SELECT bg.bundle.id " //
+            + "          FROM BundleGroup bg " //
+            + "         WHERE bg.id IN ( ? ) )");
         filterOverrides.put("destinationIds", "" //
             + "id IN ( SELECT bd.bundle.id " //
             + "          FROM BundleDestination bd " //
@@ -97,6 +103,17 @@ public class BundleCriteria extends TaggedCriteria {
         this.filterDescription = filterDescription;
     }
 
+    /** Convenience routine calls addFilterBundleGroupIds */
+    public void addFilterBundleGroupId(Integer filterBundleGroupId) {
+        List<Integer> ids = new ArrayList<Integer>(1);
+        ids.add(filterBundleGroupId);
+        this.addFilterBundleGroupIds(ids);
+    }
+
+    public void addFilterBundleGroupIds(List<Integer> filterBundleGroupIds) {
+        this.filterBundleGroupIds = filterBundleGroupIds;
+    }
+
     /** Convenience routine calls addFilterDestinationIds */
     public void addFilterDestinationId(Integer filterDestinationId) {
         List<Integer> ids = new ArrayList<Integer>(1);
@@ -118,6 +135,10 @@ public class BundleCriteria extends TaggedCriteria {
 
     public void addFilterPackageTypeName(String filterPackageTypeName) {
         this.filterPackageTypeName = filterPackageTypeName;
+    }
+
+    public void fetchBundleGroups(boolean fetchBundleGroups) {
+        this.fetchBundleGroups = fetchBundleGroups;
     }
 
     public void fetchBundleVersions(boolean fetchBundleVersions) {

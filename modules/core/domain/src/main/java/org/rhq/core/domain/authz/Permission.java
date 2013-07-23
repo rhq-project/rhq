@@ -136,7 +136,64 @@ public enum Permission {
      * Can view other RHQ users, except for their assigned roles
      */
     // NOTE: This is a GLOBAL permission but defined here to maintain the ordinal indexes
-    VIEW_USERS(Target.GLOBAL) // 17
+    VIEW_USERS(Target.GLOBAL), // 17
+
+    /**
+     * Can CRUD BundleGroups
+     */
+    MANAGE_BUNDLE_GROUPS(Target.GLOBAL), // 18
+
+    /**
+     * Can create Bundle [Versions]s
+     * Can create global Bundle [Versions] if holding Global.VIEW_BUNDLES
+     * Can assign to viewable bundle groups
+     */
+    CREATE_BUNDLES(Target.GLOBAL), // 19
+
+    /**
+     * Can delete bundle [Versions]s from viewable groups
+     * Can delete global bundles if holding Global.VIEW_BUNDLES
+     * Can unassign from viewable bundle groups
+     */
+    DELETE_BUNDLES(Target.GLOBAL), // 20
+
+    /**
+     * Can view any bundle, including global bundles
+     */
+    VIEW_BUNDLES(Target.GLOBAL), // 21
+
+    /**
+     * Can deploy any viewable bundle version to any viewable (deployable, compatible) resource group
+     */
+    DEPLOY_BUNDLES(Target.GLOBAL), // 22
+
+    /**
+     * Can assign viewable bundles to the bundle group
+     * - this can be a copy from another viewable bundle group
+     * - this can be a global bundle if holding Global.VIEW_BUNDLES
+     */
+    ASSIGN_BUNDLES_TO_GROUP(Target.BUNDLE), // 23
+
+    /**
+     * Can unassign bundles from the bundle group
+     * - the bundle is not deleted and becomes a global bundle if assigned to no other bundle group
+     */
+    UNASSIGN_BUNDLES_FROM_GROUP(Target.BUNDLE), // 24
+
+    /**
+     * Can create bundle [version]s for this bundle group
+     */
+    CREATE_BUNDLES_IN_GROUP(Target.BUNDLE), // 25
+
+    /**
+     * Can delete bundle [version]s from the bundle group
+     */
+    DELETE_BUNDLES_IN_GROUP(Target.BUNDLE), // 26
+
+    /**
+     * Implied - Can view bundles in the bundle group
+     */
+    VIEW_BUNDLES_IN_GROUP(Target.BUNDLE) // 25
 
     ;
 
@@ -144,11 +201,14 @@ public enum Permission {
      * the target to which the permission applies
      */
     public enum Target {
-        /** global permissions do not apply to specific resources in groups */
+        /** global permissions do not apply to specific resources or bundles  */
         GLOBAL,
 
-        /** resource permissions apply only to the resources in the role's groups */
-        RESOURCE
+        /** resource permissions apply only to the resources in the role's resource groups */
+        RESOURCE,
+
+        /** bundle permissions apply only to the bundles in the role's bundle groups */
+        BUNDLE
     }
 
     private Target target;

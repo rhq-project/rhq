@@ -740,5 +740,41 @@
         <column name="NEW_DRIFT_FILE" type="VARCHAR2" size="64" required="false" references="RHQ_DRIFT_FILE"/>        
     </table>
 
+    <table name="RHQ_BUNDLE_GROUP">
+        <column name="ID" default="sequence-only" initial="10001"
+                primarykey="true" required="true" type="INTEGER"/>
+        <column name="NAME" required="true" size="4000" type="VARCHAR2"/>
+        <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
+        <column name="CTIME" type="LONG"/>
+        <column name="MTIME" type="LONG"/>
+    </table>
+
+    <!-- Many To Many mapping for bundles to bundle groups -->
+    <table name="RHQ_BUNDLE_GROUP_BUNDLE_MAP">
+        <column name="BUNDLE_ID" required="true" type="INTEGER" references="RHQ_BUNDLE"/>
+        <column name="BUNDLE_GROUP_ID" required="true" type="INTEGER" references="RHQ_BUNDLE_GROUP"/>
+
+        <!-- not using full words to fit index name length -->
+        <constraint name="RHQ_BUNDLE_GROUP_BUN_MAP_KEY">
+            <primaryKey>
+                <field ref="BUNDLE_ID"/>
+                <field ref="BUNDLE_GROUP_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
+    <!--  this would be better in authz-schema but too early in the chain, so putting it here  -->    
+    <table name="RHQ_ROLE_BUNDLE_GROUP_MAP">
+        <column name="ROLE_ID" required="true" type="INTEGER" references="RHQ_ROLE"/>
+        <column name="BUNDLE_GROUP_ID" required="true" type="INTEGER" references="RHQ_BUNDLE_GROUP"/>
+
+        <constraint name="RHQ_ROLE_BUN_GROUP_MAP_KEY">
+            <primaryKey>
+                <field ref="ROLE_ID"/>
+                <field ref="BUNDLE_GROUP_ID"/>
+            </primaryKey>
+        </constraint>
+    </table>
+
 </dbsetup>
 

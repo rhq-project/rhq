@@ -65,13 +65,12 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 public class DashboardLinkUtility {
     final static Messages MSG = CoreGUI.getMessages();
 
-    public DashboardLinkUtility getInstance(){
-        return new DashboardLinkUtility();
+    private DashboardLinkUtility() {
     }
-    private DashboardLinkUtility(){ }
 
-    public static MenuItem buildMetricsMenu(final ResourceType type, final Resource resource) {
-        MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
+    public static MenuItem buildMetricsMenu(final ResourceType resourceType, final Resource resource, String label) {
+
+        MenuItem measurements = new MenuItem(label);
         final Menu measurementsSubMenu = new Menu();
 
         DashboardCriteria criteria = new DashboardCriteria();
@@ -87,7 +86,7 @@ public class DashboardLinkUtility {
                     //sort the display items alphabetically
                     TreeSet<String> ordered = new TreeSet<String>();
                     Map<String, MeasurementDefinition> definitionMap = new HashMap<String, MeasurementDefinition>();
-                    for (MeasurementDefinition m : type.getMetricDefinitions()) {
+                    for (MeasurementDefinition m : resourceType.getMetricDefinitions()) {
                         ordered.add(m.getDisplayName());
                         definitionMap.put(m.getDisplayName(), m);
                     }

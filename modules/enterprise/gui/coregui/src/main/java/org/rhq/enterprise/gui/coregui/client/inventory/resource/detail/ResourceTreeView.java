@@ -32,11 +32,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import com.google.gwt.http.client.Request;
-import com.google.gwt.http.client.RequestBuilder;
-import com.google.gwt.http.client.RequestCallback;
-import com.google.gwt.http.client.RequestException;
-import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSCallback;
@@ -60,17 +55,8 @@ import com.smartgwt.client.widgets.tree.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickEvent;
 import com.smartgwt.client.widgets.tree.events.NodeContextClickHandler;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.domain.criteria.DashboardCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
-import org.rhq.core.domain.criteria.SubjectCriteria;
-import org.rhq.core.domain.dashboard.Dashboard;
-import org.rhq.core.domain.dashboard.DashboardPortlet;
-import org.rhq.core.domain.measurement.DataType;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -82,11 +68,9 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.tree.EnhancedTreeNode;
-import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
@@ -101,8 +85,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTyp
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
  * @author Jay Shaughnessy
@@ -562,7 +544,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         resourceContextMenu.addItem(operations);
 
         // Metric graph addition menu
-        resourceContextMenu.addItem(buildMetricsMenu(resourceType, resource));
+        resourceContextMenu.addItem(DashboardLinkUtility.buildMetricsMenu(resourceType, resource, MSG.view_tree_common_contextMenu_measurements()));
 
         // Create Child Menu and Manual Import Menu
         final Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
@@ -725,190 +707,6 @@ public class ResourceTreeView extends EnhancedVLayout {
         tree.reloadChildren(refreshNode);
     }
 
-    private MenuItem buildMetricsMenu(final ResourceType type, final Resource resource) {
-        MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
-        final Menu measurementsSubMenu = new Menu();
-
-        DashboardCriteria criteria = new DashboardCriteria();
-        GWTServiceLookup.getDashboardService().findDashboardsByCriteria(criteria,
-            new AsyncCallback<PageList<Dashboard>>() {
-
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(),
-                        caught);
-                }
-
-                public void onSuccess(PageList<Dashboard> result) {
-                    //sort the display items alphabetically
-                    TreeSet<String> ordered = new TreeSet<String>();
-                    Map<String, MeasurementDefinition> definitionMap = new HashMap<String, MeasurementDefinition>();
-                    for (MeasurementDefinition m : type.getMetricDefinitions()) {
-                        ordered.add(m.getDisplayName());
-                        definitionMap.put(m.getDisplayName(), m);
-                    }
-
-                    for (String displayName : ordered) {
-                        final MeasurementDefinition def = definitionMap.get(displayName);
-                        //only add menu items for Measurement
-                        if (def.getDataType().equals(DataType.MEASUREMENT)) {
-                            MenuItem defItem = new MenuItem(def.getDisplayName());
-                            measurementsSubMenu.addItem(defItem);
-                            Menu defSubItem = new Menu();
-                            defItem.setSubmenu(defSubItem);
-
-                            for (final Dashboard d : result) {
-                                MenuItem addToDBItem = new MenuItem(MSG
-                                    .view_tree_common_contextMenu_addChartToDashboard(d.getName()));
-                                defSubItem.addItem(addToDBItem);
-
-                                addToDBItem.addClickHandler(new ClickHandler() {
-
-                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                        DashboardPortlet p = new DashboardPortlet(MSG
-                                            .view_tree_common_contextMenu_resourceGraph(), ResourceD3GraphPortlet.KEY,
-                                            250);
-                                        p.getConfiguration().put(
-                                            new PropertySimple(ResourceD3GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
-                                        p.getConfiguration().put(
-                                            new PropertySimple(ResourceD3GraphPortlet.CFG_DEFINITION_ID, def.getId()));
-
-                                        d.addPortlet(p);
-
-                                        GWTServiceLookup.getDashboardService().storeDashboard(d,
-                                            new AsyncCallback<Dashboard>() {
-
-                                                public void onFailure(Throwable caught) {
-                                                    CoreGUI.getErrorHandler().handleError(
-                                                        MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
-                                                        caught);
-                                                }
-
-                                                public void onSuccess(Dashboard result) {
-                                                    CoreGUI
-                                                        .getMessageCenter()
-                                                        .notify(
-                                                            new Message(
-                                                                MSG.view_tree_common_contextMenu_saveChartToDashboardSuccessful(result
-                                                                    .getName()), Message.Severity.Info));
-                                                }
-                                            });
-
-                                    }
-
-                                });
-
-
-                            }//end dashboard iteration
-
-                            //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
-                            String currentViewPath = History.getToken();
-                            if (currentViewPath.contains("Monitoring/Metrics")) {
-                                MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
-                                defSubItem.addItem(addGraphItem);
-
-                                addGraphItem.addClickHandler(new ClickHandler() {
-                                    public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                                        //generate javascript to call out to.
-                                        //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
-                                        if (getScheduleDefinitionId(resource, def.getName()) > -1) {
-                                            final String resourceGraphElements = resource.getId() + ","
-                                                + getScheduleDefinitionId(resource, def.getName());
-
-                                            //Once, the portal-war will be rewritten to GWT and operations performed
-                                            //within the iframe + JSF will update the user preferences, the following
-                                            //2 lines could be uncommented and the lines below them refactorized
-                                            //MeasurementUserPreferences measurementPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-                                            //String selectedView = measurementPreferences.getSelectedView(String.valueOf(resource.getId()));
-
-                                            final int sid = UserSessionManager.getSessionSubject().getId();
-                                            SubjectCriteria c = new SubjectCriteria();
-                                            c.addFilterId(sid);
-
-                                            GWTServiceLookup.getSubjectService().findSubjectsByCriteria(c,
-                                                new AsyncCallback<PageList<Subject>>() {
-                                                    public void onSuccess(PageList<Subject> result) {
-                                                        if (result.size() > 0) {
-                                                            UserPreferences uPreferences = new UserPreferences(result
-                                                                .get(0));
-                                                            MeasurementUserPreferences mPreferences = new MeasurementUserPreferences(
-                                                                uPreferences);
-                                                            String selectedView = mPreferences.getSelectedView(String
-                                                                .valueOf(resource.getId()));
-
-                                                            addNewMetric(String.valueOf(resource.getId()),
-                                                                selectedView, resourceGraphElements);
-                                                        } else {
-                                                            Log.trace("Error obtaining subject with id:" + sid);
-                                                        }
-                                                    }
-
-                                                    public void onFailure(Throwable caught) {
-                                                        Log.trace("Error obtaining subject with id:" + sid, caught);
-                                                    }
-                                                });
-                                        }
-                                    }
-                                });
-                            } // end add the "add to view" menu item
-                        }//end trait exclusion
-                    }//end measurement def iteration
-
-                }
-            });
-        measurements.setSubmenu(measurementsSubMenu);
-        return measurements;
-    }
-
-    private void addNewMetric(String id, String selectedView, String resourceGraphElements) {
-        //construct portal.war url to access
-        String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
-        baseUrl += "?id=" + id;
-        baseUrl += "&view=" + selectedView;
-        baseUrl += "&action=addChart&metric=" + resourceGraphElements;
-        final String url = baseUrl;
-        //initiate HTTP request
-        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
-
-        try {
-            b.setCallback(new RequestCallback() {
-                public void onResponseReceived(final Request request, final Response response) {
-                    Log.trace("Successfully submitted request to add graph to view:" + url);
-
-                    //kick off a page reload.
-                    String currentViewPath = History.getToken();
-                    CoreGUI.goToView(currentViewPath, true);
-                }
-
-                @Override
-                public void onError(Request request, Throwable t) {
-                    Log.trace("Error adding Metric:" + url, t);
-                }
-            });
-            b.send();
-        } catch (RequestException e) {
-            Log.trace("Error adding Metric:" + url, e);
-        }
-    }
-
-    /** Locate the specific schedule definition using the definition identifier.
-     */
-    private int getScheduleDefinitionId(Resource resource, String definitionName) {
-        int id = -1;
-        if (resource.getSchedules() != null) {
-            boolean located = false;
-            MeasurementSchedule[] schedules = new MeasurementSchedule[resource.getSchedules().size()];
-            resource.getSchedules().toArray(schedules);
-            for (int i = 0; (!located && i < resource.getSchedules().size()); i++) {
-                MeasurementSchedule schedule = schedules[i];
-                MeasurementDefinition definition = schedule.getDefinition();
-                if ((definition != null) && definition.getName().equals(definitionName)) {
-                    located = true;
-                    id = schedule.getId();
-                }
-            }
-        }
-        return id;
-    }
 
     private void setRootResource(Resource rootResource) {
         this.rootResource = rootResource;

@@ -44,21 +44,18 @@ import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
 import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
 import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
 import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
+import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
+import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.grid.events.SortChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SortEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.menu.MenuItem;
-import com.smartgwt.client.widgets.menu.events.ClickHandler;
-import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+import com.smartgwt.client.widgets.menu.Menu;
 
-import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -68,12 +65,12 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphLis
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.DashboardLinkUtility;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
-import org.rhq.enterprise.gui.coregui.client.util.preferences.UserPreferences;
 
 /**
  * Views a resource's metrics in a tabular view with sparkline graph and optional detailed d3 graph.
@@ -86,13 +83,18 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     private final Resource resource;
     private final AbstractD3GraphListView abstractD3GraphListView;
 
-    private MeasurementUserPreferences measurementUserPrefs;
+    private final MeasurementUserPreferences measurementUserPrefs;
+    private final Menu addToDashboardMenu;
 
     public MetricsTableView(Resource resource, AbstractD3GraphListView abstractD3GraphListView) {
         super();
         this.resource = resource;
         this.abstractD3GraphListView = abstractD3GraphListView;
         setDataSource(new MetricsViewDataSource(resource));
+        addToDashboardMenu = new Menu();
+        addToDashboardMenu.setWidth(200);
+        addToDashboardMenu.setItems(DashboardLinkUtility.buildMetricsMenu(resource.getResourceType(), resource,
+            MSG.view_metric_addToDashboard()));
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
     }
 
@@ -104,7 +106,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      */
     @Override
     protected ListGrid createListGrid() {
-        return new MetricsTableListGrid(resource);
+        return new MetricsTableListGrid(resource, addToDashboardMenu);
     }
 
     protected void configureTable() {
@@ -112,7 +114,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         setListGridFields(fields.toArray(new ListGridField[0]));
 
         addTableAction(MSG.view_measureTable_getLive(), new ShowLiveDataTableAction(this));
-        addTableAction(MSG.view_measureTable_addToDashboard(), new AddToDashboardTableAction(this));
+        addExtraWidget(addToDashboardMenu, false);
 
     }
 
@@ -230,76 +232,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
     }
 
-    private static class AddToDashboardTableAction implements TableAction {
-        private MetricsTableView metricsTableView;
-
-        public AddToDashboardTableAction(MetricsTableView metricsTableView) {
-            this.metricsTableView = metricsTableView;
-        }
-
-        @Override
-        public boolean isEnabled(ListGridRecord[] selection) {
-            return selection != null && selection.length > 0;
-        }
-
-        @Override
-        public void executeAction(ListGridRecord[] selection, Object actionValue) {
-            //@todo: Add to Dashboard
-        }
-
-        public void abc(){
-
-            MenuItem addGraphItem = new MenuItem(MSG.common_title_add_graph_to_view());
-            defSubItem.addItem(addGraphItem);
-
-            addGraphItem.addClickHandler(new ClickHandler() {
-                public void onClick(MenuItemClickEvent menuItemClickEvent) {
-                    //generate javascript to call out to.
-                    //Ex. menuLayers.hide();addMetric('${metric.resourceId},${metric.scheduleId}')
-                    if (getScheduleDefinitionId(resource, def.getName()) > -1) {
-                        final String resourceGraphElements = resource.getId() + ","
-                                + getScheduleDefinitionId(resource, def.getName());
-
-                        //Once, the portal-war will be rewritten to GWT and operations performed
-                        //within the iframe + JSF will update the user preferences, the following
-                        //2 lines could be uncommented and the lines below them refactorized
-                        //MeasurementUserPreferences measurementPreferences = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
-                        //String selectedView = measurementPreferences.getSelectedView(String.valueOf(resource.getId()));
-
-                        final int sid = UserSessionManager.getSessionSubject().getId();
-                        SubjectCriteria c = new SubjectCriteria();
-                        c.addFilterId(sid);
-
-                        GWTServiceLookup.getSubjectService().findSubjectsByCriteria(c,
-                                new AsyncCallback<PageList<Subject>>() {
-                                    public void onSuccess(PageList<Subject> result) {
-                                        if (result.size() > 0) {
-                                            UserPreferences uPreferences = new UserPreferences(result
-                                                    .get(0));
-                                            MeasurementUserPreferences mPreferences = new MeasurementUserPreferences(
-                                                    uPreferences);
-                                            String selectedView = mPreferences.getSelectedView(String
-                                                    .valueOf(resource.getId()));
-
-                                            addNewMetric(String.valueOf(resource.getId()),
-                                                    selectedView, resourceGraphElements);
-                                        } else {
-                                            Log.trace("Error obtaining subject with id:" + sid);
-                                        }
-                                    }
-
-                                    public void onFailure(Throwable caught) {
-                                        Log.trace("Error obtaining subject with id:" + sid, caught);
-                                    }
-                                });
-                    }
-                }
-            });
-
-        }
-
-    }
-
     @Override
     /**
      * Redraw Graphs in this context means to refresh the table and redraw open graphs.
@@ -322,10 +254,13 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         private static final int TREEVIEW_DETAIL_CHART_HEIGHT = 205;
         private static final int NUM_METRIC_POINTS = 60;
         private Resource resource;
+        final private Menu addToDashboardMenu;
 
-        public MetricsTableListGrid(Resource resource) {
+        public MetricsTableListGrid(final Resource resource, final Menu dashboardMenu) {
             super();
             this.resource = resource;
+            this.addToDashboardMenu = dashboardMenu;
+            this.addToDashboardMenu.disable();
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
             setExpansionMode(ExpansionMode.DETAIL_FIELD);
@@ -345,10 +280,10 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             addSortChangedHandler(new SortChangedHandler() {
                 @Override
                 public void onSortChanged(SortEvent sortEvent) {
-                    Log.debug("SortChangeHandler");
                     redrawGraphs();
                 }
             });
+
         }
 
         @Override

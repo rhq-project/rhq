@@ -694,7 +694,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }; // end public closure
         }();
 
-        if(typeof chartContext.data !== 'undefined' && chartContext.data.length > 0){
+        if(typeof chartContext.data !== 'undefined' && chartContext.data !== null && chartContext.data.length > 0){
             metricStackedBarGraph.draw(chartContext);
         }
 

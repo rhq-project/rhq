@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.EnumSet;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
@@ -60,12 +61,11 @@ public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
     
     private static final String GROUP_NAME = "RHQ Storage Nodes";
-//    private static final String GROUP_NAME = "storage services";
     
     private final NamedTabSet tabset;
     private TabInfo tableTabInfo = new TabInfo(0, new ViewName("Nodes"));
-    private TabInfo settingsTabInfo = new TabInfo(1, new ViewName("Settings", "Global Settings"));
-    private TabInfo alertsTabInfo = new TabInfo(2, new ViewName("Alerts", "Global Alerts"));
+    private TabInfo settingsTabInfo = new TabInfo(1, new ViewName("Settings", "Cluster Settings"));
+    private TabInfo alertsTabInfo = new TabInfo(2, new ViewName("Alerts", "Cluster Alerts"));
     private TabInfo backupTabInfo = new TabInfo(3, new ViewName("Backup"));
     private StorageNodeTableView table;
 
@@ -97,6 +97,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName
                 CoreGUI.goToView(VIEW_PATH + "/" + alertsTabInfo.name);
             }
         });
+        scheduleUnacknowledgedAlertsPollingJob(alerts); 
         
         final NamedTab backup = new NamedTab(backupTabInfo.name);
         backup.addTabSelectedHandler(new TabSelectedHandler() {
@@ -181,6 +182,27 @@ public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName
 
                 }
             });
+    }
+    
+    private void scheduleUnacknowledgedAlertsPollingJob(final NamedTab alerts) {
+        new Timer() {
+            public void run() {
+                GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCount(new AsyncCallback<Integer>() {
+                    @Override
+                        public void onSuccess(Integer result) {
+                            alerts.setTitle(alerts.getTitle()
+                                + (result != 0 ? " <font color='#CC0000;'>(" + result + ")</font>" : " (" + result
+                                    + ")"));
+                            schedule(5 * 1000);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                        schedule(60 * 1000);
+                    }
+                });
+            }
+        }.run();
     }
 
     @Override

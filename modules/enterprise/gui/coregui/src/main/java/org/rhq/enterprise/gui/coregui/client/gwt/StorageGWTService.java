@@ -70,4 +70,6 @@ public interface StorageGWTService extends RemoteService {
     PageList<StorageNodeLoadComposite> getStorageNodeComposites() throws RuntimeException;
     
     Integer[] findResourcesWithAlertDefinitions() throws RuntimeException;
+    
+    int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException;
 }

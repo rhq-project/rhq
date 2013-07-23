@@ -47,6 +47,7 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite.MeasurementAggregateWithUnits;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -200,7 +201,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
     public static class StorageNodeLoadCompositeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
         public static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
-        public static final String DISK_SPACE_PERCENTAGE_KEY = "diskSpacePercentage";
+        public static final String DATA_DISK_SPACE_PERCENTAGE_KEY = "dataDiskSpacePercentage";
+        public static final String TOTAL_DISK_SPACE_PERCENTAGE_KEY = "totalDiskSpacePercentage";
         private int id;
 
         public static StorageNodeLoadCompositeDatasource getInstance(int id) {
@@ -296,10 +298,15 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
                         "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY),
                     Arrays.<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"),
                     Arrays.<Object> asList(
-                        loadComposite.getPartitionDiskUsedPercentage(),
-                        "Disk Space Percent Used",
-                        "Percentage of total disk space used for the partition that contains the data files.If multiple data locations are specified then this will report the average utilization accross all the partitions.",
-                        DISK_SPACE_PERCENTAGE_KEY),
+                        loadComposite.getDataDiskUsedPercentage(),
+                        "Data Disk Space Percent Used",
+                        "Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
+                        DATA_DISK_SPACE_PERCENTAGE_KEY),
+                    Arrays.<Object> asList(
+                        loadComposite.getTotalDiskUsedPercentage(),
+                        "Total Disk Space Percent Used",
+                        "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
+                        TOTAL_DISK_SPACE_PERCENTAGE_KEY),
                     Arrays.<Object> asList(
                         loadComposite.getDataDiskUsed(),
                         "Total Disk Space Used",
@@ -323,6 +330,21 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
                 tokens.setAttribute("avg", loadComposite.getTokens().getAvg());
                 tokens.setAttribute("max", loadComposite.getTokens().getMax());
                 recordsList.add(tokens);
+            }
+
+
+            if (loadComposite.getFreeDiskToDataSizeRatio() != null){
+                MeasurementAggregate aggregate = loadComposite.getFreeDiskToDataSizeRatio();
+
+                ListGridRecord record = new ListGridRecord();
+                record.setAttribute("id", "freeDiskToDataSizeRatio");
+                record.setAttribute("name", "Free Disk To Data Size Ratio");
+                record.setAttribute("hover", "Ratio of (Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.");
+                record.setAttribute("min", aggregate.getMin());
+                record.setAttribute("avg", aggregate.getAvg());
+                record.setAttribute("max", aggregate.getMax());
+
+                recordsList.add(record);
             }
 
             ListGridRecord[] records = recordsList.toArray(new ListGridRecord[recordsList.size()]);

@@ -253,13 +253,16 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
         // get the schedule ids for Storage Service resource
-        final String tokensMetric = "Tokens", ownershipMetric = "Ownership", diskUsedPercentageMetric = "Calculated.PartitionDiskUsedPercentage";
+        final String tokensMetric = "Tokens", ownershipMetric = "Ownership";
+        final String dataDiskUsedPercentageMetric = "Calculated.DataDiskUsedPercentage";
+        final String totalDiskUsedPercentageMetric = "Calculated.TotalDiskUsedPercentage";
+        final String freeDiskToDataRatioMetric = "Calculated.FreeDiskToDataSizeRatio";
         final String loadMetric = "Load", keyCacheSize = "KeyCacheSize", rowCacheSize = "RowCacheSize", totalCommitLogSize = "TotalCommitlogSize";
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
         query.setParameter("parrentId", resourceId).setParameter("metricNames",
-            Arrays.asList(tokensMetric, ownershipMetric, diskUsedPercentageMetric, loadMetric, keyCacheSize,
-                rowCacheSize, totalCommitLogSize));
+            Arrays.asList(tokensMetric, ownershipMetric, loadMetric, keyCacheSize, rowCacheSize, totalCommitLogSize,
+                dataDiskUsedPercentageMetric, totalDiskUsedPercentageMetric, freeDiskToDataRatioMetric));
         for (Object[] pair : query.getResultList()) {
             scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
         }
@@ -292,10 +295,22 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setActuallyOwns(ownershipAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(diskUsedPercentageMetric)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits diskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
+
+            //calculated disk space related metrics
+            if ((scheduleId = scheduleIdsMap.get(dataDiskUsedPercentageMetric)) != null) {
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits dataDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
-                result.setPartitionDiskUsedPercentage(diskUsedPercentageAggregateWithUnits);
+                result.setDataDiskUsedPercentage(dataDiskUsedPercentageAggregateWithUnits);
+            }
+            if ((scheduleId = scheduleIdsMap.get(totalDiskUsedPercentageMetric)) != null) {
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
+                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                result.setDataDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
+            }
+            if ((scheduleId = scheduleIdsMap.get(freeDiskToDataRatioMetric)) != null) {
+                MeasurementAggregate freeDiskToDataRatioAggregate = measurementManager.getAggregate(subject,
+                    scheduleId, beginTime, endTime);
+                result.setFreeDiskToDataSizeRatio(freeDiskToDataRatioAggregate);
             }
 
             if ((scheduleId = scheduleIdsMap.get(loadMetric)) != null) {

@@ -41,9 +41,13 @@ public class StorageNodeLoadComposite implements Serializable {
     private MeasurementAggregateWithUnits heapUsed;
     private MeasurementAggregateWithUnits heapPercentageUsed;
     private MeasurementAggregateWithUnits load;
-    private MeasurementAggregateWithUnits partitionDiskUsedPercentage;
     private MeasurementAggregateWithUnits dataDiskUsed;
     private MeasurementAggregate tokens;
+
+    private MeasurementAggregateWithUnits dataDiskUsedPercentage;
+    private MeasurementAggregateWithUnits totalDiskUsedPercentage;
+    private MeasurementAggregate freeDiskToDataSizeRatio;
+
     private MeasurementAggregateWithUnits actuallyOwns;
 
     public StorageNodeLoadComposite() {
@@ -113,35 +117,59 @@ public class StorageNodeLoadComposite implements Serializable {
     public void setHeapPercentageUsed(MeasurementAggregateWithUnits heapPercentageUsed) {
         this.heapPercentageUsed = heapPercentageUsed;
     }
-    
+
     /**
      * @deprecated use {@link #getPartitionDiskUsedPercentage() getPartitionDiskUsedPercentage()} instead
-     * 
+     *
      * @return partitionDiskUsedPercentage
      */
     public MeasurementAggregateWithUnits getDiskSpacePercentageUsed() {
-        return getPartitionDiskUsedPercentage();
+        return getDataDiskUsedPercentage();
     }
-    
+
     /**
      * @deprecated use {@link #setPartitionDiskUsedPercentage() setPartitionDiskUsedPercentage()} instead
-     * 
+     *
      * @param partitionDiskUsedPercentage
      */
-    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits partitionDiskUsedPercentage) {
-        setPartitionDiskUsedPercentage(partitionDiskUsedPercentage);
+    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits diskUsedPercentage) {
+        setDataDiskUsedPercentage(diskUsedPercentage);
     }
 
     /**
-     * @return A computed metric for the percentage of disk space used on the partition that contains the SSTables.
-     *         If multiple data locations are configured then the partition with the highest utilization will be reported.
+     * @return A computed metric for the percentage of disk space used by data file on the corresponding partitions.
+     *         If multiple data locations are configured then the aggregate is calculated.
      */
-    public MeasurementAggregateWithUnits getPartitionDiskUsedPercentage() {
-        return partitionDiskUsedPercentage;
+    public MeasurementAggregateWithUnits getDataDiskUsedPercentage() {
+        return dataDiskUsedPercentage;
     }
 
-    public void setPartitionDiskUsedPercentage(MeasurementAggregateWithUnits partitionDiskUsedPercentage) {
-        this.partitionDiskUsedPercentage = partitionDiskUsedPercentage;
+    public void setDataDiskUsedPercentage(MeasurementAggregateWithUnits dataDiskUsedPercentage) {
+        this.dataDiskUsedPercentage = dataDiskUsedPercentage;
+    }
+
+    /**
+     * @return A computed metric for the percentage of total (system + Storage Node data file) disk space used the partitions where data files are stored.
+     *         If multiple data locations are configured then the aggregate is calculated.
+     */
+    public MeasurementAggregateWithUnits getTotalDiskUsedPercentage() {
+        return totalDiskUsedPercentage;
+    }
+
+    public void setTotalDiskUsedPercentage(MeasurementAggregateWithUnits totalDiskUsedPercentage) {
+        this.totalDiskUsedPercentage = totalDiskUsedPercentage;
+    }
+
+    /**
+     * @return A computed metric for the percentage of total (system + Storage Node data file) disk space used the partitions where data files are stored.
+     *         If multiple data locations are configured then the aggregate is calculated.
+     */
+    public MeasurementAggregate getFreeDiskToDataSizeRatio() {
+        return freeDiskToDataSizeRatio;
+    }
+
+    public void setFreeDiskToDataSizeRatio(MeasurementAggregate freeDiskToDataSizeRatio) {
+        this.freeDiskToDataSizeRatio = freeDiskToDataSizeRatio;
     }
 
     /**
@@ -202,7 +230,7 @@ public class StorageNodeLoadComposite implements Serializable {
         builder.append("heapUsed=").append(heapUsed).append(", ");
         builder.append("heapPercentageUsed=").append(heapPercentageUsed).append(", ");
         builder.append("load=").append(load).append(", ");
-        builder.append("partitionDiskUsedPercentage=").append(partitionDiskUsedPercentage).append(", ");
+        builder.append("dataUsedPercentage=").append(dataDiskUsedPercentage).append(", ");
         builder.append("dataDiskUsed=").append(dataDiskUsed).append(", ");
         builder.append("tokens=").append(tokens).append(", ");
         builder.append("actuallyOwns=").append(actuallyOwns);

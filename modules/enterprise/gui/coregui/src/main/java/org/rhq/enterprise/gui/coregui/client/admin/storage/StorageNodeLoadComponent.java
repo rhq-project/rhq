@@ -51,8 +51,9 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
                 if ("avg".equals(getFieldName(colNum))
-                    && (StorageNodeLoadCompositeDatasource.HEAP_PERCENTAGE_KEY.equals(record.getAttribute("id")) || StorageNodeLoadCompositeDatasource.DISK_SPACE_PERCENTAGE_KEY
-                        .equals(record.getAttribute("id")))) {
+                    && (StorageNodeLoadCompositeDatasource.HEAP_PERCENTAGE_KEY.equals(record.getAttribute("id")) ||
+                        StorageNodeLoadCompositeDatasource.DATA_DISK_SPACE_PERCENTAGE_KEY.equals(record.getAttribute("id")) ||
+                        StorageNodeLoadCompositeDatasource.TOTAL_DISK_SPACE_PERCENTAGE_KEY.equals(record.getAttribute("id")))) {
                     if (record.getAttributeAsFloat("avgFloat") > .85) {
                         return "font-weight:bold; color:#d64949;";
                     } else if (record.getAttributeAsFloat("avgFloat") > .7) {

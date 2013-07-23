@@ -136,6 +136,7 @@
         <c:simple-property name="threadStackSize" type="integer" description="The thread stack size. This memory is allocated to each thread off heap. The
                                                                                 value should be an integer that will be interpreted in kilobytes."/>
         <c:simple-property name="jmxPort" type="integer" description="JMX port JVM option."/>
+        <c:simple-property name="restartIfRequired" type="boolean" required="true" default="false" description="If [true] then restart the server at the end of the update if and if only the updates made require a restart. If [false] the server will not be restarted regardless of the updates made."/>
       </parameters>
       <results>
         <c:simple-property name="operationResult" description="Outcome of updating the configuration."/>

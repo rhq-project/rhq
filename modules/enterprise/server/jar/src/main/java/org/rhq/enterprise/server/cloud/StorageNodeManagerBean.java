@@ -645,21 +645,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
             parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
             parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
+            parameters.setSimpleValue("restartIfRequired", "true");
 
-            boolean updateConfigurationResult = runOperationAndWaitForResult(subject, storageNodeResource,
-                UPDATE_CONFIGURATION_OPERATION, parameters);
-
-            if (updateConfigurationResult) {
-                boolean restartResult = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
-                    null);
-
-                if (restartResult) {
-                    storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
-                    entityManager.persist(storageNode);
-
-                    return true;
-                }
-            }
+            return runOperationAndWaitForResult(subject, storageNodeResource, UPDATE_CONFIGURATION_OPERATION,
+                parameters);
         }
 
         return false;

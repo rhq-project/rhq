@@ -643,6 +643,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             Configuration parameters = new Configuration();
             parameters.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
             parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
+            parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
+            parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
 
             boolean updateConfigurationResult = runOperationAndWaitForResult(subject, storageNodeResource,
                 UPDATE_CONFIGURATION_OPERATION, parameters);

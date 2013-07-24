@@ -111,7 +111,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
                 clusterBuilder = clusterBuilder.withCredentials(username, password);
             }
 
-//            this.cassandraSession = clusterBuilder.build().connect(clusterName);
+            this.cassandraSession = clusterBuilder.build().connect(clusterName);
         } catch (Exception e) {
             LOG.error("Connect to Cassandra " + host + ":" + nativePort, e);
             throw e;

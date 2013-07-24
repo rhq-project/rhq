@@ -83,6 +83,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
     public static final String PRIORITY_ICON_LOW = ImageManager.getAlertIcon(AlertPriority.LOW);
 
     public static final String FILTER_PRIORITIES = "priorities";
+    public static final String FILTER_RESOURCE_IDS = "resourceIds";
 
     private AlertGWTServiceAsync alertService = GWTServiceLookup.getAlertService();
 
@@ -360,6 +361,7 @@ public class AlertDataSource extends RPCDataSource<Alert, AlertCriteria> {
             Date endOfDay = DateFilterItem.adjustTimeToEndOfDay(endDateFilter);
             criteria.addFilterEndTime(endOfDay.getTime());
         }
+        criteria.addFilterResourceIds(getArrayFilter(request, FILTER_RESOURCE_IDS, Integer.class));
         criteria.addFilterEntityContext(entityContext);
         criteria.fetchConditionLogs(true);
 //        criteria.fetchGroupAlertDefinition(true);

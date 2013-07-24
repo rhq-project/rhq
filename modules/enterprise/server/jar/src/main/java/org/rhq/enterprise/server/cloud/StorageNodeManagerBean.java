@@ -484,9 +484,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         List<StorageNode> nodes = getStorageNodes();
         PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
         long endTime = System.currentTimeMillis();
-        long beginTime = endTime - (1 * 60 * 60 * 1000);
+        long beginTime = endTime - (8 * 60 * 60 * 1000);
         for (StorageNode node : nodes) {
-            result.add(getLoad(subjectManager.getOverlord(), node, beginTime, endTime));
+            StorageNodeLoadComposite composite = getLoad(subjectManager.getOverlord(), node, beginTime, endTime);
+            int unackAlerts = findNotAcknowledgedStorageNodeAlerts(subjectManager.getOverlord(), node).size();
+            composite.setUnackAlerts(unackAlerts);
+            result.add(composite);
         }
         return result;
     }

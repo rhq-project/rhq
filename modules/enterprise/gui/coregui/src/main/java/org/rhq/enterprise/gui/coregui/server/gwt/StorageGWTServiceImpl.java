@@ -22,16 +22,15 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import org.rhq.core.clientapi.util.ArrayUtil;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.gwt.StorageGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
@@ -117,6 +116,23 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
     public int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException {
         try {
             return storageNodeManager.findNotAcknowledgedStorageNodeAlerts(getSessionSubject()).size();
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public List<Integer> findNotAcknowledgedStorageNodeAlertsCounts(List<Integer> storageNodeIds) throws RuntimeException {
+        try {
+            List<Integer> unackAlertCounts = new ArrayList<Integer>(storageNodeIds.size());
+            for (int storageNodeId : storageNodeIds) {
+                StorageNode node = new StorageNode();
+                node.setId(storageNodeId);
+                int num = storageNodeManager.findNotAcknowledgedStorageNodeAlerts(getSessionSubject(), node).size();
+                unackAlertCounts.add(num);
+            }
+            assert storageNodeIds.size() == unackAlertCounts.size();
+            return unackAlertCounts;
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

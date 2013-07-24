@@ -185,8 +185,6 @@ public interface StorageNodeManagerLocal {
      * @throws IllegalStateException if the group is not found or does not exist.
      */
     ResourceGroup getStorageNodeGroup();
-    
-    Integer[] findResourcesWithAlertDefinitions();
 
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
 

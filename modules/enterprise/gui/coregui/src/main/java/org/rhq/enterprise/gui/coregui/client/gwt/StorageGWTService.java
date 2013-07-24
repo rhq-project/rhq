@@ -22,6 +22,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.List;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.StorageNode;
@@ -72,4 +74,6 @@ public interface StorageGWTService extends RemoteService {
     Integer[] findResourcesWithAlertDefinitions() throws RuntimeException;
     
     int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException;
+        
+    List<Integer> findNotAcknowledgedStorageNodeAlertsCounts(List<Integer> storageNodeIds) throws RuntimeException;
 }

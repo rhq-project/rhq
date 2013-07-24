@@ -77,7 +77,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         prefs = measurementUserPreferences.getMetricRangePreferences();
         Log.debug("ButtonBarDateTimeRangeEditor initialized with start Date: " + new Date(prefs.begin) + " end Date: "
             + new Date(prefs.end));
-        createButtons();
+        //createButtons();
 
     }
 

@@ -49,7 +49,6 @@ import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
 import com.smartgwt.client.widgets.grid.events.SortChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SortEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
-import com.smartgwt.client.widgets.menu.Menu;
 
 import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -65,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphLis
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.DashboardLinkUtility;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -84,7 +82,8 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     private final AbstractD3GraphListView abstractD3GraphListView;
 
     private final MeasurementUserPreferences measurementUserPrefs;
-    private final Menu addToDashboardMenu;
+    private final AddToDashboardComponent addToDashboardComponent;
+    private MetricsTableListGrid metricsTableListGrid;
 
     Set<Integer> expandedRows = new HashSet<Integer>();
 
@@ -92,12 +91,9 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         super();
         this.resource = resource;
         this.abstractD3GraphListView = abstractD3GraphListView;
-        setDataSource(new MetricsViewDataSource(resource));
-        addToDashboardMenu = new Menu();
-        addToDashboardMenu.setWidth(200);
-        addToDashboardMenu.setItems(DashboardLinkUtility.buildMetricsMenu(resource.getResourceType(), resource,
-            MSG.view_metric_addToDashboard()));
         measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+        setDataSource(new MetricsViewDataSource(resource));
+        addToDashboardComponent = new AddToDashboardComponent(resource);
     }
 
     /**
@@ -108,7 +104,9 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      */
     @Override
     protected ListGrid createListGrid() {
-        return new MetricsTableListGrid(this, resource, addToDashboardMenu);
+        metricsTableListGrid = new MetricsTableListGrid(this, resource);
+        addToDashboardComponent.setMetricsListGrid(metricsTableListGrid);
+        return metricsTableListGrid;
     }
 
     protected void configureTable() {
@@ -116,8 +114,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         setListGridFields(fields.toArray(new ListGridField[0]));
 
         addTableAction(MSG.view_measureTable_getLive(), new ShowLiveDataTableAction(this));
-        //addExtraWidget(addToDashboardMenu, false);
-
+        addExtraWidget(addToDashboardComponent, false);
     }
 
     private static class ShowLiveDataTableAction implements TableAction {
@@ -251,20 +248,16 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
     }
 
-    private class MetricsTableListGrid extends ListGrid {
+    public class MetricsTableListGrid extends ListGrid {
 
         private static final int TREEVIEW_DETAIL_CHART_HEIGHT = 205;
         private static final int NUM_METRIC_POINTS = 60;
         private Resource resource;
-        final private Menu addToDashboardMenu;
         final MetricsTableView metricsTableView;
 
-        public MetricsTableListGrid(final MetricsTableView metricsTableView, final Resource resource,
-            final Menu dashboardMenu) {
+        public MetricsTableListGrid(final MetricsTableView metricsTableView, final Resource resource) {
             super();
             this.resource = resource;
-            this.addToDashboardMenu = dashboardMenu;
-            this.addToDashboardMenu.disable();
             this.metricsTableView = metricsTableView;
             setCanExpandRecords(true);
             setCanExpandMultipleRecords(true);
@@ -299,8 +292,9 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                     int startRow = dataArrivedEvent.getStartRow();
                     int endRow = dataArrivedEvent.getEndRow();
                     for (int i = startRow; i < endRow; i++) {
-                        if (metricsTableView.expandedRows.contains(getRecord(i).getAttributeAsInt(
-                            MetricsViewDataSource.FIELD_METRIC_DEF_ID))) {
+                        if (null != metricsTableView.expandedRows
+                            && metricsTableView.expandedRows.contains(getRecord(i).getAttributeAsInt(
+                                MetricsViewDataSource.FIELD_METRIC_DEF_ID))) {
                             expandRecord(getRecord(i));
                         }
                     }
@@ -308,7 +302,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             });
 
         }
-
 
         @Override
         protected Canvas getExpansionComponent(final ListGridRecord record) {
@@ -318,7 +311,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
             vLayout.setPadding(5);
 
             final String chartId = "rChart-" + resourceId + "-" + definitionId;
-            Log.debug("getExpansionComponent for: " + chartId);
             HTMLFlow htmlFlow = new HTMLFlow(MetricD3Graph.createGraphMarkerTemplate(chartId,
                 TREEVIEW_DETAIL_CHART_HEIGHT));
             vLayout.addMember(htmlFlow);
@@ -331,7 +323,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        Log.debug("Error retrieving recent metrics charting data for resource [" + resourceId + "]:"
+                        Log.warn("Error retrieving recent metrics charting data for resource [" + resourceId + "]:"
                             + caught.getMessage());
                     }
 

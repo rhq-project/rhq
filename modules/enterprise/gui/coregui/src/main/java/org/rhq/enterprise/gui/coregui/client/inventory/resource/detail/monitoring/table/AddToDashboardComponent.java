@@ -1,0 +1,269 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
+
+import java.util.LinkedHashMap;
+
+import com.google.gwt.http.client.Request;
+import com.google.gwt.http.client.RequestBuilder;
+import com.google.gwt.http.client.RequestCallback;
+import com.google.gwt.http.client.RequestException;
+import com.google.gwt.http.client.Response;
+import com.google.gwt.user.client.History;
+import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.IButton;
+import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
+import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.menu.events.ClickHandler;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
+import com.smartgwt.client.widgets.toolbar.ToolStrip;
+
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.DashboardCriteria;
+import org.rhq.core.domain.dashboard.Dashboard;
+import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.MeasurementSchedule;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resource.graph.ResourceD3GraphPortlet;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.Enhanced;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
+
+/**
+ * @author Mike Thompson
+ */
+public class AddToDashboardComponent extends ToolStrip implements Enhanced {
+    final private Resource resource;
+    private SelectItem dashboardSelectItem;
+    private Dashboard selectedDashboard;
+    private IButton addToDashboardButton;
+    private LinkedHashMap<String, String> dashboardMenuMap;
+    private LinkedHashMap<Integer, Dashboard> dashboardMap;
+    private MetricsTableView.MetricsTableListGrid metricsListGrid;
+
+    public AddToDashboardComponent(Resource resource) {
+        this.resource = resource;
+        setPadding(5);
+        setMembersMargin(15);
+        setWidth(400);
+        dashboardMenuMap = new LinkedHashMap<String, String>();
+        dashboardMap = new LinkedHashMap<Integer, Dashboard>();
+    }
+
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        removeMembers(getMembers());
+        createToolstrip();
+    }
+
+    private void createToolstrip() {
+        addSpacer(15);
+        dashboardSelectItem = new SelectItem();
+        addToDashboardButton = new IButton(MSG.view_metric_addToDashboard());
+
+        dashboardSelectItem = new SelectItem();
+        dashboardSelectItem.setTitle("Dashboards");
+        dashboardSelectItem.setWidth(350);
+        dashboardSelectItem.setPickListWidth(250);
+        populateDashboardMenu();
+        addFormItem(dashboardSelectItem);
+        addMember(addToDashboardButton);
+
+        dashboardSelectItem.addChangeHandler(new ChangeHandler() {
+            @Override
+            public void onChange(ChangeEvent changeEvent) {
+                Integer selectedDashboardId = Integer.valueOf((String) changeEvent.getValue());
+                selectedDashboard = dashboardMap.get(selectedDashboardId);
+            }
+        });
+        addToDashboardButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
+            @Override
+            public void onClick(ClickEvent clickEvent) {
+                ListGridRecord[] selectedRecords = metricsListGrid.getSelectedRecords();
+                for (ListGridRecord selectedRecord : selectedRecords) {
+                    for (MeasurementDefinition measurementDefinition : resource.getResourceType().getMetricDefinitions()) {
+                        if(measurementDefinition.getId() == selectedRecord.getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID)){
+                            Log.debug("**Add to Dashboard -- Storing: "+measurementDefinition.getDisplayName() +" in "+ selectedDashboard.getName());
+                            storeDashboardMetric(selectedDashboard,resource,measurementDefinition);
+                            break;
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    public void populateDashboardMenu() {
+        dashboardMenuMap.clear();
+        dashboardMap.clear();
+
+        DashboardCriteria criteria = new DashboardCriteria();
+        GWTServiceLookup.getDashboardService().findDashboardsByCriteria(criteria,
+                new AsyncCallback<PageList<Dashboard>>() {
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_loadFailed_dashboard(),
+                                caught);
+                    }
+
+                    public void onSuccess(PageList<Dashboard> dashboards) {
+                        for (final Dashboard dashboard : dashboards) {
+                            dashboardMenuMap.put(String.valueOf(dashboard.getId()),
+                                    MSG.view_tree_common_contextMenu_addChartToDashboard(dashboard.getName()));
+                            dashboardMap.put(dashboard.getId(), dashboard);
+                            dashboardSelectItem.setValueMap(dashboardMenuMap);
+                        }
+                    }
+                });
+    }
+
+    /**
+     * The metrics list grid is not available on object creation so we must attach later after it has been initialized.
+     * @param metricsListGrid
+     */
+    public void setMetricsListGrid(MetricsTableView.MetricsTableListGrid metricsListGrid) {
+        this.metricsListGrid = metricsListGrid;
+    }
+
+    /** Locate the specific schedule definition using the definition identifier.
+     */
+    private static int getScheduleDefinitionId(Resource resource, int definitionId) {
+        int id = -1;
+        if (resource.getSchedules() != null) {
+            boolean located = false;
+            MeasurementSchedule[] schedules = new MeasurementSchedule[resource.getSchedules().size()];
+            resource.getSchedules().toArray(schedules);
+            for (int i = 0; (!located && i < resource.getSchedules().size()); i++) {
+                MeasurementSchedule schedule = schedules[i];
+                MeasurementDefinition definition = schedule.getDefinition();
+                if ((definition != null) && definition.getId() == definitionId) {
+                    located = true;
+                    id = schedule.getId();
+                }
+            }
+        }
+        return id;
+    }
+
+    private void storeDashboardMetric(Dashboard dashboard, Resource resource, MeasurementDefinition definition) {
+        DashboardPortlet dashboardPortlet = new DashboardPortlet(MSG.view_tree_common_contextMenu_resourceGraph(),
+            ResourceD3GraphPortlet.KEY, 250);
+        dashboardPortlet.getConfiguration().put(
+            new PropertySimple(ResourceD3GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+        dashboardPortlet.getConfiguration().put(
+            new PropertySimple(ResourceD3GraphPortlet.CFG_DEFINITION_ID, definition.getId()));
+
+        dashboard.addPortlet(dashboardPortlet);
+
+        GWTServiceLookup.getDashboardService().storeDashboard(dashboard, new AsyncCallback<Dashboard>() {
+
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(),
+                    caught);
+            }
+
+            public void onSuccess(Dashboard result) {
+                CoreGUI.getMessageCenter().notify(
+                    new Message(MSG.view_tree_common_contextMenu_saveChartToDashboardSuccessful(result.getName()),
+                        Message.Severity.Info));
+            }
+        });
+    }
+
+    private static void addNewMetric(String id, String selectedView, String resourceGraphElements) {
+        //construct portal.war url to access
+        String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+        baseUrl += "?id=" + id;
+        baseUrl += "&view=" + selectedView;
+        baseUrl += "&action=addChart&metric=" + resourceGraphElements;
+        final String url = baseUrl;
+        //initiate HTTP request
+        final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
+
+        try {
+            b.setCallback(new RequestCallback() {
+                public void onResponseReceived(final Request request, final Response response) {
+                    Log.trace("Successfully submitted request to add graph to view:" + url);
+
+                    //kick off a page reload.
+                    String currentViewPath = History.getToken();
+                    CoreGUI.goToView(currentViewPath, true);
+                }
+
+                @Override
+                public void onError(Request request, Throwable t) {
+                    Log.warn("Error adding Metric:" + url, t);
+                }
+            });
+            b.send();
+        } catch (RequestException e) {
+            Log.warn("Error adding Metric:" + url, e);
+        }
+
+    }
+
+    private static class AddToDashboardClickHandler implements ClickHandler {
+
+        private final Resource resource;
+        private final MeasurementDefinition definition;
+        private final Dashboard dashboard;
+
+        public AddToDashboardClickHandler(Resource resource, MeasurementDefinition definition, Dashboard dashboard) {
+            this.resource = resource;
+            this.definition = definition;
+            this.dashboard = dashboard;
+        }
+
+        public void onClick(MenuItemClickEvent menuItemClickEvent) {
+            DashboardPortlet dashboardPortlet = new DashboardPortlet(MSG.view_tree_common_contextMenu_resourceGraph(),
+                ResourceD3GraphPortlet.KEY, 250);
+            dashboardPortlet.getConfiguration().put(
+                new PropertySimple(ResourceD3GraphPortlet.CFG_RESOURCE_ID, resource.getId()));
+            dashboardPortlet.getConfiguration().put(
+                new PropertySimple(ResourceD3GraphPortlet.CFG_DEFINITION_ID, definition.getId()));
+
+            dashboard.addPortlet(dashboardPortlet);
+
+            GWTServiceLookup.getDashboardService().storeDashboard(dashboard, new AsyncCallback<Dashboard>() {
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_tree_common_contextMenu_saveChartToDashboardFailure(), caught);
+                }
+
+                public void onSuccess(Dashboard result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(MSG.view_tree_common_contextMenu_saveChartToDashboardSuccessful(result.getName()),
+                            Message.Severity.Info));
+                }
+            });
+
+        }
+
+    }
+
+}

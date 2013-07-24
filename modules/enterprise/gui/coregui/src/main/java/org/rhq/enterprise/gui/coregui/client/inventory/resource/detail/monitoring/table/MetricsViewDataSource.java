@@ -296,7 +296,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
                 @Override
                 public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> measurementDataList) {
 
-                    if (!measurementDataList.isEmpty()) {
+                    if (null != measurementDataList && !measurementDataList.isEmpty()) {
                         metricsDataList = measurementDataList;
                         countDownLatch.countDown();
                     }

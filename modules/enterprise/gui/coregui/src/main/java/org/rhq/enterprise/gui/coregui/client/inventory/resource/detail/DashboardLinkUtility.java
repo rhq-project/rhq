@@ -143,7 +143,7 @@ public class DashboardLinkUtility {
 
                                 });
 
-                            }//end dashboard iteration
+                            }
 
                             //add new menu item for adding current graphable element to view if on Monitor/Graphs tab
                             String currentViewPath = History.getToken();
@@ -183,20 +183,20 @@ public class DashboardLinkUtility {
                                                             addNewMetric(String.valueOf(resource.getId()),
                                                                 selectedView, resourceGraphElements);
                                                         } else {
-                                                            Log.trace("Error obtaining subject with id:" + sid);
+                                                            Log.warn("DashboardLinkUtility: Error obtaining subject with id:" + sid);
                                                         }
                                                     }
 
                                                     public void onFailure(Throwable caught) {
-                                                        Log.trace("Error obtaining subject with id:" + sid, caught);
+                                                        Log.warn("DashboardLinkUtility: Error obtaining subject with id:" + sid, caught);
                                                     }
                                                 });
                                         }
                                     }
                                 });
-                            } // end add the "add to view" menu item
-                        }//end trait exclusion
-                    }//end measurement def iteration
+                            }
+                        }
+                    }
 
                 }
             });

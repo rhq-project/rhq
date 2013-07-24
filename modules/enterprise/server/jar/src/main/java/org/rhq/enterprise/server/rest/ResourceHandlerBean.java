@@ -721,6 +721,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     @POST
     @Path("/")
+    @ApiErrors({
+        @ApiError(code = 302, reason = "Creation is still happening. Check back with a GET on the Location.")
+    })
     @ApiOperation(value = "Create a new resource as a child of an existing resource. ",
         notes= "If a handle is given, a content based resource is created; the content identified by the handle is not removed from the content store." +
             "If no handle is given, a resource is created from the data of the passed 'resource' object.")
@@ -824,6 +827,11 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
         CreateResourceStatus status = history.getStatus();
 
+        try {
+            Thread.sleep(2000L); // give the agent time to do the work
+        } catch (InterruptedException e) {
+            ; // nothing
+        }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);
 
@@ -832,11 +840,16 @@ public class ResourceHandlerBean extends AbstractRestBean {
         if ( status == CreateResourceStatus.SUCCESS) {
 
             ResourceWithType rwt = findCreatedResource(history.getParentResource().getId(),history.getCreatedResourceName(),uriInfo);
-
-            builder = Response.ok();
-            builder.entity(rwt);
+            if (rwt!=null) {
+                builder = Response.ok();
+                builder.entity(rwt);
+            } else {
+                // History says we had success but due to internal timing
+                // the resource is not yet visible, so switch to in_progress
+                status = CreateResourceStatus.IN_PROGRESS;
+            }
         }
-        else if (status==CreateResourceStatus.IN_PROGRESS) {
+        if (status==CreateResourceStatus.IN_PROGRESS) {
 
             try {
                 Thread.sleep(2000L); // give the agent time to do the work
@@ -865,6 +878,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
     @GET
     @Path("/creationStatus/{id}")
     @ApiOperation("Get the status of a resource creation for content based resources.")
+    @ApiError(code = 302, reason = "Creation is still going on. Check back later with the same URL.")
     public Response getHistoryItem(@PathParam("id") int historyId, @Context HttpHeaders headers, @Context UriInfo uriInfo) {
 
         CreateResourceHistory history;
@@ -888,13 +902,17 @@ public class ResourceHandlerBean extends AbstractRestBean {
         if (status== CreateResourceStatus.SUCCESS) {
 
             ResourceWithType rwt = findCreatedResource(history.getParentResource().getId(),history.getCreatedResourceName(),uriInfo);
-
-            builder = Response.ok();
-            setCachingHeader(builder, 600);
-            builder.entity(rwt);
-
+            if (rwt!=null) {
+                builder = Response.ok();
+                setCachingHeader(builder, 600);
+                builder.entity(rwt);
+            } else {
+                // History says we had success but due to internal timing
+                // the resource is not yet visible, so switch to in_progress
+                status = CreateResourceStatus.IN_PROGRESS;
+            }
         }
-        else if (status==CreateResourceStatus.IN_PROGRESS) {
+        if (status==CreateResourceStatus.IN_PROGRESS) {
 
 
             UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
@@ -913,6 +931,14 @@ public class ResourceHandlerBean extends AbstractRestBean {
 
     }
 
+    /**
+     * Find the created resource by its name and parent. Will only return it
+     * if the resource is already committed.
+     * @param parentId Id of the parent
+     * @param name Name of the resource to find
+     * @param uriInfo UriInfo object to fill links in the returned resource
+     * @return A ResourceWithType if found, null otherwise.
+     */
     private ResourceWithType findCreatedResource(int parentId, String name, UriInfo uriInfo) {
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.setStrict(true);
@@ -920,6 +946,9 @@ public class ResourceHandlerBean extends AbstractRestBean {
         criteria.addFilterName(name);
         criteria.addFilterInventoryStatus(InventoryStatus.COMMITTED);
         List<Resource> resources = resMgr.findResourcesByCriteria(caller,criteria);
+        if (resources.size()==0) {
+            return null;
+        }
         Resource res = resources.get(0);
         return fillRWT(res,uriInfo);
     }

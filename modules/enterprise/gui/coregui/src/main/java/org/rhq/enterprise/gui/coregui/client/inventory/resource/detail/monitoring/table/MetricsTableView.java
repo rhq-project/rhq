@@ -116,7 +116,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         setListGridFields(fields.toArray(new ListGridField[0]));
 
         addTableAction(MSG.view_measureTable_getLive(), new ShowLiveDataTableAction(this));
-        addExtraWidget(addToDashboardMenu, false);
+        //addExtraWidget(addToDashboardMenu, false);
 
     }
 

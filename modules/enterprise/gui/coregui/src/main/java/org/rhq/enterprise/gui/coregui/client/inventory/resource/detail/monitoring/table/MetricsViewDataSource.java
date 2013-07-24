@@ -78,7 +78,7 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
     public ArrayList<ListGridField> getListGridFields() {
         ArrayList<ListGridField> fields = new ArrayList<ListGridField>(7);
 
-        ListGridField sparklineField = new ListGridField(FIELD_SPARKLINE, "chart");
+        ListGridField sparklineField = new ListGridField(FIELD_SPARKLINE, MSG.chart_metrics_sparkline_header());
         sparklineField.setCellFormatter(new CellFormatter() {
             @Override
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {

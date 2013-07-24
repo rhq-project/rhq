@@ -132,12 +132,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         long start = System.nanoTime();
         try {
             // Get a fresh snapshot of the process
-            ProcessInfoSnapshot processInfoSnapshot = (processInfo == null) ? null : processInfo.freshSnapshot();
-            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
-                processInfo = getResourceContext().getNativeProcess();
-                // Safe to get prior snapshot here, we've just recreated the process info instance
-                processInfoSnapshot = (processInfo == null) ? null : processInfo.priorSnaphot();
-            }
+            ProcessInfoSnapshot processInfoSnapshot = getProcessInfoSnapshot();
             return (processInfoSnapshot != null && processInfoSnapshot.isRunning()) ? AvailabilityType.UP
                 : AvailabilityType.DOWN;
         } finally {
@@ -151,11 +146,23 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
+    private ProcessInfoSnapshot getProcessInfoSnapshot() {
+        ProcessInfoSnapshot processInfoSnapshot = (processInfo == null) ? null : processInfo.freshSnapshot();
+        if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+            processInfo = getResourceContext().getNativeProcess();
+            // Safe to get prior snapshot here, we've just recreated the process info instance
+            processInfoSnapshot = (processInfo == null) ? null : processInfo.priorSnaphot();
+        }
+        return processInfoSnapshot;
+    }
+
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
 
         if (name.equals("shutdown")) {
-            return shutdownNode();
+            OperationResult operationResult = shutdownNode();
+            waitForNodeToGoDown();
+            return operationResult;
         } else if (name.equals("start")) {
             return startNode();
         } else if (name.equals("restart")) {
@@ -165,6 +172,23 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
 
         return null;
+    }
+
+    private void waitForNodeToGoDown() throws InterruptedException {
+        for (ProcessInfoSnapshot processInfoSnapshot = getProcessInfoSnapshot();; processInfoSnapshot = getProcessInfoSnapshot()) {
+            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+                // Process not found, so it died, that's fine
+                // OR
+                // Process info says process is no longer running, that's fine as well
+                break;
+            }
+            if (getResourceContext().getComponentInvocationContext().isInterrupted()) {
+                // Operation canceled or timed out
+                throw new InterruptedException();
+            }
+            // Process is still running, wait a second and check again
+            Thread.sleep(SECONDS.toMillis(1));
+        }
     }
 
     @SuppressWarnings("rawtypes")

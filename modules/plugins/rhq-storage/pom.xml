@@ -55,6 +55,20 @@
      </dependency>
 
      <dependency>
+       <groupId>${rhq.groupId}</groupId>
+       <artifactId>test-utils</artifactId>
+       <version>${project.version}</version>
+       <scope>test</scope>
+       <exclusions>
+         <exclusion>
+           <groupId>org.slf4j</groupId>
+           <artifactId>slf4j-nop</artifactId>
+         </exclusion>
+       </exclusions>
+     </dependency>
+
+
+     <dependency>
        <groupId>${project.groupId}</groupId>
        <artifactId>rhq-cassandra-schema</artifactId>
        <version>${project.version}</version>
@@ -70,7 +84,7 @@
              <phase>pre-integration-test</phase>
              <configuration>
                <target>
-                 <property name="sigar.dir" value="${project.build.directory/sigar}"/>
+                 <property name="sigar.dir" value="${project.build.directory}/sigar"/>
 
                  <mkdir dir="${pc.basedir}"/>
                  <mkdir dir="${pc.lib.dir}"/>

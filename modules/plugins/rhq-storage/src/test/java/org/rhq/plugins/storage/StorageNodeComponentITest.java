@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.plugins.storage;
 
 import static java.util.Arrays.asList;
@@ -94,8 +113,10 @@ public class StorageNodeComponentITest {
         File binDir = new File(basedir, "bin");
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
 
-        File startScript = new File(binDir, "cassandra");
+        File startScript = new File("./cassandra");
         ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        startScriptExe.setWorkingDirectory(binDir.getAbsolutePath());
+        startScriptExe.setCheckExecutableExists(false);
 
         startScriptExe.addArguments(asList("-p", "cassandra.pid"));
         startScriptExe.setCaptureOutput(true);
@@ -176,8 +197,7 @@ public class StorageNodeComponentITest {
 
         assertFalse(pidFile.exists(), pidFile + " should be deleted when the storage node is shutdown.");
 
-        // TODO why is this failing?
-        //assertNodeIsDown("Expected " + storageNode + " to be DOWN after shutting it down");
+        assertNodeIsDown("Expected " + storageNode + " to be DOWN after shutting it down");
     }
 
     @Test(dependsOnMethods = "shutdownStorageNode")

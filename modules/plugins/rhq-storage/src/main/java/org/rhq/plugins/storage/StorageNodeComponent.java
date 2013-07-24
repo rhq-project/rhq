@@ -26,11 +26,15 @@
 package org.rhq.plugins.storage;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -39,6 +43,8 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
@@ -48,6 +54,7 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
 import org.rhq.core.util.StringUtil;
@@ -96,6 +103,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return updateConfiguration(parameters);
         } else if (name.equals("updateKnownNodes")) {
             return updateKnownNodes(parameters);
+        } else if (name.equals("prepareForBootstrap")) {
+            return prepareForBootstrap(parameters);
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -132,6 +141,18 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             ipAddresses.add(propertySimple.getStringValue());
         }
 
+        if (updateAuthFile(result, ipAddresses)) return result;
+
+        EmsBean authBean = getEmsConnection().getBean("org.rhq.cassandra.auth:type=RhqInternodeAuthenticator");
+        EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
+        emsOperation.invoke();
+
+        result.setSimpleResult("Successfully updated the set of known nodes.");
+
+        return result;
+    }
+
+    private boolean updateAuthFile(OperationResult result, Set<String> ipAddresses) {
         log.info("Updating known nodes to " + ipAddresses);
 
         File confDir = new File(getBasedir(), "conf");
@@ -150,7 +171,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
                 log.error(msg);
                 result.setErrorMessage(msg);
 
-                return result;
+                return true;
             }
         }
 
@@ -161,7 +182,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
                 "to unexpected error";
             log.error(msg, e);
             result.setErrorMessage(msg + ": " + ThrowableUtil.getRootMessage(e));
-            return result;
+            return true;
         }
 
         try {
@@ -176,16 +197,125 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             }
             result.setErrorMessage("There was an unexpected error while updating " + authFile + ". Make sure that " +
                 "it matches " + authBackupFile + " and then reschedule the operation.");
+            return true;
+        }
+        return false;
+    }
+
+    private OperationResult prepareForBootstrap(Configuration params) {
+        log.info("Preparing " + this + " for bootstrap...");
+
+        ResourceContext context = getResourceContext();
+        OperationResult result = new OperationResult();
+
+        log.info("Stopping storage node");
+        OperationResult stopNodeResult = stopNode();
+        if (stopNodeResult.getErrorMessage() != null) {
+            log.error("Failed to stop storage node " + this + " Cannot prepare the node for bootstrap which means " +
+                "that the storage node cannot join the cluster. Make sure the storage node is not running and retry " +
+                "the operation");
+            result.setErrorMessage("Failed to stop storage node. Cannot prepare the node for bootstrap which means " +
+                "that it cannot join the cluster. Make sure that the node is not running and retry the operation. " +
+                "Stopping the storage node failed with this error: " + stopNodeResult.getErrorMessage());
             return result;
         }
 
-        EmsBean authBean = getEmsConnection().getBean("org.rhq.cassandra.auth:type=RhqInternodeAuthenticator");
-        EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
-        emsOperation.invoke();
+        Configuration pluginConfig = context.getPluginConfiguration();
+        String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
+        File yamlFile = new File(yamlProp);
 
-        result.setSimpleResult("Successfully updated the set of known nodes.");
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Yaml yaml = new Yaml(options);
+
+        Map yamlConfig = null;
+        try {
+            yamlConfig = (Map) yaml.load(new FileInputStream(yamlFile));
+        } catch (FileNotFoundException e) {
+            log.error("Failed to load " + yamlFile, e);
+            log.error("Cannot prepare " + this + " for bootstrap. " + yamlFile + " must exist in order to make the " +
+                "necessary configuration changes.");
+            result.setErrorMessage("Cannot prepare storage node for bootstrap. It appears that " + yamlFile +
+                " does not exist. Make sure that it exists so that the necessary configuration changes can be made.");
+
+            return result;
+        }
+
+        purgeDir(getCommitLogDir(yamlConfig));
+        for (File dataDir : getDataDirs(yamlConfig)) {
+            purgeDir(dataDir);
+        }
+        purgeDir(getSavedCachesDir(yamlConfig));
+
+        log.info("Updating cluster settings");
+
+        String address = pluginConfig.getSimpleValue("host");
+        List<String> seeds = getAddresses(params.getList("storageNodeIPAddresses"));
+        // Make sure this node's address is not in the list; otherwise, it
+        // won't bootstrap properly.
+        seeds.remove(address);
+        try {
+            updateSeedsList(seeds);
+        } catch (IOException e) {
+            log.error("Failed to update seeds property in " + yamlFile, e);
+            result.setErrorMessage("Failed to prepared node for bootstrap due to unexpected error that occurred " +
+                "while updating seeds property in " + yamlFile + ":\n" + ThrowableUtil.getAllMessages(e));
+            return result;
+        }
+
+        if (updateAuthFile(result, new HashSet<String>(seeds))) {
+            return result;
+        }
+
+        int cqlPort = Integer.parseInt(params.getSimpleValue("cqlPort"));
+        int gossipPort = Integer.parseInt(params.getSimpleValue("gossipPort"));
+
+        yamlConfig.put("native_transport_port", cqlPort);
+        yamlConfig.put("storage_port", gossipPort);
+
+        try {
+            yaml.dump(yamlConfig, new FileWriter(yamlFile));
+        } catch (IOException e) {
+            log.error("Could not update cluster settings in " + yamlFile, e);
+            result.setErrorMessage("Could not update cluster settings in " + yamlFile + ":\n" +
+                ThrowableUtil.getAllMessages(e));
+            return result;
+        }
+
+        log.info(this + " is ready to be bootstrap. Restarting storage node...");
+        OperationResult startResult = startNode();
+        if (startResult.getErrorMessage() != null) {
+            log.error("Failed to restart storage node:\n" + startResult.getErrorMessage());
+            result.setErrorMessage("Failed to restart storage node:\n" + startResult.getErrorMessage());
+        } else {
+            result.setSimpleResult("The storage node was succesfully updated is now bootstrapping into the cluster.");
+        }
 
         return result;
+    }
+
+    private void purgeDir(File dir) {
+        log.info("Purging " + dir);
+        FileUtil.purge(dir, true);
+    }
+
+    private File getCommitLogDir(Map yamlConfig) {
+        return new File((String) yamlConfig.get("commitlog_directory"));
+    }
+
+    private List<File> getDataDirs(Map yamlConfig) {
+        List<File> dirs  = new ArrayList<File>();
+        List<String> dirNames = (List<String>) yamlConfig.get("data_file_directories");
+
+        for (String dirName : dirNames) {
+            dirs.add(new File(dirName));
+        }
+
+        return dirs;
+    }
+
+    private File getSavedCachesDir(Map yamlConfig) {
+        return new File((String) yamlConfig.get("saved_caches_directory"));
     }
 
     private OperationResult nodeAdded(Configuration params) {
@@ -404,5 +534,11 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         String operation;
         boolean succeeded;
         String details;
+    }
+
+    @Override
+    public String toString() {
+        return StorageNodeComponent.class.getSimpleName() + "[resourceKey: " + getResourceContext().getResourceKey() +
+            "]";
     }
 }

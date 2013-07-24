@@ -101,6 +101,16 @@
       </parameters>
     </operation>
 
+    <operation name="prepareForBootstrap">
+      <parameters>
+        <c:simple-property name="cqlPort" type="integer" displayName="CQL Port"/>
+        <c:simple-property name="gossipPort" type="integer"/>
+        <c:list-property name="storageNodeIPAddresses" displayName="Storage Node IP Addresses">
+          <c:simple-property name="storageNodeIPAddress"/>
+        </c:list-property>
+      </parameters>
+    </operation>
+
     <operation name="prepareForUpgrade" description="Prepares the storage node for upgrade (this operation consists of following steps: 1) turning off the RPC server, 2) turning off the gossiper, 3) taking the snapshot (backuping the data), 4) invoking the drain operation">
         <parameters>
           <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"

@@ -111,7 +111,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
                 clusterBuilder = clusterBuilder.withCredentials(username, password);
             }
 
-            this.cassandraSession = clusterBuilder.build().connect(clusterName);
+//            this.cassandraSession = clusterBuilder.build().connect(clusterName);
         } catch (Exception e) {
             LOG.error("Connect to Cassandra " + host + ":" + nativePort, e);
             throw e;
@@ -196,7 +196,17 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         operation = storageService.getOperation("drain", emptyParams);
         operation.invoke((Object[]) emptyParams);
 
-        ProcessInfo process = context.getNativeProcess();
+        return stopNode();
+    }
+
+    protected OperationResult stopNode() {
+        ProcessInfo process = getResourceContext().getNativeProcess();
+
+        if (processInfo == null) {
+            LOG.warn("Failed to obtain process info. It appears Cassandra is already shutdown.");
+            return new OperationResult("Failed to obtain process info. It appears Cassandra is already shutdown.");
+        }
+
         long pid = process.getPid();
         try {
             process.kill("KILL");
@@ -208,6 +218,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             return failure;
         }
     }
+
 
     protected OperationResult startNode() {
         ResourceContext<?> context = getResourceContext();

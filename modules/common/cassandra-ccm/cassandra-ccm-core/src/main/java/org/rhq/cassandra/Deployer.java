@@ -91,7 +91,14 @@ public class Deployer {
         applyConfigChanges(confDir, "cassandra.yaml", tokens);
         applyConfigChanges(confDir, "log4j-server.properties", tokens);
         applyChangesToCassandraJvmProps(confDir, deploymentOptions);
-//        applyConfigChanges(confDir, "cassandra-env.sh", tokens);
+
+        // For windows, update the service wrapper env. It may not ne necessary to have updated cassandra-jvm.properties
+        // as well as this file, but for now we'll update both, leaving the former as a dependably set file.
+        if (File.separatorChar == '\\') {
+            applyChangesToWindowsServiceWrapper(deployDir);
+        }
+
+        //        applyConfigChanges(confDir, "cassandra-env.sh", tokens);
     }
 
     private void applyConfigChanges(File confDir, String fileName, Map<String, String> tokens)
@@ -109,8 +116,8 @@ public class Deployer {
             rhqFile.delete();
         } catch (IOException e) {
             log.error("An unexpected error occurred while apply configuration changes to " + filteredFile, e);
-            throw new DeploymentException("An unexpected error occurred while apply configuration changes to " +
-                filteredFile, e);
+            throw new DeploymentException("An unexpected error occurred while apply configuration changes to "
+                + filteredFile, e);
         }
     }
 
@@ -132,8 +139,8 @@ public class Deployer {
 
             String javaVersion = System.getProperty("java.version");
             // The check here is taken right from cassandra-env.sh
-            if ((!isOpenJDK() || javaVersion.compareTo("1.6.0") > 0) ||
-                (javaVersion.equals("1.6.0") && getJavaPatchVersion() > 23)) {
+            if ((!isOpenJDK() || javaVersion.compareTo("1.6.0") > 0)
+                || (javaVersion.equals("1.6.0") && getJavaPatchVersion() > 23)) {
                 properties.put("java_agent", "-javaagent:$CASSANDRA_HOME/lib/jamm-0.2.5.jar");
             }
 
@@ -165,6 +172,29 @@ public class Deployer {
         return Integer.parseInt(javaVersion.substring(startIndex + 1, javaVersion.length()));
     }
 
+    public void applyChangesToWindowsServiceWrapper(File deployDir) throws DeploymentException {
+        File wrapperDir = new File(deployDir, "../bin/wrapper");
+        File wrapperEnvFile = new File(wrapperDir, "rhq-storage-wrapper.env");
+
+        try {
+            log.info("Applying configuration changes to " + wrapperEnvFile);
+
+            PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(wrapperEnvFile.getAbsolutePath());
+            Properties wrapperEnvProps = propertiesUpdater.loadExistingProperties();
+
+            wrapperEnvProps.setProperty("set.heap_min", "-Xms" + deploymentOptions.getHeapSize());
+            wrapperEnvProps.setProperty("set.heap_max", "-Xmx" + deploymentOptions.getHeapSize());
+            wrapperEnvProps.setProperty("set.heap_new", "-Xmn" + deploymentOptions.getHeapNewSize());
+            wrapperEnvProps.setProperty("set.thread_stack_size", "-Xss" + deploymentOptions.getStackSize());
+            wrapperEnvProps.setProperty("set.jmx_port", deploymentOptions.getJmxPort().toString());
+
+            propertiesUpdater.update(wrapperEnvProps);
+        } catch (IOException e) {
+            log.error("An error occurred while updating " + wrapperEnvFile, e);
+            throw new DeploymentException("An error occurred while updating " + wrapperEnvFile, e);
+        }
+    }
+
     public void updateFilePerms() {
         File deployDir = new File(deploymentOptions.getBasedir());
         File binDir = new File(deployDir, "bin");
@@ -187,8 +217,8 @@ public class Deployer {
 
         try {
             authFile.delete();
-            StreamUtil.copy(new StringReader(StringUtil.collectionToString(addresses, "\n")),
-                new FileWriter(authFile), true);
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(addresses, "\n")), new FileWriter(authFile),
+                true);
         } catch (IOException e) {
             throw new RuntimeException("Failed to update " + authFile);
         }

@@ -43,8 +43,11 @@ public class DomainServerComponentTest extends AbstractServerComponentTest {
 
     public static final ResourceType RESOURCE_TYPE =
             new ResourceType("JBossAS7 Host Controller", PLUGIN_NAME, ResourceCategory.SERVER, null);
-    // The key is the server's base dir.
-    public static final String RESOURCE_KEY = new File(JBOSS_HOME, "domain").getPath();
+    // The key is the server host config file
+    // hostConfig: /tmp/jboss-as-6.0.0/domain/configuration/host.xml
+    public static final String RESOURCE_KEY = "hostConfig: "
+        + new File(JBOSS_HOME, "domain" + File.separator + "configuration" + File.separator + "host.xml")
+            .getAbsolutePath();
 
     @Override
     protected ResourceType getServerResourceType() {

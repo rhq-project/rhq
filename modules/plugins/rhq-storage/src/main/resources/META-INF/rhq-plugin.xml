@@ -101,6 +101,16 @@
       </parameters>
     </operation>
 
+    <operation name="prepareForBootstrap">
+      <parameters>
+        <c:simple-property name="cqlPort" type="integer" displayName="CQL Port"/>
+        <c:simple-property name="gossipPort" type="integer"/>
+        <c:list-property name="storageNodeIPAddresses" displayName="Storage Node IP Addresses">
+          <c:simple-property name="storageNodeIPAddress"/>
+        </c:list-property>
+      </parameters>
+    </operation>
+
     <operation name="prepareForUpgrade" description="Prepares the storage node for upgrade (this operation consists of following steps: 1) turning off the RPC server, 2) turning off the gossiper, 3) taking the snapshot (backuping the data), 4) invoking the drain operation">
         <parameters>
           <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
@@ -122,6 +132,9 @@
     <operation name="updateConfiguration" description="Updates the node configuration. Will require a separate server restart for the settings to take effect.">
       <parameters>
         <c:simple-property name="heapSize" type="string" description="The heap size to be used for both -Xms and -Xmx JVM options."/>
+        <c:simple-property name="heapNewSize" type="string" description="The heap new size to be used be used with -Xmn JVM option."/>
+        <c:simple-property name="threadStackSize" type="integer" description="The thread stack size. This memory is allocated to each thread off heap. The
+                                                                                value should be an integer that will be interpreted in kilobytes."/>
         <c:simple-property name="jmxPort" type="integer" description="JMX port JVM option."/>
       </parameters>
       <results>

@@ -81,12 +81,54 @@ public interface StorageNodeManagerLocal {
     PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject);
 
     /**
+     * Fetches the list of Storage Node related alerts that have not yet been acknowledged for the
+     * specified storage node.
+     *
+     * @param subject subject
+     * @return storage nodes alerts not acknowledged
+     */
+    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode);
+
+    /**
      * Fetches all the Storage Node related alerts.
      *
      * @param subject subject
      * @return all storage nodes alerts
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject);
+
+    /**
+     * Fetches all the Storage Node related alerts for the specified storage node.
+     *
+     * @param subject subject
+     * @return all storage nodes alerts
+     */
+    PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
+
+
+    /**
+     * Find ids for all resources and sub-resources of Storage Nodes that
+     * have alert definitions. This can be used by the resource criteria queries to find
+     * all alerts triggered for storage nodes resources.
+     *
+     * @return resource ids
+     */
+    Integer[] findResourcesWithAlertDefinitions();
+
+    /**
+     * Find ids for all resources and sub-resources, of the specified storage node, that
+     * have alert definitions. This can be used by the resource criteria queries to find
+     * all alerts triggered for storage nodes resources.
+     *
+     * If storage node is null it find ids for all resources and sub-resources of Storage Nodes that
+     * have alert definitions. Please see {@link #findResourcesWithAlertDefinitions()} for more details.
+     *
+     * @param storageNode storage node
+     *
+     * @return resource ids
+     */
+    Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode);
+
 
     /**
      * <p>Prepares the node for subsequent upgrade.</p>

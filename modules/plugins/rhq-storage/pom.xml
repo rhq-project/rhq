@@ -10,10 +10,15 @@
 
    <groupId>org.rhq</groupId>
    <artifactId>rhq-rhqstorage-plugin</artifactId>
-   <packaging>jar</packaging>
 
    <name>RHQ Storage Plugin</name>
    <description>A plugin for managing RHQ Storage Nodes</description>
+
+  <properties>
+    <pc.basedir>${project.build.directory}/plugin-container</pc.basedir>
+    <pc.plugins.dir>${pc.basedir}/plugins</pc.plugins.dir>
+    <pc.lib.dir>${pc.basedir}/lib</pc.lib.dir>
+  </properties>
 
    <dependencies>
         <dependency>
@@ -27,7 +32,6 @@
           <groupId>${rhq.groupId}</groupId>
           <artifactId>rhq-cassandra-plugin</artifactId>
           <version>${project.version}</version>
-          <!--<scope>provided</scope>-->
         </dependency>
 
         <dependency>
@@ -35,7 +39,112 @@
           <artifactId>org-mc4j-ems</artifactId>
           <scope>provided</scope>
         </dependency>
+
+     <dependency>
+       <groupId>${project.groupId}</groupId>
+       <artifactId>rhq-cassandra-ccm-core</artifactId>
+       <version>${project.version}</version>
+       <scope>test</scope>
+     </dependency>
+
+     <dependency>
+       <groupId>${project.groupId}</groupId>
+       <artifactId>rhq-platform-plugin</artifactId>
+       <version>${project.version}</version>
+       <scope>test</scope>
+     </dependency>
+
+     <dependency>
+       <groupId>${project.groupId}</groupId>
+       <artifactId>rhq-cassandra-schema</artifactId>
+       <version>${project.version}</version>
+     </dependency>
    </dependencies>
+
+   <build>
+     <plugins>
+       <plugin>
+         <artifactId>maven-antrun-plugin</artifactId>
+         <executions>
+           <execution>
+             <phase>pre-integration-test</phase>
+             <configuration>
+               <target>
+                 <property name="sigar.dir" value="${project.build.directory/sigar}"/>
+
+                 <mkdir dir="${pc.basedir}"/>
+                 <mkdir dir="${pc.lib.dir}"/>
+                 <mkdir dir="${pc.plugins.dir}"/>
+
+                 <copy file="${org.rhq:rhq-platform-plugin:jar}" todir="${pc.plugins.dir}"/>
+                 <copy file="${org.rhq:rhq-jmx-plugin:jar}" todir="${pc.plugins.dir}"/>
+                 <copy file="${org.rhq:rhq-cassandra-plugin:jar}" todir="${pc.plugins.dir}"/>
+                 <copy file="${project.build.directory}/${project.build.finalName}.jar" todir="${pc.plugins.dir}"/>
+
+                 <unzip src="${org.hyperic:sigar-dist:zip}" dest="${sigar.dir}">
+                   <patternset>
+                     <include name="**/lib/sigar.jar" />
+                     <include name="**/lib/bcel*.jar" />
+                     <include name="**/lib/*.so" />
+                     <include name="**/lib/*.sl" />
+                     <include name="**/lib/*.dll" />
+                     <include name="**/lib/*.dylib" />
+                   </patternset>
+                 </unzip>
+                 <move todir="${pc.lib.dir}" flatten="true">
+                   <fileset dir="${sigar.dir}" includes="**/lib/*"/>
+                 </move>
+                 <delete dir="${sigar.dir}"/>
+               </target>
+             </configuration>
+             <goals>
+               <goal>run</goal>
+             </goals>
+           </execution>
+         </executions>
+       </plugin>
+
+       <plugin>
+         <artifactId>maven-failsafe-plugin</artifactId>
+         <version>2.13</version>
+         <executions>
+           <execution>
+             <id>integration-test</id>
+             <goals>
+               <goal>integration-test</goal>
+             </goals>
+             <configuration>
+               <includes>
+                 <include>**/*ITest.java</include>
+               </includes>
+               <argLine>-Djava.library.path=${pc.lib.dir}</argLine>
+               <systemPropertyVariables>
+                 <pc.plugins.dir>${pc.plugins.dir}</pc.plugins.dir>
+               </systemPropertyVariables>
+             </configuration>
+           </execution>
+           <execution>
+             <id>verify</id>
+             <goals>
+               <goal>verify</goal>
+             </goals>
+             <configuration>
+               <testFailureIgnore>false</testFailureIgnore>
+             </configuration>
+           </execution>
+         </executions>
+       </plugin>
+
+       <plugin>
+         <artifactId>maven-surefire-plugin</artifactId>
+         <configuration>
+           <excludes>
+             <exclude>**/*ITest.java</exclude>
+           </excludes>
+         </configuration>
+       </plugin>
+     </plugins>
+   </build>
 
    <profiles>
       <profile>

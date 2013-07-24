@@ -253,13 +253,16 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
         // get the schedule ids for Storage Service resource
-        final String tokensMetric = "Tokens", ownershipMetric = "Ownership", diskUsedPercentageMetric = "Calculated.PartitionDiskUsedPercentage";
+        final String tokensMetric = "Tokens", ownershipMetric = "Ownership";
+        final String dataDiskUsedPercentageMetric = "Calculated.DataDiskUsedPercentage";
+        final String totalDiskUsedPercentageMetric = "Calculated.TotalDiskUsedPercentage";
+        final String freeDiskToDataRatioMetric = "Calculated.FreeDiskToDataSizeRatio";
         final String loadMetric = "Load", keyCacheSize = "KeyCacheSize", rowCacheSize = "RowCacheSize", totalCommitLogSize = "TotalCommitlogSize";
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
         query.setParameter("parrentId", resourceId).setParameter("metricNames",
-            Arrays.asList(tokensMetric, ownershipMetric, diskUsedPercentageMetric, loadMetric, keyCacheSize,
-                rowCacheSize, totalCommitLogSize));
+            Arrays.asList(tokensMetric, ownershipMetric, loadMetric, keyCacheSize, rowCacheSize, totalCommitLogSize,
+                dataDiskUsedPercentageMetric, totalDiskUsedPercentageMetric, freeDiskToDataRatioMetric));
         for (Object[] pair : query.getResultList()) {
             scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
         }
@@ -292,10 +295,22 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setActuallyOwns(ownershipAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(diskUsedPercentageMetric)) != null) {
-                StorageNodeLoadComposite.MeasurementAggregateWithUnits diskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
+
+            //calculated disk space related metrics
+            if ((scheduleId = scheduleIdsMap.get(dataDiskUsedPercentageMetric)) != null) {
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits dataDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
-                result.setPartitionDiskUsedPercentage(diskUsedPercentageAggregateWithUnits);
+                result.setDataDiskUsedPercentage(dataDiskUsedPercentageAggregateWithUnits);
+            }
+            if ((scheduleId = scheduleIdsMap.get(totalDiskUsedPercentageMetric)) != null) {
+                StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
+                    subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
+                result.setDataDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
+            }
+            if ((scheduleId = scheduleIdsMap.get(freeDiskToDataRatioMetric)) != null) {
+                MeasurementAggregate freeDiskToDataRatioAggregate = measurementManager.getAggregate(subject,
+                    scheduleId, beginTime, endTime);
+                result.setFreeDiskToDataSizeRatio(freeDiskToDataRatioAggregate);
             }
 
             if ((scheduleId = scheduleIdsMap.get(loadMetric)) != null) {
@@ -512,12 +527,22 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject) {
-        return findStorageNodeAlerts(subject, false);
+        return findStorageNodeAlerts(subject, false, null);
+    }
+
+    @Override
+    public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode) {
+        return findStorageNodeAlerts(subject, false, storageNode);
     }
 
     @Override
     public PageList<Alert> findAllStorageNodeAlerts(Subject subject) {
-        return findStorageNodeAlerts(subject, true);
+        return findStorageNodeAlerts(subject, true, null);
+    }
+
+    @Override
+    public PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode) {
+        return findStorageNodeAlerts(subject, true, storageNode);
     }
 
     /**
@@ -527,8 +552,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
      * @param allAlerts if [true] then return all alerts; if [false] then return only alerts that are not acknowledged
      * @return alerts
      */
-    private PageList<Alert> findStorageNodeAlerts(Subject subject, boolean allAlerts) {
-        Integer[] resouceIdsWithAlertDefinitions = findResourcesWithAlertDefinitions();
+    private PageList<Alert> findStorageNodeAlerts(Subject subject, boolean allAlerts, StorageNode storageNode) {
+        Integer[] resouceIdsWithAlertDefinitions = findResourcesWithAlertDefinitions(storageNode);
         PageList<Alert> alerts = new PageList<Alert>();
 
         if( resouceIdsWithAlertDefinitions != null && resouceIdsWithAlertDefinitions.length != 0 ){
@@ -555,31 +580,35 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return alerts;
     }
 
-    /**
-     * Return resource Ids for all resources and sub-resources of Storage Nodes that
-     * have alert definitions. This will be used by the resource criteria to find
-     * all alerts triggered for storage nodes.
-     *
-     * @return
-     */
-    private Integer[] findResourcesWithAlertDefinitions() {
-        List<Integer> resourceIdsWithAlertDefinitions = new ArrayList<Integer>();
-        List<StorageNode> test2 = getStorageNodes();
+    @Override
+    public Integer[] findResourcesWithAlertDefinitions() {
+        return this.findResourcesWithAlertDefinitions(null);
+    }
+
+    @Override
+    public Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) {
+        List<StorageNode> initialStorageNodes;
+        if (storageNode == null) {
+            initialStorageNodes = getStorageNodes();
+        } else {
+            initialStorageNodes = Arrays.asList(storageNode);
+        }
 
         Queue<Resource> unvisitedResources = new LinkedList<Resource>();
-        for (StorageNode node : test2) {
-            if (node.getResource() != null) {
-                unvisitedResources.add(node.getResource());
+        for (StorageNode initialStorageNode : initialStorageNodes) {
+            if (initialStorageNode.getResource() != null) {
+                unvisitedResources.add(initialStorageNode.getResource());
             }
         }
 
-        while(!unvisitedResources.isEmpty()){
+        List<Integer> resourceIdsWithAlertDefinitions = new ArrayList<Integer>();
+        while (!unvisitedResources.isEmpty()) {
             Resource resource = unvisitedResources.poll();
             if (resource.getAlertDefinitions() != null) {
                 resourceIdsWithAlertDefinitions.add(resource.getId());
             }
 
-            for(Resource child: resource.getChildResources()){
+            for (Resource child : resource.getChildResources()) {
                 unvisitedResources.add(child);
             }
         }
@@ -597,6 +626,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNodeResource.getId());
 
             configuration.setHeapSize(storageNodeConfiguration.getSimpleValue("maxHeapSize"));
+            configuration.setHeapNewSize(storageNodeConfiguration.getSimpleValue("heapNewSize"));
+            configuration.setThreadStackSize(storageNodeConfiguration.getSimpleValue("threadStackSize"));
             configuration.setJmxPort(storageNode.getJmxPort());
         }
 
@@ -612,6 +643,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             Configuration parameters = new Configuration();
             parameters.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
             parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
+            parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
+            parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
 
             boolean updateConfigurationResult = runOperationAndWaitForResult(subject, storageNodeResource,
                 UPDATE_CONFIGURATION_OPERATION, parameters);

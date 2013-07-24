@@ -350,7 +350,6 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                     if (si.isRelative()) {
                         userDN += "," + baseDNs[x];
                     }
-                    userDN = userDN + "," + baseDNs[x];
                 }
                 userDetails.put("dn", userDN);
 

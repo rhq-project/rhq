@@ -37,11 +37,13 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
+import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupsDataSource;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.RoleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.ResourceGroupsDataSource;
@@ -61,6 +63,7 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
         public static final String NAME = "name";
         public static final String DESCRIPTION = "description";
         public static final String RESOURCE_GROUPS = "resourceGroups";
+        public static final String BUNDLE_GROUPS = "bundleGroups";
         public static final String PERMISSIONS = "permissions";
         public static final String SUBJECTS = "subjects";
         public static final String LDAP_GROUPS = "ldapGroups";
@@ -124,6 +127,10 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
         DataSourceField ldapGroupsField = new DataSourceField(Field.LDAP_GROUPS, FieldType.ANY,
             MSG.datasource_roles_field_ldapGroups());
         fields.add(ldapGroupsField);
+
+        DataSourceField bundleGroupsField = new DataSourceField(Field.BUNDLE_GROUPS, FieldType.ANY,
+            MSG.common_title_bundleGroups());
+        fields.add(bundleGroupsField);
 
         return fields;
     }
@@ -223,6 +230,10 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
         Set<LdapGroup> ldapGroups = new RoleLdapGroupSelector.LdapGroupsDataSource().buildDataObjects(ldapGroupRecords);
         to.setLdapGroups(ldapGroups);
 
+        Record[] bundleGroupRecords = from.getAttributeAsRecordArray(Field.BUNDLE_GROUPS);
+        Set<BundleGroup> bundleGroups = BundleGroupsDataSource.getInstance().buildDataObjects(bundleGroupRecords);
+        to.setBundleGroups(bundleGroups);
+
         return to;
     }
 
@@ -256,6 +267,12 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
             ListGridRecord[] ldapGroupRecords = new RoleLdapGroupSelector.LdapGroupsDataSource()
                 .buildRecords(ldapGroups);
             targetRecord.setAttribute(Field.LDAP_GROUPS, ldapGroupRecords);
+
+            Set<BundleGroup> bundleGroups = sourceRole.getBundleGroups();
+            ListGridRecord[] bundleGroupRecords = BundleGroupsDataSource.getInstance()
+                .buildRecords(bundleGroups, false);
+            targetRecord.setAttribute(Field.BUNDLE_GROUPS, bundleGroupRecords);
+
         }
 
         return targetRecord;

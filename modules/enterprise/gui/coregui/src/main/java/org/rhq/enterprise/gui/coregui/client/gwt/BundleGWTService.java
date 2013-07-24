@@ -27,6 +27,7 @@ import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
@@ -37,6 +38,7 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
@@ -69,6 +71,8 @@ public interface BundleGWTService extends RemoteService {
     void deleteBundleVersion(int bundleVersionId, boolean deleteBundleIfEmpty) throws RuntimeException;
 
     PageList<Bundle> findBundlesByCriteria(BundleCriteria criteria) throws RuntimeException;
+
+    PageList<BundleGroup> findBundleGroupsByCriteria(BundleGroupCriteria criteria) throws RuntimeException;
 
     PageList<Bundle> findBundlesByCriteriaWithDestinationFilter(BundleCriteria criteria) throws RuntimeException;
 

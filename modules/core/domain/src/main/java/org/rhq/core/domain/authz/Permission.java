@@ -145,15 +145,15 @@ public enum Permission {
 
     /**
      * Can create Bundle [Versions]s
+     * Can assign to viewable bundle groups 
      * Can create global Bundle [Versions] if holding Global.VIEW_BUNDLES
-     * Can assign to viewable bundle groups
      */
     CREATE_BUNDLES(Target.GLOBAL), // 19
 
     /**
-     * Can delete bundle [Versions]s from viewable groups
+     * Can delete viewable bundle [Versions]s
+     * Can unassign from viewable bundle groups 
      * Can delete global bundles if holding Global.VIEW_BUNDLES
-     * Can unassign from viewable bundle groups
      */
     DELETE_BUNDLES(Target.GLOBAL), // 20
 
@@ -188,7 +188,7 @@ public enum Permission {
     /**
      * Can delete bundle [version]s from the bundle group
      */
-    DELETE_BUNDLES_IN_GROUP(Target.BUNDLE), // 26
+    DELETE_BUNDLES_FROM_GROUP(Target.BUNDLE), // 26
 
     /**
      * Implied - Can view bundles in the bundle group

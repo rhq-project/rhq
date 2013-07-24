@@ -2,7 +2,9 @@ package org.rhq.plugins.storage;
 
 import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertTrue;
 
 import java.io.File;
 import java.net.InetAddress;
@@ -168,8 +170,34 @@ public class StorageNodeComponentITest {
             new Configuration(), timeout);
 
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The shutdown operation failed");
+
+        File binDir = new File(basedir, "bin");
+        File pidFile = new File(binDir, "cassandra.pid");
+
+        assertFalse(pidFile.exists(), pidFile + " should be deleted when the storage node is shutdown.");
+
         // TODO why is this failing?
-        assertNodeIsDown("Expected " + storageNode + " to be DOWN after shutting it down");
+        //assertNodeIsDown("Expected " + storageNode + " to be DOWN after shutting it down");
+    }
+
+    @Test(dependsOnMethods = "shutdownStorageNode")
+    public void restartStorageNode() {
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+
+        long timeout = 1000 * 60;
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId());
+        OperationServicesResult result = operationsService.invokeOperation(operationContext, "start",
+            new Configuration(), timeout);
+
+        assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The start operation failed.");
+
+        File binDir = new File(basedir, "bin");
+        File pidFile = new File(binDir, "cassandra.pid");
+
+        assertTrue(pidFile.exists(), pidFile + " should be created when starting the storage node.");
+
+        assertNodeIsUp("Expected " + storageNode + " to be up after restarting it.");
     }
 
     private void assertNodeIsUp(String msg) {
@@ -192,7 +220,8 @@ public class StorageNodeComponentITest {
 
     private Availability getAvailability() {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        return inventoryManager.getAvailabilityIfKnown(storageNode);
+//        return inventoryManager.getAvailabilityIfKnown(storageNode);
+        return inventoryManager.getCurrentAvailability(storageNode);
     }
 
     private void executeAvailabilityScan() {

@@ -18,6 +18,7 @@
  */
 package org.rhq.plugins.cassandra;
 
+import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.system.OperatingSystemType.WINDOWS;
@@ -210,6 +211,14 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         long pid = process.getPid();
         try {
             process.kill("KILL");
+
+            Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+            File basedir = new File(pluginConfig.getSimpleValue("baseDir"));
+            File binDir = new File(basedir, "bin");
+            File pidFile = new File(binDir, "cassandra.pid");
+
+            pidFile.delete();
+
             return new OperationResult("Successfully shut down Cassandra daemon with pid " + pid);
         } catch (SigarException e) {
             LOG.warn("Failed to shut down Cassandra node with pid " + pid, e);
@@ -226,8 +235,10 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         String baseDir = pluginConfig.getSimpleValue("baseDir");
         File binDir = new File(baseDir, "bin");
         File startScript = new File(binDir, getStartScript());
+        File pidFile = new File(binDir, "cassandra.pid");
 
         ProcessExecution scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        scriptExe.addArguments(asList("-p", pidFile.getAbsolutePath()));
         SystemInfo systemInfo = context.getSystemInformation();
         ProcessExecutionResults results = systemInfo.executeProcess(scriptExe);
 

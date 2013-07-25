@@ -46,6 +46,8 @@ import com.smartgwt.client.widgets.grid.events.RecordCollapseEvent;
 import com.smartgwt.client.widgets.grid.events.RecordCollapseHandler;
 import com.smartgwt.client.widgets.grid.events.RecordExpandEvent;
 import com.smartgwt.client.widgets.grid.events.RecordExpandHandler;
+import com.smartgwt.client.widgets.grid.events.SelectionChangedHandler;
+import com.smartgwt.client.widgets.grid.events.SelectionEvent;
 import com.smartgwt.client.widgets.grid.events.SortChangedHandler;
 import com.smartgwt.client.widgets.grid.events.SortEvent;
 import com.smartgwt.client.widgets.layout.VLayout;
@@ -115,6 +117,17 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
         addTableAction(MSG.view_measureTable_getLive(), new ShowLiveDataTableAction(this));
         addExtraWidget(addToDashboardComponent, false);
+        addToDashboardComponent.disableAddToDashboardButton();
+        metricsTableListGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+            @Override
+            public void onSelectionChanged(SelectionEvent selectionEvent) {
+                if(metricsTableListGrid.getSelectedRecords().length > 0){
+                    addToDashboardComponent.enableAddToDashboardButton();
+                }else {
+                    addToDashboardComponent.disableAddToDashboardButton();
+                }
+            }
+        });
     }
 
     private static class ShowLiveDataTableAction implements TableAction {

@@ -35,6 +35,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
 import com.datastax.driver.core.Session;
@@ -131,10 +137,11 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     public AvailabilityType getAvailability() {
         long start = System.nanoTime();
         try {
-            // Get a fresh snapshot of the process
-            ProcessInfoSnapshot processInfoSnapshot = getProcessInfoSnapshot();
-            return (processInfoSnapshot != null && processInfoSnapshot.isRunning()) ? AvailabilityType.UP
-                : AvailabilityType.DOWN;
+            if (isStorageServiceReachable()) {
+                return AvailabilityType.UP;
+            }
+
+            return AvailabilityType.DOWN;
         } finally {
             long totalTimeMillis = NANOSECONDS.toMillis(System.nanoTime() - start);
             if (LOG.isDebugEnabled()) {
@@ -142,6 +149,39 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             }
             if (totalTimeMillis > SECONDS.toMillis(5)) {
                 LOG.warn("Availability check exceeded five seconds. Total time was " + totalTimeMillis + " ms");
+            }
+        }
+    }
+
+    private boolean isStorageServiceReachable() {
+        JMXConnector connector = null;
+        try {
+            Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+            String url = pluginConfig.getSimpleValue("connectorAddress");
+            JMXServiceURL serviceURL = new JMXServiceURL(url);
+            connector = JMXConnectorFactory.connect(serviceURL, null);
+
+            MBeanServerConnection serverConnection = connector.getMBeanServerConnection();
+            ObjectName storageService = new ObjectName("org.apache.cassandra.db:type=StorageService");
+
+            // query an attribute to make sure it is in fact available
+            serverConnection.getAttribute(storageService, "NativeTransportRunning");
+
+            return true;
+        } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to make JMX connection to StorageService", e);
+            }
+            return false;
+        } finally {
+            if (connector != null) {
+                try {
+                    connector.close();
+                } catch (IOException e) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("An error occurred closing the JMX connector", e);
+                    }
+                }
             }
         }
     }
@@ -158,10 +198,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
-
         if (name.equals("shutdown")) {
             OperationResult operationResult = shutdownNode();
-            waitForNodeToGoDown();
             return operationResult;
         } else if (name.equals("start")) {
             return startNode();
@@ -234,6 +272,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
         long pid = process.getPid();
         try {
+            getEmsConnection().close();
+
             process.kill("KILL");
 
             Configuration pluginConfig = getResourceContext().getPluginConfiguration();

@@ -28,6 +28,7 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
@@ -177,5 +178,7 @@ public interface StorageNodeManagerLocal {
      * @throws IllegalStateException if the group is not found or does not exist.
      */
     ResourceGroup getStorageNodeGroup();
+
+    void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
 
 }

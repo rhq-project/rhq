@@ -35,6 +35,8 @@ import java.util.Queue;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -133,6 +135,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private ConfigurationManagerLocal configurationManager;
+
+    @EJB
+    private StorageNodeManagerLocal storageNodeManger;
 
     @Override
     public void linkResource(Resource resource) {
@@ -658,29 +663,47 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 parameters);
 
             if (result) {
+                //2. Update the JMX port
+                //this is a fast operation compared to the restart
+                storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
+                entityManager.merge(storageNode);
+
+                //3. Restart the storage node
+                result = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
+                    new Configuration());
+
+                //4. Update the plugin configuration to talk with the new server
+                //Up to this point communication with the storage node should not have been affected by the intermediate
+                //changes
                 Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
                     storageNodeResource.getId());
 
                 String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
-                storageNodePluginConfig.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
+                String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
 
-                String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
-                String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
-                    + storageNodeConfiguration.getJmxPort() + "/");
-                storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
+                if (!existingJMXPort.equals(newJMXPort)) {
+                    storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
 
-                configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
-                    storageNodePluginConfig);
+                    String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
+                    String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
+                        + storageNodeConfiguration.getJmxPort() + "/");
+                    storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
 
-                storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
-                entityManager.merge(storageNode);
-                entityManager.flush();
+                    configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
+                        storageNodePluginConfig);
+                }
 
-                return runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION, null);
+                return result;
             }
         }
 
         return false;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule) {
+        operationManager.scheduleResourceOperation(subject, schedule);
     }
 
     private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
@@ -696,8 +719,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         newSchedule.setDescription("Run by StorageNodeManagerBean");
         newSchedule.setParameters(parameters);
 
-        operationManager.scheduleResourceOperation(subject, newSchedule);
-        entityManager.flush();
+        storageNodeManger.scheduleOperationInNewTransaction(subject, newSchedule);
 
         //waiting for the operation result then return it
         int iteration = 0;

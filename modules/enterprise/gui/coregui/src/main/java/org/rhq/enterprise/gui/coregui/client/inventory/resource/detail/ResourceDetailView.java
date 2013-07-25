@@ -66,9 +66,8 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.inventory.ResourceAgentView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.CalltimeView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.ResourceAvailabilityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.schedules.ResourceSchedulesView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MeasurementTableView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MetricsResourceView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.traits.TraitsView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.schedule.ResourceOperationScheduleListView;
@@ -129,10 +128,8 @@ public class ResourceDetailView extends
 
     private SubTab summaryActivity;
     private SubTab summaryTimeline;
-    private SubTab monitorGraphs;
     private SubTab monitorMetrics;
     private SubTab monitorTraits;
-    private SubTab monitorAvail;
     private SubTab monitorSched;
     private SubTab monitorCallTime;
     private SubTab inventoryChildren;
@@ -196,16 +193,11 @@ public class ResourceDetailView extends
         monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
 
-        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
-
-        monitorMetrics = new SubTab(monitoringTab, new ViewName("Metrics", "Metrics"), null);
+        monitorMetrics = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_metrics()), null);
         monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
-        monitorAvail = new SubTab(monitoringTab, new ViewName("Availability", MSG.view_tabs_common_availability()),
-            null);
         monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
         monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
-        monitoringTab.registerSubTabs(monitorGraphs, monitorMetrics, monitorTraits, monitorAvail,
-            monitorSched, monitorCallTime);
+        monitoringTab.registerSubTabs( monitorMetrics, monitorTraits,  monitorSched, monitorCallTime);
         tabs.add(monitoringTab);
 
         eventsTab = new TwoLevelTab(new ViewName("Events", MSG.view_tabs_common_events()), IconEnum.EVENTS);
@@ -395,22 +387,14 @@ public class ResourceDetailView extends
 
         boolean visibleToIE8 = !BrowserUtility.isBrowserPreIE9();
 
-        viewFactory = (!visibleToIE8) ? null : new ViewFactory() {
-            @Override
-            public Canvas createView() {
-                return createD3GraphListView();
-            }
-        };
-        updateSubTab(this.monitoringTab, this.monitorGraphs, visible, visibleToIE8, viewFactory);
-
         // visible = same test as above
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MeasurementTableView(resource.getId());
+                return new MetricsResourceView(resource);
             }
         };
-        updateSubTab(this.monitoringTab, this.monitorMetrics, visible, true, viewFactory);
+        updateSubTab(this.monitoringTab, this.monitorMetrics, visible, visibleToIE8, viewFactory);
 
         visible = hasMetricsOfType(this.resourceComposite, DataType.TRAIT);
         viewFactory = (!visible) ? null : new ViewFactory() {
@@ -420,13 +404,6 @@ public class ResourceDetailView extends
             }
         };
         updateSubTab(this.monitoringTab, this.monitorTraits, visible, true, viewFactory);
-
-        updateSubTab(this.monitoringTab, this.monitorAvail, true, true, new ViewFactory() {
-            @Override
-            public Canvas createView() {
-                return new ResourceAvailabilityView(resourceComposite);
-            }
-        });
 
         updateSubTab(this.monitoringTab, this.monitorSched, hasMetricsOfType(this.resourceComposite, null), true,
             new ViewFactory() {

@@ -38,9 +38,10 @@ if (!window.console.log) window.console.log = function () {
  * @param singleValueLabel
  * @param chartXaxisTimeFormatHours
  * @param chartXaxisTimeFormatHoursMinutes
+ * @param showLegend
  * @constructor
  */
-var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes) {
+var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes, hideLegend) {
             "use strict";
             if (!(this instanceof ChartContext)) {
                 throw new Error("ChartContext function cannot be called as a function.")
@@ -78,6 +79,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
             this.buttonBarDateTimeFormat = buttonBarDateTimeFormat;
             this.chartXaxisTimeFormatHours = chartXaxisTimeFormatHours;
             this.chartXaxisTimeFormatHoursMinutes = chartXaxisTimeFormatHoursMinutes;
+            this.hideLegend = hideLegend;
 
         },
         /**

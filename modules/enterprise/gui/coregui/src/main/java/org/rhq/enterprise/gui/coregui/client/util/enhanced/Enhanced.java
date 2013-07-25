@@ -31,5 +31,5 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
  */
 public interface Enhanced {
 
-    Messages MSG = CoreGUI.getMessages();
+    final static Messages MSG = CoreGUI.getMessages();
 }

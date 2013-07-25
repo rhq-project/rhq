@@ -18,8 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.DONT_MISS_ME_COLOR;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.OK_COLOR;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.WARN_COLOR;
+
 import java.util.List;
 
+import com.smartgwt.client.types.Autofit;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
@@ -39,9 +44,6 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  */
 public class StorageNodeLoadComponent extends EnhancedVLayout {
     private final ListGrid loadGrid;
-    private static final String OK_COLOR = "color:#26aa26;";
-    private static final String WARN_COLOR = "color:#ed9b26;";
-    private static final String DONT_MISS_ME_COLOR = "font-weight:bold; color:#d64949;";
 
     public StorageNodeLoadComponent(int storageNodeId) {
         this(storageNodeId, null, null);
@@ -65,10 +67,10 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                     } else {
                         return OK_COLOR;
                     }
-                } else if ("avg".equals(getFieldName(colNum))
+                } else if ("max".equals(getFieldName(colNum))
                     && StorageNodeLoadCompositeDatasource.FREE_DISK_TO_DATA_SIZE_RATIO_KEY.equals(record
                         .getAttribute("id"))) {
-                    if (record.getAttributeAsFloat("avgFloat") < 1) {
+                    if (record.getAttributeAsFloat("avgFloat") < .7) {
                         return DONT_MISS_ME_COLOR;
                     } else if (record.getAttributeAsFloat("avgFloat") < 1.5) {
                         return WARN_COLOR;
@@ -82,7 +84,8 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             }
         };
         loadGrid.setWidth100();
-        loadGrid.setHeight(230);
+        loadGrid.setHeight(200);
+        loadGrid.setAutoFitData(Autofit.VERTICAL);
         StorageNodeLoadCompositeDatasource datasource = StorageNodeLoadCompositeDatasource.getInstance(storageNodeId);
         List<ListGridField> fields = datasource.getListGridFields();
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));

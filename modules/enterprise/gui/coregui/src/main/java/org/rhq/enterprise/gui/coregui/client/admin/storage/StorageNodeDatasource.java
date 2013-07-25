@@ -31,7 +31,6 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import com.google.gwt.i18n.client.NumberFormat;
@@ -70,6 +69,10 @@ import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
  * @author Jirka Kremser
  */
 public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
+    public static final String OK_COLOR = "color: #26aa26;";
+    public static final String WARN_COLOR = "color: #ed9b26;";
+    public static final String DONT_MISS_ME_COLOR = "font-weight: bold; color: #d64949;";
+    
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
     public static final String FILTER_OPERATION_MODE = FIELD_OPERATION_MODE.propertyName();
@@ -213,38 +216,23 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         }
         int value = from.getUnackAlerts();
         record.setAttribute(FIELD_ALERTS.propertyName(), "New Alerts"
-            + (value != 0 ? " <font color='#CC0000;'>(" + value + ")</font>" : " (" + value + ")"));
+            + (value != 0 ? " <span style='color: #CC0000;'>(" + value + ")</span>" : " (" + value + ")"));
         String memory = null;
         if (from.getHeapPercentageUsed() != null && from.getHeapPercentageUsed().getAggregate().getAvg() != null)
             memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(), from
                 .getHeapPercentageUsed().getUnits(), true);
         record.setAttribute(FIELD_MEMORY.propertyName(), memory);
-        String disk = from.getFreeDiskToDataSizeRatio() != null ? NumberFormat.getFormat("0.0").format(
-            from.getFreeDiskToDataSizeRatio().getAvg()) : MSG.view_measure_nan();
-        record.setAttribute(FIELD_DISK.propertyName(), disk);
-        return record;
-    }
-    
-    
-    private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
-        String hover, String id) {
-        ListGridRecord record = new ListGridRecord();
-        record.setAttribute("id", id);
-        record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);
-        record.setAttribute(
-            StorageNodeLoadCompositeDatasourceField.FIELD_MIN.propertyName(),
-            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMin(),
-                aggregateWithUnits.getUnits(), true));
-        record.setAttribute("avgFloat", aggregateWithUnits.getAggregate().getAvg());
-        record.setAttribute(
-            StorageNodeLoadCompositeDatasourceField.FIELD_AVG.propertyName(),
-            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getAvg(),
-                aggregateWithUnits.getUnits(), true));
-        record.setAttribute(
-            StorageNodeLoadCompositeDatasourceField.FIELD_MAX.propertyName(),
-            MeasurementConverterClient.format(aggregateWithUnits.getAggregate().getMax(),
-                aggregateWithUnits.getUnits(), true));
-        record.setAttribute("hover", hover);
+        if (from.getFreeDiskToDataSizeRatio() != null) {
+            if (from.getFreeDiskToDataSizeRatio().getMax() < 0.7) {
+                record.setAttribute(FIELD_DISK.propertyName(),
+                    "<span style='" + DONT_MISS_ME_COLOR + "'>Insufficient</span>");
+            } else if (from.getFreeDiskToDataSizeRatio().getMax() < 1.5) {
+                record.setAttribute(FIELD_DISK.propertyName(), "<span style='" + WARN_COLOR + "'>Warning</span>");
+            } else {
+                record.setAttribute(FIELD_DISK.propertyName(),
+                    "<span style='" + OK_COLOR + "'>Sufficient</span>");
+            }
+        }
         return record;
     }
 
@@ -349,54 +337,31 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         }
 
         private static void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
-            GWTServiceLookup.getStorageService().getLoad(node, 1, MeasurementUtils.UNIT_HOURS, callback);
+            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS, callback);
         }
 
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {
-            List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6);
-            List<List<Object>> loadFields = Arrays
-                .<List<Object>> asList(
-                    Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Maximum",
-                        "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.",
-                        "heapMax"),
-                    Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used",
-                        "Amount of memory actually used by the RHQ storage node", "heapUsed"),
-                    Arrays.<Object> asList(loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
-                        "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY),
-                    Arrays.<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"),
-                    Arrays.<Object> asList(
-                        loadComposite.getDataDiskUsedPercentage(),
-                        "Data Disk Space Percent Used",
-                        "Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
-                        DATA_DISK_SPACE_PERCENTAGE_KEY),
-                    Arrays.<Object> asList(
-                        loadComposite.getTotalDiskUsedPercentage(),
-                        "Total Disk Space Percent Used",
-                        "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
-                        TOTAL_DISK_SPACE_PERCENTAGE_KEY), Arrays.<Object> asList(loadComposite.getDataDiskUsed(),
-                        "Total Disk Space Used",
-                        "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"),
-                    Arrays.<Object> asList(loadComposite.getActuallyOwns(), "Ownership",
-                        "Refers to the percentage of keys that a node owns.", "ownership"));
-            for (List<Object> aggregateWithUnitsList : loadFields) {
-                if (aggregateWithUnitsList.get(0) != null) {
-                    recordsList.add(makeListGridRecord((MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
-                        (String) aggregateWithUnitsList.get(1), (String) aggregateWithUnitsList.get(2),
-                        (String) aggregateWithUnitsList.get(3)));
+            List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6) {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public boolean add(ListGridRecord record) {
+                    if (record != null)
+                        return super.add(record);
+                    return false;
                 }
-            }
-            if (loadComposite.getTokens() != null) {
-                ListGridRecord tokens = new ListGridRecord();
-                tokens.setAttribute("id", "tokens");
-                tokens.setAttribute("name", "Number of Tokens");
-                tokens.setAttribute("hover", "Number of partitions of the ring that a node owns.");
-                tokens.setAttribute("min", loadComposite.getTokens().getMin());
-                tokens.setAttribute("avg", loadComposite.getTokens().getAvg());
-                tokens.setAttribute("max", loadComposite.getTokens().getMax());
-                recordsList.add(tokens);
-            }
+            };
 
-
+            // heap related metrics
+//            recordsList.add(makeListGridRecord(loadComposite.getHeapCommitted(), "Heap Maximum", "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.", "heapMax"));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapUsed(), "Heap Used", "Amount of memory actually used by the RHQ storage node", "heapUsed"));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY));
+  
+            // disk related metrics
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsed(), "Total Disk Space Used", "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"));
+            recordsList.add(makeListGridRecord(loadComposite.getTotalDiskUsedPercentage(),"Total Disk Space Percent Used", "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", TOTAL_DISK_SPACE_PERCENTAGE_KEY));
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsedPercentage(), "Data Disk Space Percent Used","Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", DATA_DISK_SPACE_PERCENTAGE_KEY));
+            
             if (loadComposite.getFreeDiskToDataSizeRatio() != null){
                 MeasurementAggregate aggregate = loadComposite.getFreeDiskToDataSizeRatio();
                 NumberFormat nf = NumberFormat.getFormat("0.0");
@@ -408,8 +373,21 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                 record.setAttribute("avg", nf.format(aggregate.getAvg()));
                 record.setAttribute("avgFloat", aggregate.getAvg());
                 record.setAttribute("max", nf.format(aggregate.getMax()));
-
                 recordsList.add(record);
+            }
+//            recordsList.add(makeListGridRecord(loadComposite.getLoad(), "Load", "Data stored on the node", "load"));
+
+            // other metrics
+            recordsList.add(makeListGridRecord(loadComposite.getActuallyOwns(), "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
+            if (loadComposite.getTokens() != null) {
+                ListGridRecord tokens = new ListGridRecord();
+                tokens.setAttribute("id", "tokens");
+                tokens.setAttribute("name", "Number of Tokens");
+                tokens.setAttribute("hover", "Number of partitions of the ring that a node owns.");
+                tokens.setAttribute("min", loadComposite.getTokens().getMin());
+                tokens.setAttribute("avg", loadComposite.getTokens().getAvg());
+                tokens.setAttribute("max", loadComposite.getTokens().getMax());
+                recordsList.add(tokens);
             }
 
             ListGridRecord[] records = recordsList.toArray(new ListGridRecord[recordsList.size()]);
@@ -418,6 +396,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 
         private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
             String hover, String id) {
+            if (aggregateWithUnits == null) return null;
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("id", id);
             record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);

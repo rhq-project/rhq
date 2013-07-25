@@ -52,7 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author Jirka Kremser
  */
-public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName, BookmarkableView {
+public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewName,*/ BookmarkableView {
 
     public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(),
         IconEnum.STORAGE_NODE);
@@ -190,9 +190,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName
                 GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCount(new AsyncCallback<Integer>() {
                     @Override
                         public void onSuccess(Integer result) {
-                            alerts.setTitle(alerts.getTitle()
-                                + (result != 0 ? " <font color='#CC0000;'>(" + result + ")</font>" : " (" + result
-                                    + ")"));
+                            alerts.setTitle(StorageNodeAdminView.getAlertsString(alerts.getTitle(), result));
                             schedule(5 * 1000);
                         }
 
@@ -205,9 +203,15 @@ public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName
         }.run();
     }
 
-    @Override
-    public ViewName getViewName() {
-        return VIEW_ID;
+//    @Override
+//    public ViewName getViewName() {
+//        return VIEW_ID;
+//    }
+    
+    public static String getAlertsString(String prefix, int numOfUnackAlerts) {
+        return prefix
+            + (numOfUnackAlerts != 0 ? " <font color='#CC0000;'>(" + numOfUnackAlerts + ")</font>" : " ("
+                + numOfUnackAlerts + ")");
     }
     
     private static final class TabInfo {

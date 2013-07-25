@@ -151,9 +151,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                         public void onSuccess(List<Integer> result) {
                             for (int i = 0; i < records.length; i++) {
                                 int value = result.get(i);
-                                records[i].setAttribute(FIELD_ALERTS.propertyName(), "New Alerts"
-                                    + (value != 0 ? " <font color='#CC0000;'>(" + value + ")</font>" : " (" + value
-                                        + ")"));
+                                records[i].setAttribute(FIELD_ALERTS.propertyName(),
+                                    StorageNodeAdminView.getAlertsString("New Alerts", value));
                                 listGrid.setData(records);
                             }
                             schedule(10 * 1000);

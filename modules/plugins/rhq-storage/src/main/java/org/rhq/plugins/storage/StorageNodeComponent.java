@@ -117,6 +117,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
         //update storage node jvm settings
         Configuration config = new Configuration();
+        config.put(new PropertySimple("jmxPort", params.getSimpleValue("jmxPort")));
         config.put(new PropertySimple("minHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("maxHeapSize", params.getSimpleValue("heapSize")));
         config.put(new PropertySimple("heapNewSize", params.getSimpleValue("heapNewSize")));

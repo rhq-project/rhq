@@ -103,7 +103,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
     private static final int OPERATION_QUERY_TIMEOUT = 20000;
-    private static final int MAX_ITERATIONS = 6;
+    private static final int MAX_ITERATIONS = 10;
     private static final String UPDATE_CONFIGURATION_OPERATION = "updateConfiguration";
     private static final String RESTART_OPERATION = "restart";
 
@@ -639,16 +639,45 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         StorageNode storageNode = findStorageNodeByAddress(storageNodeConfiguration.getStorageNode().getAddress());
 
         if (storageNode != null && storageNode.getResource() != null) {
-            Resource storageNodeResource = storageNode.getResource();
             Configuration parameters = new Configuration();
             parameters.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
-            parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
-            parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
-            parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
-            parameters.setSimpleValue("restartIfRequired", "true");
+            if (storageNodeConfiguration.getHeapSize() != null) {
+                parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
+            }
+            if (storageNodeConfiguration.getHeapNewSize() != null) {
+                parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
+            }
+            if (storageNodeConfiguration.getThreadStackSize() != null) {
+                parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
+            }
+            parameters.setSimpleValue("restartIfRequired", "false");
 
-            return runOperationAndWaitForResult(subject, storageNodeResource, UPDATE_CONFIGURATION_OPERATION,
+            Resource storageNodeResource = storageNode.getResource();
+
+            boolean result = runOperationAndWaitForResult(subject, storageNodeResource, UPDATE_CONFIGURATION_OPERATION,
                 parameters);
+
+            if (result) {
+                Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
+                    storageNodeResource.getId());
+
+                String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
+                storageNodePluginConfig.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
+
+                String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
+                String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
+                    + storageNodeConfiguration.getJmxPort() + "/");
+                storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
+
+                configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
+                    storageNodePluginConfig);
+
+                storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
+                entityManager.merge(storageNode);
+                entityManager.flush();
+
+                return runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION, null);
+            }
         }
 
         return false;

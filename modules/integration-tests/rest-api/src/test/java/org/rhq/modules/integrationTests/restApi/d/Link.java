@@ -19,7 +19,7 @@
 
 package org.rhq.modules.integrationTests.restApi.d;
 
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 /**
  * A Link inside objects

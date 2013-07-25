@@ -21,19 +21,19 @@ package org.rhq.modules.integrationTests.restApi.d;
 
 import java.io.IOException;
 
-import org.codehaus.jackson.JsonNode;
-import org.codehaus.jackson.JsonParser;
-import org.codehaus.jackson.JsonProcessingException;
-import org.codehaus.jackson.ObjectCodec;
-import org.codehaus.jackson.map.DeserializationContext;
-import org.codehaus.jackson.map.JsonDeserializer;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.ObjectCodec;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
 
 /**
  * Custom deserializer for link object that are now in the form { relname : { "href": link}}
  *
  * @author Heiko W. Rupp
  */
-public class LinkDeserializer extends JsonDeserializer<Link>{
+public class LinkDeserializer extends JsonDeserializer<Link> {
 
     @Override
     public Link deserialize(JsonParser jsonParser,
@@ -41,8 +41,8 @@ public class LinkDeserializer extends JsonDeserializer<Link>{
 
         ObjectCodec oc = jsonParser.getCodec();
         JsonNode node = oc.readTree(jsonParser);
-        String rel = node.getFieldNames().next();
-        String href = node.getElements().next().get("href").getTextValue();
+        String rel = node.fieldNames().next();
+        String href = node.elements().next().get("href").textValue();
 
 
         return new Link(rel,href);

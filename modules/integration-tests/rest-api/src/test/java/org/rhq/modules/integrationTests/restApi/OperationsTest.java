@@ -318,8 +318,6 @@ public class OperationsTest extends AbstractBase {
         assert draft != null;
         assert draft.getDefinitionId() == definitionId;
 
-        draft.setLinks(new ArrayList<Link>()); // Clean out links TODO
-
         System.out.println("--- Draft created --");
         System.out.flush();
 

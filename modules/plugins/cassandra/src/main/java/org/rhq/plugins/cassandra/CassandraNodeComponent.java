@@ -68,6 +68,7 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -140,7 +141,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             if (isStorageServiceReachable()) {
                 return AvailabilityType.UP;
             }
-
             return AvailabilityType.DOWN;
         } finally {
             long totalTimeMillis = NANOSECONDS.toMillis(System.nanoTime() - start);
@@ -190,6 +190,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("shutdown")) {
             OperationResult operationResult = shutdownNode();
+            waitForNodeToGoDown();
             return operationResult;
         } else if (name.equals("start")) {
             return startNode();
@@ -238,7 +239,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     protected OperationResult stopNode() {
         ProcessInfo process = getResourceContext().getNativeProcess();
 
-        if (processInfo == null) {
+        if (process == null) {
             LOG.warn("Failed to obtain process info. It appears Cassandra is already shutdown.");
             return new OperationResult("Failed to obtain process info. It appears Cassandra is already shutdown.");
         }
@@ -263,6 +264,39 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             failure.setErrorMessage(ThrowableUtil.getAllMessages(e));
             return failure;
         }
+    }
+
+    private void waitForNodeToGoDown() throws InterruptedException {
+        if (OperatingSystem.getInstance().getName().equals(OperatingSystem.NAME_MACOSX)) {
+            // See this thread on VMWare forum: http://communities.vmware.com/message/2187972#2187972
+            // Unfortunately there is no work around for this failure on Mac OSX so the method will silently return on
+            // this platform.
+            return;
+        }
+        for (ProcessInfoSnapshot processInfoSnapshot = getProcessInfoSnapshot();; processInfoSnapshot = getProcessInfoSnapshot()) {
+            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+                // Process not found, so it died, that's fine
+                // OR
+                // Process info says process is no longer running, that's fine as well
+                break;
+            }
+            if (getResourceContext().getComponentInvocationContext().isInterrupted()) {
+                // Operation canceled or timed out
+                throw new InterruptedException();
+            }
+            // Process is still running, wait a second and check again
+            Thread.sleep(SECONDS.toMillis(2));
+        }
+    }
+
+    private ProcessInfoSnapshot getProcessInfoSnapshot() {
+        ProcessInfoSnapshot processInfoSnapshot = (processInfo == null) ? null : processInfo.freshSnapshot();
+        if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+            processInfo = getResourceContext().getNativeProcess();
+            // Safe to get prior snapshot here, we've just recreated the process info instance
+            processInfoSnapshot = (processInfo == null) ? null : processInfo.priorSnaphot();
+        }
+        return processInfoSnapshot;
     }
 
     protected OperationResult startNode() {

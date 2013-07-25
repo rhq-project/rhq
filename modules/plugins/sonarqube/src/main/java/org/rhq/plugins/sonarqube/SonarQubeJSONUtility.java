@@ -18,11 +18,6 @@
  */
 package org.rhq.plugins.sonarqube;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,30 +26,53 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  * @author Jeremie Lagarde
  */
 public class SonarQubeJSONUtility {
 
     private static final Log LOG = LogFactory.getLog(SonarQubeJSONUtility.class);
-    
-    public static String getVersion(String path) throws JSONException {
-			return getData(path, "server").getString("version");
-    }
-    
-    public static String getStatus(String path) throws JSONException {
-		return getData(path, "server").getString("status");
-    }
-    
-    public static JSONObject getData(String path, String query) {
 
+    public static String getVersion(String path) throws JSONException {
+        return getData(path, "server").getString("version");
+    }
+
+    public static String getStatus(String path) throws JSONException {
+        return getData(path, "server").getString("status");
+    }
+
+    public static JSONObject getData(String path, String query) {
+        try {
+            return new JSONObject(call(path, query));
+        } catch (JSONException e) {
+            LOG.warn(e);
+        }
+        return null;
+    }
+
+    public static JSONArray getDatas(String path, String query) {
+        try {
+            return new JSONArray(call(path, query));
+        } catch (JSONException e) {
+            LOG.warn(e);
+        }
+        return null;
+    }
+
+    private static String call(String path, String query) {
         URL url = null;
         try {
 
             path = path.replaceAll(" ", "%20");
-
-            url = new URL(path + "/api/" + query);
-
+            if (!path.endsWith("/"))
+                path = path + "/";
+            url = new URL(path + "api/" + query);
 
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
             InputStream is = connection.getInputStream();
@@ -63,7 +81,7 @@ public class SonarQubeJSONUtility {
             StringBuilder builder = new StringBuilder(2048);
 
             while (true) {
-                
+
                 String line = br.readLine();
                 if (line == null) {
                     break;
@@ -72,14 +90,10 @@ public class SonarQubeJSONUtility {
                 }
             }
 
-            JSONObject jsonObject = new JSONObject(builder.toString());
-
-            return jsonObject;
+            return builder.toString();
         } catch (MalformedURLException e) {
             LOG.warn(e);
         } catch (IOException e) {
-            LOG.warn(e);
-        } catch (JSONException e) {
             LOG.warn(e);
         }
         return null;

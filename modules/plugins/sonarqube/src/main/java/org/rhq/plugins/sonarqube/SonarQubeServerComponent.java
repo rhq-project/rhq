@@ -1,4 +1,5 @@
 /*
+
  * RHQ Management Platform
  * Copyright (C) 2005-2008 Red Hat, Inc.
  * All rights reserved.
@@ -18,10 +19,6 @@
  */
 package org.rhq.plugins.sonarqube;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import org.json.JSONArray;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
@@ -33,36 +30,31 @@ import org.rhq.core.pluginapi.inventory.ResourceContext;
 public class SonarQubeServerComponent implements ResourceComponent<ResourceComponent<?>> {
 
     private ResourceContext resourceContext;
-    private Map<String, JSONArray> healthMap = new HashMap<String, JSONArray>();
 
     public void start(ResourceContext resourceContext) throws InvalidPluginConfigurationException, Exception {
-	this.resourceContext = resourceContext;
+        this.resourceContext = resourceContext;
     }
 
     public void stop() {
     }
 
     public AvailabilityType getAvailability() {
-	try {
-	    String status = SonarQubeJSONUtility.getStatus(this.resourceContext.getPluginConfiguration()
-		.getSimple("urlBase").getStringValue());
+        try {
+            String status = SonarQubeJSONUtility.getStatus(this.resourceContext.getPluginConfiguration()
+                .getSimple("urlBase").getStringValue());
 
-	    if (AvailabilityType.UP.getName().equalsIgnoreCase(status)) {
-		return AvailabilityType.UP;
-	    } else {
-		return AvailabilityType.DOWN;
-	    }
-	} catch (Exception e) {
-	    return AvailabilityType.DOWN;
-	}
-    }
-
-    public JSONArray getProjectHealth(String url) {
-	return this.healthMap.get(url);
+            if (AvailabilityType.UP.getName().equalsIgnoreCase(status)) {
+                return AvailabilityType.UP;
+            } else {
+                return AvailabilityType.DOWN;
+            }
+        } catch (Exception e) {
+            return AvailabilityType.DOWN;
+        }
     }
 
     public String getPath() {
-	return this.resourceContext.getPluginConfiguration().getSimple("urlBase").getStringValue();
+        return this.resourceContext.getPluginConfiguration().getSimple("urlBase").getStringValue();
     }
 
 }

@@ -38,39 +38,37 @@ public class SonarQubeProjectDiscoveryComponent implements ResourceDiscoveryComp
     private static final Log LOG = LogFactory.getLog(SonarQubeJSONUtility.class);
 
     public Set<DiscoveredResourceDetails> discoverResources(
-	ResourceDiscoveryContext<SonarQubeServerComponent> discoveryContext)
-	throws InvalidPluginConfigurationException, Exception {
+        ResourceDiscoveryContext<SonarQubeServerComponent> discoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
 
-	Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
+        Set<DiscoveredResourceDetails> found = new HashSet<DiscoveredResourceDetails>();
 
-	String serverPath = discoveryContext.getParentResourceComponent().getPath();
+        String serverPath = discoveryContext.getParentResourceComponent().getPath();
 
-	JSONObject resources = SonarQubeJSONUtility.getData(serverPath, "resources");
+        JSONArray projects = SonarQubeJSONUtility.getDatas(serverPath, "resources");
 
-	JSONArray projects = resources.getJSONArray("resource");
+        try {
 
-	try {
+            for (int i = 0; i < projects.length(); i++) {
+                JSONObject project = projects.getJSONObject(i);
 
-	    for (int i = 0; i < projects.length(); i++) {
-		JSONObject project = projects.getJSONObject(i);
+                String name = project.getString("name");
+                String key = project.getString("key");
+                String description = project.getString("lname");
+                String version = project.getString("version");
+                if (description.length() > 1000) {
+                    description = description.substring(0, 999);
+                }
 
-		String name = project.getString("name");
-		String key = project.getString("key");
-		String description = project.getString("lname");
-		String version = project.getString("version");
-		if (description.length() > 1000) {
-		    description = description.substring(0, 999);
-		}
+                DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
+                    key, name, version, description, null, null);
+                found.add(detail);
+            }
+            return found;
 
-		DiscoveredResourceDetails detail = new DiscoveredResourceDetails(discoveryContext.getResourceType(),
-		    key, name, version, description, null, null);
-		found.add(detail);
-	    }
-	    return found;
-
-	} catch (Exception e) {
-	    LOG.warn(e);
-	    throw e;
-	}
+        } catch (Exception e) {
+            LOG.warn(e);
+            throw e;
+        }
     }
 }

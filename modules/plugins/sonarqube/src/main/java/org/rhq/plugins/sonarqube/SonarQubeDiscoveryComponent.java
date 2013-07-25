@@ -34,41 +34,33 @@ import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 /**
  * @author Jeremie Lagarde
  */
-public class SonarQubeDiscoveryComponent implements ResourceDiscoveryComponent,
-		ManualAddFacet {
+public class SonarQubeDiscoveryComponent implements ResourceDiscoveryComponent, ManualAddFacet {
 
-	public Set discoverResources(
-			ResourceDiscoveryContext resourceDiscoveryContext)
-			throws InvalidPluginConfigurationException, Exception {
-		return Collections.emptySet();
-	}
+    public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
+        throws InvalidPluginConfigurationException, Exception {
+        return Collections.emptySet();
+    }
 
-	public DiscoveredResourceDetails discoverResource(
-			Configuration pluginConfig,
-			ResourceDiscoveryContext resourceDiscoveryContext)
-			throws InvalidPluginConfigurationException {
-		String path = pluginConfig.getSimple("urlBase").getStringValue();
-		URL url;
-		try {
-			url = new URL(path);
-		} catch (MalformedURLException e) {
-			throw new InvalidPluginConfigurationException(
-					"Value of 'urlBase' property is not a valid URL.");
-		}
+    public DiscoveredResourceDetails discoverResource(Configuration pluginConfig,
+        ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
+        String path = pluginConfig.getSimple("urlBase").getStringValue();
+        URL url;
+        try {
+            url = new URL(path);
+        } catch (MalformedURLException e) {
+            throw new InvalidPluginConfigurationException("Value of 'urlBase' property is not a valid URL.");
+        }
 
-		try {
+        try {
 
-			DiscoveredResourceDetails sonarqube = new DiscoveredResourceDetails(
-					resourceDiscoveryContext.getResourceType(), url.toString(),
-					url.getHost() + url.getPath(),
-					SonarQubeJSONUtility.getVersion(path), "SonarQube server",
-					pluginConfig, null);
-			return sonarqube;
-		}
+            DiscoveredResourceDetails sonarqube = new DiscoveredResourceDetails(
+                resourceDiscoveryContext.getResourceType(), url.toString(), url.getHost() + url.getPath(),
+                SonarQubeJSONUtility.getVersion(path), "SonarQube server", pluginConfig, null);
+            return sonarqube;
+        }
 
-		catch (JSONException e) {
-			throw new RuntimeException(
-					"Failed to obtain version for SonarQube server.", e);
-		}
-	}
+        catch (JSONException e) {
+            throw new RuntimeException("Failed to obtain version for SonarQube server.", e);
+        }
+    }
 }

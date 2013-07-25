@@ -18,15 +18,13 @@
  */
 package org.rhq.plugins.sonarqube;
 
-import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDataTrait;
@@ -47,8 +45,8 @@ public class SonarQubeProjectComponent implements ResourceComponent<SonarQubeSer
     private ResourceContext<SonarQubeServerComponent> resourceContext;
 
     public void start(ResourceContext<SonarQubeServerComponent> hudsonServerComponentResourceContext)
-	throws InvalidPluginConfigurationException, Exception {
-	this.resourceContext = hudsonServerComponentResourceContext;
+        throws InvalidPluginConfigurationException, Exception {
+        this.resourceContext = hudsonServerComponentResourceContext;
     }
 
     public void stop() {
@@ -56,48 +54,45 @@ public class SonarQubeProjectComponent implements ResourceComponent<SonarQubeSer
     }
 
     public AvailabilityType getAvailability() {
-	try {
-	    JSONArray healthArray = this.resourceContext.getParentResourceComponent().getProjectHealth(
-		this.resourceContext.getResourceKey());
-	    if (healthArray != null) {
-		JSONObject healthReport = healthArray.getJSONObject(0);
-		return (healthReport.getInt("score") == 100) ? AvailabilityType.UP : AvailabilityType.DOWN;
-	    }
-	    return AvailabilityType.DOWN;
-	} catch (JSONException e) {
-	    // e.printStackTrace();
-	    return AvailabilityType.DOWN;
-	}
-
+        String key = this.resourceContext.getResourceKey();
+        String serverPath = this.resourceContext.getParentResourceComponent().getPath();
+        JSONArray projects = SonarQubeJSONUtility.getDatas(serverPath, "resources?resource=" + key);
+        ;
+        if (projects != null && projects.length() == 1) {
+            return AvailabilityType.UP;
+        }
+        return AvailabilityType.DOWN;
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> metrics) throws Exception {
-	try {
+        try {
 
-	    String key = this.resourceContext.getResourceKey();
-	    String serverPath = this.resourceContext.getParentResourceComponent().getPath();
-	    JSONObject resources = SonarQubeJSONUtility.getData(serverPath, "resources?resource=" + key);
-	    JSONArray projects = resources.getJSONArray("resource");
-	    if (projects.length() == 1) {
-		String date = projects.getJSONObject(0).getString("date");
-		Date lastAnalysisTime = DateFormat.getDateInstance().parse(date);
-		long currentTime = System.currentTimeMillis();
-		for (MeasurementScheduleRequest request : metrics) {
-		    try {
-			if (request.getName().equals("lastAnalysisTime") && lastAnalysisTime != null) {
-			    report.addData(new MeasurementDataTrait(request, lastAnalysisTime.toString()));
-			} else if (request.getName().equals("lastAnalysisElapsedTime") && lastAnalysisTime != null) {
-			    report.addData(new MeasurementDataNumeric(request, (currentTime - lastAnalysisTime
-				.getTime()) / 1000d));
-			}
+            String key = this.resourceContext.getResourceKey();
+            String serverPath = this.resourceContext.getParentResourceComponent().getPath();
+            JSONArray projects = SonarQubeJSONUtility.getDatas(serverPath, "resources?resource=" + key);
 
-		    } catch (Exception e) {
-			LOG.warn(e);
-		    }
-		}
-	    }
-	} catch (Exception e) {
-	    LOG.warn(e);
-	}
+            if (projects != null && projects.length() == 1) {
+                String date = projects.getJSONObject(0).getString("date");
+                SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss Z");
+                Date lastAnalysisTime = df.parse(date.replaceAll("(?=.{5}$)", " "));
+                //    DateFormat.getDateInstance().parse(date);
+                long currentTime = System.currentTimeMillis();
+                for (MeasurementScheduleRequest request : metrics) {
+                    try {
+                        if (request.getName().equals("lastAnalysisTime") && lastAnalysisTime != null) {
+                            report.addData(new MeasurementDataTrait(request, lastAnalysisTime.toString()));
+                        } else if (request.getName().equals("lastAnalysisElapsedTime") && lastAnalysisTime != null) {
+                            report.addData(new MeasurementDataNumeric(request, (currentTime - lastAnalysisTime
+                                .getTime()) / 1000d));
+                        }
+
+                    } catch (Exception e) {
+                        LOG.warn(e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LOG.warn(e);
+        }
     }
 }

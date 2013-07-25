@@ -311,13 +311,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                 });
             }
 
-            function timeFormat(formats) {
-                return function(date) {
-                    var i = formats.length - 1, f = formats[i];
-                    while (!f[1](date)) f = formats[--i];
-                    return f[0](date);
-                }
-            }
 
             function formatHovers(d) {
                 var  timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
@@ -345,11 +338,13 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
         }();
 
-        if (availChartContext.data !== undefined && availChartContext.data.length > 0) {
+        console.log("Avail Data records: "+availChartContext.data.length);
+        if (typeof availChartContext.data !== 'undefined' && availChartContext.data.length > 0) {
             availabilityGraph.draw(availChartContext);
+            console.log("Availability Chart Drawn");
         }
 
-                                       }-*/;
+    }-*/;
 
     public String getChartId() {
         return String.valueOf(entityId);

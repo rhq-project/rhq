@@ -73,6 +73,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
     private boolean isPortalGraph;
+    private boolean hideLegend;
 
 
     private MetricGraphData(int portalId) {
@@ -249,6 +250,14 @@ public class MetricGraphData implements JsonMetricProducer {
         return isPortalGraph;
     }
 
+    public boolean isHideLegend() {
+        return hideLegend;
+    }
+
+    public void setHideLegend(boolean hideLegend) {
+        this.hideLegend = hideLegend;
+    }
+
     public String getChartTitle() {
 
         if(definition != null){
@@ -380,8 +389,8 @@ public class MetricGraphData implements JsonMetricProducer {
      * @see StackedBarMetricGraphImpl
      */
     public boolean showBarAvgTrendLine() {
+        int numberOfAggBars = 0;
         for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            int numberOfAggBars = 0;
             boolean noValuesInCurrentBarUndefined = (!Double.isNaN(measurement.getValue()) && !Double.isNaN(measurement.getHighValue())  && !Double.isNaN(measurement.getLowValue()));
             boolean foundAggregateBar = (measurement.getValue() != measurement.getHighValue() || measurement.getHighValue() != measurement.getLowValue());
             // if there exists a even one aggregate bar then I can short circuit this and exit

@@ -18,7 +18,6 @@
  */
 package org.rhq.modules.integrationTests.restApi;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -219,9 +218,60 @@ public class OperationsTest extends AbstractBase {
             .when()
                 .delete("/operation/" + draftId);
         }
+    }
+
+    @Test
+    public void testCatchBadLinkSerialization() throws Exception {
+
+        // Test that when we get Links back in bad format, we
+        // correctly bail out.
+
+        Operation draft = getADraftOperation(_platformId, discoveryDefinitionId);
+
+        int draftId = draft.getId();
+        draft.getParams().put("detailedDiscovery",true);
+
+        String jsonWithBadLinkSer = //
+        "{\n" +
+            "    \"id\": " + draftId + ",\n" +
+            "    \"name\": \"discovery\",\n" +
+            "    \"readyToSubmit\": false,\n" +
+            "    \"resourceId\": " + _platformId + ",\n" +
+            "    \"definitionId\": " + discoveryDefinitionId + ",\n" +
+            "    \"params\": {\n" +
+            "        \"detailedDiscovery\": true\n" +
+            "    },\n" +
+            "    \"links\": [\n" +
+            "        {\n" +
+            "            \"rel\": \"edit\",\n" +
+            "            \"href\": \"http://localhost:7080/rest/operation/" + draftId + "\"\n" +
+            "        }\n" +
+            "    ]\n" +
+            "}";
+
+        try {
+            given()
+                .contentType(ContentType.JSON)
+                .pathParam("id", draftId)
+                .body(jsonWithBadLinkSer)
+                .log().everything()
+            .expect()
+                .statusCode(503)
+                .log().ifError()
+            .when()
+                .put("/operation/{id}");
+        } finally {
+            // delete the draft again
+            expect()
+                .statusCode(204)
+            .when()
+                .delete("/operation/" + draftId);
+        }
 
 
     }
+
+
 
     @Test
     public void testCreateDraftOperationAndScheduleExecution() throws Exception {

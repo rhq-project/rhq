@@ -31,6 +31,7 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import org.hyperic.sigar.OperatingSystem;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
@@ -113,14 +114,8 @@ public class StorageNodeComponentITest {
         File binDir = new File(basedir, "bin");
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
 
-        File startScript = new File("./cassandra");
-        ProcessExecution startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
-        startScriptExe.setWorkingDirectory(binDir.getAbsolutePath());
-        startScriptExe.setCheckExecutableExists(false);
-
-        startScriptExe.addArguments(asList("-p", "cassandra.pid"));
-        startScriptExe.setCaptureOutput(true);
-        ProcessExecutionResults results = systemInfo.executeProcess(startScriptExe);
+        ProcessExecution processExecution = getProcessExecution(binDir);
+        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
 
         assertEquals(results.getExitCode(), (Integer) 0, "Cassandra failed to start: " + results.getCapturedOutput());
 
@@ -133,6 +128,22 @@ public class StorageNodeComponentITest {
         SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", "127.0.0.1|7399|9142");
         schemaManager.install();
         schemaManager.updateTopology(true);
+    }
+
+    private ProcessExecution getProcessExecution(File binDir) {
+        ProcessExecution startScriptExe;
+        if (OperatingSystem.getInstance().getName().equals(OperatingSystem.NAME_WIN32)) {
+            File startScript = new File(binDir, "cassandra.bat");
+            startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        } else {
+            File startScript = new File("./cassandra");
+            startScriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+            startScriptExe.setCheckExecutableExists(false);
+        }
+        startScriptExe.setWorkingDirectory(binDir.getAbsolutePath());
+        startScriptExe.addArguments(asList("-p", "cassandra.pid"));
+        startScriptExe.setCaptureOutput(true);
+        return startScriptExe;
     }
 
     private void initPluginContainer() {

@@ -121,21 +121,27 @@
        <plugin>
          <artifactId>maven-failsafe-plugin</artifactId>
          <version>2.13</version>
+         <configuration>
+           <includes>
+             <include>**/*ITest.java</include>
+           </includes>
+           <argLine>-Djava.library.path=${pc.lib.dir}</argLine>
+           <systemPropertyVariables>
+             <pc.plugins.dir>${pc.plugins.dir}</pc.plugins.dir>
+           </systemPropertyVariables>
+           <properties>
+             <property>
+               <name>listener</name>
+               <value>org.rhq.test.testng.StdoutReporter</value>
+             </property>
+           </properties>
+         </configuration>
          <executions>
            <execution>
              <id>integration-test</id>
              <goals>
                <goal>integration-test</goal>
              </goals>
-             <configuration>
-               <includes>
-                 <include>**/*ITest.java</include>
-               </includes>
-               <argLine>-Djava.library.path=${pc.lib.dir}</argLine>
-               <systemPropertyVariables>
-                 <pc.plugins.dir>${pc.plugins.dir}</pc.plugins.dir>
-               </systemPropertyVariables>
-             </configuration>
            </execution>
            <execution>
              <id>verify</id>
@@ -155,6 +161,12 @@
            <excludes>
              <exclude>**/*ITest.java</exclude>
            </excludes>
+           <properties>
+             <property>
+               <name>listener</name>
+               <value>org.rhq.test.testng.StdoutReporter</value>
+             </property>
+           </properties>
          </configuration>
        </plugin>
      </plugins>

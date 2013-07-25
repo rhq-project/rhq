@@ -268,7 +268,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                         onItemChanged();
                     }
                 });
-                updateTab(this.resourceGroupsTab, this.resourceGroupSelector);
+                updateTab(this.bundleGroupsTab, this.bundleGroupSelector);
 
             }
 
@@ -392,6 +392,9 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         }
         if (this.ldapGroupSelector != null) {
             this.ldapGroupSelector.reset();
+        }
+        if (this.bundleGroupSelector != null) {
+            this.bundleGroupSelector.reset();
         }
     }
 

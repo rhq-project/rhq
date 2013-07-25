@@ -228,14 +228,21 @@ public enum Permission {
 
     public static final Set<Permission> GLOBAL_ALL = new HashSet<Permission>();
     public static final Set<Permission> RESOURCE_ALL = new HashSet<Permission>();
+    public static final Set<Permission> BUNDLE_ALL = new HashSet<Permission>();
     static {
         for (Permission permission : Permission.values()) {
             switch (permission.getTarget()) {
             case GLOBAL:
                 GLOBAL_ALL.add(permission);
+                if (permission.name().contains("BUNDLE")) {
+                    BUNDLE_ALL.add(permission);
+                }
                 break;
             case RESOURCE:
                 RESOURCE_ALL.add(permission);
+                break;
+            case BUNDLE:
+                BUNDLE_ALL.add(permission);
                 break;
             }
         }

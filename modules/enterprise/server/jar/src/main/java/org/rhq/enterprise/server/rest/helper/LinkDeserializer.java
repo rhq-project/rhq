@@ -20,7 +20,11 @@
 package org.rhq.enterprise.server.rest.helper;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import org.codehaus.jackson.JsonLocation;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.JsonProcessingException;
 import org.codehaus.jackson.map.DeserializationContext;
@@ -44,25 +48,47 @@ import org.rhq.enterprise.server.rest.domain.Link;
  */
 public class LinkDeserializer extends JsonDeserializer<Link>{
 
+    Pattern textPattern = Pattern.compile("\\S+"); // Non whitespace; could possibly be narrowed
+
     @Override
     public Link deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
 
         String tmp = jp.getText(); // {
+        validate(jp, tmp,"{");
         jp.nextToken(); // skip over { to the rel
         String rel = jp.getText();
+        validateText(jp, rel);
         jp.nextToken(); // skip over  {
         tmp = jp.getText();
+        validate(jp, tmp,"{");
         jp.nextToken(); // skip over "href"
         tmp = jp.getText();
-//        jp.nextToken(); // skip over :
+        validate(jp, tmp,"href");
         jp.nextToken(); // skip to "http:// ... "
         String href = jp.getText();
+        validateText(jp, href);
         jp.nextToken(); // skip }
         tmp = jp.getText();
+        validate(jp, tmp, "}");
         jp.nextToken(); // skip }
+        tmp = jp.getText();
+        validate(jp, tmp, "}");
 
         Link link = new Link(rel,href);
 
         return link;
+    }
+
+    private void validateText(JsonParser jsonParser, String input) throws JsonProcessingException {
+        Matcher m = textPattern.matcher(input);
+        if (!m.matches()) {
+            throw new JsonParseException("Unexpected token: " + input, jsonParser.getTokenLocation());
+        }
+    }
+
+    private void validate(JsonParser jsonParser, String input, String expected) throws JsonProcessingException {
+        if (!input.equals(expected)) {
+            throw new JsonParseException("Unexpected token: " + input, jsonParser.getTokenLocation());
+        }
     }
 }

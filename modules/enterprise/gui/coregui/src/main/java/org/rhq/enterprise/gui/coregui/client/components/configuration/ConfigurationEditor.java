@@ -453,8 +453,11 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
                 sectionStack.addSection(buildGroupSection(definition));
             }
-            this.toolStrip = buildToolStrip(layout, sectionStack);
-            layout.addMember(toolStrip);
+
+            if (groupDefinitions.size() > 1) {
+                this.toolStrip = buildToolStrip(layout, sectionStack);
+                layout.addMember(toolStrip);
+            }
             layout.addMember(sectionStack);
         }
 

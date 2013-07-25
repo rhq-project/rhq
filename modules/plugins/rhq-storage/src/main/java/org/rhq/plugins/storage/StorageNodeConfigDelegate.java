@@ -148,11 +148,17 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         }
     }
 
-    private void updateCassandraJvmProps(Configuration config) throws IOException {
+    private void updateCassandraJvmProps(Configuration newConfig) throws IOException {
         PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(jvmOptsFile.getAbsolutePath());
         Properties properties = propertiesUpdater.loadExistingProperties();
 
-        String maxHeapSize = config.getSimpleValue("maxHeapSize");
+        String jmxPort = newConfig.getSimpleValue("jmxPort");
+        if (!StringUtil.isEmpty(jmxPort)) {
+            validateIntegerArg("jmx_port", jmxPort);
+            properties.setProperty("jmx_port", jmxPort);
+        }
+
+        String maxHeapSize = newConfig.getSimpleValue("maxHeapSize");
         if (!StringUtil.isEmpty(maxHeapSize)) {
             validateHeapArg("maxHeapSize", maxHeapSize);
             // We want min and max heap to be the same
@@ -160,19 +166,19 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             properties.setProperty("heap_max", "-Xmx" + maxHeapSize);
         }
 
-        String heapNewSize = config.getSimpleValue("heapNewSize");
+        String heapNewSize = newConfig.getSimpleValue("heapNewSize");
         if (!StringUtil.isEmpty(heapNewSize)) {
             validateHeapArg("heapNewSize", heapNewSize);
             properties.setProperty("heap_new", "-Xmn" + heapNewSize);
         }
 
-        String threadStackSize = config.getSimpleValue("threadStackSize");
+        String threadStackSize = newConfig.getSimpleValue("threadStackSize");
         if (!StringUtil.isEmpty(threadStackSize)) {
-            validateStackArg(threadStackSize);
+            validateIntegerArg("threadStackSize", threadStackSize);
             properties.setProperty("thread_stack_size", "-Xss" + threadStackSize + "k");
         }
 
-        PropertySimple heapDumpOnOMMError = config.getSimple("heapDumpOnOOMError");
+        PropertySimple heapDumpOnOMMError = newConfig.getSimple("heapDumpOnOOMError");
         if (heapDumpOnOMMError != null) {
             if (heapDumpOnOMMError.getBooleanValue()) {
                 properties.setProperty("heap_dump_on_OOMError", "-XX:+HeapDumpOnOutOfMemoryError");
@@ -181,7 +187,7 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             }
         }
 
-        String heapDumpDir = useForwardSlash(config.getSimpleValue("heapDumpDir"));
+        String heapDumpDir = useForwardSlash(newConfig.getSimpleValue("heapDumpDir"));
         if (!StringUtil.isEmpty(heapDumpDir)) {
             properties.setProperty("heap_dump_dir", heapDumpDir);
         }
@@ -209,7 +215,7 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
         String threadStackSize = config.getSimpleValue("threadStackSize");
         if (!StringUtil.isEmpty(threadStackSize)) {
-            validateStackArg(threadStackSize);
+            validateIntegerArg("threadStackSize", threadStackSize);
             properties.setProperty("set.thread_stack_size", "-Xss" + threadStackSize + "k");
         }
 
@@ -248,11 +254,11 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         }
     }
 
-    private void validateStackArg(String value) {
+    private void validateIntegerArg(String name, String value) {
         try {
             Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new IllegalArgumentException(value + " is not a legal value for the property [threadStackSize]");
+            throw new IllegalArgumentException(value + " is not a legal value for the property [" + name + "]");
         }
     }
 

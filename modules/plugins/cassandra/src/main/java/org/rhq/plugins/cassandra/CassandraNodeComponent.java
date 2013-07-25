@@ -47,6 +47,7 @@ import com.datastax.driver.core.Session;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.OperatingSystem;
 import org.hyperic.sigar.SigarException;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -67,7 +68,6 @@ import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.ProcessInfo;
-import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -186,16 +186,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
-    private ProcessInfoSnapshot getProcessInfoSnapshot() {
-        ProcessInfoSnapshot processInfoSnapshot = (processInfo == null) ? null : processInfo.freshSnapshot();
-        if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
-            processInfo = getResourceContext().getNativeProcess();
-            // Safe to get prior snapshot here, we've just recreated the process info instance
-            processInfoSnapshot = (processInfo == null) ? null : processInfo.priorSnaphot();
-        }
-        return processInfoSnapshot;
-    }
-
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("shutdown")) {
@@ -210,23 +200,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
 
         return null;
-    }
-
-    private void waitForNodeToGoDown() throws InterruptedException {
-        for (ProcessInfoSnapshot processInfoSnapshot = getProcessInfoSnapshot();; processInfoSnapshot = getProcessInfoSnapshot()) {
-            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
-                // Process not found, so it died, that's fine
-                // OR
-                // Process info says process is no longer running, that's fine as well
-                break;
-            }
-            if (getResourceContext().getComponentInvocationContext().isInterrupted()) {
-                // Operation canceled or timed out
-                throw new InterruptedException();
-            }
-            // Process is still running, wait a second and check again
-            Thread.sleep(SECONDS.toMillis(1));
-        }
     }
 
     @SuppressWarnings("rawtypes")
@@ -292,27 +265,49 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
-
     protected OperationResult startNode() {
-        ResourceContext<?> context = getResourceContext();
-        Configuration pluginConfig = context.getPluginConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         String baseDir = pluginConfig.getSimpleValue("baseDir");
         File binDir = new File(baseDir, "bin");
-        File startScript = new File(binDir, getStartScript());
-        File pidFile = new File(binDir, "cassandra.pid");
-
-        ProcessExecution scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
-        scriptExe.addArguments(asList("-p", pidFile.getAbsolutePath()));
-        SystemInfo systemInfo = context.getSystemInformation();
+        if (!startScriptExists(binDir)) {
+            OperationResult failure = new OperationResult("Failed to start Cassandra daemon");
+            failure.setErrorMessage("Start script does not exists");
+            return failure;
+        }
+        ProcessExecution scriptExe = getProcessExecution(binDir);
+        SystemInfo systemInfo = getResourceContext().getSystemInformation();
         ProcessExecutionResults results = systemInfo.executeProcess(scriptExe);
-
-        if  (results.getError() == null) {
+        if (results.getError() == null) {
             return new OperationResult("Successfully started Cassandra daemon");
         } else {
             OperationResult failure = new OperationResult("Failed to start Cassandra daemon");
             failure.setErrorMessage(ThrowableUtil.getAllMessages(results.getError()));
             return failure;
         }
+    }
+
+    private boolean startScriptExists(File binDir) {
+        File file = new File(binDir, getStartScript());
+        return file.exists() && !file.isDirectory();
+    }
+
+    private ProcessExecution getProcessExecution(File binDir) {
+        ProcessExecution scriptExe;
+        if (OperatingSystem.getInstance().getName().equals(OperatingSystem.NAME_WIN32)) {
+            File startScript = new File(binDir, getStartScript());
+            scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        } else {
+            // On Linux, when Cassandra is started with an absolute path, the command line is too long and is truncated
+            // in /proc/pid/cmdline (beacuse of a long CLASSPATH made of absolute paths)
+            // This prevents the process from being later discovered because the process query argument criteria
+            // expects org.apache.cassandra.service.CassandraDaemon to be found
+            File startScript = new File("./" + getStartScript());
+            scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+            scriptExe.setCheckExecutableExists(false);
+        }
+        scriptExe.setWorkingDirectory(binDir.getAbsolutePath());
+        scriptExe.addArguments(asList("-p", "cassandra.pid"));
+        return scriptExe;
     }
 
     protected OperationResult restartNode() {

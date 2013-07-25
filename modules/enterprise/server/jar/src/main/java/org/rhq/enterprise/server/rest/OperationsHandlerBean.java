@@ -303,12 +303,15 @@ public class OperationsHandlerBean extends AbstractRestBean  {
 
             // Validate parameters
             ConfigurationDefinition parameterDefinition = opDef.getParametersConfigurationDefinition();
-            List<String> errorMessages = ConfigurationHelper.checkConfigurationWrtDefinition(parameters, parameterDefinition);
+            if (parameterDefinition!=null) {
+                // There are parameters defined, so lets validate them.
+                List<String> errorMessages = ConfigurationHelper.checkConfigurationWrtDefinition(parameters, parameterDefinition);
 
-            if (errorMessages.size()>0) {
-                // Configuration is not ok
-                operation.setReadyToSubmit(false);
-                throw new BadArgumentException("Validation of parameters failed", StringUtils.getListAsString(errorMessages,", "));
+                if (errorMessages.size()>0) {
+                    // Configuration is not ok
+                    operation.setReadyToSubmit(false);
+                    throw new BadArgumentException("Validation of parameters failed", StringUtils.getListAsString(errorMessages,", "));
+                }
             }
         }
 

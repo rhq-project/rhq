@@ -106,7 +106,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements HasViewName
             }
         });
 
-        tabset.setTabs(table, settings, alerts, backup);
+        tabset.setTabs(table, settings, alerts/*, backup*/);
         addMember(tabset);
     }
 

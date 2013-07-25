@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_DISK;
@@ -33,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -72,7 +74,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
     public static final String FILTER_OPERATION_MODE = FIELD_OPERATION_MODE.propertyName();
     private static StorageNodeDatasource instance;
-    
+        
     private StorageNodeDatasource() {
         super();
         setID("storageNode");
@@ -105,33 +107,38 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         fields.add(idField);
 
         fields.add(FIELD_ADDRESS.getListGridField("*"));
+        fields.add(FIELD_ALERTS.getListGridField("120"));
+
+        ListGridField field = FIELD_MEMORY.getListGridField("120");
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "Average memory taken for last 8 hours.";
+            }
+        });
+        fields.add(field);
+
+        field = FIELD_DISK.getListGridField("120");
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "Average disk Ratio of (Free Disk)/(Data File Size) for last 8 hours. A value below 1 is not "
+                    + "recommended since a compaction or repair process could double the amount of disk "
+                    + "space used by data files. If multiple data locations are specified then the "
+                    + "aggregate accross all the partitions that contain data files is reported.";
+            }
+        });
+        fields.add(field);
+        
         fields.add(FIELD_JMX_PORT.getListGridField("90"));
-        ListGridField cqlField = FIELD_CQL_PORT.getListGridField("90");
-        cqlField.setHidden(true);
-        fields.add(cqlField);
-        fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
+//        ListGridField cqlField = FIELD_CQL_PORT.getListGridField("90");
+//        cqlField.setHidden(true);
+//        fields.add(cqlField);
+//        fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
 
         ListGridField createdTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(createdTimeField);
         fields.add(createdTimeField);
-        
-        ListGridField field = FIELD_MEMORY.getListGridField("90");
-        field.setShowHover(true);
-        field.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                return "Average memory taken for last one hour.";
-            }
-        });
-        fields.add(field);
-        
-        field = FIELD_DISK.getListGridField("90");
-        field.setShowHover(true);
-        field.setHoverCustomizer(new HoverCustomizer() {
-            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                return "Average disk space taken for last one hour.";
-            }
-        });
-        fields.add(field);
 
         ListGridField resourceIdField = FIELD_RESOURCE_ID.getListGridField("120");
 //        resourceIdField.setHidden(true);
@@ -204,11 +211,16 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                 record.setAttribute(FIELD_RESOURCE_ID.propertyName(), node.getResource().getId());
             }
         }
-        String memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(),
-            from.getHeapPercentageUsed().getUnits(), true);
+        int value = from.getUnackAlerts();
+        record.setAttribute(FIELD_ALERTS.propertyName(), "New Alerts"
+            + (value != 0 ? " <font color='#CC0000;'>(" + value + ")</font>" : " (" + value + ")"));
+        String memory = null;
+        if (from.getHeapPercentageUsed() != null && from.getHeapPercentageUsed().getAggregate().getAvg() != null)
+            memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(), from
+                .getHeapPercentageUsed().getUnits(), true);
         record.setAttribute(FIELD_MEMORY.propertyName(), memory);
-        String disk = MeasurementConverterClient.format(from.getPartitionDiskUsedPercentage().getAggregate().getAvg(),
-            from.getPartitionDiskUsedPercentage().getUnits(), true);
+        String disk = from.getFreeDiskToDataSizeRatio() != null ? NumberFormat.getFormat("0.0").format(
+            from.getFreeDiskToDataSizeRatio().getAvg()) : MSG.view_measure_nan();
         record.setAttribute(FIELD_DISK.propertyName(), disk);
         return record;
     }
@@ -258,6 +270,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         public static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
         public static final String DATA_DISK_SPACE_PERCENTAGE_KEY = "dataDiskSpacePercentage";
         public static final String TOTAL_DISK_SPACE_PERCENTAGE_KEY = "totalDiskSpacePercentage";
+        public static final String FREE_DISK_TO_DATA_SIZE_RATIO_KEY = "freeDiskToDataSizeRatio";
+        
         private int id;
 
         public static StorageNodeLoadCompositeDatasource getInstance(int id) {
@@ -359,14 +373,11 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                         loadComposite.getTotalDiskUsedPercentage(),
                         "Total Disk Space Percent Used",
                         "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.",
-                        TOTAL_DISK_SPACE_PERCENTAGE_KEY),
-                    Arrays.<Object> asList(
-                        loadComposite.getDataDiskUsed(),
+                        TOTAL_DISK_SPACE_PERCENTAGE_KEY), Arrays.<Object> asList(loadComposite.getDataDiskUsed(),
                         "Total Disk Space Used",
-                        "Total space used on disk by all data files, commit logs, and saved caches.",
-                        "totaldisk"),
-                    Arrays.<Object> asList(loadComposite.getActuallyOwns(),
-                        "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
+                        "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"),
+                    Arrays.<Object> asList(loadComposite.getActuallyOwns(), "Ownership",
+                        "Refers to the percentage of keys that a node owns.", "ownership"));
             for (List<Object> aggregateWithUnitsList : loadFields) {
                 if (aggregateWithUnitsList.get(0) != null) {
                     recordsList.add(makeListGridRecord((MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
@@ -388,14 +399,15 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 
             if (loadComposite.getFreeDiskToDataSizeRatio() != null){
                 MeasurementAggregate aggregate = loadComposite.getFreeDiskToDataSizeRatio();
-
+                NumberFormat nf = NumberFormat.getFormat("0.0");
                 ListGridRecord record = new ListGridRecord();
-                record.setAttribute("id", "freeDiskToDataSizeRatio");
+                record.setAttribute("id", FREE_DISK_TO_DATA_SIZE_RATIO_KEY);
                 record.setAttribute("name", "Free Disk To Data Size Ratio");
                 record.setAttribute("hover", "Ratio of (Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.");
-                record.setAttribute("min", aggregate.getMin());
-                record.setAttribute("avg", aggregate.getAvg());
-                record.setAttribute("max", aggregate.getMax());
+                record.setAttribute("min", nf.format(aggregate.getMin()));
+                record.setAttribute("avg", nf.format(aggregate.getAvg()));
+                record.setAttribute("avgFloat", aggregate.getAvg());
+                record.setAttribute("max", nf.format(aggregate.getMax()));
 
                 recordsList.add(record);
             }

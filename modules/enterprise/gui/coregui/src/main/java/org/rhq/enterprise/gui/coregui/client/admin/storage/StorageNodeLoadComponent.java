@@ -39,6 +39,9 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  */
 public class StorageNodeLoadComponent extends EnhancedVLayout {
     private final ListGrid loadGrid;
+    private static final String OK_COLOR = "color:#26aa26;";
+    private static final String WARN_COLOR = "color:#ed9b26;";
+    private static final String DONT_MISS_ME_COLOR = "font-weight:bold; color:#d64949;";
 
     public StorageNodeLoadComponent(int storageNodeId) {
         this(storageNodeId, null, null);
@@ -51,28 +54,40 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         loadGrid = new ListGrid() {
             @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
-                if ("avg".equals(getFieldName(colNum))
+                if ("avg".equals(getFieldName(colNum)) 
                     && (StorageNodeLoadCompositeDatasource.HEAP_PERCENTAGE_KEY.equals(record.getAttribute("id")) ||
                         StorageNodeLoadCompositeDatasource.DATA_DISK_SPACE_PERCENTAGE_KEY.equals(record.getAttribute("id")) ||
                         StorageNodeLoadCompositeDatasource.TOTAL_DISK_SPACE_PERCENTAGE_KEY.equals(record.getAttribute("id")))) {
                     if (record.getAttributeAsFloat("avgFloat") > .85) {
-                        return "font-weight:bold; color:#d64949;";
+                        return DONT_MISS_ME_COLOR;
                     } else if (record.getAttributeAsFloat("avgFloat") > .7) {
-                        return "color:#ed9b26;";
+                        return WARN_COLOR;
                     } else {
-                        return "color:#26aa26;";
+                        return OK_COLOR;
                     }
-                } else {
+                } else if ("avg".equals(getFieldName(colNum))
+                    && StorageNodeLoadCompositeDatasource.FREE_DISK_TO_DATA_SIZE_RATIO_KEY.equals(record
+                        .getAttribute("id"))) {
+                    if (record.getAttributeAsFloat("avgFloat") < 1) {
+                        return DONT_MISS_ME_COLOR;
+                    } else if (record.getAttributeAsFloat("avgFloat") < 1.5) {
+                        return WARN_COLOR;
+                    } else {
+                        return OK_COLOR;
+                    }
+                }
+                else {
                     return super.getCellCSSText(record, rowNum, colNum);
                 }
             }
         };
         loadGrid.setWidth100();
-        loadGrid.setHeight(200);
+        loadGrid.setHeight(230);
         StorageNodeLoadCompositeDatasource datasource = StorageNodeLoadCompositeDatasource.getInstance(storageNodeId);
         List<ListGridField> fields = datasource.getListGridFields();
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         loadGrid.setAutoFetchData(true);
+        loadGrid.setHoverWidth(300);
 
 
         ToolStrip toolStrip = new ToolStrip();
@@ -107,7 +122,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         }
         loadGrid.setDataSource(datasource);
         addMember(loadGrid);
-        addMember(toolStrip);
+//        addMember(toolStrip);
 
     }
 }

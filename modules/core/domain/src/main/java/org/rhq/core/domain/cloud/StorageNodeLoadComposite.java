@@ -36,6 +36,7 @@ public class StorageNodeLoadComposite implements Serializable {
     private StorageNode storageNode;
     private long beginTime;
     private long endTime;
+    private int unackAlerts;
 
     private MeasurementAggregateWithUnits heapCommitted;
     private MeasurementAggregateWithUnits heapUsed;
@@ -82,6 +83,14 @@ public class StorageNodeLoadComposite implements Serializable {
 
     public void setEndTime(long endTime) {
         this.endTime = endTime;
+    }
+
+    public int getUnackAlerts() {
+        return unackAlerts;
+    }
+
+    public void setUnackAlerts(int unackAlerts) {
+        this.unackAlerts = unackAlerts;
     }
 
     /**
@@ -219,14 +228,12 @@ public class StorageNodeLoadComposite implements Serializable {
         this.actuallyOwns = actuallyOwns;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("storageNode.addresss=").append(storageNode.getAddress()).append(", ");
         builder.append("beginTime=").append(beginTime).append(", ");
-        builder.append("heapCommitted=").append(heapCommitted).append(", ");
+        builder.append("beginTime=").append(beginTime).append(", ");
+        builder.append("unackAlerts=").append(unackAlerts).append(", ");
         builder.append("heapUsed=").append(heapUsed).append(", ");
         builder.append("heapPercentageUsed=").append(heapPercentageUsed).append(", ");
         builder.append("load=").append(load).append(", ");

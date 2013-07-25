@@ -76,6 +76,7 @@ public class AddToDashboardComponent extends ToolStrip implements Enhanced {
         addSpacer(15);
         dashboardSelectItem = new SelectItem();
         addToDashboardButton = new IButton(MSG.view_metric_addToDashboard());
+        addToDashboardButton.disable();
 
         dashboardSelectItem = new SelectItem();
         dashboardSelectItem.setTitle("Dashboards");

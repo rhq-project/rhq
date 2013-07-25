@@ -658,12 +658,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (storageNode == null) {
             initialStorageNodes = getStorageNodes();
         } else {
-            int index = initialStorageNodes.indexOf(storageNode);
-            if (index >= 0) {
-                initialStorageNodes = Arrays.asList(initialStorageNodes.get(index));
-            } else {
-                initialStorageNodes = new ArrayList<StorageNode>();
-            }
+            initialStorageNodes = Arrays.asList(storageNode.getResource() == null ? entityManager.find(
+                StorageNode.class, storageNode.getId()) : storageNode);
         }
          
         Queue<Resource> unvisitedResources = new LinkedList<Resource>();

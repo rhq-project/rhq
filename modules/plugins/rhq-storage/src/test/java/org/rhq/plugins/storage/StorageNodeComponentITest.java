@@ -231,6 +231,26 @@ public class StorageNodeComponentITest {
         assertNodeIsUp("Expected " + storageNode + " to be up after restarting it.");
     }
 
+    @Test(dependsOnMethods = "restartStorageNode")
+    public void prepareForBootstrap() {
+        Configuration params = Configuration.builder().addSimple("cqlPort", 9242).addSimple("gossipPort", 7200)
+            .openList("storageNodeIPAddresses", "storageNodeIPAddresse").addSimples("127.0.0.1", "127.0.0.2")
+            .closeList().build();
+
+        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+        OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+
+        long timeout = 1000 * 60;
+        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId());
+        OperationServicesResult result = operationsService.invokeOperation(operationContext, "prepareForBootstrap",
+            params, timeout);
+
+        assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The operation failed: " +
+            result.getErrorStackTrace());
+
+        assertNodeIsUp("Expected " + storageNode + " to be up after the prepareForBootstrap operation completes.");
+    }
+
     private void assertNodeIsUp(String msg) {
         executeAvailabilityScan();
 
@@ -251,7 +271,6 @@ public class StorageNodeComponentITest {
 
     private Availability getAvailability() {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-//        return inventoryManager.getAvailabilityIfKnown(storageNode);
         return inventoryManager.getCurrentAvailability(storageNode);
     }
 

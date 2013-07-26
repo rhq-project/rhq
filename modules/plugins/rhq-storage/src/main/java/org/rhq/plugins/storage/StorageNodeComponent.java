@@ -28,6 +28,7 @@ package org.rhq.plugins.storage;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
@@ -39,6 +40,7 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.SigarException;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
@@ -54,9 +56,11 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.ProcessInfo;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -105,9 +109,78 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return updateKnownNodes(parameters);
         } else if (name.equals("prepareForBootstrap")) {
             return prepareForBootstrap(parameters);
+        } else if (name.equals("shutdown")) {
+            return shutdownStorageNode();
         } else {
             return super.invokeOperation(name, parameters);
         }
+    }
+
+    private OperationResult shutdownStorageNode() {
+        OperationResult result = new OperationResult();
+        File binDir = new File(getBasedir(), "bin");
+        File pidFile = new File(binDir, "cassandra.pid");
+
+        try {
+            if (pidFile.exists()) {
+                long pid = readPidFile(pidFile);
+                log.info("Shutting down storage node with pid " + pid);
+                ProcessInfo process = findProcessInfo(pid);
+                if (process != null) {
+                    try {
+                        process.kill("KILL");
+                        waitForNodeToGoDown();
+                        pidFile.delete();
+                        result.setSimpleResult("Successfully storage node with pid " + pid);
+                    } catch (SigarException e) {
+                        log.error("Failed to delete storage node with pid " + process.getPid(), e);
+                        result.setErrorMessage("Failed to delete storage node with pid " + pid + ": " +
+                            ThrowableUtil.getAllMessages(e));
+                    }
+                } else {
+                    log.warn("Could not find process info for pid " + pid);
+                    result = shutdownUsingNativeProcessInfo();
+                }
+
+            } else {
+                log.warn("Did not find pid file " + pidFile + ". It should not be modified, deleted, or moved.");
+                result = shutdownUsingNativeProcessInfo();
+            }
+        } catch (FileNotFoundException e) {
+            log.error("Could not read pid file " + pidFile, e);
+            result.setErrorMessage("Could not read pid file " + pidFile + ": " + ThrowableUtil.getAllMessages(e));
+        } catch (InterruptedException e) {
+            log.warn("The shutdown operation was cancelled or interrupted. This interruption occurred while trying " +
+                "to verify that the storage node process has exited.");
+            result.setErrorMessage("The operation was cancelled or interrupted while trying to verify that the " +
+                "storage node process has exited.");
+        }
+        return result;
+    }
+
+    private long readPidFile(File pidFile) throws FileNotFoundException {
+       return Long.parseLong(StreamUtil.slurp(new FileReader(pidFile)));
+    }
+
+    private ProcessInfo findProcessInfo(long pid) {
+        List<ProcessScanResult> scanResults = getResourceContext().getNativeProcessesForType();
+
+        for (ProcessScanResult scanResult : scanResults) {
+            if (scanResult.getProcessInfo().getPid() == pid) {
+                return scanResult.getProcessInfo();
+            }
+        }
+        return null;
+    }
+
+    private OperationResult shutdownUsingNativeProcessInfo() throws InterruptedException {
+        log.warn("Could not obtain process info from pid file");
+        log.info("Obtaining process info from the system to perform the shutdown");
+
+        OperationResult result = shutdownNode();
+        waitForNodeToGoDown();
+
+        return result;
     }
 
     private OperationResult updateConfiguration(Configuration params) {
@@ -237,7 +310,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         OperationResult result = new OperationResult();
 
         log.info("Stopping storage node");
-        OperationResult stopNodeResult = stopNode();
+        OperationResult stopNodeResult = shutdownStorageNode();
         if (stopNodeResult.getErrorMessage() != null) {
             log.error("Failed to stop storage node " + this + " Cannot prepare the node for bootstrap which means " +
                 "that the storage node cannot join the cluster. Make sure the storage node is not running and retry " +

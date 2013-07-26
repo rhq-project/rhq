@@ -38,7 +38,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
-import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 
@@ -78,7 +77,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
     @BeforeClass
     public void initDAO() throws Exception {
-        dao = new MetricsDAO(session, new MetricsConfiguration());
+        dao = new MetricsDAO(storageSession, new MetricsConfiguration());
     }
 
     @BeforeMethod
@@ -101,7 +100,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         WaitForWrite waitForResults = new WaitForWrite(1);
 
-        ResultSetFuture resultSetFuture = dao.insertRawData(expected);
+        StorageResultSetFuture resultSetFuture = dao.insertRawData(expected);
         Futures.addCallback(resultSetFuture, waitForResults);
         waitForResults.await("Failed to insert raw data");
 
@@ -131,7 +130,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
-            ResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw);
             Futures.addCallback(resultSetFuture, waitForWrite);
         }
         waitForWrite.await("Failed to insert raw data");
@@ -160,14 +159,14 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
-            ResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw);
             Futures.addCallback(resultSetFuture, waitForWrite);
         }
         waitForWrite.await("Failed to insert raw data");
 
         RawNumericMetricMapper mapper = new RawNumericMetricMapper();
         WaitForRead<RawNumericMetric> waitForRead = new WaitForRead<RawNumericMetric>(mapper);
-        ResultSetFuture resultSetFuture = dao.findRawMetricsAsync(scheduleId,
+        StorageResultSetFuture resultSetFuture = dao.findRawMetricsAsync(scheduleId,
             threeMinutesAgo.minusSeconds(5).getMillis(), oneMinuteAgo.plusSeconds(5).getMillis());
         Futures.addCallback(resultSetFuture, waitForRead);
 
@@ -200,7 +199,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
-            ResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw);
             Futures.addCallback(resultSetFuture, waitForWrite);
         }
         waitForWrite.await("Failed to insert raw data");
@@ -321,9 +320,9 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         WaitForWrite waitForWrite = new WaitForWrite(2);
 
-        ResultSetFuture resultSetFuture1 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId1,
+        StorageResultSetFuture resultSetFuture1 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId1,
             hour0().getMillis());
-        ResultSetFuture resultSetFuture2 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId2,
+        StorageResultSetFuture resultSetFuture2 = dao.updateMetricsIndex(MetricsTable.TWENTY_FOUR_HOUR, scheduleId2,
             hour0().getMillis());
 
         Futures.addCallback(resultSetFuture1, waitForWrite);

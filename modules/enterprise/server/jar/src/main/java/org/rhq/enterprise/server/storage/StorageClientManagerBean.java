@@ -50,6 +50,7 @@ import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
+import org.rhq.server.metrics.StorageSession;
 
 /**
  * @author John Sanda
@@ -70,7 +71,7 @@ public class StorageClientManagerBean {
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
 
-    private Session session;
+    private StorageSession session;
     private MetricsConfiguration metricsConfiguration;
     private MetricsDAO metricsDAO;
     private MetricsServer metricsServer;
@@ -95,7 +96,12 @@ public class StorageClientManagerBean {
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
         metricsConfiguration = new MetricsConfiguration();
-        session = createSession(username, password, storageNodeManager.getStorageNodes());
+
+        Session wrappedSession = createSession(username, password, storageNodeManager.getStorageNodes());
+        session = new StorageSession(wrappedSession);
+
+        session.addStorageStateListener(new StorageClusterMonitor());
+
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
         Server server = serverManager.getServer();
@@ -121,15 +127,15 @@ public class StorageClientManagerBean {
     }
 
     public MetricsDAO getMetricsDAO() {
-        return this.metricsDAO;
+        return metricsDAO;
     }
 
     public MetricsServer getMetricsServer() {
-        return this.metricsServer;
+        return metricsServer;
     }
 
-    public Session getSession() {
-        return this.session;
+    public StorageSession getSession() {
+        return session;
     }
 
     public MetricsConfiguration getMetricsConfiguration() {

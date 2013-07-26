@@ -33,10 +33,10 @@ import java.util.List;
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.rhq.server.metrics.CQLException;
+import org.rhq.server.metrics.StorageSession;
 
 /**
  * This class helps paginate Cassandra results that have a list in the matching clause. Instead of running
@@ -52,12 +52,12 @@ public class ListPagedResult<T> implements Iterable<T> {
     private final long startTime;
     private final long endTime;
     private final ResultSetMapper<T> mapper;
-    private final Session session;
+    private final StorageSession session;
 
     private final PreparedStatement preparedStatement;
 
     public ListPagedResult(PreparedStatement preparedStatement, List<Integer> scheduleIds, long startTime, long endTime,
-        ResultSetMapper<T> mapper, Session session) {
+        ResultSetMapper<T> mapper, StorageSession session) {
         this.preparedStatement = preparedStatement;
         this.scheduleIds = new LinkedList<Integer>(scheduleIds);
         this.startTime = startTime;

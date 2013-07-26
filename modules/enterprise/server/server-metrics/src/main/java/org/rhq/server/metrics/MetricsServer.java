@@ -35,7 +35,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Row;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -299,7 +298,7 @@ public class MetricsServer {
 
         for (final MeasurementDataNumeric data : dataSet) {
             semaphore.acquire();
-            ResultSetFuture resultSetFuture = dao.insertRawData(data);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
             Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
                 @Override
                 public void onSuccess(ResultSet rows) {
@@ -325,7 +324,7 @@ public class MetricsServer {
 
         long timeSlice = dateTimeService.getTimeSlice(new DateTime(rawData.getTimestamp()),
             configuration.getRawTimeSliceDuration()).getMillis();
-        ResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
+        StorageResultSetFuture resultSetFuture = dao.updateMetricsIndex(MetricsTable.ONE_HOUR, rawData.getScheduleId(),
             timeSlice);
         Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
             @Override

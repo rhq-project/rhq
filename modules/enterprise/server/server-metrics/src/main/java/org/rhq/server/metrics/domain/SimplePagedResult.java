@@ -34,6 +34,7 @@ import com.datastax.driver.core.SimpleStatement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.rhq.server.metrics.CQLException;
+import org.rhq.server.metrics.StorageSession;
 
 /**
  * This class is just a placeholder for future pagination implementations once Cassandra gets native support for paging results.
@@ -51,7 +52,7 @@ public class SimplePagedResult<T> implements Iterable<T> {
 
     private final ResultSetMapper<T> mapper;
     private final Query query;
-    private final Session session;
+    private final StorageSession session;
     private final int pageSize;
 
     /**
@@ -60,7 +61,7 @@ public class SimplePagedResult<T> implements Iterable<T> {
      * @param session Cassandra session
      * @param pageSize page size
      */
-    public SimplePagedResult(Query query, ResultSetMapper<T> mapper, Session session, int pageSize) {
+    public SimplePagedResult(Query query, ResultSetMapper<T> mapper, StorageSession session, int pageSize) {
         this.query = query;
         this.mapper = mapper;
         this.session = session;
@@ -73,7 +74,7 @@ public class SimplePagedResult<T> implements Iterable<T> {
      * @param session Cassandra session
      * @param pageSize page size
      */
-    public SimplePagedResult(String query, ResultSetMapper<T> mapper, Session session, int pageSize) {
+    public SimplePagedResult(String query, ResultSetMapper<T> mapper, StorageSession session, int pageSize) {
         this(new SimpleStatement(query), mapper, session, pageSize);
     }
 
@@ -82,7 +83,7 @@ public class SimplePagedResult<T> implements Iterable<T> {
      * @param mapper result set mapper
      * @param session Cassandra session
      */
-    public SimplePagedResult(Query query, ResultSetMapper<T> mapper, Session session) {
+    public SimplePagedResult(Query query, ResultSetMapper<T> mapper, StorageSession session) {
         this(query, mapper, session, DEFAULT_PAGE_SIZE);
     }
 
@@ -92,7 +93,7 @@ public class SimplePagedResult<T> implements Iterable<T> {
      * @param session Cassandra session
      * @param pageSize page size
      */
-    public SimplePagedResult(String query, ResultSetMapper<T> mapper, Session session) {
+    public SimplePagedResult(String query, ResultSetMapper<T> mapper, StorageSession session) {
         this(new SimpleStatement(query), mapper, session);
     }
 

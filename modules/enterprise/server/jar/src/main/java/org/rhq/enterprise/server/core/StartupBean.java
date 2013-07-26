@@ -450,7 +450,6 @@ public class StartupBean implements StartupLocal {
         }
 
         storageClientManager.init();
-        storageClusterHeartBeatJob.scheduleJob();
     }
 
     /**

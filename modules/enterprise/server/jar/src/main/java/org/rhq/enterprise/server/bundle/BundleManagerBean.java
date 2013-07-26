@@ -257,6 +257,31 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
+    public BundleGroup createBundleGroup(Subject subject, String name, String description) throws Exception {
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleGroupName: " + name);
+        }
+
+        BundleGroupCriteria c = new BundleGroupCriteria();
+        c.addFilterName(name);
+        c.setStrict(true);
+        if (!bundleManager.findBundleGroupsByCriteria(subject, c).isEmpty()) {
+            throw new IllegalArgumentException("Invalid bundleGroupName, bundle group already exists with name: "
+                + name);
+        }
+
+        // create and add the required Repo. the Repo is a detached object which helps in its eventual
+        // removal.
+        BundleGroup bg = new BundleGroup(name);
+        bg.setDescription(description);
+
+        entityManager.persist(bg);
+
+        return bg;
+    }
+
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
@@ -502,8 +527,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         RecipeParseResults results;
 
         try {
-            results = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager().parseRecipe(
-                bundleType.getName(), recipe);
+            results = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+                .parseRecipe(bundleType.getName(), recipe);
         } catch (Exception e) {
             // ensure that we throw a runtime exception to force a rollback
             throw new RuntimeException("Failed to parse recipe", e);
@@ -610,8 +635,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         try {
             file = downloadFile(distributionFileUrl, username, password);
 
-            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into ["
-                + file.getPath() + "]");
+            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into [" + file.getPath()
+                + "]");
 
             return createBundleVersionViaFile(subject, file);
         } finally {
@@ -631,8 +656,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
     }
 
-    private File downloadFileFromHttp(URL url, String username, String password) throws URISyntaxException,
-        IOException {
+    private File downloadFileFromHttp(URL url, String username, String password) throws URISyntaxException, IOException {
 
         HttpParams params = new BasicHttpParams();
         HttpClientParams.setRedirecting(params, true);
@@ -647,9 +671,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         HttpResponse response = httpClient.execute(get);
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            throw new IllegalArgumentException(
-                "Failed to download the file from the URL [" + url + "]. The server responded: " +
-                    response.getStatusLine().toString());
+            throw new IllegalArgumentException("Failed to download the file from the URL [" + url
+                + "]. The server responded: " + response.getStatusLine().toString());
         }
 
         InputStream contents = response.getEntity().getContent();
@@ -842,8 +865,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // Create the mapping between the Bundle's Repo and the BundleFile's PackageVersion
         Repo repo = bundle.getRepo();
         // add the packageVersion as overlord, this allows users without MANAGE_INVENTORY permission to add bundle files
-        repoManager.addPackageVersionsToRepo(subjectManager.getOverlord(), repo.getId(), new int[] { packageVersion
-            .getId() });
+        repoManager.addPackageVersionsToRepo(subjectManager.getOverlord(), repo.getId(),
+            new int[] { packageVersion.getId() });
 
         // Classify the Package with the Bundle name in order to distinguish it from the same package name for
         // a different bundle.
@@ -903,7 +926,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
         }
     }
-
 
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
@@ -1126,8 +1148,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment revertDeployment = bundleManager.createBundleDeploymentInNewTrans(subject, prevDeployment
             .getBundleVersion().getId(), bundleDestinationId, name, desc, config);
 
-        return scheduleBundleDeploymentImpl(subject, revertDeployment.getId(), isCleanDeployment, true, prevDeployment
-            .getReplacedBundleDeploymentId());
+        return scheduleBundleDeploymentImpl(subject, revertDeployment.getId(), isCleanDeployment, true,
+            prevDeployment.getReplacedBundleDeploymentId());
     }
 
     // revertedDeploymentReplacedDeployment is only meaningful if isRevert is true
@@ -1201,8 +1223,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try
         // to add History to it during immediate deployments. So, create and persist it (requires a new trans).
-        BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployment
-            .getId(), bundleTargetResourceId);
+        BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject,
+            deployment.getId(), bundleTargetResourceId);
 
         if (null != bundleTarget.getResourceType().getResourceTypeBundleConfiguration()) {
 
@@ -1225,8 +1247,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                         BundleDeploymentStatus.FAILURE);
                     history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT,
-                        deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE, response
-                            .getErrorMessage(), null);
+                        deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
+                        response.getErrorMessage(), null);
                     bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
                 }
             } catch (Throwable t) {
@@ -1494,9 +1516,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      */
     @Override
     public PageList<BundleDeployment> findBundleDeploymentsByCriteriaWithDestinationFilter(Subject subject,
-                                                                                           BundleDeploymentCriteria criteria) {
+        BundleDeploymentCriteria criteria) {
 
-        PageList<BundleDeployment> deployments = findBundleDeploymentsByCriteria(subject,criteria);
+        PageList<BundleDeployment> deployments = findBundleDeploymentsByCriteria(subject, criteria);
         if (authorizationManager.isInventoryManager(subject))
             return deployments;
 
@@ -1507,8 +1529,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             int bundleId = deployment.getBundleVersion().getBundle().getId();
             BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
             destinationCriteria.addFilterBundleId(bundleId);
-            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
-            if (destinationsContains(destinations,deployment.getDestination()))
+            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject, destinationCriteria);
+            if (destinationsContains(destinations, deployment.getDestination()))
                 resultingDeployments.add(deployment);
         }
         return resultingDeployments;
@@ -1520,8 +1542,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         // Filter by destinations that are viewable
         if (!authorizationManager.isInventoryManager(subject)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,subject.getId());
-        }        CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,
+                subject.getId());
+        }
+        CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
             generator, entityManager);
         return queryRunner.execute();
     }
@@ -1568,26 +1592,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      */
     @Override
     public PageList<BundleVersion> findBundleVersionsByCriteriaWithDestinationFilter(Subject subject,
-                                                                                     BundleVersionCriteria criteria) {
+        BundleVersionCriteria criteria) {
 
-        PageList<BundleVersion> versions = findBundleVersionsByCriteria(subject,criteria);
+        PageList<BundleVersion> versions = findBundleVersionsByCriteria(subject, criteria);
         if (authorizationManager.isInventoryManager(subject)) {
             return versions;
         }
         // Not inv manager -> restrict visible deployments by visible destinations
 
-        for (BundleVersion version:versions) {
+        for (BundleVersion version : versions) {
 
             Bundle bundle = version.getBundle();
             BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
             destinationCriteria.addFilterBundleId(bundle.getId());
             destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
-            List<BundleDeployment> resultingDeployments = new ArrayList<BundleDeployment>(version.getBundleDeployments().size());
+            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject, destinationCriteria);
+            List<BundleDeployment> resultingDeployments = new ArrayList<BundleDeployment>(version
+                .getBundleDeployments().size());
             // We now have visible destinations - go over the resultingDeployments and only include the ones with vis. destinations
             for (BundleDeployment deployment : version.getBundleDeployments()) {
-                if (destinationsContains(destinations,deployment.getDestination()))
+                if (destinationsContains(destinations, deployment.getDestination()))
                     resultingDeployments.add(deployment);
             }
 
@@ -1639,18 +1664,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     public PageList<Bundle> findBundlesByCriteriaWithDestinationFilter(Subject subject, BundleCriteria criteria) {
         // First get the bundles
-        PageList<Bundle> bundles = findBundlesByCriteria(subject,criteria);
+        PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
         if (authorizationManager.isInventoryManager(subject)) {
             return bundles;
         }
         // Not inv manager -> restrict visible destinations
-        PageList<Bundle> result = new PageList<Bundle>(bundles.size(),bundles.getPageControl());
+        PageList<Bundle> result = new PageList<Bundle>(bundles.size(), bundles.getPageControl());
         for (Bundle bundle : bundles.getValues()) { // TODO clone the bundle and return the modified clones
             BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
             destinationCriteria.addFilterBundleId(bundle.getId());
             destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
 
-            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
+            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject, destinationCriteria);
             bundle.setDestinations(destinations);
         }
 
@@ -1752,6 +1777,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.flush();
 
         entityManager.remove(doomed);
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
+    public void deleteBundleGroups(Subject subject, int... bundleGroupIds) throws Exception {
+
+        for (int bundleGroupId : bundleGroupIds) {
+            BundleGroup bundleGroup = this.entityManager.find(BundleGroup.class, bundleGroupIds);
+            if (null == bundleGroup) {
+                return;
+            }
+
+            // unassign any bundles assigned to the bundle group
+            for (Bundle b : bundleGroup.getBundles()) {
+                bundleGroup.removeBundle(b);
+            }
+            bundleGroup = entityManager.merge(bundleGroup);
+
+            // now remove the bundle group
+            entityManager.remove(bundleGroup);
+        }
     }
 
     @Override

@@ -193,7 +193,7 @@ public enum Permission {
     /**
      * Implied - Can view bundles in the bundle group
      */
-    VIEW_BUNDLES_IN_GROUP(Target.BUNDLE) // 25
+    VIEW_BUNDLES_IN_GROUP(Target.BUNDLE) // 27
 
     ;
 

@@ -246,8 +246,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
         long pid = process.getPid();
         try {
-            getEmsConnection().close();
-
             process.kill("KILL");
 
             Configuration pluginConfig = getResourceContext().getPluginConfiguration();
@@ -266,7 +264,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
-    private void waitForNodeToGoDown() throws InterruptedException {
+    protected void waitForNodeToGoDown() throws InterruptedException {
         if (OperatingSystem.getInstance().getName().equals(OperatingSystem.NAME_MACOSX)) {
             // See this thread on VMWare forum: http://communities.vmware.com/message/2187972#2187972
             // Unfortunately there is no work around for this failure on Mac OSX so the method will silently return on

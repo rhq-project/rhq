@@ -214,6 +214,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
+    public void assignBundlesToBundleGroup(Subject subject, int bundleGroupId, int... bundleIds) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
@@ -254,31 +260,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         entityManager.persist(bundle);
 
         return bundle;
-    }
-
-    @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
-    public BundleGroup createBundleGroup(Subject subject, String name, String description) throws Exception {
-        if (null == name || "".equals(name.trim())) {
-            throw new IllegalArgumentException("Invalid bundleGroupName: " + name);
-        }
-
-        BundleGroupCriteria c = new BundleGroupCriteria();
-        c.addFilterName(name);
-        c.setStrict(true);
-        if (!bundleManager.findBundleGroupsByCriteria(subject, c).isEmpty()) {
-            throw new IllegalArgumentException("Invalid bundleGroupName, bundle group already exists with name: "
-                + name);
-        }
-
-        // create and add the required Repo. the Repo is a detached object which helps in its eventual
-        // removal.
-        BundleGroup bg = new BundleGroup(name);
-        bg.setDescription(description);
-
-        entityManager.persist(bg);
-
-        return bg;
     }
 
     @Override
@@ -1336,6 +1317,31 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
+    public BundleGroup createBundleGroup(Subject subject, String name, String description) throws Exception {
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleGroupName: " + name);
+        }
+
+        BundleGroupCriteria c = new BundleGroupCriteria();
+        c.addFilterName(name);
+        c.setStrict(true);
+        if (!bundleManager.findBundleGroupsByCriteria(subject, c).isEmpty()) {
+            throw new IllegalArgumentException("Invalid bundleGroupName, bundle group already exists with name: "
+                + name);
+        }
+
+        // create and add the required Repo. the Repo is a detached object which helps in its eventual
+        // removal.
+        BundleGroup bg = new BundleGroup(name);
+        bg.setDescription(description);
+
+        entityManager.persist(bg);
+
+        return bg;
+    }
+
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId,
@@ -1642,7 +1648,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE, null,
+                subject.getId());
+        }
+
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
         return queryRunner.execute();
     }
@@ -1680,6 +1694,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         return bundles;
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
+    public void deleteBundleGroups(Subject subject, int... bundleGroupIds) throws Exception {
+
+        for (int bundleGroupId : bundleGroupIds) {
+            BundleGroup bundleGroup = this.entityManager.find(BundleGroup.class, bundleGroupIds);
+            if (null == bundleGroup) {
+                return;
+            }
+
+            // unassign any bundles assigned to the bundle group
+            for (Bundle b : bundleGroup.getBundles()) {
+                bundleGroup.removeBundle(b);
+            }
+            bundleGroup = entityManager.merge(bundleGroup);
+
+            // now remove the bundle group
+            entityManager.remove(bundleGroup);
+        }
     }
 
     @Override
@@ -1780,27 +1815,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
-    public void deleteBundleGroups(Subject subject, int... bundleGroupIds) throws Exception {
-
-        for (int bundleGroupId : bundleGroupIds) {
-            BundleGroup bundleGroup = this.entityManager.find(BundleGroup.class, bundleGroupIds);
-            if (null == bundleGroup) {
-                return;
-            }
-
-            // unassign any bundles assigned to the bundle group
-            for (Bundle b : bundleGroup.getBundles()) {
-                bundleGroup.removeBundle(b);
-            }
-            bundleGroup = entityManager.merge(bundleGroup);
-
-            // now remove the bundle group
-            entityManager.remove(bundleGroup);
-        }
-    }
-
-    @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
@@ -1846,6 +1860,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         return;
+    }
+
+    @Override
+    public void unassignBundlesFromBundleGroup(Subject subject, int bundleGroupId, int... bundleIds) {
+        // TODO Auto-generated method stub
+
     }
 
     private void safeClose(InputStream is) {

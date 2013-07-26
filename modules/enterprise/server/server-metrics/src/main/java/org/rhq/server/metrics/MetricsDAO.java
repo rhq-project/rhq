@@ -26,20 +26,13 @@
 package org.rhq.server.metrics;
 
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.insertInto;
-
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.ResultSetFuture;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.Statement;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
@@ -67,7 +60,7 @@ public class MetricsDAO {
 
     private final Log log = LogFactory.getLog(MetricsDAO.class);
 
-    private Session session;
+    private StorageSession storageSession;
 
     private MetricsConfiguration configuration;
 
@@ -86,8 +79,8 @@ public class MetricsDAO {
     private PreparedStatement findTimeSliceForIndex;
     private PreparedStatement deleteIndexEntries;
 
-    public MetricsDAO(Session session, MetricsConfiguration configuration) {
-        this.session = session;
+    public MetricsDAO(StorageSession session, MetricsConfiguration configuration) {
+        this.storageSession = session;
         this.configuration = configuration;
         initPreparedStatements();
     }
@@ -104,176 +97,118 @@ public class MetricsDAO {
         // re-initialized and re-prepared with the new TTLs. None of this would be necessary
         // if the TTL value could be a bound value.
 
-        insertRawData = session.prepare(
+        insertRawData = storageSession.prepare(
             "INSERT INTO " + MetricsTable.RAW + " (schedule_id, time, value) VALUES (?, ?, ?) USING TTL " +
                 configuration.getRawTTL());
 
-        rawMetricsQuery = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
+        rawMetricsQuery = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? AND time >= ? AND time < ? ORDER BY time");
 
-        insertOneHourData = session.prepare("INSERT INTO " + MetricsTable.ONE_HOUR + "(schedule_id, time, " +
+        insertOneHourData = storageSession.prepare("INSERT INTO " + MetricsTable.ONE_HOUR + "(schedule_id, time, " +
             "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
 
-        insertSixHourData = session.prepare("INSERT INTO " + MetricsTable.SIX_HOUR + "(schedule_id, time, " +
+        insertSixHourData = storageSession.prepare("INSERT INTO " + MetricsTable.SIX_HOUR + "(schedule_id, time, " +
             "type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
 
-        insertTwentyFourHourData = session.prepare("INSERT INTO " + MetricsTable.TWENTY_FOUR_HOUR + "(schedule_id, " +
+        insertTwentyFourHourData = storageSession.prepare("INSERT INTO " + MetricsTable.TWENTY_FOUR_HOUR + "(schedule_id, " +
             "time, type, value) VALUES (?, ?, ?, ?) USING TTL " + configuration.getOneHourTTL());
 
-        updateMetricsIndex = session.prepare("INSERT INTO " + MetricsTable.INDEX + " (bucket, time, schedule_id) " +
+        updateMetricsIndex = storageSession.prepare("INSERT INTO " + MetricsTable.INDEX + " (bucket, time, schedule_id) " +
             "VALUES (?, ?, ?)");
 
-        findLatestRawMetric = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
+        findLatestRawMetric = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? ORDER BY time DESC LIMIT 1");
 
-        findRawMetrics = session.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
+        findRawMetrics = storageSession.prepare("SELECT schedule_id, time, value FROM " + MetricsTable.RAW +
             " WHERE schedule_id = ? AND time >= ? AND time <= ?");
 
-        findOneHourMetricsByDateRange = session.prepare("SELECT schedule_id, time, type, value FROM " +
+        findOneHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM " +
             MetricsTable.ONE_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
 
-        findSixHourMetricsByDateRange = session.prepare("SELECT schedule_id, time, type, value FROM "
+        findSixHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM "
             + MetricsTable.SIX_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
 
-        findTwentyFourHourMetricsByDateRange = session.prepare("SELECT schedule_id, time, type, value FROM " +
+        findTwentyFourHourMetricsByDateRange = storageSession.prepare("SELECT schedule_id, time, type, value FROM " +
             MetricsTable.TWENTY_FOUR_HOUR + " WHERE schedule_id = ? AND time >= ? AND time < ?");
 
-        findIndexEntries = session.prepare("SELECT time, schedule_id FROM " + MetricsTable.INDEX +
+        findIndexEntries = storageSession.prepare("SELECT time, schedule_id FROM " + MetricsTable.INDEX +
             " WHERE bucket = ? AND time = ?");
 
-        findTimeSliceForIndex = session.prepare("SELECT time FROM " + MetricsTable.INDEX +
+        findTimeSliceForIndex = storageSession.prepare("SELECT time FROM " + MetricsTable.INDEX +
             " WHERE bucket = ? AND time = ?");
 
-        deleteIndexEntries = session.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND time = ?");
+        deleteIndexEntries = storageSession.prepare("DELETE FROM " + MetricsTable.INDEX + " WHERE bucket = ? AND time = ?");
 
         long endTime = System.currentTimeMillis();
         log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
     }
 
-    public ResultSetFuture insertRawData(MeasurementDataNumeric data) {
+    public StorageResultSetFuture insertRawData(MeasurementDataNumeric data) {
         BoundStatement statement = insertRawData.bind(data.getScheduleId(), new Date(data.getTimestamp()),
             data.getValue());
-        return session.executeAsync(statement);
-    }
-
-    public List<MetricResultFuture<MeasurementDataNumeric>> insertRawMetricsAsync(Set<MeasurementDataNumeric> dataSet,
-        int ttl) {
-        try {
-            List<MetricResultFuture<MeasurementDataNumeric>> resultFutures = new ArrayList<MetricResultFuture<MeasurementDataNumeric>>();
-
-            String cql = "INSERT INTO raw_metrics (schedule_id, time, value) VALUES (?, ?, ?) " + "USING TTL " + ttl;
-            PreparedStatement statement = session.prepare(cql);
-
-            for (MeasurementDataNumeric data : dataSet) {
-                BoundStatement boundStatement = statement.bind(data.getScheduleId(), new Date(data.getTimestamp()),
-                    data.getValue());
-
-                resultFutures.add(new MetricResultFuture<MeasurementDataNumeric>(session.executeAsync(boundStatement),
-                    data));
-            }
-
-            return resultFutures;
-        } catch (NoHostAvailableException e) {
-            throw new CQLException(e);
-        }
+        return storageSession.executeAsync(statement);
     }
 
     public ResultSet insertOneHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertOneHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
-        return session.execute(statement);
+        return storageSession.execute(statement);
     }
 
     public ResultSet insertSixHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
-        return session.execute(statement);
+        return storageSession.execute(statement);
     }
 
     public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value) {
         BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
             value);
-        return session.execute(statement);
-    }
-
-    public List<MetricResultFuture<AggregateNumericMetric>> insertAggregatesAsync(MetricsTable table,
-        List<AggregateNumericMetric> metrics, int ttl) {
-        List<MetricResultFuture<AggregateNumericMetric>> updates = new ArrayList<MetricResultFuture<AggregateNumericMetric>>();
-
-        if (metrics.isEmpty()) {
-            return updates;
-        }
-
-        try {
-            Statement statement = null;
-
-            for (AggregateNumericMetric metric : metrics) {
-                statement = insertInto(table.getTableName())
-                    .value("schedule_id", metric.getScheduleId())
-                    .value("time", new Date(metric.getTimestamp()))
-                    .value("type", AggregateType.MIN.ordinal())
-                    .value("value", metric.getMin());
-                updates.add(new MetricResultFuture<AggregateNumericMetric>(session.executeAsync(statement), metric));
-
-                statement = insertInto(table.getTableName())
-                    .value("schedule_id", metric.getScheduleId())
-                    .value("time", new Date(metric.getTimestamp()))
-                    .value("type", AggregateType.MAX.ordinal())
-                    .value("value", metric.getMax());
-                updates.add(new MetricResultFuture<AggregateNumericMetric>(session.executeAsync(statement), metric));
-
-                statement = insertInto(table.getTableName())
-                    .value("schedule_id", metric.getScheduleId())
-                    .value("time", new Date(metric.getTimestamp()))
-                    .value("type", AggregateType.AVG.ordinal())
-                    .value("value", metric.getAvg());
-                updates.add(new MetricResultFuture<AggregateNumericMetric>(session.executeAsync(statement), metric));
-            }
-
-            return updates;
-        } catch (Exception e) {
-            throw new CQLException(e);
-        }
+        return storageSession.execute(statement);
     }
 
     public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
         try {
             BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
-            return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(false), session);
+            return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(false),
+                storageSession);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }
     }
 
-    public ResultSetFuture findRawMetricsAsync(int scheduleId, long startTime, long endTime) {
+    public StorageResultSetFuture findRawMetricsAsync(int scheduleId, long startTime, long endTime) {
         BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
-        return session.executeAsync(boundStatement);
+        return storageSession.executeAsync(boundStatement);
     }
 
     public RawNumericMetric findLatestRawMetric(int scheduleId) {
         RawNumericMetricMapper mapper = new RawNumericMetricMapper(false);
         BoundStatement boundStatement = findLatestRawMetric.bind(scheduleId);
-        ResultSet resultSet = session.execute(boundStatement);
+        ResultSet resultSet = storageSession.execute(boundStatement);
 
         return mapper.mapOne(resultSet);
     }
 
     public Iterable<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, long startTime, long endTime) {
         return new ListPagedResult<RawNumericMetric>(findRawMetrics, scheduleIds, startTime, endTime,
-            new RawNumericMetricMapper(), session);
+            new RawNumericMetricMapper(), storageSession);
     }
 
     public Iterable<AggregateNumericMetric> findOneHourMetrics(int scheduleId, long startTime, long endTime) {
         BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
-        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(), session);
+        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
+            storageSession);
     }
 
     public Iterable<AggregateNumericMetric> findSixHourMetrics(int scheduleId, long startTime, long endTime) {
         BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
-        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(), session);
+        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
+            storageSession);
     }
 
     public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(int scheduleId, long startTime, long endTime) {
         BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
-        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(), session);
+        return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
+            storageSession);
     }
 
     public Iterable<AggregateSimpleNumericMetric> findAggregatedSimpleOneHourMetric(int scheduleId, long startTime,
@@ -281,52 +216,52 @@ public class MetricsDAO {
         BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
             new Date(endTime));
         return new SimplePagedResult<AggregateSimpleNumericMetric>(statement, new AggregateSimpleNumericMetricMapper(),
-            session);
+            storageSession);
     }
 
     public Iterable<AggregateNumericMetric> findOneHourMetrics(List<Integer> scheduleIds, long startTime,
         long endTime) {
         return new ListPagedResult<AggregateNumericMetric>(findOneHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), session);
+            new AggregateNumericMetricMapper(), storageSession);
     }
 
     public Iterable<AggregateNumericMetric> findSixHourMetrics(List<Integer> scheduleIds, long startTime,
         long endTime) {
         return new ListPagedResult<AggregateNumericMetric>(findSixHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), session);
+            new AggregateNumericMetricMapper(), storageSession);
     }
 
     public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(List<Integer> scheduleIds, long startTime,
         long endTime) {
         return new ListPagedResult<AggregateNumericMetric>(findTwentyFourHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), session);
+            new AggregateNumericMetricMapper(), storageSession);
     }
 
     public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table, long timestamp) {
         BoundStatement statement = findIndexEntries.bind(table.toString(), new Date(timestamp));
-        return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), session);
+        return new SimplePagedResult<MetricsIndexEntry>(statement, new MetricsIndexEntryMapper(table), storageSession);
     }
 
     public ResultSet setFindTimeSliceForIndex(MetricsTable table, long timestamp) {
         BoundStatement statement = findTimeSliceForIndex.bind(table.toString(), new Date(timestamp));
-        return session.execute(statement);
+        return storageSession.execute(statement);
     }
 
     public void updateMetricsIndex(MetricsTable table, Map<Integer, Long> updates) {
             for (Integer scheduleId : updates.keySet()) {
                 BoundStatement statement = updateMetricsIndex.bind(table.getTableName(),
                     new Date(updates.get(scheduleId)), scheduleId);
-                session.execute(statement);
+                storageSession.execute(statement);
             }
     }
 
-    public ResultSetFuture updateMetricsIndex(MetricsTable table, int scheduleId, long timestamp) {
+    public StorageResultSetFuture updateMetricsIndex(MetricsTable table, int scheduleId, long timestamp) {
         BoundStatement statement = updateMetricsIndex.bind(table.getTableName(), new Date(timestamp), scheduleId);
-        return session.executeAsync(statement);
+        return storageSession.executeAsync(statement);
     }
 
     public void deleteMetricsIndexEntries(MetricsTable table, long timestamp) {
         BoundStatement statement = deleteIndexEntries.bind(table.getTableName(), new Date(timestamp));
-        session.execute(statement);
+        storageSession.execute(statement);
     }
 }

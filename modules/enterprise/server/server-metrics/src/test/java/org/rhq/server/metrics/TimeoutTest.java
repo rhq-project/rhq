@@ -35,7 +35,6 @@ import com.google.common.base.Throwables;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.testng.annotations.Test;
 
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 
@@ -43,7 +42,7 @@ public class TimeoutTest extends CassandraIntegrationTest {
 
     private final Log log = LogFactory.getLog(TimeoutTest.class);
 
-    @Test
+//    @Test
     public void generateTimeout() throws Exception {
         MetricsConfiguration configuration = new MetricsConfiguration();
 
@@ -54,7 +53,7 @@ public class TimeoutTest extends CassandraIntegrationTest {
         dateTimeService.setConfiguration(configuration);
         metricsServer.setDateTimeService(dateTimeService);
 
-        MetricsDAO dao = new MetricsDAO(session, configuration);
+        MetricsDAO dao = new MetricsDAO(new StorageSession(session), configuration);
         metricsServer.setDAO(dao);
 
         long time = hour0().getMillis();

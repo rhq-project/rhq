@@ -43,7 +43,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.datastax.driver.core.ResultSetFuture;
 import com.google.common.base.Throwables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
@@ -113,7 +112,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         dateTimeService.setConfiguration(configuration);
         metricsServer.setDateTimeService(dateTimeService);
 
-        dao = new MetricsDAO(session, configuration);
+        dao = new MetricsDAO(storageSession, configuration);
         metricsServer.setDAO(dao);
 
         purgeDB();
@@ -230,7 +229,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         WaitForWrite waitForRawInserts = new WaitForWrite(rawMetrics.size());
 
         for (MeasurementDataNumeric raw : rawMetrics) {
-            ResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw);
             Futures.addCallback(resultSetFuture, waitForRawInserts);
         }
         waitForRawInserts.await("Failed to insert raw data");
@@ -1008,7 +1007,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
             "SELECT schedule_id, time, value, ttl(value), writetime(value) " +
             "FROM " + MetricsTable.RAW + " " +
             "WHERE schedule_id = " + scheduleId + " AND time >= " + startTime + " AND time < " + endTime;
-        return new SimplePagedResult<RawNumericMetric>(cql, new RawNumericMetricMapper(true), session);
+        return new SimplePagedResult<RawNumericMetric>(cql, new RawNumericMetricMapper(true), storageSession);
     }
 
     private static class WaitForRawInserts implements RawDataInsertedCallback {

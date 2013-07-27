@@ -76,6 +76,22 @@ public class ConfigEditor {
         }
     }
 
+    public File getBackupFile() {
+        return backupFile;
+    }
+
+    public String getCommitLogDirectory() {
+        return (String) config.get("commitlog_directory");
+    }
+
+    public List<String> getDataFileDirectories() {
+        return (List<String>) config.get("data_file_directories");
+    }
+
+    public String getSavedCachesDirectory() {
+        return (String) config.get("saved_caches_directory");
+    }
+
     public void setSeeds(String... seeds) {
         List seedProviderList = (List) config.get("seed_provider");
         Map seedProvider = (Map) seedProviderList.get(0);

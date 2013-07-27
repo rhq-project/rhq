@@ -26,15 +26,25 @@ import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileReader;
 import java.net.InetAddress;
 import java.util.Set;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 
+import org.apache.cassandra.config.Config;
+import org.apache.cassandra.config.SeedProviderDef;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.OperatingSystem;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Test;
+import org.yaml.snakeyaml.Loader;
+import org.yaml.snakeyaml.TypeDescription;
+import org.yaml.snakeyaml.Yaml;
 
 import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.ClusterInitService;
@@ -63,11 +73,14 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
  */
 public class StorageNodeComponentITest {
+
+    private final Log log = LogFactory.getLog(StorageNodeComponentITest.class);
 
     private File basedir;
 
@@ -232,7 +245,7 @@ public class StorageNodeComponentITest {
     }
 
     @Test(dependsOnMethods = "restartStorageNode")
-    public void prepareForBootstrap() {
+    public void prepareForBootstrap() throws Exception {
         Configuration params = Configuration.builder().addSimple("cqlPort", 9242).addSimple("gossipPort", 7200)
             .openList("storageNodeIPAddresses", "storageNodeIPAddresse").addSimples("127.0.0.1", "127.0.0.2")
             .closeList().build();
@@ -245,10 +258,22 @@ public class StorageNodeComponentITest {
         OperationServicesResult result = operationsService.invokeOperation(operationContext, "prepareForBootstrap",
             params, timeout);
 
+        log.info("Waiting for node to boostrap...");
+        Thread.sleep(33000);
+
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The operation failed: " +
             result.getErrorStackTrace());
 
         assertNodeIsUp("Expected " + storageNode + " to be up after the prepareForBootstrap operation completes.");
+
+        assertThatInternodeAuthConfFileMatches("127.0.0.1", "127.0.0.2");
+
+        File confDir = new File(basedir, "conf");
+        File cassandraYamlFile = new File(confDir, "cassandra.yaml");
+        Config config = loadConfig(cassandraYamlFile);
+
+        assertEquals(config.seed_provider.parameters.get("seeds"), "127.0.0.2", "Failed to update seeds " +
+            "property in " + cassandraYamlFile);
     }
 
     private void assertNodeIsUp(String msg) {
@@ -290,6 +315,30 @@ public class StorageNodeComponentITest {
 
     private boolean isCassandraNode(ResourceType type) {
         return type.getPlugin().equals("RHQStorage") && type.getName().equals("RHQ Storage Node");
+    }
+
+    private void assertThatInternodeAuthConfFileMatches(String... addresses) throws Exception {
+        File confDir = new File(basedir, "conf");
+        File internodeAuthConfFile = new File(confDir, "rhq-storage-auth.conf");
+        String contents = StreamUtil.slurp(new FileReader(internodeAuthConfFile));
+
+        Set<String> expected = ImmutableSet.copyOf(addresses);
+        Set<String> actual = ImmutableSet.copyOf(contents.split("\n"));
+
+        assertEquals(actual, expected, "Failed to update internode authentication conf file " +
+            internodeAuthConfFile + ".");
+    }
+
+    private Config loadConfig(File configFile) throws Exception {
+        FileInputStream inputStream = new FileInputStream(configFile);
+        org.yaml.snakeyaml.constructor.Constructor constructor =
+            new org.yaml.snakeyaml.constructor.Constructor(Config.class);
+        TypeDescription seedDesc = new TypeDescription(SeedProviderDef.class);
+        seedDesc.putMapPropertyType("parameters", String.class, String.class);
+        constructor.addTypeDescription(seedDesc);
+        Yaml yaml = new Yaml(new Loader(constructor));
+
+        return (Config) yaml.load(inputStream);
     }
 
 }

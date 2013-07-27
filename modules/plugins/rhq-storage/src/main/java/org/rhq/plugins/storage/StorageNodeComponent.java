@@ -26,7 +26,6 @@
 package org.rhq.plugins.storage;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -45,9 +44,10 @@ import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
-import org.yaml.snakeyaml.DumperOptions;
-import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.error.YAMLException;
 
+import org.rhq.cassandra.util.ConfigEditor;
+import org.rhq.cassandra.util.ConfigEditorException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.Property;
@@ -277,27 +277,18 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
 
         try {
-            FileUtil.copyFile(authFile, authBackupFile);
-        } catch (IOException e) {
-            String msg = "Failed to backup " + authFile + " prior to making updates. The operation will abort due " +
-                "to unexpected error";
-            log.error(msg, e);
-            result.setErrorMessage(msg + ": " + ThrowableUtil.getRootMessage(e));
-            return true;
-        }
-
-        try {
             StreamUtil.copy(new StringReader(StringUtil.collectionToString(ipAddresses, "\n")),
                 new FileWriter(authFile), true);
         } catch (IOException e) {
             log.error("An error occurred while updating " + authFile, e);
             try {
+                log.info("Restoring back up file " + authBackupFile);
                 FileUtil.copyFile(authBackupFile, authFile);
+                authBackupFile.delete();
             } catch (IOException e1) {
                 log.error("Failed to revert backup of " + authFile, e1);
             }
-            result.setErrorMessage("There was an unexpected error while updating " + authFile + ". Make sure that " +
-                "it matches " + authBackupFile + " and then reschedule the operation.");
+            result.setErrorMessage("There was an unexpected error while updating " + authFile);
             return true;
         }
         return false;
@@ -325,74 +316,67 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
         File yamlFile = new File(yamlProp);
 
-        DumperOptions options = new DumperOptions();
-        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-        Yaml yaml = new Yaml(options);
-
-        Map yamlConfig = null;
+        ConfigEditor configEditor = new ConfigEditor(yamlFile);
         try {
-            yamlConfig = (Map) yaml.load(new FileInputStream(yamlFile));
-        } catch (FileNotFoundException e) {
-            log.error("Failed to load " + yamlFile, e);
-            log.error("Cannot prepare " + this + " for bootstrap. " + yamlFile + " must exist in order to make the " +
-                "necessary configuration changes.");
-            result.setErrorMessage("Cannot prepare storage node for bootstrap. It appears that " + yamlFile +
-                " does not exist. Make sure that it exists so that the necessary configuration changes can be made.");
+            configEditor.load();
+
+            purgeDir(new File(configEditor.getCommitLogDirectory()));
+            for (String dir : configEditor.getDataFileDirectories()) {
+                purgeDir(new File(dir));
+            }
+            purgeDir(new File(configEditor.getSavedCachesDirectory()));
+
+
+            log.info("Updating cluster settings");
+
+            String address = pluginConfig.getSimpleValue("host");
+            int cqlPort = Integer.parseInt(params.getSimpleValue("cqlPort"));
+            int gossipPort = Integer.parseInt(params.getSimpleValue("gossipPort"));
+            List<String> addresses = getAddresses(params.getList("storageNodeIPAddresses"));
+
+            // Make sure this node's address is not in the list; otherwise, it
+            // won't bootstrap properly.
+            List<String> seeds = new ArrayList<String>(addresses);
+            seeds.remove(address);
+
+            configEditor.setSeeds(seeds.toArray(new String[seeds.size()]));
+            configEditor.setNativeTransportPort(cqlPort);
+            configEditor.setStoragePort(gossipPort);
+
+            configEditor.save();
+
+            if (updateAuthFile(result, new HashSet<String>(addresses))) {
+                return result;
+            }
+
+            log.info(this + " is ready to be bootstrap. Restarting storage node...");
+            OperationResult startResult = startNode();
+            if (startResult.getErrorMessage() != null) {
+                log.error("Failed to restart storage node:\n" + startResult.getErrorMessage());
+                result.setErrorMessage("Failed to restart storage node:\n" + startResult.getErrorMessage());
+            } else {
+                result.setSimpleResult("The storage node was succesfully updated is now bootstrapping into the cluster.");
+            }
 
             return result;
-        }
-
-        purgeDir(getCommitLogDir(yamlConfig));
-        for (File dataDir : getDataDirs(yamlConfig)) {
-            purgeDir(dataDir);
-        }
-        purgeDir(getSavedCachesDir(yamlConfig));
-
-        log.info("Updating cluster settings");
-
-        String address = pluginConfig.getSimpleValue("host");
-        List<String> seeds = getAddresses(params.getList("storageNodeIPAddresses"));
-        // Make sure this node's address is not in the list; otherwise, it
-        // won't bootstrap properly.
-        seeds.remove(address);
-        try {
-            updateSeedsList(seeds);
-        } catch (IOException e) {
-            log.error("Failed to update seeds property in " + yamlFile, e);
-            result.setErrorMessage("Failed to prepared node for bootstrap due to unexpected error that occurred " +
-                "while updating seeds property in " + yamlFile + ":\n" + ThrowableUtil.getAllMessages(e));
+        } catch (ConfigEditorException e) {
+            log.error("There was an error while trying to update " + yamlFile, e);
+            if (e.getCause() instanceof YAMLException) {
+                log.info("Attempting to restore " + yamlFile);
+                try {
+                    configEditor.restore();
+                    result.setErrorMessage("Failed to update configuration file [" + yamlFile + "]: " +
+                        ThrowableUtil.getAllMessages(e.getCause()));
+                } catch (ConfigEditorException e1) {
+                    log.error("Failed to restore " + yamlFile + ". A copy of the file prior to any modifications " +
+                        "can be found at " + configEditor.getBackupFile());
+                    result.setErrorMessage("There was an error updating [" + yamlFile + "] and undoing the changes " +
+                        "Failed. A copy of the file can be found at " + configEditor.getBackupFile() + ". See the " +
+                        "agent logs for more details");
+                }
+            }
             return result;
         }
-
-        if (updateAuthFile(result, new HashSet<String>(seeds))) {
-            return result;
-        }
-
-        int cqlPort = Integer.parseInt(params.getSimpleValue("cqlPort"));
-        int gossipPort = Integer.parseInt(params.getSimpleValue("gossipPort"));
-
-        yamlConfig.put("native_transport_port", cqlPort);
-        yamlConfig.put("storage_port", gossipPort);
-
-        try {
-            yaml.dump(yamlConfig, new FileWriter(yamlFile));
-        } catch (IOException e) {
-            log.error("Could not update cluster settings in " + yamlFile, e);
-            result.setErrorMessage("Could not update cluster settings in " + yamlFile + ":\n" +
-                ThrowableUtil.getAllMessages(e));
-            return result;
-        }
-
-        log.info(this + " is ready to be bootstrap. Restarting storage node...");
-        OperationResult startResult = startNode();
-        if (startResult.getErrorMessage() != null) {
-            log.error("Failed to restart storage node:\n" + startResult.getErrorMessage());
-            result.setErrorMessage("Failed to restart storage node:\n" + startResult.getErrorMessage());
-        } else {
-            result.setSimpleResult("The storage node was succesfully updated is now bootstrapping into the cluster.");
-        }
-
-        return result;
     }
 
     private void purgeDir(File dir) {

@@ -259,6 +259,10 @@ public class StorageNodeComponentITest {
             params, timeout);
 
         log.info("Waiting for node to boostrap...");
+        // When a node goes through bootstrap, StorageService sleeps for RING_DELAY ms
+        // while it determines the ranges of the token ring it will own. RING_DELAY defaults
+        // to 30 seconds by default.
+        // TODO Override the default RING_DELAY to speed up tests
         Thread.sleep(33000);
 
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The operation failed: " +

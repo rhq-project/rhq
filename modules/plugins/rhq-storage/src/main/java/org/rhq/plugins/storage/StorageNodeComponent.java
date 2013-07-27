@@ -29,12 +29,10 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -93,6 +91,14 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     private File getBasedir() {
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         return new File(pluginConfig.getSimpleValue("baseDir"));
+    }
+
+    private File getConfDir() {
+        return new File(getBasedir(), "conf");
+    }
+
+    private File getInternodeAuthConfFile() {
+        return new File(getConfDir(), "rhq-storage-auth.conf");
     }
 
     @Override
@@ -242,56 +248,24 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             ipAddresses.add(propertySimple.getStringValue());
         }
 
-        if (updateAuthFile(result, ipAddresses)) return result;
-
-        EmsBean authBean = getEmsConnection().getBean("org.rhq.cassandra.auth:type=RhqInternodeAuthenticator");
-        EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
-        emsOperation.invoke();
-
-        result.setSimpleResult("Successfully updated the set of known nodes.");
-
-        return result;
-    }
-
-    private boolean updateAuthFile(OperationResult result, Set<String> ipAddresses) {
-        log.info("Updating known nodes to " + ipAddresses);
-
-        File confDir = new File(getBasedir(), "conf");
-        File authFile = new File(confDir, "rhq-storage-auth.conf");
-        File authBackupFile = new File(confDir, "." + authFile.getName() + ".bak");
-
-        if (authBackupFile.exists()) {
-            if (log.isDebugEnabled()) {
-                log.debug(authBackupFile + " already exists. Deleting it now in preparation of creating new backup " +
-                    "for " + authFile.getName());
-            }
-            if (!authBackupFile.delete()) {
-                String msg = "Failed to delete backup file " + authBackupFile + ". The operation will abort " +
-                    "since " + authFile + " cannot reliably be backed up before making changes. Please delete " +
-                    authBackupFile + " manually and reschedule the operation once the file has been removed.";
-                log.error(msg);
-                result.setErrorMessage(msg);
-
-                return true;
-            }
-        }
-
         try {
-            StreamUtil.copy(new StringReader(StringUtil.collectionToString(ipAddresses, "\n")),
-                new FileWriter(authFile), true);
-        } catch (IOException e) {
-            log.error("An error occurred while updating " + authFile, e);
-            try {
-                log.info("Restoring back up file " + authBackupFile);
-                FileUtil.copyFile(authBackupFile, authFile);
-                authBackupFile.delete();
-            } catch (IOException e1) {
-                log.error("Failed to revert backup of " + authFile, e1);
-            }
-            result.setErrorMessage("There was an unexpected error while updating " + authFile);
-            return true;
+            updateInternodeAuthConfFile(ipAddresses);
+
+            EmsBean authBean = getEmsConnection().getBean("org.rhq.cassandra.auth:type=RhqInternodeAuthenticator");
+            EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
+            emsOperation.invoke();
+
+            result.setSimpleResult("Successfully updated the set of known nodes.");
+
+            return result;
+        } catch (InternodeAuthConfUpdateException e) {
+            File authFile = getInternodeAuthConfFile();
+            log.error("Failed to update set of trusted nodes in " + authFile + " due to the following error(s): " +
+                ThrowableUtil.getAllMessages(e)) ;
+            result.setErrorMessage("Failed to update set of trusted nodes in " + authFile + " due to the following " +
+                "error(s): " + ThrowableUtil.getAllMessages(e));
+            return result;
         }
-        return false;
     }
 
     private OperationResult prepareForBootstrap(Configuration params) {
@@ -326,7 +300,6 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             }
             purgeDir(new File(configEditor.getSavedCachesDirectory()));
 
-
             log.info("Updating cluster settings");
 
             String address = pluginConfig.getSimpleValue("host");
@@ -344,10 +317,9 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             configEditor.setStoragePort(gossipPort);
 
             configEditor.save();
+            log.info("Cluster configuration settings have been applied to " + yamlFile);
 
-            if (updateAuthFile(result, new HashSet<String>(addresses))) {
-                return result;
-            }
+            updateInternodeAuthConfFile(new HashSet<String>(addresses));
 
             log.info(this + " is ready to be bootstrap. Restarting storage node...");
             OperationResult startResult = startNode();
@@ -376,6 +348,11 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
                 }
             }
             return result;
+        } catch (InternodeAuthConfUpdateException e) {
+            File authFile = getInternodeAuthConfFile();
+            result.setErrorMessage("Failed to update " + authFile + " due to the following error(s): " +
+                ThrowableUtil.getAllMessages(e));
+            return result;
         }
     }
 
@@ -384,23 +361,18 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         FileUtil.purge(dir, true);
     }
 
-    private File getCommitLogDir(Map yamlConfig) {
-        return new File((String) yamlConfig.get("commitlog_directory"));
-    }
+    private void updateInternodeAuthConfFile(Set<String> ipAddresses) throws InternodeAuthConfUpdateException {
+        File authFile = getInternodeAuthConfFile();
 
-    private List<File> getDataDirs(Map yamlConfig) {
-        List<File> dirs  = new ArrayList<File>();
-        List<String> dirNames = (List<String>) yamlConfig.get("data_file_directories");
+        log.info("Updating " + authFile);
 
-        for (String dirName : dirNames) {
-            dirs.add(new File(dirName));
+        try {
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(ipAddresses, "\n")),
+                new FileWriter(authFile), true);
+        } catch (Exception e) {
+            log.error("An error occurred while trying to update " + authFile, e);
+            throw new InternodeAuthConfUpdateException("An error occurred while trying to update " + authFile, e);
         }
-
-        return dirs;
-    }
-
-    private File getSavedCachesDir(Map yamlConfig) {
-        return new File((String) yamlConfig.get("saved_caches_directory"));
     }
 
     private OperationResult nodeAdded(Configuration params) {

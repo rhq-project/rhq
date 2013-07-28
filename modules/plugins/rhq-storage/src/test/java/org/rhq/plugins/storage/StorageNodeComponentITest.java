@@ -29,6 +29,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.net.InetAddress;
+import java.util.Properties;
 import java.util.Set;
 
 import com.google.common.collect.ImmutableSet;
@@ -73,6 +74,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.stream.StreamUtil;
 
 /**
@@ -123,6 +125,18 @@ public class StorageNodeComponentITest {
         deployer.applyConfigChanges();
         deployer.updateFilePerms();
         deployer.updateStorageAuthConf(Sets.newHashSet(InetAddress.getByName(address)));
+
+        File confDir = new File(basedir, "conf");
+        File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+        PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(cassandraJvmPropsFile.getAbsolutePath());
+        Properties properties = propertiesUpdater.loadExistingProperties();
+
+        String jvmOpts = properties.getProperty("JVM_OPTS");
+        jvmOpts = jvmOpts.substring(0, jvmOpts.lastIndexOf("\""));
+        jvmOpts = jvmOpts + " -Dcassandra.ring_delay_ms=100\"";
+        properties.setProperty("JVM_OPTS", jvmOpts);
+
+        propertiesUpdater.update(properties);
 
         File binDir = new File(basedir, "bin");
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
@@ -261,9 +275,8 @@ public class StorageNodeComponentITest {
         log.info("Waiting for node to boostrap...");
         // When a node goes through bootstrap, StorageService sleeps for RING_DELAY ms
         // while it determines the ranges of the token ring it will own. RING_DELAY defaults
-        // to 30 seconds by default.
-        // TODO Override the default RING_DELAY to speed up tests
-        Thread.sleep(33000);
+        // to 30 seconds by default but we are overriding it to be 100 ms.
+        Thread.sleep(3000);
 
         assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The operation failed: " +
             result.getErrorStackTrace());

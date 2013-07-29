@@ -310,7 +310,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             if ((scheduleId = scheduleIdsMap.get(totalDiskUsedPercentageMetric)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
-                result.setDataDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
+                result.setTotalDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
             }
             if ((scheduleId = scheduleIdsMap.get(freeDiskToDataRatioMetric)) != null) {
                 MeasurementAggregate freeDiskToDataRatioAggregate = measurementManager.getAggregate(subject,

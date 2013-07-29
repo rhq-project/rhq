@@ -415,17 +415,29 @@ public class ConfigurationEditor extends EnhancedVLayout {
         EnhancedVLayout layout = new EnhancedVLayout();
         List<PropertyGroupDefinition> groupDefinitions = configurationDefinition.getGroupDefinitions();
 
-        if (groupDefinitions.isEmpty()) {
-            // No prop groups, so we just need a single form for the non-grouped props.
+        if (groupDefinitions.isEmpty() || groupDefinitions.size() == 1) {
+            // No or one prop groups, so we just need a single form for the non-grouped props 
+            // and another one if there is just one group
             List<PropertyDefinition> propertyDefinitions = new ArrayList<PropertyDefinition>(
                 configurationDefinition.getNonGroupedProperties());
-
-            DynamicForm form = buildPropertiesForm(propertyDefinitions, configuration);
-            form.setBorder("1px solid #AAA");
-            form.validate();
-            layout.addMember(form);
+            if (!propertyDefinitions.isEmpty()) {
+                DynamicForm form = buildPropertiesForm(propertyDefinitions, configuration);
+                form.setBorder("1px solid #AAA");
+                form.validate();
+                layout.addMember(form);
+            }
+            if (groupDefinitions.size() == 1) {
+                propertyDefinitions.addAll(configurationDefinition.getPropertiesInGroup(groupDefinitions.get(0)
+                    .getName()));
+                DynamicForm groupForm = buildPropertiesForm(propertyDefinitions, configuration);
+                groupForm.setIsGroup(true);
+                groupForm.setGroupTitle(groupDefinitions.get(0).getDisplayName());
+                groupForm.setBorder("1px solid #AAA");
+                groupForm.validate();
+                layout.addMember(groupForm);
+            }
         } else {
-            // One or more prop groups, so create a section stack with one section per group.
+            // Two or more prop groups, so create a section stack with one section per group.
             final SectionStack sectionStack = new SectionStack();
             sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
             sectionStack.setWidth100();
@@ -441,7 +453,6 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 //            com.allen_sauer.gwt.log.client.Log.info("building: " + definition.getDisplayName());
                 sectionStack.addSection(buildGroupSection(definition));
             }
-
             this.toolStrip = buildToolStrip(layout, sectionStack);
             layout.addMember(toolStrip);
             layout.addMember(sectionStack);

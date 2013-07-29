@@ -427,8 +427,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 layout.addMember(form);
             }
             if (groupDefinitions.size() == 1) {
-                propertyDefinitions.addAll(configurationDefinition.getPropertiesInGroup(groupDefinitions.get(0)
-                    .getName()));
+                propertyDefinitions = new ArrayList<PropertyDefinition>(
+                    configurationDefinition.getPropertiesInGroup(groupDefinitions.get(0).getName()));
                 DynamicForm groupForm = buildPropertiesForm(propertyDefinitions, configuration);
                 groupForm.setIsGroup(true);
                 groupForm.setGroupTitle(groupDefinitions.get(0).getDisplayName());
@@ -454,10 +454,10 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 sectionStack.addSection(buildGroupSection(definition));
             }
 
-            if (groupDefinitions.size() > 1) {
+//            if (groupDefinitions.size() > 1) {
                 this.toolStrip = buildToolStrip(layout, sectionStack);
                 layout.addMember(toolStrip);
-            }
+//            }
             layout.addMember(sectionStack);
         }
 
@@ -1331,7 +1331,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     valueItem = new ComboBoxItem();
                     ((ComboBoxItem) valueItem).setAddUnknownValues(true);
                 } else {
-                    if (valueOptions.size() > 5) {
+                    if (valueOptions.size() > 3) {
                         valueItem = new SelectItem();
                     } else {
                         valueItem = new RadioGroupItem();

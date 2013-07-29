@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -133,6 +132,30 @@ public interface AuthorizationManagerLocal {
      * @return true if the current user possesses the specified resource permission for the specified auto-group
      */
     boolean hasAutoGroupPermission(Subject subject, Permission permission, int parentResourceId, int resourceTypeId);
+
+    /**
+     * Returns true if the current user possesses the specified bundle permission for the specified bundle.
+     *
+     * @param  subject     the current subject or caller
+     * @param  permission  a bundle permission (i.e. permission.getTarget() == Permission.Target.BUNDLE)
+     * @param  bundleId    the id of the bundle to check permissions against
+     *
+     * @return true if the current user possesses the specified resource permission for the specified resource
+     */
+
+    boolean hasBundlePermission(Subject subject, Permission permission, int bundleId);
+
+    /**
+     * Returns true if the current user possesses the specified bundle permission for the specified bundle group.
+     *
+     * @param  subject     the current subject or caller
+     * @param  permission  a bundle permission (i.e. permission.getTarget() == Permission.Target.BUNDLE)
+     * @param  bundleGroupId  the id of the bundle group to check permissions against
+     *
+     * @return true if the current user possesses the specified resource permission for the specified resource
+     */
+
+    boolean hasBundleGroupPermission(Subject subject, Permission permission, int bundleGroupId);
 
     /**
      * Returns true if the current user possesses the specified global permission.

@@ -105,6 +105,9 @@ public class Bundle implements Serializable {
     private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
 
     @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Set<BundleGroup> bundleGroups;
+
+    @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
 
     public Bundle() {

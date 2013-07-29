@@ -247,8 +247,8 @@ public interface BundleManagerRemote {
      * </p>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
-     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      *
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
@@ -289,8 +289,8 @@ public interface BundleManagerRemote {
      * </p>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
-     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      *
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
@@ -332,8 +332,8 @@ public interface BundleManagerRemote {
      * </p>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
-     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      *
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
@@ -379,8 +379,8 @@ public interface BundleManagerRemote {
      * </p>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
-     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      *
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
@@ -418,8 +418,8 @@ public interface BundleManagerRemote {
      * </p>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
-     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      *
      * @see #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)
      */

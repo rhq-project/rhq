@@ -51,6 +51,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    @Override
     @SuppressWarnings("unchecked")
     public Set<Permission> getExplicitGlobalPermissions(Subject subject) {
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_GLOBAL_PERMISSIONS);
@@ -66,6 +67,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Set<Permission> getExplicitGroupPermissions(Subject subject, int groupId) {
         Set<Permission> result = new HashSet<Permission>();
@@ -99,12 +101,14 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return result;
     }
 
+    @Override
     public Set<Permission> getImplicitGroupPermissions(Subject subject, int groupId) {
         Set<Permission> permissions = isInventoryManager(subject) ? Permission.RESOURCE_ALL
             : getExplicitGroupPermissions(subject, groupId);
         return permissions;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Set<Permission> getExplicitResourcePermissions(Subject subject, int resourceId) {
         Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_RESOURCE_ID);
@@ -119,12 +123,14 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return results;
     }
 
+    @Override
     public Set<Permission> getImplicitResourcePermissions(Subject subject, int resourceId) {
         Set<Permission> permissions = isInventoryManager(subject) ? Permission.RESOURCE_ALL
             : getExplicitResourcePermissions(subject, resourceId);
         return permissions;
     }
 
+    @Override
     public boolean hasGlobalPermission(Subject subject, Permission permission) {
         if (isOverlord(subject)) {
             return true;
@@ -137,6 +143,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean hasGroupPermission(Subject subject, Permission permission, int groupId) {
         if (isInventoryManager(subject)) {
@@ -170,6 +177,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         }
     }
 
+    @Override
     public boolean hasResourcePermission(Subject subject, Permission permission, int resourceId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -183,6 +191,31 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean hasBundlePermission(Subject subject, Permission permission, int bundleId) {
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_HAS_BUNDLE_PERMISSION);
+        query.setParameter("subject", subject);
+        query.setParameter("permission", permission);
+        query.setParameter("bundleId", bundleId);
+        long count = (Long) query.getSingleResult();
+        return (count != 0);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public boolean hasBundleGroupPermission(Subject subject, Permission permission, int bundleGroupId) {
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_HAS_BUNDLE_GROUP_PERMISSION);
+        query.setParameter("subject", subject);
+        query.setParameter("permission", permission);
+        query.setParameter("bundleGroupId", bundleGroupId);
+        long count = (Long) query.getSingleResult();
+        return (count != 0);
+    }
+
+    @Override
     public boolean hasAutoGroupPermission(Subject subject, Permission permission, int parentResourceId,
         int resourceTypeId) {
         if (isInventoryManager(subject)) {
@@ -207,6 +240,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (baseCount == subjectCount);
     }
 
+    @Override
     public boolean canViewResource(Subject subject, int resourceId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -219,6 +253,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    @Override
     public boolean canViewResources(Subject subject, List<Integer> resourceIds) {
         if (isInventoryManager(subject)) {
             return true;
@@ -232,6 +267,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return count == resourceIds.size();
     }
 
+    @Override
     public boolean canViewGroup(Subject subject, int groupId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -244,6 +280,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (count != 0);
     }
 
+    @Override
     public boolean canViewAutoGroup(Subject subject, int parentResourceId, int resourceTypeId) {
         if (isInventoryManager(subject)) {
             return true;
@@ -266,10 +303,12 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return (baseCount == subjectCount);
     }
 
+    @Override
     public boolean isInventoryManager(Subject subject) {
         return hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean hasResourcePermission(Subject subject, Permission permission, Collection<Integer> resourceIds) {
         if (isInventoryManager(subject)) {
@@ -284,16 +323,20 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         return results.containsAll(resourceIds);
     }
 
+    @Override
     public boolean isSystemSuperuser(Subject subject) {
         // We know that our overlord is always id=1 and the rhqadmin user is always id=2.
-        return (subject != null) && ((subject.getId() == SUBJECT_ID_OVERLORD) || (subject.getId() == SUBJECT_ID_RHQADMIN));
+        return (subject != null)
+            && ((subject.getId() == SUBJECT_ID_OVERLORD) || (subject.getId() == SUBJECT_ID_RHQADMIN));
     }
 
+    @Override
     public boolean isOverlord(Subject subject) {
         // We know that our overlord is always id=1.
         return (subject != null) && (subject.getId() == SUBJECT_ID_OVERLORD);
     }
 
+    @Override
     public boolean canUpdateRepo(Subject subject, int repoId) {
         if (hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
             return true;
@@ -301,11 +344,12 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Query q = entityManager.createNamedQuery(Repo.QUERY_CHECK_REPO_OWNED_BY_SUBJECT_ID);
         q.setParameter("repoId", repoId);
         q.setParameter("subjectId", subject.getId());
-        
+
         Long num = (Long) q.getSingleResult();
         return num > 0;
     }
-    
+
+    @Override
     public boolean canViewRepo(Subject subject, int repoId) {
         if (hasGlobalPermission(subject, Permission.MANAGE_REPOSITORIES)) {
             return true;
@@ -314,7 +358,7 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
         Query q = entityManager.createNamedQuery(Repo.QUERY_CHECK_REPO_VISIBLE_BY_SUBJECT_ID);
         q.setParameter("repoId", repoId);
         q.setParameter("subjectId", subject.getId());
-        
+
         Long num = (Long) q.getSingleResult();
         return num > 0;
     }

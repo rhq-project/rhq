@@ -431,6 +431,7 @@ public class PermissionsEditor extends EnhancedVStack {
                     String permissionName = record.getAttribute(nameField);
                     Permission permission = Permission.valueOf(permissionName);
                     String permissionDisplayName = record.getAttribute("displayName");
+
                     if (permission == Permission.VIEW_RESOURCE) {
                         String messageString = MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
@@ -448,6 +449,11 @@ public class PermissionsEditor extends EnhancedVStack {
                         && permission == Permission.CONFIGURE_READ) {
                         String messageString = MSG
                             .view_adminRoles_permissions_illegalDeselectionDueToCorrespondingWritePermSelection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_BUNDLE)
+                        && Permission.BUNDLE_ALL.contains(permission)) {
+                        String messageString = MSG
+                            .view_adminRoles_permissions_illegalDeselectionDueToManageBundleSelection(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
                     } else {
                         updatePermissions(authorized, permission);

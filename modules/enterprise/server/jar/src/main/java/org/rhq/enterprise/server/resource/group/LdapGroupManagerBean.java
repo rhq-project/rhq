@@ -585,6 +585,8 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                     }
                 }
             }
+            //now load default/shared LDAP properties as we always have
+            properties = getProperties(properties);
         }
         return properties;
     }

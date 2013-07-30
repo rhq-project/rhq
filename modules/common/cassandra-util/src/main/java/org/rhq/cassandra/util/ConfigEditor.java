@@ -88,6 +88,10 @@ public class ConfigEditor {
         return (List<String>) config.get("data_file_directories");
     }
 
+    public void setDataFileDirectories(List<String> dirs) {
+        config.put("data_file_directories", dirs);
+    }
+
     public String getSavedCachesDirectory() {
         return (String) config.get("saved_caches_directory");
     }

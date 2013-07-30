@@ -18,7 +18,10 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype;
 
+import com.smartgwt.client.widgets.HTMLFlow;
+import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,9 +35,25 @@ import java.util.List;
  */
 public class AvailabilitySummaryPieGraphType {
 
+    public static final int HEIGHT = 100;
+    public static final int WIDTH = 100;
+
     private List<AvailabilitySummary> availabilitySummaries;
 
     public AvailabilitySummaryPieGraphType() {
+    }
+
+    public HTMLFlow createGraphMarker() {
+        Log.debug("drawGraph marker in AvailabilitySummaryPieGraph");
+
+        StringBuilder divAndSvgDefs = new StringBuilder();
+        divAndSvgDefs.append("<div id=\"availSummaryChart\" >");
+        divAndSvgDefs.append("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:"+HEIGHT+"px;\" ></svg>");
+        divAndSvgDefs.append("</div>");
+        HTMLFlow graphFlow = new HTMLFlow(divAndSvgDefs.toString());
+        graphFlow.setWidth(WIDTH);
+        graphFlow.setHeight(HEIGHT);
+        return graphFlow;
     }
 
     public void setAvailabilityData(String upLabel, double upPercent, String downLabel, double downPercent, String disabledLabel, double disabledPercent ){
@@ -51,7 +70,8 @@ public class AvailabilitySummaryPieGraphType {
             // loop through the avail intervals
             for (AvailabilitySummary availabilitySummary : availabilitySummaries) {
                 sb.append("{ \"label\":\"" + availabilitySummary.getLabel() + "\", ");
-                sb.append(" \"value\": \"" + availabilitySummary.getValue() *  100 + "\" },");
+                sb.append(" \"value\": \"" + MeasurementConverterClient.format(availabilitySummary.getValue(),
+                        MeasurementUnits.PERCENTAGE, true) + "\" },");
             }
             sb.setLength(sb.length() - 1);
         }
@@ -67,26 +87,21 @@ public class AvailabilitySummaryPieGraphType {
     public native void drawJsniChart() /*-{
         console.log("Draw Availability Summary Pie Chart");
 
-        var data = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::getAvailabilitySummaryJson()();
-
         var w = 100,
             h = 100,
-            r = 30,
-            color = $wnd.d3.scale.category10();
-
-        var vis = $wnd.d3.select("#availSummaryChart svg")
+            r = h/2,
+            color = $wnd.d3.scale.category10(),
+        data = this.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::getAvailabilitySummaryJson()(),
+        vis = $wnd.d3.select("#availSummaryChart svg")
             .append("g")
             .data(data)
             .attr("width", w)
             .attr("height", h)
-            .attr("transform", "translate(" + r + "," + r + ")");
-
-        var arc = $wnd.d3.svg.arc()
-            .outerRadius(r);
-
-        var pie = $wnd.d3.layout.pie();
-
-        var arcs = vis.selectAll("g.slice")
+            .attr("transform", "translate(" + r + "," + r + ")"),
+        arc = $wnd.d3.svg.arc()
+            .outerRadius(r),
+        pie = $wnd.d3.layout.pie(),
+        arcs = vis.selectAll("g.slice")
             .data(pie)
             .enter()
             .append("g")
@@ -108,7 +123,7 @@ public class AvailabilitySummaryPieGraphType {
             .text(function (d, i) {
                 return data[i].value;
             });
-        console.warn("done with avail summary pie graph");
+        console.log("done with avail summary pie graph");
 
     }-*/;
 

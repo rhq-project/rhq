@@ -586,7 +586,34 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                 }
             }
             //now load default/shared LDAP properties as we always have
-            properties = getProperties(properties);
+            // Set our default factory name if one is not given
+            String factoryName = properties.getProperty(SystemSetting.LDAP_NAMING_FACTORY.name());
+            properties.setProperty(Context.INITIAL_CONTEXT_FACTORY, factoryName);
+
+            // Setup SSL if requested
+            String value = properties.getProperty(SystemSetting.USE_SSL_FOR_LDAP.name());
+            boolean ldapSsl = "ssl".equalsIgnoreCase(value);
+            if (ldapSsl) {
+                String ldapSocketFactory = properties.getProperty("java.naming.ldap.factory.socket");
+                if (ldapSocketFactory == null) {
+                    properties.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());
+                }
+                properties.put(Context.SECURITY_PROTOCOL, "ssl");
+            }
+
+            // Set the LDAP url
+            String providerUrl = properties.getProperty(SystemSetting.LDAP_NAMING_PROVIDER_URL.name());
+            if (providerUrl == null) {
+                int port = (ldapSsl) ? 636 : 389;
+                providerUrl = "ldap://localhost:" + port;
+            }
+
+            properties.setProperty(Context.PROVIDER_URL, providerUrl);
+
+            // Follow referrals automatically
+            properties.setProperty(Context.REFERRAL, "ignore"); //BZ:582471- active directory query change
+
+            //            properties = getProperties(properties);
         }
         return properties;
     }
@@ -598,6 +625,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
      *
      * @return properties that are to be used when connecting to LDAP server
      */
+    @Deprecated
     private Properties getProperties(Properties systemConfig) {
         Properties env = new Properties(systemConfig);
         // Set our default factory name if one is not given

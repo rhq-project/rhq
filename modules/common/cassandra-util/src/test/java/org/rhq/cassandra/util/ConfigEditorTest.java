@@ -1,5 +1,6 @@
 package org.rhq.cassandra.util;
 
+import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
 
 import java.io.File;
@@ -86,6 +87,24 @@ public class ConfigEditorTest {
         editor.load();
 
         assertEquals(editor.getStoragePort(), config.storage_port, "Failed to fetch storage_port");
+    }
+
+    @Test
+    public void updateDataFilesDirectories() throws Exception {
+        ConfigEditor editor = new ConfigEditor(configFile);
+        editor.load();
+        editor.setDataFileDirectories(asList("/data/dir1", "/data/dir2", "data/dir3"));
+        editor.save();
+
+        Config config = loadConfig();
+
+        assertEquals(config.data_file_directories, new String[] {"/data/dir1", "/data/dir2", "data/dir3"},
+            "Failed to update data_file_directories");
+
+        editor.load();
+
+        assertEquals(editor.getDataFileDirectories().toArray(new String[3]), config.data_file_directories,
+            "Failed to fetch data_file_directories");
     }
 
     private Config loadConfig() throws Exception {

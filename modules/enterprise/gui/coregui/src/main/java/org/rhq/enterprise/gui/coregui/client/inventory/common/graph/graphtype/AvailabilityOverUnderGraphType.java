@@ -230,6 +230,8 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                                 .attr("height", height + margin.top + margin.bottom)
                                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
+                console.error("avail.chartSelection: "+ availChartContext.chartSelection);
+
 
                 svg.selectAll("rect.availBars")
                         .data(availChartContext.data)
@@ -329,7 +331,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                 // Public API
                 draw: function (availChartContext) {
                     "use strict";
-                    console.log("AvailabilityChart");
                     drawBars(availChartContext);
                     createHovers();
                 }
@@ -338,7 +339,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
         }();
 
-        console.log("Avail Data records: "+availChartContext.data.length);
         if (typeof availChartContext.data !== 'undefined' && availChartContext.data.length > 0) {
             availabilityGraph.draw(availChartContext);
             console.log("Availability Chart Drawn");

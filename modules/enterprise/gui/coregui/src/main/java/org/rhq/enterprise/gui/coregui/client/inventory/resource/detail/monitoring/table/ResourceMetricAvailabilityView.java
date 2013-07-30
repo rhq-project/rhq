@@ -20,7 +20,9 @@
 
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -31,6 +33,8 @@ import org.rhq.core.domain.resource.composite.ResourceAvailabilitySummary;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -58,20 +62,37 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
     private StaticTextItem unknownField;
     private StaticTextItem currentTimeField;
 
+    private AvailabilitySummaryPieGraphType availabilitySummaryPieGraph;
+
     public ResourceMetricAvailabilityView(Resource resource) {
         super();
 
         this.resource = resource;
+        availabilitySummaryPieGraph = new AvailabilitySummaryPieGraphType();
 
         setWidth100();
-        setHeight(165);
+        setHeight(265);
     }
 
     @Override
     protected void onInit() {
         super.onInit();
-
+        addMember(createGraphMarker());
         addMember(createSummaryForm());
+    }
+
+    public HTMLFlow createGraphMarker() {
+        Log.debug("drawGraph marker in AvailabilitySummaryPieGraph");
+
+        StringBuilder divAndSvgDefs = new StringBuilder();
+        divAndSvgDefs.append("<div id=\"availSummaryChart"
+                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:100px;\">");
+        divAndSvgDefs.append("</svg></div>");
+        HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
+        graph.setWidth100();
+        graph.setHeight(100);
+        //addMember(graph);
+        return graph;
     }
 
     private DynamicForm createSummaryForm() {
@@ -158,6 +179,21 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
                 @Override
                 public void onSuccess(ResourceAvailabilitySummary result) {
+                    Log.debug("reloadSummaryData");
+
+                    availabilitySummaryPieGraph.setAvailabilityData(
+                            "Up", result.getUpPercentage(),
+                            "Down", result.getDownPercentage(),
+                            "Disabled" ,result.getDisabledPercentage()
+                    );
+                    new Timer(){
+
+                        @Override
+                        public void run() {
+                            Log.debug("Run Avail Graph");
+                            availabilitySummaryPieGraph.drawJsniChart();
+                        }
+                    }.schedule(150);
 
                     currentField.setValue(MSG.view_resource_monitor_availability_currentStatus_value(result
                         .getCurrent().getName(), TimestampCellFormatter.format(result.getLastChange().getTime())));
@@ -189,6 +225,8 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
                     currentTimeField.setValue(MSG.view_resource_monitor_availability_currentAsOf(TimestampCellFormatter
                         .format(result.getCurrentTime())));
+
+
                 }
 
                 @Override

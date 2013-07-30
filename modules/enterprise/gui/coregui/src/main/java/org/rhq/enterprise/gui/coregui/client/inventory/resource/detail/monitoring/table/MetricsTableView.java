@@ -305,7 +305,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                     int startRow = dataArrivedEvent.getStartRow();
                     int endRow = dataArrivedEvent.getEndRow();
                     for (int i = startRow; i < endRow; i++) {
-                        if (null != metricsTableView.expandedRows
+                        if (null != metricsTableView && null != metricsTableView.expandedRows
                             && metricsTableView.expandedRows.contains(getRecord(i).getAttributeAsInt(
                                 MetricsViewDataSource.FIELD_METRIC_DEF_ID))) {
                             expandRecord(getRecord(i));

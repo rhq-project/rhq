@@ -215,6 +215,7 @@
 	<classpathentry kind="src" path="modules/plugins/rhq-storage/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/data-migration/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/data-migration/src/test/java"/>
+	<classpathentry kind="src" path="modules/helpers/ldap-tool/src/main/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3.jar" sourcepath="M2_REPO/org/apache/httpcomponents/httpclient/4.2.3/httpclient-4.2.3-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/commons-io/commons-io/2.1/commons-io-2.1.jar" sourcepath="M2_REPO/commons-io/commons-io/2.1/commons-io-2.1-sources.jar"/>

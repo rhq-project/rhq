@@ -121,9 +121,9 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         metricsTableListGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
             @Override
             public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if(metricsTableListGrid.getSelectedRecords().length > 0){
+                if (metricsTableListGrid.getSelectedRecords().length > 0) {
                     addToDashboardComponent.enableAddToDashboardButton();
-                }else {
+                } else {
                     addToDashboardComponent.disableAddToDashboardButton();
                 }
             }
@@ -304,11 +304,15 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
                     int startRow = dataArrivedEvent.getStartRow();
                     int endRow = dataArrivedEvent.getEndRow();
+
                     for (int i = startRow; i < endRow; i++) {
-                        if (null != metricsTableView && null != metricsTableView.expandedRows
-                            && metricsTableView.expandedRows.contains(getRecord(i).getAttributeAsInt(
-                                MetricsViewDataSource.FIELD_METRIC_DEF_ID))) {
-                            expandRecord(getRecord(i));
+                        ListGridRecord listGridRecord = getRecord(i);
+                        if (null != listGridRecord) {
+                            int metricDefinitionId = listGridRecord
+                                .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
+                            if (null != metricsTableView && metricsTableView.expandedRows.contains(metricDefinitionId)) {
+                                expandRecord(listGridRecord);
+                            }
                         }
                     }
                 }

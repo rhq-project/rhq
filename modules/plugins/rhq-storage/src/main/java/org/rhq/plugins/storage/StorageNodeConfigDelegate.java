@@ -5,6 +5,12 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.yaml.snakeyaml.error.YAMLException;
+
+import org.rhq.cassandra.util.ConfigEditor;
+import org.rhq.cassandra.util.ConfigEditorException;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -18,12 +24,16 @@ import org.rhq.core.util.StringUtil;
  */
 public class StorageNodeConfigDelegate implements ConfigurationFacet {
 
+    private Log log = LogFactory.getLog(StorageNodeConfigDelegate.class);
+
     private File jvmOptsFile;
     private File wrapperEnvFile;
+    private File cassandraYamlFile;
 
     public StorageNodeConfigDelegate(File basedir) {
         File confDir = new File(basedir, "conf");
         jvmOptsFile = new File(confDir, "cassandra-jvm.properties");
+        cassandraYamlFile = new File(confDir, "cassandra.yaml");
 
         // for windows, config props also get propagated to the wrapper env
         if (isWindows()) {
@@ -59,6 +69,11 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             File basedir = jvmOptsFile.getParentFile().getParentFile();
             config.put(new PropertySimple("heapDumpDir", new File(basedir, "bin").getAbsolutePath()));
         }
+
+        ConfigEditor yamlEditor = new ConfigEditor(cassandraYamlFile);
+        yamlEditor.load();
+        config.put(new PropertySimple("cqlPort", yamlEditor.getNativeTransportPort()));
+        config.put(new PropertySimple("gossipPort", yamlEditor.getStoragePort()));
 
         return config;
     }
@@ -135,6 +150,7 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
             Configuration config = configurationUpdateReport.getConfiguration();
 
             updateCassandraJvmProps(config);
+            updateCassandraYaml(config);
 
             if (isWindows()) {
                 updateWrapperEnv(config);
@@ -144,6 +160,8 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         } catch (IllegalArgumentException e) {
             configurationUpdateReport.setErrorMessage("No configuration update was applied: " + e.getMessage());
         } catch (IOException e) {
+            configurationUpdateReport.setErrorMessageFromThrowable(e);
+        } catch (ConfigEditorException e) {
             configurationUpdateReport.setErrorMessageFromThrowable(e);
         }
     }
@@ -193,6 +211,43 @@ public class StorageNodeConfigDelegate implements ConfigurationFacet {
         }
 
         propertiesUpdater.update(properties);
+    }
+
+    private void updateCassandraYaml(Configuration newConfig) {
+        ConfigEditor editor = new ConfigEditor(cassandraYamlFile);
+        try {
+            editor.load();
+
+            PropertySimple cqlPortProperty = newConfig.getSimple("cqlPort");
+            if (cqlPortProperty != null) {
+                editor.setNativeTransportPort(cqlPortProperty.getIntegerValue());
+            }
+
+            PropertySimple gossipPortProperty = newConfig.getSimple("gossipPort");
+            if (gossipPortProperty != null) {
+                editor.setStoragePort(gossipPortProperty.getIntegerValue());
+            }
+
+            editor.save();
+        } catch (ConfigEditorException e) {
+            if (e.getCause() instanceof YAMLException) {
+                log.error("Failed to update " + cassandraYamlFile);
+                log.info("Attempting to restore " + cassandraYamlFile);
+                try {
+                    editor.restore();
+                    throw e;
+                } catch (ConfigEditorException e1) {
+                    log.error("Failed to restore " + cassandraYamlFile + ". A copy of the file prior to any " +
+                        "modifications can be found at " + editor.getBackupFile());
+                    throw new ConfigEditorException("There was an error updating " + cassandraYamlFile + " and " +
+                        "undoing the changes failed. A copy of the file can be found at " + editor.getBackupFile() +
+                        ". See the agent logs for more details.", e);
+                }
+            } else {
+                log.error("No updates were made to " + cassandraYamlFile + " due to an unexpected error", e);
+                throw e;
+            }
+        }
     }
 
     private void updateWrapperEnv(Configuration config) throws IOException {

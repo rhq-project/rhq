@@ -108,7 +108,7 @@ public class ConfigEditor {
         return (Integer) config.get("native_transport_port");
     }
 
-    public void setNativeTransportPort(int port) {
+    public void setNativeTransportPort(Integer port) {
         config.put("native_transport_port", port);
     }
 
@@ -116,7 +116,7 @@ public class ConfigEditor {
         return (Integer) config.get("storage_port");
     }
 
-    public void setStoragePort(int port) {
+    public void setStoragePort(Integer port) {
         config.put("storage_port", port);
     }
 

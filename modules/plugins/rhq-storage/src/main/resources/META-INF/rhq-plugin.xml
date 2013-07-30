@@ -175,6 +175,17 @@
         <c:simple-property name="heapDumpDir" displayName="Heap Dump Directory" required="false"
                            description="The directory in which heap dumps will be written."/>
       </c:group>
+      <c:group name="Ports">
+        <c:simple-property name="cqlPort"
+                           displayName="CQL Port"
+                           type="integer"
+                           description="The port on which to listen for client requests over the native, CQL protocol.
+                           This is a shared, cluster-wide setting."/>
+        <c:simple-property name="gossipPort"
+                           type="integer"
+                           description="The port used for internode communication. This is a shared, cluster-wide setting."/>
+
+      </c:group>
     </resource-configuration>
 
     <server name="Cassandra Server JVM"

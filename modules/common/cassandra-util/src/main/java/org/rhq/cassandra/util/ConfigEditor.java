@@ -100,8 +100,16 @@ public class ConfigEditor {
         params.put("seeds", StringUtil.arrayToString(seeds));
     }
 
+    public Integer getNativeTransportPort() {
+        return (Integer) config.get("native_transport_port");
+    }
+
     public void setNativeTransportPort(int port) {
         config.put("native_transport_port", port);
+    }
+
+    public Integer getStoragePort() {
+        return (Integer) config.get("storage_port");
     }
 
     public void setStoragePort(int port) {

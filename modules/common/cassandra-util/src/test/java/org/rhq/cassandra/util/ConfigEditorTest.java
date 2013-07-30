@@ -65,6 +65,11 @@ public class ConfigEditorTest {
         Config config = loadConfig();
 
         assertEquals(config.native_transport_port, (Integer) 9393, "Failed to update native_transport_port");
+
+        editor.load();
+
+        assertEquals(editor.getNativeTransportPort(), config.native_transport_port,
+            "Failed to fetch native_transport_port");
     }
 
     @Test
@@ -77,6 +82,10 @@ public class ConfigEditorTest {
         Config config = loadConfig();
 
         assertEquals(config.storage_port, (Integer) 6767, "Failed to update storage_port");
+
+        editor.load();
+
+        assertEquals(editor.getStoragePort(), config.storage_port, "Failed to fetch storage_port");
     }
 
     private Config loadConfig() throws Exception {

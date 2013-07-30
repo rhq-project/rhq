@@ -230,8 +230,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                                 .attr("height", height + margin.top + margin.bottom)
                                 .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
 
-                console.error("avail.chartSelection: "+ availChartContext.chartSelection);
-
 
                 svg.selectAll("rect.availBars")
                         .data(availChartContext.data)

@@ -22,8 +22,9 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.widgets.HTMLFlow;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
@@ -49,11 +50,8 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
     private Resource resource;
     private StaticTextItem currentField;
-    private StaticTextItem availField;
     private StaticTextItem availTimeField;
-    private StaticTextItem downField;
     private StaticTextItem downTimeField;
-    private StaticTextItem disabledField;
     private StaticTextItem disabledTimeField;
     private StaticTextItem failureCountField;
     private StaticTextItem disabledCountField;
@@ -71,29 +69,16 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
         availabilitySummaryPieGraph = new AvailabilitySummaryPieGraphType();
 
         setWidth100();
-        setHeight(265);
+        setHeight(165);
     }
 
     @Override
     protected void onInit() {
         super.onInit();
-        addMember(createGraphMarker());
         addMember(createSummaryForm());
     }
 
-    public HTMLFlow createGraphMarker() {
-        Log.debug("drawGraph marker in AvailabilitySummaryPieGraph");
 
-        StringBuilder divAndSvgDefs = new StringBuilder();
-        divAndSvgDefs.append("<div id=\"availSummaryChart"
-                + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:100px;\">");
-        divAndSvgDefs.append("</svg></div>");
-        HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
-        graph.setWidth100();
-        graph.setHeight(100);
-        //addMember(graph);
-        return graph;
-    }
 
     private DynamicForm createSummaryForm() {
         DynamicForm form = new DynamicForm();
@@ -108,28 +93,16 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
         currentField.setColSpan(4);
 
         // row 2
-        availField = new StaticTextItem("avail", MSG.view_resource_monitor_availability_availability());
-        availField.setWrapTitle(false);
-        prepareTooltip(availField, MSG.view_resource_monitor_availability_availability_tooltip());
-
         availTimeField = new StaticTextItem("availTime", MSG.view_resource_monitor_availability_uptime());
         availTimeField.setWrapTitle(false);
         prepareTooltip(availTimeField, MSG.view_resource_monitor_availability_uptime_tooltip());
 
         // row 3
-        downField = new StaticTextItem("down", MSG.view_resource_monitor_availability_down());
-        downField.setWrapTitle(false);
-        prepareTooltip(downField, MSG.view_resource_monitor_availability_down_tooltip());
-
         downTimeField = new StaticTextItem("downTime", MSG.view_resource_monitor_availability_downtime());
         downTimeField.setWrapTitle(false);
         prepareTooltip(downTimeField, MSG.view_resource_monitor_availability_downtime_tooltip());
 
         // row 4
-        disabledField = new StaticTextItem("disabled", MSG.view_resource_monitor_availability_disabled());
-        disabledField.setWrapTitle(false);
-        prepareTooltip(disabledField, MSG.view_resource_monitor_availability_disabled_tooltip());
-
         disabledTimeField = new StaticTextItem("disabledTime", MSG.view_resource_monitor_availability_disabledTime());
         disabledTimeField.setWrapTitle(false);
         prepareTooltip(disabledTimeField, MSG.view_resource_monitor_availability_disabledTime_tooltip());
@@ -164,7 +137,17 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
         currentTimeField.setColSpan(4);
         currentTimeField.setShowTitle(false);
 
-        form.setItems(currentField, availField, availTimeField, downField, downTimeField, disabledField,
+        CanvasItem availPieChartItem = new CanvasItem();
+        //@todo: i18n
+        availPieChartItem.setTitle("Availability");
+        availPieChartItem.setCanvas(availabilitySummaryPieGraph.createGraphMarker());
+        availPieChartItem.setRowSpan(3);
+        availPieChartItem.setVAlign(VerticalAlignment.TOP);
+        availPieChartItem.setTitleVAlign(VerticalAlignment.TOP);
+        availPieChartItem.setHeight(60);
+        availPieChartItem.setWidth(60);
+
+        form.setItems(currentField, availPieChartItem, availTimeField,  downTimeField,
             disabledTimeField, failureCountField, disabledCountField, mtbfField, mttrField, unknownField,
             currentTimeField);
 
@@ -181,6 +164,7 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
                 public void onSuccess(ResourceAvailabilitySummary result) {
                     Log.debug("reloadSummaryData");
 
+                    //@todo: i18n
                     availabilitySummaryPieGraph.setAvailabilityData(
                             "Up", result.getUpPercentage(),
                             "Down", result.getDownPercentage(),
@@ -197,16 +181,10 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
                     currentField.setValue(MSG.view_resource_monitor_availability_currentStatus_value(result
                         .getCurrent().getName(), TimestampCellFormatter.format(result.getLastChange().getTime())));
-                    availField.setValue(MeasurementConverterClient.format(result.getUpPercentage(),
-                        MeasurementUnits.PERCENTAGE, true));
                     availTimeField.setValue(MeasurementConverterClient.format((double) result.getUpTime(),
                         MeasurementUnits.MILLISECONDS, true));
-                    downField.setValue(MeasurementConverterClient.format(result.getDownPercentage(),
-                        MeasurementUnits.PERCENTAGE, true));
                     downTimeField.setValue(MeasurementConverterClient.format((double) result.getDownTime(),
                         MeasurementUnits.MILLISECONDS, true));
-                    disabledField.setValue(MeasurementConverterClient.format(result.getDisabledPercentage(),
-                        MeasurementUnits.PERCENTAGE, true));
                     disabledTimeField.setValue(MeasurementConverterClient.format((double) result.getDisabledTime(),
                         MeasurementUnits.MILLISECONDS, true));
                     failureCountField.setValue(result.getFailures());

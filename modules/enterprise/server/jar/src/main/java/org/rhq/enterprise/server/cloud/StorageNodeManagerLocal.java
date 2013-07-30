@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.cloud;
 
+import java.net.InetAddress;
 import java.util.List;
 
 import javax.ejb.Local;
@@ -106,6 +107,8 @@ public interface StorageNodeManagerLocal {
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
 
+    StorageNode findStorageNodeByAddress(InetAddress address);
+
 
     /**
      * Find ids for all resources and sub-resources of Storage Nodes that
@@ -170,6 +173,8 @@ public interface StorageNodeManagerLocal {
      */
     boolean storageNodeGroupExists();
 
+    void addToStorageNodeGroup(StorageNode storageNode);
+
     /**
      * This method assumes the storage node resource group already exists; as such, it should only be called from places
      * in the code that are after the point(s) where the group has been created.
@@ -180,5 +185,9 @@ public interface StorageNodeManagerLocal {
     ResourceGroup getStorageNodeGroup();
 
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
+
+    void prepareNewNodesForBootstrap();
+
+    void runAddNodeMaintenance();
 
 }

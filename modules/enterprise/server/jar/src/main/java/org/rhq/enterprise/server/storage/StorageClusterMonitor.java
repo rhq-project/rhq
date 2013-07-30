@@ -9,7 +9,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -35,6 +37,18 @@ public class StorageClusterMonitor implements StorageStateListener {
         if (isClusterDown.compareAndSet(true, false)) {
             log.info("Taking server out of maintenance mode");
             updateServerMode(Server.OperationMode.NORMAL);
+        }
+
+        StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
+        StorageNode newClusterNode = storageNodeManager.findStorageNodeByAddress(address);
+
+        if (newClusterNode == null) {
+            log.error("Did not find storage node with address [" + address.getHostAddress() + "]. This should not " +
+                "happen.");
+        } else {
+            log.info("Adding " + newClusterNode + " to storage cluster and scheduling cluster maintenance...");
+            storageNodeManager.addToStorageNodeGroup(newClusterNode);
+            storageNodeManager.runAddNodeMaintenance();
         }
     }
 

@@ -24,6 +24,8 @@
  */
 package org.rhq.enterprise.server.cloud;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -47,6 +49,7 @@ import org.quartz.JobDataMap;
 import org.quartz.SimpleTrigger;
 import org.quartz.Trigger;
 
+import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -57,6 +60,8 @@ import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertyList;
+import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
@@ -73,6 +78,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -82,6 +88,7 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
@@ -99,6 +106,14 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageNodeManagerRemote {
 
     private final Log log = LogFactory.getLog(StorageNodeManagerBean.class);
+
+    private static final String USERNAME_PROPERTY = "rhq.cassandra.username";
+    private static final String PASSWORD_PROPERTY = "rhq.cassandra.password";
+    private final static String MAINTENANCE_OPERATION = "addNodeMaintenance";
+    private final static String MAINTENANCE_OPERATION_NOTE = "Topology change maintenance.";
+    private final static String RUN_REPAIR_PROPERTY = "runRepair";
+    private final static String UPDATE_SEEDS_LIST = "updateSeedsList";
+    private final static String SEEDS_LIST = "seedsList";
 
     private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
@@ -139,46 +154,86 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private StorageNodeManagerLocal storageNodeManger;
 
+    @EJB
+    private ResourceManagerLocal resourceManager;
+
     @Override
     public void linkResource(Resource resource) {
-        List<StorageNode> storageNodes = this.getStorageNodes();
-
         Configuration resourceConfig = resource.getPluginConfiguration();
-        String configAddress = resourceConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
+        String address = resourceConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
 
-        if (configAddress != null) {
-            // TODO Do not add the node to the group until we have verified it has joined the cluster
-            // StorageNodeMaintenanceJob currently determines if a new node has successfully joined the cluster.
-            addStorageNodeToGroup(resource);
+        if (log.isInfoEnabled()) {
+            log.info("Linking " + resource + " to storage node at " + address);
+        }
+        try {
+            StorageNode storageNode = findStorageNodeByAddress(InetAddress.getByName(address));
 
-            boolean storageNodeFound = false;
-            if (storageNodes != null) {
-                for (StorageNode storageNode : storageNodes) {
-                    if (configAddress.equals(storageNode.getAddress())) {
-                        storageNode.setResource(resource);
-                        storageNode.setOperationMode(OperationMode.NORMAL);
-                        storageNodeFound = true;
-                        break;
-                    }
+            if (storageNode != null) {
+                if (log.isInfoEnabled()) {
+                    log.info(storageNode + " is an existing storage node. No cluster maintenance is necessary.");
                 }
-            }
-
-            if (!storageNodeFound) {
-                int cqlPort = Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY));
-                int jmxPort = Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY));
-
-                StorageNode storageNode = new StorageNode();
-                storageNode.setAddress(configAddress);
-                storageNode.setCqlPort(cqlPort);
-                storageNode.setJmxPort(jmxPort);
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
+                addStorageNodeToGroup(resource);
+            } else {
+                storageNode = new StorageNode();
+                storageNode.setAddress(address);
+                storageNode.setCqlPort(Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
+                storageNode.setJmxPort(Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
+                storageNode.setResource(resource);
+                storageNode.setOperationMode(OperationMode.INSTALLED);
 
                 entityManager.persist(storageNode);
 
-//                scheduleQuartzJob(storageNodes.size());
+                if (log.isInfoEnabled()) {
+                    log.info(storageNode + " is a new storage node and not part of the storage node cluster.");
+                    log.info("Scheduling maintenance operations to bring " + storageNode + " into the cluster...");
+                }
+
+                announceNewNode(storageNode);
             }
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
+                " cannot be linked to a storage node", e);
         }
+    }
+
+    private void announceNewNode(StorageNode newStorageNode) {
+        if (log.isInfoEnabled()) {
+            log.info("Announcing " + newStorageNode + " to storage node cluster.");
+        }
+
+        ResourceGroup storageNodeGroup = getStorageNodeGroup();
+
+        GroupOperationSchedule schedule = new GroupOperationSchedule();
+        schedule.setGroup(storageNodeGroup);
+        schedule.setHaltOnFailure(false);
+        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
+        schedule.setJobTrigger(JobTrigger.createNowTrigger());
+        schedule.setSubject(subjectManager.getOverlord());
+        schedule.setOperationName("updateKnownNodes");
+
+        Configuration parameters = new Configuration();
+        parameters.put(createPropertyListOfAddresses("ipAddresses", combine(getStorageNodes(), newStorageNode)));
+        schedule.setParameters(parameters);
+
+        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
+    }
+
+    private List<StorageNode> combine(List<StorageNode> storageNodes, StorageNode storageNode) {
+        List<StorageNode> newList = new ArrayList<StorageNode>(storageNodes.size() + 1);
+        newList.addAll(storageNodes);
+        newList.add(storageNode);
+
+        return newList;
+    }
+
+    private PropertyList createPropertyListOfAddresses(String propertyName, List<StorageNode> nodes) {
+        PropertyList list = new PropertyList(propertyName);
+        for (StorageNode storageNode : nodes) {
+            list.add(new PropertySimple("address", storageNode.getAddress()));
+        }
+        return list;
     }
 
     @Override
@@ -214,7 +269,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         ResourceGroup group = getStorageNodeGroup();
         resourceGroupManager.addResourcesToGroup(subjectManager.getOverlord(), group.getId(),
-            new int[] {resource.getId()});
+            new int[]{resource.getId()});
     }
 
     @Override
@@ -229,6 +284,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(overlord, criteria);
 
         return !groups.isEmpty();
+    }
+
+    @Override
+    public void addToStorageNodeGroup(StorageNode storageNode) {
+        storageNode.setOperationMode(OperationMode.NORMAL);
+        entityManager.merge(storageNode);
+        addStorageNodeToGroup(storageNode.getResource());
     }
 
     @Override
@@ -398,6 +460,19 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return runner.execute();
     }
 
+    public StorageNode findStorageNodeByAddress(InetAddress address) {
+        TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
+            StorageNode.class);
+        query.setParameter("address", address.getHostAddress());
+        List<StorageNode> result = query.getResultList();
+
+        if (result != null && result.size() > 0) {
+            return result.get(0);
+        }
+
+        return null;
+    }
+
     @Override
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
@@ -470,19 +545,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
         entityManager.flush();
-    }
-
-    private StorageNode findStorageNodeByAddress(String address) {
-        TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
-            StorageNode.class);
-        query.setParameter("address", address);
-        List<StorageNode> result = query.getResultList();
-
-        if (result != null && result.size() > 0) {
-            return result.get(0);
-        }
-
-        return null;
     }
 
     private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
@@ -641,63 +703,68 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
-        StorageNode storageNode = findStorageNodeByAddress(storageNodeConfiguration.getStorageNode().getAddress());
+        try {
+            StorageNode storageNode = findStorageNodeByAddress(InetAddress.getByName(
+                storageNodeConfiguration.getStorageNode().getAddress()));
 
-        if (storageNode != null && storageNode.getResource() != null) {
-            Configuration parameters = new Configuration();
-            parameters.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
-            if (storageNodeConfiguration.getHeapSize() != null) {
-                parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
-            }
-            if (storageNodeConfiguration.getHeapNewSize() != null) {
-                parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
-            }
-            if (storageNodeConfiguration.getThreadStackSize() != null) {
-                parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
-            }
-            parameters.setSimpleValue("restartIfRequired", "false");
-
-            Resource storageNodeResource = storageNode.getResource();
-
-            boolean result = runOperationAndWaitForResult(subject, storageNodeResource, UPDATE_CONFIGURATION_OPERATION,
-                parameters);
-
-            if (result) {
-                //2. Update the JMX port
-                //this is a fast operation compared to the restart
-                storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
-                entityManager.merge(storageNode);
-
-                //3. Restart the storage node
-                result = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
-                    new Configuration());
-
-                //4. Update the plugin configuration to talk with the new server
-                //Up to this point communication with the storage node should not have been affected by the intermediate
-                //changes
-                Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
-                    storageNodeResource.getId());
-
-                String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
-                String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
-
-                if (!existingJMXPort.equals(newJMXPort)) {
-                    storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
-
-                    String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
-                    String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
-                        + storageNodeConfiguration.getJmxPort() + "/");
-                    storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
-
-                    configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
-                        storageNodePluginConfig);
+            if (storageNode != null && storageNode.getResource() != null) {
+                Configuration parameters = new Configuration();
+                parameters.setSimpleValue("jmxPort", storageNodeConfiguration.getJmxPort() + "");
+                if (storageNodeConfiguration.getHeapSize() != null) {
+                    parameters.setSimpleValue("heapSize", storageNodeConfiguration.getHeapSize() + "");
                 }
+                if (storageNodeConfiguration.getHeapNewSize() != null) {
+                    parameters.setSimpleValue("heapNewSize", storageNodeConfiguration.getHeapNewSize() + "");
+                }
+                if (storageNodeConfiguration.getThreadStackSize() != null) {
+                    parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
+                }
+                parameters.setSimpleValue("restartIfRequired", "false");
 
-                return result;
+                Resource storageNodeResource = storageNode.getResource();
+
+                boolean result = runOperationAndWaitForResult(subject, storageNodeResource, UPDATE_CONFIGURATION_OPERATION,
+                    parameters);
+
+                if (result) {
+                    //2. Update the JMX port
+                    //this is a fast operation compared to the restart
+                    storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
+                    entityManager.merge(storageNode);
+
+                    //3. Restart the storage node
+                    result = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
+                        new Configuration());
+
+                    //4. Update the plugin configuration to talk with the new server
+                    //Up to this point communication with the storage node should not have been affected by the intermediate
+                    //changes
+                    Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
+                        storageNodeResource.getId());
+
+                    String existingJMXPort = storageNodePluginConfig.getSimpleValue("jmxPort");
+                    String newJMXPort = storageNodeConfiguration.getJmxPort() + "";
+
+                    if (!existingJMXPort.equals(newJMXPort)) {
+                        storageNodePluginConfig.setSimpleValue("jmxPort", newJMXPort);
+
+                        String existingConnectionURL = storageNodePluginConfig.getSimpleValue("connectorAddress");
+                        String newConnectionURL = existingConnectionURL.replace(":" + existingJMXPort + "/", ":"
+                            + storageNodeConfiguration.getJmxPort() + "/");
+                        storageNodePluginConfig.setSimpleValue("connectorAddress", newConnectionURL);
+
+                        configurationManager.updatePluginConfiguration(subject, storageNodeResource.getId(),
+                            storageNodePluginConfig);
+                    }
+
+                    return result;
+                }
             }
-        }
 
-        return false;
+            return false;
+        } catch (UnknownHostException e) {
+            throw new RuntimeException("Failed to resolve address for " + storageNodeConfiguration, e);
+        }
     }
 
     @Override
@@ -754,4 +821,129 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         return successResultFound;
     }
+
+    @Override
+    public void prepareNewNodesForBootstrap() {
+        List<StorageNode> newStorageNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE)
+            .setParameter("operationMode", OperationMode.INSTALLED).getResultList();
+        if (newStorageNodes.isEmpty()) {
+            throw new RuntimeException("Failed to find storage node to bootstrap into cluster.");
+        }
+        // Right now, without some user input, we can only reliably bootstrap one node at a
+        // time. To support bootstrapping multiple nodes concurrently, a mechanism will have
+        // to be put in place for the user to declare in advance the nodes that are coming
+        // online. Then we can wait until all declared nodes have been committed into
+        // inventory and announced to the cluster
+        StorageNode storageNode = newStorageNodes.get(0);
+
+        if (log.isInfoEnabled()) {
+            log.info("Preparing to bootstrap " + storageNode + " into cluster...");
+        }
+
+        List<StorageNode> existingStorageNodes = getStorageNodes();
+
+        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
+        schedule.setResource(storageNode.getResource());
+        schedule.setJobTrigger(JobTrigger.createNowTrigger());
+        schedule.setSubject(subjectManager.getOverlord());
+        schedule.setOperationName("prepareForBootstrap");
+
+        Configuration parameters = new Configuration();
+        parameters.put(new PropertySimple("cqlPort", existingStorageNodes.get(0).getCqlPort()));
+        // TODO need to add support for storage_port in cassandra/storage plugins
+        parameters.put(new PropertySimple("gossipPort", 7100));
+        parameters.put(createPropertyListOfAddresses("storageNodeIPAddresses", getStorageNodes()));
+
+        schedule.setParameters(parameters);
+
+        operationManager.scheduleResourceOperation(subjectManager.getOverlord(), schedule);
+    }
+
+    @Override
+    public void runAddNodeMaintenance() {
+        log.info("Preparing to schedule addNodeMaintenance on the storage cluster...");
+
+        List<StorageNode> storageNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+            StorageNode.class).setParameter("operationMode", OperationMode.NORMAL).getResultList();
+
+        int clusterSize = storageNodes.size();
+        boolean isReadRepairNeeded;
+
+        if (clusterSize >= 4) {
+            // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
+            // that for additional nodes; so, there is no need to run repair if we are
+            // expanding from a 4 node cluster since the RF remains the same.
+            isReadRepairNeeded = false;
+        } else if (clusterSize == 1) {
+            // The RF will increase since we are going from a single to a multi-node
+            // cluster; therefore, we want to run repair.
+            isReadRepairNeeded = true;
+        } else if (clusterSize == 2) {
+            if (storageNodes.size() > 3) {
+                // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
+                // we want to run repair.
+                isReadRepairNeeded = true;
+            } else {
+                // If we go from 2 to 3 nodes, we keep the RF at 2 so there is no need
+                // to run repair.
+                isReadRepairNeeded = false;
+            }
+        } else if (clusterSize == 3) {
+            // We are increasing the cluster size > 3 which means the RF will be
+            // updated to 3; therefore, we want to run repair.
+            isReadRepairNeeded = true;
+        } else {
+            // If we cluster size of zero, then something is really screwed up. It
+            // should always be > 0.
+            isReadRepairNeeded = storageNodes.size() > 1;
+        }
+
+        if (isReadRepairNeeded) {
+            updateTopology(storageNodes);
+        }
+
+        ResourceGroup storageNodeGroup = getStorageNodeGroup();
+
+        GroupOperationSchedule schedule = new GroupOperationSchedule();
+        schedule.setGroup(storageNodeGroup);
+        schedule.setHaltOnFailure(false);
+        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
+        schedule.setJobTrigger(JobTrigger.createNowTrigger());
+        schedule.setSubject(subjectManager.getOverlord());
+        schedule.setOperationName(MAINTENANCE_OPERATION);
+        schedule.setDescription(MAINTENANCE_OPERATION_NOTE);
+
+        Configuration config = new Configuration();
+        config.put(createPropertyListOfAddresses(SEEDS_LIST, storageNodes));
+        config.put(new PropertySimple(RUN_REPAIR_PROPERTY, isReadRepairNeeded));
+        config.put(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
+
+        schedule.setParameters(config);
+
+        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
+    }
+
+    private boolean updateTopology(List<StorageNode> storageNodes) {
+        String username = getRequiredStorageProperty(USERNAME_PROPERTY);
+        String password = getRequiredStorageProperty(PASSWORD_PROPERTY);
+        SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
+        try{
+            return schemaManager.updateTopology(false);
+        } catch (Exception e) {
+            log.error("An error occurred while applying schema topology changes", e);
+        }
+
+        return false;
+    }
+
+    private String getRequiredStorageProperty(String property) {
+        String value = System.getProperty(property);
+        if (StringUtil.isEmpty(property)) {
+            throw new IllegalStateException("The system property [" + property + "] is not set. The RHQ "
+                + "server will not be able connect to the RHQ storage node(s). This property should be defined "
+                + "in rhq-server.properties.");
+        }
+        return value;
+    }
+
 }

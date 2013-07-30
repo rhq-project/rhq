@@ -96,6 +96,7 @@ import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.storage.StorageNodeOperationsHandler;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
@@ -122,6 +123,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
     private SchedulerLocal scheduler;
     @EJB
     private SubjectManagerLocal subjectManager;
+
+    @EJB
+    private StorageNodeOperationsHandler storageNodeOperationsHandler;
 
     @SuppressWarnings("unchecked")
     public List<IntegerOptionItem> getResourceNameOptionItems(int groupId) {
@@ -917,7 +921,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         if (history.getParameters() != null) {
             history.getParameters().getId(); // eagerly reload the parameters
         }
-
+        storageNodeOperationsHandler.handleOperationUpdateIfNecessary(history);
         notifyAlertConditionCacheManager("updateOperationHistory", history);
         return history;
     }
@@ -1723,6 +1727,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             if (!stillInProgress) {
                 groupHistory.setErrorMessage((groupErrorMessage == null) ? null : groupErrorMessage.toString());
                 groupHistory.setStatus(groupStatus);
+                storageNodeOperationsHandler.handleGroupOperationUpdateIfNecessary(groupHistory);
                 notifyAlertConditionCacheManager("checkForCompletedGroupOperation", groupHistory);
             }
         }

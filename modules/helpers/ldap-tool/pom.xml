@@ -19,6 +19,7 @@
    <properties>
     <executable.name>TestLdapSettings</executable.name>
     <tool.version>1.0.1</tool.version>
+    <test.package>org.rhq</test.package>
    </properties>
 
     <name>RHQ ldap test tool</name>
@@ -33,8 +34,8 @@
         <configuration>
           <archive>
             <manifest>
-              <packageName>com.test</packageName>
-              <mainClass>com.test.TestLdapSettings</mainClass>
+              <packageName>${test.package}</packageName>
+              <mainClass>${test.package}.TestLdapSettings</mainClass>
             </manifest>
           </archive>
         </configuration>

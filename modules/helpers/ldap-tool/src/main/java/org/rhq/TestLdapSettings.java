@@ -1,4 +1,4 @@
-package com.test;
+package org.rhq;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -45,12 +45,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
-import javax.swing.UIManager;
-import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 //import org.rhq.enterprise.server.util.security.UntrustedSSLSocketFactory;
 
@@ -379,10 +375,6 @@ public class TestLdapSettings extends JFrame {
 					env.setProperty(SystemSetting.LDAP_BIND_DN.getInternalName(), bindUserName);
 					env.setProperty(SystemSetting.LDAP_BIND_PW.getInternalName(), bindPassword);
 					env.setProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.getInternalName(), groupMemberQuerySize);
-					
-					for(Object key :env.keySet()){
-						System.out.println(key+"="+env.getProperty(key+""));
-					}
 					
 					try {
 						ctx = new InitialLdapContext(env, null);

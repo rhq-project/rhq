@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+      <groupId>org.rhq</groupId>
+      <artifactId>rhq-parent</artifactId>
+      <version>4.9.0-SNAPSHOT</version>
+      <relativePath>../../../pom.xml</relativePath>
+    </parent>
+
+    <groupId>org.rhq.helpers</groupId>
+    <artifactId>ldap-tool</artifactId>
+    <packaging>jar</packaging>
+    <version>4.9.0-SNAPSHOT</version>
+
+   <properties>
+    <executable.name>TestLdapSettings</executable.name>
+    <tool.version>1.0.1</tool.version>
+   </properties>
+
+    <name>RHQ ldap test tool</name>
+    <description>Executable jar to exercise LDAP settings used by RHQ with external LDAP server.</description>
+
+    <build>
+
+     <plugins>
+
+      <plugin>
+        <artifactId>maven-jar-plugin</artifactId>
+        <configuration>
+          <archive>
+            <manifest>
+              <packageName>com.test</packageName>
+              <mainClass>com.test.TestLdapSettings</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.7</version>
+        <executions>
+          <execution>
+            <id>tool-finalize</id>
+            <phase>verify</phase>
+            <configuration>
+              <target>
+              <copy file="${project.build.directory}/${project.build.finalName}.jar" 
+                 tofile="${project.build.directory}/${executable.name}.jar"/>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.1</version>
+      </plugin>
+
+     </plugins>
+
+    </build>
+
+</project>
+
+

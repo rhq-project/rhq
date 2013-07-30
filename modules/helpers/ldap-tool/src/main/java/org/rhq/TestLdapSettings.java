@@ -39,6 +39,9 @@ import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JScrollPane;
@@ -79,6 +82,7 @@ public class TestLdapSettings extends JFrame {
 	private JCheckBox iterativeVerboseLogging;
 	private JCheckBox enablePosixGroups;
 	private JCheckBox enable32xFeatures;
+    private JMenuBar menuBar;
     private String advdb = "**Verbose:debug ----";
     private static final String BASEDN_DELIMITER = ";";
 
@@ -95,10 +99,10 @@ public class TestLdapSettings extends JFrame {
 	final String warnMessage = "<html>***WARNING: Depending upon<br>" +
 			"i)how the ldap server is configured <br>" +
 			"ii)client query paging settings <br>" +
-			" enabling <b>'more detailed logging'</b>,<br>" +
-			" <b>'more group parsing'</b> AND/OR <b>'also log to console'</b> may cause the console to hang/freeze <br>" +
+			" enabling <b>'more verbose logging'</b>,<br>" +
+			" <b>'more detailed group parsing'</b> AND/OR <b>'also log to console'</b> may cause the console to hang/freeze <br>" +
 			" as the LDAP tool continues to parse large query results. If that occurs it is <br>" +
-			" suggested that you kill tool and re-run with 'also log to console' so that the console logs<br>" +
+			" suggested that you stop this tool and re-run your queries with <b>'also log to console'</b> so that the console logs<br>" +
 			" will show which dataset is causing the delay and then you should modify your search|group|member<br>" +
 			" filters accordingly to <b>return smaller results</b> and/or <b>consume larger payloads</b>.<br>" +
 			"***WARNING</html>";
@@ -108,6 +112,12 @@ public class TestLdapSettings extends JFrame {
 
 		setTitle("Check LDAP Settings: Simulates LDAP checks/queries of RHQ LDAP integration");
 		getContentPane().setLayout(new BorderLayout());
+		menuBar = new JMenuBar();
+		JMenu menu = new JMenu("View ***Warning");
+        JMenuItem menuItem = new JMenuItem(warnMessage);
+        menu.add(menuItem);
+		menuBar.add(menu);
+		setJMenuBar(menuBar);
 		// top panel definition
 		top = new JPanel();
 		top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));

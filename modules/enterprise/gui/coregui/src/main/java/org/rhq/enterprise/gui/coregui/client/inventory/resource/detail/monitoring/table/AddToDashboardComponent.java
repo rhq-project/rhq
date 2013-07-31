@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
+import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
@@ -79,7 +80,7 @@ public class AddToDashboardComponent extends ToolStrip implements Enhanced {
         addToDashboardButton.disable();
 
         dashboardSelectItem = new SelectItem();
-        dashboardSelectItem.setTitle("Dashboards");
+        dashboardSelectItem.setTitle(MSG.chart_metrics_add_to_dashboard_label());
         dashboardSelectItem.setWidth(300);
         dashboardSelectItem.setPickListWidth(210);
         populateDashboardMenu();
@@ -102,7 +103,7 @@ public class AddToDashboardComponent extends ToolStrip implements Enhanced {
                         .getMetricDefinitions()) {
                         if (measurementDefinition.getId() == selectedRecord
                             .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID)) {
-                            Log.debug("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName()
+                            Log.info("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName()
                                 + " in " + selectedDashboard.getName());
                             storeDashboardMetric(selectedDashboard, resource, measurementDefinition);
                             break;

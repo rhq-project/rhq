@@ -280,9 +280,9 @@
                                             if (project.getProperty('storage-schema')) {
                                               if (project.getProperty('db') == 'dev') {
                                                 self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
-                                                username = project.getProperty('rhq.dev.cassandra.username') ?: "cassandra"
-                                                password = project.getProperty('rhq.dev.cassandra.password') ?: "cassandra"
-                                                seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7199|9142"
+                                                username = project.getProperty('rhq.dev.cassandra.username') ?: "rhqadmin"
+                                                password = project.getProperty('rhq.dev.cassandra.password') ?: "rhqadmin"
+                                                seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7299|9142"
 
                                                 schemaManager = new SchemaManager(username, password, seeds)
 

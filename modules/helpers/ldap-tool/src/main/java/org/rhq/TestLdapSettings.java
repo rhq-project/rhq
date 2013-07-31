@@ -895,7 +895,9 @@ public class TestLdapSettings extends JFrame {
         // Load any search filter
         String groupSearchFilter = (String) systemConfig.get(SystemSetting.LDAP_GROUP_FILTER.getInternalName());
         String groupMemberFilter = (String) systemConfig.get(SystemSetting.LDAP_GROUP_MEMBER.getInternalName());
-        String testUserDN=userName;
+        String userDn = (String) systemConfig.get(Context.SECURITY_PRINCIPAL);
+
+        String testUserDN = userDn;
         String ldapServer = (String) systemConfig.get(Context.PROVIDER_URL);
         
         Properties env = getProperties(ldapServer);

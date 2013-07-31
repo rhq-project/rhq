@@ -2079,6 +2079,73 @@
               <schema-javaTask className="StorageNodeAddressUpgradeTask" />
             </schemaSpec>
 
+            <schemaSpec version="2.135">
+              <!-- Fine Grained Bundle Permissions -->
+              
+              <!-- Add new perms to superuser/all-resources roles -->
+              <schema-directSQL>
+                <statement desc="Inserting MANAGE_BUNDLE_GROUPS permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 18)
+                </statement>
+                <statement desc="Inserting CREATE_BUNDLES permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 19)
+                </statement>
+                <statement desc="Inserting DELETE_BUNDLES permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 20)
+                </statement>
+                <statement desc="Inserting DEPLOY_BUNDLES permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 21)
+                </statement>
+                <statement desc="Inserting VIEW_BUNDLES permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 22)
+                </statement>
+                <statement desc="Inserting ASSIGN_BUNDLES_TO_GROUP permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 23)
+                </statement>
+                <statement desc="Inserting UNASSIGN_BUNDLES_FROM_GROUP permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 24)
+                </statement>
+                <statement desc="Inserting CREATE_BUNDLES_IN_GROUP permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 25)
+                </statement>
+                <statement desc="Inserting DELETE_BUNDLES_FROM_GROUP permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 26)
+                </statement>
+                <statement desc="Inserting VIEW_BUNDLES_IN_GROUP permission for 'Super User' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 27)
+                </statement>
+
+              	<!-- all-resources-role does not get MANAGE_BUNDLE_GROUPS -->
+                <statement desc="Inserting CREATE_BUNDLES permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 19)
+                </statement>
+                <statement desc="Inserting DELETE_BUNDLES permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 20)
+                </statement>
+                <statement desc="Inserting DEPLOY_BUNDLES permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 21)
+                </statement>
+                <statement desc="Inserting VIEW_BUNDLES permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 22)
+                </statement>
+                <statement desc="Inserting ASSIGN_BUNDLES_TO_GROUP permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 23)
+                </statement>
+                <statement desc="Inserting UNASSIGN_BUNDLES_FROM_GROUP permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 24)
+                </statement>
+                <statement desc="Inserting CREATE_BUNDLES_IN_GROUP permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 25)
+                </statement>
+                <statement desc="Inserting DELETE_BUNDLES_FROM_GROUP permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 26)
+                </statement>
+                <statement desc="Inserting VIEW_BUNDLES_IN_GROUP permission for 'All Resources' role">
+                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (2, 27)
+                </statement>
+              </schema-directSQL>            
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

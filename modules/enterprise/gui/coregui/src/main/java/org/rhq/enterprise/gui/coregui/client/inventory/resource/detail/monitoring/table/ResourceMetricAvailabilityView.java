@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
- * This shows the availability history for a resource.
+ * This  view shows the detail availability data in tabular form and a pie chart for available %.
  *
  * @author Jay Shaughnessy
  * @author John Mazzitelli
@@ -49,6 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
     private Resource resource;
+    private DynamicForm form;
     private StaticTextItem currentField;
     private StaticTextItem availTimeField;
     private StaticTextItem downTimeField;
@@ -81,7 +82,7 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
 
     private DynamicForm createSummaryForm() {
-        DynamicForm form = new DynamicForm();
+        form = new DynamicForm();
         form.setWidth100();
         form.setAutoHeight();
         form.setMargin(10);
@@ -138,14 +139,13 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
         currentTimeField.setShowTitle(false);
 
         CanvasItem availPieChartItem = new CanvasItem();
-        //@todo: i18n
-        availPieChartItem.setTitle("Availability");
+        availPieChartItem.setTitle(MSG.pie_chart_availability_summary_label());
         availPieChartItem.setCanvas(availabilitySummaryPieGraph.createGraphMarker());
         availPieChartItem.setRowSpan(3);
         availPieChartItem.setVAlign(VerticalAlignment.TOP);
         availPieChartItem.setTitleVAlign(VerticalAlignment.TOP);
-        availPieChartItem.setHeight(60);
-        availPieChartItem.setWidth(60);
+        availPieChartItem.setHeight(AvailabilitySummaryPieGraphType.HEIGHT);
+        availPieChartItem.setWidth(AvailabilitySummaryPieGraphType.WIDTH);
 
         form.setItems(currentField, availPieChartItem, availTimeField,  downTimeField,
             disabledTimeField, failureCountField, disabledCountField, mtbfField, mttrField, unknownField,
@@ -164,17 +164,15 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
                 public void onSuccess(ResourceAvailabilitySummary result) {
                     Log.debug("reloadSummaryData");
 
-                    //@todo: i18n
                     availabilitySummaryPieGraph.setAvailabilityData(
-                            "Up", result.getUpPercentage(),
-                            "Down", result.getDownPercentage(),
-                            "Disabled" ,result.getDisabledPercentage()
+                            MSG.pie_chart_availability_summary_up(), result.getUpPercentage(),
+                            MSG.pie_chart_availability_summary_down(), result.getDownPercentage(),
+                            MSG.pie_chart_availability_summary_disabled() ,result.getDisabledPercentage()
                     );
                     new Timer(){
 
                         @Override
                         public void run() {
-                            Log.debug("Run Avail Graph");
                             availabilitySummaryPieGraph.drawJsniChart();
                         }
                     }.schedule(150);

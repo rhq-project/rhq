@@ -138,7 +138,7 @@ public class GroupEventsPortlet extends EnhancedVLayout implements CustomSetting
     }
 
     public static final class Factory implements PortletViewFactory {
-        public static PortletViewFactory INSTANCE = new Factory();
+        public static final PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(EntityContext context) {
 

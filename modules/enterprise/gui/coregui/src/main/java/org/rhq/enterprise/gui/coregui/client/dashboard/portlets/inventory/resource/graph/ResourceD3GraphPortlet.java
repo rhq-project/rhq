@@ -324,7 +324,7 @@ public class ResourceD3GraphPortlet extends MetricD3Graph implements AutoRefresh
     }
 
     public static final class Factory implements PortletViewFactory {
-        public static PortletViewFactory INSTANCE = new Factory();
+        public static final PortletViewFactory INSTANCE = new Factory();
 
         @Override
         public final Portlet getInstance(EntityContext context) {

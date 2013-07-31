@@ -57,10 +57,10 @@ import javax.swing.border.TitledBorder;
  * LDAP calls during auth/authz operations.
  *
  * The specific LDAP logic below needs to mirror the latest RHQ code and allow the user
- * to test our their configuration without requring a specific RHQ/JON build as a dependency.
+ * to test our their configuration without requiring a specific RHQ/JON build as a dependency.
  * 
  * NOTE: To avoid a runtime dependency on specific versions of RHQ or JON, the small implementation
- * methods were copied into this class with minimatl changes for logging and ui messaging. The 
+ * methods were copied into this class with minimal changes for logging and ui messaging. The 
  * definitive implementation for each 'copied' method can be found in LDAPGroupManagerBean.
  *
  * @author Simeon Pinder
@@ -85,6 +85,7 @@ public class TestLdapSettings extends JFrame {
     private JMenuBar menuBar;
     private String advdb = "**Verbose:debug ----";
     private static final String BASEDN_DELIMITER = ";";
+    private String userDN;
 
 	private static final long serialVersionUID = 1L;
 	int textBoxWidth = 20;
@@ -419,7 +420,7 @@ public class TestLdapSettings extends JFrame {
 					}
 					// testing a valid user involves a filtered ldap search
 					// using the loginProperty, and optionally searchFilter
-					String userDN = "";
+                    userDN = "";
 					if (proceed) {
 						// default loginProperty to cn if it's not set
 						if (loginProperty.isEmpty()) {
@@ -895,9 +896,8 @@ public class TestLdapSettings extends JFrame {
         // Load any search filter
         String groupSearchFilter = (String) systemConfig.get(SystemSetting.LDAP_GROUP_FILTER.getInternalName());
         String groupMemberFilter = (String) systemConfig.get(SystemSetting.LDAP_GROUP_MEMBER.getInternalName());
-        String userDn = (String) systemConfig.get(Context.SECURITY_PRINCIPAL);
 
-        String testUserDN = userDn;
+        String testUserDN = userDN;
         String ldapServer = (String) systemConfig.get(Context.PROVIDER_URL);
         
         Properties env = getProperties(ldapServer);

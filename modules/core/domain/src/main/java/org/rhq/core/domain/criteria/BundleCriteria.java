@@ -145,6 +145,12 @@ public class BundleCriteria extends TaggedCriteria {
         this.fetchBundleVersions = fetchBundleVersions;
     }
 
+    /**
+     * Unless called by an InventoryManager the destinations will be filtered to those the caller can view, based
+     * on the resource groups associated with his roles and the group associated wuth the destination.
+     *  
+     * @param fetchDestinations
+     */
     public void fetchDestinations(boolean fetchDestinations) {
         this.fetchDestinations = fetchDestinations;
     }
@@ -166,4 +172,9 @@ public class BundleCriteria extends TaggedCriteria {
         addSortField("description");
         this.sortDescription = sortDescription;
     }
+
+    public boolean isInventoryManagerRequired() {
+        return fetchDestinations;
+    }
+
 }

@@ -72,12 +72,13 @@ public interface BundleManagerRemote {
     /**
      * Adds a BundleFile to the BundleVersion and implicitly creates the backing PackageVersion. If the PackageVersion
      * already exists use {@link #addBundleFileViaPackageVersion(Subject, int, String, int)}
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleVersionId id of the BundleVersion incorporating this BundleFile 
      * @param name name of the BundleFile (and the resulting Package)
@@ -94,12 +95,13 @@ public interface BundleManagerRemote {
      * A convenience method taking a byte array as opposed to a stream for the file bits.
      * WARNING: obviously, this requires the entire bundle file to have been loaded fully in memory.
      * For very large files, this could cause OutOfMemoryErrors.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @see {@link #addBundleFile(Subject, int, String, String, Architecture, InputStream)}
      */
     BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
@@ -107,12 +109,13 @@ public interface BundleManagerRemote {
 
     /**
      * A convenience method taking a URL String whose content will be streamed to the server and used for the file bits.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @see #addBundleFile(Subject, int, String, String, Architecture, InputStream)
      */
     BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
@@ -121,12 +124,13 @@ public interface BundleManagerRemote {
     /**
      * A variant of {@link #addBundleFileViaURL(Subject, int, String, String, Architecture, String)} supporting the
      * HTTP basic authentication.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @see #addBundleFileViaURL(Subject, int, String, String, Architecture, String)
      */
     BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
@@ -134,12 +138,13 @@ public interface BundleManagerRemote {
 
     /**
      * A convenience method taking an existing PackageVersion as opposed to a stream for the file bits.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @see {@link #addBundleFile(Subject, int, String, String, Architecture, InputStream)}
      */
     BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name, int packageVersionId)
@@ -147,11 +152,12 @@ public interface BundleManagerRemote {
 
     /**
      * Assign the specified bundles to the specified bundle group.
-     * </p>
+     * <pre>
      * Requires VIEW permission for the relevant bundle and either:
      * - Global.CREATE_BUNDLE
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP or BundleGroup.ASSIGN_BUNDLES_TO_GROUP for the relevant bundle group
-     *
+     * </pre>
+     * 
      * @param subject
      * @param bundleGroupId
      * @param bundleIds
@@ -163,11 +169,12 @@ public interface BundleManagerRemote {
      * call.  This provides useful, uniform naming for display. An optional, custom description
      * can be added.  This call defines a deployment.  The defined deployment can then be
      * scheduled in a separate call.  
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleVersionId the BundleVersion being deployed by this deployment
      * @param bundleDestinationId the BundleDestination for the deployment
@@ -182,11 +189,12 @@ public interface BundleManagerRemote {
 
     /**
      * Creates a bundle destination that describes a target for the bundle deployments.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
-     *
+     * </pre>
+     * 
      * @param subject user must have MANAGE_INVENTORY permission
      * @param bundleId the Bundle to be deployed to this Destination
      * @param name a name for this destination. not null or empty
@@ -225,12 +233,13 @@ public interface BundleManagerRemote {
      * </p>
      * If this bundle version is the initial version of a new bundle that needs to be created, the subject must
      * have Global.VIEW_BUNDLES because the new bundle will not be associated with any bundle group.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param recipe the recipe that defines the bundle version to be created
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
@@ -244,19 +253,21 @@ public interface BundleManagerRemote {
      * should be assigned to.
      * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
      * @param recipe the recipe that defines the bundle version to be created
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did.
      */
-    BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int bundleGroupId, String recipe) throws Exception;
+    BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int bundleGroupId, String recipe)
+        throws Exception;
 
     /**
      * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
@@ -267,12 +278,13 @@ public interface BundleManagerRemote {
      * </p>
      * If this bundle version is the initial version of a new bundle that needs to be created, the subject must
      * have Global.VIEW_BUNDLES because the new bundle will not be associated with any bundle group.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param distributionFile a local Bundle Distribution file. It must be read accessible by the RHQ server process.
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
@@ -286,12 +298,13 @@ public interface BundleManagerRemote {
      * should be assigned to.
      * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
      * @param distributionFile a local Bundle Distribution file. It must be read accessible by the RHQ server process.
@@ -299,7 +312,8 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      */
-    BundleVersion createInitialBundleVersionViaFile(Subject subject, int bundleGroupId, File distributionFile) throws Exception;
+    BundleVersion createInitialBundleVersionViaFile(Subject subject, int bundleGroupId, File distributionFile)
+        throws Exception;
 
     /**
      * Creates a bundle version based on the actual bytes of a Bundle Distribution file. This is essentially
@@ -310,12 +324,13 @@ public interface BundleManagerRemote {
      * </p>
      * If this bundle version is the initial version of a new bundle that needs to be created, the subject must
      * have Global.VIEW_BUNDLES because the new bundle will not be associated with any bundle group.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param fileBytes the file bits that make up the entire bundle distribution file
      * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
@@ -329,12 +344,13 @@ public interface BundleManagerRemote {
      * should be assigned to.
      * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
      * @param fileBytes the file bits that make up the entire bundle distribution file
@@ -342,7 +358,8 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      */
-    BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int bundleGroupId, byte[] fileBytes) throws Exception;
+    BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int bundleGroupId, byte[] fileBytes)
+        throws Exception;
 
     /**
      * Creates a bundle version based on a Bundle Distribution file. Typically a zip file, the bundle distribution
@@ -355,12 +372,13 @@ public interface BundleManagerRemote {
      * </p>
      * If this bundle version is the initial version of a new bundle that needs to be created, the subject must
      * have Global.VIEW_BUNDLES because the new bundle will not be associated with any bundle group.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param distributionFileUrl a URL String to the Bundle Distribution file. It must be live, resolvable and read accessible
      * by the RHQ server process. 
@@ -376,12 +394,13 @@ public interface BundleManagerRemote {
      * should be assigned to.
      * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
      * @param distributionFileUrl a URL String to the Bundle Distribution file. It must be live, resolvable and read accessible
@@ -390,7 +409,8 @@ public interface BundleManagerRemote {
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      */
-    BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl) throws Exception;
+    BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl)
+        throws Exception;
 
     /**
      * A version of the {@link #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)} that accepts a
@@ -398,12 +418,13 @@ public interface BundleManagerRemote {
      * </p>
      * If this bundle version is the initial version of a new bundle that needs to be created, the subject must
      * have Global.VIEW_BUNDLES because the new bundle will not be associated with any bundle group.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @see #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)
      */
     BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
@@ -415,27 +436,30 @@ public interface BundleManagerRemote {
      * should be assigned to.
      * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
-     *
+     * </pre>
+     * 
      * @see #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)
      */
-    BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl, String username,  String password) throws Exception;
+    BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl,
+        String username, String password) throws Exception;
 
     /**
      * Remove everything associated with the Bundles with the exception of files laid down by related deployments.
      * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
      * the deployment of all bundles that have been deleted.
      * The bundles that are deleted will be removed from all bundle groups that it was a member of.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.DELETE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.DELETE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleIds IDs of all bundles to be deleted
      * @throws Exception if any part of the removal fails. 
@@ -447,12 +471,13 @@ public interface BundleManagerRemote {
      * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
      * the deployment.
      * The bundles that are deleted will be removed from all bundle groups that it was a member of.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.DELETE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.DELETE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleId the id of the bundle to remove
      * @throws Exception if any part of the removal fails. 
@@ -476,12 +501,13 @@ public interface BundleManagerRemote {
      * Deployed files are left as is on the deployment platforms but the bundle mechanism will no longer track
      * the deployment.
      * The deleted bundle version will no longer exist in any bundle group.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.DELETE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.DELETE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleVersionId the id of the bundle version to remove
      * @param deleteBundleIfEmpty if <code>true</code> and if this method deletes the last bundle version for its
@@ -490,14 +516,40 @@ public interface BundleManagerRemote {
      */
     void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception;
 
+    /**
+     * Return the <code>Bundles</code> narrowed by the supplied Criteria. The results are implicitly
+     * narrowed to those bundles viewable by the <code>subject</code>. 
+     */
     PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria);
 
+    /**
+     * Return the <code>BundleGroups</code> narrowed by the supplied Criteria. The results are implicitly
+     * narrowed to those bundle groups viewable by the <code>subject</code>. 
+     */
     PageList<BundleGroup> findBundleGroupsByCriteria(Subject subject, BundleGroupCriteria criteria);
 
+    /**
+     * Return the <code>BundleDeployments</code> narrowed by the supplied Criteria. The results are implicitly
+     * narrowed to those for bundles and destination groups viewable by the <code>subject</code>. 
+     */
     PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria);
 
+    /**
+     * Return the <code>BundleDestinations</code> narrowed by the supplied Criteria. The results are implicitly
+     * narrowed to those with destination resource groups viewable by the <code>subject</code>. 
+     */
     PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject, BundleDestinationCriteria criteria);
 
+    /**
+     * Note that this can involves permissions on bundles and resources.  Results will always be narrowed to the bundles
+     * viewable by <code>subject</code>.  If optionally requesting the relevant Resources
+     * via <code>BundleResourceDeploymentCriteria.fetchResources(true)</code> the results will be further narrowed to
+     * the viewable resources.
+     * 
+     * @param subject
+     * @param criteria
+     * @return
+     */
     PageList<BundleResourceDeployment> findBundleResourceDeploymentsByCriteria(Subject subject,
         BundleResourceDeploymentCriteria criteria);
 
@@ -516,12 +568,13 @@ public interface BundleManagerRemote {
      * Determine the files required for a BundleVersion and return all of the filenames or optionally, just those
      * that lack BundleFiles for the BundleVersion.  The recipe may be parsed as part of this call.
      * This is needed as part of the bundle creation workflow, hence why creation permissions are needed.
-     * </p>
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     *
+     * </pre>
+     * 
      * @param subject user that must have proper permissions
      * @param bundleVersionId the BundleVersion being queried
      * @param withoutBundleFileOnly if true omit any filenames that already have a corresponding BundleFile for
@@ -534,7 +587,7 @@ public interface BundleManagerRemote {
 
     /**
      * Purges the destination's live deployment content from the remote platforms.
-     * </p>
+     * </pre>
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
@@ -550,7 +603,7 @@ public interface BundleManagerRemote {
      * complete. The returned BundleDeployment can be used to track the history of the individual deployments.
      * <br/><br/>
      * TODO: Add the scheduling capability, currently it's Immediate.
-     * </p>
+     * </pre>
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
@@ -574,7 +627,7 @@ public interface BundleManagerRemote {
      * call.  This provides useful, uniform naming for display. An optional, custom description can be added.
      * <br/><br/>
      * TODO: Add the scheduling capability, currently it's Immediate. 
-     * </p>
+     * </pre>
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
@@ -592,7 +645,7 @@ public interface BundleManagerRemote {
 
     /**
      * Unassign the specified bundles from the specified bundle group.
-     * </p>
+     * </pre>
      * Requires VIEW permission for the relevant bundles and either:
      * - Global.DELETE_BUNDLE
      * - BundleGroup.DELETE_BUNDLES_FROM_GROUP or BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP for the relevant bundle group

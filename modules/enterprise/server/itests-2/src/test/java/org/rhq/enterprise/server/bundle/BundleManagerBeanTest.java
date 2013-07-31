@@ -860,7 +860,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         int size = brd.getBundleResourceDeploymentHistories().size();
         assertTrue(size > 0);
         String auditMessage = "BundleTest-Message";
-        bundleManager.addBundleResourceDeploymentHistory(overlord, brd.getId(), new BundleResourceDeploymentHistory(
+        bundleManager.addBundleResourceDeploymentHistoryInNewTrans(overlord, brd.getId(), new BundleResourceDeploymentHistory(
             overlord.getName(), auditMessage, auditMessage, BundleResourceDeploymentHistory.Category.DEPLOY_STEP,
             BundleResourceDeploymentHistory.Status.SUCCESS, auditMessage, auditMessage));
 
@@ -1242,7 +1242,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         final BundleType type = createBundleType(name);
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
-            "description", type.getId(), fullName, fullName + "-desc", "3.0", recipe);
+            "description", type.getId(), 0, fullName, fullName + "-desc", "3.0", recipe);
         assertNotNull(bundleVerison);
 
         // find the previously created bundle
@@ -1272,7 +1272,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
-            "description", bundle.getBundleType().getId(), fullName, fullName + "-desc", "3.0", recipe);
+            "description", bundle.getBundleType().getId(), 0, fullName, fullName + "-desc", "3.0", recipe);
 
         // find the newly created bundle
         BundleCriteria c = new BundleCriteria();
@@ -1282,6 +1282,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         bundles = bundleManager.findBundlesByCriteria(overlord, c);
         assertNotNull(bundles);
         assertEquals(1, bundles.size());
+    }
+
+    @Test(enabled = false)
+    public void testNoAuthz() throws Exception {
+        // create 
+
     }
 
     // helper methods
@@ -1302,7 +1308,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private Bundle createBundle(String name, BundleType bt) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManager.createBundle(overlord, fullName, fullName + "-desc", bt.getId());
+        Bundle b = bundleManager.createBundle(overlord, fullName, fullName + "-desc", bt.getId(), 0);
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);

@@ -47,8 +47,6 @@ public interface BundleGWTService extends RemoteService {
 
     ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(int compatGroupId) throws RuntimeException;
 
-    BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe) throws RuntimeException;
-
     BundleVersion createBundleVersionViaURL(String url, String username, String password) throws RuntimeException;
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws RuntimeException;
@@ -74,12 +72,7 @@ public interface BundleGWTService extends RemoteService {
 
     PageList<BundleGroup> findBundleGroupsByCriteria(BundleGroupCriteria criteria) throws RuntimeException;
 
-    PageList<Bundle> findBundlesByCriteriaWithDestinationFilter(BundleCriteria criteria) throws RuntimeException;
-
     PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria)
-        throws RuntimeException;
-
-    PageList<BundleDeployment> findBundleDeploymentsByCriteriaWithDestinationFilter(BundleDeploymentCriteria criteria)
         throws RuntimeException;
 
     PageList<BundleDestination> findBundleDestinationsByCriteria(BundleDestinationCriteria criteria)
@@ -91,8 +84,6 @@ public interface BundleGWTService extends RemoteService {
         throws RuntimeException;
 
     PageList<BundleVersion> findBundleVersionsByCriteria(BundleVersionCriteria criteria) throws RuntimeException;
-
-    PageList<BundleVersion> findBundleVersionsByCriteriaWithDestinationFilter(BundleVersionCriteria criteria) throws RuntimeException;
 
     PageList<BundleWithLatestVersionComposite> findBundlesWithLatestVersionCompositesByCriteria(BundleCriteria criteria)
         throws RuntimeException;

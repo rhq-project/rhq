@@ -56,7 +56,7 @@ public class BundleServerServiceImpl implements BundleServerService {
     public void addDeploymentHistory(int bundleDeploymentId, BundleResourceDeploymentHistory history) {
         try {
             BundleManagerLocal bm = LookupUtil.getBundleManager();
-            bm.addBundleResourceDeploymentHistory(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId,
+            bm.addBundleResourceDeploymentHistoryInNewTrans(LookupUtil.getSubjectManager().getOverlord(), bundleDeploymentId,
                 history);
         } catch (Exception e) {
             log.error("Failed to add history to deployment id: " + bundleDeploymentId, e);

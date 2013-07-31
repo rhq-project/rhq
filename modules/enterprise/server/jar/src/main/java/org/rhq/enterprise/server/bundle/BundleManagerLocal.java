@@ -33,10 +33,6 @@ import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.criteria.BundleCriteria;
-import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
-import org.rhq.core.domain.criteria.BundleVersionCriteria;
-import org.rhq.core.domain.util.PageList;
 
 /**
  * Local interface to the manager responsible for creating and managing bundles.
@@ -55,51 +51,64 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     // - legacy reasons
 
     /**
+     * Internal use only
+     * </p>
      * Called internally to add history when action is taken against a deployment. This executes
      * in a New Transaction and supports deployBundle and Agent requests.
-     *
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p>
      * @param subject
      * @param resourceDeploymentId id of the deployment appending the history record
      * @param history
      * @return the persisted history
      */
-    BundleResourceDeploymentHistory addBundleResourceDeploymentHistory(Subject subject, int resourceDeploymentId,
-        BundleResourceDeploymentHistory history) throws Exception;
+    BundleResourceDeploymentHistory addBundleResourceDeploymentHistoryInNewTrans(Subject subject,
+        int resourceDeploymentId, BundleResourceDeploymentHistory history) throws Exception;
 
     /**
-     * Mainly Used  For Testing
-     *
+     * Internal use only, and test entry point.
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p>
      * @param subject user that must have proper permissions
      * @param name not null or empty
      * @param description optional long description of the bundle
      * @param bundleTypeId valid bundleType
+     * @param bundleGroupId bundle group, existing bundle group for bundle assignment, or 0 for unassigned
      * @return the persisted Bundle (id is assigned)
      */
-    Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception;
+    Bundle createBundle(Subject subject, String name, String description, int bundleTypeId, int bundleGroupId)
+        throws Exception;
 
     /**
-     * Mainly Used  For Testing
+     * Internal use only and test entry point.
      *
-     * Convienence method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
+     * Convenience method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
      * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
      * This will then create the bundle version that will be associated with the bundle that was created or found.
-     *
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p>
      * @param subject user that must have proper permissions
      * @param bundleName name of the bundle to use (if not found, it will be created)
      * @param bundleDescription optional long description of the bundle
      * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
+     * @param bundleGroupId the bundle group for the new bundle (if it is created) for which this will be the first version. 0 to leave unassigned. 
      * @param bundleVersionName name of the bundle version
      * @param bundleVersionDescription optional long description of the bundle version
      * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
      * @return the persisted BundleVersion (id is assigned)
      */
     BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
-        int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
-        throws Exception;
+        int bundleTypeId, int bundleGroupId, String bundleVersionName, String bundleVersionDescription, String version,
+        String recipe) throws Exception;
 
     /**
-     * Mainly Used  For Testing
-     *
+     * Internal use only, test entry point
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p>
      * @param subject user that must have proper permissions
      * @param bundleId the bundle for which this will be the next version
      * @param name not null or empty
@@ -112,8 +121,11 @@ public interface BundleManagerLocal extends BundleManagerRemote {
 
     /**
      * Not generally called. For use by Server Side Plugins when registering a Bundle Plugin.
-     *
-     * @param subject must be InventoryManager
+     * </p>
+     * Required Permissions:
+     * - Global.CREATE_BUNDLES
+     * </p>
+     * @param subject
      * @param name not null or empty
      * @param resourceTypeId id of the ResourceType that handles this BundleType
      * @return the persisted BundleType (id is assigned)
@@ -121,26 +133,50 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     BundleType createBundleType(Subject subject, String name, int resourceTypeId) throws Exception;
 
     /**
-     * This is typically not called directly, typically scheduleBundleResourceDeployment() is called externally. This executes
-     * in a New Transaction and supports scheduleBundleResourceDeployment.
+     * This is typically not called directly, typically scheduleBundleResourceDeployment() is called externally.
+     * This executes in a New Transaction and supports scheduleBundleResourceDeployment.
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p>
      */
-    BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId, int resourceId)
-        throws Exception;
+    BundleResourceDeployment createBundleResourceDeploymentInNewTrans(Subject subject, int bundleDeploymentId,
+        int resourceId) throws Exception;
 
     /**
      * Similar to {@link BundleManagerRemote#createBundleDeployment(Subject, int, int, String, Configuration)} but
      * supplies the internally generated deploymentName and has different transaction semantics. Useful when an
      * slsb method needs to both create a deployment and schedules it prior to returning to an external caller.
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p> 
      */
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
         int bundleDestinationId, String name, String description, Configuration configuration) throws Exception;
 
-    // added here because the same method in @Remote was commented out to bypass a WSProvide issue
+    /** 
+     * Used by GUI
+     * </p>
+     * Required Permissions: Either:
+     * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * </p>
+     *  
+     * @param subject
+     * @param bundleVersionId
+     * @return Map, filename to foundInBundleVersion 
+     * @throws Exception
+     */
     HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception;
 
     /**
-     * Needed by the Bundle Deploy and Revert wizards GUI to generate a deployment name for display.
-     *
+     * Used by GUI. Needed by the Bundle Deploy and Revert wizards GUI to generate a deployment name for display.
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * </pre>
+     * 
      * @param subject
      * @param bundleDestinationId required
      * @param bundleVersionId required for progressive deployment, -1 for revert
@@ -151,18 +187,26 @@ public interface BundleManagerLocal extends BundleManagerRemote {
         int prevDeploymentId);
 
     /**
-     * Not for general consumption.  A special case method to build the pojo that can be sent to the agent to
+     * Internal use only. A special case method to build the pojo that can be sent to the agent to
      * schedule the deployment request. Uses NOT_SUPPORTED transaction attribute to avoid having the cleaned pojo
      * affect the persistence context.
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p> 
+     *
      * @throws Exception
      */
     public BundleScheduleRequest getScheduleRequest(Subject subject, int resourceDeploymentId,
         boolean isCleanDeployment, boolean isRevert) throws Exception;
 
     /**
-     * This is a simple attempt at delete, typically used for removing a poorly defined deployment before it is
-     * actually scheduled for deployment. The status must be PENDING. It will
-     * fail if anything actually refers to it.
+     * Used by GUI. This is a simple attempt at delete, typically used for removing a poorly defined deployment before it is
+     * actually scheduled for deployment. The status must be PENDING. It will fail if anything actually refers to it.
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * </pre>
      *
      * @param subject
      * @param bundleDeploymentId
@@ -171,8 +215,13 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     void deleteBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception;
 
     /**
-     * This is a simple attempt at delete, typically used for removing a poorly defined destination. It will
+     * Used by GUI. This is a simple attempt at delete, typically used for removing a poorly defined destination. It will
      * fail if any actual deployments are referring to the destination.
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * </pre>
      *
      * @param subject
      * @param bundleDestinationId
@@ -181,7 +230,11 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     void deleteBundleDestination(Subject subject, int bundleDestinationId) throws Exception;
 
     /**
-     * Called internally to set deployment status. Typically to a completion status when deployment ends.
+     * Internal use only. Called internally to set deployment status. Typically to a completion status when deployment 
+     * ends.
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p> 
      *
      * @param subject
      * @param resourceDeploymentId id of the resource deployment appending the history record
@@ -192,9 +245,14 @@ public interface BundleManagerLocal extends BundleManagerRemote {
         BundleDeploymentStatus status) throws Exception;
 
     /**
-     * This is for internal use only - when {@link #purgeBundleDestination(Subject, int)} is done, it
+     * Internal use only
+     * </p>
+     * When {@link #purgeBundleDestination(Subject, int)} is done, it
      * calls this so the purge can be finalized. This is required because this method is called with
      * a transactional context, as opposed to the main purge method.
+     * </p>
+     * This method performs NO AUTHZ!
+     * </p> 
      *
      * @param subject
      * @param bundleDeployment
@@ -204,29 +262,4 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     void _finalizePurge(Subject subject, BundleDeployment bundleDeployment,
         Map<BundleResourceDeployment, String> failedToPurge) throws Exception;
 
-    /**
-     * Fetch bundles by criteria and then on the result objects
-     * @param subject Caller
-     * @param criteria criteria to fetch the bundles
-     * @return List of bundles with destinations filtered.
-     */
-    PageList<Bundle> findBundlesByCriteriaWithDestinationFilter(Subject subject, BundleCriteria criteria);
-
-    /**
-     * Fetch bundle versions by criteria and then filter destination on the result objects to limit what the user can see
-     * @param subject Caller
-     * @param criteria criteria to fetch the bundles
-     * @return List of bundles with destinations filtered.
-     */
-    PageList<BundleVersion> findBundleVersionsByCriteriaWithDestinationFilter(Subject subject,
-                                                                              BundleVersionCriteria criteria);
-
-    /**
-     * Fetch bundle deployments by criteria and then filter on destinations on the result objects to limit what the user can see
-     * @param subject Caller
-     * @param criteria criteria to fetch the deployments
-     * @return List of deployments with destinations filtered.
-     */
-    PageList<BundleDeployment> findBundleDeploymentsByCriteriaWithDestinationFilter(Subject subject,
-                                                                                    BundleDeploymentCriteria criteria);
 }

@@ -57,7 +57,7 @@ import org.rhq.core.domain.tagging.Tag;
  * @author John Mazzitelli
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     // Below queries primarily used for domain test code.    
     @NamedQuery(name = Bundle.QUERY_FIND_ALL, query = "SELECT b FROM Bundle b"), //    
     @NamedQuery(name = Bundle.QUERY_FIND_BY_NAME, query = "SELECT b FROM Bundle b WHERE :name = b.name"),
@@ -180,6 +180,29 @@ public class Bundle implements Serializable {
 
     public void setBundleVersions(List<BundleVersion> bundleVersions) {
         this.bundleVersions = bundleVersions;
+    }
+
+    public Set<BundleGroup> getBundleGroups() {
+        return bundleGroups;
+    }
+
+    public void setBundleGroups(Set<BundleGroup> bundleGroups) {
+        this.bundleGroups = bundleGroups;
+    }
+
+    public void addBundleGroup(BundleGroup bundleGroup) {
+        if (this.bundleGroups == null) {
+            this.bundleGroups = new HashSet<BundleGroup>();
+        }
+        this.bundleGroups.add(bundleGroup);
+    }
+
+    public boolean removeBundleGroup(BundleGroup bundleGroup) {
+        if (this.bundleGroups != null) {
+            return this.bundleGroups.remove(bundleGroup);
+        } else {
+            return false;
+        }
     }
 
     public List<BundleDestination> getDestinations() {

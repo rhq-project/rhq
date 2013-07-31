@@ -259,7 +259,7 @@ public class TagManagerBeanTest extends AbstractEJB3Test {
     private Bundle createBundle() throws Exception {
         ResourceType resourceType = SessionTestHelper.createNewResourceType(em);
         BundleType bundleType = bundleManager.createBundleType(overlord, getRandomString(), resourceType.getId());
-        return bundleManager.createBundle(overlord, getRandomString(), getRandomString(), bundleType.getId());
+        return bundleManager.createBundle(overlord, getRandomString(), getRandomString(), bundleType.getId(), 0);
     }
 
     private BundleVersion createBundleVersion() throws Exception {

@@ -110,18 +110,6 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     @Override
-    public BundleVersion createBundleVersion(int bundleId, String name, String version, String recipe)
-        throws RuntimeException {
-        try {
-            BundleVersion results = bundleManager.createBundleVersion(getSessionSubject(), bundleId, name, null,
-                    version, recipe);
-            return SerialUtility.prepare(results, "createBundleVersion");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
     public void deleteBundles(int[] bundleIds) throws RuntimeException {
         try {
             bundleManager.deleteBundles(getSessionSubject(), bundleIds);
@@ -246,34 +234,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     @Override
-    public PageList<Bundle> findBundlesByCriteriaWithDestinationFilter(BundleCriteria criteria) throws RuntimeException {
-        try {
-            PageList<Bundle> results = bundleManager.findBundlesByCriteriaWithDestinationFilter(getSessionSubject(), criteria);
-            return SerialUtility.prepare(results, "findBundlesByCriteriaWithDestinationFilter");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(BundleDeploymentCriteria criteria)
         throws RuntimeException {
         try {
             PageList<BundleDeployment> result = bundleManager.findBundleDeploymentsByCriteria(getSessionSubject(),
                 criteria);
             return SerialUtility.prepare(result, "BundleService.findBundleDeploymentsByCriteria");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public PageList<BundleDeployment> findBundleDeploymentsByCriteriaWithDestinationFilter(BundleDeploymentCriteria criteria)
-        throws RuntimeException {
-        try {
-            PageList<BundleDeployment> result = bundleManager.findBundleDeploymentsByCriteriaWithDestinationFilter(getSessionSubject(),
-                criteria);
-            return SerialUtility.prepare(result, "BundleService.findBundleDeploymentsByCriteriaWithDestinationFilter");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -318,16 +284,6 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteria(getSessionSubject(), criteria);
             return SerialUtility.prepare(results, "findBundleVersionsByCriteria");
-        } catch (Throwable t) {
-            throw getExceptionToThrowToClient(t);
-        }
-    }
-
-    @Override
-    public PageList<BundleVersion> findBundleVersionsByCriteriaWithDestinationFilter(BundleVersionCriteria criteria) throws RuntimeException {
-        try {
-            PageList<BundleVersion> results = bundleManager.findBundleVersionsByCriteriaWithDestinationFilter(getSessionSubject(), criteria);
-            return SerialUtility.prepare(results, "findBundleVersionsByCriteriaWithDestinationFilter");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

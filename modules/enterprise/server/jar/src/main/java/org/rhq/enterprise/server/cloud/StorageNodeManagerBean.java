@@ -866,19 +866,21 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         List<StorageNode> storageNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", OperationMode.NORMAL).getResultList();
 
-        int clusterSize = storageNodes.size();
+        // The previous cluster size will be the current size - 1 since we currently only
+        // support deploying one node at a time.
+        int previousClusterSize = storageNodes.size() - 1;
         boolean isReadRepairNeeded;
 
-        if (clusterSize >= 4) {
+        if (previousClusterSize >= 4) {
             // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
             // that for additional nodes; so, there is no need to run repair if we are
             // expanding from a 4 node cluster since the RF remains the same.
             isReadRepairNeeded = false;
-        } else if (clusterSize == 1) {
+        } else if (previousClusterSize == 1) {
             // The RF will increase since we are going from a single to a multi-node
             // cluster; therefore, we want to run repair.
             isReadRepairNeeded = true;
-        } else if (clusterSize == 2) {
+        } else if (previousClusterSize == 2) {
             if (storageNodes.size() > 3) {
                 // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
                 // we want to run repair.
@@ -888,7 +890,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 // to run repair.
                 isReadRepairNeeded = false;
             }
-        } else if (clusterSize == 3) {
+        } else if (previousClusterSize == 3) {
             // We are increasing the cluster size > 3 which means the RF will be
             // updated to 3; therefore, we want to run repair.
             isReadRepairNeeded = true;

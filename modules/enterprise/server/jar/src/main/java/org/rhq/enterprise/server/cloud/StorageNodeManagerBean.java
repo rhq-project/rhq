@@ -660,11 +660,16 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) {
-        List<StorageNode> initialStorageNodes;
+        List<StorageNode> initialStorageNodes = getStorageNodes();
         if (storageNode == null) {
             initialStorageNodes = getStorageNodes();
         } else {
-            initialStorageNodes = Arrays.asList(storageNode);
+            int index = initialStorageNodes.indexOf(storageNode);
+            if (index >= 0) {
+                initialStorageNodes = Arrays.asList(initialStorageNodes.get(index));
+            } else {
+                initialStorageNodes = new ArrayList<StorageNode>();
+            }
         }
 
         Queue<Resource> unvisitedResources = new LinkedList<Resource>();

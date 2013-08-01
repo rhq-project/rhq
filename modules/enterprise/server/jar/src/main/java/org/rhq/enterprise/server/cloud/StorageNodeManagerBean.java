@@ -968,17 +968,15 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
     }
 
-    private boolean updateTopology(List<StorageNode> storageNodes) {
+    private void updateTopology(List<StorageNode> storageNodes) {
         String username = getRequiredStorageProperty(USERNAME_PROPERTY);
         String password = getRequiredStorageProperty(PASSWORD_PROPERTY);
         SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
         try{
-            return schemaManager.updateTopology(false);
+            schemaManager.updateTopology();
         } catch (Exception e) {
             log.error("An error occurred while applying schema topology changes", e);
         }
-
-        return false;
     }
 
     private String getRequiredStorageProperty(String property) {

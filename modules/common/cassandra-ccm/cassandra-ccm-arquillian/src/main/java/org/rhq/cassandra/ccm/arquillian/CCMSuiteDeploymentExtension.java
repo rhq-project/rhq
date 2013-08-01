@@ -159,7 +159,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                     try {
                         schemaManager.install();
                         clusterInitService.waitForSchemaAgreement(nodes);
-                        schemaManager.updateTopology(true);
+                        schemaManager.updateTopology();
                     } catch (Exception e) {
                         if (null != ccm) {
                             ccm.shutdownCluster();

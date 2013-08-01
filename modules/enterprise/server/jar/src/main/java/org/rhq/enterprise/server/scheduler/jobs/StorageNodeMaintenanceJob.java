@@ -135,17 +135,15 @@ public class StorageNodeMaintenanceJob extends AbstractStatefulJob {
         runNodeMaintenance(seedList, isReadRepairNeeded);
     }
 
-    private boolean updateTopology(List<StorageNode> storageNodes) throws JobExecutionException {
+    private void updateTopology(List<StorageNode> storageNodes) throws JobExecutionException {
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);
         SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
         try{
-            return schemaManager.updateTopology(false);
+            schemaManager.updateTopology();
         } catch (Exception e) {
             log.error("An error occurred while applying schema topology changes", e);
         }
-
-        return false;
     }
 
     private List<StorageNode> waitForClustering(List<StorageNode> storageNodes) {

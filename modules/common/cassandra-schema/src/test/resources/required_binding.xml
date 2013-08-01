@@ -1,0 +1,9 @@
+<updatePlan>
+    <step>%first_property%%fifth_property%</step>
+
+    <step>%second_property% testString %fifth_property% testString %fifth_property%</step>
+
+    <step>%third_property%%fifth_property%</step>
+
+    <step>%fourth_property% testString %fifth_property% testString %fifth_property%</step>
+</updatePlan>

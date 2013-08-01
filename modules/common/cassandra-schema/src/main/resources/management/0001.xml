@@ -1,0 +1,25 @@
+<updatePlan>
+  <step name="user_exists">
+    SELECT * FROM system_auth.users WHERE name = '%username%'
+  </step>
+
+   <step name="schema_exists">
+    SELECT * FROM system.schema_keyspaces WHERE keyspace_name = 'rhq'
+  </step>
+
+  <step name="version_columnfamily_exists">
+    SELECT * from system.schema_columnfamilies WHERE keyspace_name='rhq' AND columnfamily_name='schema_version'
+  </step>
+
+  <step name="version">
+    SELECT version FROM rhq.schema_version
+  </step>
+
+  <step name="replication_factor">
+    SELECT strategy_options FROM system.schema_keyspaces where keyspace_name='rhq'
+  </step>
+
+  <step name="insert_schema_version">
+    INSERT INTO rhq.schema_version (version, time ) VALUES ( %version%, %time%)
+  </step>
+</updatePlan>

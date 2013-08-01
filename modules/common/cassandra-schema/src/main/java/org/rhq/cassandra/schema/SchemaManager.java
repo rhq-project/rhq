@@ -29,8 +29,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
@@ -42,8 +40,6 @@ import org.rhq.core.domain.cloud.StorageNode;
  * @author John Sanda
  */
 public class SchemaManager {
-
-    private final Log log = LogFactory.getLog(SchemaManager.class);
 
     /**
      * The username that RHQ will use to connect to the storage cluster.
@@ -83,25 +79,53 @@ public class SchemaManager {
         this.nodes.addAll(nodes);
     }
 
+    /**
+     * Install and update the RHQ schema.
+     *
+     * @throws Exception
+     */
     public void install() throws Exception {
         VersionManager version = new VersionManager(username, password, nodes);
         version.install();
     }
 
+    /**
+     * Drop RHQ schema and revert the database to pre-RHQ state.
+     *
+     * @throws Exception
+     */
     public void drop() throws Exception {
         VersionManager version = new VersionManager(username, password, nodes);
         version.drop();
     }
 
-    public boolean updateTopology(boolean isNewSchema) throws Exception {
+    /**
+     * Update cluster topology settings, such as replication factor.
+     *
+     * @param isNewSchema
+     * @return
+     * @throws Exception
+     */
+    public void updateTopology() throws Exception {
         TopologyManager topology = new TopologyManager(username, password, nodes);
-        return topology.updateTopology(isNewSchema);
+        topology.updateTopology();
     }
 
+    /**
+     * Returns the list of storage nodes.
+     *
+     * @return list of storage nodes
+     */
     public List<StorageNode> getStorageNodes() {
         return nodes;
     }
 
+    /**
+     * Parse raw string that contains the list of storage nodes.
+     *
+     * @param nodes list of storage nodes
+     * @return
+     */
     private static List<StorageNode> parseNodeInformation(String... nodes) {
         List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
         for (String node : nodes) {
@@ -113,6 +137,12 @@ public class SchemaManager {
         return parsedNodes;
     }
 
+    /**
+     * A main runner used for direct usage of the schema manager.
+     *
+     * @param args arguments
+     * @throws Exception
+     */
     public static void main(String[] args) throws Exception {
         try {
             Logger root = Logger.getRootLogger();
@@ -126,29 +156,29 @@ public class SchemaManager {
                 System.out.println("Usage      : command username password nodes...");
                 System.out.println("\n");
                 System.out.println("Commands   : install | drop | topology");
-                System.out.println("Node format: hostname|thriftPort|nativeTransportPort");
-
+                System.out.println("Node format: hostname|jmxPort|cqlPort");
                 return;
             }
 
             String command = args[0];
             String username = args[1];
             String password = args[2];
+            String[] hosts = Arrays.copyOfRange(args, 3, args.length);
 
-            SchemaManager schemaManager = new SchemaManager(username, password,
-                Arrays.copyOfRange(args, 3, args.length));
+            SchemaManager schemaManager = new SchemaManager(username, password, hosts);
 
             if ("install".equalsIgnoreCase(command)) {
                 schemaManager.install();
             } else if ("drop".equalsIgnoreCase(command)) {
                 schemaManager.drop();
             } else if ("topology".equalsIgnoreCase(command)) {
-                schemaManager.updateTopology(true);
+                schemaManager.updateTopology();
             } else {
                 throw new IllegalArgumentException(command + " not available.");
             }
         } catch (Exception e) {
             System.err.println(e);
+            e.printStackTrace();
         } finally {
             System.exit(0);
         }

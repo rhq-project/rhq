@@ -1,0 +1,9 @@
+<updatePlana>
+    <step>%first_property%%fifth_property%</step>
+
+    <step>%second_property%%fifth_property%%fifth_property%</step>
+
+    <step>%third_property%%fifth_property%</step>
+
+    <step>%fourth_property%%fifth_property%%fifth_property%</step>
+</updatePlana>

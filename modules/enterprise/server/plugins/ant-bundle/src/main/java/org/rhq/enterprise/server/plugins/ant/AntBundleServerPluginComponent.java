@@ -105,12 +105,13 @@ public class AntBundleServerPluginComponent implements ServerPluginComponent, Bu
             StreamUtil.copy(in, out);
 
             // parse, but do not execute, the Ant script
-            AntLauncher antLauncher = new AntLauncher();
+            AntLauncher antLauncher = new AntLauncher(true);
             BundleAntProject project = antLauncher.parseBundleDeployFile(recipeFile, null);
 
             // obtain the parse results
             deploymentProps = new DeploymentProperties(0, project.getBundleName(), project.getBundleVersion(), project
-                .getBundleDescription());
+                .getBundleDescription(), project.getDestinationCompliance());
+
             bundleFiles = project.getBundleFileNames();
             configDef = project.getConfigurationDefinition();
         } catch (Throwable t) {

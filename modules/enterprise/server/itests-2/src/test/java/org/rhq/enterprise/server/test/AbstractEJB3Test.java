@@ -40,6 +40,7 @@ import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
+import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -329,6 +330,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/resource-type/update4-v2_0.xml");
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v1.xml");
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v2.xml");
+
+        testClassesJar.addAsResource("org/rhq/enterprise/server/plugins/ant/recipe-no-manageRootDir.xml");
 
         // create test ear by starting with rhq.ear and thinning it
         String projectVersion = System.getProperty("project.version");

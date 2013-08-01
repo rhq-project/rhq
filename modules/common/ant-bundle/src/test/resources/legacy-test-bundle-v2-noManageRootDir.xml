@@ -1,24 +1,5 @@
 <?xml version="1.0"?>
 
-<!--
-  ~ RHQ Management Platform
-  ~ Copyright (C) 2013 Red Hat, Inc.
-  ~ All rights reserved.
-  ~
-  ~ This program is free software; you can redistribute it and/or modify
-  ~ it under the terms of the GNU General Public License as published by
-  ~ the Free Software Foundation version 2 of the License.
-  ~
-  ~ This program is distributed in the hope that it will be useful,
-  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
-  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  ~ GNU General Public License for more details.
-  ~
-  ~ You should have received a copy of the GNU General Public License
-  ~ along with this program; if not, write to the Free Software
-  ~ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
-  -->
-
 <project name="test-bundle" default="main" xmlns:rhq="antlib:org.rhq.bundle">
 
     <rhq:bundle name="example.com (JBoss EAP 4.3)" version="2.5"
@@ -31,7 +12,8 @@
                 defaultValue="9090"
                 type="integer"/>
 
-        <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall" compliance="full">
+        <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall"
+                             manageRootDir="false"> <!-- this is the only difference with legacy-test-bundle-v2.xml -->
             <rhq:system-service name="foo" scriptFile="foo-script"
                          configFile="foo-config" overwriteScript="true"
                          startLevels="3,4,5" startPriority="80" stopPriority="20" root="root"/>

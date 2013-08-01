@@ -31,7 +31,7 @@
                 defaultValue="8080"
                 type="integer"/>
 
-        <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall" compliance="full">
+        <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall" manageRootDir="false">
             <rhq:system-service name="foo" scriptFile="foo-script"
                          configFile="foo-config" overwriteScript="true"
                          startLevels="3,4,5" startPriority="80" stopPriority="20" root="root"/>

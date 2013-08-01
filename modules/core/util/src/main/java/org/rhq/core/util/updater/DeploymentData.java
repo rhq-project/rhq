@@ -50,13 +50,16 @@ public class DeploymentData {
     private final Set<File> rawFilesToRealize;
     private final TemplateEngine templateEngine;
     private final Pattern ignoreRegex;
-    private final boolean manageRootDir;
     private final Map<File, Boolean> zipsExploded;
 
     /**
      * Constructors that prepares this object with the data that is necessary in order to deploy archive/file content
      * a destination directory.
-     *  
+     *
+     * Note that as of RHQ 4.9.0 the {@code manageRootDir} attribute actually writes through to the similar attribute
+     * in {@code deploymentProps}.  It was previously possible for {@link #isManageRootDir()} to have different value
+     * from {@link org.rhq.core.util.updater.DeploymentProperties#getManageRootDir()} on the {@code deploymentProps}.
+     *
      * @param deploymentProps metadata about this deployment
      * @param zipFiles the archives containing the content to be deployed
      * @param rawFiles files that are to be copied into the destination directory - the keys are the current
@@ -85,10 +88,61 @@ public class DeploymentData {
      * @param zipsExploded if not <code>null</code>, this is a map keyed on zip files whose values indicate
      *                     if the zips should be exploded (true) or remain compressed after the deployment
      *                     is finished (false). If a zip file is not found in this map, true is the default.
+     *
+     * @deprecated The {@code manageRootDir} parameter is deprecated and this constructor should not be used. The need
+     * for that parameter was superseded by the {@link org.rhq.core.util.updater.DeploymentProperties#getDestinationCompliance()}
+     * property.
      */
+    @Deprecated
     public DeploymentData(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles,
         File sourceDir, File destinationDir, Map<File, Pattern> zipEntriesToRealizeRegex, Set<File> rawFilesToRealize,
         TemplateEngine templateEngine, Pattern ignoreRegex, boolean manageRootDir, Map<File, Boolean> zipsExploded) {
+
+        this(deploymentProps, zipFiles, rawFiles, sourceDir, destinationDir, zipEntriesToRealizeRegex,
+            rawFilesToRealize,
+            templateEngine, ignoreRegex, zipsExploded);
+
+        deploymentProps.setManageRootDir(manageRootDir);
+    }
+
+    /**
+     * Constructors that prepares this object with the data that is necessary in order to deploy archive/file content
+     * a destination directory.
+     *
+     * @param deploymentProps          metadata about this deployment
+     * @param zipFiles                 the archives containing the content to be deployed
+     * @param rawFiles                 files that are to be copied into the destination directory - the keys are the
+     *                                 current
+     *                                 locations of the files, the values are where the files should be copied (the
+     *                                 values may be relative
+     *                                 in which case they are relative to destDir and can have subdirectories and/or a
+     *                                 different filename
+     *                                 than what the file is named currently)
+     * @param destinationDir           the root directory where the content is to be deployed
+     * @param sourceDir                the root directory where the source files (zips and raw files) are located
+     * @param zipEntriesToRealizeRegex the patterns of files (whose paths are relative to destDir) that
+     *                                 must have replacement variables within them replaced with values
+     *                                 obtained via the given template engine. The key is the name of the zip file
+     *                                 that the regex must be applied to - in other words, the regex value is only
+     *                                 applied
+     *                                 to relative file names as found in their associated zip file.
+     * @param rawFilesToRealize        identifies the raw files that need to be realized; note that each item in this
+     *                                 set
+     *                                 must match a key to a <code>rawFiles</code> entry
+     * @param templateEngine           if one or more filesToRealize are specified, this template engine is used to
+     *                                 determine
+     *                                 the values that should replace all replacement variables found in those files
+     * @param ignoreRegex              the files/directories to ignore when updating an existing deployment
+     * @param zipsExploded             if not <code>null</code>, this is a map keyed on zip files whose values indicate
+     *                                 if the zips should be exploded (true) or remain compressed after the deployment
+     *                                 is finished (false). If a zip file is not found in this map, true is the
+     *                                 default.
+     *
+     * @since 4.9.0
+     */
+    public DeploymentData(DeploymentProperties deploymentProps, Set<File> zipFiles, Map<File, File> rawFiles,
+        File sourceDir, File destinationDir, Map<File, Pattern> zipEntriesToRealizeRegex, Set<File> rawFilesToRealize,
+        TemplateEngine templateEngine, Pattern ignoreRegex, Map<File, Boolean> zipsExploded) {
 
         if (deploymentProps == null) {
             throw new IllegalArgumentException("deploymentProps == null");
@@ -130,7 +184,6 @@ public class DeploymentData {
 
         this.sourceDir = sourceDir;
         this.ignoreRegex = ignoreRegex;
-        this.manageRootDir = manageRootDir;
         this.zipsExploded = zipsExploded;
 
         // if there is nothing to realize or we have no template engine to obtain replacement values, then we null things out
@@ -157,7 +210,8 @@ public class DeploymentData {
             File rawFile = entry.getValue();
             String rawFilePath = rawFile.getPath();
 
-            boolean doubledot = rawFilePath.replace('\\', '/').matches(".*((/\\.\\.)|(\\.\\./)).*"); // finds "/.." or "../" in the string
+            boolean doubledot = rawFilePath.replace('\\', '/')
+                .matches(".*((/\\.\\.)|(\\.\\./)).*"); // finds "/.." or "../" in the string
 
             if (doubledot) {
                 File fileToNormalize;
@@ -171,7 +225,8 @@ public class DeploymentData {
 
                         // determine if the windows rawFile relative path specified a drive (e.g. C:foobar.txt)
                         StringBuilder rawFilePathBuilder = new StringBuilder(rawFilePath);
-                        String rawFileDriveLetter = FileUtil.stripDriveLetter(rawFilePathBuilder); // rawFilePathBuilder now has drive letter stripped
+                        String rawFileDriveLetter = FileUtil
+                            .stripDriveLetter(rawFilePathBuilder); // rawFilePathBuilder now has drive letter stripped
 
                         // determine what, if any, drive letter is specified in the destination directory
                         StringBuilder destDirAbsPathBuilder = new StringBuilder(this.destinationDir.getAbsolutePath());
@@ -197,7 +252,8 @@ public class DeploymentData {
                     // we can keep rawFile path relative, but we need to normalize out the ".." paths
                     String baseDir = this.destinationDir.getAbsolutePath();
                     String absRawFilePath = fileToNormalize.getAbsolutePath();
-                    String relativePath = absRawFilePath.substring(baseDir.length() + 1); // should always return a valid path; if not, let it throw exception (which likely means there is a bug here)
+                    String relativePath = absRawFilePath.substring(baseDir.length() +
+                        1); // should always return a valid path; if not, let it throw exception (which likely means there is a bug here)
                     entry.setValue(new File(relativePath));
                 } else {
                     // raw file path has ".." such that the file is really above destination dir - use an absolute, canonical path
@@ -205,8 +261,6 @@ public class DeploymentData {
                 }
             }
         }
-
-        return;
     }
 
     private static File getNormalizedFile(File fileToNormalize) {
@@ -249,8 +303,14 @@ public class DeploymentData {
         return ignoreRegex;
     }
 
+    /**
+     * As of RHQ 4.9.0, this calls {@link #getDeploymentProps()}.{@link DeploymentProperties#getManageRootDir() getManageRootDir()}
+     *
+     * @deprecated use {@link #getDeploymentProps()}.{@link org.rhq.core.util.updater.DeploymentProperties#getDestinationCompliance() getDestinationCompliance()}.
+     */
+    @Deprecated
     public boolean isManageRootDir() {
-        return manageRootDir;
+        return deploymentProps.getManageRootDir();
     }
 
     public Map<File, Boolean> getZipsExploded() {

@@ -38,6 +38,7 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
+import org.rhq.enterprise.server.bundle.TestBundlePluginComponent;
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
@@ -79,7 +80,7 @@ public class MetadataBeanTest extends AbstractEJB3Test {
 
         setupDB();
 
-        TestBundleServerPluginService bundleService = new TestBundleServerPluginService(getTempDir());
+        TestBundleServerPluginService bundleService = new TestBundleServerPluginService(getTempDir(), new TestBundlePluginComponent());
         prepareCustomServerPluginService(bundleService);
         bundleService.startMasterPluginContainerWithoutSchedulingJobs();
         prepareScheduler();

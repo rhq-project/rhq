@@ -45,6 +45,7 @@ import org.rhq.core.domain.tagging.Tag;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
+import org.rhq.enterprise.server.bundle.TestBundlePluginComponent;
 import org.rhq.enterprise.server.bundle.TestBundleServerPluginService;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
@@ -75,7 +76,7 @@ public class TagManagerBeanTest extends AbstractEJB3Test {
         SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
         bundleManager = LookupUtil.getBundleManager();
         overlord = subjectManager.getOverlord();
-        TestBundleServerPluginService bundleServerPluginService = new TestBundleServerPluginService(getTempDir());
+        TestBundleServerPluginService bundleServerPluginService = new TestBundleServerPluginService(getTempDir(), new TestBundlePluginComponent());
         prepareCustomServerPluginService(bundleServerPluginService);
         bundleServerPluginService.startMasterPluginContainer();
     }

@@ -34,6 +34,8 @@ public class DeploymentPropertiesTest {
         props.setBundleName("test-bundle-name");
         props.setBundleVersion("1.0");
         props.setDescription("This is a description\nof a bundle");
+        props.setDestinationCompliance(DestinationComplianceMode.full);
+
         File tmpFile = File.createTempFile("deploymentPropertiesTest", ".properties");
         try {
             props.saveToFile(tmpFile);
@@ -83,6 +85,13 @@ public class DeploymentPropertiesTest {
             // this is expected and ok
         }
 
+        try {
+            props.setDestinationCompliance(null);
+            assert false : "Should have thrown an exception due to null value";
+        } catch (Exception ok) {
+            // this is expected and ok
+        }
+
         File tmpFile = File.createTempFile("deploymentPropertiesTest", ".properties");
         try {
             try {
@@ -109,6 +118,14 @@ public class DeploymentPropertiesTest {
             }
 
             props.setBundleVersion("1");
+            try {
+                props.saveToFile(tmpFile);
+                assert false : "Should have thrown an exception since it was not valid";
+            } catch (Exception ok) {
+                // this is expected and ok
+            }
+
+            props.setDestinationCompliance(DestinationComplianceMode.filesAndDirectories);
 
             // we set all properties we need, it should be valid and we should be able to save it now
             props.saveToFile(tmpFile);

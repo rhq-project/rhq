@@ -120,6 +120,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private static final boolean DISABLED = false;
 
     private TestBundleServerPluginService ps;
+    private TestBundlePluginComponent bpc;
     private MasterServerPluginContainer pc;
     private Subject overlord;
     TestServerCommunicationsService agentServiceContainer;
@@ -129,7 +130,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         agentServiceContainer = prepareForTestAgents();
         agentServiceContainer.bundleService = new TestAgentClient(null, agentServiceContainer);
 
-        this.ps = new TestBundleServerPluginService(getTempDir());
+        this.bpc = new TestBundlePluginComponent();
+        this.ps = new TestBundleServerPluginService(getTempDir(), bpc);
         prepareCustomServerPluginService(this.ps);
         bundleManager = LookupUtil.getBundleManager();
         resourceManager = LookupUtil.getResourceManager();
@@ -368,11 +370,11 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             BundleType bt1 = createBundleType("one");
 
             // prepare our mock bundle PC
-            ps.parseRecipe_returnValue = new RecipeParseResults(bundleMetadata, configDef, new HashSet<String>(
+            bpc.parseRecipe_returnValue = new RecipeParseResults(bundleMetadata, configDef, new HashSet<String>(
                 bundleFiles.keySet()));
-            ps.processBundleDistributionFile_returnValue = new BundleDistributionInfo(recipe,
-                ps.parseRecipe_returnValue, bundleFiles);
-            ps.processBundleDistributionFile_returnValue.setBundleTypeName(bt1.getName());
+            bpc.processBundleDistributionFile_returnValue = new BundleDistributionInfo(recipe,
+                bpc.parseRecipe_returnValue, bundleFiles);
+            bpc.processBundleDistributionFile_returnValue.setBundleTypeName(bt1.getName());
 
             // now ask the SLSB to persist our bundle data given our mock distribution
             BundleVersion bv1 = bundleManager.createBundleVersionViaURL(overlord, bundleDistroFile.toURI().toURL()

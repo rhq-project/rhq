@@ -32,6 +32,7 @@ import org.apache.tools.ant.Project;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.util.updater.DeployDifferences;
+import org.rhq.core.util.updater.DestinationComplianceMode;
 
 /**
  * This is the Ant project object that is used when processing bundle Ant scripts
@@ -70,6 +71,9 @@ public class BundleAntProject extends Project {
     private int deploymentId;
     private DeploymentPhase deploymentPhase;
     private boolean dryRun;
+
+    //note that this will have to change once we start supporting multiple deployment units.
+    private DestinationComplianceMode destinationCompliance;
 
     // results of project execution
     private DeployDifferences deployDiffs = new DeployDifferences();
@@ -163,6 +167,14 @@ public class BundleAntProject extends Project {
 
     public DeployDifferences getDeployDifferences() {
         return deployDiffs;
+    }
+
+    public DestinationComplianceMode getDestinationCompliance() {
+        return destinationCompliance;
+    }
+
+    public void setDestinationCompliance(DestinationComplianceMode destinationCompliance) {
+        this.destinationCompliance = destinationCompliance;
     }
 
     /**

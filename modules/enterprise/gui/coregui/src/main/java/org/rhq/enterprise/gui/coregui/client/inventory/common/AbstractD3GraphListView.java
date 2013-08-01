@@ -45,13 +45,13 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
 public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh,RedrawGraphs {
     protected final static int SINGLE_CHART_HEIGHT = 225;
     protected final static int MULTI_CHART_HEIGHT = 210;
-    protected static Label loadingLabel = new Label(MSG.common_msg_loading());
+    protected static final Label loadingLabel = new Label(MSG.common_msg_loading());
     protected List<Availability> availabilityList;
     protected List<ResourceGroupAvailability> groupAvailabilityList;
     protected AvailabilityD3GraphView availabilityGraph;
-    protected MeasurementUserPreferences measurementUserPrefs;
+    protected final MeasurementUserPreferences measurementUserPrefs;
     protected boolean showAvailabilityGraph = false;
-    protected ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
+    protected final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
     protected Timer refreshTimer;
 
     public AbstractD3GraphListView() {

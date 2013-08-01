@@ -54,7 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
  */
 public final class D3GroupGraphListView extends AbstractD3GraphListView implements AutoRefresh {
 
-    private ResourceGroup resourceGroup;
+    private final ResourceGroup resourceGroup;
     private VLayout graphsVLayout;
 
     public D3GroupGraphListView(ResourceGroup resourceGroup, boolean monitorDetailView) {
@@ -67,7 +67,6 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
     @Override
     protected void onDraw() {
         super.onDraw();
-
         destroyMembers();
 
         addMember(buttonBarDateTimeRangeEditor);
@@ -81,9 +80,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         graphsVLayout.setWidth100();
         graphsVLayout.setHeight100();
 
-        if (resourceGroup != null) {
-            buildGraphs();
-        }
+        buildGraphs();
         addMember(graphsVLayout);
     }
 
@@ -196,9 +193,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         graphView.setWidth("95%");
         graphView.setHeight(MULTI_CHART_HEIGHT);
 
-        if (graphsVLayout != null) {
-            graphsVLayout.addMember(graphView);
-        }
+        graphsVLayout.addMember(graphView);
     }
 
 }

@@ -60,9 +60,9 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
  */
 public class D3GraphListView extends AbstractD3GraphListView {
 
-    private static int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
+    private static final int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
 
-    private Resource resource;
+    private final Resource resource;
     private Set<Integer> definitionIds = null;
     private boolean useSummaryData = false;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
@@ -91,7 +91,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         return D3GraphListView.createSingleGraph(resource, measurementId, false);
     }
 
-    protected D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
+    private D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
         commonConstructorSettings();
@@ -99,7 +99,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         this.showAvailabilityGraph = showAvailabilityGraph;
     }
 
-    protected D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
+    private D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
         this.showAvailabilityGraph = showAvailabilityGraph;
@@ -130,9 +130,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         vLayout.setWidth100();
         vLayout.setHeight100();
 
-        if (resource != null) {
-            queryAndBuildGraphs();
-        }
+        queryAndBuildGraphs();
         addMember(vLayout);
     }
 
@@ -176,7 +174,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private void queryAndBuildGraphs() {
         final long startTimer = System.currentTimeMillis();
 
-        if (null != availabilityGraph) {
+        if (showAvailabilityGraph) {
             queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
                 buttonBarDateTimeRangeEditor.getEndTime(), null);
         }

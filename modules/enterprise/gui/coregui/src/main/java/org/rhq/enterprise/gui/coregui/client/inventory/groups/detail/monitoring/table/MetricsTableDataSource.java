@@ -1,4 +1,4 @@
-package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
+package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,9 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  * 
  * @author John Mazzitelli
  * @author Mike Thompson
- * @todo: get rid of this once we have tested the new screen out
  */
-@Deprecated
 public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, Criteria> {
 
     public static final String FIELD_SPARKLINE = "sparkline";
@@ -217,7 +215,7 @@ public class MetricsTableDataSource extends RPCDataSource<MetricDisplaySummary, 
                                     BrowserUtility.graphSparkLines();
                                 }
                             }.schedule(150);
-                            Log.debug("*** Finished CountdownLatch for metrics loaded: " + metricsDataList.size());
+                            Log.debug("Finished CountdownLatch for metrics loaded: " + metricsDataList.size());
                         }
                     });
 

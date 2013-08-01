@@ -22,7 +22,6 @@ import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table.MetricsTableDataSource;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
@@ -149,8 +148,8 @@ public class GroupMetricsTableDataSource extends MetricsTableDataSource {
 
                     //now retrieve metric display sumamries
                     GWTServiceLookup.getMeasurementChartsService().getMetricDisplaySummariesForCompatibleGroup(groupId,
-                        definitionArrayIds, Long.valueOf(range.get(0)).longValue(),
-                        Long.valueOf(range.get(1)).longValue(), false,
+                        definitionArrayIds, range.get(0),
+                        range.get(1), false,
                         new AsyncCallback<ArrayList<MetricDisplaySummary>>() {
                             @Override
                             public void onSuccess(ArrayList<MetricDisplaySummary> result) {

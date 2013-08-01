@@ -92,8 +92,8 @@ public class AvailabilitySummaryPieGraphType {
         console.log("Draw Availability Summary Pie Chart");
 
         var global = this,
-                w = 100,
-                h = 100,
+                w = @org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::WIDTH,
+                h = @org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::HEIGHT,
                 r = h / 2,
                 color = $wnd.d3.scale.category10(),
                 data = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::getAvailabilitySummaryJson()(),

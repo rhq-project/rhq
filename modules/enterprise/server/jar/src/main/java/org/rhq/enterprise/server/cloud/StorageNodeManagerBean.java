@@ -94,6 +94,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
+import org.rhq.enterprise.server.storage.StorageConfigurationException;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -214,7 +215,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         schedule.setOperationName("updateKnownNodes");
 
         Configuration parameters = new Configuration();
-        parameters.put(createPropertyListOfAddresses("ipAddresses", combine(getStorageNodes(), newStorageNode)));
+    parameters.put(createPropertyListOfAddresses("ipAddresses", combine(getClusteredStorageNodes(), newStorageNode)));
         schedule.setParameters(parameters);
 
         operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
@@ -449,6 +450,11 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_ALL,
             StorageNode.class);
         return query.getResultList();
+    }
+
+    private List<StorageNode> getClusteredStorageNodes() {
+        return entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE, StorageNode.class)
+            .setParameter("operationMode", OperationMode.NORMAL).getResultList();
     }
 
     @Override
@@ -840,7 +846,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             log.info("Preparing to bootstrap " + storageNode + " into cluster...");
         }
 
-        List<StorageNode> existingStorageNodes = getStorageNodes();
+        List<StorageNode> existingStorageNodes = getClusteredStorageNodes();
 
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(storageNode.getResource());
@@ -850,13 +856,50 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("cqlPort", existingStorageNodes.get(0).getCqlPort()));
-        // TODO need to add support for storage_port in cassandra/storage plugins
-        parameters.put(new PropertySimple("gossipPort", 7100));
-        parameters.put(createPropertyListOfAddresses("storageNodeIPAddresses", getStorageNodes()));
+        parameters.put(new PropertySimple("gossipPort", getGossipPort(storageNode, existingStorageNodes)));
+        parameters.put(createPropertyListOfAddresses("storageNodeIPAddresses", getClusteredStorageNodes()));
 
         schedule.setParameters(parameters);
 
         operationManager.scheduleResourceOperation(subjectManager.getOverlord(), schedule);
+    }
+
+    private Integer getGossipPort(StorageNode newStorageNode, List<StorageNode> storageNodes) {
+        if (log.isInfoEnabled()) {
+            log.info("Looking up gossip port for new storage node " + newStorageNode);
+        }
+        try {
+            StorageNode node = null;
+            Configuration resourceConfig = null;
+            for (StorageNode storageNode : storageNodes) {
+                resourceConfig = configurationManager.getLiveResourceConfiguration(subjectManager.getOverlord(),
+                    storageNode.getResource().getId(), false);
+                if (resourceConfig == null) {
+                    log.warn("Failed to load resource configuration for storage node " + newStorageNode.getResource());
+                } else {
+                    node = storageNode;
+                    break;
+                }
+            }
+            if (resourceConfig == null) {
+                log.error("Failed to obtain gossip port from existing storage nodes");
+                throw new StorageConfigurationException("Failed to obtain gossip port from existing storage nodes");
+            }
+
+            PropertySimple property = resourceConfig.getSimple("gossipPort");
+            if (property == null) {
+                throw new StorageConfigurationException("The resource configuration for " + node.getResource() +
+                    "did not include the required property [gossipPort]");
+            }
+            Integer port = property.getIntegerValue();
+            log.info("Found gossip port set to " + port);
+            return property.getIntegerValue();
+        } catch (Exception e) {
+            if (e instanceof StorageConfigurationException) {
+                throw (StorageConfigurationException) e;
+            }
+            throw new RuntimeException("An error occurred while trying to obtain the gossip port", e);
+        }
     }
 
     @Override

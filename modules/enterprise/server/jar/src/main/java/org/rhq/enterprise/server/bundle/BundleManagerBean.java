@@ -66,6 +66,7 @@ import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
@@ -232,6 +233,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 throw new IllegalArgumentException("Invalid bundleGroupId: " + bundleGroupId);
             }
         }
+
+        checkCreateInitialBundleVersionAuthz(subject, bundleGroupId);
 
         // create and add the required Repo. the Repo is a detached object which helps in its eventual removal.
         Repo repo = new Repo(name);
@@ -761,7 +764,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         if (isInitialVersion) {
-            checkCreateInitialBundleVersionAuthz(subject, initialBundleGroupId);
             bundle = bundleManager.createBundle(subject, bundleName, bundleDescription, bundleType.getId(),
                 initialBundleGroupId);
             createdBundle = true;
@@ -1619,7 +1621,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // filter by bundles that are viewable
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE, null,
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
                 subject.getId());
         }
 
@@ -1660,7 +1662,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE, null,
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
                 subject.getId());
         }
 
@@ -1720,7 +1722,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // filter by bundles that are viewable
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE, null,
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
                 subject.getId());
         }
 
@@ -1735,8 +1737,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE, null,
-                subject.getId());
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId(), null);
         }
 
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
@@ -1781,7 +1783,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         generator.alterProjection(replacementSelectList);
 
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE, null,
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
                 subject.getId());
         }
 
@@ -1990,7 +1992,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public void deleteBundleGroups(Subject subject, int[] bundleGroupIds) throws Exception {
 
         for (int bundleGroupId : bundleGroupIds) {
-            BundleGroup bundleGroup = this.entityManager.find(BundleGroup.class, bundleGroupIds);
+            BundleGroup bundleGroup = this.entityManager.find(BundleGroup.class, bundleGroupId);
             if (null == bundleGroup) {
                 return;
             }
@@ -1999,6 +2001,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             for (Bundle b : bundleGroup.getBundles()) {
                 bundleGroup.removeBundle(b);
             }
+
+            // remove from any roles
+            for (Role r : bundleGroup.getRoles()) {
+                bundleGroup.removeRole(r);
+            }
+
             bundleGroup = entityManager.merge(bundleGroup);
 
             // now remove the bundle group
@@ -2012,8 +2020,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // filter by bundle groups that are viewable
         if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_BUNDLE_GROUPS)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE_GROUP,
-                null, subject.getId());
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE_GROUP,
+                subject.getId(), null);
         }
 
         CriteriaQueryRunner<BundleGroup> queryRunner = new CriteriaQueryRunner<BundleGroup>(criteria, generator,

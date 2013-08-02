@@ -39,6 +39,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -88,6 +89,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesBySubject(int subjectId,PageControl pageControl)
      */
+    @Override
     @SuppressWarnings("unchecked")
     // the first param, subject, is not the subject making the request, its the subject whose roles are to be returned.
     // therefore, we won't want our security interceptor to check this method since the subject won't have a session associated with it
@@ -109,6 +111,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRoles(PageControl)
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Role> findRoles(PageControl pc) {
         pc.initDefaultOrderingField("r.name");
@@ -135,6 +138,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#createRole(Subject, Role)
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Role createRole(Subject whoami, Role newRole) {
         // Make sure there's not an existing role with the same name.
@@ -182,6 +186,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#deleteRoles(Subject, int[])
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void deleteRoles(Subject subject, int[] doomedRoleIds) {
         if (doomedRoleIds != null) {
@@ -200,6 +205,13 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                 for (ResourceGroup doomedResourceGroupRelationship : groupsToUnhook) {
                     doomedRole.removeResourceGroup(doomedResourceGroupRelationship);
                     entityManager.merge(doomedResourceGroupRelationship);
+                }
+
+                //remove attached Bundle Groups
+                Set<BundleGroup> bundleGroupsToUnhook = new HashSet<BundleGroup>(doomedRole.getBundleGroups()); // avoid concurrent mod exception
+                for (BundleGroup doomedBundleGroupRelationship : bundleGroupsToUnhook) {
+                    doomedRole.removeBundleGroup(doomedBundleGroupRelationship);
+                    entityManager.merge(doomedBundleGroupRelationship);
                 }
 
                 //remove attached LDAP Subjects
@@ -232,6 +244,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addRolesToSubject(Subject, int, int[])
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void addRolesToSubject(Subject subject, int subjectId, int[] roleIds) {
         addRolesToSubject(subject, subjectId, roleIds, false);
@@ -272,6 +285,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addSubjectsToRole(Subject, int, int[])
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void addSubjectsToRole(Subject subject, int roleId, int[] subjectIds) {
         if (subjectIds != null) {
@@ -303,6 +317,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeRolesFromSubject(Subject, int, int[])
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeRolesFromSubject(Subject subject, int subjectId, int[] roleIds) {
         if (roleIds != null) {
@@ -324,6 +339,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds) {
 
@@ -359,6 +375,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getRoleById(Integer)
      */
+    @Override
     public Role getRoleById(Integer roleId) {
         Role role = entityManager.find(Role.class, roleId);
         return role;
@@ -367,6 +384,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#setPermissions(Subject, Integer, Set)
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setPermissions(Subject subject, Integer roleId, Set<Permission> permissions) {
         Role role = entityManager.find(Role.class, roleId);
@@ -381,6 +399,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#getPermissions(Integer)
      */
+    @Override
     public Set<Permission> getPermissions(Integer roleId) {
         Role role = entityManager.find(Role.class, roleId);
         Set<Permission> rolePermissions = role.getPermissions();
@@ -390,6 +409,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#updateRole(Subject, Role)
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public Role updateRole(Subject whoami, Role role) {
         Role attachedRole = entityManager.find(Role.class, role.getId());
@@ -481,6 +501,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findSubjectsByRole(Integer,PageControl)
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Subject> findSubjectsByRole(Integer roleId, PageControl pc) {
         pc.initDefaultOrderingField("s.name");
@@ -501,6 +522,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#findRolesByIds(Integer[],PageControl)
      */
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Role> findRolesByIds(Integer[] roleIds, PageControl pc) {
         if ((roleIds == null) || (roleIds.length == 0)) {
@@ -528,6 +550,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return new PageList<Role>(roles, (int) count, pc);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     @SuppressWarnings("unchecked")
     public PageList<Role> findAvailableRolesForSubject(Subject subject, Integer subjectId, Integer[] pendingRoleIds,
@@ -565,14 +588,39 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return new PageList<Role>(roles, (int) count, pc);
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public PageList<Role> findSubjectUnassignedRoles(Subject subject, int subjectId, PageControl pc) {
         return findAvailableRolesForSubject(subject, subjectId, null, pc);
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void addBundleGroupsToRole(Subject subject, int roleId, int[] bundleGroupIds) {
+        if ((bundleGroupIds != null) && (bundleGroupIds.length > 0)) {
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("Could not find role[" + roleId + "] in order to add resourceGroups");
+            }
+            role.getBundleGroups().size(); // load them in
+
+            for (Integer bundleGroupId : bundleGroupIds) {
+                BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+                if (bundleGroup == null) {
+                    throw new IllegalArgumentException("Tried to add BundleGroup[" + bundleGroupId + "] to role["
+                        + roleId + "], but bundleGroup was not found.");
+                }
+                role.addBundleGroup(bundleGroup);
+            }
+        }
+
+        return;
+    }
+
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#addResourceGroupsToRole(Subject, int, int[])
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void addResourceGroupsToRole(Subject subject, int roleId, int[] groupIds) {
         if ((groupIds != null) && (groupIds.length > 0)) {
@@ -595,9 +643,32 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return;
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void removeBundleGroupsFromRole(Subject subject, int roleId, int[] bundleGroupIds) {
+        if ((bundleGroupIds != null) && (bundleGroupIds.length > 0)) {
+            Role role = entityManager.find(Role.class, roleId);
+            if (role == null) {
+                throw new IllegalArgumentException("Could not find role[" + roleId
+                    + "] in order to remove BundleGroups");
+            }
+            role.getBundleGroups().size(); // load them in
+
+            for (Integer bundleGroupId : bundleGroupIds) {
+                BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+                if (bundleGroup == null) {
+                    throw new IllegalArgumentException("Tried to remove BundleGroup[" + bundleGroupId + "] from role["
+                        + roleId + "], but BundleGroup was not found");
+                }
+                role.removeBundleGroup(bundleGroup);
+            }
+        }
+    }
+
     /**
      * @see org.rhq.enterprise.server.authz.RoleManagerLocal#removeResourceGroupsFromRole(Subject, int, int[])
      */
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds) {
         if ((groupIds != null) && (groupIds.length > 0)) {
@@ -618,6 +689,27 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void setAssignedBundleGroups(Subject subject, int roleId, int[] bundleGroupIds) {
+        Role role = getRole(subject, roleId);
+        List<Integer> currentBundleGroups = new ArrayList<Integer>();
+        for (BundleGroup group : role.getBundleGroups()) {
+            currentBundleGroups.add(group.getId());
+        }
+
+        List<Integer> newBundleGroups = ArrayUtils.wrapInList(bundleGroupIds); // members needing addition
+        newBundleGroups.removeAll(currentBundleGroups);
+        int[] newBundleGroupIds = ArrayUtils.unwrapCollection(newBundleGroups);
+        roleManager.addBundleGroupsToRole(subject, roleId, newBundleGroupIds);
+
+        List<Integer> removedBundleGroups = new ArrayList<Integer>(currentBundleGroups); // members needing removal
+        removedBundleGroups.removeAll(ArrayUtils.wrapInList(bundleGroupIds));
+        int[] removedGroupIds = ArrayUtils.unwrapCollection(removedBundleGroups);
+        roleManager.removeBundleGroupsFromRole(subject, roleId, removedGroupIds);
+    }
+
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds) {
         Role role = getRole(subject, roleId);
@@ -668,11 +760,13 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
+    @Override
     public PageList<Role> findSubjectAssignedRoles(Subject subject, int subjectId, PageControl pc) {
         PageList<Role> assignedRoles = findRolesBySubject(subjectId, pc);
         return assignedRoles;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeSubjectsFromRole(Subject subject, int roleId, int[] subjectIds) {
         if ((subjectIds != null) && (subjectIds.length > 0)) {
@@ -697,6 +791,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void setAssignedSubjects(Subject subject, int roleId, int[] subjectIds) {
 
@@ -729,6 +824,31 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         }
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void removeRolesFromBundleGroup(Subject subject, int bundleGroupId, int[] roleIds) {
+        if ((roleIds != null) && (roleIds.length > 0)) {
+            BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+            if (bundleGroup == null) {
+                throw new IllegalArgumentException("Could not find BundleGroup[" + bundleGroupId
+                    + "] in order to remove roles");
+            }
+            bundleGroup.getRoles().size(); // load them in
+
+            for (Integer roleId : roleIds) {
+                Role doomedRole = entityManager.find(Role.class, roleId);
+                if (doomedRole == null) {
+                    throw new IllegalArgumentException("Tried to remove role[" + roleId + "] from BundleGroup["
+                        + bundleGroupId + "], but role was not found");
+                }
+                bundleGroup.removeRole(doomedRole);
+            }
+        }
+
+        return;
+    }
+
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds) {
         if ((roleIds != null) && (roleIds.length > 0)) {
@@ -751,10 +871,36 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return;
     }
 
+    @Override
     public Role getRole(Subject subject, int roleId) {
         return entityManager.find(Role.class, roleId);
     }
 
+    @Override
+    @RequiredPermission(Permission.MANAGE_SECURITY)
+    public void addRolesToBundleGroup(Subject subject, int bundleGroupId, int[] roleIds) {
+        if ((roleIds != null) && (roleIds.length > 0)) {
+            BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+            if (bundleGroup == null) {
+                throw new IllegalArgumentException("Could not find bundleGroup[" + bundleGroupId
+                    + "] in order to add roles");
+            }
+            bundleGroup.getRoles().size(); // load them in
+
+            for (Integer roleId : roleIds) {
+                Role role = entityManager.find(Role.class, roleId);
+                if (role == null) {
+                    throw new IllegalArgumentException("Tried to add role[" + roleId + "] to bundleGroup["
+                        + bundleGroupId + "], but role was not found");
+                }
+                bundleGroup.addRole(role);
+            }
+        }
+
+        return;
+    }
+
+    @Override
     @RequiredPermission(Permission.MANAGE_SECURITY)
     public void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds) {
         if ((roleIds != null) && (roleIds.length > 0)) {
@@ -777,6 +923,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         return;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<Role> findRolesByCriteria(Subject subject, RoleCriteria criteria) {
 
@@ -788,7 +935,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         CriteriaQueryRunner<Role> queryRunner = new CriteriaQueryRunner<Role>(criteria, generator, entityManager);
-        @SuppressWarnings({ "UnnecessaryLocalVariable" })
+
         PageList<Role> roles = queryRunner.execute();
 
         return roles;

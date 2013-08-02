@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -64,8 +65,9 @@ public class BundleCriteria extends TaggedCriteria {
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("bundleTypeName", "bundleType.name like ?");
         filterOverrides.put("bundleGroupIds", "" //
-            + "id IN ( SELECT bg.bundle.id " //
-            + "          FROM BundleGroup bg " //
+            + "id IN ( SELECT innerbundle.id " //
+            + "          FROM Bundle innerbundle " //
+            + "          JOIN innerbundle.bundleGroups bg"
             + "         WHERE bg.id IN ( ? ) )");
         filterOverrides.put("destinationIds", "" //
             + "id IN ( SELECT bd.bundle.id " //
@@ -103,15 +105,8 @@ public class BundleCriteria extends TaggedCriteria {
         this.filterDescription = filterDescription;
     }
 
-    /** Convenience routine calls addFilterBundleGroupIds */
-    public void addFilterBundleGroupId(Integer filterBundleGroupId) {
-        List<Integer> ids = new ArrayList<Integer>(1);
-        ids.add(filterBundleGroupId);
-        this.addFilterBundleGroupIds(ids);
-    }
-
-    public void addFilterBundleGroupIds(List<Integer> filterBundleGroupIds) {
-        this.filterBundleGroupIds = filterBundleGroupIds;
+    public void addFilterBundleGroupIds(Integer... filterBundleGroupIds) {
+        this.filterBundleGroupIds = CriteriaUtils.getListIgnoringNulls(filterBundleGroupIds);
     }
 
     /** Convenience routine calls addFilterDestinationIds */

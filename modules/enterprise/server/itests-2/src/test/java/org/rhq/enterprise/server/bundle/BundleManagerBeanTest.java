@@ -39,11 +39,14 @@ import org.hibernate.LazyInitializationException;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
@@ -65,8 +68,11 @@ import org.rhq.core.domain.content.Repo;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.criteria.RoleCriteria;
+import org.rhq.core.domain.criteria.SubjectCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -78,6 +84,7 @@ import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeploymentProperties;
+import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
@@ -98,10 +105,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private static final boolean TESTS_ENABLED = true;
 
-    private static final String TEST_PREFIX = "bundletest";
+    private static final String TEST_PREFIX = BundleManagerBeanTest.class.getSimpleName();
     private static final String TEST_BUNDLE_DESTBASEDIR_PROP = TEST_PREFIX + ".destBaseDirProp";
     private static final String TEST_BUNDLE_DESTBASEDIR_PROP_VALUE = TEST_PREFIX + "/destBaseDir";
+    private static final String TEST_BUNDLE_GROUP_NAME = TEST_PREFIX + ".bundleGroup";
     private static final String TEST_DESTBASEDIR_NAME = TEST_PREFIX + ".destBaseDirName";
+    private static final String TEST_ROLE_NAME = TEST_PREFIX + ".role";
+    private static final String TEST_USER_NAME = TEST_PREFIX + ".user";
 
     private BundleManagerLocal bundleManager;
     private ResourceManagerLocal resourceManager;
@@ -143,6 +153,21 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private void cleanupDatabase() {
         try {
+            RoleCriteria roleCriteria = new RoleCriteria();
+            roleCriteria.addFilterName(TEST_ROLE_NAME);
+            List<Role> testRoles = LookupUtil.getRoleManager().findRolesByCriteria(overlord, roleCriteria);
+            for (Role testRole : testRoles) {
+                LookupUtil.getRoleManager().deleteRoles(overlord, new int[] { testRole.getId() });
+            }
+
+            SubjectCriteria subjectCriteria = new SubjectCriteria();
+            subjectCriteria.addFilterName(TEST_USER_NAME);
+            List<Subject> testSubjects = LookupUtil.getSubjectManager().findSubjectsByCriteria(overlord,
+                subjectCriteria);
+            for (Subject testSubject : testSubjects) {
+                LookupUtil.getSubjectManager().deleteSubjects(overlord, new int[] { testSubject.getId() });
+            }
+
             getTransactionManager().begin();
 
             Query q;
@@ -230,6 +255,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 em.remove(em.getReference(Repo.class, ((Repo) removeMe).getId()));
+            }
+
+            // remove bundle groups no longer referenced by bundles
+            q = em.createQuery("SELECT bg FROM BundleGroup bg WHERE bg.name LIKE '" + TEST_PREFIX + "%'");
+            doomed = q.getResultList();
+            for (Object removeMe : doomed) {
+                em.remove(em.getReference(BundleGroup.class, ((BundleGroup) removeMe).getId()));
             }
 
             // remove Resource Groups left over from test deployments freeing up test resources
@@ -755,7 +787,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testAddBundleFilesToDifferentBundles() throws Exception {
         // create a bundle type to use for both bundles.
         BundleType bt = createBundleType("one");
-        Bundle b1 = createBundle("one", bt);
+        Bundle b1 = createBundle(overlord, "one", bt, 0);
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         assertNotNull(bv1);
@@ -763,7 +795,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             null, "Bundle #1 File # 1".getBytes());
 
         // create a second bundle but create file of the same name as above
-        Bundle b2 = createBundle("two", bt);
+        Bundle b2 = createBundle(overlord, "two", bt, 0);
         assertNotNull(b2);
         BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
         assertNotNull(bv2);
@@ -860,9 +892,10 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         int size = brd.getBundleResourceDeploymentHistories().size();
         assertTrue(size > 0);
         String auditMessage = "BundleTest-Message";
-        bundleManager.addBundleResourceDeploymentHistoryInNewTrans(overlord, brd.getId(), new BundleResourceDeploymentHistory(
-            overlord.getName(), auditMessage, auditMessage, BundleResourceDeploymentHistory.Category.DEPLOY_STEP,
-            BundleResourceDeploymentHistory.Status.SUCCESS, auditMessage, auditMessage));
+        bundleManager.addBundleResourceDeploymentHistoryInNewTrans(overlord, brd.getId(),
+            new BundleResourceDeploymentHistory(overlord.getName(), auditMessage, auditMessage,
+                BundleResourceDeploymentHistory.Category.DEPLOY_STEP, BundleResourceDeploymentHistory.Status.SUCCESS,
+                auditMessage, auditMessage));
 
         brds = bundleManager.findBundleResourceDeploymentsByCriteria(overlord, c);
         assertEquals(1, brds.size());
@@ -1284,31 +1317,253 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertEquals(1, bundles.size());
     }
 
-    @Test(enabled = false)
-    public void testNoAuthz() throws Exception {
-        // create 
+    @Test(enabled = TESTS_ENABLED)
+    public void authzBundleGroupTest() throws Exception {
+        Subject subject = null;
+        Role role = null;
 
+        subject = createNewSubject(TEST_USER_NAME);
+        role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
+
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+
+        // deny bundle group create
+        try {
+            bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // allow bundle group create
+        addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
+        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+
+        // deny bundle group delete
+        removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
+        try {
+            bundleManager.deleteBundleGroups(subject, new int[] { bundleGroup.getId() });
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // deny global perm bundleGroup view
+        BundleGroupCriteria bgCriteria = new BundleGroupCriteria();
+        List<BundleGroup> bundleGroups = bundleManager.findBundleGroupsByCriteria(subject, bgCriteria);
+        assertNotNull(bundleGroups);
+        assert bundleGroups.isEmpty() : "Should not be able to see unassociated bundle group";
+
+        // allow global perm bundleGroup view
+        addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
+        bundleGroups = bundleManager.findBundleGroupsByCriteria(subject, bgCriteria);
+        assertNotNull(bundleGroups);
+        assertEquals("Should be able to see unassociated bundle group", 1, bundleGroups.size());
+
+        // allow bundle group delete        
+        bundleManager.deleteBundleGroups(subject, new int[] { bundleGroup.getId() });
+
+        // deny unassigned bundle create (no global create or view)
+        try {
+            createBundle(subject, TEST_PREFIX + ".bundle");
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // deny unassigned bundle create (no global view)
+        addRolePermissions(role, Permission.CREATE_BUNDLES);
+        try {
+            createBundle(subject, TEST_PREFIX + ".bundle");
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // deny unassigned bundle create (no global create)
+        removeRolePermissions(role, Permission.CREATE_BUNDLES);
+        addRolePermissions(role, Permission.VIEW_BUNDLES);
+        try {
+            createBundle(subject, TEST_PREFIX + ".bundle");
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // allow unassigned bundle create
+        addRolePermissions(role, Permission.CREATE_BUNDLES);
+        Bundle bundle = createBundle(subject, TEST_PREFIX + ".bundle");
+
+        // deny unassigned bundle view
+        removeRolePermissions(role, Permission.CREATE_BUNDLES, Permission.VIEW_BUNDLES);
+        BundleCriteria bCriteria = new BundleCriteria();
+        List<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, bCriteria);
+        assertNotNull(bundles);
+        assert bundles.isEmpty() : "Should not be able to see unassigned bundle";
+
+        // allow unassigned bundle view
+        addRolePermissions(role, Permission.VIEW_BUNDLES);
+        bundles = bundleManager.findBundlesByCriteria(subject, bCriteria);
+        assertNotNull(bundles);
+        assertEquals("Should be able to see unassigned bundle", 1, bundles.size());
+
+        // deny global perm bundle assign
+        bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+        try {
+            bundleManager.assignBundlesToBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // allow global perm bundle assign
+        addRolePermissions(role, Permission.CREATE_BUNDLES);
+        bundleManager.assignBundlesToBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+
+        // deny assigned, unassociated-bundle-group bundle view
+        removeRolePermissions(role, Permission.CREATE_BUNDLES, Permission.VIEW_BUNDLES);
+        bundles = bundleManager.findBundlesByCriteria(subject, bCriteria);
+        assertNotNull(bundles);
+        assert bundles.isEmpty() : "Should not be able to see assigned bundle";
+
+        // allow assigned, associated-bundle-group bundle view
+        addRoleBundleGroup(role, bundleGroup);
+        bundles = bundleManager.findBundlesByCriteria(subject, bCriteria);
+        assertNotNull(bundles);
+        assertEquals("Should be able to see assigned bundle", 1, bundles.size());
+
+        // check new bundle criteria options (no match)
+        bCriteria.addFilterBundleGroupIds(87678);
+        bCriteria.fetchBundleGroups(true);
+        bundles = bundleManager.findBundlesByCriteria(subject, bCriteria);
+        assertNotNull(bundles);
+        assert bundles.isEmpty() : "Should not have found anything";
+
+        // check new bundle criteria options (match)
+        bCriteria.addFilterBundleGroupIds(bundleGroup.getId());
+        bCriteria.fetchBundleGroups(true);
+        bundles = bundleManager.findBundlesByCriteria(subject, bCriteria);
+        assertNotNull(bundles);
+        assertEquals("Should be able to see assigned bundle", 1, bundles.size());
+        assertNotNull(bundles.get(0).getBundleGroups());
+        assertEquals("Should have fetched bundlegroup", 1, bundles.get(0).getBundleGroups().size());
+        assertEquals("Should have fetched expected bundlegroup", bundleGroup, bundles.get(0).getBundleGroups()
+            .iterator().next());
+
+        // check new bundle group criteria options (no match)
+        bgCriteria.addFilterId(87678);
+        bgCriteria.addFilterBundleIds(87678);
+        bgCriteria.addFilterRoleIds(87678);
+        bgCriteria.fetchBundles(true);
+        bgCriteria.fetchRoles(true);
+        bundleGroups = bundleManager.findBundleGroupsByCriteria(subject, bgCriteria);
+        assertNotNull(bundleGroups);
+        assert bundleGroups.isEmpty() : "Should not have found anything";
+
+        // check new bundle group criteria options (no match)
+        bgCriteria.addFilterId(bundleGroup.getId());
+        bundleGroups = bundleManager.findBundleGroupsByCriteria(subject, bgCriteria);
+        assertNotNull(bundleGroups);
+        assert bundleGroups.isEmpty() : "Should not have found anything";
+
+        // check new bundle group criteria options (no match)
+        bgCriteria.addFilterBundleIds(bundle.getId());
+        bundleGroups = bundleManager.findBundleGroupsByCriteria(subject, bgCriteria);
+        assertNotNull(bundleGroups);
+        assert bundleGroups.isEmpty() : "Should not have found anything";
+
+        // check new bundle group criteria options (match)
+        bgCriteria.addFilterRoleIds(role.getId());
+        bundleGroups = bundleManager.findBundleGroupsByCriteria(subject, bgCriteria);
+        assertNotNull(bundleGroups);
+        assertEquals("Should be able to see assigned bundle", 1, bundleGroups.size());
+        assertNotNull(bundleGroups.get(0).getBundles());
+        assertEquals("Should have fetched bundle in bundle group", 1, bundleGroups.get(0).getBundles().size());
+        assertEquals("Should have fetched bundle in bundle group", bundle, bundleGroups.get(0).getBundles()
+            .iterator().next());
+        assertNotNull(bundleGroups.get(0).getRoles());
+        assertEquals("Should have fetched role for bundle group", 1, bundleGroups.get(0).getRoles().size());
+        assertEquals("Should have fetched role for bundle group", role, bundleGroups.get(0).getRoles().iterator()
+            .next());
+    }
+
+    private Subject createNewSubject(String subjectName) throws Exception {
+
+        Subject newSubject = new Subject();
+        newSubject.setName(subjectName);
+        newSubject.setFactive(true);
+        newSubject.setFsystem(false);
+
+        return LookupUtil.getSubjectManager().createSubject(overlord, newSubject);
+    }
+
+    private Role createNewRoleForSubject(Subject subject, String roleName) throws Exception {
+        Role newRole = new Role(roleName);
+        newRole.setFsystem(false);
+        newRole.addSubject(subject);
+
+        return LookupUtil.getRoleManager().createRole(overlord, newRole);
+    }
+
+    private void addRolePermissions(Role role, Permission... permissions) throws Exception {
+
+        for (Permission p : permissions) {
+            role.getPermissions().add(p);
+        }
+        LookupUtil.getRoleManager().setPermissions(overlord, role.getId(), role.getPermissions());
+    }
+
+    private void removeRolePermissions(Role role, Permission... permissions) throws Exception {
+
+        for (Permission p : permissions) {
+            role.getPermissions().remove(p);
+        }
+        LookupUtil.getRoleManager().setPermissions(overlord, role.getId(), role.getPermissions());
+    }
+
+    private void addRoleBundleGroup(Role role, BundleGroup bundleGroup) throws Exception {
+
+        int[] ids = new int[1];
+        ids[0] = bundleGroup.getId();
+        LookupUtil.getRoleManager().addBundleGroupsToRole(overlord, role.getId(), ids);
+    }
+
+    private void removeRoleBundleGroup(Role role, BundleGroup bundleGroup) throws Exception {
+
+        int[] ids = new int[1];
+        ids[0] = bundleGroup.getId();
+        LookupUtil.getRoleManager().removeBundleGroupsFromRole(overlord, role.getId(), ids);
     }
 
     // helper methods
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
-        ResourceType rt = createResourceTypeForBundleType(name);
-        BundleType bt = bundleManager.createBundleType(overlord, fullName, rt.getId());
+        BundleType bt = null;
+        try {
+            bt = bundleManager.getBundleType(overlord, fullName);
+        } catch (Throwable t) {
+            ResourceType rt = createResourceTypeForBundleType(name);
+            bt = bundleManager.createBundleType(overlord, fullName, rt.getId());
 
-        assert bt.getId() > 0;
-        assert bt.getName().endsWith(fullName);
+            assert bt.getId() > 0;
+            assert bt.getName().endsWith(fullName);
+        }
+
         return bt;
     }
 
     private Bundle createBundle(String name) throws Exception {
-        BundleType bt = createBundleType(name);
-        return createBundle(name, bt);
+        return createBundle(overlord, name);
     }
 
-    private Bundle createBundle(String name, BundleType bt) throws Exception {
+    private Bundle createBundle(Subject subject, String name) throws Exception {
+        BundleType bt = createBundleType(name);
+        return createBundle(subject, name, bt, 0);
+    }
+
+    private Bundle createBundle(Subject subject, String name, BundleType bt, int bundleGroupId) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManager.createBundle(overlord, fullName, fullName + "-desc", bt.getId(), 0);
+        Bundle b = bundleManager.createBundle(subject, fullName, fullName + "-desc", bt.getId(), bundleGroupId);
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);
@@ -1316,6 +1571,11 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     private BundleVersion createBundleVersion(String name, String version, Bundle bundle) throws Exception {
+        return createBundleVersion(overlord, name, version, bundle);
+    }
+
+    private BundleVersion createBundleVersion(Subject subject, String name, String version, Bundle bundle)
+        throws Exception {
         final String fullName = TEST_PREFIX + "-bundleversion-" + version + "-" + name;
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         BundleVersion bv = bundleManager.createBundleVersion(overlord, bundle.getId(), fullName, fullName + "-desc",

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.EnumSet;
 import java.util.Random;
@@ -135,6 +136,18 @@ public class SessionTestHelper {
         em.flush();
 
         return newRole;
+    }
+
+    public static void addRolePermissions(EntityManager em, Role role, Permission... permissions) {
+        role.getPermissions().addAll(Arrays.asList(permissions));
+        em.merge(role);
+        em.flush();
+    }
+
+    public static void removeRolePermissions(EntityManager em, Role role, Permission... permissions) {
+        role.getPermissions().removeAll(Arrays.asList(permissions));
+        em.merge(role);
+        em.flush();
     }
 
     public static ResourceType createNewResourceType(EntityManager em) {

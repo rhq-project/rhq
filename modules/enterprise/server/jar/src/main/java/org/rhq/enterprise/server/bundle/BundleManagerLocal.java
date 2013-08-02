@@ -68,9 +68,12 @@ public interface BundleManagerLocal extends BundleManagerRemote {
 
     /**
      * Internal use only, and test entry point.
-     * </p>
-     * This method performs NO AUTHZ!
-     * </p>
+     * <pre>
+     * Required Permissions (same as createInitialBundleVersionXxx): Either:
+     * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
+     * </pre>
      * @param subject user that must have proper permissions
      * @param name not null or empty
      * @param description optional long description of the bundle
@@ -87,9 +90,12 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * Convenience method that combines {@link #createBundle(Subject, String, int)} and {@link #createBundleVersion(Subject, int, String, String, String)}.
      * This will first check to see if a bundle with the given type/name exists - if it doesn't, it will be created. If it does, it will be reused.
      * This will then create the bundle version that will be associated with the bundle that was created or found.
-     * </p>
-     * This method performs NO AUTHZ!
-     * </p>
+     * <pre>
+     * Required Permissions (same as createInitialBundleVersionXxx): Either:
+     * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
+     * </pre>
      * @param subject user that must have proper permissions
      * @param bundleName name of the bundle to use (if not found, it will be created)
      * @param bundleDescription optional long description of the bundle

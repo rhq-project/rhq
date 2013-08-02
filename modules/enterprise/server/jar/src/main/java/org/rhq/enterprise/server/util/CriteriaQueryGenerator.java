@@ -124,10 +124,9 @@ public final class CriteriaQueryGenerator {
         } else if (type == AuthorizationTokenType.GROUP) {
             defaultFragment = "group";
             setAuthorizationResourceFragment(type, defaultFragment, subjectId);
-        } else if (type == AuthorizationTokenType.BUNDLE) {
-            setAuthorizationBundleFragment(subjectId);
-        } else if (type == AuthorizationTokenType.BUNDLE_GROUP) {
-            setAuthorizationBundleGroupFragment(subjectId);
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not yet support generating resource queries for '" + type + "' token types");
         }
     }
 
@@ -237,10 +236,31 @@ public final class CriteriaQueryGenerator {
         return customAuthzFragment;
     }
 
-    public void setAuthorizationBundleFragment(int subjectId) {
+    public void setAuthorizationBundleFragment(AuthorizationTokenType type, int subjectId) {
+        if (type == AuthorizationTokenType.BUNDLE) {
+            setAuthorizationBundleFragment(type, subjectId, "bundle");
+        } else if (type == AuthorizationTokenType.BUNDLE_GROUP) {
+            setAuthorizationBundleFragment(type, subjectId, "bundleGroup");
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not yet support generating bundle queries for '" + type + "' token types");
+        }
+    }
+
+    public void setAuthorizationBundleFragment(AuthorizationTokenType type, int subjectId, String fragment) {
+        if (type == AuthorizationTokenType.BUNDLE) {
+            setAuthorizationBundleFragment(subjectId, fragment);
+        } else if (type == AuthorizationTokenType.BUNDLE_GROUP) {
+            setAuthorizationBundleGroupFragment(subjectId, fragment);
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not yet support generating bundle queries for '" + type + "' token types");
+        }
+    }
+
+    private void setAuthorizationBundleFragment(int subjectId, String fragment) {
         this.authorizationSubjectId = subjectId;
 
-        String fragment = "bundle";
         String customAuthzFragment = "" //
             + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //
@@ -271,8 +291,9 @@ public final class CriteriaQueryGenerator {
         }
     }
 
-    public void setAuthorizationBundleGroupFragment(int subjectId) {
-        String fragment = "bundleGroup";
+    private void setAuthorizationBundleGroupFragment(int subjectId, String fragment) {
+        this.authorizationSubjectId = subjectId;
+
         String customAuthzFragment = "" //
             + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
             + "                    FROM %alias% innerAlias " + NL //

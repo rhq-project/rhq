@@ -18,7 +18,6 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -26,6 +25,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.BundleGroup;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -39,9 +39,7 @@ public class BundleGroupCriteria extends Criteria {
 
     private String filterName;
     private String filterDescription;
-    private Integer filterBundleId;
     private List<Integer> filterBundleIds; // requires overrides
-    private Integer filterRoleId;
     private List<Integer> filterRoleIds; // requires overrides
 
     private boolean fetchBundles;
@@ -52,12 +50,14 @@ public class BundleGroupCriteria extends Criteria {
 
     public BundleGroupCriteria() {
         filterOverrides.put("bundleIds", "" //
-            + "id IN ( SELECT b.id " //
+            + "id IN ( SELECT bg.id " //
             + "          FROM Bundle b " //
+            + "          JOIN b.bundleGroups bg"
             + "         WHERE b.id IN ( ? ) )");
         filterOverrides.put("roleIds", "" //
-            + "id IN ( SELECT r.id " //
+            + "id IN ( SELECT bg.id " //
             + "          FROM Role r " //
+            + "          JOIN r.bundleGroups bg"
             + "         WHERE r.id IN ( ? ) )");
     }
 
@@ -74,15 +74,12 @@ public class BundleGroupCriteria extends Criteria {
         this.filterDescription = filterDescription;
     }
 
-    /** Convenience routine calls addFilterBundleVersionIds */
-    public void addFilterBundleId(Integer filterBundleId) {
-        List<Integer> ids = new ArrayList<Integer>(1);
-        ids.add(filterBundleId);
-        this.addFilterBundleIds(ids);
+    public void addFilterBundleIds(Integer... filterBundleIds) {
+        this.filterBundleIds = CriteriaUtils.getListIgnoringNulls(filterBundleIds);
     }
 
-    public void addFilterBundleIds(List<Integer> filterBundleIds) {
-        this.filterBundleIds = filterBundleIds;
+    public void addFilterRoleIds(Integer... filterRoleIds) {
+        this.filterRoleIds = CriteriaUtils.getListIgnoringNulls(filterRoleIds);
     }
 
     public void fetchBundles(boolean fetchBundles) {

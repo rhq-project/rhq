@@ -130,6 +130,15 @@ public interface RoleManagerRemote {
     void setAssignedSubjectRoles(Subject subject, int subjectId, int[] roleIds);
 
     /**
+     * Adds the given bundle groups to the given role.
+     *
+     * @param subject The logged in user's subject.
+     * @param roleId
+     * @param bundleGroupIds
+     */
+    void addBundleGroupsToRole(Subject subject, int roleId, int[] bundleGroupIds);
+
+    /**
      * Adds the given resource groups to the given role.
      *
      * @param subject The logged in user's subject.
@@ -138,9 +147,22 @@ public interface RoleManagerRemote {
      */
     void addResourceGroupsToRole(Subject subject, int roleId, int[] pendingGroupIds);
 
+    void addRolesToBundleGroup(Subject subject, int bundleGroupId, int[] roleIds);
+
     void addRolesToResourceGroup(Subject subject, int groupId, int[] roleIds);
 
+    void setAssignedBundleGroups(Subject subject, int roleId, int[] bundleGroupIds);
+
     void setAssignedResourceGroups(Subject subject, int roleId, int[] groupIds);
+
+    /**
+     * Removes the given bundle groups from the given role.
+     *
+     * @param subject user attempting to remove the groups from the role
+     * @param roleId
+     * @param bundleGroupIds
+     */
+    void removeBundleGroupsFromRole(Subject subject, int roleId, int[] bundleGroupIds);
 
     /**
      * Removes the given resource groups from the given role.
@@ -150,6 +172,8 @@ public interface RoleManagerRemote {
      * @param groupIds
      */
     void removeResourceGroupsFromRole(Subject subject, int roleId, int[] groupIds);
+
+    void removeRolesFromBundleGroup(Subject subject, int bundleGroupId, int[] roleIds);
 
     void removeRolesFromResourceGroup(Subject subject, int groupId, int[] roleIds);
 

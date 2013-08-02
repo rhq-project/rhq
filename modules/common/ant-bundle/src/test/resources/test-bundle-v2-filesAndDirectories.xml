@@ -32,7 +32,7 @@
                 type="integer"/>
 
         <rhq:deployment-unit name="appserver" preinstallTarget="preinstall" postinstallTarget="postinstall"
-                             compliance="commonDirectories"> <!-- this is the only difference with test-bundle-v2.xml -->
+                             compliance="filesAndDirectories"> <!-- this is the only difference with test-bundle-v2.xml -->
             <rhq:system-service name="foo" scriptFile="foo-script"
                          configFile="foo-config" overwriteScript="true"
                          startLevels="3,4,5" startPriority="80" stopPriority="20" root="root"/>

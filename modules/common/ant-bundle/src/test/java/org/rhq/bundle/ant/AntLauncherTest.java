@@ -303,7 +303,7 @@ public class AntLauncherTest {
     }
 
     public void testUpgradeNoManageRootDir() throws Exception {
-        testUpgradeNoManageRootDir(true, "test-bundle-v2-commonSubdirectories.xml");
+        testUpgradeNoManageRootDir(true, "test-bundle-v2-filesAndDirectories.xml");
     }
 
     private void testUpgradeNoManageRootDir(boolean validate, String recipeFile) throws Exception {

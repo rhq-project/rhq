@@ -386,10 +386,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         snapshotFailureCondition.setOption(OperationRequestStatus.FAILURE.name());
         newTemplate.addCondition(snapshotFailureCondition);
 
-        AlertDampening dampener = new AlertDampening(AlertDampening.Category.PARTIAL_COUNT);
-        dampener.setPeriod(15);
-        dampener.setPeriodUnits(TimeUnits.MINUTES);
-        dampener.setValue(10);
+        AlertDampening dampener = new AlertDampening(AlertDampening.Category.NONE);
         newTemplate.setAlertDampening(dampener);
 
         int newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,

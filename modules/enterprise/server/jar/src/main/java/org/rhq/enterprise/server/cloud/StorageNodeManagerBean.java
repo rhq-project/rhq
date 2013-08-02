@@ -34,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -686,8 +687,11 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 resourceIdsWithAlertDefinitions.add(resource.getId());
             }
 
-            for (Resource child : resource.getChildResources()) {
-                unvisitedResources.add(child);
+            Set<Resource> childResources = resource.getChildResources();
+            if (childResources != null) {
+                for (Resource child : childResources) {
+                    unvisitedResources.add(child);
+                }
             }
         }
 

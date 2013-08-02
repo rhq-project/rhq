@@ -24,18 +24,21 @@
 
     <plugin-configuration>
       <c:simple-property name="connectorAddress" displayName="Manager URL" default="service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi"
-                         description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
+                         description="The RMI URL with which to connect to the RHQ Storage Node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
       <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
-                         description="The type used to establish the EMS connection to the Cassandra node."/>
+                         description="The type used to establish the EMS connection to the RHQ Storage Node."/>
       <c:simple-property name="username" default="rhqadmin" required="true" description="The login username"/>
       <c:simple-property name="password" default="rhqadmin" required="true" type="password" description="The login password"/>
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
       <c:simple-property name="yamlConfiguration" displayName="YAML Configuration File" description="YAML Configuration File"/>
-      <c:simple-property name="nativeTransportPort" description="The port on which Cassandra listens for CQL client connections." default="9042" type="integer"/>
-      <c:simple-property name="jmxPort" description="The JMX port for Cassandra" default="7299" type="integer" readOnly="true"/>
-      <c:simple-property name="host" description="The host on which cassandra listens to CQL client connections" default="localhost"/>
+      <c:simple-property name="nativeTransportPort" default="9142" type="integer" readOnly="true"
+                         description="The port on which the Storage Node listens for CQL client connections."/>
+      <c:simple-property name="storagePort" default="7100" type="integer" readOnly="true"
+                         description="The port on which the Storage Node listens for internode communication."/>
+      <c:simple-property name="jmxPort" description="The JMX port for the RHQ Storage Node" default="7299" type="integer" readOnly="true"/>
+      <c:simple-property name="host" description="The host on which the RHQ Storage Node listens to CQL client connections" default="localhost"/>
       <c:simple-property name="clusterName" description="Cluster name" default="localhost"/>
-      <c:simple-property name="authenticator" required="true" default="org.apache.cassandra.auth.AllowAllAuthenticator" description="Cassandra client authenticator">
+      <c:simple-property name="authenticator" required="true" default="org.apache.cassandra.auth.AllowAllAuthenticator" description="RHQ Storage Node client authenticator">
         <c:property-options>
           <c:option name="org.apache.cassandra.auth.AllowAllAuthenticator" value="org.apache.cassandra.auth.AllowAllAuthenticator"/>
           <c:option name="org.apache.cassandra.auth.PasswordAuthenticator" value="org.apache.cassandra.auth.PasswordAuthenticator"/>

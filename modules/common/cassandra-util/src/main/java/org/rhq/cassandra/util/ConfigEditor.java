@@ -80,6 +80,18 @@ public class ConfigEditor {
         return backupFile;
     }
 
+    public String getClusterName() {
+        return (String) config.get("cluster_name");
+    }
+
+    public String getListenAddress() {
+        return (String) config.get("listen_address");
+    }
+
+    public String getAuthenticator() {
+        return (String) config.get("authenticator");
+    }
+
     public String getCommitLogDirectory() {
         return (String) config.get("commitlog_directory");
     }

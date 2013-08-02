@@ -133,11 +133,11 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         });
         fields.add(field);
         
-        fields.add(FIELD_JMX_PORT.getListGridField("90"));
+//        fields.add(FIELD_JMX_PORT.getListGridField("90"));
 //        ListGridField cqlField = FIELD_CQL_PORT.getListGridField("90");
 //        cqlField.setHidden(true);
 //        fields.add(cqlField);
-//        fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
+        fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
 
         ListGridField createdTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(createdTimeField);

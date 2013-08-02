@@ -35,6 +35,7 @@ import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -184,7 +185,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new StorageNodeDetailView(id);
+        HTMLFlow header = new HTMLFlow("id = " + id);
+        setHeader(header);
+        return new StorageNodeDetailView(id, header);
     }
 
     private void showCommonActions() {

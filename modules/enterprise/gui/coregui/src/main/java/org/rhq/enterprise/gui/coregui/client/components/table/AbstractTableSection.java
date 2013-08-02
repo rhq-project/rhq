@@ -34,6 +34,8 @@ import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -46,8 +48,9 @@ import org.rhq.enterprise.gui.coregui.client.components.buttons.BackButton;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * Provides the typical table view with the additional ability of traversing to a "details" view
@@ -65,6 +68,7 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
 
     private VLayout detailsHolder;
     private Canvas detailsView;
+    private Canvas header;
     private String basePath;
     private boolean escapeHtmlInDetailsLinkColumn;
     private boolean initialDisplay;
@@ -388,8 +392,15 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
             // Only add the "Back to List" button if the details are definitely not editable, because if they are
             // editable, a Cancel button should already be provided by the details view.
             BackButton backButton = new BackButton(MSG.view_tableSection_backButton(), basePath);
-            detailsHolder.addMember(backButton);
-            VLayout verticalSpacer = new EnhancedVLayout();
+            HLayout hlayout = new EnhancedHLayout();
+            hlayout.addMember(backButton);
+            if (header != null) {
+                header.setWidth100();
+                header.setAlign(com.smartgwt.client.types.Alignment.CENTER);
+                hlayout.addMember(header);
+            }
+            detailsHolder.addMember(hlayout);
+            LayoutSpacer verticalSpacer = new LayoutSpacer();
             verticalSpacer.setHeight(8);
             detailsHolder.addMember(verticalSpacer);
         }
@@ -430,6 +441,10 @@ public abstract class AbstractTableSection<DS extends RPCDataSource, ID> extends
                 contents.animateShow(AnimationEffect.WIPE);
             }
         }
+    }
+    
+    public void setHeader(Canvas header) {
+        this.header = header;
     }
 
 }

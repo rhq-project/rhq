@@ -83,13 +83,15 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private SectionStackSection detailsAndLoadSection;
     private StaticTextItem alertsItem;
     private int expandedSection = -1;
+    private HTMLFlow header;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
 
-    public StorageNodeDetailView(int storageNodeId) {
+    public StorageNodeDetailView(int storageNodeId, HTMLFlow header) {
         super();
         this.storageNodeId = storageNodeId;
+        this.header = header;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
@@ -102,10 +104,10 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 //        sectionStack.setOverflow(Overflow.VISIBLE);
     }
     
-    public StorageNodeDetailView(int storageNodeId, int expandedSection) {
-        this(storageNodeId);
-        this.expandedSection = expandedSection;
-    }
+//    public StorageNodeDetailView(int storageNodeId, int expandedSection) {
+//        this(storageNodeId);
+//        this.expandedSection = expandedSection;
+//    }
 
     @Override
     protected void onInit() {
@@ -122,6 +124,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         initSectionCount = SECTION_COUNT;
                     }
                     final StorageNode node = storageNodes.get(0);
+                    header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
+                        + node.getAddress() + ")</div>");
                     Resource res = node.getResource();
                     if (res != null) {
                         fetchResourceComposite(res.getId());
@@ -254,15 +258,15 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         final StaticTextItem nameItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         nameItem.setValue("<b>" + storageNode.getAddress() + "</b>");
 
+        final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
+        cqlPortItem.setValue(storageNode.getCqlPort());
+        
         final StaticTextItem jmxPortItem = new StaticTextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
         jmxPortItem.setValue(storageNode.getJmxPort());
 
 //        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",
 //            MSG.view_adminTopology_storageNode_jmxConnectionUrl());
 //        jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
-
-        final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
-        cqlPortItem.setValue(storageNode.getCqlPort());
 
         final StaticTextItem operationModeItem = new StaticTextItem(FIELD_OPERATION_MODE.propertyName(), MSG.view_adminTopology_serverDetail_operationMode());
         operationModeItem.setValue(storageNode.getOperationMode());
@@ -300,7 +304,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         diskStatusItem.setValue("No action needed");
         
         List<FormItem> formItems = new ArrayList<FormItem>(6);
-        formItems.addAll(Arrays.asList(nameItem, resourceItem, jmxPortItem, cqlPortItem/*, jmxConnectionUrlItem*/));
+        formItems.addAll(Arrays.asList(nameItem, resourceItem,cqlPortItem, jmxPortItem/*, jmxConnectionUrlItem*/));
         if (!CoreGUI.isDebugMode()) formItems.add(operationModeItem); // debug mode fails if this item is added
         formItems.addAll(Arrays.asList(installationDateItem, lastUpdateItem, alertsItem, memoryStatusItem, diskStatusItem));
         form.setItems(formItems.toArray(new FormItem[]{}));
@@ -355,8 +359,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         initSectionCount++;
     }
     
-    
-
     @Override
     public void renderView(ViewPath viewPath) {
         if (viewPath.toString().endsWith("/Config")) {

@@ -35,6 +35,8 @@ import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.StorageNodeLoadCompositeDatasource;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
@@ -112,20 +114,9 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         refreshButton.setExtraSpace(5);
         toolStrip.addMember(refreshButton);
 
-        if (parentGrid != null && record != null) {
-            IButton closeButton = new IButton(MSG.common_button_close());
-            closeButton.addClickHandler(new ClickHandler() {
-                public void onClick(ClickEvent event) {
-                    parentGrid.collapseRecord(record);
-                }
-            });
-            toolStrip.addMember(closeButton);
-            
-
-        }
         loadGrid.setDataSource(datasource);
         addMember(loadGrid);
-//        addMember(toolStrip);
 
     }
+
 }

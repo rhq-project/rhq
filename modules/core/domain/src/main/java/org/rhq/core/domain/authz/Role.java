@@ -38,6 +38,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
 import javax.persistence.NamedQueries;
 import javax.persistence.NamedQuery;
@@ -94,7 +95,7 @@ public class Role implements Serializable {
 
     public static final String QUERY_DYNAMIC_CONFIG_VALUES = "Role.dynamicConfigValues";
 
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     @Column(name = "ID", nullable = false)
     @GeneratedValue(strategy = GenerationType.AUTO, generator = "RHQ_ROLE_ID_SEQ")
@@ -129,7 +130,8 @@ public class Role implements Serializable {
     @Cascade({ org.hibernate.annotations.CascadeType.ALL })
     private Set<Permission> permissions = new HashSet<Permission>();
 
-    @ManyToMany(mappedBy = "roles")
+    @JoinTable(name = "RHQ_ROLE_BUNDLE_GROUP_MAP", joinColumns = { @JoinColumn(name = "ROLE_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_GROUP_ID") })
+    @ManyToMany
     private Set<BundleGroup> bundleGroups = new HashSet<BundleGroup>();
 
     public Role() {
@@ -277,9 +279,16 @@ public class Role implements Serializable {
     }
 
     public Set<BundleGroup> getBundleGroups() {
+        if (this.bundleGroups == null) {
+            this.bundleGroups = new HashSet<BundleGroup>();
+        }
         return bundleGroups;
     }
 
+    /**
+     * This also updates the inverse relations (add this role to bundle groups)
+     * @param bundleGroups
+     */
     public void setBundleGroups(Set<BundleGroup> bundleGroups) {
         if (bundleGroups == null) {
             this.bundleGroups = new HashSet<BundleGroup>();
@@ -292,22 +301,22 @@ public class Role implements Serializable {
         }
     }
 
+    /**
+     * This also updates the inverse relation (add this role to bundle group)
+     * @param bundleGroup
+     */
     public void addBundleGroup(BundleGroup bundleGroup) {
-        if (this.bundleGroups == null) {
-            this.bundleGroups = new HashSet<BundleGroup>();
-        }
-
+        getBundleGroups().add(bundleGroup);
         bundleGroup.addRole(this);
-        this.bundleGroups.add(bundleGroup);
     }
 
+    /**
+     * This also updates the inverse relation (remove this role from bundle group)
+     * @param bundleGroup
+     */
     public void removeBundleGroup(BundleGroup bundleGroup) {
-        if (this.bundleGroups == null) {
-            this.bundleGroups = new HashSet<BundleGroup>();
-        }
-
+        getBundleGroups().remove(bundleGroup);
         bundleGroup.removeRole(this);
-        this.bundleGroups.remove(bundleGroup);
     }
 
     public Set<ResourceGroup> getResourceGroups() {

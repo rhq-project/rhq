@@ -841,7 +841,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                     throw new IllegalArgumentException("Tried to remove role[" + roleId + "] from BundleGroup["
                         + bundleGroupId + "], but role was not found");
                 }
-                bundleGroup.removeRole(doomedRole);
+                doomedRole.removeBundleGroup(bundleGroup);
             }
         }
 
@@ -893,7 +893,7 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
                     throw new IllegalArgumentException("Tried to add role[" + roleId + "] to bundleGroup["
                         + bundleGroupId + "], but role was not found");
                 }
-                bundleGroup.addRole(role);
+                role.addBundleGroup(bundleGroup);
             }
         }
 

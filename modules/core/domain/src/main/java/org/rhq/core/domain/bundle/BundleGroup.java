@@ -26,8 +26,10 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -74,11 +76,10 @@ public class BundleGroup implements Serializable {
 
     @JoinTable(name = "RHQ_BUNDLE_GROUP_BUNDLE_MAP", joinColumns = { @JoinColumn(name = "BUNDLE_GROUP_ID") }, inverseJoinColumns = { @JoinColumn(name = "BUNDLE_ID") })
     @ManyToMany
-    private Set<Bundle> bundles = new HashSet<Bundle>();
+    private Set<Bundle> bundles;
 
-    @JoinTable(name = "RHQ_ROLE_BUNDLE_GROUP_MAP", joinColumns = { @JoinColumn(name = "BUNDLE_GROUP_ID") }, inverseJoinColumns = { @JoinColumn(name = "ROLE_ID") })
-    @ManyToMany
-    private Set<Role> roles = new HashSet<Role>();
+    @ManyToMany(mappedBy = "bundleGroups", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
+    private Set<Role> roles;
 
     public BundleGroup() {
         // for JPA use
@@ -119,12 +120,41 @@ public class BundleGroup implements Serializable {
         return bundles;
     }
 
+    /**
+     * This also updates the inverse relation (add this bundle group to bundle)
+     * @param bundle
+     */
     public void addBundle(Bundle bundle) {
         getBundles().add(bundle);
+        bundle.addBundleGroup(this);
     }
 
-    public void removeBundle(Bundle bundle) {
-        getBundles().remove(bundle);
+    /**
+     * This also updates the inverse relation (remove this bundle group from bundle)
+     * @param bundle
+     */
+    public boolean removeBundle(Bundle bundle) {
+        boolean result = getBundles().remove(bundle);
+        bundle.removeBundleGroup(this);
+        return result;
+    }
+
+    /**
+     * This also updates the inverse relations
+     * @param bundle
+     */
+    public void setBundles(Set<Bundle> bundles) {
+        for (Bundle bundle : getBundles()) {
+            bundle.removeBundleGroup(this);
+        }
+
+        this.bundles.clear();
+
+        if (null != bundles) {
+            for (Bundle bundle : bundles) {
+                addBundle(bundle);
+            }
+        }
     }
 
     public Set<Role> getRoles() {
@@ -134,12 +164,20 @@ public class BundleGroup implements Serializable {
         return roles;
     }
 
+    /**
+     * This *does not* update the inverse relation. You may want {@link Role#addBundleGroup(BundleGroup)}
+     * @param role
+     */
     public void addRole(Role role) {
         getRoles().add(role);
     }
 
-    public void removeRole(Role role) {
-        getRoles().remove(role);
+    /**
+     * This *does not* update the inverse relation. You may want {@link Role#removeBundleGroup(BundleGroup)}
+     * @param role
+     */
+    public boolean removeRole(Role role) {
+        return getRoles().remove(role);
     }
 
     public Long getCtime() {

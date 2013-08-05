@@ -259,12 +259,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         Bundle bundle = new Bundle(name, bundleType, repo, packageType);
         bundle.setDescription(description);
         bundle.setPackageType(packageType);
-        if (null != bundleGroup) {
-            bundle.addBundleGroup(bundleGroup);
-        }
 
         log.info("Creating bundle: " + bundle);
         entityManager.persist(bundle);
+
+        if (null != bundleGroup) {
+            bundleGroup.addBundle(bundle);
+        }
 
         return bundle;
     }
@@ -510,6 +511,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == bundle) {
             throw new IllegalArgumentException("Invalid bundleId: " + bundleId);
         }
+
+        checkCreateBundleVersionAuthz(subject, bundleId);
 
         // parse the recipe (validation occurs here) and get the config def and list of files
         BundleType bundleType = bundle.getBundleType();
@@ -1784,7 +1787,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
             generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
-                subject.getId());
+                subject.getId(), null);
         }
 
         CriteriaQueryRunner<BundleWithLatestVersionComposite> queryRunner = new CriteriaQueryRunner<BundleWithLatestVersionComposite>(
@@ -1822,6 +1825,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         for (BundleVersion bv : bvs) {
             bundleManager.deleteBundleVersion(subject, bv.getId(), false);
             entityManager.flush();
+        }
+
+        // remove bundle from relevant any assigned bundle groups
+        for (BundleGroup bg : bundle.getBundleGroups()) {
+            bg.removeBundle(bundle);
         }
 
         // we need to whack the Repo once the Bundle no longer refers to it
@@ -2004,7 +2012,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
             // remove from any roles
             for (Role r : bundleGroup.getRoles()) {
-                bundleGroup.removeRole(r);
+                r.removeBundleGroup(bundleGroup);
             }
 
             bundleGroup = entityManager.merge(bundleGroup);
@@ -2036,7 +2044,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("BundleGroup does not exist for bundleGroupId [" + bundleGroupId + "]");
         }
 
-        checkAssignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
+        checkUnassignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
 
         for (int bundleId : bundleIds) {
             Bundle bundle = entityManager.find(Bundle.class, bundleId);
@@ -2074,7 +2082,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         if (hasGlobalCreateBundles) {
-            if (authorizationManager.hasBundleGroupPermission(subject, Permission.VIEW_BUNDLES_IN_GROUP, bundleGroupId)) {
+            if (authorizationManager.canViewBundleGroup(subject, bundleGroupId)) {
                 return;
             }
         } else {
@@ -2116,7 +2124,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         if (hasGlobalCreateBundles) {
-            if (authorizationManager.hasBundlePermission(subject, Permission.VIEW_BUNDLES_IN_GROUP, bundleId)) {
+            if (authorizationManager.canViewBundle(subject, bundleId)) {
                 return;
             }
         } else {
@@ -2173,9 +2181,61 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 throw new IllegalArgumentException("Invalid bundleId: [" + bundleId + "]");
             }
 
-            if (!authorizationManager.hasBundlePermission(subject, Permission.VIEW_BUNDLES_IN_GROUP, bundleId)) {
+            if (!authorizationManager.canViewBundle(subject, bundleId)) {
                 String msg = "Subject [" + subject.getName()
                     + "] requires either Global.VIEW_BUNDLES or BundleGroup.VIEW_BUNDLES_IN_GROUP to assign bundle ["
+                    + bundleId + "] to bundle group [" + bundleGroupId + "]";
+                throw new PermissionException(msg);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * Requires VIEW permission for the relevant bundles and either:
+     * - Global.DELETE_BUNDLE
+     * - BundleGroup.DELETE_BUNDLES_FROM_GROUP or BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP for the relevant bundle group
+     * 
+     * @param subject
+     * @param bundleGroupId an existing bundle group
+     * @param bundleIds existing bundles
+     * @throws PermissionException
+     */
+    private void checkUnassignBundleGroupAuthz(Subject subject, int bundleGroupId, int[] bundleIds)
+        throws PermissionException {
+
+        Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalDeleteBundles = globalPerms.contains(Permission.DELETE_BUNDLES);
+        boolean hasGlobalViewBundles = globalPerms.contains(Permission.VIEW_BUNDLES);
+
+        if (hasGlobalDeleteBundles && hasGlobalViewBundles) {
+            return;
+        }
+
+        boolean hasBundleGroupDelete = hasGlobalDeleteBundles
+            || authorizationManager.hasBundleGroupPermission(subject, Permission.DELETE_BUNDLES_FROM_GROUP,
+                bundleGroupId);
+        boolean hasBundleGroupUnassign = hasBundleGroupDelete
+            || authorizationManager.hasBundleGroupPermission(subject, Permission.UNASSIGN_BUNDLES_FROM_GROUP,
+                bundleGroupId);
+
+        if (!hasBundleGroupUnassign) {
+            String msg = "Subject ["
+                + subject.getName()
+                + "] requires one of Global.DELETE_BUNDLES, BundleGroup.DELETE_BUNDLES_FROM_GROUP, or BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP to unassign a bundle to undle group  ["
+                + bundleGroupId + "].";
+            throw new PermissionException(msg);
+        }
+
+        for (int bundleId : bundleIds) {
+            if (bundleId <= 0) {
+                throw new IllegalArgumentException("Invalid bundleId: [" + bundleId + "]");
+            }
+
+            if (!authorizationManager.canViewBundle(subject, bundleId)) {
+                String msg = "Subject [" + subject.getName()
+                    + "] requires either Global.VIEW_BUNDLES or BundleGroup.VIEW_BUNDLES_IN_GROUP to unassign bundle ["
                     + bundleId + "] to bundle group [" + bundleGroupId + "]";
                 throw new PermissionException(msg);
             }
@@ -2210,8 +2270,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         boolean hasResourceGroupDeploy = hasGlobalDeployBundles
             || authorizationManager.hasGroupPermission(subject, Permission.DEPLOY_BUNDLES_TO_GROUP, resourceGroupId);
-        boolean hasBundleView = hasGlobalViewBundles
-            || authorizationManager.hasBundlePermission(subject, Permission.VIEW_BUNDLES_IN_GROUP, bundleId);
+        boolean hasBundleView = hasGlobalViewBundles || authorizationManager.canViewBundle(subject, bundleId);
 
         if (!(hasResourceGroupDeploy && hasBundleView)) {
             String msg = "Subject [" + subject.getName()
@@ -2248,7 +2307,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         if (hasGlobalDeleteBundles) {
-            if (authorizationManager.hasBundlePermission(subject, Permission.VIEW_BUNDLES_IN_GROUP, bundleId)) {
+            if (authorizationManager.canViewBundle(subject, bundleId)) {
                 return;
             }
         } else {

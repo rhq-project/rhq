@@ -186,6 +186,20 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                                          JOIN r.subjects s " //
         + "                                         WHERE s.id = :subjectId ) ) "),
 
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_BUNDLE, query = "SELECT COUNT(b) "
+        + "FROM Bundle b, IN (b.bundleGroups) bg, IN (bg.roles) r, IN (r.subjects) s "
+        + "WHERE s = :subject AND b.id = :bundleId"),
+
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_BUNDLE_GROUP, query = "" //
+        + "SELECT count(bg) " //
+        + "  FROM BundleGroup bg " //
+        + " WHERE bg.id = :bundleGroupId " //  
+        + "   AND bg.id IN (SELECT innerbg.id " //
+        + "                   FROM BundleGroup innerbg " //
+        + "                   JOIN innerbg.roles r " //
+        + "                   JOIN r.subjects s " //
+        + "                  WHERE s = :subject) "),
+
     /*
      * No easy way to test whether ALL resources are      in some group     in some role     in some subject     where
      * subject.id = <id> & role.permission = <perm>
@@ -246,6 +260,8 @@ public class Subject implements Serializable {
     public static final String QUERY_CAN_VIEW_RESOURCES = "Subject.canViewResources";
     public static final String QUERY_CAN_VIEW_GROUP = "Subject.canViewGroup";
     public static final String QUERY_CAN_VIEW_AUTO_GROUP = "Subject.canViewAutoGroup";
+    public static final String QUERY_CAN_VIEW_BUNDLE = "Subject.canViewBundle";
+    public static final String QUERY_CAN_VIEW_BUNDLE_GROUP = "Subject.canViewBundleGroup";
 
     public static final String QUERY_GET_RESOURCES_BY_PERMISSION = "Subject.getResourcesByPermission";
 

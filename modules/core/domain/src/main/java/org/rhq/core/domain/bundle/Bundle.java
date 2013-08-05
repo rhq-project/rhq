@@ -69,7 +69,7 @@ import org.rhq.core.domain.tagging.Tag;
 @Table(name = "RHQ_BUNDLE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Bundle implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public static final String QUERY_FIND_ALL = "Bundle.findAll";
     public static final String QUERY_FIND_BY_NAME = "Bundle.findByName";
@@ -104,8 +104,8 @@ public class Bundle implements Serializable {
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY)
     private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
 
-    @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
-    private Set<BundleGroup> bundleGroups;
+    @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY)
+    private Set<BundleGroup> bundleGroups = new HashSet<BundleGroup>();
 
     @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
@@ -183,26 +183,34 @@ public class Bundle implements Serializable {
     }
 
     public Set<BundleGroup> getBundleGroups() {
+        if (this.bundleGroups == null) {
+            this.bundleGroups = new HashSet<BundleGroup>();
+        }
         return bundleGroups;
     }
 
+    /**
+     * This does not set the inverse relationships.
+     * @param bundleGroups
+     */
     public void setBundleGroups(Set<BundleGroup> bundleGroups) {
         this.bundleGroups = bundleGroups;
     }
 
+    /**
+     * This does not set the inverse relationship. You may want {@link BundleGroup#addBundle(Bundle)}.
+     * @param bundleGroups
+     */
     public void addBundleGroup(BundleGroup bundleGroup) {
-        if (this.bundleGroups == null) {
-            this.bundleGroups = new HashSet<BundleGroup>();
-        }
-        this.bundleGroups.add(bundleGroup);
+        getBundleGroups().add(bundleGroup);
     }
 
+    /**
+     * This does not set the inverse relationship. You may want {@link BundleGroup#removeBundle(Bundle)}.
+     * @param bundleGroups
+     */
     public boolean removeBundleGroup(BundleGroup bundleGroup) {
-        if (this.bundleGroups != null) {
-            return this.bundleGroups.remove(bundleGroup);
-        } else {
-            return false;
-        }
+        return getBundleGroups().remove(bundleGroup);
     }
 
     public List<BundleDestination> getDestinations() {

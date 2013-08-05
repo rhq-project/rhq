@@ -304,6 +304,32 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
     }
 
     @Override
+    public boolean canViewBundle(Subject subject, int bundleId) {
+        if (hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            return true;
+        }
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_CAN_VIEW_BUNDLE);
+        query.setParameter("subject", subject);
+        query.setParameter("bundleId", bundleId);
+        long count = (Long) query.getSingleResult();
+        return (count != 0);
+    }
+
+    @Override
+    public boolean canViewBundleGroup(Subject subject, int bundleGroupId) {
+        if (hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            return true;
+        }
+
+        Query query = entityManager.createNamedQuery(Subject.QUERY_CAN_VIEW_BUNDLE_GROUP);
+        query.setParameter("subject", subject);
+        query.setParameter("bundleGroupId", bundleGroupId);
+        long count = (Long) query.getSingleResult();
+        return (count != 0);
+    }
+
+    @Override
     public boolean isInventoryManager(Subject subject) {
         return hasGlobalPermission(subject, Permission.MANAGE_INVENTORY);
     }

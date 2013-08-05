@@ -112,9 +112,12 @@ public interface BundleManagerLocal extends BundleManagerRemote {
 
     /**
      * Internal use only, test entry point
-     * </p>
-     * This method performs NO AUTHZ!
-     * </p>
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * </pre>
      * @param subject user that must have proper permissions
      * @param bundleId the bundle for which this will be the next version
      * @param name not null or empty

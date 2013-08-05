@@ -23,6 +23,7 @@ import java.util.Set;
 
 import javax.naming.CompositeName;
 import javax.naming.Context;
+import javax.naming.InvalidNameException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -464,19 +465,7 @@ public class TestLdapSettings extends JFrame {
 								// Going with the first match
 								SearchResult si = (SearchResult) answer.next();
 
-								// Construct the UserDN
-                                //								userDN = si.getName() + "," + baseDNs[x];
-                                //BZ: 981015:
-                                userDN = null;
-
-                                try {
-                                    userDN = si.getNameInNamespace();
-                                } catch (UnsupportedOperationException use) {
-                                    userDN = new CompositeName(si.getName()).get(0);
-                                    if (si.isRelative()) {
-                                        userDN += "," + baseDNs[x];
-                                    }
-                                }
+								constructUserDn(baseDNs, x, si);
 
 								msg = "STEP-2:PASS: The test user '"
 										+ testUserName
@@ -946,16 +935,7 @@ public class TestLdapSettings extends JFrame {
                 // We use the first match
                 SearchResult si = answer.next();
                 // Construct the UserDN
-                userDN = null;
-
-                try {
-                    userDN = si.getNameInNamespace();
-                } catch (UnsupportedOperationException use) {
-                    userDN = new CompositeName(si.getName()).get(0);
-                    if (si.isRelative()) {
-                        userDN += "," + baseDNs[x];
-                    }
-                }
+                constructUserDn(baseDNs, x, si);
                 userDetails.put("dn", userDN);
 
                 // Construct the UserDN
@@ -975,6 +955,22 @@ public class TestLdapSettings extends JFrame {
 			generateUiLoggingStep4Exception(ex);
 		}
         return userDetails;
+    }
+
+    /* Construct UserDn.
+     * 
+     */
+    private void constructUserDn(String[] baseDNs, int x, SearchResult si) throws InvalidNameException {
+        userDN = null;
+
+        try {
+            userDN = si.getNameInNamespace();
+        } catch (UnsupportedOperationException use) {
+            userDN = new CompositeName(si.getName()).get(0);
+            if (si.isRelative()) {
+                userDN += "," + baseDNs[x];
+            }
+        }
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {

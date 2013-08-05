@@ -23,12 +23,10 @@ import java.util.LinkedHashMap;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangeEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangeHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
-import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.DashboardCriteria;
@@ -42,12 +40,13 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.inventory.resour
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.Enhanced;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Mike Thompson
  */
-public class AddToDashboardComponent extends ToolStrip implements Enhanced {
+public class AddToDashboardComponent extends EnhancedToolStrip implements Enhanced {
     final private Resource resource;
     private SelectItem dashboardSelectItem;
     private Dashboard selectedDashboard;
@@ -75,7 +74,6 @@ public class AddToDashboardComponent extends ToolStrip implements Enhanced {
 
     private void createToolstrip() {
         addSpacer(15);
-        dashboardSelectItem = new SelectItem();
         addToDashboardButton = new IButton(MSG.view_metric_addToDashboard());
         addToDashboardButton.disable();
 
@@ -103,8 +101,8 @@ public class AddToDashboardComponent extends ToolStrip implements Enhanced {
                         .getMetricDefinitions()) {
                         if (measurementDefinition.getId() == selectedRecord
                             .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID)) {
-                            Log.info("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName()
-                                + " in " + selectedDashboard.getName());
+                            Log.info("Add to Dashboard -- Storing: " + measurementDefinition.getDisplayName() + " in "
+                                + selectedDashboard.getName());
                             storeDashboardMetric(selectedDashboard, resource, measurementDefinition);
                             break;
                         }
@@ -114,14 +112,13 @@ public class AddToDashboardComponent extends ToolStrip implements Enhanced {
         });
     }
 
-    public void disableAddToDashboardButton(){
-       addToDashboardButton.disable();
+    public void disableAddToDashboardButton() {
+        addToDashboardButton.disable();
     }
 
-    public void enableAddToDashboardButton(){
+    public void enableAddToDashboardButton() {
         addToDashboardButton.enable();
     }
-
 
     public void populateDashboardMenu() {
         dashboardMenuMap.clear();
@@ -156,7 +153,6 @@ public class AddToDashboardComponent extends ToolStrip implements Enhanced {
     public void setMetricsListGrid(MetricsTableView.MetricsTableListGrid metricsListGrid) {
         this.metricsListGrid = metricsListGrid;
     }
-
 
     private void storeDashboardMetric(Dashboard dashboard, Resource resource, MeasurementDefinition definition) {
         DashboardPortlet dashboardPortlet = new DashboardPortlet(MSG.view_tree_common_contextMenu_resourceGraph(),

@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.naming.CompositeName;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -464,7 +465,19 @@ public class TestLdapSettings extends JFrame {
 								SearchResult si = (SearchResult) answer.next();
 
 								// Construct the UserDN
-								userDN = si.getName() + "," + baseDNs[x];
+                                //								userDN = si.getName() + "," + baseDNs[x];
+                                //BZ: 981015:
+                                userDN = null;
+
+                                try {
+                                    userDN = si.getNameInNamespace();
+                                } catch (UnsupportedOperationException use) {
+                                    userDN = new CompositeName(si.getName()).get(0);
+                                    if (si.isRelative()) {
+                                        userDN += "," + baseDNs[x];
+                                    }
+                                }
+
 								msg = "STEP-2:PASS: The test user '"
 										+ testUserName
 										+ "' was succesfully located, and the following userDN will be used in authorization check:\n";
@@ -914,7 +927,8 @@ public class TestLdapSettings extends JFrame {
 
 			String filter = String.format("(&(%s)(%s=%s))",
 			groupSearchFilter, groupMemberFilter,
-			testUserDN);
+            //			testUserDN); BZ 707047
+                encodeForFilter(testUserDN));
 
         	generateUiLoggingForStep4LdapFilter(userName, filter);
             
@@ -931,19 +945,16 @@ public class TestLdapSettings extends JFrame {
 
                 // We use the first match
                 SearchResult si = answer.next();
-                //generate the DN
-                String userDN = null;
+                // Construct the UserDN
+                userDN = null;
+
                 try {
                     userDN = si.getNameInNamespace();
                 } catch (UnsupportedOperationException use) {
-                    userDN = si.getName();
-                    if (userDN.startsWith("\"")) {
-                        userDN = userDN.substring(1, userDN.length());
+                    userDN = new CompositeName(si.getName()).get(0);
+                    if (si.isRelative()) {
+                        userDN += "," + baseDNs[x];
                     }
-                    if (userDN.endsWith("\"")) {
-                        userDN = userDN.substring(0, userDN.length() - 1);
-                    }
-                    userDN = userDN + "," + baseDNs[x];
                 }
                 userDetails.put("dn", userDN);
 

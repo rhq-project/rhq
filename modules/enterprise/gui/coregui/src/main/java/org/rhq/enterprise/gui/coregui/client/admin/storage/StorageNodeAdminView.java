@@ -44,6 +44,7 @@ import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -190,8 +191,9 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
                 GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCount(new AsyncCallback<Integer>() {
                     @Override
                         public void onSuccess(Integer result) {
+                            Log.info("Running the job fetching the number of ALL unack alerts...");
                             alerts.setTitle(StorageNodeAdminView.getAlertsString(alerts.getTitle(), result));
-                            schedule(5 * 1000);
+                            schedule(15 * 1000);
                         }
 
                         @Override

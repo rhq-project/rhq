@@ -63,7 +63,7 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = StorageNode.QUERY_DELETE_BY_ID, query = "" //
         + "DELETE FROM StorageNode s WHERE s.id = :storageNodeId "),
     @NamedQuery(name = StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, query = "" //
-        + "   SELECT def.name, ms.id  FROM MeasurementSchedule ms   " //
+        + "   SELECT def.name, def.id, ms.id, res.id  FROM MeasurementSchedule ms   " //
         + "     JOIN ms.definition def " //
         + "     JOIN ms.resource res  " //
         + "    WHERE ms.definition = def    " //
@@ -72,7 +72,7 @@ import org.rhq.core.domain.resource.Resource;
         + "      AND def.name IN (:metricNames)"), //
 
     @NamedQuery(name = StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, query = "" //
-        + "   SELECT def.name, ms.id  FROM MeasurementSchedule ms   " //
+        + "   SELECT def.name, def.id, ms.id, res.id  FROM MeasurementSchedule ms   " //
         + "     JOIN ms.definition def " //
         + "     JOIN ms.resource res  " //
         + "    WHERE ms.definition = def    " //

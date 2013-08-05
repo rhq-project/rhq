@@ -24,11 +24,13 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.StorageGWTService;
@@ -133,6 +135,17 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
             }
             assert storageNodeIds.size() == unackAlertCounts.size();
             return unackAlertCounts;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(StorageNode node, int lastN, int unit, int numPoints) throws RuntimeException {
+        try {
+            List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
+            return SerialUtility.prepare(storageNodeManager.findStorageNodeLoadDataForLast(getSessionSubject(), node,
+                beginEnd.get(0), beginEnd.get(1), numPoints), "StorageGWTServiceImpl.findStorageNodeLoadDataForLast");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

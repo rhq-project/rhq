@@ -23,12 +23,14 @@
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -76,4 +78,6 @@ public interface StorageGWTService extends RemoteService {
     int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException;
         
     List<Integer> findNotAcknowledgedStorageNodeAlertsCounts(List<Integer> storageNodeIds) throws RuntimeException;
+    
+    Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(StorageNode node, int lastN, int unit, int numPoints) throws RuntimeException;
 }

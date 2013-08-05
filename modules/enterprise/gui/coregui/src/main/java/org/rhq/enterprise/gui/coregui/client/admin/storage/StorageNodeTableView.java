@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -140,6 +140,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
     private void scheduleUnacknowledgedAlertsPollingJob(final ListGrid listGrid) {
         new Timer() {
             public void run() {
+                Log.info("Running the job fetching the number of unack alerts for particular storage nodes...");
                 final ListGridRecord[] records = listGrid.getRecords();
                 List<Integer> storageNodeIds = new ArrayList<Integer>(records.length);
                 for (ListGridRecord record : records) {
@@ -156,16 +157,19 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                                     StorageNodeAdminView.getAlertsString("New Alerts", value));
                                 listGrid.setData(records);
                             }
-                            schedule(10 * 1000);
+                            schedule(15 * 1000);
                         }
 
                         @Override
                         public void onFailure(Throwable caught) {
                             schedule(60 * 1000);
+                            // todo:
+                            SC.say("fooo");
                         }
                     });
             }
-        }.schedule(5 * 1000);
+        }.schedule(15 * 1000);
+        Log.info("Polling job fetching the number of unack alerts for particular storage nodes has been scheduled");
     }
 
     @Override
@@ -174,7 +178,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             @Override
             protected Canvas getExpansionComponent(final ListGridRecord record) {
                 int id = record.getAttributeAsInt(FIELD_ID);
-                return new StorageNodeLoadComponent(id, this, record);
+                return new StorageNodeLoadComponent(id, null);
             }
         };
         listGrid.setCanExpandRecords(true);

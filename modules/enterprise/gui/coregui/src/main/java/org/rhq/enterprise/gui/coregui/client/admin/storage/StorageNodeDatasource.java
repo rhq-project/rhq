@@ -358,7 +358,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             recordsList.add(makeListGridRecord(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY));
   
             // disk related metrics
-            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsed(), "Total Disk Space Used", "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"));
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsed(), "Disk Space Used by Storage Node", "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"));
             recordsList.add(makeListGridRecord(loadComposite.getTotalDiskUsedPercentage(),"Total Disk Space Percent Used", "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", TOTAL_DISK_SPACE_PERCENTAGE_KEY));
             recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsedPercentage(), "Data Disk Space Percent Used","Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", DATA_DISK_SPACE_PERCENTAGE_KEY));
             

@@ -29,16 +29,27 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.Overflow;
+import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
+import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
@@ -46,7 +57,10 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -56,9 +70,15 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -84,6 +104,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private StaticTextItem alertsItem;
     private int expandedSection = -1;
     private HTMLFlow header;
+    private ChartViewWindow window;
+    private D3GraphListView graphView;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
@@ -134,7 +156,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         initSectionCount++;
                     }
                     prepareDetailsSection(sectionStack, node);
-                    prepareLoadSection(sectionStack, node);
+                    fetchSparkLineDataForLoadComponent(sectionStack, node);
+                    
                 }
 
                 public void onFailure(Throwable caught) {
@@ -168,9 +191,25 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         final ResourceComposite resourceComposite = result.get(0);
 //                        prepareOperationHistory(resourceComposite);
                         prepareResourceConfigEditor(resourceComposite);
-                        
                     }
                 }
+            });
+    }
+    
+    private void fetchSparkLineDataForLoadComponent(final SectionStack stack, final StorageNode storageNode) {
+
+        GWTServiceLookup.getStorageService().findStorageNodeLoadDataForLast(storageNode, 8, MeasurementUtility.UNIT_HOURS,
+            60, new AsyncCallback<Map<String, List<MeasurementDataNumericHighLowComposite>>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+
+                }
+
+                @Override
+                public void onSuccess(Map<String, List<MeasurementDataNumericHighLowComposite>> result) {
+                    prepareLoadSection(sectionStack, storageNode, result);
+                }
+
             });
     }
     
@@ -318,8 +357,9 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         initSectionCount++;
     }
 
-    private void prepareLoadSection(SectionStack stack, final StorageNode storageNode) {
-        StorageNodeLoadComponent loadDataComponent = new StorageNodeLoadComponent(storageNode.getId());
+    private void prepareLoadSection(SectionStack stack, final StorageNode storageNode,
+        final Map<String, List<MeasurementDataNumericHighLowComposite>> sparkLineData) {
+        StorageNodeLoadComponent loadDataComponent = new StorageNodeLoadComponent(storageNode.getId(), sparkLineData);
         loadDataComponent.setExtraSpace(5);
         loadLayout = new EnhancedVLayout();
         loadLayout.setWidth100();

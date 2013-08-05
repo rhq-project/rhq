@@ -20,6 +20,7 @@ package org.rhq.enterprise.server.cloud;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 
@@ -30,6 +31,7 @@ import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
@@ -185,6 +187,7 @@ public interface StorageNodeManagerLocal {
      * @throws IllegalStateException if the group is not found or does not exist.
      */
     ResourceGroup getStorageNodeGroup();
+    
 
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
 
@@ -192,4 +195,5 @@ public interface StorageNodeManagerLocal {
 
     void runAddNodeMaintenance();
 
+    Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject, StorageNode node, long beginTime, long endTime, int numPoints);
 }

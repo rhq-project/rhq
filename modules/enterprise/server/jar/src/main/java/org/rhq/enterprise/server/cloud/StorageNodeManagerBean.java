@@ -29,6 +29,7 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -43,6 +44,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
 
+import org.apache.commons.collections.map.LinkedMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -65,6 +67,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
@@ -122,6 +125,19 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private static final int MAX_ITERATIONS = 10;
     private static final String UPDATE_CONFIGURATION_OPERATION = "updateConfiguration";
     private static final String RESTART_OPERATION = "restart";
+    
+    // metric names on Storage Service resource
+    private static final String METRIC_TOKENS = "Tokens", METRIC_OWNERSHIP = "Ownership";
+    private static final String METRIC_DATA_DISK_USED_PERCENTAGE = "Calculated.DataDiskUsedPercentage";
+    private static final String METRIC_TOTAL_DISK_USED_PERCENTAGE = "Calculated.TotalDiskUsedPercentage";
+    private static final String METRIC_FREE_DISK_TO_DATA_RATIO = "Calculated.FreeDiskToDataSizeRatio";
+    private static final String METRIC_LOAD = "Load", METRIC_KEY_CACHE_SIZE = "KeyCacheSize",
+        METRIC_ROW_CACHE_SIZE = "RowCacheSize", METRIC_TOTAL_COMMIT_LOG_SIZE = "TotalCommitlogSize";
+    
+    //metric names on Memory Subsystem resource
+    private static final String METRIC_HEAP_COMMITED = "{HeapMemoryUsage.committed}",
+        METRIC_HEAP_USED = "{HeapMemoryUsage.used}", METRIC_HEAP_USED_PERCENTAGE = "Calculated.HeapUsagePercentage";
+
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -347,106 +363,90 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         int resourceId = getResourceIdFromStorageNode(node);
         Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
-        // get the schedule ids for Storage Service resource
-        final String tokensMetric = "Tokens", ownershipMetric = "Ownership";
-        final String dataDiskUsedPercentageMetric = "Calculated.DataDiskUsedPercentage";
-        final String totalDiskUsedPercentageMetric = "Calculated.TotalDiskUsedPercentage";
-        final String freeDiskToDataRatioMetric = "Calculated.FreeDiskToDataSizeRatio";
-        final String loadMetric = "Load", keyCacheSize = "KeyCacheSize", rowCacheSize = "RowCacheSize", totalCommitLogSize = "TotalCommitlogSize";
-        TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
-            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
-        query.setParameter("parrentId", resourceId).setParameter("metricNames",
-            Arrays.asList(tokensMetric, ownershipMetric, loadMetric, keyCacheSize, rowCacheSize, totalCommitLogSize,
-                dataDiskUsedPercentageMetric, totalDiskUsedPercentageMetric, freeDiskToDataRatioMetric));
-        for (Object[] pair : query.getResultList()) {
-            scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
+        for (Object[] tupple : getStorageServiceScheduleIds(resourceId)) {
+            String definitionName = (String) tupple[0];
+            Integer scheduleId = (Integer) tupple[2];
+            scheduleIdsMap.put(definitionName, scheduleId);
         }
-
-        // get the schedule ids for Memory Subsystem resource
-        final String heapCommittedMetric = "{HeapMemoryUsage.committed}", heapUsedMetric = "{HeapMemoryUsage.used}", heapUsedPercentageMetric = "Calculated.HeapUsagePercentage";
-        query = entityManager.<Object[]> createNamedQuery(
-            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
-            Object[].class);
-        query.setParameter("grandparrentId", resourceId).setParameter("metricNames",
-            Arrays.asList(heapCommittedMetric, heapUsedMetric, heapUsedPercentageMetric));
-        for (Object[] pair : query.getResultList()) {
-            scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
+        for (Object[] tupple : getMemorySubsystemScheduleIds(resourceId)) {
+            String definitionName = (String) tupple[0];
+            Integer scheduleId = (Integer) tupple[2];
+            scheduleIdsMap.put(definitionName, scheduleId);
         }
-
 
         StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
-        MeasurementAggregate totalDiskUsedaggregate = new MeasurementAggregate(0d, 0d, 0d);
+        MeasurementAggregate totalDiskUsedAggregate = new MeasurementAggregate(0d, 0d, 0d);
         Integer scheduleId = null;
 
         // find the aggregates and enrich the result instance
         if (!scheduleIdsMap.isEmpty()) {
-            if ((scheduleId = scheduleIdsMap.get(tokensMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_TOKENS)) != null) {
                 MeasurementAggregate tokensAggregate = measurementManager.getAggregate(subject, scheduleId, beginTime,
                     endTime);
                 result.setTokens(tokensAggregate);
             }
-            if ((scheduleId = scheduleIdsMap.get(ownershipMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_OWNERSHIP)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits ownershipAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setActuallyOwns(ownershipAggregateWithUnits);
             }
 
             //calculated disk space related metrics
-            if ((scheduleId = scheduleIdsMap.get(dataDiskUsedPercentageMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_DATA_DISK_USED_PERCENTAGE)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits dataDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setDataDiskUsedPercentage(dataDiskUsedPercentageAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(totalDiskUsedPercentageMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_DISK_USED_PERCENTAGE)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setTotalDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(freeDiskToDataRatioMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_FREE_DISK_TO_DATA_RATIO)) != null) {
                 MeasurementAggregate freeDiskToDataRatioAggregate = measurementManager.getAggregate(subject,
                     scheduleId, beginTime, endTime);
                 result.setFreeDiskToDataSizeRatio(freeDiskToDataRatioAggregate);
             }
 
-            if ((scheduleId = scheduleIdsMap.get(loadMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_LOAD)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits loadAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setLoad(loadAggregateWithUnits);
 
-                updateAggregateTotal(totalDiskUsedaggregate, loadAggregateWithUnits.getAggregate());
+                updateAggregateTotal(totalDiskUsedAggregate, loadAggregateWithUnits.getAggregate());
             }
-            if ((scheduleId = scheduleIdsMap.get(keyCacheSize)) != null) {
-                updateAggregateTotal(totalDiskUsedaggregate,
-                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            }
-            if ((scheduleId = scheduleIdsMap.get(rowCacheSize)) != null) {
-                updateAggregateTotal(totalDiskUsedaggregate,
-                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            }
-            if ((scheduleId = scheduleIdsMap.get(totalCommitLogSize)) != null) {
-                updateAggregateTotal(totalDiskUsedaggregate,
-                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            }
+//            if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
+//                updateAggregateTotal(totalDiskUsedAggregate,
+//                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+//            }
+//            if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
+//                updateAggregateTotal(totalDiskUsedAggregate,
+//                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+//            }
+//            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
+//                updateAggregateTotal(totalDiskUsedAggregate,
+//                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+//            }
 
-            if (totalDiskUsedaggregate.getMax() > 0) {
+            if (totalDiskUsedAggregate.getMax() > 0) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
-                    totalDiskUsedaggregate, MeasurementUnits.BYTES);
-                totalDiskUsedAggregateWithUnits.setFormattedValue(getSummaryString(totalDiskUsedaggregate,
+                    totalDiskUsedAggregate, MeasurementUnits.BYTES);
+                totalDiskUsedAggregateWithUnits.setFormattedValue(getSummaryString(totalDiskUsedAggregate,
                     MeasurementUnits.BYTES));
                 result.setDataDiskUsed(totalDiskUsedAggregateWithUnits);
             }
 
-            if ((scheduleId = scheduleIdsMap.get(heapCommittedMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_COMMITED)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapCommittedAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setHeapCommitted(heapCommittedAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(heapUsedMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setHeapUsed(heapUsedAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(heapUsedPercentageMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED_PERCENTAGE)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
                     endTime);
@@ -455,6 +455,26 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
 
         return result;
+    }
+    
+    private List<Object[]> getStorageServiceScheduleIds(int storageNodeResourceId) {
+        // get the schedule ids for Storage Service resource
+        TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
+            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
+        query.setParameter("parrentId", storageNodeResourceId).setParameter("metricNames",
+            Arrays.asList(METRIC_TOKENS, METRIC_OWNERSHIP, METRIC_LOAD/*, METRIC_KEY_CACHE_SIZE, METRIC_ROW_CACHE_SIZE, METRIC_TOTAL_COMMIT_LOG_SIZE*/,
+                METRIC_DATA_DISK_USED_PERCENTAGE, METRIC_TOTAL_DISK_USED_PERCENTAGE, METRIC_FREE_DISK_TO_DATA_RATIO));
+        return query.getResultList();
+    }
+    
+    private List<Object[]> getMemorySubsystemScheduleIds(int storageNodeResourceId) {
+        // get the schedule ids for Memory Subsystem resource
+        TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
+            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
+            Object[].class);
+        query.setParameter("grandparrentId", storageNodeResourceId).setParameter("metricNames",
+            Arrays.asList(METRIC_HEAP_COMMITED, METRIC_HEAP_USED, METRIC_HEAP_USED_PERCENTAGE));
+        return query.getResultList();
     }
 
     /**
@@ -775,6 +795,55 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule) {
         operationManager.scheduleResourceOperation(subject, schedule);
+    }
+    
+    @Override
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject,
+        StorageNode node, long beginTime, long endTime, int numPoints) {
+        int storageNodeResourceId = getResourceIdFromStorageNode(node);
+        Map<String, List<MeasurementDataNumericHighLowComposite>> result = new LinkedHashMap<String, List<MeasurementDataNumericHighLowComposite>>();
+
+        List<Object[]> tupples = getStorageServiceScheduleIds(storageNodeResourceId);
+        List<String> defNames = new ArrayList<String>();
+        int[] definitionIds = new int[tupples.size()];
+        int resId = -1;
+        int index = 0;
+        for (Object[] tupple : tupples) {
+            String defName = (String) tupple[0];
+            int definitionId = (Integer) tupple[1];
+            resId = (Integer) tupple[3];
+            defNames.add(defName);
+            definitionIds[index++] = definitionId;
+        }
+        List<List<MeasurementDataNumericHighLowComposite>> storageServiceData = measurementManager.findDataForResource(
+            subject, resId, definitionIds, beginTime, endTime, numPoints);
+        for (int i = 0; i < storageServiceData.size(); i ++) {
+            List<MeasurementDataNumericHighLowComposite> oneRecord = storageServiceData.get(i);
+            result.put(defNames.get(i), oneRecord);
+        }
+        
+        tupples = getMemorySubsystemScheduleIds(storageNodeResourceId);
+        defNames = new ArrayList<String>();
+        definitionIds = new int[tupples.size()];
+        resId = -1;
+        index = 0;
+        for (Object[] tupple : tupples) {
+            String defName = (String) tupple[0];
+            int definitionId = (Integer) tupple[1];
+            resId = (Integer) tupple[3];
+            defNames.add(defName);
+            definitionIds[index++] = definitionId;
+        }
+        List<List<MeasurementDataNumericHighLowComposite>> memorySubsystemData = measurementManager.findDataForResource(
+            subject, resId, definitionIds, beginTime, endTime, numPoints);
+        for (int i = 0; i < memorySubsystemData.size(); i ++) {
+            List<MeasurementDataNumericHighLowComposite> oneRecord = memorySubsystemData.get(i);
+            result.put(defNames.get(i), oneRecord);
+        }
+        
+        return result;
     }
 
     private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,

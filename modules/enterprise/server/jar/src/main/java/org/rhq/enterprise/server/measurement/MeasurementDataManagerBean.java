@@ -778,7 +778,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 false);
 
             List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
-            for(MeasurementDataNumericHighLowComposite object :metricsManager.findDataForResource(schedule.getId(), beginTime, endTime,numDataPoints) ){
+            for(MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResource(schedule.getId(), beginTime, endTime,numDataPoints) ){
                 tempList.add(object);
             }
 

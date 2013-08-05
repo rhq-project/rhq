@@ -96,12 +96,14 @@ public class StorageClientManagerBean {
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
         metricsConfiguration = new MetricsConfiguration();
-
-        Session wrappedSession = createSession(username, password, storageNodeManager.getStorageNodes());
-        session = new StorageSession(wrappedSession);
-
-        session.addStorageStateListener(new StorageClusterMonitor());
-
+        List<StorageNode> storageNodes = storageNodeManager.getStorageNodes();
+        if (storageNodes.isEmpty()) {
+            throw new IllegalStateException(
+                "There is no storage node metadata stored in the relational database. This may have happened as a "
+                    + "result of running dbsetup or deleting rows from rhq_storage_node table. Please re-install the "
+                    + "storage node to fix this issue.");
+        }
+        session = createSession(username, password, storageNodes);
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
         Server server = serverManager.getServer();

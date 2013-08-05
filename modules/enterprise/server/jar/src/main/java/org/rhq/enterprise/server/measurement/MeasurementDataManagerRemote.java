@@ -112,8 +112,7 @@ public interface MeasurementDataManagerRemote {
      *
      * @param  subject
      * @param  resourceId
-     * @param  definitionIds measurement definition id for numeric metric associated with the given compatible
-     *                                 group
+     * @param  definitionIds measurement definition id for numeric metric associated with the given resource
      * @param  beginTime
      * @param  endTime
      * @param  numPoints

@@ -27,17 +27,25 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
+import com.smartgwt.client.widgets.form.fields.FormItemIcon;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
+import com.smartgwt.client.widgets.layout.HLayout;
 
+import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.core.domain.resource.group.LdapGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -55,6 +63,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
     public static final String FIELD_ID = "id";
     public static final String FIELD_NAME = "name";
     public static final String FIELD_DESCRIPTION = "description";
+    private static boolean queryCompleted = false;
 
     //override the selector key for ldap group selection.
     protected String getSelectorKey() {
@@ -72,11 +81,227 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
     @Override
     protected DynamicForm getAvailableFilterForm() {
         DynamicForm availableFilterForm = new DynamicForm();
-        availableFilterForm.setWidth100();
-        availableFilterForm.setNumCols(2);
+        {
+            availableFilterForm.setWidth100();
+            availableFilterForm.setNumCols(2);
+        }
+        int groupPanelWidth = 375;
+        int groupPanelHeight = 140;
 
-        final TextItem search = new TextItem("search", MSG.common_title_search());
-        availableFilterForm.setItems(search, new SpacerItem());
+        // final TextItem search = new TextItem("search",
+        // MSG.common_title_search());
+
+        // Structure the display area into two separate display regions
+        // Available Groups region
+        final DynamicForm availableGroupDetails = new DynamicForm();
+        {
+            availableGroupDetails.setWidth(groupPanelWidth);
+            availableGroupDetails.setHeight(groupPanelHeight);
+            availableGroupDetails.setGroupTitle("Available Groups Results");
+            availableGroupDetails.setIsGroup(true);
+            availableGroupDetails.setWrapItemTitles(false);
+        }
+        final TextItem resultCountItem = new TextItem("resultCount", "Groups Found");
+        {
+            resultCountItem.setCanEdit(false);
+            resultCountItem.setWidth("100%");
+        }
+        final TextItem pageCountItem = new TextItem("pageCount", "Query Pages Parsed");
+        {
+            pageCountItem.setCanEdit(false);
+            pageCountItem.setWidth("100%");
+        }
+        // final TextItem search = new TextItem("search",
+        // MSG.common_title_search());
+        final TextItem search = new TextItem("search", "Search[within results]");
+        {
+            search.setWidth("100%");
+            search.setTooltip("Start typing here to show groups containing the typed characters.");
+        }
+        final FormItemIcon loadingIcon = new FormItemIcon();
+        final FormItemIcon successIcon = new FormItemIcon();
+        final FormItemIcon failIcon = new FormItemIcon();
+        String successIconPath = "[SKIN]/actions/ok.png";
+        String failedIconPath = "[SKIN]/actions/exclamation.png";
+        String loadingIconPath = "[SKIN]/loading.gif";
+        //icon.setSrc("[SKIN]/actions/help.png");
+        loadingIcon.setSrc(loadingIconPath);
+        successIcon.setSrc(successIconPath);
+        failIcon.setSrc(failedIconPath);
+
+        final StaticTextItem groupQueryStatus = new StaticTextItem();
+        {
+            groupQueryStatus.setName("groupQueryStatus");
+            groupQueryStatus.setTitle("Query Progress");
+            groupQueryStatus.setDefaultValue("Loading...");
+            groupQueryStatus.setIcons(loadingIcon);
+        }
+        availableGroupDetails.setItems(resultCountItem, pageCountItem, groupQueryStatus, new SpacerItem(), search);
+
+        // Ldap Group Settings region
+        final DynamicForm ldapGroupSettings = new DynamicForm();
+        {
+            ldapGroupSettings.setWidth(groupPanelWidth);
+            ldapGroupSettings.setHeight(groupPanelHeight);
+            ldapGroupSettings.setGroupTitle("[Read Only] Ldap Group Settings. Edit in 'System Settings'");
+            ldapGroupSettings.setIsGroup(true);
+            ldapGroupSettings.setWrapItemTitles(false);
+        }
+        final TextItem groupSearch = new TextItem("groupSearch", "Search Filter");
+        {
+            groupSearch.setCanEdit(false);
+            groupSearch.setWidth("100%");
+        }
+        final TextItem groupMember = new TextItem("groupMember", "Member Filter");
+        {
+            groupMember.setCanEdit(false);
+            groupMember.setWidth("100%");
+        }
+        final CheckboxItem groupQueryPagingItem = new CheckboxItem("groupQueryEnable", "Query Paging Enabled");
+        {
+            groupQueryPagingItem.setCanEdit(false);
+            groupQueryPagingItem.setValue(false);
+            groupQueryPagingItem.setShowLabel(false);
+            groupQueryPagingItem.setShowTitle(true);
+            groupQueryPagingItem.setTitleOrientation(TitleOrientation.LEFT);
+            //You have to set this attribute
+            groupQueryPagingItem.setAttribute("labelAsTitle", true);
+        }
+        final TextItem groupQueryPagingCountItem = new TextItem("groupQueryCount", "Query Page Size");
+        {
+            groupQueryPagingCountItem.setCanEdit(false);
+            groupQueryPagingCountItem.setWidth("100%");
+        }
+        final CheckboxItem groupUsePosixGroupsItem = new CheckboxItem("groupUsePosixGroups", "Use Posix Enabled");
+        {
+            groupUsePosixGroupsItem.setCanEdit(false);
+            groupUsePosixGroupsItem.setValue(false);
+            groupUsePosixGroupsItem.setShowLabel(false);
+            groupUsePosixGroupsItem.setShowTitle(true);
+            groupUsePosixGroupsItem.setTitleOrientation(TitleOrientation.LEFT);
+            //You have to set this attribute
+            groupUsePosixGroupsItem.setAttribute("labelAsTitle", true);
+        }
+        ldapGroupSettings
+            .setItems(groupSearch, groupMember, groupQueryPagingItem, groupQueryPagingCountItem, groupUsePosixGroupsItem);
+
+        // orient both panels next to each other
+        HLayout panel = new HLayout();
+        {
+            panel.addMember(availableGroupDetails);
+            DynamicForm spacerWrapper = new DynamicForm();
+            spacerWrapper.setItems(new SpacerItem());
+            panel.addMember(spacerWrapper);
+            panel.addMember(ldapGroupSettings);
+        }
+        availableFilterForm.addChild(panel);
+
+        //launch operations to populate/refresh LDAP Group Query contents.
+        final Timer ldapPropertiesTimer = new Timer() {
+            public void run() {
+                //if system properties not set, launch request/update
+                String ldapGroupQuery = groupSearch.getValueAsString();
+                if ((ldapGroupQuery == null) || (ldapGroupQuery.trim().isEmpty())) {
+                    GWTServiceLookup.getSystemService().getSystemSettings(new AsyncCallback<SystemSettings>() {
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            groupQueryStatus.setIcons(failIcon);
+                            groupQueryStatus.setDefaultValue("Fail: Unable to retrieve system settings.");
+                            //TODO: update this message
+                            CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
+                        }
+
+                        @Override
+                        public void onSuccess(SystemSettings settings) {
+                            //retrieve relevant information once and update ui
+                            String ldapGroupFilter = settings.get(SystemSetting.LDAP_GROUP_FILTER);
+                            String ldapGroupMember = settings.get(SystemSetting.LDAP_GROUP_MEMBER);
+                            String ldapGroupPagingEnabled = settings.get(SystemSetting.LDAP_GROUP_PAGING);
+                            String ldapGroupPagingValue = settings.get(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE);
+                            String ldapGroupIsPosix = settings.get(SystemSetting.LDAP_GROUP_USE_POSIX);
+                            groupSearch.setValue(ldapGroupFilter);
+                            groupMember.setValue(ldapGroupMember);
+                            groupQueryPagingItem.setValue(Boolean.valueOf(ldapGroupPagingEnabled));
+                            groupQueryPagingCountItem.setValue(ldapGroupPagingValue);
+                            groupUsePosixGroupsItem.setValue(Boolean.valueOf(ldapGroupIsPosix));
+                            ldapGroupSettings.markForRedraw();
+                        }
+                    });
+                }
+            }
+        };
+        ldapPropertiesTimer.scheduleRepeating(2000); // repeat interval in milliseconds, e.g. 30000 = 30seconds
+
+        //launch operations to populate/refresh LDAP Group Query contents.
+        final Timer availableGroupsTimer = new Timer() {
+            public void run() {
+                if (!queryCompleted) {
+                    //make request to RHQ about state of latest LDAP GWT request
+                    GWTServiceLookup.getLdapService().findAvailableGroupsStatus(
+                        new AsyncCallback<Set<Map<String, String>>>() {
+                            @Override
+                            public void onFailure(Throwable caught) {
+                                groupQueryStatus.setIcons(failIcon);
+                                groupQueryStatus
+                                    .setDefaultValue("Fail: Unable to retrieve status for latest AvailableGroups() call.");
+                                //TODO: update this message
+                                CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
+                            }
+
+                            @Override
+                            public void onSuccess(Set<Map<String, String>> results) {
+                                //                                Log.debug("@@@@@@@ findAvailableGroupsStatus: SUCCESS:" + System.currentTimeMillis()
+                                //                                    + ":count:"
+                                //                                    + results.size());
+                                long start = -1, end = -1;
+                                int pageCount = 0;
+                                int resultCountValue = 0;
+                                for (Map<String, String> map : results) {
+                                    String key = map.keySet().toArray()[0] + "";
+                                    if (key.equals("query.results.parsed")) {
+                                        String value = map.get(key);
+                                        resultCountItem.setValue(value);
+                                        resultCountValue = Integer.valueOf(value);
+                                    } else if (key.equals("query.complete")) {
+                                        String value = map.get(key);
+                                        queryCompleted = Boolean.valueOf(value);
+                                    } else if (key.equals("query.start.time")) {
+                                        String value = map.get(key);
+                                        start = Long.valueOf(value);
+                                    } else if (key.equals("query.end.time")) {
+                                        String value = map.get(key);
+                                        end = Long.valueOf(value);
+                                    } else if (key.equals("query.page.count")) {
+                                        String value = map.get(key);
+                                        pageCountItem.setValue(value);
+                                        pageCount = Integer.valueOf(value);
+                                    }
+                                }
+                                //act on status details to add extra perf suggestions
+                                if (queryCompleted) {
+                                    groupQueryStatus.setIcons(successIcon);
+                                    String success = "Success";
+                                    String tooManyResults = success + ": Too many results.";
+                                    String queryTookLongResults = success + ": Query took long to complete.";
+                                    String queryTookManyPagesResults = success + ": Query required a lot of paging.";
+                                    //TODO: add in extra information about results.
+                                    if (resultCountValue > 20000) {//results throttled
+                                        groupQueryStatus.setDefaultValue(tooManyResults);
+                                    } else if ((end - start) >= 10 * 1000) {// took longer than 10s
+                                        groupQueryStatus.setDefaultValue(queryTookLongResults);
+                                    } else if (pageCount >= 20) {// took longer than 10s
+                                        groupQueryStatus.setDefaultValue(queryTookManyPagesResults);
+                                    }
+                                }
+                                availableGroupDetails.markForRedraw();
+                                //now cancel the timer
+                                cancel();
+                            }
+                        });
+                }
+            }
+        };
+        availableGroupsTimer.scheduleRepeating(3000); // repeat interval in milliseconds, e.g. 30000 = 30seconds
 
         return availableFilterForm;
     }

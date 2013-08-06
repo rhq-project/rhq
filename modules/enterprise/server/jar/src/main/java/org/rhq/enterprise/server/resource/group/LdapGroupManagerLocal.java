@@ -51,6 +51,8 @@ public interface LdapGroupManagerLocal {
 
     Set<Map<String, String>> findAvailableGroups();
 
+    Set<Map<String, String>> findAvailableGroupsStatus();
+
     Set<String> findAvailableGroupsFor(String userName);
 
     Map<String, String> findLdapUserDetails(String userName);

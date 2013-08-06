@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7;
 
@@ -32,6 +32,7 @@ public enum JBossProductType {
 
     AS("AS", "JBoss AS 7", "JBoss Application Server 7", "AS"),
     EAP("EAP", "JBoss EAP 6", "JBoss Enterprise Application Platform 6", "EAP"),
+    ISPN("ISPN", "Infinispan Server", "Infinispan Server", "ISPN"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "Portal Platform"),
     JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "Portal Platform"),
@@ -123,6 +124,8 @@ public enum JBossProductType {
             }
             if (slot.equals("eap")) {
                 productType = JBossProductType.EAP;
+            } else if (slot.equals("ispn")) {
+                productType = JBossProductType.ISPN;
             } else if (slot.equals("jdg")) {
                 productType = JBossProductType.JDG;
             } else if (slot.equals("epp")) {//old EPP
@@ -150,6 +153,8 @@ public enum JBossProductType {
             productType = JBossProductType.WILDFLY8;
         } else if (homeDirName.contains("-eap-")) {
             productType = JBossProductType.EAP;
+        } else if (homeDirName.contains("infinispan-server")) {
+            productType = JBossProductType.ISPN;
         } else if (homeDirName.contains("-jdg-")||(homeDirName.contains("datagrid-server"))) {
             productType = JBossProductType.JDG;
         } else if (homeDirName.contains("-epp-")) {

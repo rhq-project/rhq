@@ -138,7 +138,7 @@ public class Start extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
-        int rValue;
+		int rValue;
 
         // Cassandra looks for JAVA_HOME or then defaults to PATH.  We want it to use the Java
         // defined for RHQ, so make sure JAVA_HOME is set, and set to the RHQ Java for the executor
@@ -167,7 +167,7 @@ public class Start extends ControlCommand {
             // For now we are duplicating logic in the status command. This code will be
             // replaced when we implement a rhq-storage.sh script.
             if (isStorageRunning()) {
-                String pid = getStoragePid();
+            	String pid = getStoragePid();
                 System.out.println("RHQ storage node (pid " + pid + ") is running");
                 rValue = RHQControl.EXIT_CODE_OK;
             } else {

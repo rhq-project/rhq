@@ -88,14 +88,14 @@ public abstract class AbstractInstall extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
-        int rValue = RHQControl.EXIT_CODE_OK;
+	    int rValue = RHQControl.EXIT_CODE_OK;
 
         if (replaceExistingService) {
-            commandLine = getCommandLine(batFile, "stop");
-            rValue = Math.max(rValue, executor.execute(commandLine));
+		    commandLine = getCommandLine(batFile, "stop");
+		    rValue = Math.max(rValue, executor.execute(commandLine));
 
-            commandLine = getCommandLine(batFile, "remove");
-            rValue = Math.max(rValue, executor.execute(commandLine));
+		    commandLine = getCommandLine(batFile, "remove");
+		    rValue = Math.max(rValue, executor.execute(commandLine));
         }
 
         commandLine = getCommandLine(batFile, "install");
@@ -277,7 +277,7 @@ public abstract class AbstractInstall extends ControlCommand {
             return RHQControl.EXIT_CODE_OK;
         }
 
-        int rValue = 0;
+		int rValue = 0;
 
         try {
             File agentBinDir = new File(agentBasedir, "bin");
@@ -317,7 +317,7 @@ public abstract class AbstractInstall extends ControlCommand {
             throw e;
         }
 
-        return rValue;
+		return rValue;
     }
 
     protected int startAgent(final File agentBasedir) throws Exception {
@@ -366,7 +366,7 @@ public abstract class AbstractInstall extends ControlCommand {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
-        org.apache.commons.exec.CommandLine commandLine;
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
 
         int rValue = 0;
 
@@ -635,7 +635,7 @@ public abstract class AbstractInstall extends ControlCommand {
         clearAgentPreferences();
         int rValue = installAgent(agentBasedir);
         configureAgent(agentBasedir, commandLine);
-        return rValue;
+		return rValue;
     }
 
     private int installAgent(final File agentBasedir) throws IOException {
@@ -667,7 +667,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             int exitValue = executor.execute(commandLine);
             log.info("The agent installer finished running with exit value " + exitValue);
-            return exitValue;
+			return exitValue;
         } catch (IOException e) {
             log.error("An error occurred while running the agent installer: " + e.getMessage());
             throw e;

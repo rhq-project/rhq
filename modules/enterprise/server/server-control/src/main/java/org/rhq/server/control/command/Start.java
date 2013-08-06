@@ -36,6 +36,7 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -72,7 +73,8 @@ public class Start extends ControlCommand {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
+        int rValue = RHQControl.EXIT_CODE_OK;
         try {
             // if no options specified, then start whatever is installed
             if (commandLine.getOptions().length == 0) {
@@ -82,54 +84,61 @@ public class Start extends ControlCommand {
 
                 if (!(storageInstalled || serverInstalled || agentInstalled)) {
                     log.warn("Nothing to start. No RHQ services are installed.");
+                    rValue = RHQControl.EXIT_CODE_NOT_INSTALLED;
                 } else {
                     if (storageInstalled) {
-                        startStorage();
+                        rValue = Math.max(rValue, startStorage());
                     }
                     if (serverInstalled) {
-                        startRHQServer();
+                        rValue = Math.max(rValue, startRHQServer());
                     }
                     if (agentInstalled) {
-                        startAgent();
+                        rValue = Math.max(rValue, startAgent());
                     }
                 }
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        startStorage();
+                        rValue = Math.max(rValue, startStorage());
                     } else {
                         log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_NOT_INSTALLED;
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
-                        startRHQServer();
+                        rValue = Math.max(rValue, startRHQServer());
                     } else {
                         log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_NOT_INSTALLED;
                     }
                 }
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
-                        startAgent();
+                        rValue = Math.max(rValue, startAgent());
                     } else {
                         log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_NOT_INSTALLED;
                     }
                 }
             }
         } catch (Exception e) {
             throw new RHQControlException("Failed to start services", e);
         }
+        return rValue;
     }
 
-    private void startStorage() throws Exception {
+    private int startStorage() throws Exception {
         log.debug("Starting RHQ storage node");
 
         Executor executor = new DefaultExecutor();
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
+
+		int rValue;
 
         // Cassandra looks for JAVA_HOME or then defaults to PATH.  We want it to use the Java
         // defined for RHQ, so make sure JAVA_HOME is set, and set to the RHQ Java for the executor
@@ -144,11 +153,12 @@ public class Start extends ControlCommand {
             executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "start");
             try {
-                executor.execute(commandLine, env);
+                rValue = executor.execute(commandLine, env);
 
             } catch (Exception e) {
                 // Ignore, service may not exist or may already be running, script returns 1
                 log.debug("Failed to start storage service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
             File storageBinDir = new File(getStorageBasedir(), "bin");
@@ -159,16 +169,18 @@ public class Start extends ControlCommand {
             if (isStorageRunning()) {
             	String pid = getStoragePid();
                 System.out.println("RHQ storage node (pid " + pid + ") is running");
+                rValue = RHQControl.EXIT_CODE_OK;
             } else {
                 commandLine = getCommandLine(false, "cassandra", "-p", pidFile.getAbsolutePath());
                 executor.setWorkingDirectory(storageBinDir);
 
-                executor.execute(commandLine, env);
+                rValue = executor.execute(commandLine, env);
             }
         }
+        return rValue;
     }
 
-    private void startRHQServer() throws Exception {
+    private int startRHQServer() throws Exception {
         log.debug("Starting RHQ server");
 
         Executor executor = new DefaultExecutor();
@@ -176,19 +188,23 @@ public class Start extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "start");
 
+        int rValue;
+
         if (isWindows()) {
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to start server service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            executor.execute(commandLine);
+            rValue = executor.execute(commandLine);
         }
+        return rValue;
     }
 
-    private void startAgent() throws Exception {
+    private int startAgent() throws Exception {
         log.debug("Starting RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
@@ -197,16 +213,21 @@ public class Start extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "start");
 
+        int rValue;
+
         if (isWindows()) {
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to start agent service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            executor.execute(commandLine);
+            rValue = executor.execute(commandLine);
         }
+
+        return rValue;
     }
 
 }

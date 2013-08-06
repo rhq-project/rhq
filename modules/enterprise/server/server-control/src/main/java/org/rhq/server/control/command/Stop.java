@@ -33,6 +33,7 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -68,29 +69,33 @@ public class Stop extends AbstractInstall {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
+
+        int rValue = RHQControl.EXIT_CODE_OK;
+
         try {
             // if no options specified, then stop whatever is installed
             if (commandLine.getOptions().length == 0) {
                 if (isAgentInstalled()) {
-                    stopAgent();
+                    rValue = Math.max(rValue, stopAgent());
                 }
 
                 // the server service may be installed even if the full server install fails. The files to execute
                 // the remove are there after the initial unzip, so just go ahead and try to stop the service. This
                 // may help clean up a failed install.
-                stopRHQServer();
+                rValue = Math.max(rValue, stopRHQServer());
 
                 if (isStorageInstalled()) {
-                    stopStorage();
+                    rValue = Math.max(rValue, stopStorage());
                 }
             } else {
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
-                        stopAgent();
+                        rValue = Math.max(rValue, stopAgent());
                     } else {
                         log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
                     }
                 }
 
@@ -98,24 +103,26 @@ public class Stop extends AbstractInstall {
                     // the server service may be installed even if the full server install fails. The files to execute
                     // the remove are there after the initial unzip, so just go ahead and try to stop the service. This
                     // may help clean up a failed install.
-                    stopRHQServer();
+                    rValue = Math.max(rValue, stopRHQServer());
                 }
 
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        stopStorage();
+                        rValue = Math.max(rValue, stopStorage());
                     } else {
                         log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
                     }
                 }
             }
         } catch (Exception e) {
             throw new RHQControlException("Failed to stop services", e);
         }
+        return rValue;
     }
 
-    private void stopStorage() throws Exception {
+    private int stopStorage() throws Exception {
         log.debug("Stopping RHQ storage node");
 
         Executor executor = new DefaultExecutor();
@@ -123,17 +130,21 @@ public class Stop extends AbstractInstall {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
+        int rValue;
+
         if (isWindows()) {
             commandLine = getCommandLine("rhq-storage", "stop");
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
+                System.out.println("RHQ storage node has stopped");
 
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, script returns 1
                 log.debug("Failed to stop storage service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            if (isStorageRunning()) {
+            if(isStorageRunning()) {
                 String pid = getStoragePid();
 
                 System.out.println("Stopping RHQ storage node...");
@@ -145,11 +156,13 @@ public class Stop extends AbstractInstall {
 
                 System.out.println("RHQ storage node has stopped");
             }
+            rValue = RHQControl.EXIT_CODE_OK; // If process isn't running, stopping it is considered OK.
 
         }
+        return rValue;
     }
 
-    private void stopRHQServer() throws Exception {
+    private int stopRHQServer() throws Exception {
         log.debug("Stopping RHQ server");
 
         Executor executor = new DefaultExecutor();
@@ -157,23 +170,29 @@ public class Stop extends AbstractInstall {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
+        int rValue;
+
         if (isWindows()) {
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop server service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
             String pid = getServerPid();
 
             if (pid != null) {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
+            } else {
+                rValue = RHQControl.EXIT_CODE_OK;
             }
         }
+        return rValue;
     }
 
-    private void stopAgent() throws Exception {
+    private int stopAgent() throws Exception {
         log.debug("Stopping RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
@@ -182,19 +201,25 @@ public class Stop extends AbstractInstall {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
 
+        int rValue;
+
         if (isWindows()) {
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop agent service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
             String pid = getAgentPid();
 
             if (pid != null) {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
+            } else {
+                rValue = RHQControl.EXIT_CODE_OK;
             }
         }
+        return rValue;
     }
 }

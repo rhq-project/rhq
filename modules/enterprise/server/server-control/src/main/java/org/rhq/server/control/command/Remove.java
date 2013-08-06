@@ -34,6 +34,7 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -74,52 +75,56 @@ public class Remove extends ControlCommand {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
+        int rValue = RHQControl.EXIT_CODE_OK;
         try {
             // if no options specified, then stop whatever is installed
             if (commandLine.getOptions().length == 0) {
                 if (isAgentInstalled()) {
-                    removeAgentService();
+                    rValue = Math.max(rValue, removeAgentService());
                 }
 
                 // the server service may be installed even if the full server install fails. The files to execute
                 // the remove are there after the initial unzip, so just go ahead and try to remove the service. This
                 // may help clean up a failed install.
-                removeServerService();
+                rValue = Math.max(rValue, removeServerService());
 
                 if (isStorageInstalled()) {
-                    removeStorageService();
+                    rValue = Math.max(rValue, removeStorageService());
                 }
             } else {
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
-                        removeAgentService();
+                        rValue = Math.max(rValue, removeAgentService());
                     } else {
                         log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     // the server service may be installed even if the full server install fails. The files to execute
                     // the remove are there after the initial unzip, so just go ahead and try to remove the service. This
                     // may help clean up a failed install.
-                    removeServerService();
+                    rValue = Math.max(rValue, removeServerService());
                 }
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        removeStorageService();
+                        rValue = Math.max(rValue, removeStorageService());
                     } else {
                         log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
                     }
                 }
             }
         } catch (Exception e) {
             throw new RHQControlException("Failed to stop services", e);
         }
+        return rValue;
     }
 
-    private void removeStorageService() throws Exception {
+    private int removeStorageService() throws Exception {
         log.debug("Stopping RHQ storage node");
 
         Executor executor = new DefaultExecutor();
@@ -127,12 +132,15 @@ public class Remove extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
+        int rValue;
+
         if (isWindows()) {
             commandLine = getCommandLine("rhq-storage", "remove");
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 log.debug("Failed to remove storage service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
             String pid = getStoragePid();
@@ -141,15 +149,18 @@ public class Remove extends ControlCommand {
                 System.out.println("RHQ storage node (pid=" + pid + ") is stopping...");
 
                 commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
 
                 System.out.println("RHQ storage node has stopped");
+            } else {
+                rValue = RHQControl.EXIT_CODE_OK;
             }
 
         }
+        return rValue;
     }
 
-    private void removeServerService() throws Exception {
+    private int removeServerService() throws Exception {
         log.debug("Stopping RHQ server");
 
         Executor executor = new DefaultExecutor();
@@ -157,25 +168,31 @@ public class Remove extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
+        int rValue;
+
         if (isWindows()) {
             try {
                 commandLine = getCommandLine("rhq-server", "remove");
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to remove server service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
             String pid = getServerPid();
 
             if (pid != null) {
                 commandLine = getCommandLine("rhq-server", "stop");
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
+            } else {
+                rValue = RHQControl.EXIT_CODE_OK;
             }
         }
+        return rValue;
     }
 
-    private void removeAgentService() throws Exception {
+    private int removeAgentService() throws Exception {
         log.debug("Stopping RHQ agent");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
@@ -184,21 +201,27 @@ public class Remove extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
+        int rValue;
+
         if (isWindows()) {
             try {
                 commandLine = getCommandLine("rhq-agent-wrapper", "remove");
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist, script returns 1
                 log.debug("Failed to remove agent service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
             String pid = getAgentPid();
 
             if (pid != null) {
                 commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
+            } else {
+                rValue = RHQControl.EXIT_CODE_OK;
             }
         }
+        return rValue;
     }
 }

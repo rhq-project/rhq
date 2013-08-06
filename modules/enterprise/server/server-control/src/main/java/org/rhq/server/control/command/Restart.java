@@ -64,11 +64,13 @@ public class Restart extends ControlCommand {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
         Stop stop = new Stop();
         stop.exec(commandLine);
 
+        // If the server isn't stopped.. restart had some LSB rules.. check 'em.
+
         Start start = new Start();
-        start.exec(commandLine);
+        return start.exec(commandLine);
     }
 }

@@ -41,7 +41,6 @@ import org.apache.http.HttpStatus;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Availability;
-import org.rhq.modules.integrationTests.restApi.d.Link;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -127,7 +126,6 @@ public class ResourcesTest extends AbstractBase {
             .get("/resource/{id}")
         .jsonPath().getInt("typeId");
 
-        assert typeId!=null;
         assert typeId>0;
 
         given()
@@ -345,6 +343,40 @@ public class ResourcesTest extends AbstractBase {
             .body("currentPage",is(1))
         .when()
             .get("/resource");
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndWrappingAndJsonP() throws Exception {
+
+        Response response =
+        given()
+            .header("Accept", "application/vnd.rhq.wrapped+json")
+            .queryParam("jsonp","jsonp") // Use jsonp-wrapping e.g. for JavaScript access
+        .with()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/resource");
+
+        String mediaType = response.getContentType();
+        assert mediaType.startsWith("application/javascript");
+
+        // check for jsonp wrapping
+        String bodyString = response.asString();
+        assert bodyString.startsWith("jsonp(");
+        assert bodyString.endsWith(");");
+
+        // extract the internal json data
+        String body = bodyString.substring(6,bodyString.length()-2);
+
+        // validate
+        JsonPath jsonPath = new JsonPath(body);
+        assert jsonPath.getInt("pageSize") == 2;
+        assert jsonPath.getInt("currentPage") == 1;
     }
 
     @Test

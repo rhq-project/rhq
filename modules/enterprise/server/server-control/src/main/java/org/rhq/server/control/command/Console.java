@@ -32,6 +32,7 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -70,32 +71,38 @@ public class Console extends ControlCommand {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
+        int rValue = RHQControl.EXIT_CODE_OK;
+
         if (commandLine.getOptions().length != 1) {
             printUsage();
+            rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
         } else {
             String option = commandLine.getOptions()[0].getLongOpt();
             try {
                 if (option.equals(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        startStorageInForeground();
+                        rValue = Math.max(rValue, startStorageInForeground());
                     } else {
                         log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
                     }
                 } else if (option.equals(SERVER_OPTION)) {
                     if (isServerInstalled()) {
-                        startServerInForeground();
+                        rValue = Math.max(rValue, startServerInForeground());
                     } else {
                         log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
                     }
                 } else if (option.equals(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
-                        startAgentInForeground();
+                        rValue = Math.max(rValue, startAgentInForeground());
                     } else {
                         log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
                             + " option will be ignored.");
+                        rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
                     }
                 } else {
                     throw new IllegalArgumentException(option + " is not a supported option");
@@ -104,32 +111,33 @@ public class Console extends ControlCommand {
                 throw new RHQControlException("Failed to execute console command", e);
             }
         }
+        return rValue;
     }
 
-    private void startStorageInForeground() throws Exception {
+    private int startStorageInForeground() throws Exception {
         log.debug("Starting RHQ storage node in foreground");
 
         File storageBinDir = new File(getStorageBasedir(), "bin");
 
         org.apache.commons.exec.CommandLine commandLine = new org.apache.commons.exec.CommandLine(getCommandLine(false,
             "cassandra", "-f"));
-        Executor exeuctor = new DefaultExecutor();
-        exeuctor.setWorkingDirectory(storageBinDir);
-        exeuctor.setStreamHandler(new PumpStreamHandler());
-        exeuctor.execute(commandLine);
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(storageBinDir);
+        executor.setStreamHandler(new PumpStreamHandler());
+        return executor.execute(commandLine);
     }
 
-    private void startServerInForeground() throws Exception {
+    private int startServerInForeground() throws Exception {
         log.debug("Starting RHQ server in foreground");
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "console");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
-        executor.execute(commandLine);
+        return executor.execute(commandLine);
     }
 
-    private void startAgentInForeground() throws Exception {
+    private int startAgentInForeground() throws Exception {
         log.info("Starting RHQ agent in foreground");
 
         File agentHomeDir = getAgentBasedir();
@@ -165,6 +173,7 @@ public class Console extends ControlCommand {
         //        agentThread.start();
         //        doneSignal.await();
         //        agentThread.join();
+        return RHQControl.EXIT_CODE_OK;
     }
 
     private class AgentInputStreamPipe extends Thread {

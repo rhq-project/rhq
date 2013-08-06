@@ -35,6 +35,7 @@ import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -71,23 +72,24 @@ public class Status extends ControlCommand {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
+        int rValue = RHQControl.EXIT_CODE_OK;
         try {
             // if no options specified, then check the status of whatever is installed
             if (commandLine.getOptions().length == 0) {
                 if (isStorageInstalled()) {
-                    checkStorageStatus();
+                    rValue = Math.max(rValue, checkStorageStatus());
                 }
                 if (isServerInstalled()) {
-                    checkServerStatus();
+                    rValue = Math.max(rValue, checkServerStatus());
                 }
                 if (isAgentInstalled()) {
-                    checkAgentStatus();
+                    rValue = Math.max(rValue, checkAgentStatus());
                 }
             } else {
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
-                        checkStorageStatus();
+                        rValue = Math.max(rValue, checkStorageStatus());
                     } else {
                         log.warn("It appears that the storage node is not installed. The --" + STORAGE_OPTION
                             + " option will be ignored.");
@@ -95,7 +97,7 @@ public class Status extends ControlCommand {
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
                     if (isServerInstalled()) {
-                        checkServerStatus();
+                        rValue = Math.max(rValue, checkServerStatus());
                     } else {
                         log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
                             + " option will be ignored.");
@@ -103,7 +105,7 @@ public class Status extends ControlCommand {
                 }
                 if (commandLine.hasOption(AGENT_OPTION)) {
                     if (isAgentInstalled()) {
-                        checkAgentStatus();
+                        rValue = Math.max(rValue, checkAgentStatus());
                     } else {
                         log.warn("It appears that the agent is not installed. The --" + AGENT_OPTION
                             + " option will be ignored.");
@@ -113,10 +115,13 @@ public class Status extends ControlCommand {
         } catch (Exception e) {
             throw new RHQControlException("Failed to check statuses", e);
         }
+        return rValue;
     }
 
-    private void checkStorageStatus() throws Exception {
+    private int checkStorageStatus() throws Exception {
         log.debug("Checking RHQ storage node status");
+
+        int rValue = RHQControl.EXIT_CODE_OK;
 
         if (isWindows()) {
             Executor executor = new DefaultExecutor();
@@ -125,31 +130,34 @@ public class Status extends ControlCommand {
             executor.setWorkingDirectory(getBinDir());
             commandLine = getCommandLine("rhq-storage", "status");
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
 
             } catch (Exception e) {
                 log.debug("Failed to check storage service status", e);
+                rValue = RHQControl.EXIT_CODE_STATUS_UNKNOWN;
             }
         } else {
             if(isStorageRunning()) {
                 System.out.println(String.format("%-30s", "RHQ Storage Node") + " (pid " + String.format("%-7s", getStoragePid()) + ") IS running");
             } else {
                 System.out.println(String.format("%-30s", "RHQ Storage Node") + " (no pid file) IS NOT running");
+                rValue = RHQControl.EXIT_CODE_STATUS_NOT_RUNNING;
             }
         }
+        return rValue;
     }
 
-    private void checkServerStatus() throws Exception {
+    private int checkServerStatus() throws Exception {
         log.debug("Checking RHQ server status");
 
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "status");
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(getBinDir());
         executor.setStreamHandler(new PumpStreamHandler());
-        executor.execute(commandLine);
+        return executor.execute(commandLine);
     }
 
-    private void checkAgentStatus() throws Exception {
+    private int checkAgentStatus() throws Exception {
         log.debug("Checking RHQ agent status");
 
         File agentBinDir = new File(getAgentBasedir(), "bin");
@@ -159,7 +167,7 @@ public class Status extends ControlCommand {
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
         try {
-            executor.execute(commandLine);
+            return executor.execute(commandLine);
         } catch (ExecuteException e) {
             // For windows the JSW exit code for a status check is expected to be a mask value and the agent wrapper
             // .bat will return it explicitly.  We can ignore it and assume that the logged output is sufficient.
@@ -167,6 +175,7 @@ public class Status extends ControlCommand {
             if (!isWindows()) {
                 throw e;
             }
+            return RHQControl.EXIT_CODE_STATUS_UNKNOWN;
         }
     }
 }

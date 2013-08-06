@@ -33,6 +33,7 @@ import org.apache.commons.cli.Options;
 
 import org.rhq.core.util.file.FileReverter;
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -95,10 +96,11 @@ public class Install extends AbstractInstall {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
         boolean start = commandLine.hasOption(START_OPTION);
         boolean startedStorage = false;
         boolean startedServer = false;
+        int rValue = RHQControl.EXIT_CODE_OK;
 
         try {
             List<String> errors = validateOptions(commandLine);
@@ -107,7 +109,7 @@ public class Install extends AbstractInstall {
                     log.error(error);
                 }
                 log.error("Exiting due to the previous errors");
-                return;
+                return RHQControl.EXIT_CODE_NOT_INSTALLED;
             }
 
             // If any failures occur, we know we need to reset rhq-server.properties.
@@ -137,10 +139,10 @@ public class Install extends AbstractInstall {
 
                     if (isWindows()) {
                         log.info("Ensuring the RHQ Storage Windows service exists. Ignore any CreateService failure.");
-                        installWindowsService(getBinDir(), "rhq-storage", false, false);
+                        rValue = Math.max(rValue, installWindowsService(getBinDir(), "rhq-storage", false, false));
                     }
                 } else {
-                    installStorageNode(getStorageBasedir(), commandLine, false);
+                    rValue = Math.max(rValue, installStorageNode(getStorageBasedir(), commandLine, false));
                     startStorage = start;
                 }
             }
@@ -148,7 +150,7 @@ public class Install extends AbstractInstall {
             if (startStorage || installServer) {
                 startedStorage = true;
                 Start startCommand = new Start();
-                startCommand.exec(new String[] { "start", "--storage" });
+                rValue = Math.max(rValue, startCommand.exec(new String[] { "start", "--storage" }));
             }
 
             if (installServer) {
@@ -157,12 +159,12 @@ public class Install extends AbstractInstall {
 
                     if (isWindows()) {
                         log.info("Ensuring the RHQ Server Windows service exists. Ignore any CreateService failure.");
-                        installWindowsService(getBinDir(), "rhq-server", false, false);
+                        rValue = Math.max(rValue, installWindowsService(getBinDir(), "rhq-server", false, false));
                     }
                 } else {
                     startedServer = true;
                     startRHQServerForInstallation();
-                    runRHQServerInstaller();
+                    rValue = Math.max(rValue, runRHQServerInstaller());
                     waitForRHQServerToInitialize();
                 }
             }
@@ -175,7 +177,7 @@ public class Install extends AbstractInstall {
                     if (isWindows()) {
                         try {
                             log.info("Ensuring the RHQ Agent Windows service exists. Ignore any CreateService failure.");
-                            installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, false);
+                            rValue = Math.max(rValue, installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, false));
                         } catch (Exception e) {
                             // Ignore, service may already exist or be running, wrapper script returns 1
                             log.debug("Failed to stop agent service", e);
@@ -185,10 +187,10 @@ public class Install extends AbstractInstall {
                     File agentBasedir = getAgentBasedir();
                     installAgent(agentBasedir, commandLine);
 
-                    updateWindowsAgentService(agentBasedir);
+                    rValue = Math.max(rValue, updateWindowsAgentService(agentBasedir));
 
                     if (start) {
-                        startAgent(agentBasedir);
+                        rValue = Math.max(rValue, startAgent(agentBasedir));
                     }
                 }
             }
@@ -200,13 +202,14 @@ public class Install extends AbstractInstall {
             if (!start && (startedStorage || startedServer)) {
                 Stop stopCommand = new Stop();
                 if (startedServer) {
-                    stopCommand.exec(new String[] { "stop", "--server" });
+                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--server" }));
                 }
                 if (startedStorage) {
-                    stopCommand.exec(new String[] { "stop", "--storage" });
+                    rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--storage" }));
                 }
             }
         }
+        return rValue;
     }
 
     private List<String> validateOptions(CommandLine commandLine) {

@@ -43,6 +43,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.PosixParser;
 import org.apache.commons.exec.DefaultExecuteResultHandler;
 import org.apache.commons.exec.DefaultExecutor;
+import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
 
@@ -55,6 +56,7 @@ import org.rhq.core.util.file.FileReverter;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -79,28 +81,31 @@ public abstract class AbstractInstall extends ControlCommand {
     private static final String PREF_RHQ_AGENT_SERVER_BINDPORT = "rhq.agent.server.bind-port";
     private static final String PREF_RHQ_AGENT_SERVER_TRANSPORTPARAMS = "rhq.agent.server.transport-params";
 
-    protected void installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
+    protected int installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
         throws Exception {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(workingDir);
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
-        if (replaceExistingService) {
-            commandLine = getCommandLine(batFile, "stop");
-            executor.execute(commandLine);
+	    int rValue = RHQControl.EXIT_CODE_OK;
 
-            commandLine = getCommandLine(batFile, "remove");
-            executor.execute(commandLine);
+        if (replaceExistingService) {
+		    commandLine = getCommandLine(batFile, "stop");
+		    rValue = Math.max(rValue, executor.execute(commandLine));
+
+		    commandLine = getCommandLine(batFile, "remove");
+		    rValue = Math.max(rValue, executor.execute(commandLine));
         }
 
         commandLine = getCommandLine(batFile, "install");
-        executor.execute(commandLine);
+        rValue = Math.max(rValue, executor.execute(commandLine));
 
         if (start) {
             commandLine = getCommandLine(batFile, "start");
-            executor.execute(commandLine);
+            rValue = Math.max(rValue, executor.execute(commandLine));
         }
+        return rValue;
     }
 
     protected void validateCustomStorageDataDirectories(CommandLine commandLine, List<String> errors) {
@@ -155,6 +160,31 @@ public abstract class AbstractInstall extends ControlCommand {
 
     }
 
+    protected boolean isUnixPidRunning(String pid) {
+
+        Executor executor = new DefaultExecutor();
+        executor.setWorkingDirectory(getBinDir());
+        executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine;
+
+        commandLine = new org.apache.commons.exec.CommandLine("/bin/kill").addArgument("-0").addArgument(pid);
+
+        try {
+            int code = executor.execute(commandLine);
+            if (code != 0) {
+                return false;
+            }
+        } catch (ExecuteException ee) {
+            if (ee.getExitValue() == 1) {
+                // return code 1 means process does not exist
+                return false;
+            }
+        } catch (IOException e) {
+            log.error("Checking for running process failed: " + e.getMessage());
+        }
+        return true;
+    }
+
     protected void waitForRHQServerToInitialize() throws Exception {
         try {
             final long messageInterval = 30000L;
@@ -169,13 +199,13 @@ public abstract class AbstractInstall extends ControlCommand {
                     long totalWait = (now - timerStart);
 
                     if (totalWait < problemMessageInterval) {
-                        log.info("Still waiting for server to initialize...");
+                        log.info("Still waiting for server to start...");
 
                     } else {
                         long minutes = totalWait / 60000;
                         log.info("It has been over ["
                             + minutes
-                            + "] minutes - you may want to ensure your server initialization is proceeding as expected. You can check the log at ["
+                            + "] minutes - you may want to ensure your server startup is proceeding as expected. You can check the log at ["
                             + new File(getBaseDir(), "logs/server.log").getPath() + "].");
 
                         timerStart = now;
@@ -196,6 +226,7 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
+    @SuppressWarnings("resource")
     protected boolean isRHQServerInitialized() throws IOException {
 
         BufferedReader reader = null;
@@ -241,10 +272,12 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void updateWindowsAgentService(final File agentBasedir) throws Exception {
+    protected int updateWindowsAgentService(final File agentBasedir) throws Exception {
         if (!isWindows()) {
-            return;
+            return RHQControl.EXIT_CODE_OK;
         }
+
+		int rValue = 0;
 
         try {
             File agentBinDir = new File(agentBasedir, "bin");
@@ -262,7 +295,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             commandLine = getCommandLine("rhq-agent-wrapper", "stop");
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop agent service", e);
@@ -270,22 +303,26 @@ public abstract class AbstractInstall extends ControlCommand {
 
             commandLine = getCommandLine("rhq-agent-wrapper", "remove");
             try {
-                executor.execute(commandLine);
+                rValue = Math.max(rValue, executor.execute(commandLine));
             } catch (Exception e) {
                 // Ignore, service may not exist, script returns 1
                 log.debug("Failed to uninstall agent service", e);
             }
 
             commandLine = getCommandLine("rhq-agent-wrapper", "install");
-            executor.execute(commandLine);
+            rValue = Math.max(rValue, executor.execute(commandLine));
 
         } catch (IOException e) {
             log.error("An error occurred while updating the agent service: " + e.getMessage());
             throw e;
         }
+
+		return rValue;
     }
 
-    protected void startAgent(final File agentBasedir) throws Exception {
+    protected int startAgent(final File agentBasedir) throws Exception {
+        int rValue;
+
         try {
             File agentBinDir = new File(agentBasedir, "bin");
             if (!agentBinDir.exists()) {
@@ -300,7 +337,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             // For *nix, just start the server in the background, for Win, now that the service is installed, start it
             commandLine = getCommandLine("rhq-agent-wrapper", "start");
-            executor.execute(commandLine);
+            rValue = executor.execute(commandLine);
 
             // if any errors occur after now, we need to stop the agent
             addUndoTask(new ControlCommand.UndoTask("Stopping agent") {
@@ -314,9 +351,10 @@ public abstract class AbstractInstall extends ControlCommand {
             log.error("An error occurred while starting the agent: " + e.getMessage());
             throw e;
         }
+        return rValue;
     }
 
-    protected void killAgent(File agentBasedir) throws Exception {
+    protected int killAgent(File agentBasedir) throws Exception {
 
         File agentBinDir = new File(agentBasedir, "bin");
         if (!agentBinDir.exists()) {
@@ -328,25 +366,32 @@ public abstract class AbstractInstall extends ControlCommand {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(agentBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
+        org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+
+        int rValue = 0;
 
         if (isWindows()) {
             try {
-                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "stop");
-                executor.execute(commandLine);
+                commandLine = getCommandLine("rhq-agent-wrapper", "stop");
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop agent service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
             String pid = getAgentPid();
             if (pid != null) {
-                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-agent-wrapper", "kill");
-                executor.execute(commandLine);
+                commandLine = getCommandLine("rhq-agent-wrapper", "kill");
+                rValue = executor.execute(commandLine);
+            } else {
+                rValue = RHQControl.EXIT_CODE_OK;
             }
         }
+        return rValue;
     }
 
-    protected void stopServer() throws Exception {
+    protected int stopServer() throws Exception {
 
         File serverBinDir = getBinDir();
         if (!serverBinDir.exists()) {
@@ -360,16 +405,20 @@ public abstract class AbstractInstall extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-server", "stop");
 
+        int rValue;
+
         if (isWindows()) {
             try {
-                executor.execute(commandLine);
+                rValue = executor.execute(commandLine);
             } catch (Exception e) {
                 // Ignore, service may not exist or be running, , script returns 1
                 log.debug("Failed to stop server service", e);
+                rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            executor.execute(commandLine);
+            rValue = executor.execute(commandLine);
         }
+        return rValue;
     }
 
     protected void startRHQServerForInstallation() throws IOException {
@@ -446,7 +495,7 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void runRHQServerInstaller() throws IOException {
+    protected int runRHQServerInstaller() throws IOException {
         try {
             log.info("Installing RHQ server");
 
@@ -467,10 +516,14 @@ public abstract class AbstractInstall extends ControlCommand {
             executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
-            executor.execute(commandLine, new DefaultExecuteResultHandler());
+            DefaultExecuteResultHandler executeHandler = new DefaultExecuteResultHandler();
+
+            executor.execute(commandLine, executeHandler);
             log.info("The server installer is running");
-        } catch (Exception e) {
+            return executeHandler.getExitValue();
+        } catch (IOException e) {
             log.error("An error occurred while starting the server installer: " + e.getMessage());
+            return RHQControl.EXIT_CODE_NOT_INSTALLED;
         }
     }
 
@@ -560,6 +613,7 @@ public abstract class AbstractInstall extends ControlCommand {
             Executor executor = new DefaultExecutor();
             executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
+
             int exitCode = executor.execute(commandLine);
             log.info("The storage node installer has finished with an exit value of " + exitCode);
 
@@ -577,13 +631,14 @@ public abstract class AbstractInstall extends ControlCommand {
         }
     }
 
-    protected void installAgent(final File agentBasedir, final CommandLine commandLine) throws Exception {
+    protected int installAgent(final File agentBasedir, final CommandLine commandLine) throws Exception {
         clearAgentPreferences();
-        installAgent(agentBasedir);
+        int rValue = installAgent(agentBasedir);
         configureAgent(agentBasedir, commandLine);
+		return rValue;
     }
 
-    private void installAgent(final File agentBasedir) throws IOException {
+    private int installAgent(final File agentBasedir) throws IOException {
         try {
             log.info("Installing RHQ agent");
 
@@ -612,6 +667,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
             int exitValue = executor.execute(commandLine);
             log.info("The agent installer finished running with exit value " + exitValue);
+			return exitValue;
         } catch (IOException e) {
             log.error("An error occurred while running the agent installer: " + e.getMessage());
             throw e;

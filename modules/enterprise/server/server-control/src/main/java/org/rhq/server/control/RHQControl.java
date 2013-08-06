@@ -22,6 +22,7 @@
  *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  */
+
 package org.rhq.server.control;
 
 import java.io.Console;
@@ -50,6 +51,19 @@ public class RHQControl {
 
     private final Log log = LogFactory.getLog(RHQControl.class);
 
+    public static final int EXIT_CODE_OK = 0;
+
+    // These try to follow the LSB specification - status command
+    public static final int EXIT_CODE_STATUS_NOT_RUNNING = 3;
+    public static final int EXIT_CODE_STATUS_UNKNOWN = 4;
+
+    // These try to follow the LSB specification - other commands
+    public static final int EXIT_CODE_OPERATION_FAILED = 1;
+    public static final int EXIT_CODE_INVALID_ARGUMENT = 2;
+    public static final int EXIT_CODE_NOT_INSTALLED = 5;
+//    public static final int EXIT_CODE_OPERATION_NOT_RUNNING = 7;
+
+
     private Commands commands = new Commands();
 
     public void printUsage() {
@@ -63,7 +77,8 @@ public class RHQControl {
         helpFormatter.printHelp(syntax, header, commands.getOptions(), footer);
     }
 
-    public void exec(String[] args) {
+    public int exec(String[] args) {
+        int rValue = EXIT_CODE_OK;
         ControlCommand command = null;
         boolean undo = false;
         AbortHook abortHook = new AbortHook();
@@ -71,6 +86,7 @@ public class RHQControl {
         try {
             if (args.length == 0) {
                 printUsage();
+                rValue = EXIT_CODE_INVALID_ARGUMENT;
             } else {
                 String commandName = findCommand(commands, args);
                 command = commands.get(commandName);
@@ -84,10 +100,11 @@ public class RHQControl {
                 Runtime.getRuntime().addShutdownHook(abortHook);
 
                 // run the command
-                command.exec(getCommandLine(commandName, args));
+                rValue = command.exec(getCommandLine(commandName, args));
             }
         } catch (UsageException e) {
             printUsage();
+            rValue = EXIT_CODE_INVALID_ARGUMENT;
         } catch (RHQControlException e) {
             undo = true;
 
@@ -98,9 +115,11 @@ public class RHQControl {
             } else {
                 log.error(rootCause.getMessage());
             }
+            rValue = EXIT_CODE_OPERATION_FAILED;
         } catch (Throwable t) {
             undo = true;
             log.error(t);
+            rValue = EXIT_CODE_OPERATION_FAILED;
         } finally {
             abortHook.setCommand(null);
             Runtime.getRuntime().removeShutdownHook(abortHook);
@@ -116,10 +135,11 @@ public class RHQControl {
             } catch (Throwable t) {
                 log.warn("Failed to clean up after the failed installation attempt. "
                     + "You may have to clean up some things before attempting to install again", t);
+	            rValue = EXIT_CODE_OPERATION_FAILED;
             }
         }
 
-        return;
+        return rValue;
     }
 
     private void logWarningIfAgentRPMIsInstalled(ControlCommand command) {
@@ -303,9 +323,9 @@ public class RHQControl {
 
     public static void main(String[] args) throws Exception {
         RHQControl control = new RHQControl();
+        int rValue;
         try {
-            control.exec(args);
-            System.exit(0);
+            rValue = control.exec(args);
         } catch (RHQControlException e) {
             Throwable rootCause = ThrowableUtil.getRootCause(e);
             // Only show the messy stack trace if we're in debug mode. Otherwise keep it cleaner for the user...
@@ -314,8 +334,9 @@ public class RHQControl {
             } else {
                 control.log.error("There was an unexpected error: " + rootCause.getMessage());
             }
-            System.exit(1);
+            rValue = EXIT_CODE_OPERATION_FAILED;
         }
+        System.exit(rValue);
     }
 
     private class AbortHook extends Thread {

@@ -60,6 +60,7 @@ public abstract class ControlCommand {
     public static final String SERVER_OPTION = "server";
     public static final String STORAGE_OPTION = "storage";
     public static final String AGENT_OPTION = "agent";
+    public static final String RHQ_STORAGE_BASEDIR_PROP = "rhq.storage.basedir";
     public static final String RHQ_AGENT_BASEDIR_PROP = "rhq.agent.basedir";
 
     protected static final String STORAGE_BASEDIR_NAME = "rhq-storage";
@@ -133,6 +134,7 @@ public abstract class ControlCommand {
                 throw new RHQControlException("Failed to load configuration", e);
             }
         }
+
         defaultStorageBasedir = new File(getBaseDir(), STORAGE_BASEDIR_NAME);
         defaultAgentBasedir = new File(getBaseDir().getParent(), AGENT_BASEDIR_NAME);
     }
@@ -143,22 +145,26 @@ public abstract class ControlCommand {
 
     public abstract Options getOptions();
 
-    protected abstract void exec(CommandLine commandLine);
+    protected abstract int exec(CommandLine commandLine);
 
-    public void exec(String[] args) {
+    public int exec(String[] args) {
         Options options = getOptions();
+        int rValue = RHQControl.EXIT_CODE_OK;
         try {
             CommandLineParser parser = new PosixParser();
             CommandLine cmdLine = parser.parse(options, args);
-            exec(cmdLine);
+            rValue = exec(cmdLine);
 
             if (rhqctlConfig != null) {
                 rhqctlConfig.save();
             }
         } catch (ParseException e) {
             printUsage();
+            rValue = RHQControl.EXIT_CODE_INVALID_ARGUMENT;
         } catch (ConfigurationException e) {
             throw new RHQControlException("Failed to update " + getRhqCtlProperties(), e);
+        } finally {
+            return rValue;
         }
     }
 
@@ -386,7 +392,6 @@ public abstract class ControlCommand {
             result = new org.apache.commons.exec.CommandLine("cmd.exe");
             result.addArgument("/C");
             result.addArgument(scriptName.replace('/', '\\') + ".bat");
-
         } else {
             result = new org.apache.commons.exec.CommandLine("./" + (addShExt ? scriptName + ".sh" : scriptName));
         }
@@ -456,6 +461,7 @@ public abstract class ControlCommand {
         PumpStreamHandler streamHandler = new PumpStreamHandler(new NullOutputStream(), new NullOutputStream());
         executor.setStreamHandler(streamHandler);
         org.apache.commons.exec.CommandLine commandLine;
+
         commandLine = new org.apache.commons.exec.CommandLine("kill").addArgument(pid);
         executor.execute(commandLine);
     }

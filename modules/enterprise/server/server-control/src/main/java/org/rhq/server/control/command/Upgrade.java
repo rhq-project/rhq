@@ -48,6 +48,7 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.file.FileVisitor;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
+import org.rhq.server.control.RHQControl;
 import org.rhq.server.control.RHQControlException;
 
 /**
@@ -125,7 +126,8 @@ public class Upgrade extends AbstractInstall {
     }
 
     @Override
-    protected void exec(CommandLine commandLine) {
+    protected int exec(CommandLine commandLine) {
+        int rValue = RHQControl.EXIT_CODE_OK;
         boolean start = commandLine.hasOption(START_OPTION);
 
         try {
@@ -135,8 +137,12 @@ public class Upgrade extends AbstractInstall {
                     log.error(error);
                 }
                 log.error("Exiting due to the previous errors");
-                return;
+                return RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
+
+            // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
+            // really shouldn't be running anyway. This is just an attempt to avoid upgrade problems.
+            log.info("Stopping any running RHQ components...");
 
             // If using non-default agent location then save it so it will be applied to all subsequent rhqctl commands.
             boolean hasFromAgentOption = commandLine.hasOption(FROM_AGENT_DIR_OPTION);
@@ -149,7 +155,7 @@ public class Upgrade extends AbstractInstall {
             // if the agent already exists in the default location, it may be there from a prior install.
             if (isStorageInstalled() || isServerInstalled()) {
                 log.warn("RHQ is already installed so upgrade can not be performed.");
-                return;
+                return RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
 
             // Attempt to shutdown any running components. A failure to shutdown a component is not a failure as it
@@ -158,7 +164,7 @@ public class Upgrade extends AbstractInstall {
 
             // Stop the agent, if running.
             if (hasFromAgentOption) {
-                killAgent(getFromAgentDir(commandLine)); // this validates the path as well
+                rValue = Math.max(rValue, killAgent(getFromAgentDir(commandLine))); // this validates the path as well
             }
 
             // If rhqctl exists in the old version, use it to stop old components, otherwise, just try and stop the
@@ -177,10 +183,10 @@ public class Upgrade extends AbstractInstall {
             } else {
                 log.error("The old installation components failed to be stopped. Please stop them manually before continuing. exit code="
                     + exitValue);
-                return;
+                return exitValue;
             }
 
-            // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
+             // If any failures occur during upgrade, we know we need to reset rhq-server.properties.
             final FileReverter serverPropFileReverter = new FileReverter(getServerPropertiesFile());
             addUndoTask(new ControlCommand.UndoTask("Reverting server properties file") {
                 public void performUndoWork() throws Exception {
@@ -193,9 +199,9 @@ public class Upgrade extends AbstractInstall {
             });
 
             // now upgrade everything
-            upgradeStorage(commandLine);
-            upgradeServer(commandLine);
-            upgradeAgent(commandLine);
+            rValue = Math.max(rValue, upgradeStorage(commandLine));
+            rValue = Math.max(rValue, upgradeServer(commandLine));
+            rValue = Math.max(rValue, upgradeAgent(commandLine));
 
             File agentDir;
 
@@ -208,7 +214,7 @@ public class Upgrade extends AbstractInstall {
             updateWindowsAgentService(agentDir);
 
             if (start) {
-                startAgent(agentDir);
+                rValue = Math.max(rValue, startAgent(agentDir));
             }
         } catch (Exception e) {
             throw new RHQControlException("An error occurred while executing the upgrade command", e);
@@ -218,30 +224,33 @@ public class Upgrade extends AbstractInstall {
                     Stop stopCommand = new Stop();
                     stopCommand.exec(new String[] { "stop", "--server" });
                     if (!commandLine.hasOption(RUN_DATA_MIGRATION)) {
-                        stopCommand.exec(new String[] { "stop", "--storage" });
+                        rValue = Math.max(rValue, stopCommand.exec(new String[] { "stop", "--storage" }));
                     }
                 }
             } catch (Throwable t) {
                 log.warn("Unable to stop services: " + t.getMessage());
+				rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         }
 
         if (!isRhq48OrLater(commandLine) && commandLine.hasOption(RUN_DATA_MIGRATION)) {
-            runDataMigration(commandLine);
+            rValue = Math.max(rValue, runDataMigration(commandLine));
         }
-
+        return rValue;
     }
 
-    private void runDataMigration(CommandLine rhqctlCommandLine) {
+    private int runDataMigration(CommandLine rhqctlCommandLine) {
 
         String migrationOption = rhqctlCommandLine.getOptionValue(RUN_DATA_MIGRATION);
+
+        int rValue;
 
         if (migrationOption.equals("none")) {
             log.info("No data migration will run");
             if (!isRhq48OrLater(rhqctlCommandLine)) {
                 printDataMigrationNotice();
             }
-            return;
+            return RHQControl.EXIT_CODE_OK;
         }
 
         // We deduct the database parameters from the server properties
@@ -253,22 +262,27 @@ public class Upgrade extends AbstractInstall {
             }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(new File(getBaseDir(), "bin")); // data migrator script is not in bin/internal
+            executor.setWorkingDirectory(getBinDir());
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitValue = executor.execute(commandLine);
             log.info("The data migrator finished with exit value " + exitValue);
+            rValue = exitValue;
         } catch (Exception e) {
             log.error("Running the data migrator failed - please try to run it from the command line: "
                 + e.getMessage());
+            rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
         }
+        return rValue;
     }
 
-    private void upgradeStorage(CommandLine rhqctlCommandLine) throws Exception {
+    private int upgradeStorage(CommandLine rhqctlCommandLine) throws Exception {
         if (rhqctlCommandLine.hasOption(USE_REMOTE_STORAGE_NODE)) {
             log.info("Ignoring storage node upgrade, a remote storage node is configured.");
-            return;
+            return RHQControl.EXIT_CODE_OK;
         }
+
+        int rValue;
 
         // If upgrading from a pre-cassandra then just install an initial storage node. Otherwise, upgrade
         if (isRhq48OrLater(rhqctlCommandLine)) {
@@ -293,28 +307,30 @@ public class Upgrade extends AbstractInstall {
 
                 int exitCode = executor.execute(commandLine);
                 log.info("The storage node upgrade has finished with an exit value of " + exitCode);
-
+                rValue = exitCode;
             } catch (IOException e) {
                 log.error("An error occurred while running the storage node upgrade: " + e.getMessage());
                 throw e;
             }
 
         } else {
-            installStorageNode(getStorageBasedir(), rhqctlCommandLine, true);
+            rValue = installStorageNode(getStorageBasedir(), rhqctlCommandLine, true);
         }
+        return rValue;
     }
 
-    private void upgradeServer(CommandLine commandLine) throws Exception {
+    private int upgradeServer(CommandLine commandLine) throws Exception {
         // don't upgrade the server if this is a storage node only install
         File oldServerDir = getFromServerDir(commandLine);
         if (!(!isRhq48OrLater(commandLine) || isServerInstalled(oldServerDir))) {
             log.info("Ignoring server upgrade, this is a storage node only installation.");
-            return;
+            return RHQControl.EXIT_CODE_OK;
         }
 
         // copy all the old settings into the new rhq-server.properties file
         upgradeServerPropertiesFile(commandLine);
 
+        int rValue = RHQControl.EXIT_CODE_OK;
         // make sure we retain the oracle driver if one exists
         try {
             copyOracleDriver(oldServerDir);
@@ -323,6 +339,7 @@ public class Upgrade extends AbstractInstall {
                 + "The upgrade will continue but your server may not work if connecting to an Oracle database, "
                 + "in which case you will need to manually install an Oracle driver to your server. " + "Cause: "
                 + ThrowableUtil.getAllMessages(e));
+            rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
         }
 
         // copy over any wrapper.inc that may have been added
@@ -334,10 +351,10 @@ public class Upgrade extends AbstractInstall {
 
         // start the server, the invoke the installer and wait for the server to be completely installed
         startRHQServerForInstallation();
-        runRHQServerInstaller();
+        rValue = Math.max(rValue, runRHQServerInstaller());
         waitForRHQServerToInitialize();
 
-        return;
+        return rValue;
     }
 
     public void copyOracleDriver(File oldServerDir) throws IOException {
@@ -529,7 +546,7 @@ public class Upgrade extends AbstractInstall {
         }
 
         // now merge the old settings in with the default properties from the new server install
-        String newServerPropsFilePath = new File(getBaseDir(), "bin/rhq-server.properties").getAbsolutePath();
+        String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
         newServerPropsFile.update(oldServerProps);
 
@@ -606,7 +623,7 @@ public class Upgrade extends AbstractInstall {
         return (null != path) ? path.replace('\\', '/') : null;
     }
 
-    private void upgradeAgent(CommandLine rhqctlCommandLine) throws Exception {
+    private int upgradeAgent(CommandLine rhqctlCommandLine) throws Exception {
         try {
             File oldAgentDir;
             if (rhqctlCommandLine.hasOption(FROM_AGENT_DIR_OPTION)) {
@@ -628,8 +645,7 @@ public class Upgrade extends AbstractInstall {
                         + " option specified and no agent found in the default location ["
                         + oldAgentDir.getAbsolutePath()
                         + "]. Installing agent in the default location as part of the upgrade.");
-                    installAgent(getAgentBasedir(), rhqctlCommandLine);
-                    return;
+                    return installAgent(getAgentBasedir(), rhqctlCommandLine);
                 }
             }
 
@@ -687,6 +703,7 @@ public class Upgrade extends AbstractInstall {
             });
 
             log.info("The agent has been upgraded and placed in: " + agentBasedir);
+            return exitValue;
 
         } catch (IOException e) {
             log.error("An error occurred while upgrading the agent: " + e.getMessage());

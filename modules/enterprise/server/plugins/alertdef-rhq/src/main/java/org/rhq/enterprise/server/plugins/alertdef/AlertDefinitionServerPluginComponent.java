@@ -40,6 +40,7 @@ import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.alert.AlertTemplateManagerLocal;
@@ -64,10 +65,12 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
     private static final String DATA_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.DataDiskUsedPercentage";
     private static final String TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.TotalDiskUsedPercentage";
     private static final String FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME = "Calculated.FreeDiskToDataSizeRatio";
+    private static final String TAKE_SNAPSHOT_OPERATION_NAME = "takeSnapshot";
 
     static private final List<InjectedTemplate> injectedTemplates;
     static private final InjectedTemplate storageNodeHighHeapTemplate;
     static private final InjectedTemplate storageNodeHighDiskUsageTemplate;
+    static private final InjectedTemplate storageNodeSnapshotFailureTemplate;
 
     static {
         storageNodeHighHeapTemplate = new InjectedTemplate(
@@ -82,9 +85,16 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
             "StorageNodeHighDiskUsageTemplate", //
             "An alert template to notify users of excessive heap use by an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
 
+        storageNodeSnapshotFailureTemplate = new InjectedTemplate(
+            "RHQStorage", //
+            "StorageService", //
+            "StorageNodeSnapshotFailureTemplate", //
+            "An alert template to notify users when a snapshot operations fails for an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
+
         injectedTemplates = new ArrayList<InjectedTemplate>();
         injectedTemplates.add(storageNodeHighHeapTemplate);
         injectedTemplates.add(storageNodeHighDiskUsageTemplate);
+        injectedTemplates.add(storageNodeSnapshotFailureTemplate);
     }
 
     private ServerPluginContext context;
@@ -227,6 +237,8 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
             newAlertDefId = injectStorageNodeHighHeapTemplate(resourceType);
         } else if (storageNodeHighDiskUsageTemplate.equals(injectedAlertDef)) {
             newAlertDefId = injectStorageNodeHighDiskUsageTemplate(resourceType);
+        } else if (storageNodeSnapshotFailureTemplate.equals(injectedAlertDef)) {
+            newAlertDefId = injectStorageNodeSnapshotFailureTemplate(resourceType);
         }
 
         adc.addFilterId(newAlertDefId);
@@ -352,6 +364,33 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
             subjectManager.getOverlord(),
             ArrayUtils.toPrimitive(measurementDefinitionIds.toArray(new Integer[measurementDefinitionIds.size()])),
             60000L, true, true);
+
+        return newTemplateId;
+    }
+
+    private int injectStorageNodeSnapshotFailureTemplate(ResourceType resourceType) {
+        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+
+        AlertDefinition newTemplate = new AlertDefinition();
+        newTemplate.setName(storageNodeSnapshotFailureTemplate.getName());
+        newTemplate.setResourceType(resourceType);
+        newTemplate.setPriority(AlertPriority.MEDIUM);
+        newTemplate.setConditionExpression(BooleanExpression.ANY);
+        newTemplate.setRecoveryId(0);
+        newTemplate.setEnabled(true);
+
+        AlertCondition snapshotFailureCondition = new AlertCondition();
+        snapshotFailureCondition.setCategory(AlertConditionCategory.CONTROL);
+        snapshotFailureCondition.setName(TAKE_SNAPSHOT_OPERATION_NAME);
+        snapshotFailureCondition.setOption(OperationRequestStatus.FAILURE.name());
+        newTemplate.addCondition(snapshotFailureCondition);
+
+        AlertDampening dampener = new AlertDampening(AlertDampening.Category.NONE);
+        newTemplate.setAlertDampening(dampener);
+
+        int newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
+            resourceType.getId());
 
         return newTemplateId;
     }

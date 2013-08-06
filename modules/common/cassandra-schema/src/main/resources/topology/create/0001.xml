@@ -1,5 +1,0 @@
-<updatePlan>
-  <step>
-    ALTER KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': %s};
-  </step>
-</updatePlan>

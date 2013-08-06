@@ -54,12 +54,12 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public abstract class AbstractMeasurementRangeEditor extends DynamicForm implements TableWidget {
 
-    protected Messages MSG = CoreGUI.getMessages();
+    protected static final Messages MSG = CoreGUI.getMessages();
 
     //keyed map of translated date units Ex. minutes,hours,days
     protected static LinkedHashMap<String, String> lastUnits;
     //array of values available for displaying/selecting 'last N hours|minutes|days'.
-    protected static String[] lastValues;
+    protected static final String[] lastValues;
 
     protected boolean advanced;
     private ButtonItem advancedSimpleButton;
@@ -74,13 +74,13 @@ public abstract class AbstractMeasurementRangeEditor extends DynamicForm impleme
     private SpacerItem space;
 
     private ButtonItem setButton;
-    public static String ENABLE_RANGE_ITEM = "ENABLE_RANGE_ITEM";
-    public static String ADVANCED_BUTTON_ITEM = "advanced";
-    public static String SIMPLE_VALUE_ITEM = "lastValues";
-    public static String SIMPLE_UNIT_ITEM = "lastUnits";
-    public static String ADVANCED_START_ITEM = "start";
-    public static String ADVANCED_END_ITEM = "end";
-    public static String SET_ITEM = "set";
+    public static final String ENABLE_RANGE_ITEM = "ENABLE_RANGE_ITEM";
+    public static final String ADVANCED_BUTTON_ITEM = "advanced";
+    public static final String SIMPLE_VALUE_ITEM = "lastValues";
+    public static final String SIMPLE_UNIT_ITEM = "lastUnits";
+    public static final String ADVANCED_START_ITEM = "start";
+    public static final String ADVANCED_END_ITEM = "end";
+    public static final String SET_ITEM = "set";
 
     static {
         Messages MSG = CoreGUI.getMessages();

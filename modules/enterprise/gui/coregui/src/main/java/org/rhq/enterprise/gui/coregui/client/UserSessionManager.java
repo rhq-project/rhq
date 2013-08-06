@@ -158,7 +158,7 @@ public class UserSessionManager {
                     }
 
                     // If a session is active it will return valid session strings
-                    if (sessionIdString != null && sessionIdString.length() > 0) {
+                    if (sessionIdString.length() > 0) {
 
                         String[] parts = sessionIdString.split(":");
                         final int subjectId = Integer.parseInt(parts[0]);

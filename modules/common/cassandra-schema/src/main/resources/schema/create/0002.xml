@@ -1,0 +1,9 @@
+<updatePlan>
+  <step>
+    ALTER USER cassandra NOSUPERUSER
+  </step>
+
+  <step>
+    ALTER USER cassandra WITH PASSWORD '%cassandra_user_password%'
+  </step>
+</updatePlan>

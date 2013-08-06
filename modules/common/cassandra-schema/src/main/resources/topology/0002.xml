@@ -1,0 +1,25 @@
+<updatePlan>
+  <step>
+    ALTER COLUMNFAMILY rhq.metrics_index WITH gc_grace_seconds = %gc_grace_seconds%
+  </step>
+
+  <step>
+    ALTER COLUMNFAMILY rhq.raw_metrics WITH gc_grace_seconds = %gc_grace_seconds%
+  </step>
+
+  <step>
+    ALTER COLUMNFAMILY rhq.one_hour_metrics WITH gc_grace_seconds = %gc_grace_seconds%
+  </step>
+
+  <step>
+    ALTER COLUMNFAMILY rhq.six_hour_metrics WITH gc_grace_seconds = %gc_grace_seconds%
+  </step>
+
+  <step>
+    ALTER COLUMNFAMILY rhq.twenty_four_hour_metrics WITH gc_grace_seconds = %gc_grace_seconds%
+  </step>
+
+  <step>
+    ALTER COLUMNFAMILY rhq.schema_version WITH gc_grace_seconds = %gc_grace_seconds%
+  </step>
+</updatePlan>

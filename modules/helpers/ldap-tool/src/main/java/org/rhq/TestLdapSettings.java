@@ -21,7 +21,9 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
+import javax.naming.CompositeName;
 import javax.naming.Context;
+import javax.naming.InvalidNameException;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
 import javax.naming.directory.Attribute;
@@ -463,8 +465,8 @@ public class TestLdapSettings extends JFrame {
 								// Going with the first match
 								SearchResult si = (SearchResult) answer.next();
 
-								// Construct the UserDN
-								userDN = si.getName() + "," + baseDNs[x];
+								constructUserDn(baseDNs, x, si);
+
 								msg = "STEP-2:PASS: The test user '"
 										+ testUserName
 										+ "' was succesfully located, and the following userDN will be used in authorization check:\n";
@@ -914,7 +916,8 @@ public class TestLdapSettings extends JFrame {
 
 			String filter = String.format("(&(%s)(%s=%s))",
 			groupSearchFilter, groupMemberFilter,
-			testUserDN);
+            //			testUserDN); BZ 707047
+                encodeForFilter(testUserDN));
 
         	generateUiLoggingForStep4LdapFilter(userName, filter);
             
@@ -931,20 +934,8 @@ public class TestLdapSettings extends JFrame {
 
                 // We use the first match
                 SearchResult si = answer.next();
-                //generate the DN
-                String userDN = null;
-                try {
-                    userDN = si.getNameInNamespace();
-                } catch (UnsupportedOperationException use) {
-                    userDN = si.getName();
-                    if (userDN.startsWith("\"")) {
-                        userDN = userDN.substring(1, userDN.length());
-                    }
-                    if (userDN.endsWith("\"")) {
-                        userDN = userDN.substring(0, userDN.length() - 1);
-                    }
-                    userDN = userDN + "," + baseDNs[x];
-                }
+                // Construct the UserDN
+                constructUserDn(baseDNs, x, si);
                 userDetails.put("dn", userDN);
 
                 // Construct the UserDN
@@ -964,6 +955,22 @@ public class TestLdapSettings extends JFrame {
 			generateUiLoggingStep4Exception(ex);
 		}
         return userDetails;
+    }
+
+    /* Construct UserDn.
+     * 
+     */
+    private void constructUserDn(String[] baseDNs, int x, SearchResult si) throws InvalidNameException {
+        userDN = null;
+
+        try {
+            userDN = si.getNameInNamespace();
+        } catch (UnsupportedOperationException use) {
+            userDN = new CompositeName(si.getName()).get(0);
+            if (si.isRelative()) {
+                userDN += "," + baseDNs[x];
+            }
+        }
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {

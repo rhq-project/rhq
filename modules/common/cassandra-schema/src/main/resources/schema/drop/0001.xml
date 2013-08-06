@@ -1,10 +1,9 @@
 <updatePlan>
   <step>
-    DROP KEYSPACE rhq;
+    ALTER USER cassandra SUPERUSER
   </step>
 
   <step>
-    DROP USER rhqadmin;
+    ALTER USER cassandra WITH PASSWORD 'cassandra'
   </step>
-
 </updatePlan>

@@ -1,0 +1,9 @@
+<updatePlan>
+    <steps>%first_property%%fifth_property%</steps>
+
+    <steps>%second_property%%fifth_property%%fifth_property%</steps>
+
+    <random>%third_property%%fifth_property%</steps>
+
+    <steps>%fourth_property%%fifth_property%%fifth_property%</steps>
+</updatePlan>

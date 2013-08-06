@@ -154,7 +154,7 @@ public class StorageNodeComponentITest {
 
         SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", "127.0.0.1|7399|9142");
         schemaManager.install();
-        schemaManager.updateTopology(true);
+        schemaManager.updateTopology();
     }
 
     private ProcessExecution getProcessExecution(File binDir) {

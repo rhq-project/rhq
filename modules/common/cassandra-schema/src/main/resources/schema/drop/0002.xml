@@ -1,0 +1,5 @@
+<updatePlan>
+  <step>
+    DROP KEYSPACE rhq
+  </step>
+</updatePlan>

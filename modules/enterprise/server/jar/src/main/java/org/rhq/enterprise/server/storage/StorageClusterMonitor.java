@@ -77,7 +77,6 @@ public class StorageClusterMonitor implements StorageStateListener {
 
         Server server = serverManager.getServer();
 
-        topologyManager.updateServerMode(subjectManager.getOverlord(), new Integer[] {server.getId()},
-            Server.OperationMode.MAINTENANCE);
+        topologyManager.updateServerMode(subjectManager.getOverlord(), new Integer[] {server.getId()}, mode);
     }
 }

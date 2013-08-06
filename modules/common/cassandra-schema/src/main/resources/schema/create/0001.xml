@@ -1,15 +1,22 @@
 <updatePlan>
   <step>
-    CREATE KEYSPACE rhq WITH
-      replication = {'class': 'SimpleStrategy', 'replication_factor': 1};
+    ALTER KEYSPACE system_auth WITH replication = {'class': 'SimpleStrategy', 'replication_factor': %replication_factor% }
   </step>
 
   <step>
-    GRANT ALL PERMISSIONS ON KEYSPACE  system_auth to rhqadmin;
+    CREATE USER %rhq_admin_username% WITH PASSWORD '%rhq_admin_password%' SUPERUSER
   </step>
 
   <step>
-    GRANT ALL PERMISSIONS ON KEYSPACE  rhq to rhqadmin;
+    CREATE KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': %replication_factor% }
+  </step>
+
+  <step>
+    GRANT ALL PERMISSIONS ON KEYSPACE  system_auth to %rhq_admin_username%
+  </step>
+
+  <step>
+    GRANT ALL PERMISSIONS ON KEYSPACE  rhq to %rhq_admin_username%
   </step>
 
   <step>
@@ -17,6 +24,6 @@
         version int,
         time timestamp,
         PRIMARY KEY (version, time)
-      ) WITH COMPACT STORAGE;
+      ) WITH COMPACT STORAGE
   </step>
 </updatePlan>

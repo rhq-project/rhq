@@ -25,21 +25,9 @@
 
 package org.rhq.cassandra.schema;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.JarURLConnection;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Enumeration;
 import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarFile;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import java.util.Properties;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions.Compression;
@@ -50,9 +38,6 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
@@ -61,26 +46,35 @@ import org.rhq.core.util.StringUtil;
 /**
  * @author Stefan Negrea
  */
-public class AbstractManager {
+abstract class AbstractManager {
 
-    private static final String UPDATE_PLAN_ELEMENT = "updatePlan";
-    private static final String STEP_ELEMENT = "step";
-
-    private static final String SCHEMA_EXISTS_QUERY = "SELECT * FROM system.schema_keyspaces WHERE keyspace_name = 'rhq';";
-    private static final String VERSION_COLUMNFAMILY_EXISTS_QUERY = "SELECT * from system.schema_columnfamilies WHERE keyspace_name='rhq' AND columnfamily_name='schema_version';";
-    private static final String VERSION_QUERY = "SELECT version FROM rhq.schema_version";
-    private static final String REPLICATION_FACTOR_QUERY = "SELECT strategy_options FROM system.schema_keyspaces where keyspace_name='rhq';";
-
-
+    private static final String MANAGEMENT_BASE_FOLDER = "management";
+    protected static final String DEFAULT_CASSANDRA_USER = "cassandra";
+    protected static final String DEFAULT_CASSANDRA_PASSWORD = "cassandra";
 
     private final Log log = LogFactory.getLog(AbstractManager.class);
 
-    protected Session session;
-    protected final String username;
-    protected final String password;
-    protected List<StorageNode> nodes = new ArrayList<StorageNode>();
+    enum Query {
+        USER_EXISTS,
+        SCHEMA_EXISTS,
+        VERSION_COLUMNFAMILY_EXISTS,
+        VERSION,
+        REPLICATION_FACTOR,
+        INSERT_SCHEMA_VERSION;
 
-    public AbstractManager(String username, String password, List<StorageNode> nodes) {
+        @Override
+        public String toString() {
+            return this.name().toLowerCase();
+        }
+    }
+
+    private Session session;
+    private final String username;
+    private final String password;
+    private List<StorageNode> nodes = new ArrayList<StorageNode>();
+    private final UpdateFile managementTasks;
+
+    protected AbstractManager(String username, String password, List<StorageNode> nodes) {
         try {
             this.username = username;
             this.password = password;
@@ -88,148 +82,32 @@ public class AbstractManager {
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("Unable create storage node session.", e);
         }
-    }
-
-    protected boolean schemaExists() {
-        try {
-            ResultSet resultSet = session.execute(SCHEMA_EXISTS_QUERY);
-            if (!resultSet.all().isEmpty()) {
-                resultSet = session.execute(VERSION_COLUMNFAMILY_EXISTS_QUERY);
-                return !resultSet.all().isEmpty();
-            }
-            return false;
-        } catch (Exception e) {
-            log.error(e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    protected int getSchemaVersion() {
-        int maxVersion = 0;
-        try {
-            ResultSet resultSet = session.execute(VERSION_QUERY);
-            for (Row row : resultSet.all()) {
-                if (maxVersion < row.getInt(0)) {
-                    maxVersion = row.getInt(0);
-                }
-            }
-        } catch (Exception e) {
-            log.error(e);
-            throw new RuntimeException(e);
-        }
-
-        return maxVersion;
-    }
-
-    protected void removeAppliedUpdates(List<String> updateFiles, int currentSchemaVersion) {
-        while (!updateFiles.isEmpty()) {
-            int version = this.extractVersionFromUpdateFile(updateFiles.get(0));
-            if (version <= currentSchemaVersion) {
-                updateFiles.remove(0);
-            } else {
-                break;
-            }
-        }
-    }
-
-    protected int extractVersionFromUpdateFile(String file) {
-        file = file.substring(file.lastIndexOf('/') + 1);
-        file = file.substring(0, file.indexOf('.'));
-        return Integer.parseInt(file);
-    }
-
-    protected List<String> getSteps(String file) throws Exception {
-        List<String> steps = new ArrayList<String>();
-        InputStream stream = null;
-        try {
-            stream = SchemaManager.class.getClassLoader().getResourceAsStream(file);
-
-            DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-            DocumentBuilder builder = factory.newDocumentBuilder();
-            Document doc = builder.parse(stream);
-
-            Node rootDocument = doc.getElementsByTagName(UPDATE_PLAN_ELEMENT).item(0);
-            NodeList updateStepElements = rootDocument.getChildNodes();
-
-            for (int index = 0; index < updateStepElements.getLength(); index++) {
-                Node updateStepElement = updateStepElements.item(index);
-                if (STEP_ELEMENT.equals(updateStepElement.getNodeName()) && updateStepElement.getTextContent() != null) {
-                    steps.add(updateStepElement.getTextContent());
-                }
-            }
-        } catch (Exception e) {
-            log.error("Error reading the list of steps from " + file + " file.", e);
-            throw e;
-        } finally {
-            if (stream != null) {
-                try {
-                    stream.close();
-                } catch (Exception e) {
-                    log.error("Error closing the stream with the list of steps from " + file + " file.", e);
-                    throw e;
-                }
-            }
-        }
-
-        return steps;
-    }
-
-    protected List<String> getUpdateFiles(String folder) throws Exception {
-        List<String> files = new ArrayList<String>();
-        InputStream stream = null;
 
         try {
-            URL resourceFolderURL = this.getClass().getClassLoader().getResource(folder);
-
-            if (resourceFolderURL.getProtocol().equals("file")) {
-                stream = this.getClass().getClassLoader().getResourceAsStream(folder);
-                BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-
-                String updateFile;
-                while ((updateFile = reader.readLine()) != null) {
-                    files.add(folder + updateFile);
-                }
-            } else if (resourceFolderURL.getProtocol().equals("jar")) {
-                URL jarURL = this.getClass().getClassLoader().getResources(folder).nextElement();
-                JarURLConnection jarURLCon = (JarURLConnection) (jarURL.openConnection());
-                JarFile jarFile = jarURLCon.getJarFile();
-                Enumeration<JarEntry> entries = jarFile.entries();
-                while (entries.hasMoreElements()) {
-                    String entry = entries.nextElement().getName();
-                    if (entry.startsWith(folder) && !entry.equals(folder)) {
-                        files.add(entry);
-                    }
-                }
-            }
-
-            Collections.sort(files, new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    return o1.compareTo(o2);
-                }
-            });
+            UpdateFolder managementFolder = new UpdateFolder(MANAGEMENT_BASE_FOLDER);
+            managementTasks = managementFolder.getUpdateFiles().get(0);
         } catch (Exception e) {
-            log.error("Error reading the list of update files.", e);
-            throw e;
-        } finally {
-            if (stream != null) {
-                try{
-                    stream.close();
-                } catch (Exception e) {
-                    log.error("Error closing the stream with the list of update files.", e);
-                    throw e;
-                }
-            }
+            throw new RuntimeException("Unable create storage node session.", e);
         }
-
-        return files;
     }
 
-    protected void initCluster() {
-        initCluster(username, password);
+    /**
+     * Init the Cassandra cluster session with the username and password provided
+     * at creation.
+     */
+    protected void initClusterSession() {
+        initClusterSession(username, password);
     }
 
-    protected void initCluster(String username, String password) {
+    /**
+     * Init the Cassandra cluster session with provided username and password.
+     *
+     * @param username
+     * @param password
+     */
+    protected void initClusterSession(String username, String password) {
+        shutdownClusterConnection();
+
         String[] hostNames = new String[nodes.size()];
         for (int i = 0; i < hostNames.length; ++i) {
             hostNames[i] = nodes.get(i).getAddress();
@@ -246,19 +124,124 @@ public class AbstractManager {
         log.info("Cluster connected.");
     }
 
-    protected void shutdown() {
-        log.info("Shutting down connections");
-        session.getCluster().shutdown();
+    /**
+     * Shutdown the Cassandra cluster connection.
+     */
+    protected void shutdownClusterConnection() {
+        log.info("Shutting down existing cluster connections");
+        if (session != null && session.getCluster() != null) {
+            session.getCluster().shutdown();
+        }
     }
 
-    protected int getReplicationFactor() {
+    /**
+     * Get cluster size.
+     *
+     * @return cluster size
+     */
+    protected int getClusterSize() {
+        return nodes.size();
+    }
+
+    /**
+     * @return the username
+     */
+    protected String getUsername() {
+        return username;
+    }
+
+    /**
+     * @return the password
+     */
+    protected String getPassword() {
+        return password;
+    }
+
+    /**
+     * Runs a CQL query to check the existence of the RHQ user
+     *
+     * @return true if the RHQ user exists, false otherwise
+     */
+    protected boolean userExists() {
+        try {
+            ResultSet resultSet = executeManagementQuery(Query.USER_EXISTS, "username", username);
+            return !resultSet.all().isEmpty();
+        } catch (Exception e) {
+            log.error(e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Run a CQL query to check the existence of the RHQ schema
+     *
+     * @return true if the RHQ schema exists, false otherwise
+     */
+    protected boolean schemaExists() {
+        try {
+            ResultSet resultSet = executeManagementQuery(Query.SCHEMA_EXISTS);
+            if (!resultSet.all().isEmpty()) {
+                resultSet = executeManagementQuery(Query.VERSION_COLUMNFAMILY_EXISTS);
+                return !resultSet.all().isEmpty();
+            }
+            return false;
+        } catch (Exception e) {
+            log.error(e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Run a CQL query to retrieve the current RHQ schema version
+     *
+     * @return current RHQ schema version
+     */
+    protected int getSchemaVersion() {
+        int maxVersion = 0;
+        try {
+            ResultSet resultSet = executeManagementQuery(Query.VERSION);
+            for (Row row : resultSet.all()) {
+                if (maxVersion < row.getInt(0)) {
+                    maxVersion = row.getInt(0);
+                }
+            }
+        } catch (Exception e) {
+            log.error(e);
+            throw new RuntimeException(e);
+        }
+
+        return maxVersion;
+    }
+
+    /**
+     * Calculate the replication factor based on the input cluster size.
+     *
+     * @return calculated replication factor
+     */
+    protected int calculateNewReplicationFactor() {
+        int replicationFactor;
+        if (getClusterSize() < 3) {
+            replicationFactor = getClusterSize();
+        } else if (getClusterSize() < 4) {
+            replicationFactor = 2;
+        } else {
+            replicationFactor = 3;
+        }
+        return replicationFactor;
+    }
+
+    /**
+     * Run a CQL query to retrieve the current replication factor for RHQ schema.
+     *
+     * @return existing replication factor
+     */
+    protected int queryReplicationFactor() {
         int replicationFactor = 1;
         try {
-            String replicationFactorString = "replication_factor\"";
-
-            ResultSet resultSet = session.execute(REPLICATION_FACTOR_QUERY);
+            ResultSet resultSet = executeManagementQuery(Query.REPLICATION_FACTOR);
             Row row = resultSet.one();
 
+            String replicationFactorString = "replication_factor\"";
             String resultString = row.getString(0);
             resultString = resultString.substring(resultString.indexOf(replicationFactorString)
                 + replicationFactorString.length());
@@ -272,4 +255,98 @@ public class AbstractManager {
 
         return replicationFactor;
     }
+
+    /**
+     * Execute a named management query.
+     *
+     * @param query named management query
+     * @return result
+     */
+    protected ResultSet executeManagementQuery(Query query) {
+        return executeManagementQuery(query, null);
+    }
+
+    /**
+     * Execute a named management query with the given property (name,value).
+     *
+     * @param query named management query
+     * @param propertyName property name
+     * @param propertyValue property value.
+     * @return
+     */
+    protected ResultSet executeManagementQuery(Query query, String propertyName, String propertyValue) {
+        Properties properties = new Properties();
+        properties.put(propertyName, propertyValue);
+        return executeManagementQuery(query, properties);
+    }
+
+    /**
+     * Execute a named management query with the given properties.
+     *
+     * @param query named management query
+     * @param properties properties
+     * @return
+     */
+    protected ResultSet executeManagementQuery(Query query, Properties properties) {
+        String queryString = managementTasks.getNamedStep(query.toString(), properties);
+        return execute(queryString);
+    }
+
+
+    /**
+     * Execute all the queries in an update file as returned by @link {@link UpdateFile#getOrderedSteps()}.
+     *
+     * @param updateFile update file
+     * @return list of result sets, one for each executed query.
+     */
+    protected List<ResultSet> execute(UpdateFile updateFile) {
+        return execute(updateFile, null);
+    }
+
+    /**
+     * Execute all the queries in an update file as returned by @link {@link UpdateFile#getOrderedSteps(Properties))} with
+     * the given property (name,value).
+     *
+     * @param updateFile update file
+     * @param propertyName property name
+     * @param propertyValue property value
+     * @return list of result sets, one for each executed query.
+     */
+    protected List<ResultSet> execute(UpdateFile updateFile, String propertyName, String propertyValue) {
+        Properties properties = new Properties();
+        properties.put(propertyName, propertyValue);
+        return execute(updateFile, properties);
+    }
+
+    /**
+     * Execute all the queries in an update file as returned by @link {@link UpdateFile#getOrderedSteps(Properties))} with
+     * the given property (name,value).
+     *
+     * @param updateFile update file
+     * @param properties properties
+     * @return list of result sets, one for each executed query.
+     */
+    protected List<ResultSet> execute(UpdateFile updateFile, Properties properties) {
+        List<ResultSet> results = new ArrayList<ResultSet>();
+
+        log.info("Applying update file: " + updateFile);
+        for (String step : updateFile.getOrderedSteps(properties)) {
+            log.info("Statement: \n" + step);
+            results.add(execute(step));
+        }
+        log.info("Applied update file: " + updateFile);
+
+        return results;
+    }
+
+    /**
+     * Execute a CQL query.
+     *
+     * @param query query
+     * @return result for the query
+     */
+    protected ResultSet execute(String query) {
+        return session.execute(query);
+    }
+
 }

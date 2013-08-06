@@ -487,7 +487,7 @@ public class InstallerServiceImpl implements InstallerService {
                 }
                 log("Install RHQ schema along with updates to Cassandra.");
                 storageNodeSchemaManager.install();
-                storageNodeSchemaManager.updateTopology(true);
+                storageNodeSchemaManager.updateTopology();
             } else {
                 log("Ignoring Cassandra schema - installer will assume it exists and is already up-to-date.");
             }

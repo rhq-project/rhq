@@ -861,6 +861,7 @@ public class ResourceHandlerBean extends AbstractRestBean {
             uriBuilder.path("/resource/creationStatus/{id}");
             URI uri = uriBuilder.build(history.getId());
             builder =  Response.status(302);
+            builder.entity("Creation is running - please check back later");
             builder.location(uri); // redirect to self
 
         }
@@ -909,19 +910,24 @@ public class ResourceHandlerBean extends AbstractRestBean {
             } else {
                 // History says we had success but due to internal timing
                 // the resource is not yet visible, so switch to in_progress
-                status = CreateResourceStatus.IN_PROGRESS;
+                UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
+                URI uri = uriBuilder.build();
+                builder =  Response.status(302);
+                builder.entity("Creation is still running - please check back later");
+                builder.location(uri); // redirect to self
             }
         }
-        if (status==CreateResourceStatus.IN_PROGRESS) {
-
-
+        else if (status==CreateResourceStatus.IN_PROGRESS) {
+            // Creation is still running, so let the user know to check back later
             UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
             URI uri = uriBuilder.build();
             builder =  Response.status(302);
+            builder.entity("Creation is still running - please check back later");
             builder.location(uri); // redirect to self
         }
         else {
             builder = Response.serverError();
+            builder.entity(status + ": " + history.getErrorMessage());
         }
 
         MediaType mediaType = headers.getAcceptableMediaTypes().get(0);

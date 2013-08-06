@@ -23,18 +23,15 @@
 package org.rhq.plugins.cassandra;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor;
-import org.yaml.snakeyaml.Yaml;
 
+import org.rhq.cassandra.util.ConfigEditor;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.resource.ResourceUpgradeReport;
@@ -55,6 +52,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
     protected static final String HOST_PROPERTY = "host";
     protected static final String CLUSTER_NAME_PROPERTY = "clusterName";
     protected static final String NATIVE_TRANSPORT_PORT_PROPERTY = "nativeTransportPort";
+    protected static final String STORAGE_PORT_PROPERTY = "storagePort";
     protected static final String JMX_PORT_PROPERTY = "jmxPort";
     protected static final String AUTHENTICATOR_PROPERTY = "authenticator";
     protected static final String USERNAME_PROPERTY = "username";
@@ -153,44 +151,17 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
             }
 
             if (yamlConfigurationPath != null) {
-                InputStream inputStream = null;
-                try {
-                    File yamlConfigurationFile = new File(yamlConfigurationPath, "cassandra.yaml");
-                    pluginConfig.put(new PropertySimple(YAML_PROPERTY, yamlConfigurationFile.getAbsolutePath()));
+                File yamlConfigurationFile = new File(yamlConfigurationPath, "cassandra.yaml");
+                ConfigEditor yamlEditor = new ConfigEditor(yamlConfigurationFile);
+                yamlEditor.load();
 
-                    inputStream = new FileInputStream(yamlConfigurationFile);
-                    Yaml yaml = new Yaml();
-                    Map<String, String> parsedProperties = (Map<String, String>) yaml.load(inputStream);
-
-                    if (parsedProperties.get("cluster_name") != null) {
-                        pluginConfig
-                            .put(new PropertySimple(CLUSTER_NAME_PROPERTY, parsedProperties.get("cluster_name")));
-                    }
-
-                    if (parsedProperties.get("listen_address") != null) {
-                        pluginConfig.put(new PropertySimple(HOST_PROPERTY, parsedProperties.get("listen_address")));
-                    }
-
-                    if (parsedProperties.get("native_transport_port") != null) {
-                        pluginConfig.put(new PropertySimple(NATIVE_TRANSPORT_PORT_PROPERTY, parsedProperties
-                            .get("native_transport_port")));
-                    }
-
-                    if (parsedProperties.get("authenticator") != null) {
-                        pluginConfig.put(new PropertySimple(AUTHENTICATOR_PROPERTY, parsedProperties
-                            .get("authenticator")));
-                    }
-                } catch (Exception e) {
-                    log.error("YAML Configuration load exception ", e);
-                } finally {
-                    try {
-                        if ( inputStream != null){
-                            inputStream.close();
-                        }
-                    } catch (Exception e) {
-                        log.error("Unable to close stream for yaml configuration", e);
-                    }
-                }
+                pluginConfig.put(new PropertySimple(YAML_PROPERTY, yamlConfigurationFile.getAbsolutePath()));
+                pluginConfig.put(new PropertySimple(CLUSTER_NAME_PROPERTY, yamlEditor.getClusterName()));
+                pluginConfig.put(new PropertySimple(HOST_PROPERTY, yamlEditor.getListenAddress()));
+                pluginConfig.put(new PropertySimple(NATIVE_TRANSPORT_PORT_PROPERTY,
+                    yamlEditor.getNativeTransportPort()));
+                pluginConfig.put(new PropertySimple(STORAGE_PORT_PROPERTY, yamlEditor.getStoragePort()));
+                pluginConfig.put(new PropertySimple(AUTHENTICATOR_PROPERTY, yamlEditor.getAuthenticator()));
             }
         }
 

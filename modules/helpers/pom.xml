@@ -20,10 +20,6 @@
 
     <module>rtfilter</module>
     <module>rtfilter-subsystem</module>
-<!--
-    <module>pluginGen</module>
-    <module>pluginAnnotations</module>
--->
     <module>bundleGen</module>
     <module>jeeGen</module>
     <module>perftest-support</module>

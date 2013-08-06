@@ -1,0 +1,5 @@
+<updatePlan>
+  <step>
+    DROP USER %rhq_admin_username%
+  </step>
+</updatePlan>

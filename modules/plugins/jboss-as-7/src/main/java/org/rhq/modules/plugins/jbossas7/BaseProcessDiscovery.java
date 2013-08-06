@@ -18,6 +18,9 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
+import static org.rhq.core.util.StringUtil.arrayToString;
+import static org.rhq.core.util.StringUtil.isNotBlank;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -212,20 +215,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
         String description = buildDefaultResourceDescription(hostPort, productType);
-
-        String version;
-        String versionFromHomeDir = determineServerVersionFromHomeDir(homeDir);
-        if (productType == JBossProductType.AS) {
-            version = versionFromHomeDir;
-        } else {
-            ProductInfo productInfo = new ProductInfo(managementHostPort.host, serverPluginConfig.getUser(),
-                serverPluginConfig.getPassword(), managementHostPort.port);
-            productInfo = productInfo.getFromRemote();
-            String productVersion = (productInfo.fromRemote) ? productInfo.productVersion : versionFromHomeDir;
-            // TODO: Grab the product version from the product info properties file, so we aren't relying on connecting
-            //       to the server to obtain it.
-            version = productType.SHORT_NAME + " " + productVersion;
-        }
+        String version = getVersion(homeDir, productType);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
@@ -603,6 +593,52 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
             logEventSources.add(serverLogEventSource);
         }
+    }
+
+    private String getVersion(File homeDir, JBossProductType productType) {
+        // Products should have a version.txt file at root dir
+        File versionFile = new File(homeDir, "version.txt");
+        String version = getProductVersionInFile(versionFile, " - Version ", productType);
+        if (version == null && productType != JBossProductType.AS && productType != JBossProductType.WILDFLY8) {
+            // No version.txt file. Try modules/system/layers/base/org/jboss/as/product/slot/dir/META-INF/MANIFEST.MF
+            String layeredProductManifestFilePath = arrayToString(
+                new String[] { "modules", "system", "layers", "base", "org", "jboss", "as", "product",
+                    productType.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" }, File.separatorChar);
+            File productManifest = new File(homeDir, layeredProductManifestFilePath);
+            version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", productType);
+            if (version == null) {
+                // Try modules/org/jboss/as/product/slot/dir/META-INF/MANIFEST.MF
+                String productManifestFilePath = arrayToString(new String[] { "modules", "org", "jboss", "as",
+                    "product", productType.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" },
+                    File.separatorChar);
+                productManifest = new File(homeDir, productManifestFilePath);
+                version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", productType);
+            }
+        }
+        if (version == null) {
+            // Fallback
+            version = determineServerVersionFromHomeDir(homeDir);
+        }
+        return version;
+    }
+
+    private String getProductVersionInFile(File file, String versionPrefix, JBossProductType productType) {
+        if (!file.exists() || file.isDirectory()) {
+            return null;
+        }
+        try {
+            String versionLine = FileUtils.findString(file.getAbsolutePath(), versionPrefix);
+            if (isNotBlank(versionLine)) {
+                return new StringBuilder(productType.SHORT_NAME).append(" ")
+                    .append(versionLine.substring(versionLine.lastIndexOf(versionPrefix) + versionPrefix.length()))
+                    .toString();
+            }
+        } catch (IOException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Could not read file " + file.getAbsolutePath(), e);
+            }
+        }
+        return null;
     }
 
     protected String determineServerVersionFromHomeDir(File homeDir) {

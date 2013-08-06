@@ -1,9 +1,0 @@
-<updatePlan>
-  <step>
-    ALTER KEYSPACE system_auth WITH replication = {'class': 'SimpleStrategy', 'replication_factor': %s};
-  </step>
-
-  <step>
-    ALTER KEYSPACE rhq WITH replication = {'class': 'SimpleStrategy', 'replication_factor': %s};
-  </step>
-</updatePlan>

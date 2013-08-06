@@ -25,14 +25,11 @@
 
 package org.rhq.cassandra.schema;
 
-import java.util.Date;
 import java.util.List;
+import java.util.Properties;
 import java.util.UUID;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.exceptions.AuthenticationException;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,10 +39,9 @@ import org.rhq.core.domain.cloud.StorageNode;
 /**
  * @author Stefan Negrea
  */
-public class VersionManager extends AbstractManager {
+class VersionManager extends AbstractManager {
 
     private static final String SCHEMA_BASE_FOLDER = "schema";
-    private static final String INSERT_VERSION_QUERY = "INSERT INTO rhq.schema_version (version, time ) VALUES ( ?, ?);";
 
     private final Log log = LogFactory.getLog(VersionManager.class);
 
@@ -65,125 +61,170 @@ public class VersionManager extends AbstractManager {
         }
     }
 
-    public VersionManager(String username, String password, List<StorageNode> nodes) {
+    public VersionManager(String username, String password, List<StorageNode> nodes) throws Exception {
         super(username, password, nodes);
     }
 
+    /**
+     * Install and update the RHQ schema:
+     * 1) If the schema does not exist then attempt to create it and then run the updates in order.
+     * 2) If the schema exists then run the updates in order.
+     *
+     * @throws Exception
+     */
     public void install() throws Exception {
         log.info("Preparing to install schema");
+
+        boolean clusterSessionInitialized = false;
         try {
-            initCluster();
+            initClusterSession();
+            clusterSessionInitialized = true;
         } catch (AuthenticationException e) {
-            // If we cannot connect with the rhqadmin user, then assume it has not been
-            // created; so, we need to perform the "bootstrap" step of creating the user
-            // before we apply any schema changes. We want to create the user first so that
-            // we can go ahead and remove the default cassandra user and apply all changes
-            // using the rhqadmin user.
-            bootstrap();
+            log.debug("Authentication exception. Will now attempt to create the schema.");
+            log.debug(e);
+        } finally {
+            shutdownClusterConnection();
         }
 
+        if (!clusterSessionInitialized) {
+            create();
+        }
+
+        update();
+    }
+
+    /**
+     * Create RHQ schema and make related updates to the Cassandra installation.
+     *
+     * @throws Exception
+     */
+    private void create() throws Exception {
+        UpdateFolder updateFolder = new UpdateFolder(Task.Create.getFolder());
+
+        Properties properties = new Properties(System.getProperties());
+        properties.put("replication_factor", calculateNewReplicationFactor() + "");
+        properties.put("cassandra_user_password", UUID.randomUUID() + "");
+        properties.put("rhq_admin_username", getUsername());
+        properties.put("rhq_admin_password", getPassword());
+
+        /**
+         * NOTE: Before applying any schema, we need to create the rhqadmin user. If we have more
+         * than a single node cluster then we also need to set the RF of the system_auth
+         * keyspace BEFORE we create the rhqadmin user. If we do not do in this order we will
+         * get inconsistent reads which will can result in failed authentication.
+         */
+        //1. Execute the creation of RHQ schema, version table, admin user.
         try {
-            initCluster();
+            initClusterSession(DEFAULT_CASSANDRA_USER, DEFAULT_CASSANDRA_PASSWORD);
             if (!schemaExists()) {
-                session.execute("ALTER USER cassandra NOSUPERUSER");
-                session.execute("ALTER USER cassandra WITH PASSWORD '" + UUID.randomUUID() + "'");
-                this.executeTask(Task.Create);
-            }  else {
+                execute(updateFolder.getUpdateFiles().get(0), properties);
+            } else {
                 log.info("RHQ schema already exists.");
             }
-            this.executeTask(Task.Update);
+        } catch (Exception ex) {
+            log.error(ex);
+            throw new RuntimeException(ex);
         } finally {
-            shutdown();
+            shutdownClusterConnection();
+        }
+
+        //2. Change Cassandra default user privileges and password.
+        try {
+            initClusterSession();
+            execute(updateFolder.getUpdateFiles().get(1), properties);
+        } finally {
+            shutdownClusterConnection();
         }
     }
 
     /**
-     * Before applying any schema, we need to create the rhqadmin user. If we have more
-     * than a single node cluster then we also need to set the RF of the system_auth
-     * keyspace BEFORE we create the rhqadmin user. If we do not do in this order we will
-     * get inconsistent reads which will can result in failed authentication.
+     * Update existing schema to the most current version in the update folder.
+     *
+     * @throws Exception
      */
-    public void bootstrap() {
+    private void update() throws Exception {
         try {
-            initCluster("cassandra", "cassandra");
+            initClusterSession();
 
-            int replicationFactor;
-            if (nodes.size() < 3) {
-                replicationFactor = nodes.size();
-            } else if (nodes.size() < 4) {
-                replicationFactor = 2;
-            } else {
-                replicationFactor = 3;
+            if (!schemaExists()) {
+                log.error("Schema not installed.");
+                throw new RuntimeException("Schema not installed propertly, cannot apply schema updates.");
             }
-            log.info("Updating replication_factor of system_auth keyspace to " + replicationFactor);
-            session.execute("ALTER KEYSPACE system_auth WITH replication = {'class': 'SimpleStrategy', " +
-                "'replication_factor': " + replicationFactor + "}");
 
-            log.info("Creating rhqadmin user");
-            session.execute("CREATE USER rhqadmin WITH PASSWORD 'rhqadmin' SUPERUSER");
+            UpdateFolder updateFolder = new UpdateFolder(Task.Update.getFolder());
+
+            int currentSchemaVersion = getSchemaVersion();
+            log.info("Current schema version is " + currentSchemaVersion);
+            updateFolder.removeAppliedUpdates(currentSchemaVersion);
+
+            if (updateFolder.getUpdateFiles().size() == 0) {
+                log.info("RHQ schema is current! No updates applied.");
+            } else {
+                for (UpdateFile updateFile : updateFolder.getUpdateFiles()) {
+                    execute(updateFile);
+
+                    Properties versionProperties = new Properties();
+                    versionProperties.put("version", updateFile.extractVersion() + "");
+                    versionProperties.put("time", System.currentTimeMillis() + "");
+                    executeManagementQuery(Query.INSERT_SCHEMA_VERSION, versionProperties);
+
+                    log.info("RHQ schema update " + updateFile +" applied.");
+                }
+            }
         } finally {
-            shutdown();
+            shutdownClusterConnection();
         }
     }
 
+    /**
+     * Drop RHQ schema and revert the database to pre-RHQ state:
+     * 1) Reinstate Cassandra superuser
+     * 2) Drop RHQ schema
+     * 3) Drop RHQ user
+     *
+     * @throws Exception
+     */
     public void drop() throws Exception {
         log.info("Preparing to drop RHQ schema");
+
+        UpdateFolder updateFolder = new UpdateFolder(Task.Drop.getFolder());
+        Properties properties = new Properties(System.getProperties());
+        properties.put("rhq_admin_username", getUsername());
+
+        try{
+            initClusterSession();
+            //1. Reinstated Cassandra superuser
+            execute(updateFolder.getUpdateFiles().get(0), properties);
+            log.info("Cassandra user reverted to default configuration.");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            shutdownClusterConnection();
+        }
+
         try {
-            initCluster();
+            //Use Cassandra superuser to drop RHQ schema and user
+            initClusterSession(DEFAULT_CASSANDRA_USER, DEFAULT_CASSANDRA_PASSWORD);
 
             if (schemaExists()) {
-                this.executeTask(Task.Drop);
+                //2. Drop RHQ schema
+                execute(updateFolder.getUpdateFiles().get(1), properties);
+                log.info("RHQ schema dropped.");
             } else {
                 log.info("RHQ schema does not exist. Drop operation not required.");
             }
-        } catch (NoHostAvailableException e) {
-            throw new RuntimeException(e);
-        } finally {
-            shutdown();
-        }
-    }
 
-    private void executeTask(Task task) {
-        try {
-            log.info("Starting to execute " + task + " task.");
-
-            List<String> updateFiles = this.getUpdateFiles(task.getFolder());
-
-            if (Task.Update.equals(task)) {
-                int currentSchemaVersion = this.getSchemaVersion();
-                log.info("Current schema version is " + currentSchemaVersion);
-                this.removeAppliedUpdates(updateFiles, currentSchemaVersion);
-            }
-
-            if (updateFiles.size() == 0 && Task.Update.equals(task)) {
-                log.info("RHQ schema is current! No updates applied.");
-            }
-
-            for (String updateFile : updateFiles) {
-                log.info("Applying file " + updateFile + " for " + task + " task.");
-                for (String step : getSteps(updateFile)) {
-                    log.info("Statement: \n" + step);
-                    session.execute(step);
-                }
-
-                if (Task.Update.equals(task)) {
-                    this.updateSchemaVersion(updateFile);
-                }
-
-                log.info("File " + updateFile + " applied for " + task + " task.");
+            if (userExists()) {
+                //3. Drop RHQ user
+                execute(updateFolder.getUpdateFiles().get(2), properties);
+                log.info("RHQ admin user dropped.");
+            } else {
+                log.info("RHQ admin user does not exist. Drop operation not required.");
             }
         } catch (Exception e) {
-            log.error(e);
             throw new RuntimeException(e);
+        } finally {
+            shutdownClusterConnection();
         }
-
-        log.info("Successfully executed " + task + " task.");
-    }
-
-    private void updateSchemaVersion(String updateFileName) {
-        PreparedStatement preparedStatement = session.prepare(INSERT_VERSION_QUERY);
-        BoundStatement boundStatement = preparedStatement.bind(this.extractVersionFromUpdateFile(updateFileName),
-            new Date());
-        session.execute(boundStatement);
     }
 }

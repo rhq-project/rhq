@@ -144,7 +144,7 @@ public class Stop extends AbstractInstall {
                 rValue = RHQControl.EXIT_CODE_OPERATION_FAILED;
             }
         } else {
-            if (isStorageRunning()) {
+            if(isStorageRunning()) {
                 String pid = getStoragePid();
 
                 System.out.println("Stopping RHQ storage node...");

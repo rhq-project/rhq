@@ -276,23 +276,22 @@
                                         <script language="groovy">
                                           import org.rhq.cassandra.schema.SchemaManager
 
-                                          if (project.getProperty('dbsetup-upgrade') || project.getProperty('dbsetup')) {
+                                          if (project.getProperty('dbsetup-upgrade') || project.getProperty('dbreset') || project.getProperty('dbsetup')) {
                                             if (project.getProperty('storage-schema')) {
-                                              if (project.getProperty('db') == 'dev') {
                                                 self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
-                                                username = project.getProperty('rhq.dev.cassandra.username') ?: "rhqadmin"
-                                                password = project.getProperty('rhq.dev.cassandra.password') ?: "rhqadmin"
-                                                seeds = project.getProperty('rhq.dev.cassandra.seeds') ?: "127.0.0.1|7299|9142"
+                                                username = project.getProperty('rhq.cassandra.username') ?: "rhqadmin"
+                                                password = project.getProperty('rhq.cassandra.password') ?: "rhqadmin"
+                                                seeds = project.getProperty('rhq.cassandra.seeds') ?: "127.0.0.1|7299|9142"
 
                                                 schemaManager = new SchemaManager(username, password, seeds)
 
+                                                if (project.getProperty('dbreset') == 'true') {
+                                                  self.log('Dropping schema')
+                                                  schemaManager.drop()
+                                                }
+
                                                 self.log('Install schema')
                                                 schemaManager.install()
-                                              } else {
-                                                self.log('SKIPPING SCHEMA UPDATES FOR STORAGE NODE')
-                                                self.log('Schema updates will only be applied to the dev-container storage node')
-                                                self.log('Run to with -Ddb=dev or -Pdev for to activate storage node schema changes')
-                                              }
                                             }
                                           }
                                         </script>

@@ -77,6 +77,28 @@ public class LdapGWTServiceImpl extends AbstractGWTServiceImpl implements LdapGW
         }
     }
 
+    @Override
+    public Set<Map<String, String>> findAvailableGroupsStatus() throws RuntimeException {
+        try {
+            //add permissions check
+            Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(getSessionSubject());
+            Boolean accessGranted = globalPermissions.contains(Permission.MANAGE_SECURITY);
+
+            Set<Map<String, String>> results = null;
+            if (accessGranted) {
+                results = ldapManager.findAvailableGroupsStatus();
+            } else {
+                String message = "User '" + getSessionSubject().getName()
+                    + "' does not have sufficient permissions to query the status of available LDAP groups request.";
+                log.debug(message);
+                throw new PermissionException(message);
+            }
+            return SerialUtility.prepare(results, "findAvailableGroups");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
     public void setLdapGroupsForRole(int roleId, List<String> groupIds) throws RuntimeException {
         try {
             //add permissions check

@@ -93,9 +93,24 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     @EJB
     private SystemManagerLocal systemManager;
 
+    private static boolean groupQueryComplete = false;
+    private static int groupQueryResultCount = 0;
+    private static long groupQueryStartTime = -1;
+    private static long groupQueryEndTime = -1;
+    private static int groupQueryPageCount = 0;
+
+    private void resetGroupQueryDetails() {
+        groupQueryComplete = false;
+        groupQueryResultCount = 0;
+        groupQueryStartTime = -1;
+        groupQueryEndTime = -1;
+        groupQueryPageCount = 0;
+    }
     public Set<Map<String, String>> findAvailableGroups() {
         //load current system properties
         Properties systemConfig = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+        //reset group query details
+        resetGroupQueryDetails();
 
         //retrieve the filters.
         String groupFilter = (String) systemConfig.get(SystemSetting.LDAP_GROUP_FILTER.name());
@@ -112,6 +127,29 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
 
         Set<Map<String, String>> emptyAvailableGroups = new HashSet<Map<String, String>>();
         return emptyAvailableGroups;
+    }
+
+    public Set<Map<String, String>> findAvailableGroupsStatus() {
+        Set<Map<String, String>> availableGroupsQueryStatus = new HashSet<Map<String, String>>();
+
+        //query.complete => true|false
+        availableGroupsQueryStatus.add(buildStatusEntry("query.complete", String.valueOf(groupQueryComplete)));
+        //query.results.parsed => 0...N
+        availableGroupsQueryStatus.add(buildStatusEntry("query.results.parsed", String.valueOf(groupQueryResultCount)));
+        //query.start.time => timestamp
+        availableGroupsQueryStatus.add(buildStatusEntry("query.start.time", String.valueOf(groupQueryStartTime)));
+        //query.end.time => timestamp|-1
+        availableGroupsQueryStatus.add(buildStatusEntry("query.end.time", String.valueOf(groupQueryEndTime)));
+        //query.page.count => 0...N
+        availableGroupsQueryStatus.add(buildStatusEntry("query.page.count", String.valueOf(groupQueryPageCount)));
+
+        return availableGroupsQueryStatus;
+    }
+
+    private Map<String, String> buildStatusEntry(String key, String value) {
+        HashMap<String, String> status = new HashMap<String, String>();
+        status.put(key, value);
+        return status;
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
@@ -449,7 +487,13 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
 
             for (int x = 0; x < baseDNs.length; x++) {
+                //update query start time
+                groupQueryStartTime = System.currentTimeMillis();
+
                 executeGroupSearch(filter, groupDetailsMap, ctx, searchControls, baseDNs, x);
+
+                //update queryResultCount
+                groupQueryResultCount = groupDetailsMap.size();
 
                 // continually parsing pages of results until we're done.
                 // only if they're enabled in the UI.
@@ -472,6 +516,11 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                         ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, cookie,
                             Control.CRITICAL) });
                         executeGroupSearch(filter, groupDetailsMap, ctx, searchControls, baseDNs, x);
+
+                        //update Query state after each page
+                        groupQueryResultCount = groupDetailsMap.size();
+                        groupQueryPageCount++;
+
                         //empty out cookie
                         cookie = null;
                         //test for further iterations
@@ -481,25 +530,6 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                                 if (control instanceof PagedResultsResponseControl) {
                                     PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
                                     cookie = pagedResult.getCookie();
-                                }
-                            }
-                        }
-                        //continually parsing pages of results until we're done.
-                        while (cookie != null) {
-                            //ensure the next requests contains the session/cookie details
-                            ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, cookie,
-                                Control.CRITICAL) });
-                            executeGroupSearch(filter, groupDetailsMap, ctx, searchControls, baseDNs, x);
-                            //empty out cookie
-                            cookie = null;
-                            //test for further iterations
-                            controls = ctx.getResponseControls();
-                            if (controls != null) {
-                                for (Control control : controls) {
-                                    if (control instanceof PagedResultsResponseControl) {
-                                        PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
-                                        cookie = pagedResult.getCookie();
-                                    }
                                 }
                             }
                         }
@@ -522,6 +552,9 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             log.error("Unexpected LDAP communciation error:" + iex.getMessage(), iex);
             throw new LdapCommunicationException(iex);
         }
+        //update end of query information
+        groupQueryEndTime = System.currentTimeMillis();
+        groupQueryComplete = true;
         return groupDetailsMap;
     }
 

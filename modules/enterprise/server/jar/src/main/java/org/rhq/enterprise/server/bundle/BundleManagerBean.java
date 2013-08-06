@@ -1576,8 +1576,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // filter by bundles that are viewable
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE, null,
-                subject.getId());
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId(), "bundleVersion.bundle");
         }
 
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
@@ -1625,7 +1625,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // filter by bundles that are viewable
         if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
             generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
-                subject.getId());
+                subject.getId(), "bundleDeployment.bundleVersion.bundle");
         }
 
         CriteriaQueryRunner<BundleResourceDeployment> queryRunner = new CriteriaQueryRunner<BundleResourceDeployment>(
@@ -1852,8 +1852,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         checkDeployBundleAuthz(subject, doomed.getBundleVersion().getBundle().getId(), doomed.getDestination()
             .getGroup().getId());
 
-        // only allow deployments to be deleted if they are finished
-        if (BundleDeploymentStatus.SUCCESS == doomed.getStatus()
+        // only allow deployments to be deleted if they are not started or finished
+        if (BundleDeploymentStatus.PENDING == doomed.getStatus()
+            || BundleDeploymentStatus.SUCCESS == doomed.getStatus()
             || BundleDeploymentStatus.FAILURE == doomed.getStatus()
             || BundleDeploymentStatus.MIXED == doomed.getStatus()) {
             entityManager.remove(doomed);
@@ -2251,8 +2252,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      */
     private void checkDeployBundleAuthz(Subject subject, int bundleId, int resourceGroupId) throws PermissionException {
 
-        boolean hasResourceGroupView = authorizationManager.hasGroupPermission(subject, Permission.VIEW_RESOURCE,
-            resourceGroupId);
+        boolean hasResourceGroupView = authorizationManager.canViewGroup(subject, resourceGroupId);
 
         if (!hasResourceGroupView) {
             String msg = "Subject [" + subject.getName() + "] requires VIEW permission on resource group  ["

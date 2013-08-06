@@ -32,6 +32,7 @@ import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import javax.ejb.EJBException;
 import javax.persistence.Query;
 import javax.transaction.TransactionManager;
 
@@ -1665,6 +1666,230 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         }
     }
 
+    @Test(enabled = TESTS_ENABLED)
+    public void testAuthzBundleDest() throws Exception {
+        Subject subject = createNewSubject(TEST_USER_NAME);
+        Role role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+
+        // create bundle group
+        addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
+        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "bg");
+
+        // add bg to the role with group create
+        addRoleBundleGroup(role, bundleGroup);
+        addRolePermissions(role, Permission.CREATE_BUNDLES_IN_GROUP);
+
+        // allow bundle creation in bg (has create perm)        
+        Bundle b1 = createBundle(subject, "one", bundleGroup.getId());
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(subject, b1.getName() + "-1", null, b1);
+        assertNotNull(bv1);
+        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        assertNotNull(platformResourceGroup);
+
+        // deny destination create (no view of resource group)
+        try {
+            BundleDestination dest1 = createDestination(subject, b1, "one", "/test", platformResourceGroup);
+            fail("Should have thrown IllegalArgumentException");
+        } catch (EJBException e) {
+            assert e.getCause() instanceof IllegalArgumentException
+                && e.getCause().getMessage().contains("Invalid groupId") : "Should have not had group visibility";
+            // expected
+        }
+
+        // deny destination create (no deploy perm)
+        LookupUtil.getRoleManager().addResourceGroupsToRole(overlord, role.getId(),
+            new int[] { platformResourceGroup.getId() });
+        try {
+            BundleDestination dest1 = createDestination(subject, b1, "one", "/test", platformResourceGroup);
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // allow global
+        addRolePermissions(role, Permission.DEPLOY_BUNDLES);
+        BundleDestination dest1 = createDestination(subject, b1, "one", "/test", platformResourceGroup);
+        assertNotNull(dest1);
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
+        BundleDeployment bd1;
+        bd1 = createDeployment(subject, "one", bv1, dest1, config);
+        assertNotNull(bd1);
+
+        // allow group
+        removeRolePermissions(role, Permission.DEPLOY_BUNDLES);
+        addRolePermissions(role, Permission.DEPLOY_BUNDLES_TO_GROUP);
+        BundleDestination dest2 = createDestination(subject, b1, "two", "/test2", platformResourceGroup);
+        assertNotNull(dest2);
+        Configuration config2 = new Configuration();
+        config2.put(new PropertySimple("bundletest.property", "bundletest.property value"));
+        BundleDeployment bd2;
+        bd2 = createDeployment(subject, "two", bv1, dest2, config2);
+        assertNotNull(bd1);
+
+        // deny delete deployment
+        removeRolePermissions(role, Permission.DEPLOY_BUNDLES_TO_GROUP);
+        try {
+            bundleManager.deleteBundleDeployment(subject, bd2.getId());
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // allow delete deployment
+        addRolePermissions(role, Permission.DEPLOY_BUNDLES);
+        bundleManager.deleteBundleDeployment(subject, bd2.getId());
+
+        // deny delete destination
+        removeRolePermissions(role, Permission.DEPLOY_BUNDLES);
+        try {
+            bundleManager.deleteBundleDestination(subject, dest2.getId());
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // allow delete destination
+        addRolePermissions(role, Permission.DEPLOY_BUNDLES_TO_GROUP);
+        bundleManager.deleteBundleDestination(subject, dest2.getId());
+    }
+
+    @Test(enabled = TESTS_ENABLED)
+    public void testAuthzBundleDeploy() throws Exception {
+        Subject subject = createNewSubject(TEST_USER_NAME);
+        Role role = createNewRoleForSubject(subject, TEST_ROLE_NAME);
+        subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
+
+        // create bundle group
+        addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
+        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "bg");
+
+        // add bg to the role with group create
+        addRoleBundleGroup(role, bundleGroup);
+        addRolePermissions(role, Permission.CREATE_BUNDLES_IN_GROUP);
+
+        // allow bundle creation in bg (has create perm)        
+        Bundle b1 = createBundle(subject, "one", bundleGroup.getId());
+        assertNotNull(b1);
+        BundleVersion bv1 = createBundleVersion(subject, b1.getName() + "-1", null, b1);
+        assertNotNull(bv1);
+        ResourceGroup platformResourceGroup = createTestResourceGroup();
+        assertNotNull(platformResourceGroup);
+        LookupUtil.getRoleManager().addResourceGroupsToRole(overlord, role.getId(),
+            new int[] { platformResourceGroup.getId() });
+
+        // allow dest/deploy create (global)
+        addRolePermissions(role, Permission.DEPLOY_BUNDLES);
+        BundleDestination dest1 = createDestination(subject, b1, "one", "/test", platformResourceGroup);
+        assertNotNull(dest1);
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("bundletest.property", "bundletest.property value"));
+        BundleDeployment bd1;
+        bd1 = createDeployment(subject, "one", bv1, dest1, config);
+        assertNotNull(bd1);
+
+        // deny schedule
+        removeRolePermissions(role, Permission.DEPLOY_BUNDLES);
+        try {
+            BundleDeployment bd1d = bundleManager.scheduleBundleDeployment(subject, bd1.getId(), false);
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // test with global perm
+        testAuthzBundleDeployInternal(subject, role, bd1, dest1, platformResourceGroup, Permission.DEPLOY_BUNDLES);
+
+        // test with bundle group perm        
+        testAuthzBundleDeployInternal(subject, role, bd1, dest1, platformResourceGroup,
+            Permission.DEPLOY_BUNDLES_TO_GROUP);
+    }
+
+    private void testAuthzBundleDeployInternal(Subject subject, Role role, BundleDeployment bd1,
+        BundleDestination dest1, ResourceGroup platformResourceGroup, Permission permission) throws Exception {
+
+        // allow
+        addRolePermissions(role, permission);
+
+        BundleDeployment bd1d = bundleManager.scheduleBundleDeployment(subject, bd1.getId(), false);
+        assertNotNull(bd1d);
+        assertEquals(bd1.getId(), bd1d.getId());
+
+        BundleDeploymentCriteria bdc = new BundleDeploymentCriteria();
+        bdc.addFilterId(bd1d.getId());
+        bdc.fetchBundleVersion(true);
+        bdc.fetchDestination(true);
+        bdc.fetchResourceDeployments(true);
+        bdc.fetchTags(true);
+        List<BundleDeployment> bds = bundleManager.findBundleDeploymentsByCriteria(subject, bdc);
+        assertEquals(1, bds.size());
+        bd1d = bds.get(0);
+
+        assertEquals(platformResourceGroup, bd1d.getDestination().getGroup());
+        assertEquals(dest1.getId(), bd1d.getDestination().getId());
+
+        BundleResourceDeploymentCriteria c = new BundleResourceDeploymentCriteria();
+        c.addFilterBundleDeploymentId(bd1d.getId());
+        c.fetchBundleDeployment(true);
+        c.fetchHistories(true);
+        c.fetchResource(true);
+        List<BundleResourceDeployment> brds = bundleManager.findBundleResourceDeploymentsByCriteria(subject, c);
+        assertEquals(1, brds.size());
+        assertEquals(1, bd1d.getResourceDeployments().size());
+        assertEquals(bd1d.getResourceDeployments().get(0).getId(), brds.get(0).getId());
+        BundleResourceDeployment brd = brds.get(0);
+
+        assertNotNull(brd.getBundleResourceDeploymentHistories());
+        int size = brd.getBundleResourceDeploymentHistories().size();
+        assertTrue(size > 0);
+        String auditMessage = "BundleTest-Message";
+        bundleManager.addBundleResourceDeploymentHistoryInNewTrans(overlord, brd.getId(),
+            new BundleResourceDeploymentHistory(overlord.getName(), auditMessage, auditMessage,
+                BundleResourceDeploymentHistory.Category.DEPLOY_STEP, BundleResourceDeploymentHistory.Status.SUCCESS,
+                auditMessage, auditMessage));
+
+        brds = bundleManager.findBundleResourceDeploymentsByCriteria(subject, c);
+        assertEquals(1, brds.size());
+        assertEquals(brd.getId(), brds.get(0).getId());
+        brd = brds.get(0);
+        assertNotNull(brd.getBundleResourceDeploymentHistories());
+        assertTrue((size + 1) == brd.getBundleResourceDeploymentHistories().size());
+        BundleResourceDeploymentHistory newHistory = null;
+        for (BundleResourceDeploymentHistory h : brd.getBundleResourceDeploymentHistories()) {
+            if (auditMessage.equals(h.getMessage())) {
+                newHistory = h;
+                break;
+            }
+        }
+        assertNotNull(newHistory);
+        assertEquals(auditMessage, newHistory.getAction());
+        assertEquals(BundleResourceDeploymentHistory.Status.SUCCESS, newHistory.getStatus());
+
+        // deny purge destination
+        //TransactionManager txMgr = getTransactionManager();
+        //txMgr.begin();
+        //bd1 = em.find(BundleDeployment.class, bd1.getId());
+        //bd1.setLive(true);
+        //txMgr.commit();
+
+        removeRolePermissions(role, permission);
+        try {
+            bundleManager.purgeBundleDestination(subject, dest1.getId());
+            fail("Should have thrown PermissionException");
+        } catch (PermissionException e) {
+            // expected
+        }
+
+        // allow purge destination
+        addRolePermissions(role, permission);
+        bundleManager.purgeBundleDestination(subject, dest1.getId());
+
+        // leave without the perm being assigned
+        removeRolePermissions(role, permission);
+    }
+
     // subject must have create bundle version permission
     private void deleteBundleVersion(Subject subject, Bundle b1) throws Exception {
         assertNotNull(b1);
@@ -1819,8 +2044,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleDestination createDestination(Bundle bundle, String name, String deployDir, ResourceGroup group)
         throws Exception {
+        return createDestination(overlord, bundle, name, deployDir, group);
+    }
+
+    private BundleDestination createDestination(Subject subject, Bundle bundle, String name, String deployDir,
+        ResourceGroup group) throws Exception {
         final String fullName = TEST_PREFIX + "-bundledestination-" + name;
-        BundleDestination bd = bundleManager.createBundleDestination(overlord, bundle.getId(), fullName, fullName,
+        BundleDestination bd = bundleManager.createBundleDestination(subject, bundle.getId(), fullName, fullName,
             TEST_DESTBASEDIR_NAME, deployDir, group.getId());
 
         assert bd.getId() > 0;
@@ -1831,9 +2061,13 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private BundleDeployment createDeployment(String name, BundleVersion bv, BundleDestination dest,
         Configuration config) throws Exception {
+        return createDeployment(overlord, name, bv, dest, config);
+    }
+
+    private BundleDeployment createDeployment(Subject subject, String name, BundleVersion bv, BundleDestination dest,
+        Configuration config) throws Exception {
         final String fullName = TEST_PREFIX + "-bundledeployment-" + name;
-        BundleDeployment bd = bundleManager
-            .createBundleDeployment(overlord, bv.getId(), dest.getId(), fullName, config);
+        BundleDeployment bd = bundleManager.createBundleDeployment(subject, bv.getId(), dest.getId(), fullName, config);
 
         assert bd.getId() > 0;
         assert bd.getDescription().endsWith(fullName);
@@ -1907,6 +2141,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
             resourceGroup = new ResourceGroup(TEST_PREFIX + "-group-" + System.currentTimeMillis());
             resourceGroup.addExplicitResource(resource);
+            resourceGroup.addImplicitResource(resource);
             resourceGroup.setResourceType(resourceType); // need to tell the group the type it is
             em.persist(resourceGroup);
 

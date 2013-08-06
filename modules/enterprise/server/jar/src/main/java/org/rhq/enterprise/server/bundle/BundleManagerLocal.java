@@ -209,8 +209,7 @@ public interface BundleManagerLocal extends BundleManagerRemote {
         boolean isCleanDeployment, boolean isRevert) throws Exception;
 
     /**
-     * Used by GUI. This is a simple attempt at delete, typically used for removing a poorly defined deployment before it is
-     * actually scheduled for deployment. The status must be PENDING. It will fail if anything actually refers to it.
+     * Used by GUI. The deployment must be PENDING or in a completed state.
      * <pre>
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)

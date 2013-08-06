@@ -744,7 +744,7 @@
         <column name="ID" default="sequence-only" initial="10001"
                 primarykey="true" required="true" type="INTEGER"/>
         <column name="NAME" required="true" size="4000" type="VARCHAR2"/>
-        <column name="DESCRIPTION" size="100" type="VARCHAR2"/>
+        <column name="DESCRIPTION" size="512" type="VARCHAR2"/>
         <column name="CTIME" type="LONG"/>
         <column name="MTIME" type="LONG"/>
     </table>

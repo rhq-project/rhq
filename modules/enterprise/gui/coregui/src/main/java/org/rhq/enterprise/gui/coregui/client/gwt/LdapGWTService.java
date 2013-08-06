@@ -42,6 +42,11 @@ public interface LdapGWTService extends RemoteService {
     Set<Map<String, String>> findAvailableGroups() throws RuntimeException;
 
     /**
+     * @return Map with status of last LDAP groups query available
+     */
+    Set<Map<String, String>> findAvailableGroupsStatus() throws RuntimeException;
+
+    /**
      * @return Map with LDAP details for user passed.
      */
     Map<String, String> getLdapDetailsFor(String user) throws RuntimeException;

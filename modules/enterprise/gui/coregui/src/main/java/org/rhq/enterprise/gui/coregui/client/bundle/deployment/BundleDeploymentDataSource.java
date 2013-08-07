@@ -99,7 +99,7 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response,
         final BundleDeploymentCriteria criteria) {
-        bundleService.findBundleDeploymentsByCriteriaWithDestinationFilter(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
+        bundleService.findBundleDeploymentsByCriteria(criteria, new AsyncCallback<PageList<BundleDeployment>>() {
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_bundle_deploy_loadDeployFailure(), caught);
             }
@@ -109,7 +109,6 @@ public class BundleDeploymentDataSource extends RPCDataSource<BundleDeployment, 
                 processResponse(request.getRequestId(), response);
             }
         });
-
     }
 
     @Override

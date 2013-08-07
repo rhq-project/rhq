@@ -58,9 +58,9 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -268,7 +268,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         criteria.fetchConfigurationDefinition(true);
         criteria.fetchTags(true);
 
-        bundleManager.findBundleVersionsByCriteriaWithDestinationFilter(criteria,
+        bundleManager.findBundleVersionsByCriteria(criteria,
             new AsyncCallback<PageList<BundleVersion>>() {
                 public void onFailure(Throwable caught) {
                     CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);

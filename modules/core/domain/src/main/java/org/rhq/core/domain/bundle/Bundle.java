@@ -57,7 +57,7 @@ import org.rhq.core.domain.tagging.Tag;
  * @author John Mazzitelli
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
     // Below queries primarily used for domain test code.    
     @NamedQuery(name = Bundle.QUERY_FIND_ALL, query = "SELECT b FROM Bundle b"), //    
     @NamedQuery(name = Bundle.QUERY_FIND_BY_NAME, query = "SELECT b FROM Bundle b WHERE :name = b.name"),
@@ -69,7 +69,7 @@ import org.rhq.core.domain.tagging.Tag;
 @Table(name = "RHQ_BUNDLE")
 @XmlAccessorType(XmlAccessType.FIELD)
 public class Bundle implements Serializable {
-    private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 2L;
 
     public static final String QUERY_FIND_ALL = "Bundle.findAll";
     public static final String QUERY_FIND_BY_NAME = "Bundle.findByName";
@@ -103,6 +103,9 @@ public class Bundle implements Serializable {
 
     @OneToMany(mappedBy = "bundle", fetch = FetchType.LAZY)
     private List<BundleVersion> bundleVersions = new ArrayList<BundleVersion>();
+
+    @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY)
+    private Set<BundleGroup> bundleGroups = new HashSet<BundleGroup>();
 
     @ManyToMany(mappedBy = "bundles", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private Set<Tag> tags;
@@ -177,6 +180,37 @@ public class Bundle implements Serializable {
 
     public void setBundleVersions(List<BundleVersion> bundleVersions) {
         this.bundleVersions = bundleVersions;
+    }
+
+    public Set<BundleGroup> getBundleGroups() {
+        if (this.bundleGroups == null) {
+            this.bundleGroups = new HashSet<BundleGroup>();
+        }
+        return bundleGroups;
+    }
+
+    /**
+     * This does not set the inverse relationships.
+     * @param bundleGroups
+     */
+    public void setBundleGroups(Set<BundleGroup> bundleGroups) {
+        this.bundleGroups = bundleGroups;
+    }
+
+    /**
+     * This does not set the inverse relationship. You may want {@link BundleGroup#addBundle(Bundle)}.
+     * @param bundleGroups
+     */
+    public void addBundleGroup(BundleGroup bundleGroup) {
+        getBundleGroups().add(bundleGroup);
+    }
+
+    /**
+     * This does not set the inverse relationship. You may want {@link BundleGroup#removeBundle(Bundle)}.
+     * @param bundleGroups
+     */
+    public boolean removeBundleGroup(BundleGroup bundleGroup) {
+        return getBundleGroups().remove(bundleGroup);
     }
 
     public List<BundleDestination> getDestinations() {

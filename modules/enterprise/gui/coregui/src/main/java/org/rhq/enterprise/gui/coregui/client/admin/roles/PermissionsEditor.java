@@ -48,8 +48,8 @@ import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * An editor for editing the set of RHQ {@link Permission permission}s associated with an RHQ {@link Role role}.
@@ -62,6 +62,7 @@ public class PermissionsEditor extends EnhancedVStack {
 
     private ListGrid globalPermissionsGrid;
     private ListGrid resourcePermissionsGrid;
+    private ListGrid bundleGroupPermissionsGrid;
     private Set<Permission> selectedPermissions;
     private RoleEditView roleEditView;
     private boolean isReadOnly;
@@ -99,6 +100,15 @@ public class PermissionsEditor extends EnhancedVStack {
 
         this.resourcePermissionsGrid = createResourcePermissionsGrid();
         addMember(this.resourcePermissionsGrid);
+
+        Label bundleGroupPermissionsHeader = new Label("<h4>"
+            + MSG.view_adminRoles_permissions_bundleGroupPermissions() + "</h4>");
+        bundleGroupPermissionsHeader.setHeight(17);
+        addMember(bundleGroupPermissionsHeader);
+
+        this.bundleGroupPermissionsGrid = createBundleGroupPermissionsGrid();
+        addMember(this.bundleGroupPermissionsGrid);
+
     }
 
     public void reset() {
@@ -128,6 +138,13 @@ public class PermissionsEditor extends EnhancedVStack {
             String writePermissionName = record.getAttribute("writeName");
             Permission writePermission = Permission.valueOf(writePermissionName);
             record.setAttribute("writeAuthorized", this.selectedPermissions.contains(writePermission));
+        }
+
+        ListGridRecord[] bundleGroupPermissionRecords = this.bundleGroupPermissionsGrid.getRecords();
+        for (ListGridRecord record : bundleGroupPermissionRecords) {
+            String permissionName = record.getAttribute("name");
+            Permission permission = Permission.valueOf(permissionName);
+            record.setAttribute("authorized", this.selectedPermissions.contains(permission));
         }
 
         markForRedraw();
@@ -162,31 +179,56 @@ public class PermissionsEditor extends EnhancedVStack {
         grid.setFields(iconField, displayNameField, authorizedField, descriptionField);
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
-        ListGridRecord record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSecurity(),
+        ListGridRecord record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSecurity(),
             "global/Locked", Permission.MANAGE_SECURITY, MSG.view_adminRoles_permissions_permDesc_manageSecurity());
         records.add(record);
 
-        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageInventory(),
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_manageInventory(),
             "subsystems/inventory/Inventory", Permission.MANAGE_INVENTORY,
             MSG.view_adminRoles_permissions_permDesc_manageInventory());
         records.add(record);
 
-        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSettings(),
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_manageSettings(),
             "subsystems/configure/Configure", Permission.MANAGE_SETTINGS,
             MSG.view_adminRoles_permissions_permDesc_manageSettings(productInfo.getShortName()));
         records.add(record);
 
-        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundles(),
-            "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE,
-            MSG.view_adminRoles_permissions_permDesc_manageBundles());
-        records.add(record);
-
-        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_manageRepositories(),
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_manageRepositories(),
             "subsystems/content/Content", Permission.MANAGE_REPOSITORIES,
             MSG.view_adminRoles_permissions_permDesc_manageRepositories());
         records.add(record);
 
-        record = createGlobalPermissionRecord(MSG.view_adminRoles_permissions_perm_viewUsers(), "global/User",
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundles(),
+            "subsystems/bundle/Bundle", Permission.MANAGE_BUNDLE,
+            MSG.view_adminRoles_permissions_permDesc_manageBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundleGroups(),
+            "subsystems/content/Content", Permission.MANAGE_BUNDLE_GROUPS,
+            MSG.view_adminRoles_permissions_permDesc_manageBundleGroups());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_createBundles(),
+            "subsystems/content/Content", Permission.CREATE_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_createBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deleteBundles(),
+            "subsystems/content/Content", Permission.DELETE_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_deleteBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewBundles(),
+            "subsystems/content/Content", Permission.VIEW_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_viewBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deployBundles(),
+            "subsystems/content/Content", Permission.DEPLOY_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_deployBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewUsers(), "global/User",
             Permission.VIEW_USERS, MSG.view_adminRoles_permissions_permDesc_viewUsers());
         records.add(record);
 
@@ -280,6 +322,54 @@ public class PermissionsEditor extends EnhancedVStack {
         return grid;
     }
 
+    private ListGrid createBundleGroupPermissionsGrid() {
+        ListGrid grid = createPermissionsGrid();
+        // TODO: Add table title.
+
+        ListGridField iconField = createIconField();
+
+        ListGridField displayNameField = new ListGridField("displayName", MSG.common_title_name(), 130);
+
+        ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
+        descriptionField.setWrap(true);
+
+        final ListGridField authorizedField = createAuthorizedField("authorized",
+            MSG.view_adminRoles_permissions_isAuthorized(), "name", grid, false);
+
+        grid.setFields(iconField, displayNameField, authorizedField, descriptionField);
+
+        List<ListGridRecord> records = new ArrayList<ListGridRecord>();
+
+        ListGridRecord record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_assignBundlesToGroup(),
+            "subsystems/bundle/Bundle", Permission.ASSIGN_BUNDLES_TO_GROUP,
+            MSG.view_adminRoles_permissions_permDesc_assignBundlesToGroup());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_unassignBundlesFromGroup(),
+            "subsystems/bundle/Bundle", Permission.UNASSIGN_BUNDLES_FROM_GROUP,
+            MSG.view_adminRoles_permissions_permDesc_unassignBundlesFromGroup());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_createBundlesInGroup(),
+            "subsystems/bundle/Bundle", Permission.CREATE_BUNDLES_IN_GROUP,
+            MSG.view_adminRoles_permissions_permDesc_createBundlesInGroup());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deleteBundlesFromGroup(),
+            "subsystems/bundle/Bundle", Permission.DELETE_BUNDLES_FROM_GROUP,
+            MSG.view_adminRoles_permissions_permDesc_deleteBundlesFromGroup());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewBundlesInGroup(),
+            "subsystems/bundle/Bundle", Permission.VIEW_BUNDLES_IN_GROUP,
+            MSG.view_adminRoles_permissions_permDesc_viewBundlesInGroup());
+        records.add(record);
+
+        grid.setData(records.toArray(new ListGridRecord[records.size()]));
+
+        return grid;
+    }
+
     private ListGridField createIconField() {
         ListGridField iconField = new ListGridField("icon", "&nbsp;", 28);
         iconField.setShowDefaultContextMenu(false);
@@ -341,6 +431,7 @@ public class PermissionsEditor extends EnhancedVStack {
                     String permissionName = record.getAttribute(nameField);
                     Permission permission = Permission.valueOf(permissionName);
                     String permissionDisplayName = record.getAttribute("displayName");
+
                     if (permission == Permission.VIEW_RESOURCE) {
                         String messageString = MSG.view_adminRoles_permissions_readAccessImplied(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
@@ -358,6 +449,11 @@ public class PermissionsEditor extends EnhancedVStack {
                         && permission == Permission.CONFIGURE_READ) {
                         String messageString = MSG
                             .view_adminRoles_permissions_illegalDeselectionDueToCorrespondingWritePermSelection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_BUNDLE)
+                        && Permission.BUNDLE_ALL.contains(permission)) {
+                        String messageString = MSG
+                            .view_adminRoles_permissions_illegalDeselectionDueToManageBundleSelection(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
                     } else {
                         updatePermissions(authorized, permission);
@@ -402,6 +498,12 @@ public class PermissionsEditor extends EnhancedVStack {
                     messageString = MSG.view_adminRoles_permissions_autoselecting_configureWrite_implied();
                     redrawRequired = true;
                 }
+            } else if (permission == Permission.MANAGE_BUNDLE) {
+                // MANAGE_BUNDLE implies all other bundle-related perms
+                if (this.selectedPermissions.addAll(Permission.BUNDLE_ALL)) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_manageBundle_implied();
+                    redrawRequired = true;
+                }
             }
         } else {
             this.selectedPermissions.remove(permission);
@@ -420,14 +522,14 @@ public class PermissionsEditor extends EnhancedVStack {
         }
     }
 
-    private ListGridRecord createGlobalPermissionRecord(String displayName, String icon, Permission globalPermission,
+    private ListGridRecord createPermissionRecord(String displayName, String icon, Permission permission,
         String description) {
         ListGridRecord record = new ListGridRecord();
         record.setAttribute("displayName", displayName);
         record.setAttribute("icon", icon);
-        record.setAttribute("name", globalPermission.name());
+        record.setAttribute("name", permission.name());
         record.setAttribute("description", description);
-        record.setAttribute("authorized", this.selectedPermissions.contains(globalPermission));
+        record.setAttribute("authorized", this.selectedPermissions.contains(permission));
 
         return record;
     }

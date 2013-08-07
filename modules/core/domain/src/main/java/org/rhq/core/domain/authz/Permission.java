@@ -104,10 +104,8 @@ public enum Permission {
     CONFIGURE_WRITE(Target.RESOURCE), // 11
 
     /**
-     * can C/U/D provisioning bundles
+     * can perform any bundle action, assigns all other bundle permissions
      */
-    // NOTE: This is a GLOBAL permission, but is defined down here so as to maintain the ordinal indexes of the other
-    //       pre-existing permissions.
     MANAGE_BUNDLE(Target.GLOBAL), // 12
 
     /**
@@ -124,7 +122,6 @@ public enum Permission {
     /**
      * Can C/U/D repositories and content sources
      */
-    // NOTE: This is a GLOBAL permission but defined here to maintain the ordinal indexes
     MANAGE_REPOSITORIES(Target.GLOBAL), // 15
 
     /**
@@ -135,8 +132,69 @@ public enum Permission {
     /**
      * Can view other RHQ users, except for their assigned roles
      */
-    // NOTE: This is a GLOBAL permission but defined here to maintain the ordinal indexes
-    VIEW_USERS(Target.GLOBAL) // 17
+    VIEW_USERS(Target.GLOBAL), // 17
+
+    /**
+     * Can CRUD BundleGroups
+     */
+    MANAGE_BUNDLE_GROUPS(Target.GLOBAL), // 18
+
+    /**
+     * Can create Bundle [Versions]s
+     * Can assign to viewable bundle groups 
+     * Can create unassigned Bundle [Versions] if holding Global.VIEW_BUNDLES
+     */
+    CREATE_BUNDLES(Target.GLOBAL), // 19
+
+    /**
+     * Can delete viewable bundle [Versions]s
+     * Can unassign from viewable bundle groups 
+     * Can delete unassigned bundles if holding Global.VIEW_BUNDLES
+     */
+    DELETE_BUNDLES(Target.GLOBAL), // 20
+
+    /**
+     * Can view any bundle, including unassigned bundles
+     */
+    VIEW_BUNDLES(Target.GLOBAL), // 21
+
+    /**
+     * Can deploy any viewable bundle version to any viewable [deployable, compatible] resource group
+     */
+    DEPLOY_BUNDLES(Target.GLOBAL), // 22
+
+    /**
+     * Can assign viewable bundles to the bundle groups associated with the role.
+     * - this can be a copy from another viewable bundle group
+     * - this can be an unassigned bundle if holding Global.VIEW_BUNDLES
+     */
+    ASSIGN_BUNDLES_TO_GROUP(Target.BUNDLE), // 23
+
+    /**
+     * Can unassign bundles assigned to bundle groups associated with the role.
+     * - the bundle is not deleted and becomes an unassigned bundle if assigned to no other bundle group
+     */
+    UNASSIGN_BUNDLES_FROM_GROUP(Target.BUNDLE), // 24
+
+    /**
+     * Can create [implicitly assigned] bundle [version]s for bundle groups associated with the role.
+     */
+    CREATE_BUNDLES_IN_GROUP(Target.BUNDLE), // 25
+
+    /**
+     * Can delete assigned bundle [version]s from the bundle groups associated with the role.
+     */
+    DELETE_BUNDLES_FROM_GROUP(Target.BUNDLE), // 26
+
+    /**
+     * Implied - Can view the bundles assigned to the bundle groups associated with the role.
+     */
+    VIEW_BUNDLES_IN_GROUP(Target.BUNDLE), // 27
+
+    /**
+     * Can deploy viewable bundles to the [compatible, deployable] resource groups associated with the role.  
+     */
+    DEPLOY_BUNDLES_TO_GROUP(Target.RESOURCE) // 28
 
     ;
 
@@ -144,11 +202,14 @@ public enum Permission {
      * the target to which the permission applies
      */
     public enum Target {
-        /** global permissions do not apply to specific resources in groups */
+        /** global permissions do not apply to specific resources or bundles  */
         GLOBAL,
 
-        /** resource permissions apply only to the resources in the role's groups */
-        RESOURCE
+        /** resource permissions apply only to the resources in the role's resource groups */
+        RESOURCE,
+
+        /** bundle permissions apply only to the bundles in the role's bundle groups */
+        BUNDLE
     }
 
     private Target target;
@@ -168,14 +229,21 @@ public enum Permission {
 
     public static final Set<Permission> GLOBAL_ALL = new HashSet<Permission>();
     public static final Set<Permission> RESOURCE_ALL = new HashSet<Permission>();
+    public static final Set<Permission> BUNDLE_ALL = new HashSet<Permission>();
     static {
         for (Permission permission : Permission.values()) {
             switch (permission.getTarget()) {
             case GLOBAL:
                 GLOBAL_ALL.add(permission);
+                if (permission.name().contains("BUNDLE")) {
+                    BUNDLE_ALL.add(permission);
+                }
                 break;
             case RESOURCE:
                 RESOURCE_ALL.add(permission);
+                break;
+            case BUNDLE:
+                BUNDLE_ALL.add(permission);
                 break;
             }
         }

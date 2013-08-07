@@ -28,7 +28,6 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -46,9 +45,6 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.JobDataMap;
-import org.quartz.SimpleTrigger;
-import org.quartz.Trigger;
 
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.domain.alert.Alert;
@@ -94,8 +90,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
-import org.rhq.enterprise.server.storage.StorageConfigurationException;
+import org.rhq.enterprise.server.storage.StorageClusterSettings;
+import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -118,6 +114,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private final static String SEEDS_LIST = "seedsList";
 
     private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
+    private static final String RHQ_STORAGE_GOSSIP_PORT_PROPERTY = "storagePort";
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
@@ -159,10 +156,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private ResourceManagerLocal resourceManager;
 
+    @EJB
+    private StorageClusterSettingsManagerBean storageClusterSettingsManager;
+
     @Override
     public void linkResource(Resource resource) {
-        Configuration resourceConfig = resource.getPluginConfiguration();
-        String address = resourceConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
+        Configuration pluginConfig = resource.getPluginConfiguration();
+        String address = pluginConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
 
         if (log.isInfoEnabled()) {
             log.info("Linking " + resource + " to storage node at " + address);
@@ -176,12 +176,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 }
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
+                initClusterSettingsIfNecessary(pluginConfig);
                 addStorageNodeToGroup(resource);
             } else {
                 storageNode = new StorageNode();
                 storageNode.setAddress(address);
-                storageNode.setCqlPort(Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
-                storageNode.setJmxPort(Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
+                storageNode.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
+                storageNode.setJmxPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.INSTALLED);
 
@@ -198,6 +199,31 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
                 " cannot be linked to a storage node", e);
         }
+    }
+
+    private void initClusterSettingsIfNecessary(Configuration pluginConfig) {
+        // TODO Need to handle non-repeatable reads here (probably a post 4.9 task)
+        //
+        // If a user deploys two storage nodes prior to installing the RHQ server, then we
+        // could end up in this method concurrently for both storage nodes. The settings
+        // would be committed for each node with the second commit winning. The problem is
+        // that is the cluster settings differ for the two nodes, it will be silently
+        // ignored. This scenario will happen infrequently so it should be sufficient to
+        // resolve it with optimistic locking. The second writer should fail with an
+        // OptimisticLockException.
+
+        log.info("Initializing storage cluster settings");
+
+        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
+            subjectManager.getOverlord());
+        if (clusterSettings != null) {
+            log.info("Cluster settings have already been set. Skipping initialization.");
+            return;
+        }
+        clusterSettings = new StorageClusterSettings();
+        clusterSettings.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
+        clusterSettings.setGossipPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_GOSSIP_PORT_PROPERTY)));
+        storageClusterSettingsManager.setClusterSettings(subjectManager.getOverlord(), clusterSettings);
     }
 
     private void announceNewNode(StorageNode newStorageNode) {
@@ -506,54 +532,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return formattedValue;
     }
 
-    private List<StorageNode> parseSeedsProperty(String seedsProperty) {
-        String[] seeds = seedsProperty.split(",");
-        List<StorageNode> storageNodes = new ArrayList<StorageNode>();
-        for (String seed : seeds) {
-            StorageNode node = new StorageNode();
-            node.setOperationMode(OperationMode.INSTALLED);
-            node.parseNodeInformation(seed);
-            storageNodes.add(node);
-        }
-        return storageNodes;
-    }
-
-    private void scheduleQuartzJob(int clusterSize) {
-        String jobName = StorageNodeMaintenanceJob.class.getName();
-        String jobGroupName = StorageNodeMaintenanceJob.class.getName();
-        String triggerName = StorageNodeMaintenanceJob.class.getName();
-        Date jobTime = new Date(System.currentTimeMillis() + 30000);
-
-        Trigger trigger = new SimpleTrigger(triggerName, jobGroupName, jobTime);
-        trigger.setJobName(jobName);
-        trigger.setJobGroup(jobGroupName);
-        try {
-            JobDataMap jobDataMap = new JobDataMap();
-            jobDataMap.put(StorageNodeMaintenanceJob.JOB_DATA_PROPERTY_CLUSTER_SIZE, Integer.toString(clusterSize));
-            trigger.setJobDataMap(jobDataMap);
-
-            quartzScheduler.scheduleJob(trigger);
-        } catch (Throwable t) {
-            log.warn("Unable to schedule storage node maintenance job", t);
-        }
-    }
-
-    private void updateStorageNodes(Map<String, StorageNode> storageNodeMap) {
-        for (Map.Entry<String, StorageNode> storageNodeEntry : storageNodeMap.entrySet()) {
-            TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(
-                StorageNode.QUERY_FIND_BY_ADDRESS, StorageNode.class);
-            query.setParameter("address", storageNodeEntry.getKey());
-            List<StorageNode> result = query.getResultList();
-            if (!result.isEmpty()) {
-                storageNodeEntry.getValue().setId(result.get(0).getId());
-                entityManager.merge(storageNodeEntry.getValue());
-            } else {
-                entityManager.persist(storageNodeEntry.getValue());
-            }
-        }
-        entityManager.flush();
-    }
-
     private StorageNodeLoadComposite.MeasurementAggregateWithUnits getMeasurementAggregateWithUnits(Subject subject,
         int schedId, MeasurementUnits units, long beginTime, long endTime) {
         MeasurementAggregate measurementAggregate = measurementManager.getAggregate(subject, schedId, beginTime,
@@ -855,60 +833,22 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             log.info("Preparing to bootstrap " + storageNode + " into cluster...");
         }
 
-        List<StorageNode> existingStorageNodes = getClusteredStorageNodes();
-
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(storageNode.getResource());
         schedule.setJobTrigger(JobTrigger.createNowTrigger());
         schedule.setSubject(subjectManager.getOverlord());
         schedule.setOperationName("prepareForBootstrap");
 
+        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
+            subjectManager.getOverlord());
         Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("cqlPort", existingStorageNodes.get(0).getCqlPort()));
-        parameters.put(new PropertySimple("gossipPort", getGossipPort(storageNode, existingStorageNodes)));
+        parameters.put(new PropertySimple("cqlPort", clusterSettings.getCqlPort()));
+        parameters.put(new PropertySimple("gossipPort", clusterSettings.getGossipPort()));
         parameters.put(createPropertyListOfAddresses("storageNodeIPAddresses", getClusteredStorageNodes()));
 
         schedule.setParameters(parameters);
 
         operationManager.scheduleResourceOperation(subjectManager.getOverlord(), schedule);
-    }
-
-    private Integer getGossipPort(StorageNode newStorageNode, List<StorageNode> storageNodes) {
-        if (log.isInfoEnabled()) {
-            log.info("Looking up gossip port for new storage node " + newStorageNode);
-        }
-        try {
-            StorageNode node = null;
-            Configuration resourceConfig = null;
-            for (StorageNode storageNode : storageNodes) {
-                resourceConfig = configurationManager.getLiveResourceConfiguration(subjectManager.getOverlord(),
-                    storageNode.getResource().getId(), false);
-                if (resourceConfig == null) {
-                    log.warn("Failed to load resource configuration for storage node " + newStorageNode.getResource());
-                } else {
-                    node = storageNode;
-                    break;
-                }
-            }
-            if (resourceConfig == null) {
-                log.error("Failed to obtain gossip port from existing storage nodes");
-                throw new StorageConfigurationException("Failed to obtain gossip port from existing storage nodes");
-            }
-
-            PropertySimple property = resourceConfig.getSimple("gossipPort");
-            if (property == null) {
-                throw new StorageConfigurationException("The resource configuration for " + node.getResource() +
-                    "did not include the required property [gossipPort]");
-            }
-            Integer port = property.getIntegerValue();
-            log.info("Found gossip port set to " + port);
-            return property.getIntegerValue();
-        } catch (Exception e) {
-            if (e instanceof StorageConfigurationException) {
-                throw (StorageConfigurationException) e;
-            }
-            throw new RuntimeException("An error occurred while trying to obtain the gossip port", e);
-        }
     }
 
     @Override

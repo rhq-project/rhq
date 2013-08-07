@@ -110,6 +110,14 @@ public enum SystemSetting {
     /** The length of CoreGUI inactivity (no call to UserSessionManager.refresh()) before a CoreGUI session timeout, Default: 1 hour */
     RHQ_SESSION_TIMEOUT("RHQ_SESSION_TIMEOUT", PropertySimpleType.LONG, false, true),
 
+    /**
+     * The STORAGE settings are all read-only and deal with shared, cluster-wide settings
+     * among storage nodes. They are read-only because they should only be updated through
+     * the storage subsystem.
+     */
+    STORAGE_CQL_PORT("STORAGE_CQL_PORT", PropertySimpleType.INTEGER, true, true),
+    STORAGE_GOSSIP_PORT("STORAGE_GOSSIP_PORT", PropertySimpleType.INTEGER, true, true),
+
     //these seem to be unused yet still present in the database...
     @Deprecated
     HELP_USER("CAM_HELP_USER", PropertySimpleType.STRING, true, false),
@@ -162,6 +170,12 @@ public enum SystemSetting {
             return isBoolean(value);
         case LONG:
             return isLong(value);
+        case INTEGER:
+            return isInteger(value);
+        case FLOAT:
+            return isFloat(value);
+        case DOUBLE:
+            return isDouble(value);
         default:
             throw new IllegalStateException("A system property '" + internalName
                 + "' doesn't know how to validate its value which should have type '" + type + "'.");
@@ -193,6 +207,42 @@ public enum SystemSetting {
 
         try {
             Long.parseLong(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static boolean isInteger(String value) {
+        if (value == null) {
+            return true;
+        }
+        try {
+            Integer.parseInt(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static boolean isFloat(String value) {
+        if (value == null) {
+            return true;
+        }
+        try {
+            Float.parseFloat(value);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private static boolean isDouble(String value) {
+        if (value == null) {
+            return true;
+        }
+        try {
+            Double.parseDouble(value);
             return true;
         } catch (NumberFormatException e) {
             return false;

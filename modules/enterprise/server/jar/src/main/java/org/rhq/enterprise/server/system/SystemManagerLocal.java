@@ -24,6 +24,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.common.composite.SystemSettings;
 
 /**
  * Provides access to the server cloud's system configuration as well as some methods
@@ -140,5 +141,15 @@ public interface SystemManagerLocal extends SystemManagerRemote {
     void validateSystemConfiguration(Subject subject, Properties properties) throws InvalidSystemConfigurationException;
 
     void dumpSystemInfo(Subject subject);
+
+    /**
+     * The storage cluster settings are stored as read-only system settings. They should be updated through the storage
+     * subsystem. This API is provided for use ONLY by the storage subsystem.
+     *
+     * @param subject The user who wants to change the settings
+     * @param settings The new storage cluster settings
+     * @throws IllegalArgumentException If the settings contain anything other than storage cluster settings.
+     */
+    void setStorageClusterSettings(Subject subject, SystemSettings settings);
 
 }

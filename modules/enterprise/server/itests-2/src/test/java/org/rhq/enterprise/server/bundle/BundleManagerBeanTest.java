@@ -781,9 +781,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         assertNotNull(bv1);
-        BundleFile bf1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-1",
+        BundleFile bf1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), "bundletest-bundlefile-1",
             "1.0", null, "Test Bundle File # 1".getBytes());
-        BundleFile bf2 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-2",
+        BundleFile bf2 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), "bundletest-bundlefile-2",
             "1.0", null, "Test Bundle File # 2".getBytes());
     }
 
@@ -928,12 +928,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         Set<String> filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
         assertEquals(DEFAULT_CRITERIA_PAGE_SIZE + 2, filenames.size());
-        BundleFile bf1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-1",
+        BundleFile bf1 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), "bundletest-bundlefile-1",
             "1.0", null, "Test Bundle File # 1".getBytes());
         filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
         assertEquals(DEFAULT_CRITERIA_PAGE_SIZE + 1, filenames.size());
-        BundleFile bf2 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), TEST_PREFIX + "-bundlefile-2",
+        BundleFile bf2 = bundleManager.addBundleFileViaByteArray(overlord, bv1.getId(), "bundletest-bundlefile-2",
             "1.0", null, "Test Bundle File # 2".getBytes());
         filenames = bundleManager.getBundleVersionFilenames(overlord, bv1.getId(), true);
         assertNotNull(filenames);
@@ -1991,16 +1991,24 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     private BundleType createBundleType(String name) throws Exception {
         final String fullName = TEST_PREFIX + "-type-" + name;
         BundleType bt = null;
-        try {
-            bt = bundleManager.getBundleType(overlord, fullName);
-        } catch (Throwable t) {
-            ResourceType rt = createResourceTypeForBundleType(name);
-            bt = bundleManager.createBundleType(overlord, fullName, rt.getId());
 
-            assert bt.getId() > 0;
-            assert bt.getName().endsWith(fullName);
+        getTransactionManager().begin();
+        try {
+            Query q = em.createQuery("SELECT bt FROM BundleType bt WHERE bt.name = '" + fullName + "'");
+            bt = (BundleType) q.getSingleResult();
+        } catch (Throwable t) {
+            // nothing
+        } finally {
+            getTransactionManager().commit();
         }
 
+        if (null == bt) {
+            ResourceType rt = createResourceTypeForBundleType(name);
+            bt = bundleManager.createBundleType(overlord, fullName, rt.getId());
+        }
+
+        assert bt.getId() > 0;
+        assert bt.getName().endsWith(fullName);
         return bt;
     }
 

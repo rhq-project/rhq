@@ -197,7 +197,7 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     }
 
     private Tab buildBundleGroupsTab(TabSet tabSet) {
-        Tab tab = new Tab(MSG.common_title_bundleGroups(), ImageManager.getBundleIcon());
+        Tab tab = new Tab(MSG.common_title_bundleGroups(), ImageManager.getBundleGroupIcon());
         // NOTE: We will set the tab content to the bundle group selector later once the Role has been fetched.
 
         return tab;

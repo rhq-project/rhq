@@ -758,6 +758,21 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         if (!role.getPermissions().contains(Permission.CONFIGURE_READ)) {
             role.getPermissions().remove(Permission.CONFIGURE_WRITE);
         }
+
+        /*
+         * and MANAGE_BUNDLE implies all Bundle perms
+         */
+        if (role.getPermissions().contains(Permission.MANAGE_BUNDLE)) {
+            role.getPermissions().addAll(Permission.BUNDLE_ALL);
+        }
+
+        /*
+         * and MANAGE_BUNDLE_GROUPS implies global bundle view
+         */
+        if (role.getPermissions().contains(Permission.MANAGE_BUNDLE_GROUPS)) {
+            role.getPermissions().add(Permission.VIEW_BUNDLES);
+        }
+
     }
 
     @Override

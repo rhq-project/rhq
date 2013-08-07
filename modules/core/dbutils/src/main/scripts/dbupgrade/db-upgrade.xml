@@ -2084,10 +2084,9 @@
               
               <!-- Add new perms to superuser/all-resources roles -->
               <schema-directSQL>
-                <statement desc="Inserting MANAGE_BUNDLE_GROUPS permission for 'Super User' role only">
-                    INSERT INTO RHQ_PERMISSION (ROLE_ID, OPERATION) VALUES (1, 18)
-                </statement>
-
+                <statement desc="Inserting MANAGE_BUNDLE_GROUPS permission for all MANAGE_BUNDLE (12) roles">
+                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 18 FROM rhq_permission p where p.operation = 12
+                </statement>              	
                 <statement desc="Inserting CREATE_BUNDLES permission for all MANAGE_BUNDLE (12) roles">
                     INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 19 FROM rhq_permission p where p.operation = 12
                 </statement>
@@ -2099,21 +2098,6 @@
                 </statement>
                 <statement desc="Inserting VIEW_BUNDLES permission for all MANAGE_BUNDLE roles">
                     INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 22 FROM rhq_permission p where p.operation = 12
-                </statement>
-                <statement desc="Inserting ASSIGN_BUNDLES_TO_GROUP permission for all MANAGE_BUNDLE roles">
-                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 23 FROM rhq_permission p where p.operation = 12
-                </statement>
-                <statement desc="Inserting UNASSIGN_BUNDLES_FROM_GROUP permission for all MANAGE_BUNDLE roles">
-                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 24 FROM rhq_permission p where p.operation = 12
-                </statement>
-                <statement desc="Inserting CREATE_BUNDLES_IN_GROUP permission for all MANAGE_BUNDLE roles">
-                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 25 FROM rhq_permission p where p.operation = 12
-                </statement>
-                <statement desc="Inserting DELETE_BUNDLES_FROM_GROUP permission for all MANAGE_BUNDLE roles">
-                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 26 FROM rhq_permission p where p.operation = 12
-                </statement>
-                <statement desc="Inserting VIEW_BUNDLES_IN_GROUP permission for all MANAGE_BUNDLE roles">
-                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 27 FROM rhq_permission p where p.operation = 12
                 </statement>
               </schema-directSQL>
 

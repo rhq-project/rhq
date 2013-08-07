@@ -579,9 +579,12 @@ public class ImageManager {
 
 
     public static String getBundleIcon() {
-        return "subsystems/content/Content_16.png";
+        return "subsystems/bundle/Bundle_16.png";
     }
 
+    public static String getBundleGroupIcon() {
+        return "subsystems/bundle/BundleGroup_16.png";
+    }
 
     public static String getConfigureIcon() {
         return "subsystems/configure/Configure_16.png";

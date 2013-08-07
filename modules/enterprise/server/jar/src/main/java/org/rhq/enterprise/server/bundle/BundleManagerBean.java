@@ -2058,11 +2058,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     /**
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
-     *  
+     * </pre>  
      * @param subject
      * @param bundleGroupId null or 0 for unassigned initial bundle version creation
      * @throws PermissionException
@@ -2101,11 +2102,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     /**
+     * <pre>
      * Required Permissions: Either:
      * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
-     * 
+     * </pre> 
      * @param subject
      * @param bundleId required, bundleId of bundle in which bundle version is being created/updated
      * @throws PermissionException
@@ -2142,10 +2144,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     /**
-     * Requires VIEW permission for the relevant bundle and either:
+     * <pre>
+     * Requires VIEW permission for the relevant bundle and one of:
+     * - Global.MANAGE_BUNDLE_GROUPS
      * - Global.CREATE_BUNDLE
-     * - BundleGroup.CREATE_BUNDLES_IN_GROUP or BundleGroup.ASSIGN_BUNDLES_TO_GROUP for the relevant bundle group
-     * 
+     * - BundleGroup.ASSIGN_BUNDLES_TO_GROUP for the relevant bundle group
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for the relevant bundle group
+     * </pre>
      * @param subject
      * @param bundleGroupId an existing bundle group
      * @param bundleIds existing bundles
@@ -2155,24 +2160,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         throws PermissionException {
 
         Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalManageBundleGroups = globalPerms.contains(Permission.MANAGE_BUNDLE_GROUPS);
         boolean hasGlobalCreateBundles = globalPerms.contains(Permission.CREATE_BUNDLES);
         boolean hasGlobalViewBundles = globalPerms.contains(Permission.VIEW_BUNDLES);
 
-        if (hasGlobalCreateBundles && hasGlobalViewBundles) {
+        if ((hasGlobalManageBundleGroups || hasGlobalCreateBundles) && hasGlobalViewBundles) {
             return;
         }
 
-        boolean hasBundleGroupCreate = hasGlobalCreateBundles
+        boolean canAssign = hasGlobalManageBundleGroups
+            || hasGlobalCreateBundles
             || authorizationManager
-                .hasBundleGroupPermission(subject, Permission.CREATE_BUNDLES_IN_GROUP, bundleGroupId);
-        boolean hasBundleGroupAssign = hasBundleGroupCreate
+                .hasBundleGroupPermission(subject, Permission.CREATE_BUNDLES_IN_GROUP, bundleGroupId)
             || authorizationManager
                 .hasBundleGroupPermission(subject, Permission.ASSIGN_BUNDLES_TO_GROUP, bundleGroupId);
 
-        if (!hasBundleGroupAssign) {
+        if (!canAssign) {
             String msg = "Subject ["
                 + subject.getName()
-                + "] requires one of Global.CREATE_BUNDLES, BundleGroup.CREATE_BUNDLES_IN_GROUP, or BundleGroup.ASSIGN_BUNDLES_TO_GROUP to assign a bundle to undle group  ["
+                + "] requires one of Global.MANAGE_BUNDLE_GROUPS, Global.CREATE_BUNDLES, BundleGroup.CREATE_BUNDLES_IN_GROUP, or BundleGroup.ASSIGN_BUNDLES_TO_GROUP to assign a bundle to bundle group  ["
                 + bundleGroupId + "].";
             throw new PermissionException(msg);
         }
@@ -2194,9 +2200,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     /**
-     * Requires VIEW permission for the relevant bundles and either:
+     * <pre>
+     * Requires VIEW permission for the relevant bundles and one of:
+     * - Global.MANAGE_BUNDLE_GROUPS 
      * - Global.DELETE_BUNDLE
-     * - BundleGroup.DELETE_BUNDLES_FROM_GROUP or BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP for the relevant bundle group
+     * - BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP for the relevant bundle group
+     * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for the relevant bundle group
+     * </pre>
      * 
      * @param subject
      * @param bundleGroupId an existing bundle group
@@ -2207,24 +2217,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         throws PermissionException {
 
         Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalManageBundleGroups = globalPerms.contains(Permission.MANAGE_BUNDLE_GROUPS);
         boolean hasGlobalDeleteBundles = globalPerms.contains(Permission.DELETE_BUNDLES);
         boolean hasGlobalViewBundles = globalPerms.contains(Permission.VIEW_BUNDLES);
 
-        if (hasGlobalDeleteBundles && hasGlobalViewBundles) {
+        if ((hasGlobalManageBundleGroups || hasGlobalDeleteBundles) && hasGlobalViewBundles) {
             return;
         }
 
-        boolean hasBundleGroupDelete = hasGlobalDeleteBundles
+        boolean canUnassign = hasGlobalManageBundleGroups
+            || hasGlobalDeleteBundles
             || authorizationManager.hasBundleGroupPermission(subject, Permission.DELETE_BUNDLES_FROM_GROUP,
-                bundleGroupId);
-        boolean hasBundleGroupUnassign = hasBundleGroupDelete
+                bundleGroupId)
             || authorizationManager.hasBundleGroupPermission(subject, Permission.UNASSIGN_BUNDLES_FROM_GROUP,
                 bundleGroupId);
 
-        if (!hasBundleGroupUnassign) {
+        if (!canUnassign) {
             String msg = "Subject ["
                 + subject.getName()
-                + "] requires one of Global.DELETE_BUNDLES, BundleGroup.DELETE_BUNDLES_FROM_GROUP, or BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP to unassign a bundle to undle group  ["
+                + "] requires one of Global.MANAGE_BUNDLE_GROUPS, Global.DELETE_BUNDLES, BundleGroup.DELETE_BUNDLES_FROM_GROUP, or BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP to unassign a bundle from bundle group  ["
                 + bundleGroupId + "].";
             throw new PermissionException(msg);
         }
@@ -2237,7 +2248,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             if (!authorizationManager.canViewBundle(subject, bundleId)) {
                 String msg = "Subject [" + subject.getName()
                     + "] requires either Global.VIEW_BUNDLES or BundleGroup.VIEW_BUNDLES_IN_GROUP to unassign bundle ["
-                    + bundleId + "] to bundle group [" + bundleGroupId + "]";
+                    + bundleId + "] from bundle group [" + bundleGroupId + "]";
                 throw new PermissionException(msg);
             }
         }
@@ -2246,9 +2257,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     /**
+     * <pre>
      * Required Permissions: Either:
      * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
      * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * </pre> 
      */
     private void checkDeployBundleAuthz(Subject subject, int bundleId, int resourceGroupId) throws PermissionException {
 
@@ -2283,11 +2296,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     /**
+     * <pre>
      * Required Permissions: Either:
      * - Global.DELETE_BUNDLES and Global.VIEW_BUNDLES
      * - Global.DELETE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
      * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for bundle group BG and the relevant bundle is assigned to BG    
-     * 
+     * </pre> 
      * @param subject
      * @param bundleId required, bundleId of bundle, or the bundle version, being deleted
      * @throws PermissionException

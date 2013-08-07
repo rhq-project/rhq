@@ -101,8 +101,10 @@ public class PermissionsEditor extends EnhancedVStack {
         this.resourcePermissionsGrid = createResourcePermissionsGrid();
         addMember(this.resourcePermissionsGrid);
 
-        Label bundleGroupPermissionsHeader = new Label("<h4>"
-            + MSG.view_adminRoles_permissions_bundleGroupPermissions() + "</h4>");
+        addMember(spacer);
+
+        Label bundleGroupPermissionsHeader = new Label("<h4>" + MSG.view_adminRoles_permissions_bundlePermissions()
+            + "</h4>");
         bundleGroupPermissionsHeader.setHeight(17);
         addMember(bundleGroupPermissionsHeader);
 
@@ -204,28 +206,8 @@ public class PermissionsEditor extends EnhancedVStack {
         records.add(record);
 
         record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_manageBundleGroups(),
-            "subsystems/content/Content", Permission.MANAGE_BUNDLE_GROUPS,
+            "subsystems/bundle/BundleGroup", Permission.MANAGE_BUNDLE_GROUPS,
             MSG.view_adminRoles_permissions_permDesc_manageBundleGroups());
-        records.add(record);
-
-        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_createBundles(),
-            "subsystems/content/Content", Permission.CREATE_BUNDLES,
-            MSG.view_adminRoles_permissions_permDesc_createBundles());
-        records.add(record);
-
-        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deleteBundles(),
-            "subsystems/content/Content", Permission.DELETE_BUNDLES,
-            MSG.view_adminRoles_permissions_permDesc_deleteBundles());
-        records.add(record);
-
-        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewBundles(),
-            "subsystems/content/Content", Permission.VIEW_BUNDLES,
-            MSG.view_adminRoles_permissions_permDesc_viewBundles());
-        records.add(record);
-
-        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deployBundles(),
-            "subsystems/content/Content", Permission.DEPLOY_BUNDLES,
-            MSG.view_adminRoles_permissions_permDesc_deployBundles());
         records.add(record);
 
         record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewUsers(), "global/User",
@@ -340,28 +322,48 @@ public class PermissionsEditor extends EnhancedVStack {
 
         List<ListGridRecord> records = new ArrayList<ListGridRecord>();
 
-        ListGridRecord record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_assignBundlesToGroup(),
-            "subsystems/bundle/Bundle", Permission.ASSIGN_BUNDLES_TO_GROUP,
+        ListGridRecord record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_createBundles(),
+            "subsystems/content/Content", Permission.CREATE_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_createBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deleteBundles(),
+            "subsystems/content/Content", Permission.DELETE_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_deleteBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewBundles(),
+            "subsystems/content/Content", Permission.VIEW_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_viewBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deployBundles(),
+            "subsystems/content/Content", Permission.DEPLOY_BUNDLES,
+            MSG.view_adminRoles_permissions_permDesc_deployBundles());
+        records.add(record);
+
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_assignBundlesToGroup(),
+            "subsystems/bundle/BundleGroup", Permission.ASSIGN_BUNDLES_TO_GROUP,
             MSG.view_adminRoles_permissions_permDesc_assignBundlesToGroup());
         records.add(record);
 
         record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_unassignBundlesFromGroup(),
-            "subsystems/bundle/Bundle", Permission.UNASSIGN_BUNDLES_FROM_GROUP,
+            "subsystems/bundle/BundleGroup", Permission.UNASSIGN_BUNDLES_FROM_GROUP,
             MSG.view_adminRoles_permissions_permDesc_unassignBundlesFromGroup());
         records.add(record);
 
         record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_createBundlesInGroup(),
-            "subsystems/bundle/Bundle", Permission.CREATE_BUNDLES_IN_GROUP,
+            "subsystems/bundle/BundleGroup", Permission.CREATE_BUNDLES_IN_GROUP,
             MSG.view_adminRoles_permissions_permDesc_createBundlesInGroup());
         records.add(record);
 
         record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deleteBundlesFromGroup(),
-            "subsystems/bundle/Bundle", Permission.DELETE_BUNDLES_FROM_GROUP,
+            "subsystems/bundle/BundleGroup", Permission.DELETE_BUNDLES_FROM_GROUP,
             MSG.view_adminRoles_permissions_permDesc_deleteBundlesFromGroup());
         records.add(record);
 
         record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewBundlesInGroup(),
-            "subsystems/bundle/Bundle", Permission.VIEW_BUNDLES_IN_GROUP,
+            "subsystems/bundle/BundleGroup", Permission.VIEW_BUNDLES_IN_GROUP,
             MSG.view_adminRoles_permissions_permDesc_viewBundlesInGroup());
         records.add(record);
 
@@ -451,9 +453,14 @@ public class PermissionsEditor extends EnhancedVStack {
                             .view_adminRoles_permissions_illegalDeselectionDueToCorrespondingWritePermSelection(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
                     } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_BUNDLE)
-                        && Permission.BUNDLE_ALL.contains(permission)) {
+                        && permission != Permission.MANAGE_BUNDLE && Permission.BUNDLE_ALL.contains(permission)) {
                         String messageString = MSG
                             .view_adminRoles_permissions_illegalDeselectionDueToManageBundleSelection(permissionDisplayName);
+                        handleIllegalPermissionSelection(event, messageString);
+                    } else if (!authorized && selectedPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS)
+                        && permission == Permission.VIEW_BUNDLES) {
+                        String messageString = MSG
+                            .view_adminRoles_permissions_illegalDeselectionDueToManageBundleGroupsSelection(permissionDisplayName);
                         handleIllegalPermissionSelection(event, messageString);
                     } else {
                         updatePermissions(authorized, permission);
@@ -502,6 +509,12 @@ public class PermissionsEditor extends EnhancedVStack {
                 // MANAGE_BUNDLE implies all other bundle-related perms
                 if (this.selectedPermissions.addAll(Permission.BUNDLE_ALL)) {
                     messageString = MSG.view_adminRoles_permissions_autoselecting_manageBundle_implied();
+                    redrawRequired = true;
+                }
+            } else if (permission == Permission.MANAGE_BUNDLE_GROUPS) {
+                // MANAGE_BUNDLE_GROUPS implies VIEW_BUNDLES
+                if (this.selectedPermissions.add(Permission.VIEW_BUNDLES)) {
+                    messageString = MSG.view_adminRoles_permissions_autoselecting_manageBundleGroups_implied();
                     redrawRequired = true;
                 }
             }

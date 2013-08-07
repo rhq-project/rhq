@@ -242,8 +242,8 @@ public enum Permission {
             case RESOURCE:
                 RESOURCE_ALL.add(permission);
                 break;
-            case BUNDLE:
-                BUNDLE_ALL.add(permission);
+            default:
+                // bundle level perms do not need any aggregation 
                 break;
             }
         }

@@ -44,7 +44,7 @@
     <table name="RHQ_PERMISSION">
         <!-- give super-user-role all permissions
              (explicitly add resource perms, even though they are implied by MANAGE_INVENTORY)
-             (explicitly add bundle perms, even though they are implied by MANAGE_BUNDLE) -->             
+             (explicitly add global bundle perms, even though they are implied by MANAGE_BUNDLE) -->             
         <data ROLE_ID="1" OPERATION="0"/>        <!-- Permission.MANAGE_SECURITY -->
         <data ROLE_ID="1" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
         <data ROLE_ID="1" OPERATION="2"/>        <!-- Permission.MANAGE_SETTINGS -->
@@ -69,18 +69,14 @@
         <data ROLE_ID="1" OPERATION="13"/>       <!-- Permission.CONFIGURE_READ -->
         <data ROLE_ID="1" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
         <data ROLE_ID="1" OPERATION="16"/>       <!-- Permission.MANAGE_DRIFT -->
-        <!-- bundle permissions start here-->
-        <data ROLE_ID="1" OPERATION="23"/>        <!-- Permission.ASSIGN_BUNDLES_TO_GROUP -->
-        <data ROLE_ID="1" OPERATION="24"/>        <!-- Permission.UNASSIGN_BUNDLES_FROM_GROUP -->
-        <data ROLE_ID="1" OPERATION="25"/>        <!-- Permission.CREATE_BUNDLES_IN_GROUP -->
-        <data ROLE_ID="1" OPERATION="26"/>        <!-- Permission.DELETE_BUNDLES_FROM_GROUP -->
-        <data ROLE_ID="1" OPERATION="27"/>        <!-- Permission.VIEW_BUNDLES_IN_GROUP -->
 
-        <!-- give all-resources-role MANAGE_INVENTORY and all bundle permissions other than MANAGE_BUNDLE_GROUPS
-             (explicitly add resource perms as well, even though they are implied by MANAGE_INVENTORY) -->
+        <!-- give all-resources-role MANAGE_INVENTORY
+             (explicitly add resource perms as well, even though they are implied by MANAGE_INVENTORY)        
+             (explicitly add global bundle perms, even though they are implied by MANAGE_BUNDLE) -->
         <data ROLE_ID="2" OPERATION="1"/>        <!-- Permission.MANAGE_INVENTORY -->
         <data ROLE_ID="2" OPERATION="12"/>       <!-- Permission.MANAGE_BUNDLE -->
         <data ROLE_ID="2" OPERATION="17"/>       <!-- Permission.VIEW_USERS -->
+        <data ROLE_ID="2" OPERATION="18"/>       <!-- Permission.MANAGE_BUNDLE_GROUPS -->        
         <data ROLE_ID="2" OPERATION="19"/>       <!-- Permission.CREATE_BUNDLES -->
         <data ROLE_ID="2" OPERATION="20"/>       <!-- Permission.DELETE_BUNDLES -->
         <data ROLE_ID="2" OPERATION="21"/>       <!-- Permission.DEPLOY_BUNDLES -->
@@ -97,13 +93,7 @@
         <data ROLE_ID="2" OPERATION="11"/>       <!-- Permission.CONFIGURE_WRITE -->
         <data ROLE_ID="2" OPERATION="13"/>       <!-- Permission.CONFIGURE_READ -->
         <data ROLE_ID="2" OPERATION="14"/>       <!-- Permission.MANAGE_EVENTS -->
-        <data ROLE_ID="2" OPERATION="16"/>       <!-- Permission.MANAGE_DRIFT -->
-        <!-- bundle permissions start here-->
-        <data ROLE_ID="2" OPERATION="23"/>        <!-- Permission.ASSIGN_BUNDLES_TO_GROUP -->
-        <data ROLE_ID="2" OPERATION="24"/>        <!-- Permission.UNASSIGN_BUNDLES_FROM_GROUP -->
-        <data ROLE_ID="2" OPERATION="25"/>        <!-- Permission.CREATE_BUNDLES_IN_GROUP -->
-        <data ROLE_ID="2" OPERATION="26"/>        <!-- Permission.DELETE_BUNDLES_FROM_GROUP -->
-        <data ROLE_ID="2" OPERATION="27"/>        <!-- Permission.VIEW_BUNDLES_IN_GROUP -->        
+        <data ROLE_ID="2" OPERATION="16"/>       <!-- Permission.MANAGE_DRIFT -->    
     </table>
 
 </dbsetup>

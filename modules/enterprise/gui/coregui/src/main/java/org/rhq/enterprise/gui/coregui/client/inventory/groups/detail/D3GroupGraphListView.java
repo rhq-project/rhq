@@ -84,7 +84,7 @@ public final class D3GroupGraphListView extends AbstractD3GraphListView implemen
         addMember(graphsVLayout);
     }
 
-    public void redrawGraphs() {
+    public void refreshData() {
         this.onDraw();
     }
 

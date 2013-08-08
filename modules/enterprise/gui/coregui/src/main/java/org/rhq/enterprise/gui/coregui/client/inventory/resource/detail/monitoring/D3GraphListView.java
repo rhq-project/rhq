@@ -134,7 +134,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         addMember(vLayout);
     }
 
-    public void redrawGraphs() {
+    public void refreshData() {
         this.onDraw();
     }
 

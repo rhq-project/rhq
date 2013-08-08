@@ -22,7 +22,7 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -31,7 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * A D3 graph implementation for graphing Resource metrics.
  * Just the graph only. No avail graph no buttons just he graph.
  */
-public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVLayout implements RedrawGraphs{
+public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVLayout implements Refreshable {
 
     protected StackedBarMetricGraphImpl graph;
     private HTMLFlow graphDiv = null;
@@ -205,8 +205,8 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
     /**
      * Allow the graph to refresh  the whole d3GraphListView.
      */
-    public void redrawGraphs(){
-        d3GraphListView.redrawGraphs();
+    public void refreshData(){
+        d3GraphListView.refreshData();
     }
 
 }

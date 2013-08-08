@@ -64,7 +64,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.TableAction;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.MetricD3Graph;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -78,7 +78,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  * @author John Mazzitelli
  * @author Mike Thompson
  */
-public class MetricsTableView extends Table<MetricsViewDataSource> implements RedrawGraphs {
+public class MetricsTableView extends Table<MetricsViewDataSource> implements Refreshable {
 
     private final Resource resource;
     private final AbstractD3GraphListView abstractD3GraphListView;
@@ -248,7 +248,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
     /**
      * Redraw Graphs in this context means to refresh the table and redraw open graphs.
      */
-    public void redrawGraphs() {
+    public void refreshData() {
         Log.debug("MetricsView.redrawGraphs.");
 
         new Timer() {
@@ -281,7 +281,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 public void onRecordExpand(RecordExpandEvent recordExpandEvent) {
                     metricsTableView.expandedRows.add(recordExpandEvent.getRecord().getAttributeAsInt(
                         MetricsViewDataSource.FIELD_METRIC_DEF_ID));
-                    redrawGraphs();
+                    refreshData();
                 }
 
             });
@@ -290,13 +290,13 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 public void onRecordCollapse(RecordCollapseEvent recordCollapseEvent) {
                     metricsTableView.expandedRows.remove(recordCollapseEvent.getRecord().getAttributeAsInt(
                         MetricsViewDataSource.FIELD_METRIC_DEF_ID));
-                    redrawGraphs();
+                    refreshData();
                 }
             });
             addSortChangedHandler(new SortChangedHandler() {
                 @Override
                 public void onSortChanged(SortEvent sortEvent) {
-                    redrawGraphs();
+                    refreshData();
                 }
             });
             addDataArrivedHandler(new DataArrivedHandler() {

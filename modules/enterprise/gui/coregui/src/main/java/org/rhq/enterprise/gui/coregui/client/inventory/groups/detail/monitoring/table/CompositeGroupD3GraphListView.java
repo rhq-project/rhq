@@ -45,7 +45,7 @@ import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.gwt.ResourceGroupGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
@@ -62,7 +62,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  *
  * @author  Mike Thompson
  */
-public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout implements JsonMetricProducer, RedrawGraphs {
+public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout implements JsonMetricProducer, Refreshable {
 
     static protected final Messages MSG = CoreGUI.getMessages();
     // string labels
@@ -250,7 +250,7 @@ public abstract class CompositeGroupD3GraphListView extends EnhancedVLayout impl
     }
 
     @Override
-    public void redrawGraphs() {
+    public void refreshData() {
         populateData();
         drawGraph();
     }

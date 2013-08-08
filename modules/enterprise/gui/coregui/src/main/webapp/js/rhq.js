@@ -1,11 +1,6 @@
 /**
- * Charting Javascript Functions.
+ * RHQ Charting Javascript Functions.
  */
-
-// Handle browsers not supporting console object
-if (!window.console) window.console = {};
-if (!window.console.log) window.console.log = function () {
-};
 
 /**
  * ChartContext Constructor Object
@@ -38,13 +33,13 @@ if (!window.console.log) window.console.log = function () {
  * @param singleValueLabel
  * @param chartXaxisTimeFormatHours
  * @param chartXaxisTimeFormatHoursMinutes
- * @param showLegend
+ * @param hideLegend
  * @constructor
  */
 var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, chartTitle, yAxisUnits, minChartTitle, avgChartTitle, peakChartTitle, dateLabel, timeLabel, downLabel, unknownLabel, noDataLabel, hoverStartLabel, hoverEndLabel, hoverPeriodLabel, hoverBarLabel, chartHoverTimeFormat, chartHoverDateFormat, isPortalGraph, portalId, buttonBarDateTimeFormat, singleValueLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes, hideLegend) {
             "use strict";
             if (!(this instanceof ChartContext)) {
-                throw new Error("ChartContext function cannot be called as a function.")
+                throw new Error("ChartContext function cannot be called as a function.");
             }
             this.chartId = chartId;
             this.chartHeight = chartHeight;
@@ -103,7 +98,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
                 AvailChartContext = function (chartId, availData, dateLabel, timeLabel, hoverStartLabel, hoverBarLabel, availabilityLabel, chartHoverTimeFormat, chartHoverDateFormat, chartTitle, chartUpLabel, chartDownLabel, chartXaxisTimeFormatHours, chartXaxisTimeFormatHoursMinutes) {
             "use strict";
             if (!(this instanceof AvailChartContext)) {
-                throw new Error("AvailChartContext function cannot be called as a function.")
+                throw new Error("AvailChartContext function cannot be called as a function.");
             }
             this.chartId = chartId;
             this.chartHandle = "#availChart-" + this.chartId;
@@ -133,12 +128,13 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
                 GraphDateContext = function (startDate, endDate) {
             "use strict";
             if (!(this instanceof GraphDateContext)) {
-                throw new Error("GraphDateContext function cannot be called as a function.")
+                throw new Error("GraphDateContext function cannot be called as a function.");
             }
             this.startDate = startDate;
             this.endDate = endDate;
         },
         rhqCommon = (function () {
+            "use strict";
 
 
             var timeFormat = function (formats) {
@@ -146,7 +142,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
                     var i = formats.length - 1, f = formats[i];
                     while (!f[1](date)) f = formats[--i];
                     return f[0](date);
-                }
+                };
             };
 
             return {
@@ -179,7 +175,7 @@ var ChartContext = function (chartId, chartHeight, metricsData, xAxisLabel, char
                     ]);
                 }
 
-            }
+            };
         })();
 
 

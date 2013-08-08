@@ -114,6 +114,15 @@ class UpdateFolder {
                         files.add(new UpdateFile(entry));
                     }
                 }
+            } else if (resourceFolderURL.getProtocol().equals("vfs")) {
+                // TODO need to add support for VFS if going to use inside EAP
+                throw new RuntimeException("The URL protocol [" + resourceFolderURL.getProtocol() + "] is not " +
+                    "supported");
+            } else {
+                // In the event we get another protocol that we do not recognize, throw an
+                // exception instead of failing silently.
+                throw new RuntimeException("The URL protocol [" + resourceFolderURL.getProtocol() + "] is not " +
+                    "supported");
             }
 
             Collections.sort(files, new Comparator<UpdateFile>() {

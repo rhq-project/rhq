@@ -26,7 +26,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
@@ -146,6 +148,16 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
             List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
             return SerialUtility.prepare(storageNodeManager.findStorageNodeLoadDataForLast(getSessionSubject(), node,
                 beginEnd.get(0), beginEnd.get(1), numPoints), "StorageGWTServiceImpl.findStorageNodeLoadDataForLast");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public StorageNodeConfigurationComposite retrieveConfiguration(StorageNode storageNode) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(storageNodeManager.retrieveConfiguration(getSessionSubject(), storageNode),
+                "StorageGWTServiceImpl.retrieveConfiguration");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

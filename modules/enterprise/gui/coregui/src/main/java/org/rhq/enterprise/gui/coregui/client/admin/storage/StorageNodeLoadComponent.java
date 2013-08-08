@@ -21,29 +21,16 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.DONT_MISS_ME_COLOR;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.OK_COLOR;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.WARN_COLOR;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
 
-import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import com.google.gwt.user.client.Timer;
-import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Autofit;
-import com.smartgwt.client.types.ContentsType;
-import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.IButton;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -51,15 +38,9 @@ import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasource.StorageNodeLoadCompositeDatasource;
-import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
@@ -115,7 +96,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
         StorageNodeLoadCompositeDatasource datasource = StorageNodeLoadCompositeDatasource.getInstance(storageNodeId);
         List<ListGridField> fields = datasource.getListGridFields();
         if (showSparkLine) {
-            fields.add(new ListGridField("sparkline", 90));
+            fields.add(0, new ListGridField("sparkline", "Chart", 75));
         }
         loadGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         loadGrid.setAutoFetchData(true);
@@ -184,149 +165,19 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             someChartedData = lastValue != -1;
             
             if (someChartedData && records.length > i) {
-                String contents = "<span id='sparkline_" + entry.getKey() + "' class='dynamicsparkline' width='0' "
+                String contents = "<span id='sparkline_" + entry.getKey() + "' class='dynamicsparkline' width='70' "
                     + "values='" + commaDelimitedList + "'>...</span>";
                 records[i].setAttribute("sparkline", contents);
             }
             i++;
         }
         loadGrid.setData(records);
-        
-        
-        
-        
-        
-//        
-//        
-//        
-//        
-//
-//        if (!results.isEmpty()) {
-//            
-//            //iterate over the retrieved charting data
-//            for (int index = 0; index < displayOrder.length; index++) {
-//                //retrieve the correct measurement definition
-//                final MeasurementDefinition md = measurementDefMap
-//                    .get(displayOrder[index]);
-//
-//                //load the data results for the given metric definition
-//                List<MeasurementDataNumericHighLowComposite> data = results
-//                    .get(index);
-//
-//                //locate last and minimum values.
-//                double lastValue = -1;
-//                double minValue = Double.MAX_VALUE;//
-//                for (MeasurementDataNumericHighLowComposite d : data) {
-//                    if ((!Double.isNaN(d.getValue()))
-//                        && (!String.valueOf(d.getValue()).contains("NaN"))) {
-//                        if (d.getValue() < minValue) {
-//                            minValue = d.getValue();
-//                        }
-//                        lastValue = d.getValue();
-//                    }
-//                }
-//
-//                //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
-//                String commaDelimitedList = "";
-//
-//                for (MeasurementDataNumericHighLowComposite d : data) {
-//                    if ((!Double.isNaN(d.getValue()))
-//                        && (!String.valueOf(d.getValue()).contains("NaN"))) {
-//                        commaDelimitedList += d.getValue() + ",";
-//                    }
-//                }
-//                DynamicForm row = new DynamicForm();
-//                row.setNumCols(3);
-//                row.setColWidths(65, "*", 100);
-//                row.setWidth100();
-//                row.setAutoHeight();
-//                row.setOverflow(Overflow.VISIBLE);
-//                HTMLFlow sparklineGraph = new HTMLFlow();
-//                String contents = "<span id='sparkline_" + index
-//                    + "' class='dynamicsparkline' width='0' " + "values='"
-//                    + commaDelimitedList + "'>...</span>";
-//                sparklineGraph.setContents(contents);
-//                sparklineGraph.setContentsType(ContentsType.PAGE);
-//                //disable scrollbars on span
-//                sparklineGraph.setScrollbarSize(0);
-//
-//                CanvasItem sparklineContainer = new CanvasItem();
-//                sparklineContainer.setShowTitle(false);
-//                sparklineContainer.setHeight(16);
-//                sparklineContainer.setWidth(60);
-//                sparklineContainer.setCanvas(sparklineGraph);
-//
-//                //Link/title element
-//                final String title = md.getDisplayName();
-//                LinkItem link = AbstractActivityView.newLinkItem(title, null);
-//                link.setTooltip(title);
-//                link.setTitleVAlign(VerticalAlignment.TOP);
-//                link.setAlign(Alignment.LEFT);
-//                link.setClipValue(true);
-//                link.setWrap(true);
-//                link.setHeight(26);
-//                link.setWidth("100%");
-//                if (!BrowserUtility.isBrowserPreIE9()){
-//                    link.addClickHandler(new ClickHandler() {
-//                        @Override
-//                        public void onClick(ClickEvent event) {
-//                            window = new ChartViewWindow(title);
-//
-//                            graphView = D3GraphListView
-//                                .createSingleGraph(resourceComposite.getResource(),
-//                                    md.getId(), true);
-//
-//                            window.addItem(graphView);
-//                            window.show();
-//                        }
-//                    });
-//                } else{
-//                    link.disable();
-//                }
-//
-//
-//                //Value
-//                String convertedValue;
-//                convertedValue = AbstractActivityView.convertLastValueForDisplay(
-//                    lastValue, md);
-//                StaticTextItem value = AbstractActivityView
-//                    .newTextItem(convertedValue);
-//                value.setVAlign(VerticalAlignment.TOP);
-//                value.setAlign(Alignment.RIGHT);
-//
-//                row.setItems(sparklineContainer, link, value);
-//                row.setWidth100();
-//
-//                //if graph content returned
-//                if ((!md.getName().trim().contains("Trait.")) && (lastValue != -1)) {
-//                    column.addMember(row);
-//                    someChartedData = true;
-//                }
-//            }
-//            if (!someChartedData) {// when there are results but no chartable entries.
-//                DynamicForm row = AbstractActivityView.createEmptyDisplayRow(
-//
-//                AbstractActivityView.RECENT_MEASUREMENTS_NONE);
-//                column.addMember(row);
-//            } else {
-//                //insert see more link
-//                DynamicForm row = new DynamicForm();
-//                String link = LinkManager
-//                    .getResourceMonitoringGraphsLink(resourceId);
-//                AbstractActivityView.addSeeMoreLink(row, link, column);
-//            }
-//            //call out to 3rd party javascript lib
-//            new Timer(){
-//                @Override
-//                public void run() {
-//                    BrowserUtility.graphSparkLines();
-//                }
-//            }.schedule(200);
-//        } else {
-//            DynamicForm row = AbstractActivityView
-//                .createEmptyDisplayRow(AbstractActivityView.RECENT_MEASUREMENTS_NONE);
-//            column.addMember(row);
-//        }
-//        setRefreshing(false);
+        new Timer() {
+            @Override
+            public void run() {
+                BrowserUtility.graphSparkLines();
+                scheduleRepeating(5000);
+            }
+        }.schedule(150);
     }
 }

@@ -454,10 +454,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 sectionStack.addSection(buildGroupSection(definition));
             }
 
-//            if (groupDefinitions.size() > 1) {
-                this.toolStrip = buildToolStrip(layout, sectionStack);
-                layout.addMember(toolStrip);
-//            }
+            this.toolStrip = buildToolStrip(layout, sectionStack);
+            layout.addMember(toolStrip);
             layout.addMember(sectionStack);
         }
 
@@ -569,6 +567,7 @@ public class ConfigurationEditor extends EnhancedVLayout {
         form.setNumCols(4);
         form.setCellPadding(5);
         form.setColWidths(190, 28, 210);
+        
 
         List<FormItem> fields = new ArrayList<FormItem>();
         addHeaderItems(fields);

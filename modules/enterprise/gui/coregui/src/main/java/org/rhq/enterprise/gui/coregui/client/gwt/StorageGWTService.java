@@ -28,6 +28,7 @@ import java.util.Map;
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
@@ -80,4 +81,6 @@ public interface StorageGWTService extends RemoteService {
     List<Integer> findNotAcknowledgedStorageNodeAlertsCounts(List<Integer> storageNodeIds) throws RuntimeException;
     
     Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(StorageNode node, int lastN, int unit, int numPoints) throws RuntimeException;
+    
+    StorageNodeConfigurationComposite retrieveConfiguration(StorageNode storageNode) throws RuntimeException;
 }

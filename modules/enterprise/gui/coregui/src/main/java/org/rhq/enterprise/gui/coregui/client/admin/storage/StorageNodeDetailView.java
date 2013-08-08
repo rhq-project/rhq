@@ -29,38 +29,32 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+import java.util.Map.Entry;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.types.Alignment;
-import com.smartgwt.client.types.ContentsType;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.types.VisibilityMode;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
-import com.smartgwt.client.widgets.form.fields.CanvasItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
-import com.smartgwt.client.widgets.form.fields.LinkItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
-import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
+import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyDefinition;
+import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
-import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
@@ -70,13 +64,11 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationFilter;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
-import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -150,13 +142,14 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         + node.getAddress() + ")</div>");
                     Resource res = node.getResource();
                     if (res != null) {
-                        fetchResourceComposite(res.getId());
+//                        fetchResourceComposite(res.getId());
                     } else {
                         // skip this if the resource id is not there
                         initSectionCount++;
                     }
-                    prepareDetailsSection(sectionStack, node);
-                    fetchSparkLineDataForLoadComponent(sectionStack, node);
+                    fetchStorageNodeConfigurationComposite(node);
+                    prepareDetailsSection(node);
+                    fetchSparkLineDataForLoadComponent(node);
                     
                 }
 
@@ -170,33 +163,51 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         fetchUnackAlerts(storageNodeId);
     }
     
-    private void fetchResourceComposite(final int resourceId) {
-        ResourceCriteria resourceCriteria = new ResourceCriteria();
-        resourceCriteria.addFilterId(resourceId);
-        GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(resourceCriteria,
-            new AsyncCallback<PageList<ResourceComposite>>() {
+    
+    private void fetchStorageNodeConfigurationComposite(final StorageNode node) {
+        GWTServiceLookup.getStorageService().retrieveConfiguration(node,
+            new AsyncCallback<StorageNodeConfigurationComposite>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+                    Message message = new Message(MSG.view_configurationHistoryDetails_error_loadFailure(),
                         Message.Severity.Warning);
-                    CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                     initSectionCount = SECTION_COUNT;
                 }
 
                 @Override
-                public void onSuccess(PageList<ResourceComposite> result) {
-                    if (result.isEmpty()) {
-                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
-                    } else {
-                        final ResourceComposite resourceComposite = result.get(0);
-//                        prepareOperationHistory(resourceComposite);
-                        prepareResourceConfigEditor(resourceComposite);
-                    }
+                public void onSuccess(StorageNodeConfigurationComposite result) {
+                    prepareResourceConfigEditor(result);
                 }
             });
     }
     
-    private void fetchSparkLineDataForLoadComponent(final SectionStack stack, final StorageNode storageNode) {
+//    private void fetchResourceComposite(final int resourceId) {
+//        ResourceCriteria resourceCriteria = new ResourceCriteria();
+//        resourceCriteria.addFilterId(resourceId);
+//        GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(resourceCriteria,
+//            new AsyncCallback<PageList<ResourceComposite>>() {
+//                @Override
+//                public void onFailure(Throwable caught) {
+//                    Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+//                        Message.Severity.Warning);
+//                    CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
+//                    initSectionCount = SECTION_COUNT;
+//                }
+//
+//                @Override
+//                public void onSuccess(PageList<ResourceComposite> result) {
+//                    if (result.isEmpty()) {
+//                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
+//                    } else {
+//                        final ResourceComposite resourceComposite = result.get(0);
+////                        prepareOperationHistory(resourceComposite);
+//                        prepareResourceConfigEditor(resourceComposite);
+//                    }
+//                }
+//            });
+//    }
+    
+    private void fetchSparkLineDataForLoadComponent(final StorageNode storageNode) {
 
         GWTServiceLookup.getStorageService().findStorageNodeLoadDataForLast(storageNode, 8, MeasurementUtility.UNIT_HOURS,
             60, new AsyncCallback<Map<String, List<MeasurementDataNumericHighLowComposite>>>() {
@@ -287,7 +298,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         }.run(); // fire the timer immediately
     }
 
-    private void prepareDetailsSection(SectionStack stack, final StorageNode storageNode) {
+    private void prepareDetailsSection(final StorageNode storageNode) {
         final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
@@ -388,8 +399,40 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         initSectionCount++;
     }
     
-    private void prepareResourceConfigEditor(ResourceComposite resourceComposite) {
-        ResourceConfigurationEditView editorView = new ResourceConfigurationEditView(resourceComposite);
+//    private void prepareResourceConfigEditor(ResourceComposite resourceComposite) {
+    private void prepareResourceConfigEditor(final StorageNodeConfigurationComposite configuration) {
+
+      StorageNodeConfigurationEditor editorView = new StorageNodeConfigurationEditor(configuration);
+
+//        ResourceConfigurationEditView editorView = new ResourceConfigurationEditView(resourceComposite);
+//        ConfigurationFilter filter = new ConfigurationFilter() {
+//            @Override
+//            public ConfigurationDefinition filter(ConfigurationDefinition definition) {
+//                Map<String, PropertyDefinition> filteredConfigurationDefinition = new HashMap<String, PropertyDefinition>();
+//                PropertyGroupDefinition groupDef = null;
+//                for (Entry<String, PropertyDefinition> propertyDefinitionEntry : definition.getPropertyDefinitions().entrySet()) {
+//                    PropertyDefinition propertyDefinition = propertyDefinitionEntry.getValue();
+//                    if (propertyDefinition.getPropertyGroupDefinition() != null) {
+//                        if (groupDef == null) {
+//                            groupDef = propertyDefinition.getPropertyGroupDefinition();
+////                            groupDef.setName("Storage Node Settings");
+//                        }
+//                        propertyDefinition.setPropertyGroupDefinition(groupDef);
+//                    }
+//                    if (!"heapDumpOnOOMError".equals(propertyDefinition.getName())
+//                        && !"heapDumpDir".equals(propertyDefinition.getName())
+//                        && !"minHeapSize".equals(propertyDefinition.getName())
+//                        && !"gossipPort".equals(propertyDefinition.getName())
+//                        && !"cqlPort".equals(propertyDefinition.getName())) {
+//                        filteredConfigurationDefinition.put(propertyDefinitionEntry.getKey(),
+//                            propertyDefinitionEntry.getValue());
+//                    }
+//                }
+//                definition.setPropertyDefinitions(filteredConfigurationDefinition);
+//                return definition;
+//            }
+//        };
+//        editorView.setFilter(filter);
         SectionStackSection section = new SectionStackSection("Configuration");
         section.setItems(editorView);
         section.setExpanded(true);

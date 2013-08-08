@@ -28,8 +28,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -46,15 +46,11 @@ import javax.persistence.TypedQuery;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.quartz.JobDataMap;
-import org.quartz.SimpleTrigger;
-import org.quartz.Trigger;
 
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
@@ -69,6 +65,7 @@ import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.measurement.MeasurementUnits;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
@@ -85,7 +82,6 @@ import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.authz.RequiredPermissions;
-import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -94,8 +90,8 @@ import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
-import org.rhq.enterprise.server.storage.StorageConfigurationException;
+import org.rhq.enterprise.server.storage.StorageClusterSettings;
+import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -118,6 +114,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private final static String SEEDS_LIST = "seedsList";
 
     private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
+    private static final String RHQ_STORAGE_GOSSIP_PORT_PROPERTY = "storagePort";
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
@@ -125,6 +122,18 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private static final int MAX_ITERATIONS = 10;
     private static final String UPDATE_CONFIGURATION_OPERATION = "updateConfiguration";
     private static final String RESTART_OPERATION = "restart";
+
+    // metric names on Storage Service resource
+    private static final String METRIC_TOKENS = "Tokens", METRIC_OWNERSHIP = "Ownership";
+    private static final String METRIC_DATA_DISK_USED_PERCENTAGE = "Calculated.DataDiskUsedPercentage";
+    private static final String METRIC_TOTAL_DISK_USED_PERCENTAGE = "Calculated.TotalDiskUsedPercentage";
+    private static final String METRIC_FREE_DISK_TO_DATA_RATIO = "Calculated.FreeDiskToDataSizeRatio";
+    private static final String METRIC_LOAD = "Load", METRIC_KEY_CACHE_SIZE = "KeyCacheSize",
+        METRIC_ROW_CACHE_SIZE = "RowCacheSize", METRIC_TOTAL_COMMIT_LOG_SIZE = "TotalCommitlogSize";
+
+    //metric names on Memory Subsystem resource
+    private static final String METRIC_HEAP_COMMITED = "{HeapMemoryUsage.committed}",
+        METRIC_HEAP_USED = "{HeapMemoryUsage.used}", METRIC_HEAP_USED_PERCENTAGE = "Calculated.HeapUsagePercentage";
 
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
@@ -159,10 +168,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private ResourceManagerLocal resourceManager;
 
+    @EJB
+    private StorageClusterSettingsManagerBean storageClusterSettingsManager;
+
     @Override
     public void linkResource(Resource resource) {
-        Configuration resourceConfig = resource.getPluginConfiguration();
-        String address = resourceConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
+        Configuration pluginConfig = resource.getPluginConfiguration();
+        String address = pluginConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY);
 
         if (log.isInfoEnabled()) {
             log.info("Linking " + resource + " to storage node at " + address);
@@ -176,12 +188,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 }
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
+                initClusterSettingsIfNecessary(pluginConfig);
                 addStorageNodeToGroup(resource);
             } else {
                 storageNode = new StorageNode();
                 storageNode.setAddress(address);
-                storageNode.setCqlPort(Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
-                storageNode.setJmxPort(Integer.parseInt(resourceConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
+                storageNode.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
+                storageNode.setJmxPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.INSTALLED);
 
@@ -198,6 +211,31 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
                 " cannot be linked to a storage node", e);
         }
+    }
+
+    private void initClusterSettingsIfNecessary(Configuration pluginConfig) {
+        // TODO Need to handle non-repeatable reads here (probably a post 4.9 task)
+        //
+        // If a user deploys two storage nodes prior to installing the RHQ server, then we
+        // could end up in this method concurrently for both storage nodes. The settings
+        // would be committed for each node with the second commit winning. The problem is
+        // that is the cluster settings differ for the two nodes, it will be silently
+        // ignored. This scenario will happen infrequently so it should be sufficient to
+        // resolve it with optimistic locking. The second writer should fail with an
+        // OptimisticLockException.
+
+        log.info("Initializing storage cluster settings");
+
+        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subjectManager
+            .getOverlord());
+        if (clusterSettings != null) {
+            log.info("Cluster settings have already been set. Skipping initialization.");
+            return;
+        }
+        clusterSettings = new StorageClusterSettings();
+        clusterSettings.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
+        clusterSettings.setGossipPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_GOSSIP_PORT_PROPERTY)));
+        storageClusterSettingsManager.setClusterSettings(subjectManager.getOverlord(), clusterSettings);
     }
 
     private void announceNewNode(StorageNode newStorageNode) {
@@ -321,106 +359,90 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         int resourceId = getResourceIdFromStorageNode(node);
         Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
-        // get the schedule ids for Storage Service resource
-        final String tokensMetric = "Tokens", ownershipMetric = "Ownership";
-        final String dataDiskUsedPercentageMetric = "Calculated.DataDiskUsedPercentage";
-        final String totalDiskUsedPercentageMetric = "Calculated.TotalDiskUsedPercentage";
-        final String freeDiskToDataRatioMetric = "Calculated.FreeDiskToDataSizeRatio";
-        final String loadMetric = "Load", keyCacheSize = "KeyCacheSize", rowCacheSize = "RowCacheSize", totalCommitLogSize = "TotalCommitlogSize";
-        TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
-            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
-        query.setParameter("parrentId", resourceId).setParameter("metricNames",
-            Arrays.asList(tokensMetric, ownershipMetric, loadMetric, keyCacheSize, rowCacheSize, totalCommitLogSize,
-                dataDiskUsedPercentageMetric, totalDiskUsedPercentageMetric, freeDiskToDataRatioMetric));
-        for (Object[] pair : query.getResultList()) {
-            scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
+        for (Object[] tupple : getStorageServiceScheduleIds(resourceId)) {
+            String definitionName = (String) tupple[0];
+            Integer scheduleId = (Integer) tupple[2];
+            scheduleIdsMap.put(definitionName, scheduleId);
         }
-
-        // get the schedule ids for Memory Subsystem resource
-        final String heapCommittedMetric = "{HeapMemoryUsage.committed}", heapUsedMetric = "{HeapMemoryUsage.used}", heapUsedPercentageMetric = "Calculated.HeapUsagePercentage";
-        query = entityManager.<Object[]> createNamedQuery(
-            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
-            Object[].class);
-        query.setParameter("grandparrentId", resourceId).setParameter("metricNames",
-            Arrays.asList(heapCommittedMetric, heapUsedMetric, heapUsedPercentageMetric));
-        for (Object[] pair : query.getResultList()) {
-            scheduleIdsMap.put((String) pair[0], (Integer) pair[1]);
+        for (Object[] tupple : getMemorySubsystemScheduleIds(resourceId)) {
+            String definitionName = (String) tupple[0];
+            Integer scheduleId = (Integer) tupple[2];
+            scheduleIdsMap.put(definitionName, scheduleId);
         }
-
 
         StorageNodeLoadComposite result = new StorageNodeLoadComposite(node, beginTime, endTime);
-        MeasurementAggregate totalDiskUsedaggregate = new MeasurementAggregate(0d, 0d, 0d);
+        MeasurementAggregate totalDiskUsedAggregate = new MeasurementAggregate(0d, 0d, 0d);
         Integer scheduleId = null;
 
         // find the aggregates and enrich the result instance
         if (!scheduleIdsMap.isEmpty()) {
-            if ((scheduleId = scheduleIdsMap.get(tokensMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_TOKENS)) != null) {
                 MeasurementAggregate tokensAggregate = measurementManager.getAggregate(subject, scheduleId, beginTime,
                     endTime);
                 result.setTokens(tokensAggregate);
             }
-            if ((scheduleId = scheduleIdsMap.get(ownershipMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_OWNERSHIP)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits ownershipAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setActuallyOwns(ownershipAggregateWithUnits);
             }
 
             //calculated disk space related metrics
-            if ((scheduleId = scheduleIdsMap.get(dataDiskUsedPercentageMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_DATA_DISK_USED_PERCENTAGE)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits dataDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setDataDiskUsedPercentage(dataDiskUsedPercentageAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(totalDiskUsedPercentageMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_DISK_USED_PERCENTAGE)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime, endTime);
                 result.setTotalDiskUsedPercentage(totalDiskUsedPercentageAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(freeDiskToDataRatioMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_FREE_DISK_TO_DATA_RATIO)) != null) {
                 MeasurementAggregate freeDiskToDataRatioAggregate = measurementManager.getAggregate(subject,
                     scheduleId, beginTime, endTime);
                 result.setFreeDiskToDataSizeRatio(freeDiskToDataRatioAggregate);
             }
 
-            if ((scheduleId = scheduleIdsMap.get(loadMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_LOAD)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits loadAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setLoad(loadAggregateWithUnits);
 
-                updateAggregateTotal(totalDiskUsedaggregate, loadAggregateWithUnits.getAggregate());
+                updateAggregateTotal(totalDiskUsedAggregate, loadAggregateWithUnits.getAggregate());
             }
-            if ((scheduleId = scheduleIdsMap.get(keyCacheSize)) != null) {
-                updateAggregateTotal(totalDiskUsedaggregate,
-                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            }
-            if ((scheduleId = scheduleIdsMap.get(rowCacheSize)) != null) {
-                updateAggregateTotal(totalDiskUsedaggregate,
-                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            }
-            if ((scheduleId = scheduleIdsMap.get(totalCommitLogSize)) != null) {
-                updateAggregateTotal(totalDiskUsedaggregate,
-                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            }
+            //            if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
+            //                updateAggregateTotal(totalDiskUsedAggregate,
+            //                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            //            }
+            //            if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
+            //                updateAggregateTotal(totalDiskUsedAggregate,
+            //                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            //            }
+            //            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
+            //                updateAggregateTotal(totalDiskUsedAggregate,
+            //                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            //            }
 
-            if (totalDiskUsedaggregate.getMax() > 0) {
+            if (totalDiskUsedAggregate.getMax() > 0) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
-                    totalDiskUsedaggregate, MeasurementUnits.BYTES);
-                totalDiskUsedAggregateWithUnits.setFormattedValue(getSummaryString(totalDiskUsedaggregate,
+                    totalDiskUsedAggregate, MeasurementUnits.BYTES);
+                totalDiskUsedAggregateWithUnits.setFormattedValue(getSummaryString(totalDiskUsedAggregate,
                     MeasurementUnits.BYTES));
                 result.setDataDiskUsed(totalDiskUsedAggregateWithUnits);
             }
 
-            if ((scheduleId = scheduleIdsMap.get(heapCommittedMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_COMMITED)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapCommittedAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setHeapCommitted(heapCommittedAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(heapUsedMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.BYTES, beginTime, endTime);
                 result.setHeapUsed(heapUsedAggregateWithUnits);
             }
-            if ((scheduleId = scheduleIdsMap.get(heapUsedPercentageMetric)) != null) {
+            if ((scheduleId = scheduleIdsMap.get(METRIC_HEAP_USED_PERCENTAGE)) != null) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits heapUsedPercentageAggregateWithUnits = getMeasurementAggregateWithUnits(
                     subject, scheduleId, MeasurementUnits.PERCENTAGE, beginTime,
                     endTime);
@@ -429,6 +451,28 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
 
         return result;
+    }
+
+    private List<Object[]> getStorageServiceScheduleIds(int storageNodeResourceId) {
+        // get the schedule ids for Storage Service resource
+        TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
+            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
+        query.setParameter("parrentId", storageNodeResourceId).setParameter(
+            "metricNames",
+            Arrays.asList(METRIC_TOKENS, METRIC_OWNERSHIP,
+                METRIC_LOAD/*, METRIC_KEY_CACHE_SIZE, METRIC_ROW_CACHE_SIZE, METRIC_TOTAL_COMMIT_LOG_SIZE*/,
+                METRIC_DATA_DISK_USED_PERCENTAGE, METRIC_TOTAL_DISK_USED_PERCENTAGE, METRIC_FREE_DISK_TO_DATA_RATIO));
+        return query.getResultList();
+    }
+
+    private List<Object[]> getMemorySubsystemScheduleIds(int storageNodeResourceId) {
+        // get the schedule ids for Memory Subsystem resource
+        TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
+            StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
+            Object[].class);
+        query.setParameter("grandparrentId", storageNodeResourceId).setParameter("metricNames",
+            Arrays.asList(METRIC_HEAP_COMMITED, METRIC_HEAP_USED, METRIC_HEAP_USED_PERCENTAGE));
+        return query.getResultList();
     }
 
     /**
@@ -451,6 +495,21 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         TypedQuery<StorageNode> query = entityManager.<StorageNode> createNamedQuery(StorageNode.QUERY_FIND_ALL,
             StorageNode.class);
         return query.getResultList();
+    }
+
+    @Override
+    public PageList<StorageNodeLoadComposite> getStorageNodeComposites() {
+        List<StorageNode> nodes = getStorageNodes();
+        PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
+        long endTime = System.currentTimeMillis();
+        long beginTime = endTime - (8 * 60 * 60 * 1000);
+        for (StorageNode node : nodes) {
+            StorageNodeLoadComposite composite = getLoad(subjectManager.getOverlord(), node, beginTime, endTime);
+            int unackAlerts = findNotAcknowledgedStorageNodeAlerts(subjectManager.getOverlord(), node).size();
+            composite.setUnackAlerts(unackAlerts);
+            result.add(composite);
+        }
+        return result;
     }
 
     private List<StorageNode> getClusteredStorageNodes() {
@@ -485,12 +544,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void prepareNodeForUpgrade(Subject subject, StorageNode storageNode) {
         int storageNodeResourceId = getResourceIdFromStorageNode(storageNode);
-        TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
-        ServerManagerLocal serverManager = LookupUtil.getServerManager();
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
-        Server server = serverManager.getServer();
-        // setting the server mode to maintenance
-        topologyManager.updateServerMode(subject, new Integer[] { server.getId() }, Server.OperationMode.MAINTENANCE);
 
         Configuration parameters = new Configuration();
         parameters.setSimpleValue("snapshotName", String.valueOf(System.currentTimeMillis()));
@@ -617,12 +671,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (storageNode == null) {
             initialStorageNodes = getStorageNodes();
         } else {
-            int index = initialStorageNodes.indexOf(storageNode);
-            if (index >= 0) {
-                initialStorageNodes = Arrays.asList(initialStorageNodes.get(index));
-            } else {
-                initialStorageNodes = new ArrayList<StorageNode>();
-            }
+            initialStorageNodes = Arrays.asList(storageNode.getResource() == null ? entityManager.find(
+                StorageNode.class, storageNode.getId()) : storageNode);
         }
 
         Queue<Resource> unvisitedResources = new LinkedList<Resource>();
@@ -740,6 +790,55 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         operationManager.scheduleResourceOperation(subject, schedule);
     }
 
+    @Override
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject,
+        StorageNode node, long beginTime, long endTime, int numPoints) {
+        int storageNodeResourceId = getResourceIdFromStorageNode(node);
+        Map<String, List<MeasurementDataNumericHighLowComposite>> result = new LinkedHashMap<String, List<MeasurementDataNumericHighLowComposite>>();
+
+        List<Object[]> tupples = getStorageServiceScheduleIds(storageNodeResourceId);
+        List<String> defNames = new ArrayList<String>();
+        int[] definitionIds = new int[tupples.size()];
+        int resId = -1;
+        int index = 0;
+        for (Object[] tupple : tupples) {
+            String defName = (String) tupple[0];
+            int definitionId = (Integer) tupple[1];
+            resId = (Integer) tupple[3];
+            defNames.add(defName);
+            definitionIds[index++] = definitionId;
+        }
+        List<List<MeasurementDataNumericHighLowComposite>> storageServiceData = measurementManager.findDataForResource(
+            subject, resId, definitionIds, beginTime, endTime, numPoints);
+        for (int i = 0; i < storageServiceData.size(); i++) {
+            List<MeasurementDataNumericHighLowComposite> oneRecord = storageServiceData.get(i);
+            result.put(defNames.get(i), oneRecord);
+        }
+
+        tupples = getMemorySubsystemScheduleIds(storageNodeResourceId);
+        defNames = new ArrayList<String>();
+        definitionIds = new int[tupples.size()];
+        resId = -1;
+        index = 0;
+        for (Object[] tupple : tupples) {
+            String defName = (String) tupple[0];
+            int definitionId = (Integer) tupple[1];
+            resId = (Integer) tupple[3];
+            defNames.add(defName);
+            definitionIds[index++] = definitionId;
+        }
+        List<List<MeasurementDataNumericHighLowComposite>> memorySubsystemData = measurementManager
+            .findDataForResource(subject, resId, definitionIds, beginTime, endTime, numPoints);
+        for (int i = 0; i < memorySubsystemData.size(); i++) {
+            List<MeasurementDataNumericHighLowComposite> oneRecord = memorySubsystemData.get(i);
+            result.put(defNames.get(i), oneRecord);
+        }
+
+        return result;
+    }
+
     private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
         Configuration parameters) {
 
@@ -807,60 +906,22 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             log.info("Preparing to bootstrap " + storageNode + " into cluster...");
         }
 
-        List<StorageNode> existingStorageNodes = getClusteredStorageNodes();
-
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(storageNode.getResource());
         schedule.setJobTrigger(JobTrigger.createNowTrigger());
         schedule.setSubject(subjectManager.getOverlord());
         schedule.setOperationName("prepareForBootstrap");
 
+        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subjectManager
+            .getOverlord());
         Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("cqlPort", existingStorageNodes.get(0).getCqlPort()));
-        parameters.put(new PropertySimple("gossipPort", getGossipPort(storageNode, existingStorageNodes)));
+        parameters.put(new PropertySimple("cqlPort", clusterSettings.getCqlPort()));
+        parameters.put(new PropertySimple("gossipPort", clusterSettings.getGossipPort()));
         parameters.put(createPropertyListOfAddresses("storageNodeIPAddresses", getClusteredStorageNodes()));
 
         schedule.setParameters(parameters);
 
         operationManager.scheduleResourceOperation(subjectManager.getOverlord(), schedule);
-    }
-
-    private Integer getGossipPort(StorageNode newStorageNode, List<StorageNode> storageNodes) {
-        if (log.isInfoEnabled()) {
-            log.info("Looking up gossip port for new storage node " + newStorageNode);
-        }
-        try {
-            StorageNode node = null;
-            Configuration resourceConfig = null;
-            for (StorageNode storageNode : storageNodes) {
-                resourceConfig = configurationManager.getLiveResourceConfiguration(subjectManager.getOverlord(),
-                    storageNode.getResource().getId(), false);
-                if (resourceConfig == null) {
-                    log.warn("Failed to load resource configuration for storage node " + newStorageNode.getResource());
-                } else {
-                    node = storageNode;
-                    break;
-                }
-            }
-            if (resourceConfig == null) {
-                log.error("Failed to obtain gossip port from existing storage nodes");
-                throw new StorageConfigurationException("Failed to obtain gossip port from existing storage nodes");
-            }
-
-            PropertySimple property = resourceConfig.getSimple("gossipPort");
-            if (property == null) {
-                throw new StorageConfigurationException("The resource configuration for " + node.getResource() +
-                    "did not include the required property [gossipPort]");
-            }
-            Integer port = property.getIntegerValue();
-            log.info("Found gossip port set to " + port);
-            return property.getIntegerValue();
-        } catch (Exception e) {
-            if (e instanceof StorageConfigurationException) {
-                throw (StorageConfigurationException) e;
-            }
-            throw new RuntimeException("An error occurred while trying to obtain the gossip port", e);
-        }
     }
 
     @Override

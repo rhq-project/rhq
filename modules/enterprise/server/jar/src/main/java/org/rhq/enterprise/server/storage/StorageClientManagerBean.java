@@ -41,11 +41,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.util.ClusterBuilder;
-import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
-import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
@@ -64,9 +62,6 @@ public class StorageClientManagerBean {
     private static final String USERNAME_PROP = "rhq.cassandra.username";
     private static final String PASSWORD_PROP = "rhq.cassandra.password";
     private static final String RHQ_KEYSPACE = "rhq";
-
-    @EJB
-    private ServerManagerLocal serverManager;
 
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
@@ -147,6 +142,10 @@ public class StorageClientManagerBean {
 
     public MetricsConfiguration getMetricsConfiguration() {
         return this.metricsConfiguration;
+    }
+
+    public boolean isClusterAvailable() {
+        return storageClusterMonitor != null && storageClusterMonitor.isClusterAvailable();
     }
 
     private Session createSession(String username, String password, List<StorageNode> storageNodes) {

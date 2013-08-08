@@ -8,13 +8,6 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
-import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
-import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
-import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.StorageStateListener;
 
 /**
@@ -24,10 +17,10 @@ public class StorageClusterMonitor implements StorageStateListener {
 
     private Log log = LogFactory.getLog(StorageClusterMonitor.class);
 
-    private AtomicBoolean isClusterDown = new AtomicBoolean(false);
+    private AtomicBoolean isClusterAvailable = new AtomicBoolean(false);
 
-    public boolean isClusterDown() {
-        return isClusterDown.get();
+    public boolean isClusterAvailable() {
+        return isClusterAvailable.get();
     }
 
     @Override
@@ -46,7 +39,7 @@ public class StorageClusterMonitor implements StorageStateListener {
             log.info("Adding " + newClusterNode + " to storage cluster and scheduling cluster maintenance...");
             storageNodeManager.addToStorageNodeGroup(newClusterNode);
             storageNodeManager.runAddNodeMaintenance();
-        }
+        }*/
     }
 
     @Override

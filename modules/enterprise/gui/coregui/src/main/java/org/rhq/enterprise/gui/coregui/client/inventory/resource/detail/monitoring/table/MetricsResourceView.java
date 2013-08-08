@@ -68,7 +68,7 @@ public class MetricsResourceView extends AbstractD3GraphListView {
     }
 
 
-    public void redrawGraphs() {
+    public void refreshData() {
         this.onDraw();
     }
 

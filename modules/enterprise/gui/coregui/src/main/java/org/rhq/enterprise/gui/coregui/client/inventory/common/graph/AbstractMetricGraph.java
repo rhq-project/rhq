@@ -235,6 +235,6 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     }
 
     public void redrawGraphs(){
-       graphListView.redrawGraphs();
+       graphListView.refreshData();
     }
 }

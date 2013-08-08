@@ -143,8 +143,10 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     private DoubleClickHandler doubleClickHandler;
     private List<TableActionInfo> tableActions = new ArrayList<TableActionInfo>();
     private boolean tableActionDisableOverride = false;
+    protected List<Canvas> extraWidgetsAtTop = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsAboveFooter = new ArrayList<Canvas>();
     protected List<Canvas> extraWidgetsInMainFooter = new ArrayList<Canvas>();
+    private EnhancedToolStrip topExtraWidgets;
     private EnhancedToolStrip footer;
     private EnhancedToolStrip footerExtraWidgets;
     private EnhancedIButton refreshButton;
@@ -415,6 +417,15 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 contents.removeChild(child);
             }
 
+            // add a toolstrip at the top of screen for navigation, date range controls, etc...
+            this.topExtraWidgets = new EnhancedToolStrip();
+            topExtraWidgets.setPadding(5);
+            topExtraWidgets.setWidth100();
+            topExtraWidgets.setMembersMargin(15);
+            topExtraWidgets.hide();
+            contents.addMember(topExtraWidgets);
+
+
             // Title
             this.titleCanvas = new HTMLFlow();
             updateTitleCanvas(this.titleString);
@@ -537,6 +548,16 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
     }
 
     private void drawHeader() {
+
+        // add toolstrip to the top of screen
+        topExtraWidgets.removeMembers(topExtraWidgets.getMembers());
+        if (!extraWidgetsAtTop.isEmpty()) {
+            for (Canvas extraWidgetCanvas : extraWidgetsAtTop) {
+                topExtraWidgets.addMember(extraWidgetCanvas);
+            }
+            topExtraWidgets.show();
+        }
+
         // just use the first icon (not sure use case for multiple icons in title)
         titleBar = new TitleBar(titleString);
         if (titleIcon != null) {
@@ -1038,6 +1059,14 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
         }
     }
 
+    /**
+     * Add any widgets to the top of the table for filtering, etc...
+     * @param widget
+     */
+    public void addTopWidget(Canvas widget ) {
+            this.extraWidgetsAtTop.add(widget);
+    }
+
     public void setHeaderIcon(String headerIcon) {
         if (this.headerIcons.size() > 0) {
             this.headerIcons.clear();
@@ -1080,7 +1109,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
                 this.listGrid.setSelectionType(getDefaultSelectionStyle());
             }
 
-            //int selectionCount = this.listGrid.getSelectedRecords().length;
             for (TableActionInfo tableAction : this.tableActions) {
                 if (tableAction.actionCanvas != null) { // if null, we haven't initialized our buttons yet, so skip this
                     boolean enabled = (!this.tableActionDisableOverride && tableAction.action.isEnabled(this.listGrid

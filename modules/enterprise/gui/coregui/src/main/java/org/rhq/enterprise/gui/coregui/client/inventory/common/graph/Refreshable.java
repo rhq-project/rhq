@@ -19,11 +19,12 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
 /**
- * Define the capability to Redraw a Graph.
+ * Define the capability to Refresh data in a grid or Redraw a Graph.
+ *
  * @author Mike Thompson
  */
-public interface RedrawGraphs {
+public interface Refreshable {
 
-    void redrawGraphs();
+    void refreshData();
 
 }

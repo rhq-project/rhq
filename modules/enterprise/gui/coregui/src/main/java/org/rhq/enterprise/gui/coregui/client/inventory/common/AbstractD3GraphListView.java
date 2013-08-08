@@ -32,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeas
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.RedrawGraphs;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -42,7 +42,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  * Provide the shared stuff for create GraphListViews like Availability graphs
  * and User Preferences pickers for the date range.
  */
-public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh,RedrawGraphs {
+public abstract class AbstractD3GraphListView extends EnhancedVLayout implements AutoRefresh,Refreshable {
     protected final static int SINGLE_CHART_HEIGHT = 225;
     protected final static int MULTI_CHART_HEIGHT = 210;
     protected static final Label loadingLabel = new Label(MSG.common_msg_loading());
@@ -61,7 +61,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
         startRefreshCycle();
     }
 
-    public abstract void redrawGraphs();
+    public abstract void refreshData();
 
     protected abstract void queryAvailability(final EntityContext context, Long startTime, Long endTime,
         final CountDownLatch countDownLatch);
@@ -95,7 +95,7 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
             buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
             buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
 
-            redrawGraphs();
+            refreshData();
         }
     }
 }

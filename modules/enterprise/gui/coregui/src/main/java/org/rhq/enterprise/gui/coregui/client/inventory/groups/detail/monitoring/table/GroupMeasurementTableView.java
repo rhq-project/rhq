@@ -20,27 +20,40 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table;
 
 import java.util.ArrayList;
+import java.util.Date;
 
+import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.events.CellClickEvent;
 import com.smartgwt.client.widgets.grid.events.CellClickHandler;
 
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.UserPreferencesMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.ButtonBarDateTimeRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
+import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPreferences;
 
 /**
  * Views a resource's measurements in a tabular view.
  *
  * @author John Mazzitelli
  * @author Simeon Pinder
+ * @author Mike Thompson
  */
-public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource> {
+public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource> implements AutoRefresh, Refreshable {
 
     private final int groupId;
     private final boolean isAutogroup;
+    protected final MeasurementUserPreferences measurementUserPrefs;
+    protected final ButtonBarDateTimeRangeEditor buttonBarDateTimeRangeEditor;
+    protected Timer refreshTimer;
 
     public GroupMeasurementTableView(ResourceGroupComposite groupComposite, int groupId) {
         super();
@@ -50,10 +63,52 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
         //disable fields used when is full screen
         setShowFooterRefresh(true);
         setTitle(MSG.common_title_numeric_metrics());
+
+        measurementUserPrefs = new MeasurementUserPreferences(UserSessionManager.getUserPreferences());
+        buttonBarDateTimeRangeEditor = new ButtonBarDateTimeRangeEditor(measurementUserPrefs,this);
+    }
+
+    @Override
+    public void refreshData() {
+
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+    }
+
+    @Override
+    protected void onDestroy() {
+        AutoRefreshUtil.onDestroy( refreshTimer);
+
+        super.onDestroy();
+    }
+
+    @Override
+    public boolean isRefreshing() {
+        return false;
+    }
+
+    //Custom refresh operation as we are not directly extending Table
+    @Override
+    public void refresh() {
+        if (isVisible() && !isRefreshing()) {
+            Date now = new Date();
+            AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences =  measurementUserPrefs.getMetricRangePreferences();
+            long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+            Date newStartDate = new Date(now.getTime() - timeRange);
+            buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
+            buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
+
+            refreshData();
+        }
     }
 
     @Override
     protected void configureTable() {
+        addTopWidget(buttonBarDateTimeRangeEditor);
+
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
 
         //add cell click handler to execute on Table data entries.
@@ -72,7 +127,6 @@ public class GroupMeasurementTableView extends Table<GroupMetricsTableDataSource
             }
         });
         setListGridFields(fields.toArray(new ListGridField[getDataSource().getListGridFields().size()]));
-        addExtraWidget(new UserPreferencesMeasurementRangeEditor(), true);
     }
 
 }

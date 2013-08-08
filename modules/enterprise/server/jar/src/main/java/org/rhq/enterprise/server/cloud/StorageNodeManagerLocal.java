@@ -196,4 +196,6 @@ public interface StorageNodeManagerLocal {
     void runAddNodeMaintenance();
 
     Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject, StorageNode node, long beginTime, long endTime, int numPoints);
+
+    boolean isAddNodeMaintenanceInProgress();
 }

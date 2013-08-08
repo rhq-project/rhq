@@ -92,6 +92,7 @@ import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettings;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
+import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -171,6 +172,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @EJB
     private StorageClusterSettingsManagerBean storageClusterSettingsManager;
 
+    @EJB
+    private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
+
     @Override
     public void linkResource(Resource resource) {
         Configuration pluginConfig = resource.getPluginConfiguration();
@@ -243,21 +247,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             log.info("Announcing " + newStorageNode + " to storage node cluster.");
         }
 
-        ResourceGroup storageNodeGroup = getStorageNodeGroup();
-
-        GroupOperationSchedule schedule = new GroupOperationSchedule();
-        schedule.setGroup(storageNodeGroup);
-        schedule.setHaltOnFailure(false);
-        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subjectManager.getOverlord());
-        schedule.setOperationName("updateKnownNodes");
-
-        Configuration parameters = new Configuration();
-    parameters.put(createPropertyListOfAddresses("ipAddresses", combine(getClusteredStorageNodes(), newStorageNode)));
-        schedule.setParameters(parameters);
-
-        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
+        List<StorageNode> clusteredNodes = getClusteredStorageNodes();
+        for (StorageNode node : clusteredNodes) {
+            node.setOperationMode(OperationMode.ANNOUNCE);
+        }
+        PropertyList addresses = createPropertyListOfAddresses("addresses", combine(clusteredNodes, newStorageNode));
+        storageNodeOperationsHandler.announceNewStorageNode(newStorageNode, clusteredNodes.get(0), addresses);
     }
 
     private List<StorageNode> combine(List<StorageNode> storageNodes, StorageNode storageNode) {
@@ -274,6 +269,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             list.add(new PropertySimple("address", storageNode.getAddress()));
         }
         return list;
+    }
+
+    @Override
+    public boolean isAddNodeMaintenanceInProgress() {
+        return !entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE)
+            .setParameter("operationMode", OperationMode.ADD_NODE_MAINTENANCE).getResultList().isEmpty();
     }
 
     @Override

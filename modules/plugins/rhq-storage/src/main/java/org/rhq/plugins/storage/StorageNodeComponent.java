@@ -240,7 +240,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     private OperationResult updateKnownNodes(Configuration params) {
         OperationResult result = new OperationResult();
 
-        PropertyList propertyList = params.getList("ipAddresses");
+        PropertyList propertyList = params.getList("addresses");
         Set<String> ipAddresses = new HashSet<String>();
 
         for (Property property : propertyList.getList()) {
@@ -305,7 +305,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             String address = pluginConfig.getSimpleValue("host");
             int cqlPort = Integer.parseInt(params.getSimpleValue("cqlPort"));
             int gossipPort = Integer.parseInt(params.getSimpleValue("gossipPort"));
-            List<String> addresses = getAddresses(params.getList("storageNodeIPAddresses"));
+            List<String> addresses = getAddresses(params.getList("addresses"));
 
             // Make sure this node's address is not in the list; otherwise, it
             // won't bootstrap properly.

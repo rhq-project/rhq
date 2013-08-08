@@ -58,6 +58,8 @@ import org.rhq.core.domain.resource.Resource;
         + "          WHERE s.address = :address"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE, query =
         "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode"),
+    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE_EXCLUDING, query =
+        "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode AND s <> :storageNode"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NOT_INSTALLED, query = "SELECT s FROM StorageNode s WHERE NOT s.operationMode = 'INSTALLED'"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NORMAL, query = "SELECT s FROM StorageNode s WHERE s.operationMode = 'NORMAL'"),
     @NamedQuery(name = StorageNode.QUERY_DELETE_BY_ID, query = "" //
@@ -82,8 +84,9 @@ import org.rhq.core.domain.resource.Resource;
     @NamedQuery(name = StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES, query = "" //
         + "   UPDATE StorageNode s " //
         + "      SET s.resource = NULL  " //
-        + "    WHERE s.resource.id in (:resourceIds)") //
-
+        + "    WHERE s.resource.id in (:resourceIds)"),
+    @NamedQuery(name = StorageNode.QUERY_UPDATE_OPERATION_MODE, query =
+        "UPDATE StorageNode s SET s.operationMode = :newOperationMode WHERE s.operationMode = :oldOperationMode")
 })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_STORAGE_NODE_ID_SEQ", sequenceName = "RHQ_STORAGE_NODE_ID_SEQ")
 @Table(name = "RHQ_STORAGE_NODE")
@@ -94,12 +97,14 @@ public class StorageNode implements Serializable {
     public static final String QUERY_FIND_ALL = "StorageNode.findAll";
     public static final String QUERY_FIND_BY_ADDRESS = "StorageNode.findByAddress";
     public static final String QUERY_FIND_ALL_BY_MODE = "StorageNode.findAllByMode";
+    public static final String QUERY_FIND_ALL_BY_MODE_EXCLUDING = "StorageNode.findAllByModeExcluding";
     public static final String QUERY_FIND_ALL_NOT_INSTALLED = "StorageNode.findAllCloudMembers";
     public static final String QUERY_DELETE_BY_ID = "StorageNode.deleteById";
     public static final String QUERY_FIND_ALL_NORMAL = "StorageNode.findAllNormalCloudMembers";
     public static final String QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES = "StorageNode.findScheduleIdsByParentResourceIdAndMeasurementDefinitionNames";
     public static final String QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES = "StorageNode.findScheduleIdsByGrandparentResourceIdAndMeasurementDefinitionNames";
     public static final String QUERY_UPDATE_REMOVE_LINKED_RESOURCES = "StorageNode.updateRemoveLinkedResources";
+    public static final String QUERY_UPDATE_OPERATION_MODE = "StorageNode.updateOperationMode";
 
     private static final String JMX_CONNECTION_STRING = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
 
@@ -206,7 +211,11 @@ public class StorageNode implements Serializable {
         DOWN("This storage node is down"), //
         INSTALLED("This storage node is newly installed but not yet operationial"), //
         MAINTENANCE("This storage node is in maintenance mode"), //
-        NORMAL("This storage node is running normally");
+        NORMAL("This storage node is running normally"),
+        ANNOUNCE("The storage node is running normally and is being updated to have newly deployed storage nodes " +
+            "announced to it so that those new nodes can join the cluster."),
+        ADD_NODE_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
+            "necessary when a new node joins the cluster.");
 
         public final String message;
 

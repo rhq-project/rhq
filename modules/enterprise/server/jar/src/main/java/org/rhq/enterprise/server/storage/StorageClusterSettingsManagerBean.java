@@ -24,16 +24,18 @@ public class StorageClusterSettingsManagerBean {
         Map<String, String> settingsMap = settings.toMap();
         StorageClusterSettings clusterSettings = new StorageClusterSettings();
 
-        if (!settingsMap.containsKey(SystemSetting.STORAGE_CQL_PORT)) {
+        if (!settingsMap.containsKey(SystemSetting.STORAGE_CQL_PORT.getInternalName())) {
             return null;
         } else {
-            clusterSettings.setCqlPort(Integer.parseInt(settingsMap.get(SystemSetting.STORAGE_CQL_PORT)));
+            clusterSettings.setCqlPort(Integer.parseInt(settingsMap.get(
+                SystemSetting.STORAGE_CQL_PORT.getInternalName())));
         }
 
-        if (!settingsMap.containsKey(SystemSetting.STORAGE_GOSSIP_PORT)) {
+        if (!settingsMap.containsKey(SystemSetting.STORAGE_GOSSIP_PORT.getInternalName())) {
             return null;
         } else {
-            clusterSettings.setGossipPort(Integer.parseInt(settingsMap.get(SystemSetting.STORAGE_GOSSIP_PORT)));
+            clusterSettings.setGossipPort(Integer.parseInt(settingsMap.get(
+                SystemSetting.STORAGE_GOSSIP_PORT.getInternalName())));
         }
 
         return clusterSettings;

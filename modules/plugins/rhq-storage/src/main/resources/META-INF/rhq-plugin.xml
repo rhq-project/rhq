@@ -99,8 +99,8 @@
 
     <operation name="updateKnownNodes">
       <parameters>
-        <c:list-property name="ipAddresses">
-          <c:simple-property name="ipAddress"/>
+        <c:list-property name="addresses">
+          <c:simple-property name="address"/>
         </c:list-property>
       </parameters>
     </operation>
@@ -109,8 +109,8 @@
       <parameters>
         <c:simple-property name="cqlPort" type="integer" displayName="CQL Port"/>
         <c:simple-property name="gossipPort" type="integer"/>
-        <c:list-property name="storageNodeIPAddresses" displayName="Storage Node IP Addresses">
-          <c:simple-property name="storageNodeIPAddress"/>
+        <c:list-property name="addresses" displayName="Storage Node IP Addresses">
+          <c:simple-property name="address"/>
         </c:list-property>
       </parameters>
     </operation>

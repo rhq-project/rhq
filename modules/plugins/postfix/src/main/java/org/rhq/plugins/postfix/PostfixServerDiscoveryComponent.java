@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,34 +13,50 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.postfix;
-
-import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.PropertySimple;
-import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
-import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
-import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.core.util.stream.StreamUtil;
-import org.rhq.plugins.augeas.AugeasConfigurationComponent;
-import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
+import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.plugins.augeas.AugeasConfigurationComponent;
+import org.rhq.plugins.augeas.AugeasConfigurationDiscoveryComponent;
+
 public class PostfixServerDiscoveryComponent extends AugeasConfigurationDiscoveryComponent {
+
+    private static final Log LOG = LogFactory.getLog(PostfixServerDiscoveryComponent.class);
 
     private static final Pattern HOSTNAME_PATTERN = Pattern.compile("[\\s]*myhostname[\\s]*=[\\s]*([^$].*)[\\s]*");
 
     public Set discoverResources(ResourceDiscoveryContext resourceDiscoveryContext)
-            throws InvalidPluginConfigurationException, Exception {
+        throws InvalidPluginConfigurationException, Exception {
+        List discoveredProcesses = resourceDiscoveryContext.getAutoDiscoveredProcesses();
+        if (discoveredProcesses.isEmpty()) {
+            return Collections.emptySet();
+        }
+        if (discoveredProcesses.size() != 1) {
+            LOG.warn("Found more than one Postfix process running");
+            return Collections.emptySet();
+        }
         Set<DiscoveredResourceDetails> resources = super.discoverResources(resourceDiscoveryContext);
         for (DiscoveredResourceDetails detail : resources) {
             Configuration config = detail.getPluginConfiguration();
@@ -54,6 +70,7 @@ public class PostfixServerDiscoveryComponent extends AugeasConfigurationDiscover
                 resourceName = resourceDiscoveryContext.getSystemInformation().getHostname();
             }
             detail.setResourceName(resourceName);
+            detail.setProcessInfo(((ProcessScanResult) discoveredProcesses.get(0)).getProcessInfo());
         }
         return resources;
     }

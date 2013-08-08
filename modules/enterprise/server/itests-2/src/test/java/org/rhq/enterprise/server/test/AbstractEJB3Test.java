@@ -524,7 +524,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                         }
                     }
                 }
-                storageClientManager.init();
+                storageClientManager.init(System.currentTimeMillis() - 100000);
                 beforeMethod();
                 beforeMethod(method);
 

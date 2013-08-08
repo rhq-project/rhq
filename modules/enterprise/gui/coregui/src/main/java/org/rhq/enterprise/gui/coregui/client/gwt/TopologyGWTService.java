@@ -72,7 +72,7 @@ public interface TopologyGWTService extends RemoteService {
      * @param mode the new operation mode
      * @throws RuntimeException
      */
-    void updateServerMode(int[] serverIds, Server.OperationMode mode) throws RuntimeException;
+    void updateServerManualMaintenance(int[] serverIds, boolean manualMaintenance) throws RuntimeException;
 
     /**
      * Updates the server.

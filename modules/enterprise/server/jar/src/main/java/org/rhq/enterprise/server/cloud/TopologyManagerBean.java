@@ -35,10 +35,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.ServerCriteria;
-import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.server.PersistenceUtility;
 import org.rhq.core.domain.util.PageControl;
@@ -216,13 +214,36 @@ public class TopologyManagerBean implements TopologyManagerLocal {
 
     @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
         @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    public void updateServerManualMaintenance(Subject subject, Integer[] serverIds, boolean manualMaintenance) {
+        if (serverIds.length > 0) {
+            try {
+                for (Integer id : serverIds) {
+                    Server server = entityManager.find(Server.class, id);
+                    if (manualMaintenance) {
+                        server.addStatus(Server.Status.MANUAL_MAINTENANCE_MODE);
+                    } else {
+                        server.clearStatus(Server.Status.MANUAL_MAINTENANCE_MODE);
+                    }
+                }
+            } catch (Exception e) {
+                log.debug("Failed to update HA server modes: " + e);
+            }
+        }
+    }
+
+    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
+        @RequiredPermission(Permission.MANAGE_INVENTORY) })
     public void updateServerMode(Subject subject, Integer[] serverIds, Server.OperationMode mode) {
         if (serverIds == null) {
             return;
         }
 
         if (mode == null) {
-            throw new IllegalArgumentException("mode can not be null");
+            throw new IllegalArgumentException("Mode cannot be null.");
+        }
+        if (!mode.isConfigurable()) {
+            throw new IllegalArgumentException("Cannot directly set a mode that is not configurable. Mode "
+                + mode.name() + " is not configurable.");
         }
 
         if (serverIds.length > 0) {

@@ -76,8 +76,9 @@ public class StorageClientManagerBean {
     private MetricsDAO metricsDAO;
     private MetricsServer metricsServer;
     private boolean initialized;
+    private StorageClusterMonitor storageClusterMonitor;
 
-    public synchronized void init() {
+    public synchronized void init(long ctime) {
         if (initialized) {
             if (log.isDebugEnabled()) {
                 log.debug("Storage client subsystem is already initialized. Skipping initialization.");
@@ -103,11 +104,15 @@ public class StorageClientManagerBean {
                     + "result of running dbsetup or deleting rows from rhq_storage_node table. Please re-install the "
                     + "storage node to fix this issue.");
         }
-        session = createSession(username, password, storageNodes);
+        Session wrappedSession = createSession(username, password, storageNodeManager.getStorageNodes());
+        session = new StorageSession(wrappedSession);
+
+        storageClusterMonitor = new StorageClusterMonitor();
+        session.addStorageStateListener(storageClusterMonitor);
+
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
-        Server server = serverManager.getServer();
-        initMetricsServer(isNewServerInstall, server.getCtime());
+        initMetricsServer(isNewServerInstall, ctime);
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");

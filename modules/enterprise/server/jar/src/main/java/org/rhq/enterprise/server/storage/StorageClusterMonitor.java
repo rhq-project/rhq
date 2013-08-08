@@ -33,13 +33,10 @@ public class StorageClusterMonitor implements StorageStateListener {
     @Override
     public void onStorageNodeUp(InetAddress address) {
         log.info("Storage node at " + address.getHostAddress() + " is up");
+        isClusterAvailable.set(true);
 
-        if (isClusterDown.compareAndSet(true, false)) {
-            log.info("Taking server out of maintenance mode");
-            updateServerMode(Server.OperationMode.NORMAL);
-        }
-
-        StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
+        //TODO: Add these back at a later time
+        /*StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
         StorageNode newClusterNode = storageNodeManager.findStorageNodeByAddress(address);
 
         if (newClusterNode == null) {
@@ -64,19 +61,6 @@ public class StorageClusterMonitor implements StorageStateListener {
 
     @Override
     public void onStorageClusterDown(NoHostAvailableException e) {
-        if (isClusterDown.compareAndSet(false, true)) {
-            log.error("The server cannot connect to any storage nodes. The server will now go into maintenance mode.");
-            updateServerMode(Server.OperationMode.MAINTENANCE);
-        }
-    }
-
-    private void updateServerMode(Server.OperationMode mode) {
-        ServerManagerLocal serverManager = LookupUtil.getServerManager();
-        TopologyManagerLocal topologyManager = LookupUtil.getTopologyManager();
-        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
-
-        Server server = serverManager.getServer();
-
-        topologyManager.updateServerMode(subjectManager.getOverlord(), new Integer[] {server.getId()}, mode);
+        isClusterAvailable.set(false);
     }
 }

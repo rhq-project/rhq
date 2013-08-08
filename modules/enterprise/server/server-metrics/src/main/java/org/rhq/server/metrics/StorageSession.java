@@ -29,6 +29,14 @@ public class StorageSession implements Host.StateListener {
 
     public void addStorageStateListener(StorageStateListener listener) {
         listeners.add(listener);
+
+        for (Host host : wrappedSession.getCluster().getMetadata().getAllHosts()) {
+            if(host.getMonitor().isUp()){
+                listener.onStorageNodeUp(host.getAddress());
+            } else {
+                listener.onStorageNodeUp(host.getAddress());
+            }
+        }
     }
 
     public ResultSet execute(String query) {

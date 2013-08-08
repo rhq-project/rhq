@@ -41,6 +41,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.Server.OperationMode;
+import org.rhq.core.domain.cloud.Server.Status;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.communications.GlobalSuspendCommandListener;
@@ -50,6 +52,7 @@ import org.rhq.enterprise.server.cloud.PartitionEventManagerLocal;
 import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.cloud.TopologyManagerLocal;
 import org.rhq.enterprise.server.core.comm.ServerCommunicationsServiceUtil;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 
 /**
  * If you want to manipulate or report on the {@link Server} instance that
@@ -80,6 +83,9 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     @EJB
     private TopologyManagerLocal topologyManager;
+
+    @EJB
+    private StorageClientManagerBean storageClientManager;
 
     @EJB
     private StatusManagerLocal agentStatusManager;
@@ -156,8 +162,10 @@ public class ServerManagerBean implements ServerManagerLocal {
         if (server == null) {
             return false; // don't reload caches if we don't know who we are
         }
-        boolean hadStatus = (server.getStatus() != 0);
-        server.clearStatus();
+        boolean hadStatus = (server.hasStatus(Status.ALERT_DEFINITION) || server
+            .hasStatus(Status.RESOURCE_HIERARCHY_UPDATED));
+        server.clearStatus(Status.ALERT_DEFINITION);
+        server.clearStatus(Status.RESOURCE_HIERARCHY_UPDATED);
         return hadStatus;
     }
 
@@ -182,7 +190,9 @@ public class ServerManagerBean implements ServerManagerLocal {
 
     public void establishCurrentServerMode() {
         Server server = getServer();
-        Server.OperationMode serverMode = server.getOperationMode();
+        Server.OperationMode serverMode = determineServerOperationMode(
+            server.hasStatus(Server.Status.MANUAL_MAINTENANCE_MODE), storageClientManager.isClusterAvailable(),
+            server.getOperationMode());
 
         // no state change means no work
         if (serverMode == lastEstablishedServerMode)
@@ -221,31 +231,25 @@ public class ServerManagerBean implements ServerManagerLocal {
 
                 log.info("Notified communication layer of server operation mode " + serverMode);
 
-            } else if (Server.OperationMode.INSTALLED == serverMode) {
-
+            } else if (Server.OperationMode.INSTALLED == serverMode
                 // The server must have just been installed and must be coming for the first time
-                // up as of this call. So, update the mode to NORMAL and update mtime as an initial heart beat.
+                // up as of this call. So, attempt to update the mode to NORMAL.
                 // This will prevent a running CloudManagerJob from resetting to DOWN before the real
                 // ServerManagerJob starts updating the heart beat regularly.
-                lastEstablishedServerMode = serverMode;
-                serverMode = Server.OperationMode.NORMAL;
-                server.setOperationMode(serverMode);
-                server.setMtime(System.currentTimeMillis());
 
-            } else if (Server.OperationMode.DOWN == serverMode) {
-
+                || Server.OperationMode.DOWN == serverMode) {
                 // The server can't be DOWN if this code is executing, it means the server must be coming
-                // up as of this call. So, update the mode to NORMAL and update mtime as an initial heart beat.
+                // up as of this call. So, attempt to update the mode to NORMAL.
                 // This will prevent a running CloudManagerJob from resetting to DOWN before the real
                 // ServerManagerJob starts updating the heart beat regularly.
+
                 lastEstablishedServerMode = serverMode;
-                serverMode = Server.OperationMode.NORMAL;
-                server.setOperationMode(serverMode);
-                server.setMtime(System.currentTimeMillis());
+                serverMode = determineServerOperationMode(server.hasStatus(Server.Status.MANUAL_MAINTENANCE_MODE),
+                    storageClientManager.isClusterAvailable(), OperationMode.NORMAL);
             }
 
-            // If this server just transitioned from INSTALLED to NORMAL operation mode then it 
-            // has just been added to the cloud. Changing the number of servers in the cloud requires agent 
+            // If this server just transitioned from INSTALLED to NORMAL operation mode then it
+            // has just been added to the cloud. Changing the number of servers in the cloud requires agent
             // distribution work, even if this is a 1-Server cloud. Generate a request for a repartitioning
             // of agent load, it will be executed on the next invocation of the cluster manager job.
             // Otherwise, audit the operation mode change as a partition event of interest.
@@ -264,7 +268,8 @@ public class ServerManagerBean implements ServerManagerLocal {
             }
 
             lastEstablishedServerMode = serverMode;
-
+            server.setOperationMode(lastEstablishedServerMode);
+            server.setMtime(System.currentTimeMillis());
         } catch (Exception e) {
             log.error("Unable to change HA Server Mode from " + lastEstablishedServerMode + " to " + serverMode + ": "
                 + e);
@@ -310,4 +315,28 @@ public class ServerManagerBean implements ServerManagerLocal {
         establishCurrentServerMode();
     }
 
+    /**
+     * @param manualMaintenance
+     * @param storageNodeUp
+     * @param currentOperationMode
+     */
+    private Server.OperationMode determineServerOperationMode(boolean isManualMaintenance,
+        boolean isStorageClusterAvailable, Server.OperationMode requestedOperationMode) {
+
+        if (Server.OperationMode.DOWN == requestedOperationMode
+            || Server.OperationMode.INSTALLED == requestedOperationMode) {
+            return requestedOperationMode;
+        }
+
+        if (Server.OperationMode.NORMAL == requestedOperationMode
+            || Server.OperationMode.MAINTENANCE == requestedOperationMode) {
+            if (!isManualMaintenance && isStorageClusterAvailable) {
+                return OperationMode.NORMAL;
+            } else {
+                return OperationMode.MAINTENANCE;
+            }
+        }
+
+        throw new RuntimeException("Unable to determine new server operation mode.");
+    }
 }

@@ -235,19 +235,25 @@ public class Server implements Serializable {
 
     public enum OperationMode {
 
-        DOWN("This server is down member of the HA server cloud"), //
-        INSTALLED("This server is newly installed but not yet fully operating"), //
-        MAINTENANCE("This server is a Maintenance Mode member of the HA server cloud"), //
-        NORMAL("This server is a Normal Member of the HA server cloud");
+        DOWN("This server is down member of the HA server cloud", true), //
+        INSTALLED("This server is newly installed but not yet fully operating", true), //
+        MAINTENANCE("This server is a Maintenance Mode member of the HA server cloud", false), //
+        NORMAL("This server is a Normal Member of the HA server cloud", true);
 
         public final String message;
+        private final boolean configurable;
 
-        private OperationMode(String message) {
+        private OperationMode(String message, boolean configurable) {
             this.message = message;
+            this.configurable = configurable;
         }
 
         public String getMessage() {
             return message;
+        }
+
+        public boolean isConfigurable() {
+            return configurable;
         }
     }
 
@@ -279,13 +285,22 @@ public class Server implements Serializable {
     }
 
     /**
-     * If this status was non-zero, some scheduled job would have had to come along to perform
-     * some work on behalf of this server.  After that work is complete, the status can be reset
-     * (set to 0) signifying that no further work needs to be done on this server (as long as the 
-     * status remains 0). 
+     * Verifies if bitmask status is set.
+     *
+     * @param queryStatus status
+     * @return true if status set, false otherwise
      */
-    public void clearStatus() {
-        status = 0;
+    public boolean hasStatus(Status queryStatus) {
+        return (this.status & queryStatus.mask) == queryStatus.mask;
+    }
+
+    /**
+     * Clears the specified bitmask status.
+     *
+     * @param removeStatus status to be removed
+     */
+    public void clearStatus(Status removeStatus) {
+        this.status &= ~removeStatus.mask;
     }
 
     /**
@@ -298,6 +313,9 @@ public class Server implements Serializable {
         this.status |= newStatus.mask;
     }
 
+    /**
+     * @return list all messages for the status mask
+     */
     public List<String> getStatusMessages() {
         return Status.getMessages(status);
     }
@@ -305,7 +323,8 @@ public class Server implements Serializable {
     public enum Status {
 
         RESOURCE_HIERARCHY_UPDATED(1, "The resource hierarchy has been updated"), //
-        ALERT_DEFINITION(2, "Some alert definition with a global condition category was updated");
+        ALERT_DEFINITION(2, "Some alert definition with a global condition category was updated"),
+        MANUAL_MAINTENANCE_MODE(4,"Manual Maintenance mode setup by the user either via UI or properties file.");
 
         public final int mask;
         public final String message;

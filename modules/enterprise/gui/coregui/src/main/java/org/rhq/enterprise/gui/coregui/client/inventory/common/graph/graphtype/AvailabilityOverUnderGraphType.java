@@ -260,8 +260,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         .attr("fill", "#b0b0b0")
                         .attr("stroke-width", "0.5")
                         .attr("transform", "translate(0," + height + ")")
-                        .attr("letter-spacing", "3")
-                        .style("text-anchor", "end")
                         .call(xAxis);
 
                 svg.append("text")
@@ -295,6 +293,8 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         .text(availChartContext.chartDownLabel);
 
             }
+
+
 
             function createHovers() {
                 $wnd.jQuery('svg rect.availBars').tipsy({

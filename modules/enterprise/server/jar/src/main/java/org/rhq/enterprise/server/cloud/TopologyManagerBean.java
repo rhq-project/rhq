@@ -241,7 +241,7 @@ public class TopologyManagerBean implements TopologyManagerLocal {
         if (mode == null) {
             throw new IllegalArgumentException("Mode cannot be null.");
         }
-        if (!mode.isConfigurable()) {
+        if (!mode.isReadOnly()) {
             throw new IllegalArgumentException("Cannot directly set a mode that is not configurable. Mode "
                 + mode.name() + " is not configurable.");
         }

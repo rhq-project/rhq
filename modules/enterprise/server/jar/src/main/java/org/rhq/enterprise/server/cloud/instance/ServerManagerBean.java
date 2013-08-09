@@ -270,7 +270,7 @@ public class ServerManagerBean implements ServerManagerLocal {
             lastEstablishedServerMode = serverMode;
             server.setOperationMode(lastEstablishedServerMode);
             server.setMtime(System.currentTimeMillis());
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.error("Unable to change HA Server Mode from " + lastEstablishedServerMode + " to " + serverMode + ": "
                 + e);
         }

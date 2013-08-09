@@ -148,9 +148,6 @@
              <goals>
                <goal>verify</goal>
              </goals>
-             <configuration>
-               <testFailureIgnore>false</testFailureIgnore>
-             </configuration>
            </execution>
          </executions>
        </plugin>

@@ -47,7 +47,6 @@ import javax.persistence.TypedQuery;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
@@ -60,7 +59,6 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
@@ -68,15 +66,11 @@ import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.operation.OperationRequestStatus;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.operation.bean.GroupOperationSchedule;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
-import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -87,7 +81,6 @@ import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
-import org.rhq.enterprise.server.resource.group.ResourceGroupManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettings;
@@ -105,14 +98,6 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageNodeManagerRemote {
 
     private final Log log = LogFactory.getLog(StorageNodeManagerBean.class);
-
-    private static final String USERNAME_PROPERTY = "rhq.cassandra.username";
-    private static final String PASSWORD_PROPERTY = "rhq.cassandra.password";
-    private final static String MAINTENANCE_OPERATION = "addNodeMaintenance";
-    private final static String MAINTENANCE_OPERATION_NOTE = "Topology change maintenance.";
-    private final static String RUN_REPAIR_PROPERTY = "runRepair";
-    private final static String UPDATE_SEEDS_LIST = "updateSeedsList";
-    private final static String SEEDS_LIST = "seedsList";
 
     private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
     private static final String RHQ_STORAGE_GOSSIP_PORT_PROPERTY = "storagePort";
@@ -150,9 +135,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private SubjectManagerLocal subjectManager;
-
-    @EJB
-    private ResourceGroupManagerLocal resourceGroupManager;
 
     @EJB
     private OperationManagerLocal operationManager;
@@ -193,7 +175,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
                 initClusterSettingsIfNecessary(pluginConfig);
-                addStorageNodeToGroup(resource);
             } else {
                 storageNode = new StorageNode();
                 storageNode.setAddress(address);
@@ -275,83 +256,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     public boolean isAddNodeMaintenanceInProgress() {
         return !entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE)
             .setParameter("operationMode", OperationMode.ADD_NODE_MAINTENANCE).getResultList().isEmpty();
-    }
-
-    @Override
-    public void createStorageNodeGroup() {
-        log.info("Creating resource group [" + STORAGE_NODE_GROUP_NAME + "]");
-
-        ResourceGroup group = new ResourceGroup(STORAGE_NODE_GROUP_NAME);
-
-        ResourceType type = resourceTypeManager.getResourceTypeByNameAndPlugin(STORAGE_NODE_RESOURCE_TYPE_NAME,
-            STORAGE_NODE_PLUGIN_NAME);
-        group.setResourceType(type);
-        group.setRecursive(false);
-
-        resourceGroupManager.createResourceGroup(subjectManager.getOverlord(), group);
-
-        addExistingStorageNodesToGroup();
-    }
-
-    private void addExistingStorageNodesToGroup() {
-        log.info("Adding existing storage nodes to resource group [" + STORAGE_NODE_GROUP_NAME + "]");
-
-        for (StorageNode node : getStorageNodes()) {
-            if (node.getResource() != null) {
-                addStorageNodeToGroup(node.getResource());
-            }
-        }
-    }
-
-    private void addStorageNodeToGroup(Resource resource) {
-        if (log.isInfoEnabled()) {
-            log.info("Adding " + resource + " to resource group [" + STORAGE_NODE_GROUP_NAME + "]");
-        }
-
-        ResourceGroup group = getStorageNodeGroup();
-        resourceGroupManager.addResourcesToGroup(subjectManager.getOverlord(), group.getId(),
-            new int[]{resource.getId()});
-    }
-
-    @Override
-    public boolean storageNodeGroupExists() {
-        Subject overlord = subjectManager.getOverlord();
-
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterResourceTypeName(STORAGE_NODE_RESOURCE_TYPE_NAME);
-        criteria.addFilterPluginName(STORAGE_NODE_PLUGIN_NAME);
-        criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
-
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(overlord, criteria);
-
-        return !groups.isEmpty();
-    }
-
-    @Override
-    public void addToStorageNodeGroup(StorageNode storageNode) {
-        storageNode.setOperationMode(OperationMode.NORMAL);
-        entityManager.merge(storageNode);
-        addStorageNodeToGroup(storageNode.getResource());
-    }
-
-    @Override
-    public ResourceGroup getStorageNodeGroup() {
-        Subject overlord = subjectManager.getOverlord();
-
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterResourceTypeName(STORAGE_NODE_RESOURCE_TYPE_NAME);
-        criteria.addFilterPluginName(STORAGE_NODE_PLUGIN_NAME);
-        criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
-        criteria.fetchExplicitResources(true);
-
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(overlord, criteria);
-
-        if (groups.isEmpty()) {
-            throw new IllegalStateException("Resource group [" + STORAGE_NODE_GROUP_NAME + "] does not exist. This " +
-                "group must exist in order for the server to manage storage nodes. Restart the server for the group " +
-                "to be recreated.");
-        }
-        return groups.get(0);
     }
 
     @Override
@@ -585,25 +489,27 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public void runReadRepair() {
-        ResourceGroup storageNodeGroup = getStorageNodeGroup();
+        // TODO Re-implement using work flow similar to how we deploy new nodes
 
-        if (storageNodeGroup.getExplicitResources().size() < 2) {
-            log.info("Skipping read repair since this is a single-node cluster");
-            return;
-        }
-
-        log.info("Scheduling read repair maintenance for storage cluster");
-
-        GroupOperationSchedule schedule = new GroupOperationSchedule();
-        schedule.setGroup(storageNodeGroup);
-        schedule.setHaltOnFailure(false);
-        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subjectManager.getOverlord());
-        schedule.setOperationName("readRepair");
-        schedule.setDescription("Run scheduled read repair on storage node");
-
-        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
+//        ResourceGroup storageNodeGroup = getStorageNodeGroup();
+//
+//        if (storageNodeGroup.getExplicitResources().size() < 2) {
+//            log.info("Skipping read repair since this is a single-node cluster");
+//            return;
+//        }
+//
+//        log.info("Scheduling read repair maintenance for storage cluster");
+//
+//        GroupOperationSchedule schedule = new GroupOperationSchedule();
+//        schedule.setGroup(storageNodeGroup);
+//        schedule.setHaltOnFailure(false);
+//        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
+//        schedule.setJobTrigger(JobTrigger.createNowTrigger());
+//        schedule.setSubject(subjectManager.getOverlord());
+//        schedule.setOperationName("readRepair");
+//        schedule.setDescription("Run scheduled read repair on storage node");
+//
+//        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
     }
 
     @Override
@@ -887,129 +793,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
 
         return successResultFound;
-    }
-
-    @Override
-    public void prepareNewNodesForBootstrap() {
-        List<StorageNode> newStorageNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE)
-            .setParameter("operationMode", OperationMode.INSTALLED).getResultList();
-        if (newStorageNodes.isEmpty()) {
-            throw new RuntimeException("Failed to find storage node to bootstrap into cluster.");
-        }
-        // Right now, without some user input, we can only reliably bootstrap one node at a
-        // time. To support bootstrapping multiple nodes concurrently, a mechanism will have
-        // to be put in place for the user to declare in advance the nodes that are coming
-        // online. Then we can wait until all declared nodes have been committed into
-        // inventory and announced to the cluster
-        StorageNode storageNode = newStorageNodes.get(0);
-
-        if (log.isInfoEnabled()) {
-            log.info("Preparing to bootstrap " + storageNode + " into cluster...");
-        }
-
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setResource(storageNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subjectManager.getOverlord());
-        schedule.setOperationName("prepareForBootstrap");
-
-        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subjectManager
-            .getOverlord());
-        Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("cqlPort", clusterSettings.getCqlPort()));
-        parameters.put(new PropertySimple("gossipPort", clusterSettings.getGossipPort()));
-        parameters.put(createPropertyListOfAddresses("storageNodeIPAddresses", getClusteredStorageNodes()));
-
-        schedule.setParameters(parameters);
-
-        operationManager.scheduleResourceOperation(subjectManager.getOverlord(), schedule);
-    }
-
-    @Override
-    public void runAddNodeMaintenance() {
-        log.info("Preparing to schedule addNodeMaintenance on the storage cluster...");
-
-        List<StorageNode> storageNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", OperationMode.NORMAL).getResultList();
-
-        // The previous cluster size will be the current size - 1 since we currently only
-        // support deploying one node at a time.
-        int previousClusterSize = storageNodes.size() - 1;
-        boolean isReadRepairNeeded;
-
-        if (previousClusterSize >= 4) {
-            // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
-            // that for additional nodes; so, there is no need to run repair if we are
-            // expanding from a 4 node cluster since the RF remains the same.
-            isReadRepairNeeded = false;
-        } else if (previousClusterSize == 1) {
-            // The RF will increase since we are going from a single to a multi-node
-            // cluster; therefore, we want to run repair.
-            isReadRepairNeeded = true;
-        } else if (previousClusterSize == 2) {
-            if (storageNodes.size() > 3) {
-                // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
-                // we want to run repair.
-                isReadRepairNeeded = true;
-            } else {
-                // If we go from 2 to 3 nodes, we keep the RF at 2 so there is no need
-                // to run repair.
-                isReadRepairNeeded = false;
-            }
-        } else if (previousClusterSize == 3) {
-            // We are increasing the cluster size > 3 which means the RF will be
-            // updated to 3; therefore, we want to run repair.
-            isReadRepairNeeded = true;
-        } else {
-            // If we cluster size of zero, then something is really screwed up. It
-            // should always be > 0.
-            isReadRepairNeeded = storageNodes.size() > 1;
-        }
-
-        if (isReadRepairNeeded) {
-            updateTopology(storageNodes);
-        }
-
-        ResourceGroup storageNodeGroup = getStorageNodeGroup();
-
-        GroupOperationSchedule schedule = new GroupOperationSchedule();
-        schedule.setGroup(storageNodeGroup);
-        schedule.setHaltOnFailure(false);
-        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subjectManager.getOverlord());
-        schedule.setOperationName(MAINTENANCE_OPERATION);
-        schedule.setDescription(MAINTENANCE_OPERATION_NOTE);
-
-        Configuration config = new Configuration();
-        config.put(createPropertyListOfAddresses(SEEDS_LIST, storageNodes));
-        config.put(new PropertySimple(RUN_REPAIR_PROPERTY, isReadRepairNeeded));
-        config.put(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
-
-        schedule.setParameters(config);
-
-        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
-    }
-
-    private void updateTopology(List<StorageNode> storageNodes) {
-        String username = getRequiredStorageProperty(USERNAME_PROPERTY);
-        String password = getRequiredStorageProperty(PASSWORD_PROPERTY);
-        SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
-        try{
-            schemaManager.updateTopology();
-        } catch (Exception e) {
-            log.error("An error occurred while applying schema topology changes", e);
-        }
-    }
-
-    private String getRequiredStorageProperty(String property) {
-        String value = System.getProperty(property);
-        if (StringUtil.isEmpty(property)) {
-            throw new IllegalStateException("The system property [" + property + "] is not set. The RHQ "
-                + "server will not be able connect to the RHQ storage node(s). This property should be defined "
-                + "in rhq-server.properties.");
-        }
-        return value;
     }
 
 }

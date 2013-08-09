@@ -104,7 +104,7 @@ public class StrippedDownStartupBeanPreparation {
         for (String seedInfo : seedsInfo) {
             StorageNode storageNode = new StorageNode();
             storageNode.parseNodeInformation(seedInfo);
-            storageNode.setOperationMode(StorageNode.OperationMode.INSTALLED);
+            storageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
             entityManager.persist(storageNode);
         }
     }

@@ -30,10 +30,9 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
-import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 
 @Local
@@ -162,38 +161,7 @@ public interface StorageNodeManagerLocal {
      */
     void runReadRepair();
 
-    /**
-     * Creates the storage node resource group which will be named {@link #STORAGE_NODE_GROUP_NAME}. This method should
-     * only be called at start up by {@link org.rhq.enterprise.server.storage.StorageClientManagerBean StorageClientManagerBean}.
-     * Storage node entities created during installation will be added to the group.
-     */
-    void createStorageNodeGroup();
-
-    /**
-     * Checks whether or not the storage node resource group exists. This method is very similar to
-     * {@link #getStorageNodeGroup()} but may be called prior to the group being created.
-     *
-     * @return true if the storage node resource group exists, false otherwise.
-     */
-    boolean storageNodeGroupExists();
-
-    void addToStorageNodeGroup(StorageNode storageNode);
-
-    /**
-     * This method assumes the storage node resource group already exists; as such, it should only be called from places
-     * in the code that are after the point(s) where the group has been created.
-     *
-     * @return The storage node resource group.
-     * @throws IllegalStateException if the group is not found or does not exist.
-     */
-    ResourceGroup getStorageNodeGroup();
-    
-
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
-
-    void prepareNewNodesForBootstrap();
-
-    void runAddNodeMaintenance();
 
     Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject, StorageNode node, long beginTime, long endTime, int numPoints);
 

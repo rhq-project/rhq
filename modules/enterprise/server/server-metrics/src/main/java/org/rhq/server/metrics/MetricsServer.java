@@ -87,10 +87,8 @@ public class MetricsServer {
         this.dateTimeService = dateTimeService;
     }
 
-    public void init(boolean isNewServerInstall, long serverInstallTime) {
-        if (!isNewServerInstall) {
-            determineMostRecentRawDataSinceLastShutdown(serverInstallTime);
-        }
+    public void init(long serverInstallTime) {
+        determineMostRecentRawDataSinceLastShutdown(serverInstallTime);
     }
 
     private void determineMostRecentRawDataSinceLastShutdown(long serverInstallTime) {

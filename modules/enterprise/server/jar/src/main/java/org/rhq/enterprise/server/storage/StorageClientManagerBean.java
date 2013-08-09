@@ -83,11 +83,6 @@ public class StorageClientManagerBean {
 
         log.info("Initializing storage client subsystem");
 
-        boolean isNewServerInstall = !storageNodeManager.storageNodeGroupExists();
-        if (isNewServerInstall) {
-            storageNodeManager.createStorageNodeGroup();
-        }
-
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
@@ -107,7 +102,7 @@ public class StorageClientManagerBean {
 
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
-        initMetricsServer(isNewServerInstall, ctime);
+        initMetricsServer(ctime);
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");
@@ -141,7 +136,7 @@ public class StorageClientManagerBean {
     }
 
     public MetricsConfiguration getMetricsConfiguration() {
-        return this.metricsConfiguration;
+        return metricsConfiguration;
     }
 
     public boolean isClusterAvailable() {
@@ -180,7 +175,7 @@ public class StorageClientManagerBean {
         return cluster.connect(RHQ_KEYSPACE);
     }
 
-    private void initMetricsServer(boolean isNewInstall, long serverInstallTime) {
+    private void initMetricsServer(long serverInstallTime) {
         if (log.isDebugEnabled()) {
             log.debug("Initializing " + MetricsServer.class.getName());
         }
@@ -191,7 +186,7 @@ public class StorageClientManagerBean {
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
-        metricsServer.init(isNewInstall, serverInstallTime);
+        metricsServer.init(serverInstallTime);
     }
 
     private String getRequiredStorageProperty(String property) {

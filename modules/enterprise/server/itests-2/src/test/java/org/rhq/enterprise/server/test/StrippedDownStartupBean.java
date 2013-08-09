@@ -64,20 +64,10 @@ public class StrippedDownStartupBean {
 
     /**
      * <p>
-     * Purges the storage node resource group, test server, and any storage nodes created during server initialization
-     * from a prior test run.
-     * </p>
-     * <p>
-     * Note that the storage node group deletion simply removes the entity from the rhq_resource_group table. At this
-     * point in the deployment, {@link ResourceGroupManagerLocal#deleteResourceGroup(org.rhq.core.domain.auth.Subject, int)}
-     * cannot be used; therefore, any test that added storage node resources to the group should take care of removing
-     * them as well.
+     * Purges the test server and any storage nodes created during server initialization from a prior test run.
      * </p>
      */
     public void purgeTestServerAndStorageNodes() {
-        entityManager.createQuery("DELETE FROM " + ResourceGroup.class.getName() + " WHERE name = :storageNodeGroup")
-            .setParameter("storageNodeGroup", STORAGE_NODE_GROUP_NAME)
-            .executeUpdate();
         entityManager.createQuery("DELETE FROM " + StorageNode.class.getName()).executeUpdate();
         entityManager.createQuery("DELETE FROM " + Server.class.getName() + " WHERE name = :serverName")
             .setParameter("serverName", TestConstants.RHQ_TEST_SERVER_NAME)

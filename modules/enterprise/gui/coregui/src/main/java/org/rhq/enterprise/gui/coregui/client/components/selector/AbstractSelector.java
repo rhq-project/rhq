@@ -65,9 +65,9 @@ import com.smartgwt.client.widgets.layout.VStack;
 
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVStack;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 
 /**
  * @author Greg Hinkle
@@ -344,7 +344,7 @@ public abstract class AbstractSelector<T, C extends org.rhq.core.domain.criteria
         return availableSectionStack;
     }
 
-    private void populateAvailableGrid(Criteria criteria) {
+    protected void populateAvailableGrid(Criteria criteria) {
         // TODO until http://code.google.com/p/smartgwt/issues/detail?id=490 is fixed always go to the server for data
         this.datasource.invalidateCache();
         DSRequest requestProperties = new DSRequest();

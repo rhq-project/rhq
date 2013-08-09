@@ -261,7 +261,7 @@ public class StorageNodeComponentITest {
     @Test(dependsOnMethods = "restartStorageNode")
     public void prepareForBootstrap() throws Exception {
         Configuration params = Configuration.builder().addSimple("cqlPort", 9242).addSimple("gossipPort", 7200)
-            .openList("storageNodeIPAddresses", "storageNodeIPAddresse").addSimples("127.0.0.1", "127.0.0.2")
+            .openList("addresses", "address").addSimples("127.0.0.1", "127.0.0.2")
             .closeList().build();
 
         OperationManager operationManager = PluginContainer.getInstance().getOperationManager();

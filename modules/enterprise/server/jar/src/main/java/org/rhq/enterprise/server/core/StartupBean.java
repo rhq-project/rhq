@@ -185,6 +185,10 @@ public class StartupBean implements StartupLocal {
             log.error("Could not load ResourceFacets cache.", t);
         }
 
+        //Server depends on the storage cluster availability. Since the storage client init just
+        //establishes connectivity with the storage cluster, then run it before the server init.
+        initStorageClient();
+
         // Before starting determine the operating mode of this server and
         // take any necessary initialization action. Must happen before comm startup since listeners
         // may be added.
@@ -203,7 +207,6 @@ public class StartupBean implements StartupLocal {
         startPluginDeployer(); // make sure this is initialized before starting the server plugin container
         startServerPluginContainer(); // before comm in case an agent wants to talk to it
         upgradeRhqUserSecurityDomainIfNeeded();
-        initStorageClient();
         startServerCommunicationServices();
         startScheduler();
         scheduleJobs();
@@ -436,7 +439,6 @@ public class StartupBean implements StartupLocal {
      */
     private void initStorageClient() {
         storageClientManager.init();
-        serverManager.establishCurrentServerMode();
     }
 
     /**
@@ -659,7 +661,7 @@ public class StartupBean implements StartupLocal {
             log.error("Cannot create storage cluster read repair job", e);
         }
     }
-    
+
    /**
      * This seeds the agent clients cache with clients for all known agents. These clients will be started so they can
      * immediately begin to send any persisted guaranteed messages that might already exist. This method must be called

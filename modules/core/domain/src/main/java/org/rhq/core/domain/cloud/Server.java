@@ -241,19 +241,19 @@ public class Server implements Serializable {
         NORMAL("This server is a Normal Member of the HA server cloud", true);
 
         public final String message;
-        private final boolean configurable;
+        private final boolean readOnly;
 
         private OperationMode(String message, boolean configurable) {
             this.message = message;
-            this.configurable = configurable;
+            this.readOnly = configurable;
         }
 
         public String getMessage() {
             return message;
         }
 
-        public boolean isConfigurable() {
-            return configurable;
+        public boolean isReadOnly() {
+            return readOnly;
         }
     }
 

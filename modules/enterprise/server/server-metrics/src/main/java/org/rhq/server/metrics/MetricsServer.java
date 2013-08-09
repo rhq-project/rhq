@@ -69,8 +69,6 @@ public class MetricsServer {
 
     private Semaphore semaphore = new Semaphore(100);
 
-    private boolean shutdown = false;
-
     private boolean pastAggregationMissed;
 
     private Long mostRecentRawDataPriorToStartup;
@@ -87,16 +85,24 @@ public class MetricsServer {
         this.dateTimeService = dateTimeService;
     }
 
-    public void init(long serverInstallTime) {
-        determineMostRecentRawDataSinceLastShutdown(serverInstallTime);
+    public void init() {
+        determineMostRecentRawDataSinceLastShutdown();
     }
 
-    private void determineMostRecentRawDataSinceLastShutdown(long serverInstallTime) {
+    /**
+     * In normal operating mode we compute aggregates from the last hour. If the server has
+     * been down, we need to determine the most recently stored raw data so we know the
+     * starting hour for which to compute aggregates. We only need to check up to the raw
+     * retention period though since anything older than that will automatically get
+     * purged.
+     */
+    private void determineMostRecentRawDataSinceLastShutdown() {
         DateTime previousHour = currentHour().minusHours(1);
+        DateTime oldestRawTime = previousHour.minus(configuration.getRawRetention());
 
         ResultSet resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
         Row row = resultSet.one();
-        while (row == null && previousHour.getMillis() >= serverInstallTime) {
+        while (row == null && previousHour.compareTo(oldestRawTime) > 0) {
             previousHour = previousHour.minusHours(1);
             resultSet = dao.setFindTimeSliceForIndex(MetricsTable.ONE_HOUR, previousHour.getMillis());
             row = resultSet.one();
@@ -129,7 +135,6 @@ public class MetricsServer {
     }
 
     public void shutdown() {
-        shutdown = true;
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {

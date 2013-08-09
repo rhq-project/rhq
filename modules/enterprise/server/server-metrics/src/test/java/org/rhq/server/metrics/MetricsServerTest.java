@@ -355,7 +355,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
         metricsServer.setCurrentHour(hour15);
-        metricsServer.init(hour0().plusHours(2).getMillis());
+        metricsServer.init();
 
         rawData = new HashSet<MeasurementDataNumeric>();
         rawData.add(new MeasurementDataNumeric(hour14.plusMinutes(20).getMillis(), scheduleId, 3.0));
@@ -420,7 +420,7 @@ public class MetricsServerTest extends CassandraIntegrationTest {
         //  2) re-initialize the metrics server
         //  3) insert some more raw data
         metricsServer.setCurrentHour(hour9);
-        metricsServer.init(hour0().minusDays(1).plusHours(4).getMillis());
+        metricsServer.init();
 
         rawData = new HashSet<MeasurementDataNumeric>();
         rawData.add(new MeasurementDataNumeric(hour8.plusMinutes(20).getMillis(), scheduleId, 8.0));

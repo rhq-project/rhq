@@ -40,7 +40,6 @@ import java.util.regex.Pattern;
 import javax.ejb.EJB;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
-import javax.management.ObjectInstance;
 import javax.management.ObjectName;
 import javax.naming.Context;
 import javax.naming.InitialContext;
@@ -527,7 +526,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                         }
                     }
                 }
-                storageClientManager.init(System.currentTimeMillis() - 100000);
+                storageClientManager.init();
                 beforeMethod();
                 beforeMethod(method);
 

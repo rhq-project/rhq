@@ -73,7 +73,7 @@ public class StorageClientManagerBean {
     private boolean initialized;
     private StorageClusterMonitor storageClusterMonitor;
 
-    public synchronized void init(long ctime) {
+    public synchronized void init() {
         if (initialized) {
             if (log.isDebugEnabled()) {
                 log.debug("Storage client subsystem is already initialized. Skipping initialization.");
@@ -102,7 +102,7 @@ public class StorageClientManagerBean {
 
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
-        initMetricsServer(ctime);
+        initMetricsServer();
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");
@@ -175,7 +175,7 @@ public class StorageClientManagerBean {
         return cluster.connect(RHQ_KEYSPACE);
     }
 
-    private void initMetricsServer(long serverInstallTime) {
+    private void initMetricsServer() {
         if (log.isDebugEnabled()) {
             log.debug("Initializing " + MetricsServer.class.getName());
         }
@@ -186,7 +186,7 @@ public class StorageClientManagerBean {
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
-        metricsServer.init(serverInstallTime);
+        metricsServer.init();
     }
 
     private String getRequiredStorageProperty(String property) {

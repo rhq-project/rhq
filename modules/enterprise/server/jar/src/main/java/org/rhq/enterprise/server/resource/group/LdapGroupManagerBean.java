@@ -96,14 +96,15 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     private static boolean groupQueryComplete = false;
     private static int groupQueryResultCount = 0;
     private static long groupQueryStartTime = -1;
-    private static long groupQueryEndTime = -1;
+    private static long groupQueryCurrentTime = -1;
     private static int groupQueryPageCount = 0;
+    private static final int LDAP_GROUP_QUERY_LIMIT = 20000;//start to see a lot of ui responsiveness issues beyond this.
 
     private void resetGroupQueryDetails() {
         groupQueryComplete = false;
         groupQueryResultCount = 0;
         groupQueryStartTime = -1;
-        groupQueryEndTime = -1;
+        groupQueryCurrentTime = -1;
         groupQueryPageCount = 0;
     }
     public Set<Map<String, String>> findAvailableGroups() {
@@ -138,8 +139,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         availableGroupsQueryStatus.add(buildStatusEntry("query.results.parsed", String.valueOf(groupQueryResultCount)));
         //query.start.time => timestamp
         availableGroupsQueryStatus.add(buildStatusEntry("query.start.time", String.valueOf(groupQueryStartTime)));
-        //query.end.time => timestamp|-1
-        availableGroupsQueryStatus.add(buildStatusEntry("query.end.time", String.valueOf(groupQueryEndTime)));
+        //query.current.time => timestamp|-1
+        availableGroupsQueryStatus.add(buildStatusEntry("query.current.time", String.valueOf(groupQueryCurrentTime)));
         //query.page.count => 0...N
         availableGroupsQueryStatus.add(buildStatusEntry("query.page.count", String.valueOf(groupQueryPageCount)));
 
@@ -470,8 +471,11 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                     int passedInPageSize = -1;
                     try {
                         passedInPageSize = Integer.valueOf(groupPageSize.trim());
-                        if (passedInPageSize > 0) {
+                        if ((passedInPageSize > 0) && (passedInPageSize <= LDAP_GROUP_QUERY_LIMIT)) {
                             defaultPageSize = passedInPageSize;
+                        } else {//keep defaults and log actual value being used.
+                            log.debug("LDAP Group Page Size passed '" + groupPageSize
+                                + "' was ignored. Defaulting to 1000.");
                         }
                     } catch (NumberFormatException nfe) {
                         //log issue and do nothing. Go with the default.
@@ -494,6 +498,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
 
                 //update queryResultCount
                 groupQueryResultCount = groupDetailsMap.size();
+                groupQueryCurrentTime = System.currentTimeMillis();
 
                 // continually parsing pages of results until we're done.
                 // only if they're enabled in the UI.
@@ -511,7 +516,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                         }
                     }
                     //continually parsing pages of results until we're done.
-                    while (cookie != null) {
+                    while ((groupQueryResultCount <= LDAP_GROUP_QUERY_LIMIT) && (cookie != null)) {
                         //ensure the next requests contains the session/cookie details
                         ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, cookie,
                             Control.CRITICAL) });
@@ -520,19 +525,21 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                         //update Query state after each page
                         groupQueryResultCount = groupDetailsMap.size();
                         groupQueryPageCount++;
+                        groupQueryCurrentTime = System.currentTimeMillis();
 
                         //empty out cookie
                         cookie = null;
-                        //test for further iterations
-                        controls = ctx.getResponseControls();
-                        if (controls != null) {
-                            for (Control control : controls) {
-                                if (control instanceof PagedResultsResponseControl) {
-                                    PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
-                                    cookie = pagedResult.getCookie();
+                        //insert group query throttle.
+                            //test for further iterations
+                            controls = ctx.getResponseControls();
+                            if (controls != null) {
+                                for (Control control : controls) {
+                                    if (control instanceof PagedResultsResponseControl) {
+                                        PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
+                                        cookie = pagedResult.getCookie();
+                                    }
                                 }
                             }
-                        }
                     }
                 }
             }
@@ -553,7 +560,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             throw new LdapCommunicationException(iex);
         }
         //update end of query information
-        groupQueryEndTime = System.currentTimeMillis();
+        groupQueryCurrentTime = System.currentTimeMillis();
         groupQueryComplete = true;
         return groupDetailsMap;
     }
@@ -575,7 +582,9 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
         //execute search based on controls and context passed in.
         NamingEnumeration<SearchResult> answer = ctx.search(baseDNs[x], filter, searchControls);
         boolean ldapApiEnumerationBugEncountered = false;
-        while ((!ldapApiEnumerationBugEncountered) && answer.hasMoreElements()) {//BZ:582471- ldap api bug change
+        int resultCount = 0;
+        while ((resultCount <= LDAP_GROUP_QUERY_LIMIT) && (groupDetailsMap.size() <= LDAP_GROUP_QUERY_LIMIT)
+            && (!ldapApiEnumerationBugEncountered) && answer.hasMoreElements()) {//BZ:582471- ldap api bug change
             // We use the first match
             SearchResult si = null;
             try {
@@ -595,6 +604,7 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             entry.put("name", name);
             entry.put("description", description);
             groupDetailsMap.add(entry);
+            resultCount++;
         }
     }
 

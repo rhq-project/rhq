@@ -23,21 +23,19 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.HTMLFlow;
 
-import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
-import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 
 /**
  * Contains the javascript chart definition for an implementation of the d3 availability chart. This implementation is
- * just a line that changes color based on availability type: up=green, down=red, orange=disabled, unknown=grey,
- * empty=grey, warn=yellow.  This version of the availability graph shows continuous intervals.
+ * just a line that changes color based on availability type: up=green, down=red, unknown=grey, warn=yellow.
+ * This version of the availability graph shows continuous intervals.
  *
  * @author Mike Thompson
  */
 public class AvailabilitySummaryPieGraphType {
 
-    public static final int HEIGHT = 100;
-    public static final int WIDTH = 100;
+    public static final int HEIGHT = 75;
+    public static final int WIDTH = 75;
 
     private List<AvailabilitySummary> availabilitySummaries;
 
@@ -73,9 +71,7 @@ public class AvailabilitySummaryPieGraphType {
             // loop through the avail intervals
             for (AvailabilitySummary availabilitySummary : availabilitySummaries) {
                 sb.append("{ \"label\":\"" + availabilitySummary.getLabel() + "\", ");
-                sb.append(" \"value\": \""
-                    + MeasurementConverterClient.format(availabilitySummary.getValue(), MeasurementUnits.PERCENTAGE,
-                        true) + "\" },");
+                sb.append(" \"value\": \"" + availabilitySummary.getValue() *  100 + "\" },");
             }
             sb.setLength(sb.length() - 1);
         }
@@ -90,48 +86,74 @@ public class AvailabilitySummaryPieGraphType {
      */
     public native void drawJsniChart() /*-{
         console.log("Draw Availability Summary Pie Chart");
+        var global = this;
 
-        var global = this,
-                w = @org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::WIDTH,
+        var availPieGraph = (function () {
+            "use strict";
+
+            var w = @org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::WIDTH,
                 h = @org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::HEIGHT,
-                r = h / 2,
-                color = $wnd.d3.scale.category10(),
-                data = global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::getAvailabilitySummaryJson()(),
-                vis = $wnd.d3.select("#availSummaryChart svg")
-                        .append("g")
-                        .data(data)
-                        .attr("width", w)
-                        .attr("height", h)
-                        .attr("transform", "translate(" + r + "," + r + ")"),
-                arc = $wnd.d3.svg.arc()
-                        .outerRadius(r),
-                pie = $wnd.d3.layout.pie(),
-                arcs = vis.selectAll("g.slice")
-                        .data(pie)
-                        .enter()
-                        .append("g")
-                        .attr("class", "slice");
+                    outerRadius = w / 2,
+                    innerRadius = 0,
+                    data = $wnd.jQuery.parseJSON(global.@org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilitySummaryPieGraphType::getAvailabilitySummaryJson()());
 
-        arcs.append("path")
-                .attr("fill", function (d, i) {
-                    return color(i);
-                })
-                .attr("d", arc);
+            function drawPieGraph() {
 
-        arcs.append("text")
-                .attr("transform", function (d) {
-                    d.innerRadius = 0;
-                    d.outerRadius = r;
-                    return "translate(" + arc.centroid(d) + ")";
-                })
-                .attr("text-anchor", "middle")
-                .style("font-size", "9px")
-                .style("font-family", "Arial, Verdana, sans-serif;")
-                .attr("fill", "#000")
-                .text(function (d, i) {
-                    return data[i].value;
-                });
-        console.log("done with avail summary pie graph");
+                var arc = $wnd.d3.svg.arc()
+                                .innerRadius(innerRadius)
+                                .outerRadius(outerRadius),
+
+                        pie = $wnd.d3.layout.pie()
+                                .value(function (d) {
+                                    return d.value;
+                                }),
+
+                        colorScale = $wnd.d3.scale.ordinal().range(["#8cbe89", "#c5888b", "#d8d8d8"]),
+
+                        svg = $wnd.d3.select("#availSummaryChart svg")
+                                .append("g")
+                                .attr("width", w)
+                                .attr("height", h),
+
+                        arcs = svg.selectAll("g.arc")
+                                .data(pie(data))
+                                .enter()
+                                .append("g")
+                                .attr("class", "arc")
+                                .attr("transform", "translate(" + outerRadius + "," + outerRadius + ")");
+
+                arcs.append("path")
+                        .attr("fill", function (d, i) {
+                            return colorScale(i);
+                        })
+                        .attr("d", arc).append("title").text(function (d) {
+                            return d.label;
+                        });
+
+                arcs.append("text")
+                        .attr("transform", function (d) {
+                            return "translate(" + arc.centroid(d) + ")";
+                        })
+                        .attr("text-anchor", "middle")
+                        .attr("fill", "#FFF")
+                        .style("font-size", "12px")
+                        .style("font-family", "Arial, Verdana, sans-serif;")
+                        .text(function (d) {
+                            return d.value;
+                        });
+            }
+
+            return {
+                drawGraph: function () {
+                    return drawPieGraph();
+                }
+
+            };
+
+        })();
+
+        availPieGraph.drawGraph();
+        console.log("done with avail summary pie graph drawing");
 
     }-*/;
 

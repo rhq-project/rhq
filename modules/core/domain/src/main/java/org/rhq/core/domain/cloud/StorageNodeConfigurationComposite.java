@@ -120,7 +120,8 @@ public class StorageNodeConfigurationComposite implements Serializable {
      */
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        builder.append("storageNode.addresss=").append(storageNode.getAddress()).append(", ");
+        builder.append("storageNode.addresss=").append(storageNode == null ? "unknown" : storageNode.getAddress())
+            .append(", ");
         builder.append("jmxPort=").append(jmxPort).append(",");
         builder.append("heapSize=").append(heapSize).append(", ");
         builder.append("heapNewSize=").append(heapSize).append(", ");

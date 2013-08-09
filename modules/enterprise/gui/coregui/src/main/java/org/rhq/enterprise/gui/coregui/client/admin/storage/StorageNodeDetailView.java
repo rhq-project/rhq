@@ -29,10 +29,8 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -48,10 +46,6 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
-import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyDefinition;
-import org.rhq.core.domain.configuration.definition.PropertyGroupDefinition;
-import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
@@ -64,10 +58,6 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ConfigurationFilter;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.configuration.ResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
@@ -94,10 +84,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private SectionStackSection operationSection;
     private SectionStackSection detailsAndLoadSection;
     private StaticTextItem alertsItem;
-    private int expandedSection = -1;
     private HTMLFlow header;
-    private ChartViewWindow window;
-    private D3GraphListView graphView;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
@@ -114,14 +101,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
-//        sectionStack.setMargin(5);
-//        sectionStack.setOverflow(Overflow.VISIBLE);
+        sectionStack.setCanResizeSections(false);
     }
-    
-//    public StorageNodeDetailView(int storageNodeId, int expandedSection) {
-//        this(storageNodeId);
-//        this.expandedSection = expandedSection;
-//    }
 
     @Override
     protected void onInit() {
@@ -140,17 +121,9 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     final StorageNode node = storageNodes.get(0);
                     header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
                         + node.getAddress() + ")</div>");
-                    Resource res = node.getResource();
-                    if (res != null) {
-//                        fetchResourceComposite(res.getId());
-                    } else {
-                        // skip this if the resource id is not there
-                        initSectionCount++;
-                    }
                     fetchStorageNodeConfigurationComposite(node);
                     prepareDetailsSection(node);
                     fetchSparkLineDataForLoadComponent(node);
-                    
                 }
 
                 public void onFailure(Throwable caught) {
@@ -180,32 +153,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                 }
             });
     }
-    
-//    private void fetchResourceComposite(final int resourceId) {
-//        ResourceCriteria resourceCriteria = new ResourceCriteria();
-//        resourceCriteria.addFilterId(resourceId);
-//        GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(resourceCriteria,
-//            new AsyncCallback<PageList<ResourceComposite>>() {
-//                @Override
-//                public void onFailure(Throwable caught) {
-//                    Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
-//                        Message.Severity.Warning);
-//                    CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
-//                    initSectionCount = SECTION_COUNT;
-//                }
-//
-//                @Override
-//                public void onSuccess(PageList<ResourceComposite> result) {
-//                    if (result.isEmpty()) {
-//                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
-//                    } else {
-//                        final ResourceComposite resourceComposite = result.get(0);
-////                        prepareOperationHistory(resourceComposite);
-//                        prepareResourceConfigEditor(resourceComposite);
-//                    }
-//                }
-//            });
-//    }
     
     private void fetchSparkLineDataForLoadComponent(final StorageNode storageNode) {
 
@@ -277,12 +224,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     if (null != configurationSection) {
                         sectionStack.addSection(configurationSection);
                     }
-//                    if (expandedSection != -1) {
-//                        for (int i = 1; i < SECTION_COUNT; i++) {
-//                            sectionStack.collapseSection(i);
-//                        }
-//                        sectionStack.expandSection(expandedSection);
-//                    }
                     addMember(sectionStack);
                     markForRedraw();
 
@@ -399,42 +340,12 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         initSectionCount++;
     }
     
-//    private void prepareResourceConfigEditor(ResourceComposite resourceComposite) {
     private void prepareResourceConfigEditor(final StorageNodeConfigurationComposite configuration) {
-
+      LayoutSpacer spacer = new LayoutSpacer();
+      spacer.setHeight(15);
       StorageNodeConfigurationEditor editorView = new StorageNodeConfigurationEditor(configuration);
-
-//        ResourceConfigurationEditView editorView = new ResourceConfigurationEditView(resourceComposite);
-//        ConfigurationFilter filter = new ConfigurationFilter() {
-//            @Override
-//            public ConfigurationDefinition filter(ConfigurationDefinition definition) {
-//                Map<String, PropertyDefinition> filteredConfigurationDefinition = new HashMap<String, PropertyDefinition>();
-//                PropertyGroupDefinition groupDef = null;
-//                for (Entry<String, PropertyDefinition> propertyDefinitionEntry : definition.getPropertyDefinitions().entrySet()) {
-//                    PropertyDefinition propertyDefinition = propertyDefinitionEntry.getValue();
-//                    if (propertyDefinition.getPropertyGroupDefinition() != null) {
-//                        if (groupDef == null) {
-//                            groupDef = propertyDefinition.getPropertyGroupDefinition();
-////                            groupDef.setName("Storage Node Settings");
-//                        }
-//                        propertyDefinition.setPropertyGroupDefinition(groupDef);
-//                    }
-//                    if (!"heapDumpOnOOMError".equals(propertyDefinition.getName())
-//                        && !"heapDumpDir".equals(propertyDefinition.getName())
-//                        && !"minHeapSize".equals(propertyDefinition.getName())
-//                        && !"gossipPort".equals(propertyDefinition.getName())
-//                        && !"cqlPort".equals(propertyDefinition.getName())) {
-//                        filteredConfigurationDefinition.put(propertyDefinitionEntry.getKey(),
-//                            propertyDefinitionEntry.getValue());
-//                    }
-//                }
-//                definition.setPropertyDefinitions(filteredConfigurationDefinition);
-//                return definition;
-//            }
-//        };
-//        editorView.setFilter(filter);
         SectionStackSection section = new SectionStackSection("Configuration");
-        section.setItems(editorView);
+        section.setItems(spacer, editorView);
         section.setExpanded(true);
         section.setCanCollapse(false);
 
@@ -444,16 +355,8 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     
     @Override
     public void renderView(ViewPath viewPath) {
-        if (viewPath.toString().endsWith("/Config")) {
-//            for (int i = 1; i < SECTION_COUNT; i++) {
-//                sectionStack.collapseSection(i);
-//            }
-            expandedSection = 2;
-//            sectionStack.expandSection(expandedSection);
-//            detailsSection.setExpanded(false);
-//            loadSection.setExpanded(false);
-//            historySection.setExpanded(true);
-        }
+//        if (viewPath.toString().endsWith("/Config")) {
+//        }
         Log.debug("StorageNodeDetailView: " + viewPath);
     }
 }

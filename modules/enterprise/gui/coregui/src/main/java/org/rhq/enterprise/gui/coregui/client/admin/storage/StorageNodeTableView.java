@@ -189,7 +189,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        HTMLFlow header = new HTMLFlow("id = " + id);
+        HTMLFlow header = new HTMLFlow("");
         setHeader(header);
         return new StorageNodeDetailView(id, header);
     }

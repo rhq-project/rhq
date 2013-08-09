@@ -83,4 +83,6 @@ public interface StorageGWTService extends RemoteService {
     Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(StorageNode node, int lastN, int unit, int numPoints) throws RuntimeException;
     
     StorageNodeConfigurationComposite retrieveConfiguration(StorageNode storageNode) throws RuntimeException;
+    
+    boolean updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException;
 }

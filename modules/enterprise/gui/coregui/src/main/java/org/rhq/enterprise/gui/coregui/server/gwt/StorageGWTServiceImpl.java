@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
@@ -158,6 +157,15 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
         try {
             return SerialUtility.prepare(storageNodeManager.retrieveConfiguration(getSessionSubject(), storageNode),
                 "StorageGWTServiceImpl.retrieveConfiguration");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public boolean updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException {
+        try {
+            return storageNodeManager.updateConfiguration(getSessionSubject(), storageNodeConfiguration);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

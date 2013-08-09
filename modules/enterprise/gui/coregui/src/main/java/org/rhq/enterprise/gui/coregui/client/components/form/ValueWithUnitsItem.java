@@ -59,18 +59,18 @@ public class ValueWithUnitsItem extends CanvasItem {
 
         if (supportedUnits != null && !supportedUnits.isEmpty()) {
             this.supportedUnits = supportedUnits;
-            if (null == this.valueUnit) {
-                this.valueUnit = supportedUnits.iterator().next();
+            if (null == valueUnit) {
+                valueUnit = supportedUnits.iterator().next();
             }
         }
 
-        this.form = new EnhancedDynamicForm(false, false);
-        this.form.setNumCols(2);
-        this.form.setColWidths("126", "60");
+        form = new EnhancedDynamicForm(false, false);
+        form.setNumCols(2);
+        form.setColWidths("126", "60");
 
         final IntegerItem valueItem = new IntegerItem(FIELD_VALUE, title);
         valueItem.setShowTitle(getShowTitle());
-        valueItem.setValue(getValue());
+        valueItem.setValue(super.getValue());
         IntegerRangeValidator integerRangeValidator = new IntegerRangeValidator();
         integerRangeValidator.setMin(1);
         integerRangeValidator.setMax(Integer.MAX_VALUE);
@@ -82,7 +82,7 @@ public class ValueWithUnitsItem extends CanvasItem {
 
         LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
         for (MeasurementUnits unit : supportedUnits) {
-            valueMap.put(unit.name().toLowerCase(), unit.toString());
+            valueMap.put(unit.toString(), unit.toString());
         }
         unitsItem.setValueMap(valueMap);
         unitsItem.setDefaultToFirstOption(true);
@@ -91,7 +91,7 @@ public class ValueWithUnitsItem extends CanvasItem {
         valueItem.setWidth(126);
         unitsItem.setWidth(60);
 
-        setCanvas(this.form);
+        setCanvas(form);
     }
 
     @Override
@@ -109,24 +109,29 @@ public class ValueWithUnitsItem extends CanvasItem {
             throw new IllegalArgumentException(MSG.widget_durationItem_unitTypeNotSupported(unitType.name()));
         }
         if (value != null) {
-            this.form.setValue(FIELD_VALUE, value);
+            form.setValue(FIELD_VALUE, value);
         } else {
-            this.form.setValue(FIELD_VALUE, (String) null);
+            form.setValue(FIELD_VALUE, (String) null);
         }
-        this.form.setValue(FIELD_UNITS, this.valueUnit.name().toLowerCase());
+        form.setValue(FIELD_UNITS, valueUnit.toString());
 
         setValue(value);
+    }
+    
+    @Override
+    public Object getValue() {
+        return form.getValue(FIELD_VALUE).toString() + form.getValue(FIELD_UNITS).toString();
     }
 
     @Override
     public Boolean validate() {
-        return this.form.validate();
+        return form.validate();
     }
 
     public void setContextualHelp(String contextualHelp) {
         if (contextualHelp != null) {
             FormItem item;
-            item = this.form.getItem(FIELD_UNITS);
+            item = form.getItem(FIELD_UNITS);
             FormUtility.addContextualHelp(item, contextualHelp);
         }
     }

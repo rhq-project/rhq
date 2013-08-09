@@ -88,7 +88,6 @@ import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
-import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -436,13 +435,6 @@ public class StartupBean implements StartupLocal {
      * Initalizes the storage client subsystem which is needed for reading/writing metric data.
      */
     private void initStorageClient() {
-        try {
-            //add the cluster maintenance job to the list of available jobs.
-            schedulerBean.scheduleTriggeredJob(StorageNodeMaintenanceJob.class, false, null);
-        } catch (Exception e) {
-            log.error("Cannot create storage node maintenance job.", e);
-        }
-
         storageClientManager.init(serverManager.getServer().getCtime());
         serverManager.establishCurrentServerMode();
     }

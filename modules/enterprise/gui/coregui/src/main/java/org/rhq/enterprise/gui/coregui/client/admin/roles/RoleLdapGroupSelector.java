@@ -97,16 +97,13 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
         int groupPanelWidth = 375;
         int groupPanelHeight = 150;
 
-        // final TextItem search = new TextItem("search",
-        // MSG.common_title_search());
-
         // Structure the display area into two separate display regions
         // Available Groups region
         final DynamicForm availableGroupDetails = new DynamicForm();
         {
             availableGroupDetails.setWidth(groupPanelWidth);
             availableGroupDetails.setHeight(groupPanelHeight);
-            availableGroupDetails.setGroupTitle("Available Groups Results");
+            availableGroupDetails.setGroupTitle(MSG.common_title_ldapGroupsAvailable());
             availableGroupDetails.setIsGroup(true);
             availableGroupDetails.setWrapItemTitles(false);
             //add itemChanged handler to listen for changes to SearchItem
@@ -129,21 +126,21 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                 }
             });
         }
-        final TextItem resultCountItem = new TextItem("resultCount", "Groups Found");
+        final TextItem resultCountItem = new TextItem("resultCount", MSG.common_title_groupsFound());
         {
             resultCountItem.setCanEdit(false);
             resultCountItem.setWidth("100%");
         }
-        final TextItem pageCountItem = new TextItem("pageCount", "Query Pages Parsed");
+        final TextItem pageCountItem = new TextItem("pageCount", MSG.common_title_queryPagesParsed());
         {
             pageCountItem.setCanEdit(false);
             pageCountItem.setWidth("100%");
         }
-        final TextAreaItem adviceItem = new TextAreaItem("advice", "Suggest");
+        final TextAreaItem adviceItem = new TextAreaItem("advice", MSG.common_title_suggest());
         {
             adviceItem.setWidth("100%");
             adviceItem.setHeight(20);
-            String feedback = "(None)";
+            String feedback = MSG.common_val_none();
             adviceItem.setValue(feedback);
             adviceItem.setTooltip(feedback);
             adviceItem.setDisabled(true);
@@ -162,13 +159,12 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                 }
             });
         }
-        // final TextItem search = new TextItem("search",
-        // MSG.common_title_search());
+        //Customize Search component
         {
-            searchTextItem.setName("search");
-            searchTextItem.setTitle("Filter[results below]");
+            searchTextItem.setName(MSG.common_title_search());
+            searchTextItem.setTitle(MSG.common_title_filterResultsBelow());
             searchTextItem.setWidth("100%");
-            searchTextItem.setTooltip("Start typing here to only show groups containing the typed characters.");
+            searchTextItem.setTooltip(MSG.common_msg_typeToFilterResults());
         }
         final FormItemIcon loadingIcon = new FormItemIcon();
         final FormItemIcon successIcon = new FormItemIcon();
@@ -186,8 +182,8 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
         final StaticTextItem groupQueryStatus = new StaticTextItem();
         {
             groupQueryStatus.setName("groupQueryStatus");
-            groupQueryStatus.setTitle("Query Progress");
-            groupQueryStatus.setDefaultValue("Loading...");
+            groupQueryStatus.setTitle(MSG.common_title_queryProgress());
+            groupQueryStatus.setDefaultValue(MSG.common_msg_loading());
             groupQueryStatus.setIcons(loadingIcon);
         }
         availableGroupDetails.setItems(resultCountItem, pageCountItem, groupQueryStatus, adviceItem, searchTextItem);
@@ -197,21 +193,22 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
         {
             ldapGroupSettings.setWidth(groupPanelWidth);
             ldapGroupSettings.setHeight(groupPanelHeight);
-            ldapGroupSettings.setGroupTitle("[Read Only] Ldap Group Settings. Edit in 'System Settings'");
+            ldapGroupSettings.setGroupTitle(MSG.view_adminRoles_ldapGroupsSettingsReadOnly());
             ldapGroupSettings.setIsGroup(true);
             ldapGroupSettings.setWrapItemTitles(false);
         }
-        final TextItem groupSearch = new TextItem("groupSearch", "Search Filter");
+        final TextItem groupSearch = new TextItem("groupSearch", MSG.view_admin_systemSettings_LDAPFilter_name());
         {
             groupSearch.setCanEdit(false);
             groupSearch.setWidth("100%");
         }
-        final TextItem groupMember = new TextItem("groupMember", "Member Filter");
+        final TextItem groupMember = new TextItem("groupMember", MSG.view_admin_systemSettings_LDAPGroupMember_name());
         {
             groupMember.setCanEdit(false);
             groupMember.setWidth("100%");
         }
-        final CheckboxItem groupQueryPagingItem = new CheckboxItem("groupQueryEnable", "Query Paging Enabled");
+        final CheckboxItem groupQueryPagingItem = new CheckboxItem("groupQueryEnable",
+            MSG.view_admin_systemSettings_LDAPGroupUsePaging_name());
         {
             groupQueryPagingItem.setCanEdit(false);
             groupQueryPagingItem.setValue(false);
@@ -221,12 +218,14 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
             //You have to set this attribute
             groupQueryPagingItem.setAttribute("labelAsTitle", true);
         }
-        final TextItem groupQueryPagingCountItem = new TextItem("groupQueryCount", "Query Page Size");
+        final TextItem groupQueryPagingCountItem = new TextItem("groupQueryCount",
+            MSG.view_adminRoles_ldapQueryPageSize());
         {
             groupQueryPagingCountItem.setCanEdit(false);
             groupQueryPagingCountItem.setWidth("100%");
         }
-        final CheckboxItem groupUsePosixGroupsItem = new CheckboxItem("groupUsePosixGroups", "Use Posix Enabled");
+        final CheckboxItem groupUsePosixGroupsItem = new CheckboxItem("groupUsePosixGroups",
+            MSG.view_admin_systemSettings_LDAPGroupUsePosixGroup_name());
         {
             groupUsePosixGroupsItem.setCanEdit(false);
             groupUsePosixGroupsItem.setValue(false);
@@ -262,9 +261,8 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                         @Override
                         public void onFailure(Throwable caught) {
                             groupQueryStatus.setIcons(failIcon);
-                            groupQueryStatus.setDefaultValue("Fail: Unable to retrieve system settings.");
-                            //TODO: update this message
-                            CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
+                            groupQueryStatus.setDefaultValue(MSG.view_adminRoles_failLdapGroupsSettings());
+                            CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroupsSettings(), caught);
                         }
 
                         @Override
@@ -291,10 +289,10 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
         //launch operations to populate/refresh LDAP Group Query contents.
         final Timer availableGroupsTimer = new Timer() {
             public void run() {
-                final String attention = "Attention";
-                final String success = "Success";
-                final String none = "(None)";
-                final String failed = "Failed";
+                final String attention = MSG.common_status_attention();
+                final String success = MSG.common_status_success();
+                final String none = MSG.common_val_none();
+                final String failed = MSG.common_status_failed();
                 //make request to RHQ about state of latest LDAP GWT request
                 GWTServiceLookup.getLdapService().findAvailableGroupsStatus(
                     new AsyncCallback<Set<Map<String, String>>>() {
@@ -302,11 +300,11 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                         public void onFailure(Throwable caught) {
                             groupQueryStatus.setIcons(failIcon);
                             groupQueryStatus.setDefaultValue(failed);
-                            String adviceValue = "Failed: Unable to retrieve status for latest AvailableGroups() call.";
+                            String adviceValue = MSG.view_adminRoles_failLdapAvailableGroups();
                             adviceItem.setValue(adviceValue);
                             adviceItem.setTooltip(adviceValue);
-                            //TODO: update this message
-                            CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdap(), caught);
+                            CoreGUI.getErrorHandler()
+                                .handleError(MSG.view_adminRoles_failLdapAvailableGroups(), caught);
                             retryAttempt++;
                             if (retryAttempt > 3) {
                                 cancel();//kill thread
@@ -342,9 +340,10 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                                 }
                             }
                             //Update status information
-                            String warnTooManyResults = " A lot of results are being returned. Modify your 'Group Search Filter' to return fewer results.";
-                            String warnQueryTakingLongResults = " Query taking a while to complete. Modify your 'Group Search Filter' to return fewer results.";
-                            String warnParsingManyPagesResults = " Query requires a lot of pages. Modify your 'Group Search Page Size' to return more results per request.";
+                            String warnTooManyResults = MSG.view_adminRoles_ldapWarnTooManyResults();
+                            String warnQueryTakingLongResults = MSG.view_adminRoles_ldapWarnQueryTakingLongResults();
+                            String warnParsingManyPagesResults = MSG.view_adminRoles_ldapWarnParsingManyPagesResults();
+
                             boolean resultCountWarning = false;
                             boolean pageCountWarning = false;
                             boolean timePassingWarning = false;
@@ -368,12 +367,11 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                             //act on status details to add extra perf suggestions. Kill threads older than 30 mins
                             long parseTime = System.currentTimeMillis() - ldapGroupSelectorRequestId;
                             if ((queryCompleted) || (parseTime) > 30 * 60 * 1000) {
-                                String tooManyResults = "Too many results to show all. Modify your 'Group Search Filter' to return fewer than 20000 results.";
-                                String queryTookLongResults = " Query took " + parseTime
-                                    + " ms to complete. Modify your 'Group Search Filter' to return fewer results.";
-                                String queryTookManyPagesResults = " Query required "
-                                    + pageCount
-                                    + " pages to complete. Modify 'Group Search Page Size' to return more results per request.";
+                                String tooManyResults = MSG.view_adminRoles_ldapTooManyResults();
+                                String queryTookLongResults = MSG.view_adminRoles_ldapTookLongResults(parseTime + "");
+                                String queryTookManyPagesResults = MSG
+                                    .view_adminRoles_ldapTookManyPagesResults(pageCount + "");
+
                                 adviceItem.setDisabled(false);
                                 groupQueryStatus.setIcons(attentionIcon);
                                 groupQueryStatus.setDefaultValue(attention);

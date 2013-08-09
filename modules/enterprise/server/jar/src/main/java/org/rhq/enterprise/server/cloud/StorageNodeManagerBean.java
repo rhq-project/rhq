@@ -85,7 +85,6 @@ import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.storage.StorageClusterSettings;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
-import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -643,7 +642,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 if (storageNodeConfiguration.getThreadStackSize() != null) {
                     parameters.setSimpleValue("threadStackSize", storageNodeConfiguration.getThreadStackSize() + "");
                 }
-                parameters.setSimpleValue("restartIfRequired", "false");
+                parameters.setSimpleValue("restartIfRequired", "true");
 
                 Resource storageNodeResource = storageNode.getResource();
 
@@ -656,13 +655,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
                     entityManager.merge(storageNode);
 
-                    //3. Restart the storage node
-                    result = runOperationAndWaitForResult(subject, storageNodeResource, RESTART_OPERATION,
-                        new Configuration());
-
-                    //4. Update the plugin configuration to talk with the new server
-                    //Up to this point communication with the storage node should not have been affected by the intermediate
-                    //changes
+                    //3. Update the plugin configuration to talk with the new server
                     Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
                         storageNodeResource.getId());
 

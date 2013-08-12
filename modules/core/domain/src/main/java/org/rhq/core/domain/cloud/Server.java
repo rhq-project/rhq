@@ -88,9 +88,9 @@ import org.rhq.core.domain.resource.Agent;
         + "   AND ( s.name <> :thisServerName OR :thisServerName IS NULL ) "), //
     @NamedQuery(name = Server.QUERY_UPDATE_STATUS_BY_NAME, query = "" //
         + " UPDATE Server s " //
-        + "    SET s.status = 3 " //change this to the only value possible before adding MANUAL_MAINTENANCE_MODE
-                                  //this status should never be set to negative numbers since they are values allowed
-                                  //by the bitmask.
+        + "    SET s.status = 3 " //Change this to the only value possible before adding MANUAL_MAINTENANCE_MODE.
+                                  //This status should never be set to negative since negative values are not
+                                  //allowed by the bitmask.
         + "  WHERE s.status = 0 ") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_SERVER_ID_SEQ", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")

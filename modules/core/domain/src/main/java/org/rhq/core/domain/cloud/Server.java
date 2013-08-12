@@ -49,7 +49,7 @@ import org.rhq.core.domain.resource.Agent;
 
 /**
  * An RHQ server node in the cluster
- * 
+ *
  * @author Joseph Marques
  */
 @Entity(name = "Server")
@@ -88,7 +88,9 @@ import org.rhq.core.domain.resource.Agent;
         + "   AND ( s.name <> :thisServerName OR :thisServerName IS NULL ) "), //
     @NamedQuery(name = Server.QUERY_UPDATE_STATUS_BY_NAME, query = "" //
         + " UPDATE Server s " //
-        + "    SET s.status = -1 " // negative numbers so that bitmask strat does not conflict with this one
+        + "    SET s.status = 3 " //change this to the only value possible before adding MANUAL_MAINTENANCE_MODE
+                                  //this status should never be set to negative numbers since they are values allowed
+                                  //by the bitmask.
         + "  WHERE s.status = 0 ") })
 @SequenceGenerator(allocationSize = org.rhq.core.domain.util.Constants.ALLOCATION_SIZE, name = "RHQ_SERVER_ID_SEQ", sequenceName = "RHQ_SERVER_ID_SEQ")
 @Table(name = "RHQ_SERVER")
@@ -276,7 +278,7 @@ public class Server implements Serializable {
     /**
      * Returns 0 if this server is current.  Otherwise, returns a mask of {@link Server.Status}
      * elements corresponding to the updates that have occurred that are related to this server.
-     * 
+     *
      * @return 0 if this server is current.  Otherwise, returns a mask of {@link Server.Status}
      * elements corresponding to the updates that have occurred that are related to this server.
      */
@@ -320,11 +322,17 @@ public class Server implements Serializable {
         return Status.getMessages(status);
     }
 
+    //Please read BZ 535484 for initial design: https://bugzilla.redhat.com/show_bug.cgi?id=535484
+    //Prior to MANUAL_MAINTENANCE_MODE only used for debug purposes, design now changed to
+    //persist statuses between server restarts in production code
     public enum Status {
 
+        //Debug only flags (first five bits are reserved for debug flags)
         RESOURCE_HIERARCHY_UPDATED(1, "The resource hierarchy has been updated"), //
         ALERT_DEFINITION(2, "Some alert definition with a global condition category was updated"),
-        MANUAL_MAINTENANCE_MODE(4,"Manual Maintenance mode setup by the user either via UI or properties file.");
+
+        //Production flags
+        MANUAL_MAINTENANCE_MODE(32, "Manual Maintenance mode setup by the user either via UI or properties file.");
 
         public final int mask;
         public final String message;

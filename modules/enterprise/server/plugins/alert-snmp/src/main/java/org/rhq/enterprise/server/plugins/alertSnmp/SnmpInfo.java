@@ -37,6 +37,7 @@ public class SnmpInfo {
 
     // Default remote port for SNMP trap
     static final String DEFAULT_PORT = "162";
+    private static final String DEFAULT_RHQ_BINDING = "1.3.6.1.4.1.18016.2.1";
 
     final public String host;
     final public String port;
@@ -79,10 +80,25 @@ public class SnmpInfo {
         return new SnmpInfo(host, port, oid, trapOid);
     }
 
+    protected static SnmpInfo load(Configuration configuration, Configuration preferences) {
+        String host = configuration.getSimpleValue(PARAM_HOST, null); // optional
+        if (host==null || host.isEmpty()) {
+            host = preferences.getSimpleValue("defaultTargetHost",null);
+        }
+        String port = configuration.getSimpleValue(PARAM_PORT, null);
+        if (port==null||port.isEmpty()) {
+            port = preferences.getSimpleValue("defaultPort",DEFAULT_PORT);
+        }
+        String oid = configuration.getSimpleValue(PARAM_VARIABLE_BINDING_PREFIX, DEFAULT_RHQ_BINDING); // required
+        String trapOid = configuration.getSimpleValue(PARAM_TRAP_OID, null);
+        return new SnmpInfo(host, port, oid, trapOid);
+
+    }
+
     @Override
     public String toString() {
         String hostString = (host == null ? "UnknownHost" : host);
-        String oidString = (oid == null ? "UnknownOID" : oid);
+        String oidString = (oid == null ? "Unknown Binding Prefix" : oid);
         String trapOidString = (trapOid == null ? "DefaultTrapOID" : trapOid);
         return hostString + ":" + port + " (" + oidString + ") (" + trapOidString + ")";
     }

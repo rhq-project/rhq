@@ -2074,6 +2074,112 @@
                 </schema-directSQL>
             </schemaSpec>
 
+            <schemaSpec version="2.134">
+              <!-- Make sure existing storage nodes are storing IP addresses and not hostnames -->
+              <schema-javaTask className="StorageNodeAddressUpgradeTask" />
+            </schemaSpec>
+
+            <schemaSpec version="2.135">
+              <!-- Fine Grained Bundle Permissions -->
+              
+              <!-- Add new perms to superuser/all-resources roles -->
+              <schema-directSQL>
+                <statement desc="Inserting MANAGE_BUNDLE_GROUPS permission for all MANAGE_BUNDLE (12) roles">
+                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 18 FROM rhq_permission p where p.operation = 12
+                </statement>              	
+                <statement desc="Inserting CREATE_BUNDLES permission for all MANAGE_BUNDLE (12) roles">
+                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 19 FROM rhq_permission p where p.operation = 12
+                </statement>
+                <statement desc="Inserting DELETE_BUNDLES permission for all MANAGE_BUNDLE roles">
+                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 20 FROM rhq_permission p where p.operation = 12
+                </statement>
+                <statement desc="Inserting DEPLOY_BUNDLES permission for all MANAGE_BUNDLE roles">
+                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 21 FROM rhq_permission p where p.operation = 12
+                </statement>
+                <statement desc="Inserting VIEW_BUNDLES permission for all MANAGE_BUNDLE roles">
+                    INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 22 FROM rhq_permission p where p.operation = 12
+                </statement>
+              </schema-directSQL>
+
+              <!-- RHQ_BUNDLE_GROUP -->
+              <schema-createSequence name="RHQ_BUNDLE_GROUP_ID_SEQ" initial="10001" />
+              <schema-directSQL>
+                <statement desc="Creating table RHQ_BUNDLE_GROUP">
+                    CREATE TABLE RHQ_BUNDLE_GROUP (
+                        ID INTEGER PRIMARY KEY)
+                </statement>
+              </schema-directSQL>
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP" column="NAME" columnType="VARCHAR2" precision="4000" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP" column="NAME" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP" column="DESCRIPTION" columnType="VARCHAR2" precision="512" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP" column="DESCRIPTION" nullable="TRUE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP" column="CTIME" columnType="LONG" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP" column="CTIME" nullable="FALSE" />
+              <schema-addColumn   table="RHQ_BUNDLE_GROUP" column="MTIME" columnType="LONG" />
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP" column="MTIME" nullable="FALSE" />
+
+              <!-- RHQ_ROLE_BUNDLE_GROUP_MAP -->
+              <schema-directSQL>
+                <statement desc="Creating table RHQ_ROLE_BUNDLE_GROUP_MAP">
+                    CREATE TABLE RHQ_ROLE_BUNDLE_GROUP_MAP (
+                        ROLE_ID INTEGER,
+                        BUNDLE_GROUP_ID INTEGER)
+                </statement>
+              </schema-directSQL>
+              <schema-alterColumn table="RHQ_ROLE_BUNDLE_GROUP_MAP" column="ROLE_ID" nullable="FALSE"/>
+              <schema-alterColumn table="RHQ_ROLE_BUNDLE_GROUP_MAP" column="BUNDLE_GROUP_ID" nullable="FALSE"/>
+              <schema-directSQL>
+                <statement>
+                    ALTER TABLE RHQ_ROLE_BUNDLE_GROUP_MAP
+                    ADD CONSTRAINT RHQ_ROLE_BUN_GROUP_MAP_KEY
+                    PRIMARY KEY ( ROLE_ID, BUNDLE_GROUP_ID )
+                </statement>
+                <statement desc="Creating RHQ_ROLE_BUNDLE_GROUP_MAP foreign key to RHQ_ROLE">
+                    ALTER TABLE RHQ_ROLE_BUNDLE_GROUP_MAP
+                    ADD CONSTRAINT RHQ_RBG_ROLE_ID_FK
+                    FOREIGN KEY (ROLE_ID)
+                    REFERENCES RHQ_ROLE (ID)
+                </statement>
+                <statement desc="Creating RHQ_ROLE_BUNDLE_GROUP_MAP foreign key to RHQ_BUNDLE_GROUP">
+                    ALTER TABLE RHQ_ROLE_BUNDLE_GROUP_MAP
+                    ADD CONSTRAINT RHQ_RBG_BUNDLE_GROUP_ID_FK
+                    FOREIGN KEY (BUNDLE_GROUP_ID)
+                    REFERENCES RHQ_BUNDLE_GROUP (ID)
+                </statement>
+              </schema-directSQL>
+
+              <!-- RHQ_BUNDLE_GROUP_BUNDLE_MAP -->
+              <schema-directSQL>
+                <statement desc="Creating table RHQ_BUNDLE_GROUP_BUNDLE_MAP">
+                    CREATE TABLE RHQ_BUNDLE_GROUP_BUNDLE_MAP (
+                        BUNDLE_ID INTEGER,
+                        BUNDLE_GROUP_ID INTEGER)
+                </statement>
+              </schema-directSQL>
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_BUNDLE_MAP" column="BUNDLE_ID" nullable="FALSE"/>
+              <schema-alterColumn table="RHQ_BUNDLE_GROUP_BUNDLE_MAP" column="BUNDLE_GROUP_ID" nullable="FALSE"/>
+              <schema-directSQL>
+                <statement>
+                    ALTER TABLE RHQ_BUNDLE_GROUP_BUNDLE_MAP
+                    ADD CONSTRAINT RHQ_BUNDLE_GROUP_BUN_MAP_KEY
+                    PRIMARY KEY ( BUNDLE_ID, BUNDLE_GROUP_ID )
+                </statement>
+                <statement desc="Creating RHQ_BUNDLE_GROUP_BUNDLE_MAP foreign key to RHQ_BUNDLE">
+                    ALTER TABLE RHQ_BUNDLE_GROUP_BUNDLE_MAP
+                    ADD CONSTRAINT RHQ_BGB_BUNDLE_ID_FK
+                    FOREIGN KEY (BUNDLE_ID)
+                    REFERENCES RHQ_BUNDLE (ID)
+                </statement>
+                <statement desc="Creating RHQ_BUNDLE_GROUP_BUNDLE_MAP foreign key to RHQ_BUNDLE_GROUP">
+                    ALTER TABLE RHQ_BUNDLE_GROUP_BUNDLE_MAP
+                    ADD CONSTRAINT RHQ_BGB_BUNDLE_GROUP_ID_FK
+                    FOREIGN KEY (BUNDLE_GROUP_ID)
+                    REFERENCES RHQ_BUNDLE_GROUP (ID)
+                </statement>
+              </schema-directSQL>
+
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

@@ -40,8 +40,12 @@ import com.smartgwt.client.widgets.tab.Tab;
 import com.smartgwt.client.widgets.tab.TabSet;
 
 import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.notification.ResultState;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -83,10 +87,35 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
             @Override
             public void onSuccess(PageList<Alert> result) {
                 Alert alert = result.get(0);
-                show(alert);
+                Integer parentId = alert.getAlertDefinition().getParentId();
+                AlertDefinition groupAlertDefinition = alert.getAlertDefinition().getGroupAlertDefinition();
+                if (groupAlertDefinition != null || (parentId != null && parentId.intValue() != 0)) {
+                    fetchDefinitionWithGroupAndTemplate(alert);
+                } else {
+                    show(alert);
+                }
+                
             }
 
             @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_alert_details_loadFailed(), caught);
+            }
+        });
+    }
+    
+    private void fetchDefinitionWithGroupAndTemplate(final Alert alert) {
+        AlertDefinitionCriteria criteria = new AlertDefinitionCriteria();
+        criteria.addFilterAlertId(alert.getId());
+        criteria.fetchGroupAlertDefinition(true);
+        criteria.fetchResourceType(true);
+        GWTServiceLookup.getAlertDefinitionService().findAlertDefinitionsByCriteria(criteria, new AsyncCallback<PageList<AlertDefinition>>() {
+            public void onSuccess(PageList<AlertDefinition> result) {
+                alert.getAlertDefinition().setGroupAlertDefinition(result.get(0).getGroupAlertDefinition());
+                alert.getAlertDefinition().setResourceType(result.get(0).getResourceType());
+                show(alert);
+            }
+            
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError(MSG.view_alert_details_loadFailed(), caught);
             }
@@ -102,7 +131,7 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
         addMember(getDetailsTabSet(record));
     }
 
-    private TabSet getDetailsTabSet(Record record) {
+    private TabSet getDetailsTabSet(ListGridRecord record) {
         TabSet tabset = new NamedTabSet();
 
         Tab generalTab = new NamedTab(new ViewName("general", MSG.view_alert_common_tab_general()));
@@ -121,7 +150,7 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
         return tabset;
     }
 
-    private DynamicForm getDetailsTableForAlert(Record record) {
+    private DynamicForm getDetailsTableForAlert(ListGridRecord record) {
         DynamicForm form = new DynamicForm();
         form.setNumCols(4);
         form.setHeight("15%");
@@ -189,6 +218,13 @@ public class AlertDetailsView extends EnhancedVLayout implements BookmarkableVie
             MSG.view_alert_details_field_resource_ancestry());
         resourceAncestryItem.setValue(record.getAttribute("resourceAncestry"));
         items.add(resourceAncestryItem);
+        
+        String parentUrl = record.getAttribute("parent");
+        if (parentUrl != null) {
+            StaticTextItem parentItem = new StaticTextItem("parent", "Parent Definition");
+            parentItem.setValue(LinkManager.getHref(parentUrl, record.getLinkText()));
+            items.add(parentItem);
+        }
 
         form.setItems(items.toArray(new FormItem[items.size()]));
 

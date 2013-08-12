@@ -32,7 +32,6 @@ import org.rhq.core.domain.cloud.PartitionEvent;
 import org.rhq.core.domain.cloud.PartitionEventDetails;
 import org.rhq.core.domain.cloud.PartitionEventType;
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.cloud.composite.AffinityGroupCountComposite;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.AgentCriteria;
@@ -84,9 +83,10 @@ public class TopologyGWTServiceImpl extends AbstractGWTServiceImpl implements To
     }
 
     @Override
-    public void updateServerMode(int[] serverIds, OperationMode mode) throws RuntimeException {
+    public void updateServerManualMaintenance(int[] serverIds, boolean manualMaintenance) throws RuntimeException {
         try {
-            topologyManager.updateServerMode(getSessionSubject(), ArrayUtils.toObject(serverIds), mode);
+            topologyManager.updateServerManualMaintenance(getSessionSubject(), ArrayUtils.toObject(serverIds),
+                manualMaintenance);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

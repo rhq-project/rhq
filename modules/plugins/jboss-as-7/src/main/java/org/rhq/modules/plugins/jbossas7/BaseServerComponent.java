@@ -207,7 +207,7 @@ public abstract class BaseServerComponent<T extends ResourceComponent<?>> extend
         // Validate the product type (e.g. AS or EAP).
         JBossProductType runtimeType;
         try {
-            String runtimeTypeString = readAttribute("product-name");
+            String runtimeTypeString = readAttribute(getHostAddress(), "product-name");
             runtimeType = (runtimeTypeString != null && !runtimeTypeString.isEmpty()) ? JBossProductType
                 .getValueByProductName(runtimeTypeString) : JBossProductType.AS;
         } catch (Exception e) {

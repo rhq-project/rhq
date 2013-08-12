@@ -71,6 +71,37 @@ public class AntLauncher {
     // TODO (ips, 04/28/10): Figure out a way to avoid assuming the prefix is "rhq".
     private static final String BUNDLE_TASK_NAME = "rhq:bundle";
 
+    private boolean requireExplicitCompliance;
+
+    /**
+     * For backwards compatibility reasons, this calls {@link #AntLauncher(boolean) AntLauncher(false)}.
+     * Note that this might change in the future, because we are <b>requiring</b> the explicit declaration of the
+     * destination directory's compliance mode starting with RHQ 4.9.0.
+     * <p/>
+     * Nevertheless this constructor is behaving as it was before RHQ 4.9.0 so that users of it aren't surprised
+     * by its behavior.
+     *
+     * @deprecated since 4.9.0. You can keep using this constructor but be aware that it might change behavior in some
+     * future version of RHQ. It will NOT be removed though.
+     */
+    @Deprecated
+    public AntLauncher() {
+        this(false);
+    }
+
+    /**
+     * @since 4.9.0
+     * @param requireExplicitCompliance whether or not to enforce the presence of {@code compliance} attribute in the
+     *                                  deployment unit definitions. Before RHQ 4.9.0 a similar deprecated attribute
+     *                                  called {@code manageRootDir} was optional and defaulted to {@code true}. Since
+     *                                  RHQ 4.9.0 we require the user to explicitly specify the compliance of the
+     *                                  destination directory. But to keep backwards compatibility with the older
+     *                                  bundle recipes already deployed on the agents, we make this behavior optional.
+     */
+    public AntLauncher(boolean requireExplicitCompliance) {
+        this.requireExplicitCompliance = requireExplicitCompliance;
+    }
+
     /**
      * Executes the specified bundle deploy Ant build file (i.e. rhq-deploy.xml).
      *
@@ -241,6 +272,14 @@ public class AntLauncher {
                 "The bundle task must contain exactly one rhq:deploymentUnit child element.");
         }
         DeploymentUnitType deployment = deployments.iterator().next();
+
+        if (requireExplicitCompliance && deployment.getCompliance() == null) {
+            throw new InvalidBuildFileException(
+                "The deployment unit must specifically declare compliance mode of the destination directory.");
+        }
+
+        project.setDestinationCompliance(deployment.getCompliance());
+
         Map<File, String> files = deployment.getLocalFileNames();
         for (String file : files.values()) {
             project.getBundleFileNames().add(file);

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -30,7 +29,6 @@ import com.google.gwt.core.client.GWT;
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
-import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.EntityContext;
@@ -41,16 +39,14 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.MetricGraphData;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
@@ -64,9 +60,9 @@ import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
  */
 public class D3GraphListView extends AbstractD3GraphListView {
 
-    private static int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
+    private static final int NUM_ASYNC_CALLS = 2; // wait for X async calls in Latch
 
-    private Resource resource;
+    private final Resource resource;
     private Set<Integer> definitionIds = null;
     private boolean useSummaryData = false;
     private PageList<MeasurementOOBComposite> measurementOOBCompositeList;
@@ -95,7 +91,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         return D3GraphListView.createSingleGraph(resource, measurementId, false);
     }
 
-    protected D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
+    private D3GraphListView(Resource resource, Set<Integer> definitionIds, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
         commonConstructorSettings();
@@ -103,7 +99,7 @@ public class D3GraphListView extends AbstractD3GraphListView {
         this.showAvailabilityGraph = showAvailabilityGraph;
     }
 
-    protected D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
+    private D3GraphListView(Resource resource, boolean showAvailabilityGraph) {
         super();
         this.resource = resource;
         this.showAvailabilityGraph = showAvailabilityGraph;
@@ -115,17 +111,17 @@ public class D3GraphListView extends AbstractD3GraphListView {
         setOverflow(Overflow.HIDDEN);
     }
 
-
     @Override
     protected void onDraw() {
         super.onDraw();
-        Log.debug("D3GraphListView.onDraw() for: " + resource.getName()+ " id: "+ resource.getId());
+        Log.debug("D3GraphListView.onDraw() for: " + resource.getName() + " id: " + resource.getId());
         destroyMembers();
 
         addMember(buttonBarDateTimeRangeEditor);
 
         if (showAvailabilityGraph) {
-            availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(new AvailabilityOverUnderGraphType(resource.getId()));
+            availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
+                new AvailabilityOverUnderGraphType(resource.getId()));
             addMember(availabilityGraph);
         }
 
@@ -134,13 +130,11 @@ public class D3GraphListView extends AbstractD3GraphListView {
         vLayout.setWidth100();
         vLayout.setHeight100();
 
-        if (resource != null) {
-            queryAndBuildGraphs();
-        }
+        queryAndBuildGraphs();
         addMember(vLayout);
     }
 
-    public void redrawGraphs() {
+    public void refreshData() {
         this.onDraw();
     }
 
@@ -163,8 +157,8 @@ public class D3GraphListView extends AbstractD3GraphListView {
 
                 @Override
                 public void onSuccess(List<Availability> availList) {
-                    Log.debug("\nSuccessfully queried availability in: "
-                            + (System.currentTimeMillis() - timerStart) + " ms.");
+                    Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
+                        + " ms.");
                     availabilityList = availList;
                     if (countDownLatch != null) {
                         countDownLatch.countDown();
@@ -180,193 +174,179 @@ public class D3GraphListView extends AbstractD3GraphListView {
     private void queryAndBuildGraphs() {
         final long startTimer = System.currentTimeMillis();
 
-        if(null != availabilityGraph){
+        if (showAvailabilityGraph) {
             queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
                 buttonBarDateTimeRangeEditor.getEndTime(), null);
         }
 
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(resource.getResourceType().getId(),
-            EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
-            new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(final ResourceType type) {
+        final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
+        final ArrayList<MeasurementDefinition> summaryMeasurementDefinitions = new ArrayList<MeasurementDefinition>();
 
-                    final ArrayList<MeasurementDefinition> measurementDefinitions = new ArrayList<MeasurementDefinition>();
-                    final ArrayList<MeasurementDefinition> summaryMeasurementDefinitions = new ArrayList<MeasurementDefinition>();
+        for (MeasurementDefinition def : resource.getResourceType().getMetricDefinitions()) {
+            if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
+                summaryMeasurementDefinitions.add(def);
+            }
+            measurementDefinitions.add(def);
+        }
 
-                    for (MeasurementDefinition def : type.getMetricDefinitions()) {
-                        if (def.getDataType() == DataType.MEASUREMENT && def.getDisplayType() == DisplayType.SUMMARY) {
-                            summaryMeasurementDefinitions.add(def);
-                        }
-                        measurementDefinitions.add(def);
+        Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
+            @Override
+            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+            }
+        });
+        Collections.sort(summaryMeasurementDefinitions, new Comparator<MeasurementDefinition>() {
+            @Override
+            public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
+                return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
+            }
+        });
+
+        int[] measDefIdArray = new int[measurementDefinitions.size()];
+        for (int i = 0; i < measDefIdArray.length; i++) {
+            measDefIdArray[i] = measurementDefinitions.get(i).getId();
+        }
+
+        // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
+        // we know there are exactly 2 resources
+        final CountDownLatch countDownLatch = CountDownLatch.create(NUM_ASYNC_CALLS, new Command() {
+            @Override
+            /**
+             * Satisfied only after ALL of the metric queries AND availability have completed
+             */
+            public void execute() {
+                Log.debug("Total Time for async metrics/avail query: " + (System.currentTimeMillis() - startTimer));
+                if (null == metricsDataList || metricsDataList.isEmpty()) {
+                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
+                } else {
+                    loadingLabel.hide();
+                    if (useSummaryData) {
+                        buildSummaryGraphs(metricsDataList, summaryMeasurementDefinitions, measurementDefinitions);
+                    } else {
+                        determineGraphsToBuild(metricsDataList, measurementDefinitions, definitionIds);
                     }
-
-                    Collections.sort(measurementDefinitions, new Comparator<MeasurementDefinition>() {
-                        @Override
-                        public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                            return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
-                        }
-                    });
-                    Collections.sort(summaryMeasurementDefinitions, new Comparator<MeasurementDefinition>() {
-                        @Override
-                        public int compare(MeasurementDefinition o1, MeasurementDefinition o2) {
-                            return new Integer(o1.getDisplayOrder()).compareTo(o2.getDisplayOrder());
-                        }
-                    });
-
-                    int[] measDefIdArray = new int[measurementDefinitions.size()];
-                    for (int i = 0; i < measDefIdArray.length; i++) {
-                        measDefIdArray[i] = measurementDefinitions.get(i).getId();
-                    }
-
-                    // setting up a deferred Command to execute after all resource queries have completed (successfully or unsuccessfully)
-                    // we know there are exactly 2 resources
-                    final CountDownLatch countDownLatch = CountDownLatch.create(NUM_ASYNC_CALLS, new Command() {
-                        @Override
-                        /**
-                         * Satisfied only after ALL of the metric queries AND availability have completed
-                         */
-                        public void execute() {
-                            Log.debug("Total Time for async metrics/avail query: "
-                                + (System.currentTimeMillis() - startTimer));
-                            if (null == metricsDataList || metricsDataList.isEmpty()) {
-                                loadingLabel.setContents(MSG.view_resource_monitor_graphs_noneAvailable());
-                            } else {
-                                loadingLabel.hide();
-                                if (useSummaryData) {
-                                    buildSummaryGraphs(metricsDataList, summaryMeasurementDefinitions,
-                                        measurementDefinitions);
-                                } else {
-                                    determineGraphsToBuild(metricsDataList, measurementDefinitions, definitionIds);
-                                }
-                                // There is a weird timing case when availabilityGraph can be null
-                                if (null != availabilityGraph) {
-                                    // we only need the first metricData since we are only taking the
-                                    // availability data set in there for the dropdowns already
-                                    availabilityGraph.setAvailabilityList(availabilityList);
-                                    new Timer(){
-                                        @Override
-                                        public void run() {
-                                            availabilityGraph.drawJsniChart();
-                                        }
-                                    }.schedule(150);
-                                }
-                            }
-
-                        }
-                    });
-
-                    queryMetricData(measDefIdArray, countDownLatch);
-                    queryOOBMetrics(resource, countDownLatch);
-                    // now the countDown latch will run sometime asynchronously
-
-                }
-
-                private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
-                    GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
-                            buttonBarDateTimeRangeEditor.getStartTime(), buttonBarDateTimeRangeEditor.getEndTime(), 60,
-                        new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                    // There is a weird timing case when availabilityGraph can be null
+                    if (null != availabilityGraph) {
+                        // we only need the first metricData since we are only taking the
+                        // availability data set in there for the dropdowns already
+                        availabilityGraph.setAvailabilityList(availabilityList);
+                        new Timer() {
                             @Override
-                            public void onFailure(Throwable caught) {
-                                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(),
-                                    caught);
-                                loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
-                                countDownLatch.countDown();
+                            public void run() {
+                                availabilityGraph.drawJsniChart();
                             }
-
-                            @Override
-                            public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> metrics) {
-                                metricsDataList = metrics;
-                                Log.debug("Regular Metric graph data queried in: "
-                                    + (System.currentTimeMillis() - startTimer + " ms."));
-                                countDownLatch.countDown();
-
-                            }
-                        });
+                        }.schedule(150);
+                    }
                 }
 
-                private void queryOOBMetrics(final Resource resource, final CountDownLatch countDownLatch) {
+            }
+        });
 
-                    final long startTime = System.currentTimeMillis();
+        queryMetricData(measDefIdArray, countDownLatch);
+        queryOOBMetrics(resource, countDownLatch);
+        // now the countDown latch will run sometime asynchronously
+    }
 
-                    GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resource.getId(), 60,
-
-                    new AsyncCallback<PageList<MeasurementOOBComposite>>() {
-                        @Override
-                        public void onSuccess(PageList<MeasurementOOBComposite> measurementOOBComposites) {
-
-                            measurementOOBCompositeList = measurementOOBComposites;
-                            Log.debug("\nSuccessfully queried "+measurementOOBCompositeList.size() +" OOB records in: " + (System.currentTimeMillis() - startTime)
-                                + " ms.");
-                            countDownLatch.countDown();
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                            Log.debug("Error retrieving out of bound metrics for resource [" + resource.getId() + "]:"
-                                + caught.getMessage());
-                            countDownLatch.countDown();
-                        }
-                    });
-
+    private void queryMetricData(final int[] measDefIdArray, final CountDownLatch countDownLatch) {
+        GWTServiceLookup.getMeasurementDataService().findDataForResource(resource.getId(), measDefIdArray,
+            buttonBarDateTimeRangeEditor.getStartTime(), buttonBarDateTimeRangeEditor.getEndTime(), 60,
+            new AsyncCallback<List<List<MeasurementDataNumericHighLowComposite>>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_graphs_loadFailed(), caught);
+                    loadingLabel.setContents(MSG.view_resource_monitor_graphs_loadFailed());
+                    countDownLatch.countDown();
                 }
 
-                /**
-                 * Spin through the measurement definitions (in order) checking to see if they are in the
-                 * summary measurement definition set and if so build a graph.
-                 * @param measurementData
-                 * @param summaryMeasurementDefinitions
-                 * @param measurementDefinitions
-                 */
-                private void buildSummaryGraphs(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
-                    List<MeasurementDefinition> summaryMeasurementDefinitions,
-                    List<MeasurementDefinition> measurementDefinitions) {
-                    Set<Integer> summaryIds = new TreeSet<Integer>();
-                    for (MeasurementDefinition summaryMeasurementDefinition : summaryMeasurementDefinitions) {
-                        summaryIds.add(summaryMeasurementDefinition.getId());
-                    }
+                @Override
+                public void onSuccess(List<List<MeasurementDataNumericHighLowComposite>> metrics) {
+                    metricsDataList = metrics;
+                    countDownLatch.countDown();
 
-                    int i = 0;
-                    for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
-                        if (summaryIds.contains(measurementDefinition.getId())) {
-                            buildSingleGraph(measurementOOBCompositeList, measurementDefinition,
-                                measurementData.get(i), MULTI_CHART_HEIGHT);
-                        }
-                        i++;
-                    }
-
-                }
-
-                private void determineGraphsToBuild(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
-                    List<MeasurementDefinition> measurementDefinitions, Set<Integer> definitionIds) {
-                    int i = 0;
-                    for (List<MeasurementDataNumericHighLowComposite> metric : measurementData) {
-
-                        for (Integer selectedDefinitionId : definitionIds) {
-                            final MeasurementDefinition measurementDefinition = measurementDefinitions.get(i);
-                            final int measurementId = measurementDefinition.getId();
-
-                            if (null != selectedDefinitionId) {
-                                // single graph case
-                                if (measurementId == selectedDefinitionId) {
-                                    buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, SINGLE_CHART_HEIGHT);
-                                }
-                            } else {
-                                // multiple graph case
-                                buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, MULTI_CHART_HEIGHT);
-                            }
-                        }
-                        i++;
-                    }
                 }
             });
+    }
 
+    private void queryOOBMetrics(final Resource resource, final CountDownLatch countDownLatch) {
+
+        final long startTime = System.currentTimeMillis();
+
+        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resource.getId(), 60,
+
+        new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+            @Override
+            public void onSuccess(PageList<MeasurementOOBComposite> measurementOOBComposites) {
+
+                measurementOOBCompositeList = measurementOOBComposites;
+                Log.debug("\nSuccessfully queried " + measurementOOBCompositeList.size() + " OOB records in: "
+                    + (System.currentTimeMillis() - startTime) + " ms.");
+                countDownLatch.countDown();
+            }
+
+            @Override
+            public void onFailure(Throwable caught) {
+                Log.debug("Error retrieving out of bound metrics for resource [" + resource.getId() + "]:"
+                    + caught.getMessage());
+                countDownLatch.countDown();
+            }
+        });
+
+    }
+
+    /**
+     * Spin through the measurement definitions (in order) checking to see if they are in the
+     * summary measurement definition set and if so build a graph.
+     * @param measurementData
+     * @param summaryMeasurementDefinitions
+     * @param measurementDefinitions
+     */
+    private void buildSummaryGraphs(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
+        List<MeasurementDefinition> summaryMeasurementDefinitions, List<MeasurementDefinition> measurementDefinitions) {
+        Set<Integer> summaryIds = new TreeSet<Integer>();
+        for (MeasurementDefinition summaryMeasurementDefinition : summaryMeasurementDefinitions) {
+            summaryIds.add(summaryMeasurementDefinition.getId());
+        }
+
+        int i = 0;
+        for (MeasurementDefinition measurementDefinition : measurementDefinitions) {
+            if (summaryIds.contains(measurementDefinition.getId())) {
+                buildSingleGraph(measurementOOBCompositeList, measurementDefinition, measurementData.get(i),
+                    MULTI_CHART_HEIGHT);
+            }
+            i++;
+        }
+
+    }
+
+    private void determineGraphsToBuild(List<List<MeasurementDataNumericHighLowComposite>> measurementData,
+        List<MeasurementDefinition> measurementDefinitions, Set<Integer> definitionIds) {
+        int i = 0;
+        for (List<MeasurementDataNumericHighLowComposite> metric : measurementData) {
+
+            for (Integer selectedDefinitionId : definitionIds) {
+                final MeasurementDefinition measurementDefinition = measurementDefinitions.get(i);
+                final int measurementId = measurementDefinition.getId();
+
+                if (null != selectedDefinitionId) {
+                    // single graph case
+                    if (measurementId == selectedDefinitionId) {
+                        buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric,
+                            SINGLE_CHART_HEIGHT);
+                    }
+                } else {
+                    // multiple graph case
+                    buildSingleGraph(measurementOOBCompositeList, measurementDefinition, metric, MULTI_CHART_HEIGHT);
+                }
+            }
+            i++;
+        }
     }
 
     private void buildSingleGraph(PageList<MeasurementOOBComposite> measurementOOBCompositeList,
         MeasurementDefinition measurementDefinition, List<MeasurementDataNumericHighLowComposite> data, int height) {
 
         MetricGraphData metricGraphData = MetricGraphData.createForResource(resource.getId(), resource.getName(),
-            measurementDefinition, data, measurementOOBCompositeList );
+            measurementDefinition, data, measurementOOBCompositeList);
         StackedBarMetricGraphImpl graph = GWT.create(StackedBarMetricGraphImpl.class);
         graph.setMetricGraphData(metricGraphData);
         graph.setGraphListView(this);

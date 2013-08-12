@@ -35,8 +35,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 
-import com.datastax.driver.core.Session;
-
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.testng.PowerMockObjectFactory;
@@ -71,9 +69,9 @@ public class MetricsBaselineCalculatorTest {
 
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
-        Session mockSession = mock(Session.class);
+        StorageSession mockSession = mock(StorageSession.class);
         MetricsDAO mockMetricsDAO = mock(MetricsDAO.class);
-        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class, MetricsConfiguration.class)
+        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(StorageSession.class, MetricsConfiguration.class)
             .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(mockMetricsDAO.findAggregatedSimpleOneHourMetric(eq(1), eq(0),
@@ -147,9 +145,9 @@ public class MetricsBaselineCalculatorTest {
 
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
-        Session mockSession = mock(Session.class);
+        StorageSession mockSession = mock(StorageSession.class);
         MetricsDAO mockMetricsDAO = mock(MetricsDAO.class);
-        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class, MetricsConfiguration.class)
+        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(StorageSession.class, MetricsConfiguration.class)
             .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(
@@ -214,9 +212,9 @@ public class MetricsBaselineCalculatorTest {
 
         //tell the method story as it happens: mock dependencies and configure
         //those dependencies to get the method under test to completion.
-        Session mockSession = mock(Session.class);
+        StorageSession mockSession = mock(StorageSession.class);
         MetricsDAO mockMetricsDAO = mock(MetricsDAO.class);
-        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(Session.class, MetricsConfiguration.class)
+        PowerMockito.whenNew(MetricsDAO.class).withParameterTypes(StorageSession.class, MetricsConfiguration.class)
             .withArguments(eq(mockSession), eq(metricsConfiguration)).thenReturn(mockMetricsDAO);
 
         when(

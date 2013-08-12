@@ -107,7 +107,7 @@ public class ManageRootDirTest {
         this.originalFileHashcodeMap = deployer.deploy(null);
         this.currentFile = new File(deployDir, originalFileName);
 
-        this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment");
+        this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment", DestinationComplianceMode.filesAndDirectories);
         this.diff = new DeployDifferences();
         this.metadata = new DeploymentsMetadata(this.deployDir);
 
@@ -252,7 +252,7 @@ public class ManageRootDirTest {
         assert unrelated2.exists() : "the deployment removed unrelated file2";
 
         // deploy new content
-        this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment");
+        this.newDeployProps = new DeploymentProperties(2, "simple", "2.0", "new test deployment", DestinationComplianceMode.filesAndDirectories);
         this.diff = new DeployDifferences();
         this.metadata = new DeploymentsMetadata(this.deployDir);
         String newFileName1 = "new-file1.txt";

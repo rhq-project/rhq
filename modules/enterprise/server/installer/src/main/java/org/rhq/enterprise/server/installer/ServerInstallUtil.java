@@ -68,6 +68,7 @@ import org.rhq.core.db.DbUtil;
 import org.rhq.core.db.OracleDatabaseType;
 import org.rhq.core.db.PostgresqlDatabaseType;
 import org.rhq.core.db.setup.DBSetup;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.core.util.file.FileUtil;
@@ -950,6 +951,89 @@ public class ServerInstallUtil {
     }
 
     /**
+     * Persists the storage nodes to the database only if no storage node entities already exist. This method is used
+     * to persist storage nodes created from the rhq.cassandra.seeds server configuration property. The only time those
+     * seed nodes should be created is during an initial server installation. After the initial installation storage
+     * nodes should be created using <code>rhqctl install</code>. This ensures that any necessary cluster maintenance
+     * tasks will be performed.
+     *
+     * @param serverProperties the server properties
+     * @param password clear text password to connect to the database
+     * @param storageNodes the {@link StorageNode storage nodes} to persist
+     * @throws Exception
+     */
+    public static void persistStorageNodesIfNecessary(HashMap<String, String> serverProperties, String password,
+        List<StorageNode> storageNodes) throws Exception {
+        DatabaseType db = null;
+        Connection connection = null;
+        Statement queryStatement = null;
+        ResultSet resultSet = null;
+        PreparedStatement insertStatement = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            queryStatement = connection.createStatement();
+            resultSet = queryStatement.executeQuery("SELECT count(id) FROM rhq_storage_node");
+            resultSet.next();
+
+            if (resultSet.getInt(1) == 0) {
+                connection.setAutoCommit(false);
+
+                try {
+                    LOG.info("Persisting to database new storage nodes for values specified in server configuration " +
+                        "property [rhq.cassandra.seeds]");
+
+                    insertStatement = connection.prepareStatement(
+                        "INSERT INTO rhq_storage_node (id, address, jmx_port, cql_port, operation_mode, ctime, mtime) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+                    );
+
+                    int id = 1001;
+                    for (StorageNode storageNode : storageNodes) {
+                        insertStatement.setInt(1, id);
+                        insertStatement.setString(2, storageNode.getAddress());
+                        insertStatement.setInt(3, storageNode.getJmxPort());
+                        insertStatement.setInt(4, storageNode.getCqlPort());
+                        insertStatement.setString(5, StorageNode.OperationMode.INSTALLED.toString());
+                        insertStatement.setLong(6, System.currentTimeMillis());
+                        insertStatement.setLong(7, System.currentTimeMillis());
+
+                        insertStatement.executeUpdate();
+                        id += 1;
+                    }
+
+                    connection.commit();
+                } catch (SQLException e) {
+                    LOG.error("Failed to persist to database the storage nodes specified by server configuration " +
+                        "property [rhq.cassandra.seeds]. Transaction will be rolled back.", e);
+                    connection.rollback();
+                    throw e;
+                }
+            } else {
+                LOG.info("Storage nodes already exist in database. Server configuration property " +
+                    "[rhq.cassandra.seeds] will be ignored.");
+            }
+
+        } finally {
+            if (db != null) {
+                db.closeResultSet(resultSet);
+                db.closeStatement(queryStatement);
+                db.closeStatement(insertStatement);
+                db.closeConnection(connection);
+            }
+        }
+    }
+
+    /**
      * Stores the server details (such as the public endpoint) in the database. If the server definition already
      * exists, it will be updated; otherwise, a new server will be added to the HA cloud.
      *
@@ -981,6 +1065,7 @@ public class ServerInstallUtil {
             }
         }
     }
+
 
     private static void updateOrInsertServer(DatabaseType db, Connection conn, ServerDetails serverDetails) {
         PreparedStatement stm = null;

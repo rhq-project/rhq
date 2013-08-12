@@ -64,12 +64,12 @@ public class TestBundleServerPluginService extends ServerPluginService implement
     public TestBundleServerPluginContainer bundlePC;
     public MasterServerPluginContainerConfiguration masterConfig;
 
-    public RecipeParseResults parseRecipe_returnValue = null;
-    public BundleDistributionInfo processBundleDistributionFile_returnValue;
+    private BundleServerPluginFacet bundlePlugin;
 
-    public TestBundleServerPluginService(File tmpdir) {
+    public TestBundleServerPluginService(File tmpdir, BundleServerPluginFacet bundlePlugin) {
         // build the config at constructor time so tests have it even before the PC is initialized
         this.masterConfig = new MasterServerPluginContainerConfiguration(tmpdir, tmpdir, tmpdir, null);
+        this.bundlePlugin = bundlePlugin;
     }
 
     @Override
@@ -196,50 +196,12 @@ public class TestBundleServerPluginService extends ServerPluginService implement
 
         @Override
         public RecipeParseResults parseRecipe(String bundleTypeName, String recipe) throws Exception {
-            return new TestBundlePluginComponent().parseRecipe(recipe);
+            return bundlePlugin.parseRecipe(recipe);
         }
 
         @Override
         public BundleDistributionInfo processBundleDistributionFile(File distributionFile) throws Exception {
-            return new TestBundlePluginComponent().processBundleDistributionFile(distributionFile);
-        }
-    }
-
-    class TestBundlePluginComponent implements BundleServerPluginFacet {
-
-        public TestBundlePluginComponent() {
-        };
-
-        public RecipeParseResults parseRecipe(String recipe) throws Exception {
-
-            if (parseRecipe_returnValue != null) {
-                return parseRecipe_returnValue;
-            }
-
-            ConfigurationDefinition configDef;
-            Set<String> bundleFileNames;
-            DeploymentProperties metadata;
-
-            metadata = new DeploymentProperties(0, "bundletest", "1.0", "bundle test description");
-
-            configDef = new ConfigurationDefinition("bundletest-configdef", "Test Config Def for testing BundleVersion");
-            configDef.put(new PropertyDefinitionSimple("bundletest.property",
-                "Test property for BundleVersion Config Def testing", true, PropertySimpleType.STRING));
-
-            bundleFileNames = new HashSet<String>();
-            for (int i = 0; i < AbstractEJB3Test.DEFAULT_CRITERIA_PAGE_SIZE + 2; i++) {
-                bundleFileNames.add("bundletest-bundlefile-" + i);
-            }
-
-            return new RecipeParseResults(metadata, configDef, bundleFileNames);
-        }
-
-        public BundleDistributionInfo processBundleDistributionFile(File uberBundleFile) throws Exception {
-            if (processBundleDistributionFile_returnValue != null) {
-                return processBundleDistributionFile_returnValue;
-            }
-
-            throw new UnsupportedOperationException("this mock object cannot do this");
+            return bundlePlugin.processBundleDistributionFile(distributionFile);
         }
     }
 }

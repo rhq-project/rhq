@@ -29,6 +29,7 @@ import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.PropertySimple;
 
 /**
  * @author Thomas Segismont
@@ -69,6 +70,29 @@ public class SnmpInfoTest {
     }
 
     @Test
+    public void fallBackToGlobalValues() throws Exception {
+        Configuration configuration = new Configuration();
+        configuration.setSimpleValue(PARAM_VARIABLE_BINDING_PREFIX, "molo");
+
+        Configuration preferences = new Configuration();
+        preferences.put(new PropertySimple("defaultTargetHost","hugo"));
+        SnmpInfo snmpInfo = SnmpInfo.load(configuration,preferences);
+        assertNull(snmpInfo.error, "SnmpInfo#load should not have detected an error");
+        assertEquals(snmpInfo.host, "hugo");
+        assertEquals(snmpInfo.oid, "molo");
+        assertEquals(snmpInfo.port, SnmpInfo.DEFAULT_PORT);
+
+
+        configuration.setSimpleValue(PARAM_HOST, "pipo");
+
+        snmpInfo = SnmpInfo.load(configuration,preferences);
+        assertNull(snmpInfo.error, "SnmpInfo#load should not have detected an error");
+        assertEquals(snmpInfo.host, "pipo");
+        assertEquals(snmpInfo.oid, "molo");
+        assertEquals(snmpInfo.port, SnmpInfo.DEFAULT_PORT);
+    }
+
+    @Test
     public void shouldExposeAllParams() throws Exception {
         Configuration configuration = new Configuration();
         configuration.setSimpleValue(PARAM_HOST, "pipo");
@@ -92,11 +116,11 @@ public class SnmpInfoTest {
         // String representation is constrained (even not strongly).
         Configuration configuration = new Configuration();
         assertEquals(SnmpInfo.load(configuration).toString(), "UnknownHost:" + DEFAULT_PORT
-            + " (UnknownOID) (DefaultTrapOID)");
+            + " (Unknown Binding Prefix) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_HOST, "pipo");
-        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:" + DEFAULT_PORT + " (UnknownOID) (DefaultTrapOID)");
+        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:" + DEFAULT_PORT + " (Unknown Binding Prefix) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_PORT, "35162");
-        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:35162 (UnknownOID) (DefaultTrapOID)");
+        assertEquals(SnmpInfo.load(configuration).toString(), "pipo:35162 (Unknown Binding Prefix) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_VARIABLE_BINDING_PREFIX, "molo");
         assertEquals(SnmpInfo.load(configuration).toString(), "pipo:35162 (molo) (DefaultTrapOID)");
         configuration.setSimpleValue(PARAM_TRAP_OID, "logo");

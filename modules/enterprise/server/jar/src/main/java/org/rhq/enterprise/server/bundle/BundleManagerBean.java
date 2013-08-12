@@ -30,6 +30,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +44,6 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 
-import org.apache.commons.httpclient.params.DefaultHttpParams;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpResponse;
@@ -55,7 +55,6 @@ import org.apache.http.client.params.HttpClientParams;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.DefaultedHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.maven.artifact.versioning.ComparableVersion;
 
@@ -67,11 +66,13 @@ import org.rhq.core.clientapi.agent.bundle.BundleScheduleResponse;
 import org.rhq.core.clientapi.agent.configuration.ConfigurationUtility;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
@@ -90,6 +91,7 @@ import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
 import org.rhq.core.domain.criteria.BundleFileCriteria;
+import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
@@ -197,9 +199,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
-    public BundleResourceDeploymentHistory addBundleResourceDeploymentHistory(Subject subject, int bundleDeploymentId,
-        BundleResourceDeploymentHistory history) throws Exception {
+    public BundleResourceDeploymentHistory addBundleResourceDeploymentHistoryInNewTrans(Subject subject,
+        int bundleDeploymentId, BundleResourceDeploymentHistory history) throws Exception {
 
         BundleResourceDeployment resourceDeployment = entityManager.find(BundleResourceDeployment.class,
             bundleDeploymentId);
@@ -214,8 +215,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
-    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId) throws Exception {
+    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId, int bundleGroupId)
+        throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleName: " + name);
         }
@@ -225,8 +226,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid bundleTypeId: " + bundleTypeId);
         }
 
-        // create and add the required Repo. the Repo is a detached object which helps in its eventual
-        // removal.
+        BundleGroup bundleGroup = null;
+        if (bundleGroupId > 0) {
+            bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+            if (null == bundleGroup) {
+                throw new IllegalArgumentException("Invalid bundleGroupId: " + bundleGroupId);
+            }
+        }
+
+        checkCreateInitialBundleVersionAuthz(subject, bundleGroupId);
+
+        // create and add the required Repo. the Repo is a detached object which helps in its eventual removal.
         Repo repo = new Repo(name);
         repo.setCandidate(false);
         repo.setSyncSchedule(null);
@@ -253,12 +263,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         log.info("Creating bundle: " + bundle);
         entityManager.persist(bundle);
 
+        if (null != bundleGroup) {
+            bundleGroup.addBundle(bundle);
+        }
+
         return bundle;
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment createBundleDeploymentInNewTrans(Subject subject, int bundleVersionId,
         int bundleDestinationId, String name, String description, Configuration configuration) throws Exception {
 
@@ -275,7 +288,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment createBundleDeployment(Subject subject, int bundleVersionId, int bundleDestinationId,
         String description, Configuration configuration) throws Exception {
 
@@ -287,6 +299,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == bundleDestination) {
             throw new IllegalArgumentException("Invalid bundleDestinationId: " + bundleDestinationId);
         }
+
+        checkDeployBundleAuthz(subject, bundleVersion.getBundle().getId(), bundleDestination.getGroup().getId());
 
         String name = getBundleDeploymentNameImpl(subject, bundleDestination, bundleVersion, null);
         return this.createBundleDeploymentImpl(subject, bundleVersion, bundleDestination, name, description,
@@ -320,7 +334,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDestination createBundleDestination(Subject subject, int bundleId, String name, String description,
         String destBaseDirName, String deployDir, Integer groupId) throws Exception {
 
@@ -347,6 +360,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + "]. It must be an existing compatible group whose members must be able to support bundle deployments");
         }
         ResourceGroup group = entityManager.find(ResourceGroup.class, groups.get(0).getId());
+
+        checkDeployBundleAuthz(subject, bundle.getId(), groupId);
 
         BundleDestination dest = new BundleDestination(bundle, name, group, destBaseDirName, deployDir);
         dest.setDescription(description);
@@ -380,6 +395,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Must specify either a valid bundleVersionId [" + bundleVersionId
                 + "] or prevDeploymentId [" + prevDeploymentId + "]");
         }
+
+        checkDeployBundleAuthz(subject, bundleVersion.getBundle().getId(), bundleDestination.getGroup().getId());
 
         return getBundleDeploymentNameImpl(subject, bundleDestination, bundleVersion, prevDeployment);
     }
@@ -440,7 +457,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
+    @RequiredPermission(Permission.CREATE_BUNDLES)
     public BundleType createBundleType(Subject subject, String name, int resourceTypeId) throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleTypeName: " + name);
@@ -457,22 +474,21 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
-        int bundleTypeId, String bundleVersionName, String bundleVersionDescription, String version, String recipe)
-        throws Exception {
+        int bundleTypeId, int bundleGroupId, String bundleVersionName, String bundleVersionDescription, String version,
+        String recipe) throws Exception {
 
         // first see if the bundle exists or not; if not, create one
         BundleCriteria criteria = new BundleCriteria();
         criteria.setStrict(true);
         criteria.addFilterBundleTypeId(Integer.valueOf(bundleTypeId));
         criteria.addFilterName(bundleName);
-        criteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+        criteria.clearPaging(); //disable paging as the code assumes all the results will be returned.
 
         PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
-            bundle = createBundle(subject, bundleName, bundleDescription, bundleTypeId);
+            bundle = createBundle(subject, bundleName, bundleDescription, bundleTypeId, bundleGroupId);
         } else {
             bundle = bundles.get(0);
         }
@@ -485,7 +501,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleVersion(Subject subject, int bundleId, String name, String description,
         String version, String recipe) throws Exception {
         if (null == name || "".equals(name.trim())) {
@@ -497,13 +512,15 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid bundleId: " + bundleId);
         }
 
+        checkCreateBundleVersionAuthz(subject, bundleId);
+
         // parse the recipe (validation occurs here) and get the config def and list of files
         BundleType bundleType = bundle.getBundleType();
         RecipeParseResults results;
 
         try {
-            results = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager().parseRecipe(
-                bundleType.getName(), recipe);
+            results = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager()
+                .parseRecipe(bundleType.getName(), recipe);
         } catch (Exception e) {
             // ensure that we throw a runtime exception to force a rollback
             throw new RuntimeException("Failed to parse recipe", e);
@@ -531,7 +548,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 versionOrder = ((Number) bv[1]).intValue();
                 needToUpdateOrder = true;
             } else {
-                break; // comparision > 0, means our new version is higher than what's in the DB, because we DESC ordered, we can stop
+                break; // Comparison > 0, means our new version is higher than what's in the DB, because we DESC ordered, we can stop
             }
         }
 
@@ -555,37 +572,78 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
+
+        return createBundleVersionViaRecipeImpl(subject, recipe, false, 0);
+    }
+
+    @Override
+    public BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int bundleGroupId, String recipe)
+        throws Exception {
+
+        return createBundleVersionViaRecipeImpl(subject, recipe, true, bundleGroupId);
+    }
+
+    private BundleVersion createBundleVersionViaRecipeImpl(Subject subject, String recipe,
+        boolean mustBeInitialVersion, int initialBundleGroupId) throws Exception {
 
         BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
         BundleDistributionInfo info = manager.parseRecipe(recipe);
-        BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info);
+        BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info, mustBeInitialVersion,
+            initialBundleGroupId);
 
         return bundleVersion;
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
 
+        return createBundleVersionViaFileImpl(subject, distributionFile, false, 0);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaFile(Subject subject, int bundleGroupId, File distributionFile)
+        throws Exception {
+
+        return createBundleVersionViaFileImpl(subject, distributionFile, true, bundleGroupId);
+    }
+
+    private BundleVersion createBundleVersionViaFileImpl(Subject subject, File distributionFile,
+        boolean mustBeInitialVersion, int initialBundleGroupId) throws Exception {
+
         BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
         BundleDistributionInfo info = manager.processBundleDistributionFile(distributionFile);
-        BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info);
+        BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info, mustBeInitialVersion,
+            initialBundleGroupId);
 
         return bundleVersion;
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception {
+
+        return createBundleVersionViaByteArrayImpl(subject, fileBytes, false, 0);
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int bundleGroupId, byte[] fileBytes)
+        throws Exception {
+
+        return createBundleVersionViaByteArrayImpl(subject, fileBytes, true, bundleGroupId);
+    }
+
+    private BundleVersion createBundleVersionViaByteArrayImpl(Subject subject, byte[] fileBytes,
+        boolean mustBeInitialVersion, int bundleGroupId) throws Exception {
 
         File tmpFile = File.createTempFile("bundleDistroBits", ".zip");
         try {
             StreamUtil.copy(new ByteArrayInputStream(fileBytes), new FileOutputStream(tmpFile));
-            BundleVersion bundleVersion = createBundleVersionViaFile(subject, tmpFile);
+            BundleVersion bundleVersion = createBundleVersionViaFileImpl(subject, tmpFile, mustBeInitialVersion,
+                bundleGroupId);
             return bundleVersion;
         } finally {
             if (tmpFile != null) {
@@ -595,25 +653,44 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl) throws Exception {
+
         return createBundleVersionViaURL(subject, distributionFileUrl, null, null);
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
         String password) throws Exception {
+
+        return createBundleVersionViaURLImpl(subject, distributionFileUrl, username, password, false, 0);
+    }
+
+    @Override
+    public BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl)
+        throws Exception {
+
+        return createInitialBundleVersionViaURL(subject, bundleGroupId, distributionFileUrl, null, null);
+    }
+
+    @Override
+    public BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId,
+        String distributionFileUrl, String username, String password) throws Exception {
+
+        return createBundleVersionViaURLImpl(subject, distributionFileUrl, username, password, true, bundleGroupId);
+    }
+
+    public BundleVersion createBundleVersionViaURLImpl(Subject subject, String distributionFileUrl, String username,
+        String password, boolean mustBeInitialVersion, int initialBundleGroupId) throws Exception {
         File file = null;
         try {
             file = downloadFile(distributionFileUrl, username, password);
 
-            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into ["
-                + file.getPath() + "]");
+            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into [" + file.getPath()
+                + "]");
 
-            return createBundleVersionViaFile(subject, file);
+            return createBundleVersionViaFileImpl(subject, file, mustBeInitialVersion, initialBundleGroupId);
         } finally {
             if (file != null) {
                 file.delete();
@@ -631,8 +708,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
     }
 
-    private File downloadFileFromHttp(URL url, String username, String password) throws URISyntaxException,
-        IOException {
+    private File downloadFileFromHttp(URL url, String username, String password) throws URISyntaxException, IOException {
 
         HttpParams params = new BasicHttpParams();
         HttpClientParams.setRedirecting(params, true);
@@ -647,9 +723,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         HttpResponse response = httpClient.execute(get);
         if (response.getStatusLine().getStatusCode() != HttpStatus.SC_OK) {
-            throw new IllegalArgumentException(
-                "Failed to download the file from the URL [" + url + "]. The server responded: " +
-                    response.getStatusLine().toString());
+            throw new IllegalArgumentException("Failed to download the file from the URL [" + url
+                + "]. The server responded: " + response.getStatusLine().toString());
         }
 
         InputStream contents = response.getEntity().getContent();
@@ -665,8 +740,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return file;
     }
 
-    private BundleVersion createBundleVersionViaDistributionInfo(Subject subject, BundleDistributionInfo info)
-        throws Exception {
+    private BundleVersion createBundleVersionViaDistributionInfo(Subject subject, BundleDistributionInfo info,
+        boolean mustBeInitialVersion, Integer initialBundleGroupId) throws Exception {
 
         BundleType bundleType = bundleManager.getBundleType(subject, info.getBundleTypeName());
         String bundleName = info.getRecipeParseResults().getBundleMetadata().getBundleName();
@@ -676,7 +751,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         String version = info.getRecipeParseResults().getBundleMetadata().getBundleVersion();
         String recipe = info.getRecipe();
 
-        // first see if the bundle exists or not; if not, create one
+        // first see if the bundle exists or not
         boolean createdBundle;
         BundleCriteria criteria = new BundleCriteria();
         criteria.setStrict(true);
@@ -685,17 +760,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         PageList<Bundle> bundles = bundleManager.findBundlesByCriteria(subject, criteria);
         Bundle bundle;
-        if (bundles.getTotalSize() == 0) {
-            bundle = bundleManager.createBundle(subject, bundleName, bundleDescription, bundleType.getId());
+        boolean isInitialVersion = (bundles.getTotalSize() == 0);
+
+        if (!isInitialVersion && mustBeInitialVersion) {
+            throw new PermissionException("This must be the initial version of a new Bundle.");
+        }
+
+        if (isInitialVersion) {
+            bundle = bundleManager.createBundle(subject, bundleName, bundleDescription, bundleType.getId(),
+                initialBundleGroupId);
             createdBundle = true;
         } else {
             bundle = bundles.get(0);
+            checkCreateBundleVersionAuthz(subject, bundle.getId());
             createdBundle = false;
         }
 
         // now create the bundle version with the bundle we either found or created
-        BundleVersion bundleVersion = bundleManager.createBundleVersion(subject, bundle.getId(), name, description,
-            version, recipe);
+        BundleVersion bundleVersion = bundleManager.createBundleVersion(subjectManager.getOverlord(), bundle.getId(),
+            name, description, version, recipe);
 
         // now that we have the bundle version we can actually create the bundle files that were provided in
         // the bundle distribution
@@ -804,7 +887,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFile(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, InputStream fileStream) throws Exception {
 
@@ -821,6 +903,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == bundleVersion) {
             throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
         }
+
+        // Check authorization
+        checkCreateBundleVersionAuthz(subject, bundleVersion.getBundle().getId());
 
         // Create the PackageVersion the BundleFile is tied to.  This implicitly creates the
         // Package for the PackageVersion.
@@ -842,8 +927,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // Create the mapping between the Bundle's Repo and the BundleFile's PackageVersion
         Repo repo = bundle.getRepo();
         // add the packageVersion as overlord, this allows users without MANAGE_INVENTORY permission to add bundle files
-        repoManager.addPackageVersionsToRepo(subjectManager.getOverlord(), repo.getId(), new int[] { packageVersion
-            .getId() });
+        repoManager.addPackageVersionsToRepo(subjectManager.getOverlord(), repo.getId(),
+            new int[] { packageVersion.getId() });
 
         // Classify the Package with the Bundle name in order to distinguish it from the same package name for
         // a different bundle.
@@ -862,7 +947,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaByteArray(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, byte[] fileBytes) throws Exception {
 
@@ -870,7 +954,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, String bundleFileUrl) throws Exception {
 
@@ -881,10 +964,16 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleFile addBundleFileViaURL(Subject subject, int bundleVersionId, String name, String version,
         Architecture architecture, String bundleFileUrl, String userName, String password) throws Exception {
+
+        // Check authorization prior to performing any file download
+        BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
+        if (null == bundleVersion) {
+            throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
+        }
+        checkCreateBundleVersionAuthz(subject, bundleVersion.getBundle().getId());
 
         File file = null;
         FileInputStream fis = null;
@@ -904,9 +993,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
     }
 
-
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleFile addBundleFileViaPackageVersion(Subject subject, int bundleVersionId, String name,
         int packageVersionId) throws Exception {
 
@@ -922,8 +1009,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid packageVersionId: " + packageVersionId);
         }
 
+        // Check authorization
+        checkCreateBundleVersionAuthz(subject, bundleVersion.getBundle().getId());
+
         // With all the plumbing in place, create and persist the BundleFile. Tie it to the Package if the caller
-        // wants this BundleFile pinned to themost recent version.
+        // wants this BundleFile pinned to the most recent version.
         BundleFile bundleFile = new BundleFile();
         bundleFile.setBundleVersion(bundleVersion);
         bundleFile.setPackageVersion(packageVersion);
@@ -934,7 +1024,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public void purgeBundleDestination(final Subject subject, int bundleDestinationId) throws Exception {
         // find the live bundle deployment for this destination, and get all the resource deployments for that live deployment
@@ -954,6 +1043,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (resourceDeploys == null || resourceDeploys.isEmpty()) {
             return; // nothing to do
         }
+
+        // Although they likely will, the actual resource deployments may no longer match the members of the destination's
+        // resource group (if group membership has changed). We still use the group for authz because that is the more
+        // intuitive, manageable way to do this.  Otherwise the subject would need view perms on each of the previously
+        // deployed-to resources, and that may be tricky to provide.
+        checkDeployBundleAuthz(subject, liveDeployment.getBundleVersion().getBundle().getId(), liveDeployment
+            .getDestination().getGroup().getId());
 
         // we need to obtain the bundle type (the remote plugin container needs it). our first criteria can't fetch this deep, we have to do another query.
         BundleVersionCriteria bvc = new BundleVersionCriteria();
@@ -1006,7 +1102,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 BundleResourceDeploymentHistory history = new BundleResourceDeploymentHistory(subject.getName(),
                     "Purge Requested", "User [" + subject.getName() + "] requested to purge this deployment", null,
                     BundleResourceDeploymentHistory.Status.SUCCESS, null, null);
-                bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeploy.getId(), history);
+                bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subjectManager.getOverlord(),
+                    resourceDeploy.getId(), history);
 
                 // get a connection to the agent and tell it to purge the bundle from the file system
                 Subject overlord = subjectManager.getOverlord();
@@ -1040,8 +1137,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_SECURITY)
-    // no one should be calling us except overlord
     public void _finalizePurge(Subject subject, BundleDeployment bundleDeployment,
         Map<BundleResourceDeployment, String> failedToPurge) throws Exception {
 
@@ -1078,14 +1173,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleBundleDeployment(Subject subject, int bundleDeploymentId, boolean isCleanDeployment)
         throws Exception {
         return scheduleBundleDeploymentImpl(subject, bundleDeploymentId, isCleanDeployment, false, null);
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleDeployment scheduleRevertBundleDeployment(Subject subject, int bundleDestinationId,
         String deploymentDescription, boolean isCleanDeployment) throws Exception {
 
@@ -1113,6 +1206,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + "] can not be reverted. There is no prior deployment for destinationId [" + bundleDestinationId + "]");
         }
 
+        checkDeployBundleAuthz(subject, liveDeployment.getBundleVersion().getBundle().getId(), liveDeployment
+            .getDestination().getGroup().getId());
+
         // A revert is done by deploying a new deployment that mirrors "prevDeployment". It uses the same
         // bundleVersion, destination and config as prevDeployment.  It can have a new name and new desc, and
         // may opt to clean the deploy dir.  It must be a new deployment so that all status/auditing/history starts
@@ -1126,8 +1222,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         BundleDeployment revertDeployment = bundleManager.createBundleDeploymentInNewTrans(subject, prevDeployment
             .getBundleVersion().getId(), bundleDestinationId, name, desc, config);
 
-        return scheduleBundleDeploymentImpl(subject, revertDeployment.getId(), isCleanDeployment, true, prevDeployment
-            .getReplacedBundleDeploymentId());
+        return scheduleBundleDeploymentImpl(subject, revertDeployment.getId(), isCleanDeployment, true,
+            prevDeployment.getReplacedBundleDeploymentId());
     }
 
     // revertedDeploymentReplacedDeployment is only meaningful if isRevert is true
@@ -1148,6 +1244,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Destination [" + destination
                 + "] group has no members. Invalid deployment destination");
         }
+
+        checkDeployBundleAuthz(subject, newDeployment.getBundleVersion().getBundle().getId(), group.getId());
 
         for (Resource groupMember : groupMembers) {
             try {
@@ -1201,8 +1299,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // The BundleResourceDeployment record must exist in the db before the agent request because the agent may try
         // to add History to it during immediate deployments. So, create and persist it (requires a new trans).
-        BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeployment(subject, deployment
-            .getId(), bundleTargetResourceId);
+        BundleResourceDeployment resourceDeployment = bundleManager.createBundleResourceDeploymentInNewTrans(
+            subjectManager.getOverlord(), deployment.getId(), bundleTargetResourceId);
 
         if (null != bundleTarget.getResourceType().getResourceTypeBundleConfiguration()) {
 
@@ -1216,7 +1314,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     AUDIT_ACTION_DEPLOYMENT_REQUESTED, deployment.getName(), null,
                     BundleResourceDeploymentHistory.Status.SUCCESS, "Requested deployment time: "
                         + request.getRequestedDeployTimeAsString(), null);
-                bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
+                bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subjectManager.getOverlord(),
+                    resourceDeployment.getId(), history);
 
                 BundleScheduleResponse response = bundleAgentService.schedule(request);
 
@@ -1225,9 +1324,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                         BundleDeploymentStatus.FAILURE);
                     history = new BundleResourceDeploymentHistory(subject.getName(), AUDIT_ACTION_DEPLOYMENT,
-                        deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE, response
-                            .getErrorMessage(), null);
-                    bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
+                        deployment.getName(), null, BundleResourceDeploymentHistory.Status.FAILURE,
+                        response.getErrorMessage(), null);
+                    bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subject, resourceDeployment.getId(),
+                        history);
                 }
             } catch (Throwable t) {
                 // fail the unlaunched resource deployment
@@ -1235,7 +1335,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                     this.AUDIT_ACTION_DEPLOYMENT, deployment.getName(), null,
                     BundleResourceDeploymentHistory.Status.FAILURE, "Failed to schedule, agent on [" + bundleTarget
                         + "] may be down: " + t, null);
-                bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), failureHistory);
+                bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subject, resourceDeployment.getId(),
+                    failureHistory);
                 bundleManager.setBundleResourceDeploymentStatus(subject, resourceDeployment.getId(),
                     BundleDeploymentStatus.FAILURE);
             }
@@ -1248,7 +1349,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 "Target resource is not of a type that can have bundles deployed to it [resource="
                     + bundleTarget.getName() + "; id=" + bundleTarget.getId() + "]. Fix target group for destination ["
                     + deployment.getDestination().getName() + "]", null);
-            bundleManager.addBundleResourceDeploymentHistory(subject, resourceDeployment.getId(), history);
+            bundleManager.addBundleResourceDeploymentHistoryInNewTrans(subject, resourceDeployment.getId(), history);
         }
 
         return resourceDeployment;
@@ -1256,7 +1357,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleScheduleRequest getScheduleRequest(Subject subject, int resourceDeploymentId,
         boolean isCleanDeployment, boolean isRevert) throws Exception {
 
@@ -1315,8 +1415,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
-    public BundleResourceDeployment createBundleResourceDeployment(Subject subject, int bundleDeploymentId,
+    public BundleResourceDeployment createBundleResourceDeploymentInNewTrans(Subject subject, int bundleDeploymentId,
         int resourceId) throws Exception {
 
         BundleDeployment deployment = entityManager.find(BundleDeployment.class, bundleDeploymentId);
@@ -1335,7 +1434,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public BundleResourceDeployment setBundleResourceDeploymentStatus(Subject subject, int resourceDeploymentId,
         BundleDeploymentStatus status) throws Exception {
 
@@ -1380,14 +1478,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         return resourceDeployment;
     }
 
-    //    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    //  public BundleGroupDeployment createBundleGroupDeployment(BundleGroupDeployment groupDeployment) throws Exception {
-    //    entityManager.persist(groupDeployment);
-    //  return groupDeployment;
-    //}
-
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public Set<String> getBundleVersionFilenames(Subject subject, int bundleVersionId, boolean withoutBundleFileOnly)
         throws Exception {
 
@@ -1395,6 +1486,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         if (null == bundleVersion) {
             throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
         }
+
+        checkCreateBundleVersionAuthz(subject, bundleVersion.getBundle().getId());
 
         // parse the recipe (validation occurs here) and get the config def and list of files
         BundleType bundleType = bundleVersion.getBundle().getBundleType();
@@ -1423,17 +1516,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         return result;
-
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public HashMap<String, Boolean> getAllBundleVersionFilenames(Subject subject, int bundleVersionId) throws Exception {
 
         BundleVersion bundleVersion = entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
             throw new IllegalArgumentException("Invalid bundleVersionId: " + bundleVersionId);
         }
+
+        checkCreateBundleVersionAuthz(subject, bundleVersion.getBundle().getId());
 
         // parse the recipe (validation occurs here) and get the config def and list of files
         BundleType bundleType = bundleVersion.getBundle().getBundleType();
@@ -1457,7 +1550,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
 
         return result;
-
     }
 
     @Override
@@ -1481,47 +1573,45 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     public PageList<BundleDeployment> findBundleDeploymentsByCriteria(Subject subject, BundleDeploymentCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        // filter by bundles that are viewable
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId(), "bundleVersion.bundle");
+        }
+
         CriteriaQueryRunner<BundleDeployment> queryRunner = new CriteriaQueryRunner<BundleDeployment>(criteria,
             generator, entityManager);
-        return queryRunner.execute();
-    }
+        PageList<BundleDeployment> result = queryRunner.execute();
 
-    /**
-     * Fetch bundle deployments by criteria and then filter on destinations on the result objects to limit what the user can see
-     * @param subject Caller
-     * @param criteria criteria to fetch the deployments
-     * @return List of deployments with destinations filtered.
-     */
-    @Override
-    public PageList<BundleDeployment> findBundleDeploymentsByCriteriaWithDestinationFilter(Subject subject,
-                                                                                           BundleDeploymentCriteria criteria) {
+        // The result currently holds bundle deployments for bundles viewable by the caller, but we must remove
+        // those bundle deployments for destinations not viewable by the user. In essence we wanted two authz tokens,
+        // one for bundle and one for resource group, but we can only supply one.
+        if (!(result.isEmpty() || authorizationManager.isInventoryManager(subject))) {
 
-        PageList<BundleDeployment> deployments = findBundleDeploymentsByCriteria(subject,criteria);
-        if (authorizationManager.isInventoryManager(subject))
-            return deployments;
-
-        PageList<BundleDeployment> resultingDeployments = new PageList<BundleDeployment>(deployments.getPageControl());
-        // We now have visible destinations - go over the resultingDeployments and only include the ones with vis. destinations
-        for (BundleDeployment deployment : deployments) {
-
-            int bundleId = deployment.getBundleVersion().getBundle().getId();
-            BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
-            destinationCriteria.addFilterBundleId(bundleId);
-            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
-            if (destinationsContains(destinations,deployment.getDestination()))
-                resultingDeployments.add(deployment);
+            for (Iterator<BundleDeployment> i = result.iterator(); i.hasNext();) {
+                BundleDeployment bd = i.next();
+                int groupId = bd.getDestination().getGroup().getId();
+                if (!authorizationManager.canViewGroup(subject, groupId)) {
+                    i.remove();
+                }
+            }
         }
-        return resultingDeployments;
+
+        return result;
     }
 
     @Override
     public PageList<BundleDestination> findBundleDestinationsByCriteria(Subject subject,
         BundleDestinationCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
-        // Filter by destinations that are viewable
+
+        // Filter by destinations (resource groups) that are viewable
         if (!authorizationManager.isInventoryManager(subject)) {
-            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,subject.getId());
-        }        CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
+            generator.setAuthorizationResourceFragment(CriteriaQueryGenerator.AuthorizationTokenType.GROUP,
+                subject.getId());
+        }
+        CriteriaQueryRunner<BundleDestination> queryRunner = new CriteriaQueryRunner<BundleDestination>(criteria,
             generator, entityManager);
         return queryRunner.execute();
     }
@@ -1532,73 +1622,95 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
 
-        if (!authorizationManager.isInventoryManager(subject)) {
-            if (criteria.isInventoryManagerRequired()) {
-                // TODO: MANAGE_INVENTORY was too restrictive as a bundle manager could not then
-                // see his resource deployments. Until we can handle granular authorization checks on
-                // optionally fetched resource member data, allow a bundle manager to see
-                // resource deployments to any resource.
-                if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_BUNDLE)) {
-                    throw new PermissionException("Subject [" + subject.getName()
-                        + "] requires InventoryManager or BundleManager permission for requested query criteria.");
-                }
-            }
-            // TODO limit target groups according to visibility
+        // filter by bundles that are viewable
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId(), "bundleDeployment.bundleVersion.bundle");
         }
 
         CriteriaQueryRunner<BundleResourceDeployment> queryRunner = new CriteriaQueryRunner<BundleResourceDeployment>(
             criteria, generator, entityManager);
+        PageList<BundleResourceDeployment> result = queryRunner.execute();
 
-        return queryRunner.execute();
+        // if necessary, filter results to resources that are viewable
+        if (!result.isEmpty() && criteria.isInventoryManagerRequired()
+            && !authorizationManager.isInventoryManager(subject)) {
+
+            // try to authorize in one call, if that fails then go (slow) fine-grained
+            List<Integer> resourceIds = new ArrayList<Integer>(result.size());
+            for (BundleResourceDeployment brd : result) {
+                int resourceId = brd.getResource().getId();
+                resourceIds.add(resourceId);
+            }
+
+            if (!authorizationManager.canViewResources(subject, resourceIds)) {
+                for (Integer resourceId : resourceIds) {
+                    if (!authorizationManager.canViewResource(subject, resourceId)) {
+                        for (Iterator<BundleResourceDeployment> i = result.iterator(); i.hasNext();) {
+                            BundleResourceDeployment brd = i.next();
+                            if (brd.getResource().getId() == resourceId.intValue()) {
+                                i.remove();
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return result;
     }
 
     @Override
     public PageList<BundleVersion> findBundleVersionsByCriteria(Subject subject, BundleVersionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId());
+        }
+
         CriteriaQueryRunner<BundleVersion> queryRunner = new CriteriaQueryRunner<BundleVersion>(criteria, generator,
             entityManager);
-        return queryRunner.execute();
-    }
+        PageList<BundleVersion> result = queryRunner.execute();
 
-    /**
-     * Fetch bundle versions by criteria and then filter destination on the result objects to limit what the user can see
-     * @param subject Caller
-     * @param criteria criteria to fetch the bundles
-     * @return List of versions with destinations filtered.
-     */
-    @Override
-    public PageList<BundleVersion> findBundleVersionsByCriteriaWithDestinationFilter(Subject subject,
-                                                                                     BundleVersionCriteria criteria) {
+        // If asking for optional data that the subject may not be able to see then ensure that the optional
+        // data is filtered appropriately.  In this case only deployments to destinations viewable by the subject         
+        // can be returned.  The result currently holds bundle versions viewable by the caller, but the bundle version
+        // may have been deployed to destinations for which the user does not have access to the destination's
+        // resource group. (BZ 694741)
+        if (!result.isEmpty() && criteria.isInventoryManagerRequired()
+            && !authorizationManager.isInventoryManager(subject)) {
 
-        PageList<BundleVersion> versions = findBundleVersionsByCriteria(subject,criteria);
-        if (authorizationManager.isInventoryManager(subject)) {
-            return versions;
-        }
-        // Not inv manager -> restrict visible deployments by visible destinations
+            // this works because findBundleDestinationsByCriteria() authorizes against resource group associations
 
-        for (BundleVersion version:versions) {
+            for (BundleVersion bundleVersion : result) {
+                int numDeployments = bundleVersion.getBundleDeployments().size();
+                if (0 == numDeployments) {
+                    continue;
+                }
 
-            Bundle bundle = version.getBundle();
-            BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
-            destinationCriteria.addFilterBundleId(bundle.getId());
-            destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+                Bundle bundle = bundleVersion.getBundle();
+                BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
+                destinationCriteria.clearPaging(); //disable paging as the code assumes all the results will be returned.
+                destinationCriteria.addFilterBundleId(bundle.getId());
 
-            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
-            List<BundleDeployment> resultingDeployments = new ArrayList<BundleDeployment>(version.getBundleDeployments().size());
-            // We now have visible destinations - go over the resultingDeployments and only include the ones with vis. destinations
-            for (BundleDeployment deployment : version.getBundleDeployments()) {
-                if (destinationsContains(destinations,deployment.getDestination()))
-                    resultingDeployments.add(deployment);
+                // get the viewable destinations and use to filter the deployments
+                List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject, destinationCriteria);
+                List<BundleDeployment> filteredDeployments = new ArrayList<BundleDeployment>(numDeployments);
+                entityManager.detach(bundleVersion); // make sure we don't persist the filtered data 
+                for (BundleDeployment deployment : bundleVersion.getBundleDeployments()) {
+                    if (containsDestination(destinations, deployment.getDestination()))
+                        filteredDeployments.add(deployment);
+                }
+
+                bundleVersion.setBundleDeployments(filteredDeployments);
             }
-
-            version.setBundleDeployments(resultingDeployments);
         }
 
-        return versions;
-
+        return result;
     }
 
-    private boolean destinationsContains(List<BundleDestination> list, BundleDestination dest) {
+    private boolean containsDestination(List<BundleDestination> list, BundleDestination dest) {
         int id = dest.getId();
         for (BundleDestination destination : list) {
             if (destination.getId() == id)
@@ -1610,6 +1722,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @Override
     public PageList<BundleFile> findBundleFilesByCriteria(Subject subject, BundleFileCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        // filter by bundles that are viewable
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId());
+        }
+
         CriteriaQueryRunner<BundleFile> queryRunner = new CriteriaQueryRunner<BundleFile>(criteria, generator,
             entityManager);
         return queryRunner.execute();
@@ -1617,36 +1736,39 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     public PageList<Bundle> findBundlesByCriteria(Subject subject, BundleCriteria criteria) {
+
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId(), null);
+        }
+
         CriteriaQueryRunner<Bundle> queryRunner = new CriteriaQueryRunner<Bundle>(criteria, generator, entityManager);
-        return queryRunner.execute();
-    }
+        PageList<Bundle> result = queryRunner.execute();
 
-    /**
-     * Fetch bundles by criteria and then filter destination on the result objects to limit what the user can see
-     * @param subject Caller
-     * @param criteria criteria to fetch the bundles
-     * @return List of bundles with destinations filtered.
-     */
-    @Override
-    public PageList<Bundle> findBundlesByCriteriaWithDestinationFilter(Subject subject, BundleCriteria criteria) {
-        // First get the bundles
-        PageList<Bundle> bundles = findBundlesByCriteria(subject,criteria);
-        if (authorizationManager.isInventoryManager(subject)) {
-            return bundles;
-        }
-        // Not inv manager -> restrict visible destinations
-        PageList<Bundle> result = new PageList<Bundle>(bundles.size(),bundles.getPageControl());
-        for (Bundle bundle : bundles.getValues()) { // TODO clone the bundle and return the modified clones
-            BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
-            destinationCriteria.addFilterBundleId(bundle.getId());
-            destinationCriteria.clearPaging();//disable paging as the code assumes all the results will be returned.
+        // If asking for optional data that the subject may not be able to see then ensure that the optional
+        // data is filtered appropriately.  In this case only destinations viewable by the subject can be returned.         
+        // The result currently holds bundles viewable by the caller, but the bundle may have been deployed to
+        // destinations for which the user does not have access to the destination's resource group. (BZ 694741)
+        if (!result.isEmpty() && criteria.isInventoryManagerRequired()
+            && !authorizationManager.isInventoryManager(subject)) {
 
-            List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject,destinationCriteria);
-            bundle.setDestinations(destinations);
+            // this works because findBundleDestinationsByCriteria() authorizes against resource group associations
+            for (Bundle bundle : result) {
+                if (bundle.getDestinations().isEmpty()) {
+                    continue;
+                }
+                BundleDestinationCriteria destinationCriteria = new BundleDestinationCriteria();
+                destinationCriteria.clearPaging(); //disable paging as the code assumes all the results will be returned.                
+                destinationCriteria.addFilterBundleId(bundle.getId());
+                List<BundleDestination> destinations = findBundleDestinationsByCriteria(subject, destinationCriteria);
+                entityManager.detach(bundle); // make sure the narrowed set of destinations does not get persisted
+                bundle.setDestinations(destinations);
+            }
         }
 
-        return bundles;
+        return result;
     }
 
     @Override
@@ -1662,6 +1784,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             + "   ( SELECT bv1.version FROM bundle.bundleVersions bv1 WHERE bv1.versionOrder = (SELECT MAX(bv2.versionOrder) FROM BundleVersion bv2 WHERE bv2.bundle.id = bundle.id) ) AS latestVersion,"
             + "   ( SELECT COUNT(bv3) FROM bundle.bundleVersions bv3 WHERE bv3.bundle.id = bundle.id) AS deploymentCount ) ";
         generator.alterProjection(replacementSelectList);
+
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.VIEW_BUNDLES)) {
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE,
+                subject.getId(), null);
+        }
 
         CriteriaQueryRunner<BundleWithLatestVersionComposite> queryRunner = new CriteriaQueryRunner<BundleWithLatestVersionComposite>(
             criteria, generator, entityManager);
@@ -1684,12 +1811,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     @SuppressWarnings("unchecked")
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundle(Subject subject, int bundleId) throws Exception {
         Bundle bundle = this.entityManager.find(Bundle.class, bundleId);
         if (null == bundle) {
             return;
         }
+
+        checkDeleteBundleAuthz(subject, bundleId);
 
         Query q = entityManager.createNamedQuery(BundleVersion.QUERY_FIND_BY_BUNDLE_ID);
         q.setParameter("bundleId", bundleId);
@@ -1697,6 +1825,11 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         for (BundleVersion bv : bvs) {
             bundleManager.deleteBundleVersion(subject, bv.getId(), false);
             entityManager.flush();
+        }
+
+        // remove bundle from relevant any assigned bundle groups
+        for (BundleGroup bg : bundle.getBundleGroups()) {
+            bg.removeBundle(bundle);
         }
 
         // we need to whack the Repo once the Bundle no longer refers to it
@@ -1710,14 +1843,18 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleDeployment(Subject subject, int bundleDeploymentId) throws Exception {
         BundleDeployment doomed = this.entityManager.find(BundleDeployment.class, bundleDeploymentId);
         if (null == doomed) {
             return;
         }
-        // only allow deployments to be deleted if they are finished
-        if (BundleDeploymentStatus.SUCCESS == doomed.getStatus()
+
+        checkDeployBundleAuthz(subject, doomed.getBundleVersion().getBundle().getId(), doomed.getDestination()
+            .getGroup().getId());
+
+        // only allow deployments to be deleted if they are not started or finished
+        if (BundleDeploymentStatus.PENDING == doomed.getStatus()
+            || BundleDeploymentStatus.SUCCESS == doomed.getStatus()
             || BundleDeploymentStatus.FAILURE == doomed.getStatus()
             || BundleDeploymentStatus.MIXED == doomed.getStatus()) {
             entityManager.remove(doomed);
@@ -1727,12 +1864,13 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleDestination(Subject subject, int destinationId) throws Exception {
         BundleDestination doomed = this.entityManager.find(BundleDestination.class, destinationId);
         if (null == doomed) {
             return;
         }
+
+        checkDeployBundleAuthz(subject, doomed.getBundle().getId(), doomed.getGroup().getId());
 
         // deployments replace other deployments and have a self-referring FK.  The deployments
         // need to be removed in a way that will ensure that a replaced deployment is not removed
@@ -1747,18 +1885,19 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    @RequiredPermission(Permission.MANAGE_BUNDLE)
     public void deleteBundleVersion(Subject subject, int bundleVersionId, boolean deleteBundleIfEmpty) throws Exception {
         BundleVersion bundleVersion = this.entityManager.find(BundleVersion.class, bundleVersionId);
         if (null == bundleVersion) {
             return;
         }
 
+        int bundleId = bundleVersion.getBundle().getId();
+
+        checkDeleteBundleAuthz(subject, bundleId);
+
         // After we delete this bundle version, this is the version order value that is being removed.
         // Later we need to re-order the other bundles that are newer than this so their version orders are readjusted.
         int doomedBundleVersionOrder = bundleVersion.getVersionOrder();
-
-        int bundleId = bundleVersion.getBundle().getId();
 
         // deployments replace other deployments and have a self-referring FK.  The deployments
         // need to be removed in a way that will ensure that a replaced deployment is not removed
@@ -1766,7 +1905,6 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         // to break the FK dependency with nulls.
         Query q = entityManager.createNamedQuery(BundleDeployment.QUERY_UPDATE_FOR_VERSION_REMOVE);
         q.setParameter("bundleVersionId", bundleVersionId);
-        @SuppressWarnings("unused")
         int rowsUpdated = q.executeUpdate();
         entityManager.flush();
 
@@ -1812,6 +1950,391 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 log.warn("Failed to close OutputStream", e);
             }
         }
+    }
+
+    @Override
+    public void assignBundlesToBundleGroup(Subject subject, int bundleGroupId, int[] bundleIds) {
+        BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+        if (null == bundleGroup) {
+            throw new IllegalArgumentException("BundleGroup does not exist for bundleGroupId [" + bundleGroupId + "]");
+        }
+
+        checkAssignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
+
+        for (int bundleId : bundleIds) {
+            Bundle bundle = entityManager.find(Bundle.class, bundleId);
+            if (null == bundle) {
+                throw new IllegalArgumentException("Bundle does not exist for bundleId [" + bundleId + "]");
+            }
+
+            bundleGroup.addBundle(bundle);
+        }
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
+    public BundleGroup createBundleGroup(Subject subject, String name, String description) throws Exception {
+        if (null == name || "".equals(name.trim())) {
+            throw new IllegalArgumentException("Invalid bundleGroupName: " + name);
+        }
+
+        BundleGroupCriteria c = new BundleGroupCriteria();
+        c.addFilterName(name);
+        c.setStrict(true);
+        if (!bundleManager.findBundleGroupsByCriteria(subject, c).isEmpty()) {
+            throw new IllegalArgumentException("Invalid bundleGroupName, bundle group already exists with name: "
+                + name);
+        }
+
+        // create and add the required Repo. the Repo is a detached object which helps in its eventual
+        // removal.
+        BundleGroup bg = new BundleGroup(name);
+        bg.setDescription(description);
+
+        entityManager.persist(bg);
+
+        return bg;
+    }
+
+    @Override
+    @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
+    public void deleteBundleGroups(Subject subject, int[] bundleGroupIds) throws Exception {
+
+        for (int bundleGroupId : bundleGroupIds) {
+            BundleGroup bundleGroup = this.entityManager.find(BundleGroup.class, bundleGroupId);
+            if (null == bundleGroup) {
+                return;
+            }
+
+            // unassign any bundles assigned to the bundle group
+            for (Bundle b : bundleGroup.getBundles()) {
+                bundleGroup.removeBundle(b);
+            }
+
+            // remove from any roles
+            for (Role r : bundleGroup.getRoles()) {
+                r.removeBundleGroup(bundleGroup);
+            }
+
+            bundleGroup = entityManager.merge(bundleGroup);
+
+            // now remove the bundle group
+            entityManager.remove(bundleGroup);
+        }
+    }
+
+    @Override
+    public PageList<BundleGroup> findBundleGroupsByCriteria(Subject subject, BundleGroupCriteria criteria) {
+        CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
+
+        // filter by bundle groups that are viewable
+        if (!authorizationManager.hasGlobalPermission(subject, Permission.MANAGE_BUNDLE_GROUPS)) {
+            generator.setAuthorizationBundleFragment(CriteriaQueryGenerator.AuthorizationTokenType.BUNDLE_GROUP,
+                subject.getId(), null);
+        }
+
+        CriteriaQueryRunner<BundleGroup> queryRunner = new CriteriaQueryRunner<BundleGroup>(criteria, generator,
+            entityManager);
+        return queryRunner.execute();
+    }
+
+    @Override
+    public void unassignBundlesFromBundleGroup(Subject subject, int bundleGroupId, int[] bundleIds) {
+        BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+        if (null == bundleGroup) {
+            throw new IllegalArgumentException("BundleGroup does not exist for bundleGroupId [" + bundleGroupId + "]");
+        }
+
+        checkUnassignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
+
+        for (int bundleId : bundleIds) {
+            Bundle bundle = entityManager.find(Bundle.class, bundleId);
+            if (null == bundle) {
+                throw new IllegalArgumentException("Bundle does not exist for bundleId [" + bundleId + "]");
+            }
+
+            bundleGroup.removeBundle(bundle);
+        }
+    }
+
+    /**
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
+     * </pre>  
+     * @param subject
+     * @param bundleGroupId null or 0 for unassigned initial bundle version creation
+     * @throws PermissionException
+     */
+    private void checkCreateInitialBundleVersionAuthz(Subject subject, Integer bundleGroupId)
+        throws PermissionException {
+        Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalCreateBundles = globalPerms.contains(Permission.CREATE_BUNDLES);
+
+        if (hasGlobalCreateBundles && globalPerms.contains(Permission.VIEW_BUNDLES)) {
+            return;
+        }
+
+        if (null == bundleGroupId || bundleGroupId.intValue() <= 0) {
+            String msg = "Subject [" + subject.getName()
+                + "] requires Global CREATE_BUNDLES and VIEW_BUNDLES to create unsassigned initial bundle version.";
+            throw new PermissionException(msg);
+        }
+
+        if (hasGlobalCreateBundles) {
+            if (authorizationManager.canViewBundleGroup(subject, bundleGroupId)) {
+                return;
+            }
+        } else {
+            if (authorizationManager.hasBundleGroupPermission(subject, Permission.CREATE_BUNDLES_IN_GROUP,
+                bundleGroupId)) {
+                return;
+            }
+        }
+
+        String msg = "Subject ["
+            + subject.getName()
+            + "] requires either Global.CREATE_BUNDLES + BundleGroup.VIEW_BUNDLES_IN_GROUP, or BundleGroup.CREATE_BUNDLES_IN_GROUP, to create or update a bundle in bundle group ["
+            + bundleGroupId + "].";
+        throw new PermissionException(msg);
+    }
+
+    /**
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * </pre> 
+     * @param subject
+     * @param bundleId required, bundleId of bundle in which bundle version is being created/updated
+     * @throws PermissionException
+     */
+    private void checkCreateBundleVersionAuthz(Subject subject, int bundleId) throws PermissionException {
+
+        if (bundleId <= 0) {
+            throw new IllegalArgumentException(
+                "Must supply valid bundleId for bundle version being created. BundleId specified [" + bundleId + "]");
+        }
+
+        Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalCreateBundles = globalPerms.contains(Permission.CREATE_BUNDLES);
+
+        if (hasGlobalCreateBundles && globalPerms.contains(Permission.VIEW_BUNDLES)) {
+            return;
+        }
+
+        if (hasGlobalCreateBundles) {
+            if (authorizationManager.canViewBundle(subject, bundleId)) {
+                return;
+            }
+        } else {
+            if (authorizationManager.hasBundlePermission(subject, Permission.CREATE_BUNDLES_IN_GROUP, bundleId)) {
+                return;
+            }
+        }
+
+        String msg = "Subject ["
+            + subject.getName()
+            + "] requires either Global.CREATE_BUNDLES + BundleGroup.VIEW_BUNDLES_IN_GROUP, or BundleGroup.CREATE_BUNDLES_IN_GROUP, to create or update a bundleVersion for bundle ["
+            + bundleId + "].";
+        throw new PermissionException(msg);
+    }
+
+    /**
+     * <pre>
+     * Requires VIEW permission for the relevant bundle and one of:
+     * - Global.MANAGE_BUNDLE_GROUPS
+     * - Global.CREATE_BUNDLE
+     * - BundleGroup.ASSIGN_BUNDLES_TO_GROUP for the relevant bundle group
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for the relevant bundle group
+     * </pre>
+     * @param subject
+     * @param bundleGroupId an existing bundle group
+     * @param bundleIds existing bundles
+     * @throws PermissionException
+     */
+    private void checkAssignBundleGroupAuthz(Subject subject, int bundleGroupId, int[] bundleIds)
+        throws PermissionException {
+
+        Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalManageBundleGroups = globalPerms.contains(Permission.MANAGE_BUNDLE_GROUPS);
+        boolean hasGlobalCreateBundles = globalPerms.contains(Permission.CREATE_BUNDLES);
+        boolean hasGlobalViewBundles = globalPerms.contains(Permission.VIEW_BUNDLES);
+
+        if ((hasGlobalManageBundleGroups || hasGlobalCreateBundles) && hasGlobalViewBundles) {
+            return;
+        }
+
+        boolean canAssign = hasGlobalManageBundleGroups
+            || hasGlobalCreateBundles
+            || authorizationManager
+                .hasBundleGroupPermission(subject, Permission.CREATE_BUNDLES_IN_GROUP, bundleGroupId)
+            || authorizationManager
+                .hasBundleGroupPermission(subject, Permission.ASSIGN_BUNDLES_TO_GROUP, bundleGroupId);
+
+        if (!canAssign) {
+            String msg = "Subject ["
+                + subject.getName()
+                + "] requires one of Global.MANAGE_BUNDLE_GROUPS, Global.CREATE_BUNDLES, BundleGroup.CREATE_BUNDLES_IN_GROUP, or BundleGroup.ASSIGN_BUNDLES_TO_GROUP to assign a bundle to bundle group  ["
+                + bundleGroupId + "].";
+            throw new PermissionException(msg);
+        }
+
+        for (int bundleId : bundleIds) {
+            if (bundleId <= 0) {
+                throw new IllegalArgumentException("Invalid bundleId: [" + bundleId + "]");
+            }
+
+            if (!authorizationManager.canViewBundle(subject, bundleId)) {
+                String msg = "Subject [" + subject.getName()
+                    + "] requires either Global.VIEW_BUNDLES or BundleGroup.VIEW_BUNDLES_IN_GROUP to assign bundle ["
+                    + bundleId + "] to bundle group [" + bundleGroupId + "]";
+                throw new PermissionException(msg);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * <pre>
+     * Requires VIEW permission for the relevant bundles and one of:
+     * - Global.MANAGE_BUNDLE_GROUPS 
+     * - Global.DELETE_BUNDLE
+     * - BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP for the relevant bundle group
+     * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for the relevant bundle group
+     * </pre>
+     * 
+     * @param subject
+     * @param bundleGroupId an existing bundle group
+     * @param bundleIds existing bundles
+     * @throws PermissionException
+     */
+    private void checkUnassignBundleGroupAuthz(Subject subject, int bundleGroupId, int[] bundleIds)
+        throws PermissionException {
+
+        Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalManageBundleGroups = globalPerms.contains(Permission.MANAGE_BUNDLE_GROUPS);
+        boolean hasGlobalDeleteBundles = globalPerms.contains(Permission.DELETE_BUNDLES);
+        boolean hasGlobalViewBundles = globalPerms.contains(Permission.VIEW_BUNDLES);
+
+        if ((hasGlobalManageBundleGroups || hasGlobalDeleteBundles) && hasGlobalViewBundles) {
+            return;
+        }
+
+        boolean canUnassign = hasGlobalManageBundleGroups
+            || hasGlobalDeleteBundles
+            || authorizationManager.hasBundleGroupPermission(subject, Permission.DELETE_BUNDLES_FROM_GROUP,
+                bundleGroupId)
+            || authorizationManager.hasBundleGroupPermission(subject, Permission.UNASSIGN_BUNDLES_FROM_GROUP,
+                bundleGroupId);
+
+        if (!canUnassign) {
+            String msg = "Subject ["
+                + subject.getName()
+                + "] requires one of Global.MANAGE_BUNDLE_GROUPS, Global.DELETE_BUNDLES, BundleGroup.DELETE_BUNDLES_FROM_GROUP, or BundleGroup.UNASSIGN_BUNDLES_FROM_GROUP to unassign a bundle from bundle group  ["
+                + bundleGroupId + "].";
+            throw new PermissionException(msg);
+        }
+
+        for (int bundleId : bundleIds) {
+            if (bundleId <= 0) {
+                throw new IllegalArgumentException("Invalid bundleId: [" + bundleId + "]");
+            }
+
+            if (!authorizationManager.canViewBundle(subject, bundleId)) {
+                String msg = "Subject [" + subject.getName()
+                    + "] requires either Global.VIEW_BUNDLES or BundleGroup.VIEW_BUNDLES_IN_GROUP to unassign bundle ["
+                    + bundleId + "] from bundle group [" + bundleGroupId + "]";
+                throw new PermissionException(msg);
+            }
+        }
+
+        return;
+    }
+
+    /**
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.DEPLOY_BUNDLES and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * - Resource.DEPLOY_BUNDLES_TO_GROUP and a view of the relevant bundle and a view of the relevant resource group (may involve multiple roles)
+     * </pre> 
+     */
+    private void checkDeployBundleAuthz(Subject subject, int bundleId, int resourceGroupId) throws PermissionException {
+
+        boolean hasResourceGroupView = authorizationManager.canViewGroup(subject, resourceGroupId);
+
+        if (!hasResourceGroupView) {
+            String msg = "Subject [" + subject.getName() + "] requires VIEW permission on resource group  ["
+                + resourceGroupId + "].";
+            throw new PermissionException(msg);
+        }
+
+        Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalDeployBundles = globalPerms.contains(Permission.DEPLOY_BUNDLES);
+        boolean hasGlobalViewBundles = globalPerms.contains(Permission.VIEW_BUNDLES);
+
+        if (hasGlobalDeployBundles && hasGlobalViewBundles) {
+            return;
+        }
+
+        boolean hasResourceGroupDeploy = hasGlobalDeployBundles
+            || authorizationManager.hasGroupPermission(subject, Permission.DEPLOY_BUNDLES_TO_GROUP, resourceGroupId);
+        boolean hasBundleView = hasGlobalViewBundles || authorizationManager.canViewBundle(subject, bundleId);
+
+        if (!(hasResourceGroupDeploy && hasBundleView)) {
+            String msg = "Subject [" + subject.getName()
+                + "] requires DEPLOY permission (global or on for resource group [" + resourceGroupId
+                + "] and VIEW permission for bundle [" + bundleId + "]";
+            throw new PermissionException(msg);
+        }
+
+        return;
+    }
+
+    /**
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.DELETE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.DELETE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG and the relevant bundle is assigned to BG
+     * - BundleGroup.DELETE_BUNDLES_FROM_GROUP for bundle group BG and the relevant bundle is assigned to BG    
+     * </pre> 
+     * @param subject
+     * @param bundleId required, bundleId of bundle, or the bundle version, being deleted
+     * @throws PermissionException
+     */
+    private void checkDeleteBundleAuthz(Subject subject, int bundleId) throws PermissionException {
+
+        if (bundleId <= 0) {
+            throw new IllegalArgumentException(
+                "Must supply valid bundleId for bundle version being deleted. BundleId specified [" + bundleId + "]");
+        }
+
+        Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
+        boolean hasGlobalDeleteBundles = globalPerms.contains(Permission.DELETE_BUNDLES);
+
+        if (hasGlobalDeleteBundles && globalPerms.contains(Permission.VIEW_BUNDLES)) {
+            return;
+        }
+
+        if (hasGlobalDeleteBundles) {
+            if (authorizationManager.canViewBundle(subject, bundleId)) {
+                return;
+            }
+        } else {
+            if (authorizationManager.hasBundlePermission(subject, Permission.DELETE_BUNDLES_FROM_GROUP, bundleId)) {
+                return;
+            }
+        }
+
+        String msg = "Subject ["
+            + subject.getName()
+            + "] requires either Global.DELETE_BUNDLES + BundleGroup.VIEW_BUNDLES_IN_GROUP, or BundleGroup.DELETE_BUNDLES_FROM_GROUP, to delete bundle ["
+            + bundleId + "].";
+        throw new PermissionException(msg);
     }
 
 }

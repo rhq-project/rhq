@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
 
 import java.util.ArrayList;
@@ -26,13 +27,15 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
+import org.rhq.enterprise.gui.coregui.client.util.Log;
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -41,14 +44,11 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
-import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
-import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
@@ -60,13 +60,10 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author Jirka Kremser
  */
-public class StorageNodeTableView extends TableSection<StorageNodeDatasource> implements HasViewName {
-
-    public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(),
-        IconEnum.STORAGE_NODE);
+public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
-        + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
+        + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + StorageNodeAdminView.VIEW_ID;
 
     public StorageNodeTableView() {
         super(null);
@@ -80,7 +77,13 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
         }
         criteria.addCriteria(StorageNodeDatasource.FILTER_OPERATION_MODE, modes);
         setInitialCriteria(criteria);
-        setDataSource(new StorageNodeDatasource());
+        setDataSource(StorageNodeDatasource.instance());
+    }
+
+    @Override
+    protected void doOnDraw() {
+        super.doOnDraw();
+        scheduleUnacknowledgedAlertsPollingJob(getListGrid());
     }
 
     @Override
@@ -88,8 +91,10 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
         super.configureTable();
         List<ListGridField> fields = getDataSource().getListGridFields();
         ListGrid listGrid = getListGrid();
+        listGrid.setAutoSaveEdits(false);
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
         listGrid.sort(FIELD_ADDRESS.propertyName(), SortDirection.ASCENDING);
+        listGrid.setHoverWidth(200);
         showCommonActions();
 
         for (ListGridField field : fields) {
@@ -132,60 +137,65 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
         }
     }
 
+    private void scheduleUnacknowledgedAlertsPollingJob(final ListGrid listGrid) {
+        new Timer() {
+            public void run() {
+                Log.info("Running the job fetching the number of unack alerts for particular storage nodes...");
+                final ListGridRecord[] records = listGrid.getRecords();
+                List<Integer> storageNodeIds = new ArrayList<Integer>(records.length);
+                for (ListGridRecord record : records) {
+                    // todo: get the resource ids and create a method on SLSB that accepts resource ids to make it faster
+                    storageNodeIds.add(record.getAttributeAsInt(FIELD_ID));
+                }
+                GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCounts(storageNodeIds,
+                    new AsyncCallback<List<Integer>>() {
+                        @Override
+                        public void onSuccess(List<Integer> result) {
+                            for (int i = 0; i < records.length; i++) {
+                                int value = result.get(i);
+                                records[i].setAttribute(FIELD_ALERTS.propertyName(),
+                                    StorageNodeAdminView.getAlertsString("New Alerts", value));
+                                listGrid.setData(records);
+                            }
+                            schedule(15 * 1000);
+                        }
+
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            schedule(60 * 1000);
+                            // todo:
+                            SC.say("fooo");
+                        }
+                    });
+            }
+        }.schedule(15 * 1000);
+        Log.info("Polling job fetching the number of unack alerts for particular storage nodes has been scheduled");
+    }
+
     @Override
     protected ListGrid createListGrid() {
         ListGrid listGrid = new ListGrid() {
             @Override
             protected Canvas getExpansionComponent(final ListGridRecord record) {
                 int id = record.getAttributeAsInt(FIELD_ID);
-                return new StorageNodeLoadComponent(id, this, record);
+                return new StorageNodeLoadComponent(id, null);
             }
         };
         listGrid.setCanExpandRecords(true);
-//        listGrid.setAutoFetchData(true);
+        //        listGrid.setAutoFetchData(true);
 
         return listGrid;
     }
 
     @Override
     public Canvas getDetailsView(Integer id) {
-        return new StorageNodeDetailView(id);
+        HTMLFlow header = new HTMLFlow("");
+        setHeader(header);
+        return new StorageNodeDetailView(id, header);
     }
 
     private void showCommonActions() {
         addInvokeOperationsAction();
-
-        //        addTableAction(MSG.view_adminTopology_server_removeSelected(), null, new AuthorizedTableAction(this,
-        //            TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
-        //            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-        //                final List<String> selectedAddresses = getSelectedAddresses(selections);
-        //                String message = MSG.view_adminTopology_message_removeServerConfirm(selectedAddresses.toString());
-        //                SC.ask(message, new BooleanCallback() {
-        //                    public void execute(Boolean confirmed) {
-        //                        if (confirmed) {
-        //                            SC.say("You've selected:\n\n" + selectedAddresses);
-        ////                            int[] selectedIds = getSelectedIds(selections);
-        ////                            GWTServiceLookup.getTopologyService().deleteServers(selectedIds, new AsyncCallback<Void>() {
-        ////                                public void onSuccess(Void arg0) {
-        ////                                    Message msg = new Message(MSG.view_adminTopology_message_removedServer(String
-        ////                                        .valueOf(selections.length)), Message.Severity.Info);
-        ////                                    CoreGUI.getMessageCenter().notify(msg);
-        ////                                    refresh();
-        ////                                }
-        ////
-        ////                                public void onFailure(Throwable caught) {
-        ////                                    CoreGUI.getErrorHandler().handleError(
-        ////                                        MSG.view_adminTopology_message_removeServerFail(String
-        ////                                            .valueOf(selections.length)) + " " + caught.getMessage(), caught);
-        ////                                    refreshTableInfo();
-        ////                                }
-        ////
-        ////                            });
-        //                        }
-        //                    }
-        //                });
-        //            }
-        //        });
     }
 
     private void addInvokeOperationsAction() {
@@ -269,26 +279,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
                                         });
                                 }
                             }
-
-                            //                            int[] selectedIds = getSelectedIds(selections);
-                            //                            GWTServiceLookup.getTopologyService().updateServerMode(selectedIds, mode,
-                            //                                new AsyncCallback<Void>() {
-                            //                                    public void onSuccess(Void result) {
-                            //                                        Message msg = new Message(MSG.view_adminTopology_message_setMode(
-                            //                                            String.valueOf(selections.length), mode.name()), Message.Severity.Info);
-                            //                                        CoreGUI.getMessageCenter().notify(msg);
-                            //                                        refresh();
-                            //                                    }
-                            //
-                            //                                    public void onFailure(Throwable caught) {
-                            //                                        CoreGUI.getErrorHandler().handleError(
-                            //                                            MSG.view_adminTopology_message_setModeFail(
-                            //                                                String.valueOf(selections.length), mode.name())
-                            //                                                + " " + caught.getMessage(), caught);
-                            //                                        refreshTableInfo();
-                            //                                    }
-                            //
-                            //                                });
                         } else {
                             refreshTableInfo();
                         }
@@ -331,11 +321,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> im
             }
         }
         return true;
-    }
-
-    @Override
-    public ViewName getViewName() {
-        return VIEW_ID;
     }
 
     @Override

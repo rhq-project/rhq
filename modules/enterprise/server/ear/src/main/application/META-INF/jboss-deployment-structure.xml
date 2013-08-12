@@ -33,7 +33,7 @@
   </sub-deployment>
 
   <!-- This corresponds to the Server EJB3 JAR -->
-  <sub-deployment name="rhq-enterprise-server-ejb3.jar">
+  <sub-deployment name="rhq-server.jar">
     <dependencies>
       <module name="org.jboss.msc" export="true" />
       <module name="org.jboss.as.controller" export="true" />

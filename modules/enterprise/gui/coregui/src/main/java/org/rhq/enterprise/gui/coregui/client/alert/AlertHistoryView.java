@@ -114,6 +114,26 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
         setInitialCriteriaFixed(false);
         setDataSource(new AlertDataSource(context));
     }
+    
+    public AlertHistoryView(String tableTitle, int[] resourceIds) {
+        super(tableTitle, new SortSpecifier[] { DEFAULT_SORT_SPECIFIER });
+        
+        Criteria initialCriteria = new Criteria();
+        AlertPriority[] priorityValues = AlertPriority.values();
+        String[] priorityNames = new String[priorityValues.length];
+        for (int i = 0, priorityValuesLength = priorityValues.length; i < priorityValuesLength; i++) {
+            priorityNames[i] = priorityValues[i].name();
+        }
+        initialCriteria.addCriteria(AlertDataSource.FILTER_PRIORITIES, priorityNames);
+        initialCriteria.setAttribute("resourceIds", resourceIds);
+        setInitialCriteria(initialCriteria);
+
+        this.context = new EntityContext();
+        this.context.type = EntityContext.Type.SubsystemView;
+        this.hasWriteAccess = false;
+
+        setDataSource(new AlertDataSource(context));
+    }
 
     @Override
     protected void configureTableFilters() {

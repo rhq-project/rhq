@@ -133,6 +133,7 @@
 
 <!ENTITY datasourceConnectionResourceConfigProps '
     <c:simple-property name="jndi-name"
+                       readOnly="true"
                        displayName="JNDI Name"
                        description="The global JNDI Name under which to bind the datasource"
                        type="string"/>
@@ -502,7 +503,7 @@
  -->
 
 <!ENTITY connectionFactoryConnectionResourceConfigProps '
-    <c:simple-property required="true" name="jndi-name" displayName="JNDI Name"
+    <c:simple-property required="true" name="jndi-name" readOnly="true" displayName="JNDI Name"
                        description="The global JNDI name to bind the connection factory under."/>
 
     <c:simple-property required="true" name="rar-name" displayName="RAR Name">

@@ -29,9 +29,10 @@ import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
 import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
-import java.io.File;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -48,19 +49,24 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.FileSystemInfo;
 import org.rhq.plugins.jmx.JMXComponent;
 
 /**
  * @author John Sanda
  */
 public class StorageServiceComponent extends ComplexConfigurationResourceComponent {
-    
+
     private static final String OWNERSHIP_METRIC_NAME = "Ownership";
-    private static final String DISK_USED_METRIC_NAME = "Calculated.DiskSpaceUsedPercentage";
+    private static final String DATA_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.DataDiskUsedPercentage";
+    private static final String TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.TotalDiskUsedPercentage";
+    private static final String FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME = "Calculated.FreeDiskToDataSizeRatio";
     private static final String DATA_FILE_LOCATIONS_NAME = "AllDataFileLocations";
+    private static final String LOAD_NAME = "Load";
+
     private Log log = LogFactory.getLog(StorageServiceComponent.class);
     private InetAddress host;
-    
+
     @Override
     public void start(ResourceContext<JMXComponent<?>> context) {
         super.start(context);
@@ -73,7 +79,7 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                 e);
         }
     }
-    
+
     @Override
     public AvailabilityType getAvailability() {
         ResourceContext<?> context = getResourceContext();
@@ -148,10 +154,26 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
 
         return new OperationResult();
     }
-    
+
     @Override
     protected void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> requests, EmsBean bean) {
         super.getValues(report, requests, bean);
+
+        EmsAttribute loadAttribute = bean.getAttribute(LOAD_NAME);
+        Object loadValue = loadAttribute.refresh();
+
+        EmsAttribute dataFileLocationAttribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
+        Object dataFileLocationValue = dataFileLocationAttribute.refresh();
+
+        double load = 0;
+        if (loadValue != null && dataFileLocationValue != null && dataFileLocationValue instanceof String[]) {
+            //Please visit for details: https://issues.apache.org/jira/browse/CASSANDRA-2749
+            //The average usage of all partitions with the data will be reported.
+            //Cassandra selects the partition with most free space for SStable flush and compaction.
+            load = Double.parseDouble(loadValue.toString());
+            load = load / 1024d; //transform in MB
+        }
+
         for (MeasurementScheduleRequest request : requests) {
             if (OWNERSHIP_METRIC_NAME.equals(request.getName()) && host != null) {
                 EmsAttribute attribute = bean.getAttribute(OWNERSHIP_METRIC_NAME);
@@ -175,32 +197,53 @@ public class StorageServiceComponent extends ComplexConfigurationResourceCompone
                     report.addData(new MeasurementDataNumeric(request, value.doubleValue()));
                 }
                 break;
-            } else if (DISK_USED_METRIC_NAME.equals(request.getName())) {
-                EmsAttribute attribute = bean.getAttribute(DATA_FILE_LOCATIONS_NAME);
-                Object valueObject = attribute.refresh();
-                if (valueObject instanceof String[]) {
-                    String[] paths = (String[]) valueObject;
-                    double max = 0;
-                    for (String path : paths) {
-                        double taken = getUsage(path);
-                        if (taken > max) {
-                            max = taken;
-                        }
-                    }
-                    if (max > 0.0001d) {
-                        report.addData(new MeasurementDataNumeric(request, max));
-                    }
-                }
+            } else if (DATA_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())
+                || TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())
+                || FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME.equals(request.getName())) {
+                double metricValue = getDiskUsageMetric(request, load, (String[]) dataFileLocationValue);
+                report.addData(new MeasurementDataNumeric(request, metricValue));
             }
         }
     }
-    
-    private double getUsage(String path) {
-        File f = new File(path);
-        return ((double)f.getTotalSpace() - f.getUsableSpace()) /  f.getTotalSpace();
-    }
-    
-    public static boolean kindOfIP(final String addr) {
-        return addr.matches("^\\d{1,3}\\.\\d{1,3\\.\\d{1,3\\.\\d{1,3$"); // || addr.indexOf(":") >= 0) or IPv6
+
+    private double getDiskUsageMetric(MeasurementScheduleRequest request, double dataSize, String[] paths) {
+        List<String> visitedMountPoints = new ArrayList<String>();
+        long totalDiskSpace = 0;
+        long totalFreeDiskSpace = 0;
+        long totalUsedDiskSpace = 0;
+
+        for (String path : paths) {
+            try {
+                FileSystemInfo fileSystemInfo  = this.getResourceContext().getSystemInformation().getFileSystem(path);
+                if (!visitedMountPoints.contains(fileSystemInfo.getMountPoint())) {
+                    visitedMountPoints.add(fileSystemInfo.getMountPoint());
+
+                    //contrary to Sigar documentation this values are reported in MB and not bytes
+                    totalDiskSpace += fileSystemInfo.getFileSystemUsage().getTotal();
+                    totalFreeDiskSpace += fileSystemInfo.getFileSystemUsage().getFree();
+                    totalUsedDiskSpace += fileSystemInfo.getFileSystemUsage().getUsed();
+                }
+            } catch (Exception e) {
+                log.error("Unable to determine file system usage information for data file location " + path, e);
+            }
+        }
+
+        double metricValue = 0;
+
+
+        if (totalDiskSpace != 0) {
+            double rawPercentage = 0;
+            if (DATA_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())) {
+                rawPercentage = dataSize / ((double) totalDiskSpace);
+            } else if (TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME.equals(request.getName())) {
+                rawPercentage = ((double) totalUsedDiskSpace) / ((double) totalDiskSpace);
+            } else if (FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME.equals(request.getName())) {
+                rawPercentage = ((double) totalFreeDiskSpace) / (double) dataSize;
+            }
+
+            metricValue = Math.round(rawPercentage * 100d) / 100d;
+        }
+
+        return metricValue;
     }
 }

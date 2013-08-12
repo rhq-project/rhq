@@ -56,6 +56,7 @@ import org.xml.sax.InputSource;
 
 import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.MergeInventoryReportResults;
@@ -475,6 +476,12 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
         storageNode.setUuid(String.valueOf(new Random().nextInt()));
         storagePlatform.addChildResource(storageNode);
 
+        storageNode.setPluginConfiguration(Configuration.builder()
+            .addSimple("nativeTransportPort", 9142)
+            .addSimple("storagePort", 7100)
+            .addSimple("host", "localhost")
+            .build());
+
         inventoryReport.addAddedRoot(storagePlatform);
 
         // Merge this inventory report
@@ -548,6 +555,11 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
             doomed = q.getResultList();
             for (Object removeMe : doomed) {
                 Resource res = em.getReference(Resource.class, ((Resource) removeMe).getId());
+                StorageNode storageNode = findStorageNode(res);
+                if (storageNode != null) {
+                    storageNode.setResource(null);
+                }
+                System.out.println("Deleting resource " + res);
                 ResourceTreeHelper.deleteResource(em, res);
             }
             em.flush();
@@ -571,6 +583,15 @@ public class DiscoveryBossBeanTest extends AbstractEJB3Test {
                 connection.close();
             }
         }
+    }
+
+    private StorageNode findStorageNode(Resource resource) {
+        List<StorageNode> storageNodes = em.createQuery("SELECT s FROM StorageNode s where s.resource = :resource",
+            StorageNode.class).setParameter("resource", resource).getResultList();
+        if (storageNodes.isEmpty()) {
+            return null;
+        }
+        return storageNodes.get(0);
     }
 
     void setDbType(IDatabaseConnection connection) throws Exception {

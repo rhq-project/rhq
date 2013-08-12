@@ -39,7 +39,6 @@ import java.util.List;
 
 import javax.ejb.EJB;
 
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.joda.time.DateTime;
@@ -60,13 +59,14 @@ import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.test.TransactionCallback;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.StorageSession;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
@@ -360,7 +360,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private void purgeMetricsTables() {
         try {
-            Session session = storageClientManager.getSession();
+            StorageSession session = storageClientManager.getSession();
 
             session.execute("TRUNCATE " + MetricsTable.RAW);
             session.execute("TRUNCATE " + MetricsTable.ONE_HOUR);

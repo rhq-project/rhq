@@ -59,7 +59,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     static final int BUTTON_WIDTH = 28;
 
     private MeasurementUserPreferences measurementUserPreferences;
-    private RedrawGraphs d3GraphListView;
+    private Refreshable d3GraphListView;
     private static final Messages MSG = CoreGUI.getMessages();
     private Label dateRangeLabel;
     private static final DateTimeFormat fmt = DateTimeFormat.getFormat(MSG.common_buttonbar_datetime_format());
@@ -68,7 +68,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     final private ButtonBarDateTimeRangeEditor self;
 
     public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
-        RedrawGraphs d3GraphListView) {
+        Refreshable d3GraphListView) {
         this.self = this;
         this.measurementUserPreferences = measurementUserPrefs;
         this.d3GraphListView = d3GraphListView;
@@ -77,7 +77,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         prefs = measurementUserPreferences.getMetricRangePreferences();
         Log.debug("ButtonBarDateTimeRangeEditor initialized with start Date: " + new Date(prefs.begin) + " end Date: "
             + new Date(prefs.end));
-        createButtons();
+        //createButtons();
 
     }
 
@@ -128,7 +128,7 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     }
 
     public void redrawGraphs() {
-        d3GraphListView.redrawGraphs();
+        d3GraphListView.refreshData();
     }
 
     @Override

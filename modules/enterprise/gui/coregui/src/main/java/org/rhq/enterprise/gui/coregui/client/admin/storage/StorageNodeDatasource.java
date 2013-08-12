@@ -19,18 +19,21 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_DISK;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MEMORY;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -47,6 +50,7 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite.MeasurementAggregateWithUnits;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -60,21 +64,32 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 
 /**
- * Datasource for @see StorageNode.
- * 
+ * Datasource for @see StorageNodeDatasource + heap and disk usage.
+ *
  * @author Jirka Kremser
  */
-public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNodeCriteria>  {
-
+public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
+    public static final String OK_COLOR = "color: #26aa26;";
+    public static final String WARN_COLOR = "color: #ed9b26;";
+    public static final String DONT_MISS_ME_COLOR = "font-weight: bold; color: #d64949;";
+    
     // filters
     public static final String FILTER_ADDRESS = FIELD_ADDRESS.propertyName();
     public static final String FILTER_OPERATION_MODE = FIELD_OPERATION_MODE.propertyName();
-
-    public StorageNodeDatasource() {
+    private static StorageNodeDatasource instance;
+        
+    private StorageNodeDatasource() {
         super();
         setID("storageNode");
         List<DataSourceField> fields = addDataSourceFields();
         addFields(fields);
+    }
+    
+    public static StorageNodeDatasource instance() {
+        if (instance == null) {
+            instance = new StorageNodeDatasource();
+        }
+        return instance;
     }
 
     @Override
@@ -95,19 +110,38 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         fields.add(idField);
 
         fields.add(FIELD_ADDRESS.getListGridField("*"));
-        fields.add(FIELD_JMX_PORT.getListGridField("90"));
-        ListGridField cqlField = FIELD_CQL_PORT.getListGridField("90");
-        cqlField.setHidden(true);
-        fields.add(cqlField);
+        fields.add(FIELD_ALERTS.getListGridField("120"));
+
+        ListGridField field = FIELD_MEMORY.getListGridField("120");
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "Average memory taken for last 8 hours.";
+            }
+        });
+        fields.add(field);
+
+        field = FIELD_DISK.getListGridField("120");
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                return "Average disk Ratio of (Free Disk)/(Data File Size) for last 8 hours. A value below 1 is not "
+                    + "recommended since a compaction or repair process could double the amount of disk "
+                    + "space used by data files. If multiple data locations are specified then the "
+                    + "aggregate accross all the partitions that contain data files is reported.";
+            }
+        });
+        fields.add(field);
+        
+//        fields.add(FIELD_JMX_PORT.getListGridField("90"));
+//        ListGridField cqlField = FIELD_CQL_PORT.getListGridField("90");
+//        cqlField.setHidden(true);
+//        fields.add(cqlField);
         fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
 
         ListGridField createdTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(createdTimeField);
         fields.add(createdTimeField);
-        
-        ListGridField lastUpdateTimeField = FIELD_MTIME.getListGridField("120");
-        TimestampCellFormatter.prepareDateField(lastUpdateTimeField);
-        fields.add(lastUpdateTimeField);
 
         ListGridField resourceIdField = FIELD_RESOURCE_ID.getListGridField("120");
 //        resourceIdField.setHidden(true);
@@ -118,8 +152,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
-        GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria, new AsyncCallback<PageList<StorageNode>>() {
-            public void onSuccess(PageList<StorageNode> result) {
+        GWTServiceLookup.getStorageService().getStorageNodeComposites(new AsyncCallback<PageList<StorageNodeLoadComposite>>() {
+            public void onSuccess(PageList<StorageNodeLoadComposite> result) {                
                 response.setData(buildRecords(result));
                 response.setTotalRows(result.size());
                 processResponse(request.getRequestId(), response);
@@ -142,7 +176,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
      */
     @Override
     protected PageControl getPageControl(DSRequest request) {
-        // Initialize paging.         
+        // Initialize paging.
         PageControl pageControl = new PageControl(0, getDataPageSize());
 
         // Initialize sorting.
@@ -160,22 +194,44 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
     }
 
     @Override
-    public StorageNode copyValues(Record from) {
+    public StorageNodeLoadComposite copyValues(Record from) {
         throw new UnsupportedOperationException("StorageNodeDatasource.copyValues(Record from)");
     }
 
     @Override
-    public ListGridRecord copyValues(StorageNode from) {
+    public ListGridRecord copyValues(StorageNodeLoadComposite from) {
         ListGridRecord record = new ListGridRecord();
-        record.setAttribute(FIELD_ID.propertyName(), from.getId());
-        record.setAttribute(FIELD_ADDRESS.propertyName(), from.getAddress());
-        record.setAttribute(FIELD_JMX_PORT.propertyName(), from.getJmxPort());
-        record.setAttribute(FIELD_CQL_PORT.propertyName(), from.getCqlPort());
-        record.setAttribute(FIELD_OPERATION_MODE.propertyName(), from.getOperationMode());
-        record.setAttribute(FIELD_CTIME.propertyName(), from.getCtime());
-        record.setAttribute(FIELD_MTIME.propertyName(), from.getMtime());
-        if (from.getResource() != null) {
-            record.setAttribute(FIELD_RESOURCE_ID.propertyName(), from.getResource().getId());
+        StorageNode node = from.getStorageNode();
+        if (node != null) {
+            record.setAttribute(FIELD_ID.propertyName(), node.getId());
+            record.setAttribute(FIELD_ADDRESS.propertyName(), node.getAddress());
+            record.setAttribute(FIELD_JMX_PORT.propertyName(), node.getJmxPort());
+            record.setAttribute(FIELD_CQL_PORT.propertyName(), node.getCqlPort());
+            record.setAttribute(FIELD_OPERATION_MODE.propertyName(), node.getOperationMode());
+            record.setAttribute(FIELD_CTIME.propertyName(), node.getCtime());
+            record.setAttribute(FIELD_MTIME.propertyName(), node.getMtime());
+            if (node.getResource() != null) {
+                record.setAttribute(FIELD_RESOURCE_ID.propertyName(), node.getResource().getId());
+            }
+        }
+        int value = from.getUnackAlerts();
+        record.setAttribute(FIELD_ALERTS.propertyName(), "New Alerts"
+            + (value != 0 ? " <span style='color: #CC0000;'>(" + value + ")</span>" : " (" + value + ")"));
+        String memory = null;
+        if (from.getHeapPercentageUsed() != null && from.getHeapPercentageUsed().getAggregate().getAvg() != null)
+            memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(), from
+                .getHeapPercentageUsed().getUnits(), true);
+        record.setAttribute(FIELD_MEMORY.propertyName(), memory);
+        if (from.getFreeDiskToDataSizeRatio() != null) {
+            if (from.getFreeDiskToDataSizeRatio().getMax() < 0.7) {
+                record.setAttribute(FIELD_DISK.propertyName(),
+                    "<span style='" + DONT_MISS_ME_COLOR + "'>Insufficient</span>");
+            } else if (from.getFreeDiskToDataSizeRatio().getMax() < 1.5) {
+                record.setAttribute(FIELD_DISK.propertyName(), "<span style='" + WARN_COLOR + "'>Warning</span>");
+            } else {
+                record.setAttribute(FIELD_DISK.propertyName(),
+                    "<span style='" + OK_COLOR + "'>Sufficient</span>");
+            }
         }
         return record;
     }
@@ -197,20 +253,19 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
         return criteria;
     }
-    
+
     public static class StorageNodeLoadCompositeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
         public static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
-        public static final String DISK_SPACE_PERCENTAGE_KEY = "diskSpacePercentage";
+        public static final String DATA_DISK_SPACE_PERCENTAGE_KEY = "dataDiskSpacePercentage";
+        public static final String TOTAL_DISK_SPACE_PERCENTAGE_KEY = "totalDiskSpacePercentage";
+        public static final String FREE_DISK_TO_DATA_SIZE_RATIO_KEY = "freeDiskToDataSizeRatio";
+        
         private int id;
 
         public static StorageNodeLoadCompositeDatasource getInstance(int id) {
-//            if (instance == null) {
-//                instance = 
-                    return new StorageNodeLoadCompositeDatasource(id);
-//            }
-//            return instance;
+            return new StorageNodeLoadCompositeDatasource(id);
         }
-        
+
         public StorageNodeLoadCompositeDatasource(int id) {
             super();
             this.id = id;
@@ -235,7 +290,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             fields.add(idField);
             return fields;
         }
-        
+
         public List<ListGridField> getListGridFields() {
             List<ListGridField> fields = new ArrayList<ListGridField>();
             ListGridField idField = FIELD_ID.getListGridField();
@@ -259,15 +314,12 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             fields.add(hoverField);
             return fields;
         }
-        
-        
+
         @Override
         protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
-//            Integer id = getFilter(request, FIELD_ID.propertyName(), Integer.class);
             final StorageNode node = new StorageNode();
             node.setId(id);
-            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS,
-                new AsyncCallback<StorageNodeLoadComposite>() {
+            executeFetch(node, new AsyncCallback<StorageNodeLoadComposite>() {
                     public void onSuccess(final StorageNodeLoadComposite loadComposite) {
                         ListGridRecord[] records = makeListGridRecords(loadComposite);
                         response.setData(records);
@@ -284,32 +336,49 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
                 });
         }
 
+        private static void executeFetch(final StorageNode node, final AsyncCallback<StorageNodeLoadComposite> callback) {
+            GWTServiceLookup.getStorageService().getLoad(node, 8, MeasurementUtils.UNIT_HOURS, callback);
+        }
+
         private ListGridRecord[] makeListGridRecords(StorageNodeLoadComposite loadComposite) {
-            List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6);
-            @SuppressWarnings("unchecked")
-            List<List<Object>> loadFields = Arrays
-                .<List<Object>> asList(
-                    Arrays.<Object> asList(loadComposite.getHeapCommitted(), "Heap Maximum",
-                        "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.",
-                        "heapMax"),
-                    Arrays.<Object> asList(loadComposite.getHeapUsed(), "Heap Used",
-                        "Amount of memory actually used by the RHQ storage node", "heapUsed"),
-                    Arrays.<Object> asList(loadComposite.getHeapPercentageUsed(), "Heap Percent Used",
-                        "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY),
-                    Arrays.<Object> asList(loadComposite.getLoad(), "Load", "Data stored on the node", "load"),
-                    Arrays.<Object> asList(
-                        loadComposite.getDiskSpacePercentageUsed(),
-                        "Disk Space Percent Used",
-                        "How much of diskspace is already used. This takes into account the installation path, where Cassandra was installed.",
-                        DISK_SPACE_PERCENTAGE_KEY), Arrays.<Object> asList(loadComposite.getActuallyOwns(),
-                        "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
-            for (List<Object> aggregateWithUnitsList : loadFields) {
-                if (aggregateWithUnitsList.get(0) != null) {
-                    recordsList.add(makeListGridRecord((MeasurementAggregateWithUnits) aggregateWithUnitsList.get(0),
-                        (String) aggregateWithUnitsList.get(1), (String) aggregateWithUnitsList.get(2),
-                        (String) aggregateWithUnitsList.get(3)));
+            List<ListGridRecord> recordsList = new ArrayList<ListGridRecord>(6) {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public boolean add(ListGridRecord record) {
+                    if (record != null)
+                        return super.add(record);
+                    return false;
                 }
+            };
+
+            // heap related metrics
+//            recordsList.add(makeListGridRecord(loadComposite.getHeapCommitted(), "Heap Maximum", "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.", "heapMax"));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapUsed(), "Heap Used", "Amount of memory actually used by the RHQ storage node", "heapUsed"));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY));
+  
+            // disk related metrics
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsed(), "Disk Space Used by Storage Node", "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"));
+            recordsList.add(makeListGridRecord(loadComposite.getTotalDiskUsedPercentage(),"Total Disk Space Percent Used", "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", TOTAL_DISK_SPACE_PERCENTAGE_KEY));
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsedPercentage(), "Data Disk Space Percent Used","Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", DATA_DISK_SPACE_PERCENTAGE_KEY));
+            
+            if (loadComposite.getFreeDiskToDataSizeRatio() != null){
+                MeasurementAggregate aggregate = loadComposite.getFreeDiskToDataSizeRatio();
+                NumberFormat nf = NumberFormat.getFormat("0.0");
+                ListGridRecord record = new ListGridRecord();
+                record.setAttribute("id", FREE_DISK_TO_DATA_SIZE_RATIO_KEY);
+                record.setAttribute("name", "Free Disk To Data Size Ratio");
+                record.setAttribute("hover", "Ratio of (Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.");
+                record.setAttribute("min", nf.format(aggregate.getMin()));
+                record.setAttribute("avg", nf.format(aggregate.getAvg()));
+                record.setAttribute("avgFloat", aggregate.getAvg());
+                record.setAttribute("max", nf.format(aggregate.getMax()));
+                recordsList.add(record);
             }
+//            recordsList.add(makeListGridRecord(loadComposite.getLoad(), "Load", "Data stored on the node", "load"));
+
+            // other metrics
+            recordsList.add(makeListGridRecord(loadComposite.getActuallyOwns(), "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
             if (loadComposite.getTokens() != null) {
                 ListGridRecord tokens = new ListGridRecord();
                 tokens.setAttribute("id", "tokens");
@@ -327,6 +396,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
 
         private ListGridRecord makeListGridRecord(MeasurementAggregateWithUnits aggregateWithUnits, String name,
             String hover, String id) {
+            if (aggregateWithUnits == null) return null;
             ListGridRecord record = new ListGridRecord();
             record.setAttribute("id", id);
             record.setAttribute(StorageNodeLoadCompositeDatasourceField.FIELD_NAME.propertyName(), name);
@@ -346,14 +416,13 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
             record.setAttribute("hover", hover);
             return record;
         }
-        
-        
+
         @Override
         protected StorageNodeCriteria getFetchCriteria(DSRequest request) {
             return new StorageNodeCriteria();
 //            throw new UnsupportedOperationException("StorageNodeDatasource.StorageNodeLoadCompositeDatasource.getFetchCriteria()");
         }
-        
+
         @Override
         public StorageNodeLoadComposite copyValues(Record from) {
             throw new UnsupportedOperationException("StorageNodeDatasource.StorageNodeLoadCompositeDatasource.copyValues(Record from)");
@@ -363,6 +432,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNode, StorageNod
         public ListGridRecord copyValues(StorageNodeLoadComposite from) {
             throw new UnsupportedOperationException("StorageNodeDatasource.StorageNodeLoadCompositeDatasource.copyValues(StorageNodeLoadComposite from)");
         }
-        
+
     }
 }

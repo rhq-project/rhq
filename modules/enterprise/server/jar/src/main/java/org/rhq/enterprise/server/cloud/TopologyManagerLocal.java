@@ -25,10 +25,8 @@ import javax.ejb.Local;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.FailoverListDetails;
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.criteria.ServerCriteria;
-import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -119,6 +117,17 @@ public interface TopologyManagerLocal {
      * @param mode desired server operation mode
      */
     void updateServerMode(Subject subject, Integer[] serverIds, Server.OperationMode mode);
+
+    /**
+     * Updates the manual maintenance flag for multiple servers.
+     *
+     * the subject needs to have MANAGE_INVENTORY and MANAGE_SETTINGS permissions.
+     *
+     * @param subject the caller
+     * @param serverIds
+     * @param manualMaintenance manual maintenance
+     */
+    void updateServerManualMaintenance(Subject subject, Integer[] serverIds, boolean manualMainatenance);
 
     /**
      * Updates the server.

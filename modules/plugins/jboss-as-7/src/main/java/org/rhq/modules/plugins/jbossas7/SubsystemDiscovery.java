@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,9 +13,10 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import java.util.ArrayList;
@@ -85,7 +86,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
             lookForChildren = true;
         }
 
-        // check if the parent is a JDG server. In this case ignore the as7 version
+        // check if the parent is a JDG/Infinispan server. In this case ignore the as7 version
         // of the type and vice versa
         if (shouldSkipEntryWrtIspn(context, confPath)) {
             return details;
@@ -192,7 +193,7 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
     }
 
     /**
-     * The as7 plugin and the JDG plugin both have a subsystem=infinispan. We need to decide
+     * The as7 plugin and the JDG/Infinispan Server plugin both have a subsystem=infinispan. We need to decide
      * which one to 'activate' depending on the type, plugin and the detected parent.
      * Rules are:<ul>
      *     <li>If the parent is a host controller or such, there is no jdg available</li>
@@ -205,30 +206,29 @@ public class SubsystemDiscovery implements ResourceDiscoveryComponent<BaseCompon
      * @param confPath The subsystem that got fed into discovery. Directly return is not subsystem=infinispan
      * @return True if this subsystem should be skipped.
      */
-    private boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context,
-                                           String confPath) {
-
-        String jdgPluginType = "JDG";
+    private boolean shouldSkipEntryWrtIspn(ResourceDiscoveryContext<BaseComponent<?>> context, String confPath) {
 
         // If this is not subsystem=infinispan, we should not skip it at all
         if (!"subsystem=infinispan".equals(confPath))
             return false;
 
         ResourceType ourType = context.getResourceType();
-        boolean ourPluginTypeIsJdg = ourType.getPlugin().equals(jdgPluginType);
+        boolean ourPluginTypeIsJdg = ourType.getPlugin().equals("JDG");
 
-        String productType = context.getParentResourceComponent().pluginConfiguration.getSimpleValue("productType","AS7");
-        boolean isJdgProduct = jdgPluginType.equals(productType);
+        String productType = context.getParentResourceComponent().pluginConfiguration.getSimpleValue("productType",
+            "AS7");
+        boolean isJdgProduct = "JDG".equals(productType) || "ISPN".equals(productType);
 
         if (ourPluginTypeIsJdg && isJdgProduct) {
-            if (log.isDebugEnabled())
-                log.debug("Ours is JDG and product is JDG");
+            log.debug("Ours is JDG and product is JDG/InfinispanServer");
             return false;
         }
 
         if (!ourPluginTypeIsJdg && !isJdgProduct) {
-            if (log.isDebugEnabled())
-                log.debug("Ours is not JDG (" + ourType.toString() + ") and product is not JDG (" + productType + ")");
+            if (log.isDebugEnabled()) {
+                log.debug("Ours is not JDG (" + ourType.toString() + ") and product is not JDG/InfinispanServer ("
+                    + productType + ")");
+            }
             return false;
         }
 

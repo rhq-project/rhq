@@ -1,30 +1,26 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.cassandra;
 
-import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
-import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
-import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.rhq.core.system.OperatingSystemType.WINDOWS;
 
 import java.io.File;
@@ -32,10 +28,18 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+
+import javax.management.MBeanServerConnection;
+import javax.management.ObjectName;
+import javax.management.remote.JMXConnector;
+import javax.management.remote.JMXConnectorFactory;
+import javax.management.remote.JMXServiceURL;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Cluster.Builder;
@@ -43,6 +47,7 @@ import com.datastax.driver.core.Session;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.OperatingSystem;
 import org.hyperic.sigar.SigarException;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
@@ -74,16 +79,18 @@ import org.rhq.plugins.jmx.JMXServerComponent;
  * @author John Sanda
  */
 public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent<?>> implements OperationFacet {
-
-    private Log log = LogFactory.getLog(CassandraNodeComponent.class);
+    private static final Log LOG = LogFactory.getLog(CassandraNodeComponent.class);
 
     private Session cassandraSession;
     private String host;
+    private ProcessInfo processInfo;
 
     @SuppressWarnings("rawtypes")
     @Override
     public void start(ResourceContext context) throws Exception {
         super.start(context);
+
+        processInfo = context.getNativeProcess();
 
         host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
         String clusterName = context.getPluginConfiguration().getSimpleValue("clusterName", "unknown");
@@ -97,7 +104,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             nativePort = Integer.parseInt(context.getPluginConfiguration()
                 .getSimpleValue("nativeTransportPort", "9042"));
         } catch (Exception e) {
-            log.debug("Native transport port parsing failed...", e);
+            LOG.debug("Native transport port parsing failed...", e);
         }
 
 
@@ -114,41 +121,77 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
             this.cassandraSession = clusterBuilder.build().connect(clusterName);
         } catch (Exception e) {
-            log.error("Connect to Cassandra " + host + ":" + nativePort, e);
+            LOG.error("Connect to Cassandra " + host + ":" + nativePort, e);
             throw e;
         }
     };
 
     @Override
     public void stop() {
-        log.info("Shutting down Cassandra client");
+        processInfo = null;
+        LOG.info("Shutting down Cassandra client");
         cassandraSession.getCluster().shutdown();
-        log.info("Shutdown is complete");
+        LOG.info("Shutdown is complete");
     }
 
     @Override
     public AvailabilityType getAvailability() {
-        ResourceContext<?> context = getResourceContext();
-        ProcessInfo processInfo = context.getNativeProcess();
+        long start = System.nanoTime();
+        try {
+            if (isStorageServiceReachable()) {
+                return AvailabilityType.UP;
+            }
+            return AvailabilityType.DOWN;
+        } finally {
+            long totalTimeMillis = NANOSECONDS.toMillis(System.nanoTime() - start);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Finished availability check in " + totalTimeMillis + " ms");
+            }
+            if (totalTimeMillis > SECONDS.toMillis(5)) {
+                LOG.warn("Availability check exceeded five seconds. Total time was " + totalTimeMillis + " ms");
+            }
+        }
+    }
 
-        if (processInfo == null) {
-            return UNKNOWN;
-        } else {
-            // It is safe to read prior snapshot as getNativeProcess always return a fresh instance
-            ProcessInfoSnapshot processInfoSnaphot = processInfo.priorSnaphot();
-            if (processInfoSnaphot.isRunning()) {
-                return UP;
-            } else {
-                return DOWN;
+    private boolean isStorageServiceReachable() {
+        JMXConnector connector = null;
+        try {
+            Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+            String url = pluginConfig.getSimpleValue("connectorAddress");
+            JMXServiceURL serviceURL = new JMXServiceURL(url);
+            connector = JMXConnectorFactory.connect(serviceURL, null);
+
+            MBeanServerConnection serverConnection = connector.getMBeanServerConnection();
+            ObjectName storageService = new ObjectName("org.apache.cassandra.db:type=StorageService");
+
+            // query an attribute to make sure it is in fact available
+            serverConnection.getAttribute(storageService, "NativeTransportRunning");
+
+            return true;
+        } catch (Exception e) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to make JMX connection to StorageService", e);
+            }
+            return false;
+        } finally {
+            if (connector != null) {
+                try {
+                    connector.close();
+                } catch (IOException e) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("An error occurred closing the JMX connector", e);
+                    }
+                }
             }
         }
     }
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
-
         if (name.equals("shutdown")) {
-            return shutdownNode();
+            OperationResult operationResult = shutdownNode();
+            waitForNodeToGoDown();
+            return operationResult;
         } else if (name.equals("start")) {
             return startNode();
         } else if (name.equals("restart")) {
@@ -164,63 +207,139 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     protected OperationResult shutdownNode() {
         ResourceContext<?> context = getResourceContext();
 
-        if (log.isInfoEnabled()) {
-            log.info("Starting shutdown operation on " + CassandraNodeComponent.class.getName() +
+        if (LOG.isInfoEnabled()) {
+            LOG.info("Starting shutdown operation on " + CassandraNodeComponent.class.getName() +
                 " with resource key " + context.getResourceKey());
         }
         EmsConnection emsConnection = getEmsConnection();
         EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
         Class[] emptyParams = new Class[0];
 
-        if (log.isDebugEnabled()) {
-            log.debug("Disabling thrift...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Disabling thrift...");
         }
         EmsOperation operation = storageService.getOperation("stopRPCServer", emptyParams);
         operation.invoke((Object[]) emptyParams);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Disabling gossip...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Disabling gossip...");
         }
         operation = storageService.getOperation("stopGossiping", emptyParams);
         operation.invoke((Object[]) emptyParams);
 
-        if (log.isDebugEnabled()) {
-            log.debug("Initiating drain...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Initiating drain...");
         }
         operation = storageService.getOperation("drain", emptyParams);
         operation.invoke((Object[]) emptyParams);
 
-        ProcessInfo process = context.getNativeProcess();
+        return stopNode();
+    }
+
+    protected OperationResult stopNode() {
+        ProcessInfo process = getResourceContext().getNativeProcess();
+
+        if (process == null) {
+            LOG.warn("Failed to obtain process info. It appears Cassandra is already shutdown.");
+            return new OperationResult("Failed to obtain process info. It appears Cassandra is already shutdown.");
+        }
+
         long pid = process.getPid();
         try {
             process.kill("KILL");
+
+            Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+            File basedir = new File(pluginConfig.getSimpleValue("baseDir"));
+            File binDir = new File(basedir, "bin");
+            File pidFile = new File(binDir, "cassandra.pid");
+
+            pidFile.delete();
+
             return new OperationResult("Successfully shut down Cassandra daemon with pid " + pid);
         } catch (SigarException e) {
-            log.warn("Failed to shut down Cassandra node with pid " + pid, e);
+            LOG.warn("Failed to shut down Cassandra node with pid " + pid, e);
             OperationResult failure = new OperationResult("Failed to shut down Cassandra node with pid " + pid);
             failure.setErrorMessage(ThrowableUtil.getAllMessages(e));
             return failure;
         }
     }
 
+    protected void waitForNodeToGoDown() throws InterruptedException {
+        if (OperatingSystem.getInstance().getName().equals(OperatingSystem.NAME_MACOSX)) {
+            // See this thread on VMWare forum: http://communities.vmware.com/message/2187972#2187972
+            // Unfortunately there is no work around for this failure on Mac OSX so the method will silently return on
+            // this platform.
+            return;
+        }
+        for (ProcessInfoSnapshot processInfoSnapshot = getProcessInfoSnapshot();; processInfoSnapshot = getProcessInfoSnapshot()) {
+            if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+                // Process not found, so it died, that's fine
+                // OR
+                // Process info says process is no longer running, that's fine as well
+                break;
+            }
+            if (getResourceContext().getComponentInvocationContext().isInterrupted()) {
+                // Operation canceled or timed out
+                throw new InterruptedException();
+            }
+            // Process is still running, wait a second and check again
+            Thread.sleep(SECONDS.toMillis(2));
+        }
+    }
+
+    private ProcessInfoSnapshot getProcessInfoSnapshot() {
+        ProcessInfoSnapshot processInfoSnapshot = (processInfo == null) ? null : processInfo.freshSnapshot();
+        if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+            processInfo = getResourceContext().getNativeProcess();
+            // Safe to get prior snapshot here, we've just recreated the process info instance
+            processInfoSnapshot = (processInfo == null) ? null : processInfo.priorSnaphot();
+        }
+        return processInfoSnapshot;
+    }
+
     protected OperationResult startNode() {
-        ResourceContext<?> context = getResourceContext();
-        Configuration pluginConfig = context.getPluginConfiguration();
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         String baseDir = pluginConfig.getSimpleValue("baseDir");
         File binDir = new File(baseDir, "bin");
-        File startScript = new File(binDir, getStartScript());
-
-        ProcessExecution scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
-        SystemInfo systemInfo = context.getSystemInformation();
+        if (!startScriptExists(binDir)) {
+            OperationResult failure = new OperationResult("Failed to start Cassandra daemon");
+            failure.setErrorMessage("Start script does not exists");
+            return failure;
+        }
+        ProcessExecution scriptExe = getProcessExecution(binDir);
+        SystemInfo systemInfo = getResourceContext().getSystemInformation();
         ProcessExecutionResults results = systemInfo.executeProcess(scriptExe);
-
-        if  (results.getError() == null) {
+        if (results.getError() == null) {
             return new OperationResult("Successfully started Cassandra daemon");
         } else {
             OperationResult failure = new OperationResult("Failed to start Cassandra daemon");
             failure.setErrorMessage(ThrowableUtil.getAllMessages(results.getError()));
             return failure;
         }
+    }
+
+    private boolean startScriptExists(File binDir) {
+        File file = new File(binDir, getStartScript());
+        return file.exists() && !file.isDirectory();
+    }
+
+    private ProcessExecution getProcessExecution(File binDir) {
+        ProcessExecution scriptExe;
+        if (OperatingSystem.getInstance().getName().equals(OperatingSystem.NAME_WIN32)) {
+            File startScript = new File(binDir, getStartScript());
+            scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+        } else {
+            // On Linux, when Cassandra is started with an absolute path, the command line is too long and is truncated
+            // in /proc/pid/cmdline (beacuse of a long CLASSPATH made of absolute paths)
+            // This prevents the process from being later discovered because the process query argument criteria
+            // expects org.apache.cassandra.service.CassandraDaemon to be found
+            File startScript = new File("./" + getStartScript());
+            scriptExe = ProcessExecutionUtility.createProcessExecution(startScript);
+            scriptExe.setCheckExecutableExists(false);
+        }
+        scriptExe.setWorkingDirectory(binDir.getAbsolutePath());
+        scriptExe.addArguments(asList("-p", "cassandra.pid"));
+        return scriptExe;
     }
 
     protected OperationResult restartNode() {
@@ -245,7 +364,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         try {
             updateSeedsList(addresses);
         }  catch (Exception e) {
-            log.error("An error occurred while updating the seeds list property", e);
+            LOG.error("An error occurred while updating the seeds list property", e);
             Throwable rootCause = ThrowableUtil.getRootCause(e);
             result.setErrorMessage(ThrowableUtil.getStackAsString(rootCause));
         }
@@ -261,7 +380,16 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         return addresses;
     }
 
-    protected void updateSeedsList(List<String> addresses) throws IOException {
+    protected void updateSeedsList(List<String> seeds) throws IOException {
+        List<String> addresses = null;
+        try {
+            addresses = convertToIPAddresses(seeds);
+        } catch (UnknownHostException e) {
+            LOG.error("Failed to update seeds list", e);
+            throw new IOException("Failed to update seeds list. Make sure that " + seeds + " is a list of valid " +
+                "hostnames or IP addresses that can be resolved.", e);
+        }
+
         ResourceContext<?> context = getResourceContext();
         Configuration pluginConfig = context.getPluginConfiguration();
 
@@ -309,7 +437,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         if (!yamlFile.delete()) {
             String msg = "Failed to delete [" + yamlFile + "] in preparation of writing updated configuration. The " +
                 "changes will be aborted.";
-            log.error(msg);
+            LOG.error(msg);
             deleteYamlBackupFile(yamlFileBackup);
             throw new IOException(msg);
         }
@@ -319,8 +447,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             yaml.dump(cassandraConfig, writer);
             deleteYamlBackupFile(yamlFileBackup);
         } catch (Exception e) {
-            log.error("An error occurred while trying to write the updated configuration back to " + yamlFile, e);
-            log.error("Reverting changes to " + yamlFile);
+            LOG.error("An error occurred while trying to write the updated configuration back to " + yamlFile, e);
+            LOG.error("Reverting changes to " + yamlFile);
 
             if (yamlFile.delete()) {
                 StreamUtil.copy(new FileInputStream(yamlFileBackup), new FileOutputStream(yamlFile));
@@ -328,7 +456,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             } else {
                 String msg = "Failed updates to " + yamlFile.getName() + " cannot be rolled back. The file cannot be " +
                     "deleted. " + yamlFile + " should be replaced by " + yamlFileBackup;
-                log.error(msg);
+                LOG.error(msg);
                 throw new IOException(msg);
             }
         } finally {
@@ -336,10 +464,19 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
     }
 
+    private List<String> convertToIPAddresses(List<String> seeds) throws UnknownHostException {
+        List<String> ipAddresses = new ArrayList<String>(seeds.size());
+        for (String seed : seeds) {
+            InetAddress address = InetAddress.getByName(seed);
+            ipAddresses.add(address.getHostAddress());
+        }
+        return ipAddresses;
+    }
+
     private void deleteYamlBackupFile(File yamlBackup) {
         if (!yamlBackup.delete()) {
-            log.warn("Failed to delete Cassandra configuration backup file [" + yamlBackup + "]. This file " +
-                "should be deleted.");
+            LOG.warn("Failed to delete Cassandra configuration backup file [" + yamlBackup + "]. This file " +
+                    "should be deleted.");
         }
     }
 

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,17 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.core.system;
 
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
-import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarProxy;
 
 /**
@@ -34,7 +30,6 @@ import org.hyperic.sigar.SigarProxy;
  * @author John Mazzitelli
  */
 public class SigarAccess {
-
     private static SigarAccessHandler invocationHandler;
     private static SigarProxy sigarProxy;
 
@@ -81,37 +76,6 @@ public class SigarAccess {
             return false;
         }
 
-    }
-
-    private static class SigarAccessHandler implements InvocationHandler {
-        private Sigar sigar;
-
-        public Object invoke(Object proxy, Method meth, Object[] args) throws Throwable {
-            // its possible in the time between this handler's creation and now, someone disabled the native layer.
-            // throw a runtime exception if the native system was disabled
-            if (SystemInfoFactory.isNativeSystemInfoDisabled()) {
-                throw new SystemInfoException("Native system has been disabled");
-            }
-
-            try {
-                synchronized (this) {
-                    if (sigar == null) {
-                        this.sigar = new Sigar();
-                    }
-
-                    return meth.invoke(sigar, args);
-                }
-            } catch (InvocationTargetException e) {
-                throw e.getTargetException();
-            }
-        }
-
-        public synchronized void close() {
-            if (this.sigar != null) {
-                this.sigar.close();
-                this.sigar = null;
-            }
-        }
     }
 
 }

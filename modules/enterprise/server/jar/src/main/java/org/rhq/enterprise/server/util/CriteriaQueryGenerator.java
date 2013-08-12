@@ -68,7 +68,9 @@ public final class CriteriaQueryGenerator {
 
     public enum AuthorizationTokenType {
         RESOURCE, // specifies the resource alias to join on for standard res-group-role-subject authorization checking
-        GROUP; // specifies the group alias to join on for standard group-role-subject authorization checking
+        GROUP, // specifies the group alias to join on for standard group-role-subject authorization checking
+        BUNDLE, // specifies the bundle alias to join on for standard bundle-bundleGroup-role-subject authorization checking
+        BUNDLE_GROUP; // specifies the bundle group alias to join on for standard bundleGroup-role-subject authorization checking        
     }
 
     private Criteria criteria;
@@ -118,10 +120,14 @@ public final class CriteriaQueryGenerator {
         String defaultFragment = null;
         if (type == AuthorizationTokenType.RESOURCE) {
             defaultFragment = "resource";
+            setAuthorizationResourceFragment(type, defaultFragment, subjectId);
         } else if (type == AuthorizationTokenType.GROUP) {
             defaultFragment = "group";
+            setAuthorizationResourceFragment(type, defaultFragment, subjectId);
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not yet support generating resource queries for '" + type + "' token types");
         }
-        setAuthorizationResourceFragment(type, defaultFragment, subjectId);
     }
 
     private String fixFilterOverride(String expression, String fieldName) {
@@ -173,9 +179,9 @@ public final class CriteriaQueryGenerator {
                 + " does not yet support generating queries for '" + type + "' token types");
         }
 
-        // If the query results are narrowed by requiredParams generate the fragment now. It's done
+        // If the query results are narrowed by requiredPerms generate the fragment now. It's done
         // here for two reasons. First, it seems to make sense to apply this only when an authFragment is
-        // being used.  Second, because ond day the query may be less brute force and may modify or
+        // being used.  Second, because one day the query may be less brute force and may modify or
         // leverage the joinFragment above.  But, after extensive trying a more elegant
         // query could not be constructed due to Hibernate limitations. So, for now, here it is...
         List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
@@ -228,6 +234,94 @@ public final class CriteriaQueryGenerator {
         customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
         customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
         return customAuthzFragment;
+    }
+
+    public void setAuthorizationBundleFragment(AuthorizationTokenType type, int subjectId) {
+        if (type == AuthorizationTokenType.BUNDLE) {
+            setAuthorizationBundleFragment(type, subjectId, "bundle");
+        } else if (type == AuthorizationTokenType.BUNDLE_GROUP) {
+            setAuthorizationBundleFragment(type, subjectId, "bundleGroup");
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not yet support generating bundle queries for '" + type + "' token types");
+        }
+    }
+
+    public void setAuthorizationBundleFragment(AuthorizationTokenType type, int subjectId, String fragment) {
+        if (type == AuthorizationTokenType.BUNDLE) {
+            setAuthorizationBundleFragment(subjectId, fragment);
+        } else if (type == AuthorizationTokenType.BUNDLE_GROUP) {
+            setAuthorizationBundleGroupFragment(subjectId, fragment);
+        } else {
+            throw new IllegalArgumentException(this.getClass().getSimpleName()
+                + " does not yet support generating bundle queries for '" + type + "' token types");
+        }
+    }
+
+    private void setAuthorizationBundleFragment(int subjectId, String fragment) {
+        this.authorizationSubjectId = subjectId;
+
+        String customAuthzFragment = "" //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.bundleGroups g JOIN g.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% ) )" + NL; //
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
+        this.authorizationCustomConditionFragment = customAuthzFragment;
+
+        // If the query results are narrowed by requiredPerms generate the fragment now. It's done
+        // here for two reasons. First, it seems to make sense to apply this only when an authFragment is
+        // being used.  Second, because one day the query may be less brute force and may modify or
+        // leverage the joinFragment above.  But, after extensive trying a more elegant
+        // query could not be constructed due to Hibernate limitations. So, for now, here it is...
+        List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+        if (!(null == requiredPerms || requiredPerms.isEmpty())) {
+            this.authorizationPermsFragment = "" //
+                + "( SELECT COUNT(DISTINCT p)" + NL //
+                + "   FROM Subject innerSubject" + NL //
+                + "   JOIN innerSubject.roles r" + NL //
+                + "   JOIN r.permissions p" + NL //
+                + "   WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "   AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+        }
+    }
+
+    private void setAuthorizationBundleGroupFragment(int subjectId, String fragment) {
+        this.authorizationSubjectId = subjectId;
+
+        String customAuthzFragment = "" //
+            + "( %aliasWithFragment%.id IN ( SELECT %innerAlias%.id " + NL //
+            + "                    FROM %alias% innerAlias " + NL //
+            + "                    JOIN %innerAlias%.roles r JOIN r.subjects s " + NL //
+            + "                   WHERE s.id = %subjectId% ) ) " + NL;
+        String aliasReplacement = criteria.getAlias() + (fragment != null ? "." + fragment : "");
+        String innerAliasReplacement = "innerAlias" + (fragment != null ? "." + fragment : "");
+        customAuthzFragment = customAuthzFragment.replace("%alias%", criteria.getAlias());
+        customAuthzFragment = customAuthzFragment.replace("%aliasWithFragment%", aliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%innerAlias%", innerAliasReplacement);
+        customAuthzFragment = customAuthzFragment.replace("%subjectId%", String.valueOf(subjectId));
+        this.authorizationCustomConditionFragment = customAuthzFragment;
+
+        // If the query results are narrowed by requiredPerms generate the fragment now. It's done
+        // here for two reasons. First, it seems to make sense to apply this only when an authFragment is
+        // being used.  Second, because one day the query may be less brute force and may modify or
+        // leverage the joinFragment above.  But, after extensive trying a more elegant
+        // query could not be constructed due to Hibernate limitations. So, for now, here it is...
+        List<Permission> requiredPerms = this.criteria.getRequiredPermissions();
+        if (!(null == requiredPerms || requiredPerms.isEmpty())) {
+            this.authorizationPermsFragment = "" //
+                + "( SELECT COUNT(DISTINCT p)" + NL //
+                + "   FROM Subject innerSubject" + NL //
+                + "   JOIN innerSubject.roles r" + NL //
+                + "   JOIN r.permissions p" + NL //
+                + "   WHERE innerSubject.id = " + this.authorizationSubjectId + NL //
+                + "   AND p IN ( :requiredPerms ) ) = :requiredPermsSize" + NL;
+        }
     }
 
     public String getParameterReplacedQuery(boolean countQuery) {
@@ -687,9 +781,9 @@ public final class CriteriaQueryGenerator {
     private void addPersistentBag(String fieldName) {
         Field f = findField(fieldName);
         if (f == null) {
-            LOG.warn(
-                "Failed to add persistent bag collection [" + fieldName + "] on class [" + criteria.getPersistentClass().getName() +
-                    "]. There doesn't seem to be a field of that name on the class or any of its superclasses.");
+            LOG.warn("Failed to add persistent bag collection [" + fieldName + "] on class ["
+                + criteria.getPersistentClass().getName()
+                + "]. There doesn't seem to be a field of that name on the class or any of its superclasses.");
         } else {
             persistentBagFields.add(f);
         }
@@ -698,9 +792,9 @@ public final class CriteriaQueryGenerator {
     private void addJoinFetch(String fieldName) {
         Field f = findField(fieldName);
         if (f == null) {
-            LOG.warn(
-                "Failed to add join fetch field [" + fieldName + "] on class [" + criteria.getPersistentClass().getName() +
-                    "]. There doesn't seem to be a field of that name on the class or any of its superclasses.");
+            LOG.warn("Failed to add join fetch field [" + fieldName + "] on class ["
+                + criteria.getPersistentClass().getName()
+                + "]. There doesn't seem to be a field of that name on the class or any of its superclasses.");
         } else {
             joinFetchFields.add(f);
         }

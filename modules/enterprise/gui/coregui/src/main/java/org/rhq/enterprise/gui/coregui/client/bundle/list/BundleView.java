@@ -62,9 +62,9 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallb
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private DynamicForm form;
@@ -277,7 +277,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
                 criteria.fetchDestinations(true);
                 criteria.fetchTags(true);
 
-                GWTServiceLookup.getBundleService().findBundlesByCriteriaWithDestinationFilter(criteria,
+                GWTServiceLookup.getBundleService().findBundlesByCriteria(criteria,
                     new AsyncCallback<PageList<Bundle>>() {
                         public void onFailure(Throwable caught) {
                             CoreGUI.getErrorHandler().handleError(MSG.view_bundle_list_error3(), caught);

@@ -22,7 +22,6 @@ import javax.faces.application.FacesMessage;
 import javax.faces.model.DataModel;
 
 import org.rhq.core.domain.auth.Subject;
-import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.composite.ServerWithAgentCountComposite;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
@@ -63,17 +62,24 @@ public class ListServersUIBean extends PagedDataTableUIBean {
         return "success";
     }
 
-    public String setSelectedServersMode(Server.OperationMode mode) {
+    public String updateServerManualMaintenance(boolean manualMaintenance) {
         // Subject subject = EnterpriseFacesContextUtility.getSubject();
         String[] selected = getSelectedServers();
         Integer[] ids = getIntegerArray(selected);
 
         if (ids.length > 0) {
             try {
-                topologyManager.updateServerMode(EnterpriseFacesContextUtility.getSubject(), ids, mode);
+                topologyManager.updateServerManualMaintenance(EnterpriseFacesContextUtility.getSubject(), ids,
+                    manualMaintenance);
 
-                FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length + "] servers to mode "
-                    + mode);
+                if (manualMaintenance) {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Set [" + ids.length
+                        + "] servers' manual maintenance status.");
+                } else {
+                    FacesContextUtility.addMessage(FacesMessage.SEVERITY_INFO, "Removed [" + ids.length
+                        + "] servers' manual maintenance status.");
+                }
+
             } catch (Exception e) {
                 FacesContextUtility.addMessage(FacesMessage.SEVERITY_ERROR, "Failed to set selected server modes", e);
             }
@@ -83,11 +89,11 @@ public class ListServersUIBean extends PagedDataTableUIBean {
     }
 
     public String setSelectedServersModeMaintenance() {
-        return setSelectedServersMode(Server.OperationMode.MAINTENANCE);
+        return updateServerManualMaintenance(true);
     }
 
     public String setSelectedServersModeNormal() {
-        return setSelectedServersMode(Server.OperationMode.NORMAL);
+        return updateServerManualMaintenance(false);
     }
 
     @Override

@@ -30,18 +30,20 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.path.xml.element.Node;
+import com.jayway.restassured.response.Headers;
 import com.jayway.restassured.response.Response;
 
 import org.apache.http.HttpStatus;
 import org.junit.Test;
 
 import org.rhq.modules.integrationTests.restApi.d.Availability;
-import org.rhq.modules.integrationTests.restApi.d.Link;
 import org.rhq.modules.integrationTests.restApi.d.Resource;
 
 import static com.jayway.restassured.RestAssured.expect;
@@ -127,7 +129,6 @@ public class ResourcesTest extends AbstractBase {
             .get("/resource/{id}")
         .jsonPath().getInt("typeId");
 
-        assert typeId!=null;
         assert typeId>0;
 
         given()
@@ -330,6 +331,119 @@ public class ResourcesTest extends AbstractBase {
     }
 
     @Test
+    public void testPagingWrappingCorrectness() throws Exception {
+
+        // First get the lastPage from the paging side
+
+        JsonPath path =
+        given()
+            .header("Accept", "application/vnd.rhq.wrapped+json")
+        .with()
+            .queryParam("page", 0)
+            .queryParam("ps", 5)  // Unusually small to provoke having more than 1 page
+            .queryParam("status","COMMITTED")
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/resource")
+        .jsonPath();
+
+        int pagingLastPage = path.getInt("lastPage");
+        int pagingTotalSize = path.getInt("totalSize");
+
+        // Now get resource counts from status
+
+        JsonPath statusPath =
+        given()
+            .header(acceptJson)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/status")
+        .jsonPath();
+
+        int platforms = statusPath.getInt("values.PlatformCount");
+        int servers = statusPath.getInt("values.ServerCount");
+        int services = statusPath.getInt("values.ServiceCount");
+
+        int resources = platforms + servers + services;
+
+        assert resources == pagingTotalSize;
+
+        int statusLastPage = (resources/5)-1; // Page numbers start at 0
+
+        assert statusLastPage == pagingLastPage : statusLastPage + " != " + pagingLastPage;
+    }
+
+    @Test
+    public void testPagingHeaderCorrectness() throws Exception {
+
+        // First get the lastPage from the paging headers
+
+        Response response =
+        given()
+            .header(acceptJson)
+        .with()
+            .queryParam("page", 0)
+            .queryParam("ps", 5)  // Unusually small to provoke having more than 1 page
+            .queryParam("status", "COMMITTED")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/resource");
+
+        String tmp = response.getHeader("X-collection-size");
+        int pagingTotalSize = Integer.parseInt(tmp);
+
+        Headers responseHeaders = response.getHeaders();
+        List<String> headers = responseHeaders.getValues("Link");
+        tmp = null;
+        for (String header : headers) {
+            if (header.contains("rel=\"last\"")) {
+                tmp = header;
+                break;
+            }
+        }
+        assert tmp != null : "Found no Link header for rel=last";
+
+        Matcher m = Pattern.compile(".*page=([0-9]+).*").matcher(tmp);
+        assert m.matches();
+
+        tmp = m.group(1);
+
+        System.out.println(tmp);
+        System.out.flush();
+        int pagingLastPage = Integer.parseInt(tmp);
+
+        // Now get resource counts from status
+
+        JsonPath statusPath =
+        given()
+            .header(acceptJson)
+        .expect()
+            .statusCode(200)
+            .log().ifError()
+        .when()
+            .get("/status")
+        .jsonPath();
+
+        int platforms = statusPath.getInt("values.PlatformCount");
+        int servers = statusPath.getInt("values.ServerCount");
+        int services = statusPath.getInt("values.ServiceCount");
+
+        int resources = platforms + servers + services;
+
+        assert resources == pagingTotalSize;
+
+        int statusLastPage = (resources/5)-1; // Page numbers start at 0
+
+        assert statusLastPage == pagingLastPage : statusLastPage + " != " + pagingLastPage;
+    }
+
+    @Test
     public void testGetResourcesWithPagingAndWrapping() throws Exception {
 
         given()
@@ -345,6 +459,40 @@ public class ResourcesTest extends AbstractBase {
             .body("currentPage",is(1))
         .when()
             .get("/resource");
+    }
+
+    @Test
+    public void testGetResourcesWithPagingAndWrappingAndJsonP() throws Exception {
+
+        Response response =
+        given()
+            .header("Accept", "application/vnd.rhq.wrapped+json")
+            .queryParam("jsonp","jsonp") // Use jsonp-wrapping e.g. for JavaScript access
+        .with()
+            .queryParam("page", 1)
+            .queryParam("ps", 2)  // Unusually small to provoke having more than 1 page
+            .queryParam("category", "service")
+        .expect()
+            .statusCode(200)
+            .log().everything()
+        .when()
+            .get("/resource");
+
+        String mediaType = response.getContentType();
+        assert mediaType.startsWith("application/javascript");
+
+        // check for jsonp wrapping
+        String bodyString = response.asString();
+        assert bodyString.startsWith("jsonp(");
+        assert bodyString.endsWith(");");
+
+        // extract the internal json data
+        String body = bodyString.substring(6,bodyString.length()-2);
+
+        // validate
+        JsonPath jsonPath = new JsonPath(body);
+        assert jsonPath.getInt("pageSize") == 2;
+        assert jsonPath.getInt("currentPage") == 1;
     }
 
     @Test

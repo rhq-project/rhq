@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
+
+import static java.lang.Boolean.FALSE;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -30,6 +32,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
+import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
@@ -99,6 +102,13 @@ public class ResourceFactoryInfoStep extends AbstractWizardStep {
                     }
                 });
                 formItems.add(nameItem);
+
+                StaticTextItem commentItem = new StaticTextItem("resourceNameComment");
+                commentItem.setWidth(300);
+                commentItem.setTextBoxStyle("InlineInfo");
+                commentItem.setShowTitle(FALSE);
+                commentItem.setValue(MSG.widget_resourceFactoryWizard_nameComment());
+                formItems.add(commentItem);
             }
 
             if (null != versionPrompt) {

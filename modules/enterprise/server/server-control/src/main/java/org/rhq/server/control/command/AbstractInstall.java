@@ -1,7 +1,7 @@
 /*
  *
  *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
+ *  * Copyright (C) 2005-2013 Red Hat, Inc.
  *  * All rights reserved.
  *  *
  *  * This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
-    protected void installWindowsService(File workingDir, String batFile) throws Exception {
+    protected void installWindowsService(File workingDir, String batFile, boolean start) throws Exception {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(workingDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -73,6 +73,11 @@ public abstract class AbstractInstall extends ControlCommand {
 
         commandLine = getCommandLine(batFile, "install");
         executor.execute(commandLine);
+
+        if (start) {
+            commandLine = getCommandLine(batFile, "start");
+            executor.execute(commandLine);
+        }
     }
 
     protected void validateCustomStorageDataDirectories(CommandLine commandLine, List<String> errors) {
@@ -106,9 +111,9 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected void waitForProcessToStop(String pid) throws Exception {
 
-        if (isWindows() || pid==null) {
+        if (isWindows() || pid == null) {
             // For the moment we have no better way to just wait some time
-            Thread.sleep(10*1000L);
+            Thread.sleep(10 * 1000L);
         } else {
             int tries = 5;
             while (tries > 0) {
@@ -116,11 +121,12 @@ public abstract class AbstractInstall extends ControlCommand {
                 if (!isUnixPidRunning(pid)) {
                     break;
                 }
-                Thread.sleep(2*1000L);
+                Thread.sleep(2 * 1000L);
                 tries--;
             }
-            if (tries==0) {
-                throw new RHQControlException("Process [" + pid + "] did not finish yet. Terminate it manually and retry.");
+            if (tries == 0) {
+                throw new RHQControlException("Process [" + pid
+                    + "] did not finish yet. Terminate it manually and retry.");
             }
         }
 
@@ -133,17 +139,15 @@ public abstract class AbstractInstall extends ControlCommand {
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
-        commandLine = new org.apache.commons.exec.CommandLine("/bin/kill")
-            .addArgument("-0")
-            .addArgument(pid);
+        commandLine = new org.apache.commons.exec.CommandLine("/bin/kill").addArgument("-0").addArgument(pid);
 
         try {
             int code = executor.execute(commandLine);
-            if (code!=0) {
+            if (code != 0) {
                 return false;
             }
-        } catch (ExecuteException ee ) {
-            if (ee.getExitValue()==1) {
+        } catch (ExecuteException ee) {
+            if (ee.getExitValue() == 1) {
                 // return code 1 means process does not exist
                 return false;
             }
@@ -340,7 +344,6 @@ public abstract class AbstractInstall extends ControlCommand {
 
         log.debug("Stopping RHQ server...");
 
-
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(serverBinDir);
         executor.setStreamHandler(new PumpStreamHandler());
@@ -360,14 +363,14 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected void startRHQServerForInstallation() throws IOException {
         try {
-            log.info("The RHQ Server must be started to complete its upgrade. Starting the RHQ server in preparation of running the server installer...");
+            log.info("The RHQ Server must be started to complete its installation. Starting the RHQ server in preparation of running the server installer...");
 
             // when you unzip the distro, you are getting a fresh, unadulterated, out-of-box EAP installation, which by default listens
             // to port 9999 for its native management subsystem. Make sure some other independent EAP server (or anything for that matter)
             // isn't already listening to that port.
             if (isPortInUse("127.0.0.1", 9999)) {
                 throw new IOException(
-                    "Something is already listening to port 9999 - shut it down before upgrading the server.");
+                    "Something is already listening to port 9999 - shut it down before installing the server.");
             }
 
             Executor executor = new DefaultExecutor();
@@ -397,7 +400,7 @@ public abstract class AbstractInstall extends ControlCommand {
             }
 
             // Wait for the server to complete it's startup
-            log.info("Waiting for the RHQ Server to start in preparation of running the server installer for upgrade...");
+            log.info("Waiting for the RHQ Server to start in preparation of running the server installer...");
             commandLine = getCommandLine("rhq-installer", "--test");
 
             Executor installerExecutor = new DefaultExecutor();

@@ -87,7 +87,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
     }
 
     public static final class Factory implements PortletViewFactory {
-        public static PortletViewFactory INSTANCE = new Factory();
+        public static final PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(EntityContext context) {
 
@@ -120,7 +120,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
 
         //result timeframe if enabled
         PropertySimple property = portletConfig.getSimple(Constant.METRIC_RANGE_ENABLE);
-        if (null != property && Boolean.valueOf(property.getBooleanValue())) {//then proceed setting
+        if (null != property && property.getBooleanValue()) {//then proceed setting
 
             boolean isAdvanced = Boolean.valueOf(portletConfig.getSimpleValue(Constant.METRIC_RANGE_BEGIN_END_FLAG,
                 Constant.METRIC_RANGE_BEGIN_END_FLAG_DEFAULT));

@@ -372,6 +372,10 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
     color: #C22;
 }
 
+.InlineInfo {
+    color: #00AC3D; /* medium green */
+}
+
 .log-panel {
     z-index: 9999999 !important;
 }

@@ -30,11 +30,18 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.net.InetAddress;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.util.PropertiesFileUpdate;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.TokenReplacingReader;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -83,10 +90,20 @@ public class Deployer {
 
         applyConfigChanges(confDir, "cassandra.yaml", tokens);
         applyConfigChanges(confDir, "log4j-server.properties", tokens);
-        applyConfigChanges(confDir, "cassandra-env.sh", tokens);
+        applyChangesToCassandraJvmProps(confDir, deploymentOptions);
+
+        // For windows, update the service wrapper env. It may not ne necessary to have updated cassandra-jvm.properties
+        // as well as this file, but for now we'll update both, leaving the former as a dependably set file.
+        if (File.separatorChar == '\\') {
+            applyChangesToWindowsServiceWrapper(deployDir);
+        }
+
+        //        applyConfigChanges(confDir, "cassandra-env.sh", tokens);
     }
 
-    private void applyConfigChanges(File confDir, String fileName, Map<String, String> tokens) throws DeploymentException {
+    private void applyConfigChanges(File confDir, String fileName, Map<String, String> tokens)
+        throws DeploymentException {
+
         File filteredFile = new File(confDir, fileName);
         try {
             if (log.isInfoEnabled()) {
@@ -99,8 +116,82 @@ public class Deployer {
             rhqFile.delete();
         } catch (IOException e) {
             log.error("An unexpected error occurred while apply configuration changes to " + filteredFile, e);
-            throw new DeploymentException("An unexpected error occurred while apply configuration changes to " +
-                filteredFile, e);
+            throw new DeploymentException("An unexpected error occurred while apply configuration changes to "
+                + filteredFile, e);
+        }
+    }
+
+    private void applyChangesToCassandraJvmProps(File confDir, DeploymentOptions deploymentOptions)
+        throws DeploymentException {
+
+        File jvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+        try {
+            log.info("Applying configuration changes to " + jvmPropsFile);
+
+            PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(jvmPropsFile.getAbsolutePath());
+            Properties properties = propertiesUpdater.loadExistingProperties();
+
+            properties.setProperty("heap_min", "-Xms" + deploymentOptions.getHeapSize());
+            properties.setProperty("heap_max", "-Xmx" + deploymentOptions.getHeapSize());
+            properties.setProperty("heap_new", "-Xmn" + deploymentOptions.getHeapNewSize());
+            properties.setProperty("thread_stack_size", "-Xss" + deploymentOptions.getStackSize());
+            properties.setProperty("jmx_port", deploymentOptions.getJmxPort().toString());
+
+            String javaVersion = System.getProperty("java.version");
+            // The check here is taken right from cassandra-env.sh
+            if ((!isOpenJDK() || javaVersion.compareTo("1.6.0") > 0)
+                || (javaVersion.equals("1.6.0") && getJavaPatchVersion() > 23)) {
+                properties.put("java_agent", "-javaagent:$CASSANDRA_HOME/lib/jamm-0.2.5.jar");
+            }
+
+            propertiesUpdater.update(properties);
+        } catch (IOException e) {
+            log.error("An error occurred while updating " + jvmPropsFile, e);
+            throw new DeploymentException("An error occurred while updating " + jvmPropsFile, e);
+        }
+    }
+
+    private boolean isOpenJDK() {
+        String javaVMName = System.getProperty("java.vm.name");
+        return javaVMName.startsWith("OpenJDK");
+    }
+
+    private boolean isJava1_6() {
+        String javaVersion = System.getProperty("java.version");
+        return javaVersion.startsWith("1.6.0");
+    }
+
+    private int getJavaPatchVersion() {
+        String javaVersion = System.getProperty("java.version");
+        int startIndex = javaVersion.indexOf('_');
+
+        if (startIndex == -1) {
+            return 0;
+        }
+
+        return Integer.parseInt(javaVersion.substring(startIndex + 1, javaVersion.length()));
+    }
+
+    public void applyChangesToWindowsServiceWrapper(File deployDir) throws DeploymentException {
+        File wrapperDir = new File(deployDir, "../bin/wrapper");
+        File wrapperEnvFile = new File(wrapperDir, "rhq-storage-wrapper.env");
+
+        try {
+            log.info("Applying configuration changes to " + wrapperEnvFile);
+
+            PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(wrapperEnvFile.getAbsolutePath());
+            Properties wrapperEnvProps = propertiesUpdater.loadExistingProperties();
+
+            wrapperEnvProps.setProperty("set.heap_min", "-Xms" + deploymentOptions.getHeapSize());
+            wrapperEnvProps.setProperty("set.heap_max", "-Xmx" + deploymentOptions.getHeapSize());
+            wrapperEnvProps.setProperty("set.heap_new", "-Xmn" + deploymentOptions.getHeapNewSize());
+            wrapperEnvProps.setProperty("set.thread_stack_size", "-Xss" + deploymentOptions.getStackSize());
+            wrapperEnvProps.setProperty("set.jmx_port", deploymentOptions.getJmxPort().toString());
+
+            propertiesUpdater.update(wrapperEnvProps);
+        } catch (IOException e) {
+            log.error("An error occurred while updating " + wrapperEnvFile, e);
+            throw new DeploymentException("An error occurred while updating " + wrapperEnvFile, e);
         }
     }
 
@@ -112,6 +203,24 @@ public class Deployer {
 
         for (File f : binDir.listFiles()) {
             f.setExecutable(true);
+        }
+    }
+
+    public void updateStorageAuthConf(Set<InetAddress> ipAddresses) {
+        File confDir = new File(deploymentOptions.getBasedir(), "conf");
+        File authFile = new File(confDir, "rhq-storage-auth.conf");
+
+        Set<String> addresses = new HashSet<String>(ipAddresses.size());
+        for (InetAddress ipAddress : ipAddresses) {
+            addresses.add(ipAddress.getHostAddress());
+        }
+
+        try {
+            authFile.delete();
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(addresses, "\n")), new FileWriter(authFile),
+                true);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update " + authFile);
         }
     }
 

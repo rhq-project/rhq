@@ -28,7 +28,6 @@ import java.util.Random;
 import javax.inject.Inject;
 import javax.persistence.Query;
 
-import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.testng.annotations.Test;
@@ -45,13 +44,14 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
-import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.server.metrics.MetricsDAO;
+import org.rhq.server.metrics.StorageSession;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 import org.rhq.server.metrics.domain.MetricsTable;
@@ -645,7 +645,7 @@ public class MeasurementBaselineManagerTest extends AbstractEJB3Test {
 //        Query q = em.createNativeQuery(sql);
 //        q.executeUpdate();
         try {
-            Session session = storageClientManager.getSession();
+            StorageSession session = storageClientManager.getSession();
             session.execute("DELETE FROM " + MetricsTable.ONE_HOUR.getTableName() + " WHERE schedule_id = " +
                 schedule.getId());
         } catch (NoHostAvailableException e) {

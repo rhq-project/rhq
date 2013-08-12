@@ -47,6 +47,7 @@ public class RoleCriteria extends Criteria {
     private boolean fetchRoleNotifications;
     private boolean fetchSubjects;
     private boolean fetchLdapGroups;
+    private boolean fetchBundleGroups;
 
     private PageOrdering sortName;
 
@@ -112,6 +113,10 @@ public class RoleCriteria extends Criteria {
         this.fetchResourceGroups = fetchResourceGroups;
     }
 
+    public void fetchBundleGroups(boolean fetchBundleGroups) {
+        this.fetchBundleGroups = fetchBundleGroups;
+    }
+
     public void fetchPermissions(boolean fetchPermissions) {
         this.fetchPermissions = fetchPermissions;
     }
@@ -127,7 +132,7 @@ public class RoleCriteria extends Criteria {
 
     /** subclasses should override as necessary */
     public boolean isSecurityManagerRequired() {
-        return (this.fetchSubjects || this.fetchResourceGroups || this.fetchLdapGroups);
+        return (this.fetchSubjects || this.fetchResourceGroups || this.fetchLdapGroups || this.fetchBundleGroups);
     }
 
 }

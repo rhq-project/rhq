@@ -28,6 +28,8 @@
                               default="/files/etc/postfix/main.cf"/>
        </plugin-configuration>
 
+     <process-scan query="process|name|match=.*postfix/master.*" />
+
       <resource-configuration>
         <c:group name="Basic Configurations">
             <c:simple-property displayName="Hostname" name="myhostname" description="Server's fully qualified domain name" required="false"/>
@@ -35,7 +37,7 @@
             <c:simple-property displayName="Networks" name="mynetworks" description="List of clients that can relay mail" required="false"/>
             <c:simple-property displayName="Destinations" name="mydestination" description="Space delimited list of domains for which server will accept delivered. Postfix must be restarted." required="false"/>
             <c:simple-property displayName="Interfaces" name="inet_interfaces" description="Network interfaces that Postfix will bind to" required="false"/>
-            <c:simple-property displayName="Banner" name="smtpd_banner" description="SMTP Banner (RFC requires hostname and ESMTP prompt)" default="$myhostname ESMTP" required="true"/>
+            <c:simple-property displayName="Banner" name="smtpd_banner" description="SMTP Banner (RFC requires hostname and ESMTP prompt)" default="$myhostname ESMTP" required="false"/>
         </c:group>
         <c:group name="Security">
             <c:simple-property displayName="Suppress VRFY" name="disable_vrfy_command" type="boolean"  default="true" required="false" description="Supress Response to SMTP VRFY requests by default"/>

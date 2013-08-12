@@ -34,9 +34,15 @@ public enum StorageNodeDatasourceField {
 
     FIELD_JMX_PORT("jmxPort", "JMX Port"),
     
+    FIELD_ALERTS("alerts", "Alerts"),
+    
     FIELD_CQL_PORT("cqlPort", "CQL Port"),
 
     FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_server_mode()),
+    
+    FIELD_MEMORY("memory", "Memory"),
+    
+    FIELD_DISK("disk", "Disk"),
 
     FIELD_CTIME("ctime", CoreGUI.getMessages().view_adminTopology_serverDetail_installationDate()),
 

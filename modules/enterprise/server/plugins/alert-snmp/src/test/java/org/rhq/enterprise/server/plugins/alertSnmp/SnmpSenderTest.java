@@ -95,6 +95,7 @@ public class SnmpSenderTest {
     private AlertManagerLocal alertManager;
 
     private TestSnmpSender snmpSender;
+    private Configuration pluginConfiguration;
 
     @BeforeMethod
     public void setUp() throws Exception {
@@ -114,7 +115,7 @@ public class SnmpSenderTest {
 
         MockitoAnnotations.initMocks(this);
 
-        Configuration pluginConfiguration = new Configuration();
+        pluginConfiguration = new Configuration();
         pluginConfiguration.setSimpleValue("snmpVersion", "2c");
         pluginConfiguration.setSimpleValue("trapOid", TEST_TRAP_OID_PLUGIN_CONFIG);
         pluginConfiguration.setSimpleValue("community", "public");
@@ -153,7 +154,7 @@ public class SnmpSenderTest {
         assertNotNull(result);
         assertEquals(result.getState(), FAILURE);
         assertEquals(result.getFailureMessages().size(), 1);
-        String expectedError = SnmpInfo.load(alertParameters).error;
+        String expectedError = SnmpInfo.load(alertParameters,pluginConfiguration).error;
         assertNotNull(expectedError);
         assertEquals(result.getFailureMessages().get(0), expectedError);
     }

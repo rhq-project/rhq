@@ -93,19 +93,19 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
     protected Canvas recentBundleDeployContent = new Canvas();
 
     //retrieve localized text
-    public static String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
-    public static String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
-    public static String RECENT_MEASUREMENTS_GROUP_NONE = MSG.view_group_inventory_activity_no_recent_metrics();
-    public static String RECENT_ALERTS = MSG.common_title_recent_alerts();
-    public static String RECENT_OOB = MSG.common_title_recent_oob_metrics();
-    public static String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
-    public static String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
-    public static String RECENT_OPERATIONS = MSG.common_title_recent_operations();
-    public static String RECENT_EVENTS = MSG.common_title_recent_event_counts();
-    public static String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
-    public static String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
-    public static String SEE_MORE = MSG.common_msg_see_more();
-    public static String RECENT_CRITERIA_EVENTS_NONE = MSG.view_resource_inventory_activity_criteria_no_recent_events();
+    public static final String RECENT_MEASUREMENTS = MSG.common_title_recent_measurements();
+    public static final String RECENT_MEASUREMENTS_NONE = MSG.view_resource_inventory_activity_no_recent_metrics();
+    public static final String RECENT_MEASUREMENTS_GROUP_NONE = MSG.view_group_inventory_activity_no_recent_metrics();
+    public static final String RECENT_ALERTS = MSG.common_title_recent_alerts();
+    public static final String RECENT_OOB = MSG.common_title_recent_oob_metrics();
+    public static final String RECENT_OOB_NONE = MSG.view_resource_inventory_activity_no_recent_oob();
+    public static final String RECENT_CONFIGURATIONS = MSG.common_title_recent_configuration_updates();
+    public static final String RECENT_OPERATIONS = MSG.common_title_recent_operations();
+    public static final String RECENT_EVENTS = MSG.common_title_recent_event_counts();
+    public static final String RECENT_PKG_HISTORY = MSG.common_title_recent_pkg_history();
+    public static final String RECENT_BUNDLE_DEPLOY = MSG.common_title_recent_bundle_deployments();
+    public static final String SEE_MORE = MSG.common_msg_see_more();
+    public static final String RECENT_CRITERIA_EVENTS_NONE = MSG.view_resource_inventory_activity_criteria_no_recent_events();
     public static final String CHART_TITLE = MSG.common_title_metric_chart();
 
     private ResourceGroupComposite groupComposite = null;
@@ -634,7 +634,7 @@ public abstract class AbstractActivityView extends EnhancedVLayout implements Re
             setIsModal(true);
             setShowModalMask(true);
             setWidth(950);
-            setHeight(390);
+            setHeight(420);
             setShowResizer(true);
             setCanDragResize(true);
             centerInPage();

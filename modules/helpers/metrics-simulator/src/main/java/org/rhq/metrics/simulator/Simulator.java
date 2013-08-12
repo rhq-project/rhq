@@ -60,6 +60,7 @@ import org.rhq.metrics.simulator.stats.Stats;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
+import org.rhq.server.metrics.StorageSession;
 
 /**
  * @author John Sanda
@@ -96,7 +97,9 @@ public class Simulator implements ShutdownManager {
             session = createSession(nodes, compression);
         }
 
-        MetricsDAO metricsDAO = new MetricsDAO(session, plan.getMetricsServerConfiguration());
+        StorageSession storageSession = new StorageSession(session);
+
+        MetricsDAO metricsDAO = new MetricsDAO(storageSession, plan.getMetricsServerConfiguration());
         MetricsServer metricsServer = new MetricsServer();
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(plan.getMetricsServerConfiguration());

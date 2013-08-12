@@ -153,11 +153,6 @@ public class ServerTableView extends
         return new ServerDetailView(id);
     }
 
-    //    @Override
-    //    public abstract void showDetails(ID id) {
-    //        
-    //    }
-
     private void showCommonActions() {
         addChangeOperationModeAction(OperationMode.NORMAL, MSG.view_adminTopology_server_setNormal());
         addChangeOperationModeAction(OperationMode.MAINTENANCE, MSG.view_adminTopology_server_setMaintenance());
@@ -204,7 +199,8 @@ public class ServerTableView extends
                     public void execute(Boolean confirmed) {
                         if (confirmed) {
                             int[] selectedIds = getSelectedIds(selections);
-                            GWTServiceLookup.getTopologyService().updateServerMode(selectedIds, mode,
+                            boolean manualMaintenance = mode == OperationMode.MAINTENANCE;
+                            GWTServiceLookup.getTopologyService().updateServerManualMaintenance(selectedIds, manualMaintenance,
                                 new AsyncCallback<Void>() {
                                     public void onSuccess(Void result) {
                                         Message msg = new Message(MSG.view_adminTopology_message_setMode(

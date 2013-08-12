@@ -33,6 +33,7 @@ import java.util.concurrent.CountDownLatch;
 
 import com.datastax.driver.core.BoundStatement;
 import com.datastax.driver.core.Cluster;
+import com.datastax.driver.core.Host;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Session;
@@ -65,7 +66,11 @@ public class CassandraIntegrationTest {
 
     protected static Session session;
 
+    protected static StorageSession storageSession;
+
     private static DateTimeService dateTimeService;
+
+    private final Log log = LogFactory.getLog(CassandraIntegrationTest.class);
 
     @BeforeSuite
     @DeployCluster(numNodes = 2, username = "rhqadmin", password = "rhqadmin", waitForSchemaAgreement = true)
@@ -76,7 +81,31 @@ public class CassandraIntegrationTest {
             .addContactPoints("127.0.0.1", "127.0.02")
             .withCredentials("rhqadmin", "rhqadmin")
             .build();
+
+        cluster.register(new Host.StateListener() {
+            @Override
+            public void onAdd(Host host) {
+                log.info("host " + host + " added");
+            }
+
+            @Override
+            public void onUp(Host host) {
+                log.info("host " + host + " up");
+            }
+
+            @Override
+            public void onDown(Host host) {
+                log.info("host " + host + " down");
+            }
+
+            @Override
+            public void onRemove(Host host) {
+                log.info("host " + host + " removed");
+            }
+        });
+
         session = cluster.connect("rhq");
+        storageSession = new StorageSession(session);
     }
 
     @AfterSuite(alwaysRun = true)
@@ -98,7 +127,7 @@ public class CassandraIntegrationTest {
         BoundStatement boundStatement = statement.bind(scheduleId);
 
         return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(),
-            session);
+            storageSession);
     }
 
     protected Iterable<AggregateNumericMetric> findAggregateMetricsWithMetadata(MetricsTable table, int scheduleId,
@@ -109,11 +138,11 @@ public class CassandraIntegrationTest {
                 "SELECT schedule_id, time, type, value, ttl(value), writetime(value) " +
                     "FROM " + table + " " +
                     "WHERE schedule_id = ? AND time >= ? AND time < ?";
-            PreparedStatement statement = session.prepare(cql);
+            PreparedStatement statement = storageSession.prepare(cql);
             BoundStatement boundStatement = statement.bind(scheduleId, new Date(startTime), new Date(endTime));
 
             return new SimplePagedResult<AggregateNumericMetric>(boundStatement, new AggregateNumericMetricMapper(true),
-                session);
+                storageSession);
         } catch (NoHostAvailableException e) {
             throw new CQLException(e);
         }

@@ -222,8 +222,10 @@ public class ContentTest extends AbstractBase {
             int status = response.getStatusCode();
             String location = response.getHeader("Location");
 
-            System.out.println("\nLocation " + location + "\n\n");
-            assert location!=null;
+            if (status!=200) {
+                System.out.println("\nLocation " + location + "\n\n");
+                assert location!=null;
+            }
 
             // We need to check what we got. A 302 means the deploy is still
             // in progress, so we need to wait a little longer
@@ -244,6 +246,7 @@ public class ContentTest extends AbstractBase {
 
             createdResourceId = response.jsonPath().getInt("resourceId");
 
+            System.out.flush();
             System.out.println("\n  Deploy is done, resource Id = " + createdResourceId + " \n");
             System.out.flush();
 
@@ -254,6 +257,7 @@ public class ContentTest extends AbstractBase {
             // Remove the uploaded content
             removeContent(handle, false);
 
+            System.out.flush();
             System.out.println("\n  Content removed \n");
             System.out.flush();
 

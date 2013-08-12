@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
+import java.util.Vector;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -38,10 +39,17 @@ import java.util.zip.ZipOutputStream;
 import org.apache.tools.ant.BuildListener;
 import org.apache.tools.ant.DefaultLogger;
 import org.apache.tools.ant.Project;
+import org.apache.tools.ant.Target;
+import org.apache.tools.ant.Task;
+import org.apache.tools.ant.UnknownElement;
+import org.apache.tools.ant.helper.AntXMLContext;
+import org.testng.Assert;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import org.rhq.bundle.ant.task.BundleTask;
+import org.rhq.bundle.ant.type.DeploymentUnitType;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
@@ -49,6 +57,7 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.util.ZipUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.updater.DeploymentsMetadata;
+import org.rhq.core.util.updater.DestinationComplianceMode;
 import org.rhq.core.util.updater.FileHashcodeMap;
 
 /**
@@ -73,13 +82,21 @@ public class AntLauncherTest {
         FileUtil.purge(DEPLOY_DIR, true);
     }
 
+    public void testParse_legacy() throws Exception {
+        testParse(false, "legacy-test-bundle-v1.xml");
+    }
+
     public void testParse() throws Exception {
+        testParse(true, "test-bundle-v1.xml");
+    }
+
+    private void testParse(boolean validate, String recipeFile) throws Exception {
         // We want to test with an empty deploy dir to ensure nothing gets installed there after a parse
         FileUtil.purge(DEPLOY_DIR, true);
 
-        AntLauncher ant = new AntLauncher();
+        AntLauncher ant = new AntLauncher(validate);
 
-        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml("test-bundle-v1.xml"), null);
+        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml(recipeFile), null);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
@@ -106,7 +123,49 @@ public class AntLauncherTest {
         assert !DEPLOY_DIR.exists() : "Nothing should have been installed to the deploy dir";
     }
 
+    public void testParseWithNoDestinationComplianceCheck() throws Exception {
+        // We want to test with an empty deploy dir to ensure nothing gets installed there after a parse
+        FileUtil.purge(DEPLOY_DIR, true);
+
+        //instantiate the launcher in the new validating mode (new as of RHQ 4.9.0)
+        AntLauncher ant = new AntLauncher(true);
+
+        try {
+            ant.parseBundleDeployFile(getBuildXml("test-bundle-no-manage-root-dir-nor-compliance.xml"), null);
+            Assert.fail("Parsing a bundle with no explicit manageRootDir should have failed.");
+        } catch (InvalidBuildFileException e) {
+            assert "The deployment unit must specifically declare compliance mode of the destination directory.".equals(
+                e.getMessage());
+        }
+
+        BundleAntProject project = ant.parseBundleDeployFile(getBuildXml(
+            "test-bundle-with-manage-root-dir.xml"), null);
+        assert project != null;
+        BundleTask bundleTask = findBundleTask(project);
+        assert bundleTask != null;
+        assert bundleTask.getDeploymentUnits() != null;
+        assert bundleTask.getDeploymentUnits().size() == 1;
+        DeploymentUnitType deploymentUnit = bundleTask.getDeploymentUnits().values().iterator().next();
+        assert deploymentUnit != null;
+
+        //assert the compatibility with the legacy attribute
+        assert "false".equals(deploymentUnit.getManageRootDir());
+        assert DestinationComplianceMode.filesAndDirectories == deploymentUnit.getCompliance();
+
+        // all we did was parse, nothing should really have been extracted or installed
+        assert !DEPLOY_DIR.exists() : "Nothing should have been installed to the deploy dir";
+    }
+
+    public void testInstall_legacy() throws Exception {
+        testInstall(false, "legacy-test-bundle-v1.xml");
+    }
+
+    @Test(dependsOnMethods = "testUpgrade_legacy")
     public void testInstall() throws Exception {
+        testInstall(true, "test-bundle-v1.xml");
+    }
+
+    private void testInstall(boolean validate, String recipeFile) throws Exception {
 
         if (skipNonRHLinux("testInstall"))
             return;
@@ -117,11 +176,11 @@ public class AntLauncherTest {
         // but we do want to add an unrelated file to see that it goes away - since we have manageRootDir=true
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
 
-        AntLauncher ant = new AntLauncher();
+        AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-v1-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v1.xml"), inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
             buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -173,8 +232,17 @@ public class AntLauncherTest {
         return false;
     }
 
+    @Test(dependsOnMethods = "testInstall_legacy")
+    public void testUpgrade_legacy() throws Exception {
+        testUpgrade(false, "legacy-test-bundle-v2.xml");
+    }
+
     @Test(dependsOnMethods = "testInstall")
     public void testUpgrade() throws Exception {
+        testUpgrade(true, "test-bundle-v2.xml");
+    }
+
+    private void testUpgrade(boolean validate, String recipeFile) throws Exception {
 
         if (skipNonRHLinux("testUpgrade"))
             return;
@@ -182,11 +250,11 @@ public class AntLauncherTest {
         // add an unrelated file to see that it gets deleted as part of the upgrade
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
 
-        AntLauncher ant = new AntLauncher();
+        AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v2.xml"), inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
             buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -230,7 +298,15 @@ public class AntLauncherTest {
             "templatized.variable").equals("20000");
     }
 
+    public void testUpgradeNoManageRootDir_legacy() throws Exception {
+        testUpgradeNoManageRootDir(false, "legacy-test-bundle-v2-noManageRootDir.xml");
+    }
+
     public void testUpgradeNoManageRootDir() throws Exception {
+        testUpgradeNoManageRootDir(true, "test-bundle-v2-filesAndDirectories.xml");
+    }
+
+    private void testUpgradeNoManageRootDir(boolean validate, String recipeFile) throws Exception {
 
         if (skipNonRHLinux("testInstall"))
             return;
@@ -243,11 +319,11 @@ public class AntLauncherTest {
         File unrelatedFile = writeFile("unrelated content", DEPLOY_DIR, "unrelated-file.txt");
         assert unrelatedFile.exists() : "our initial install test method should have prepared an unmanaged file";
 
-        AntLauncher ant = new AntLauncher();
+        AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-v2-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-v2-noManageRootDir.xml"),
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile),
             inputProps, buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -291,23 +367,31 @@ public class AntLauncherTest {
             "templatized.variable").equals("20000");
     }
 
+    public void testInstallCompressedZipNoDryRun_legacy() throws Exception {
+        testInstallCompressedZip(false, false, "legacy-test-bundle-compressed-archives.xml");
+    }
+
     public void testInstallCompressedZipNoDryRun() throws Exception {
-        testInstallCompressedZip(false);
+        testInstallCompressedZip(false, true, "test-bundle-compressed-archives.xml");
+    }
+
+    public void testInstallCompressedZipDryRun_legacy() throws Exception {
+        testInstallCompressedZip(true, false, "legacy-test-bundle-compressed-archives.xml");
     }
 
     public void testInstallCompressedZipDryRun() throws Exception {
-        testInstallCompressedZip(true);
+        testInstallCompressedZip(true, true, "test-bundle-compressed-archives.xml");
     }
 
-    private void testInstallCompressedZip(boolean dryRun) throws Exception {
+    private void testInstallCompressedZip(boolean dryRun, boolean validate, String recipeFile) throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
 
-        AntLauncher ant = new AntLauncher();
+        AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-compressed-archives-input.properties", dryRun);
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-compressed-archives.xml"),
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile),
             inputProps, buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -371,24 +455,34 @@ public class AntLauncherTest {
         }
     }
 
+    public void testInstallCompressedZipWithTemplatizedFilesNoDryRun_legacy() throws Exception {
+        testInstallCompressedZipWithTemplatizedFiles(false, false,
+            "legacy-test-bundle-compressed-archives-with-replace.xml");
+    }
+
     public void testInstallCompressedZipWithTemplatizedFilesNoDryRun() throws Exception {
-        testInstallCompressedZipWithTemplatizedFiles(false);
+        testInstallCompressedZipWithTemplatizedFiles(false, true, "test-bundle-compressed-archives-with-replace.xml");
+    }
+
+    public void testInstallCompressedZipWithTemplatizedFilesDryRun_legacy() throws Exception {
+        testInstallCompressedZipWithTemplatizedFiles(true, false,
+            "legacy-test-bundle-compressed-archives-with-replace.xml");
     }
 
     public void testInstallCompressedZipWithTemplatizedFilesDryRun() throws Exception {
-        testInstallCompressedZipWithTemplatizedFiles(true);
+        testInstallCompressedZipWithTemplatizedFiles(true, true, "test-bundle-compressed-archives-with-replace.xml");
     }
 
-    private void testInstallCompressedZipWithTemplatizedFiles(boolean dryRun) throws Exception {
+    private void testInstallCompressedZipWithTemplatizedFiles(boolean dryRun, boolean validate, String recipeFile) throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
 
-        AntLauncher ant = new AntLauncher();
+        AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-bundle-compressed-archives-input.properties", dryRun);
         List<BuildListener> buildListeners = createBuildListeners();
 
         BundleAntProject project = ant.executeBundleDeployFile(
-            getBuildXml("test-bundle-compressed-archives-with-replace.xml"), inputProps, buildListeners);
+            getBuildXml(recipeFile), inputProps, buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
         assert bundleFiles != null;
@@ -454,20 +548,28 @@ public class AntLauncherTest {
         }
     }
 
+    public void testAuditMessages_legacy() throws Exception {
+        testAuditMessages(false, "legacy-test-bundle-audit.xml");
+    }
+
+    public void testAuditMessages() throws Exception {
+        testAuditMessages(true, "test-bundle-audit.xml");
+    }
+
     // this doesn't verify the audit messages getting emitted are correct
     // but it does verify the audit tag getting processed correctly.
     // you have to look at the test logs to see the audit messages
     // TODO: write a ant build listener to listen for this messages, parse them and verify they are correct
     //       this test should then ask the listener at the end if everything was OK and assert false if not
-    public void testAuditMessages() throws Exception {
+    private void testAuditMessages(boolean validate, String recipeFile) throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
 
-        AntLauncher ant = new AntLauncher();
+        AntLauncher ant = new AntLauncher(validate);
         Properties inputProps = createInputProperties("/test-audit-input.properties");
         List<BuildListener> buildListeners = createBuildListeners();
 
-        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-audit.xml"), inputProps,
+        BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
             buildListeners);
         assert project != null;
         Set<String> bundleFiles = project.getBundleFileNames();
@@ -496,7 +598,15 @@ public class AntLauncherTest {
             "777");
     }
 
+    public void testSubdirectoriesInRecipe_legacy() throws Exception {
+        testSubdirectoriesInRecipe(false, "legacy-test-bundle-subdir.xml");
+    }
+
     public void testSubdirectoriesInRecipe() throws Exception {
+        testSubdirectoriesInRecipe(true, "test-bundle-subdir.xml");
+    }
+
+    private void testSubdirectoriesInRecipe(boolean validate, String origRecipeFile) throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
 
@@ -513,9 +623,9 @@ public class AntLauncherTest {
             createZip(new String[] { "3", "4" }, subdir, "test-explode.zip", new String[] { "three.txt", "four.txt" });
             createZip(new String[] { "X=@@X@@\n" }, subdir, "test-replace.zip", new String[] { "template.txt" }); // will be exploded then recompressed
             File recipeFile = new File(antBasedir, "deploy.xml");
-            FileUtil.copyFile(new File(ANT_BASEDIR, "test-bundle-subdir.xml"), recipeFile);
+            FileUtil.copyFile(new File(ANT_BASEDIR, origRecipeFile), recipeFile);
 
-            AntLauncher ant = new AntLauncher();
+            AntLauncher ant = new AntLauncher(validate);
             Properties inputProps = new Properties();
             inputProps.setProperty(DeployPropertyNames.DEPLOY_DIR, DEPLOY_DIR.getPath());
             inputProps.setProperty(DeployPropertyNames.DEPLOY_ID, String.valueOf(++this.deploymentId));
@@ -564,7 +674,15 @@ public class AntLauncherTest {
         }
     }
 
+    public void testUrlFilesAndArchives_legacy() throws Exception {
+        testUrlFilesAndArchives(false, "legacy-test-bundle-url.xml");
+    }
+
     public void testUrlFilesAndArchives() throws Exception {
+        testUrlFilesAndArchives(true, "test-bundle-url.xml");
+    }
+
+    private void testUrlFilesAndArchives(boolean validate, String recipeFile) throws Exception {
         // We want to test a fresh install, so make sure the deploy dir doesn't pre-exist.
         FileUtil.purge(DEPLOY_DIR, true);
 
@@ -582,12 +700,12 @@ public class AntLauncherTest {
             createZip(new String[] { "3", "4" }, subdir, "test-explode.zip", new String[] { "three.txt", "four.txt" });
             createZip(new String[] { "X=@@X@@\n" }, subdir, "test-replace.zip", new String[] { "template.txt" }); // will be exploded then recompressed
 
-            AntLauncher ant = new AntLauncher();
+            AntLauncher ant = new AntLauncher(validate);
             Properties inputProps = createInputProperties("/test-bundle-url-input.properties");
             inputProps.setProperty("rhq.test.url.dir", tmpUrlLocation.toURI().toURL().toString()); // we use this so our recipe can use URLs
             List<BuildListener> buildListeners = createBuildListeners();
 
-            BundleAntProject project = ant.executeBundleDeployFile(getBuildXml("test-bundle-url.xml"), inputProps,
+            BundleAntProject project = ant.executeBundleDeployFile(getBuildXml(recipeFile), inputProps,
                 buildListeners);
             assert project != null;
 
@@ -751,6 +869,32 @@ public class AntLauncherTest {
             if (stream != null) {
                 stream.close();
             }
+        }
+    }
+
+    private BundleTask findBundleTask(BundleAntProject project) {
+        AntXMLContext antParsingContext = (AntXMLContext) project.getReference("ant.parsing.context");
+        Vector targets = antParsingContext.getTargets();
+        for (Object targetObj : targets) {
+            Target target = (Target) targetObj;
+            Task[] tasks = target.getTasks();
+            for (Task task : tasks) {
+                if ("rhq:bundle".equals(task.getTaskName())) {
+                    return (BundleTask) preconfigureTask(task);
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private static Task preconfigureTask(Task task) {
+        if (task instanceof UnknownElement) {
+            task.maybeConfigure();
+            Task resolvedTask = ((UnknownElement) task).getTask();
+            return (resolvedTask != null) ? resolvedTask : task;
+        } else {
+            return task;
         }
     }
 }

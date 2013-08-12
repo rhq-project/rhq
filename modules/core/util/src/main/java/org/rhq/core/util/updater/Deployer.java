@@ -319,12 +319,15 @@ public class Deployer {
     }
 
     private FileHashcodeMap performInitialDeployment(DeployDifferences diff, boolean dryRun) throws Exception {
-        if (this.deploymentData.isManageRootDir()) {
+        switch (deploymentData.getDeploymentProps().getDestinationCompliance()) {
+        case full: {
             // We are to fully manage the deployment dir, so we need to delete everything we find there.
             // Any old files do not belong here - only our bundle files should live here now.
             File dir = this.deploymentData.getDestinationDir();
             backupAndPurgeDirectory(diff, dir, dryRun, null);
-        } else {
+        }
+        break;
+        case filesAndDirectories: {
             // We are not to manage files in the root deployment directory. However, we always manage
             // subdirectories that the bundle wants to deploy. So look in subdirectories that our bundles
             // plan to use and remove files that found there.
@@ -335,6 +338,10 @@ public class Deployer {
                 File dir = new File(this.deploymentData.getDestinationDir(), managedSubdir.getPath());
                 backupAndPurgeDirectory(diff, dir, dryRun, managedSubdir.getPath() + File.separatorChar);
             }
+        }
+        break;
+        default:
+            throw new IllegalStateException("Unsupported destination compliance mode.");
         }
 
         FileHashcodeMap newFileHashcodeMap = extractZipAndRawFiles(new HashMap<String, String>(0), diff, dryRun);
@@ -359,10 +366,11 @@ public class Deployer {
         //       * if a current file is ignored in the latest rescan
         //       * if a file is realized on the filesystem before its stored on the file system
         //       * if a current file is backed up
-
+        boolean reportNewRootFilesAsNew =
+            this.deploymentData.getDeploymentProps().getDestinationCompliance() == DestinationComplianceMode.full;
         FileHashcodeMap original = this.deploymentsMetadata.getCurrentDeploymentFileHashcodes();
         ChangesFileHashcodeMap current = original.rescan(this.deploymentData.getDestinationDir(),
-            this.deploymentData.getIgnoreRegex(), this.deploymentData.isManageRootDir());
+            this.deploymentData.getIgnoreRegex(), reportNewRootFilesAsNew);
         FileHashcodeMap newFiles = getNewDeploymentFileHashcodeMap();
 
         if (current.getUnknownContent() != null) {

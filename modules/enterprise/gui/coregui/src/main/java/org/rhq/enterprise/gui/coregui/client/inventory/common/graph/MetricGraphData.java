@@ -73,6 +73,7 @@ public class MetricGraphData implements JsonMetricProducer {
     private MeasurementOOBComposite lastOOB;
     private Integer chartHeight;
     private boolean isPortalGraph;
+    private boolean hideLegend;
 
 
     private MetricGraphData(int portalId) {
@@ -249,6 +250,14 @@ public class MetricGraphData implements JsonMetricProducer {
         return isPortalGraph;
     }
 
+    public boolean isHideLegend() {
+        return hideLegend;
+    }
+
+    public void setHideLegend(boolean hideLegend) {
+        this.hideLegend = hideLegend;
+    }
+
     public String getChartTitle() {
 
         if(definition != null){
@@ -294,9 +303,10 @@ public class MetricGraphData implements JsonMetricProducer {
      * @todo: future: this should really use GSON or some Json marshaller
      */
     public String getJsonMetrics() {
-        StringBuilder sb = new StringBuilder("[");
+        StringBuilder sb = new StringBuilder();
         boolean gotAdjustedMeasurementUnits = false;
         if (null != metricData) {
+            sb = new StringBuilder("[");
             long firstBarTime = metricData.get(0).getTimestamp();
             long secondBarTime = metricData.get(1).getTimestamp();
             long barDuration = secondBarTime - firstBarTime;
@@ -341,8 +351,8 @@ public class MetricGraphData implements JsonMetricProducer {
                 }
             }
             sb.setLength(sb.length() - 1); // delete the last ','
+            sb.append("]");
         }
-        sb.append("]");
         Log.debug("Json data for: "+getChartTitle());
         Log.debug(sb.toString());
         return sb.toString();
@@ -379,8 +389,8 @@ public class MetricGraphData implements JsonMetricProducer {
      * @see StackedBarMetricGraphImpl
      */
     public boolean showBarAvgTrendLine() {
+        int numberOfAggBars = 0;
         for (MeasurementDataNumericHighLowComposite measurement : metricData) {
-            int numberOfAggBars = 0;
             boolean noValuesInCurrentBarUndefined = (!Double.isNaN(measurement.getValue()) && !Double.isNaN(measurement.getHighValue())  && !Double.isNaN(measurement.getLowValue()));
             boolean foundAggregateBar = (measurement.getValue() != measurement.getHighValue() || measurement.getHighValue() != measurement.getLowValue());
             // if there exists a even one aggregate bar then I can short circuit this and exit
@@ -427,20 +437,6 @@ public class MetricGraphData implements JsonMetricProducer {
         return returnValue;
     }
 
-
-
-    /**
-     * If there is more than 2 days time window then return true so we can show day of week
-     * in axis labels. Function to switch the timescale to whichever is more appropriate hours
-     * or hours with days of week.
-     * @return true if difference between startTime and endTime is >= x days
-     */
-    public boolean shouldDisplayDayOfWeekInXAxisLabel() {
-        Long startTime = metricData.get(0).getTimestamp();
-        Long endTime = metricData.get(metricData.size() - 1).getTimestamp();
-        long timeThreshold = 24 * 60 * 60 * 1000; // 1 days
-        return startTime + timeThreshold < endTime;
-    }
 
     @Override
     public String toString() {

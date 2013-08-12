@@ -46,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.users.UsersDataSource;
+import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
 import org.rhq.enterprise.gui.coregui.client.components.form.EnhancedDynamicForm;
 import org.rhq.enterprise.gui.coregui.client.components.selector.AssignedItemsChangedEvent;
@@ -74,6 +75,9 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
 
     private Tab ldapGroupsTab;
     private RoleLdapGroupSelector ldapGroupSelector;
+
+    private Tab bundleGroupsTab;
+    private BundleGroupSelector bundleGroupSelector;
 
     private boolean hasManageSecurityPermission;
     private boolean isLdapConfigured;
@@ -161,6 +165,9 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             if (!this.isSystemRole) {
                 this.resourceGroupsTab = buildResourceGroupsTab(tabSet);
                 tabSet.addTab(resourceGroupsTab);
+
+                this.bundleGroupsTab = buildBundleGroupsTab(tabSet);
+                tabSet.addTab(bundleGroupsTab);
             }
 
             this.subjectsTab = buildSubjectsTab(tabSet);
@@ -185,6 +192,13 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
     private Tab buildResourceGroupsTab(TabSet tabSet) {
         Tab tab = new Tab(MSG.common_title_resourceGroups(), ImageManager.getGroupIcon(GroupCategory.MIXED));
         // NOTE: We will set the tab content to the resource group selector later once the Role has been fetched.
+
+        return tab;
+    }
+
+    private Tab buildBundleGroupsTab(TabSet tabSet) {
+        Tab tab = new Tab(MSG.common_title_bundleGroups(), ImageManager.getBundleGroupIcon());
+        // NOTE: We will set the tab content to the bundle group selector later once the Role has been fetched.
 
         return tab;
     }
@@ -244,6 +258,18 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
                     }
                 });
                 updateTab(this.resourceGroupsTab, this.resourceGroupSelector);
+
+                Record[] bundleGroupRecords = record.getAttributeAsRecordArray(RolesDataSource.Field.BUNDLE_GROUPS);
+                ListGridRecord[] bundleGroupListGridRecords = toListGridRecordArray(bundleGroupRecords);
+                this.bundleGroupSelector = new RoleBundleGroupSelector(bundleGroupListGridRecords,
+                    !this.hasManageSecurityPermission);
+                this.bundleGroupSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
+                    public void onSelectionChanged(AssignedItemsChangedEvent event) {
+                        onItemChanged();
+                    }
+                });
+                updateTab(this.bundleGroupsTab, this.bundleGroupSelector);
+
             }
 
             ListGridRecord[] subjectListGridRecords = toListGridRecordArray(subjectRecords);
@@ -341,6 +367,11 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
             getForm().setValue(RolesDataSource.Field.LDAP_GROUPS, ldapGroupRecords);
         }
 
+        if (this.bundleGroupSelector != null) {
+            ListGridRecord[] bundleGroupRecords = this.bundleGroupSelector.getSelectedRecords();
+            getForm().setValue(RolesDataSource.Field.BUNDLE_GROUPS, bundleGroupRecords);
+        }
+
         // Submit the form values to the datasource.
         super.save(requestProperties);
     }
@@ -361,6 +392,9 @@ public class RoleEditView extends AbstractRecordEditor<RolesDataSource> implemen
         }
         if (this.ldapGroupSelector != null) {
             this.ldapGroupSelector.reset();
+        }
+        if (this.bundleGroupSelector != null) {
+            this.bundleGroupSelector.reset();
         }
     }
 

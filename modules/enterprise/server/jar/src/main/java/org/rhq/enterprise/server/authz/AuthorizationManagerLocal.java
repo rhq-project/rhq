@@ -20,7 +20,6 @@ package org.rhq.enterprise.server.authz;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import javax.ejb.Local;
@@ -81,6 +80,28 @@ public interface AuthorizationManagerLocal {
     boolean canViewAutoGroup(Subject subject, int parentResourceId, int resourceTypeId);
 
     /**
+     * Returns true if the current user has explicit (Global.VIEW_BUNDLES) or implicit (via bundleGroup-Role
+     * association) view of the specified bundle .
+     *
+     * @param  subject    the current subject or caller
+     * @param  bundleId the id of some Bundle to check permissions against
+     *
+     * @return true if the current user has some role attached to some bundle group that contains this bundle
+     */
+    boolean canViewBundle(Subject subject, int bundleId);
+
+    /**
+     * Returns true if the current user has explicit (Global.VIEW_BUNDLES) or implicit (via bundleGroup-Role
+     * association) view of the specified bundle group.
+     *
+     * @param  subject    the current subject or caller
+     * @param  bundleGroupId the id of some Bundle to check permissions against
+     *
+     * @return true if the current user has some role attached to some bundle group that contains this bundle
+     */
+    boolean canViewBundleGroup(Subject subject, int bundleGroupId);
+
+    /**
      * Returns true if the current user possesses either: 1) the specified resource permission for the specified
      * resource, or 2) the global MANAGE_INVENTORY permission which, by definition, gives full access to the inventory
      * (all resources and all groups)
@@ -133,6 +154,30 @@ public interface AuthorizationManagerLocal {
      * @return true if the current user possesses the specified resource permission for the specified auto-group
      */
     boolean hasAutoGroupPermission(Subject subject, Permission permission, int parentResourceId, int resourceTypeId);
+
+    /**
+     * Returns true if the current user possesses the specified bundle permission for the specified bundle.
+     *
+     * @param  subject     the current subject or caller
+     * @param  permission  a bundle permission (i.e. permission.getTarget() == Permission.Target.BUNDLE)
+     * @param  bundleId    the id of the bundle to check permissions against
+     *
+     * @return true if the current user possesses the specified resource permission for the specified resource
+     */
+
+    boolean hasBundlePermission(Subject subject, Permission permission, int bundleId);
+
+    /**
+     * Returns true if the current user possesses the specified bundle permission for the specified bundle group.
+     *
+     * @param  subject     the current subject or caller
+     * @param  permission  a bundle permission (i.e. permission.getTarget() == Permission.Target.BUNDLE)
+     * @param  bundleGroupId  the id of the bundle group to check permissions against
+     *
+     * @return true if the current user possesses the specified resource permission for the specified resource
+     */
+
+    boolean hasBundleGroupPermission(Subject subject, Permission permission, int bundleGroupId);
 
     /**
      * Returns true if the current user possesses the specified global permission.
@@ -221,7 +266,7 @@ public interface AuthorizationManagerLocal {
      * @return <code>true</code> if the given subject is considered the overlord subject
      */
     boolean isOverlord(Subject subject);
-    
+
     /**
      * Returns true if given subject is able to view given repo.
      * The subject is able to view a repo if it is public or if the subject is the owner of the repo 
@@ -232,7 +277,7 @@ public interface AuthorizationManagerLocal {
      * @return true if subject is able to view the repo, false otherwise
      */
     boolean canViewRepo(Subject subject, int repoId);
-    
+
     /**
      * Returns true if given subject is able to update given repo.
      * The subject is able to update a repo if it is owned by the subject 

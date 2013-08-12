@@ -41,7 +41,7 @@ public final class CompositeGroupMultiLineGraphListView extends CompositeGroupD3
     @Override
     public native void drawJsniChart() /*-{
         console.log("Draw nvd3 charts for composite multiline graph");
-        var chartId =  this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
+        var chartId =  global.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getChartId()(),
             chartHandle = "#mChart-"+chartId,
             chartSelection = chartHandle + " svg",
             yAxisUnits = this.@org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView::getYAxisUnits()(),

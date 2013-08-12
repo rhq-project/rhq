@@ -25,35 +25,81 @@
 
 package org.rhq.plugins.storage;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.hyperic.sigar.SigarException;
 import org.mc4j.ems.connection.EmsConnection;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
+import org.yaml.snakeyaml.error.YAMLException;
 
+import org.rhq.cassandra.util.ConfigEditor;
+import org.rhq.cassandra.util.ConfigEditorException;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
+import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
+import org.rhq.core.pluginapi.inventory.ProcessScanResult;
+import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
 import org.rhq.core.pluginapi.operation.OperationResult;
+import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.file.FileUtil;
+import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.plugins.cassandra.CassandraNodeComponent;
 import org.rhq.plugins.cassandra.util.KeyspaceService;
 
 /**
  * @author John Sanda
  */
-public class StorageNodeComponent extends CassandraNodeComponent implements OperationFacet {
+public class StorageNodeComponent extends CassandraNodeComponent implements OperationFacet, ConfigurationFacet {
 
     private Log log = LogFactory.getLog(StorageNodeComponent.class);
 
     private static final String SYSTEM_AUTH_KEYSPACE = "system_auth";
 
     private static final String RHQ_KEYSPACE = "rhq";
+
+    @Override
+    public Configuration loadResourceConfiguration() throws Exception {
+        return new StorageNodeConfigDelegate(getBasedir()).loadResourceConfiguration();
+    }
+
+    @Override
+    public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
+        StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(getBasedir());
+        configDelegate.updateResourceConfiguration(configurationUpdateReport);
+    }
+
+    private File getBasedir() {
+        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+        return new File(pluginConfig.getSimpleValue("baseDir"));
+    }
+
+    private File getConfDir() {
+        return new File(getBasedir(), "conf");
+    }
+
+    private File getInternodeAuthConfFile() {
+        return new File(getConfDir(), "rhq-storage-auth.conf");
+    }
 
     @Override
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
@@ -63,8 +109,269 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return prepareForUpgrade(parameters);
         } else if (name.equals("readRepair")) {
             return readRepair();
+        } else if (name.equals("updateConfiguration")) {
+            return updateConfiguration(parameters);
+        } else if (name.equals("updateKnownNodes")) {
+            return updateKnownNodes(parameters);
+        } else if (name.equals("prepareForBootstrap")) {
+            return prepareForBootstrap(parameters);
+        } else if (name.equals("shutdown")) {
+            return shutdownStorageNode();
         } else {
             return super.invokeOperation(name, parameters);
+        }
+    }
+
+    private OperationResult shutdownStorageNode() {
+        OperationResult result = new OperationResult();
+        File binDir = new File(getBasedir(), "bin");
+        File pidFile = new File(binDir, "cassandra.pid");
+
+        try {
+            if (pidFile.exists()) {
+                long pid = readPidFile(pidFile);
+                log.info("Shutting down storage node with pid " + pid);
+                ProcessInfo process = findProcessInfo(pid);
+                if (process != null) {
+                    try {
+                        process.kill("KILL");
+                        waitForNodeToGoDown();
+                        pidFile.delete();
+                        result.setSimpleResult("Successfully storage node with pid " + pid);
+                    } catch (SigarException e) {
+                        log.error("Failed to delete storage node with pid " + process.getPid(), e);
+                        result.setErrorMessage("Failed to delete storage node with pid " + pid + ": " +
+                            ThrowableUtil.getAllMessages(e));
+                    }
+                } else {
+                    log.warn("Could not find process info for pid " + pid);
+                    result = shutdownUsingNativeProcessInfo();
+                }
+
+            } else {
+                log.warn("Did not find pid file " + pidFile + ". It should not be modified, deleted, or moved.");
+                result = shutdownUsingNativeProcessInfo();
+            }
+        } catch (FileNotFoundException e) {
+            log.error("Could not read pid file " + pidFile, e);
+            result.setErrorMessage("Could not read pid file " + pidFile + ": " + ThrowableUtil.getAllMessages(e));
+        } catch (InterruptedException e) {
+            log.warn("The shutdown operation was cancelled or interrupted. This interruption occurred while trying " +
+                "to verify that the storage node process has exited.");
+            result.setErrorMessage("The operation was cancelled or interrupted while trying to verify that the " +
+                "storage node process has exited.");
+        }
+        return result;
+    }
+
+    private long readPidFile(File pidFile) throws FileNotFoundException {
+       return Long.parseLong(StreamUtil.slurp(new FileReader(pidFile)));
+    }
+
+    private ProcessInfo findProcessInfo(long pid) {
+        List<ProcessScanResult> scanResults = getResourceContext().getNativeProcessesForType();
+
+        for (ProcessScanResult scanResult : scanResults) {
+            if (scanResult.getProcessInfo().getPid() == pid) {
+                return scanResult.getProcessInfo();
+            }
+        }
+        return null;
+    }
+
+    private OperationResult shutdownUsingNativeProcessInfo() throws InterruptedException {
+        log.warn("Could not obtain process info from pid file");
+        log.info("Obtaining process info from the system to perform the shutdown");
+
+        OperationResult result = shutdownNode();
+        waitForNodeToGoDown();
+
+        return result;
+    }
+
+    private OperationResult updateConfiguration(Configuration params) {
+        boolean restartIsRequired = false;
+
+        OperationResult result = new OperationResult("Configuration updated.");
+
+        //update storage node jvm settings
+        Configuration config = new Configuration();
+        config.put(new PropertySimple("jmxPort", params.getSimpleValue("jmxPort")));
+        config.put(new PropertySimple("minHeapSize", params.getSimpleValue("heapSize")));
+        config.put(new PropertySimple("maxHeapSize", params.getSimpleValue("heapSize")));
+        config.put(new PropertySimple("heapNewSize", params.getSimpleValue("heapNewSize")));
+        config.put(new PropertySimple("threadStackSize", params.getSimpleValue("threadStackSize")));
+
+        ConfigurationUpdateReport configurationUpdate = new ConfigurationUpdateReport(config);
+        this.updateResourceConfiguration(configurationUpdate);
+
+        if (!configurationUpdate.getStatus().equals(ConfigurationUpdateStatus.SUCCESS)) {
+            result.setErrorMessage(configurationUpdate.getErrorMessage());
+        } else {
+            if (params.getSimpleValue("heapSize") != null
+                || params.getSimpleValue("heapNewSize") != null
+                || params.getSimpleValue("threadStackSize") != null) {
+                restartIsRequired = true;
+            }
+        }
+
+        //restart the server if:
+        //- requested by the user
+        //- the updates done require restart
+        boolean restartIfRequiredConfig = false;
+        if (params.getSimpleValue("restartIfRequired") != null) {
+            restartIfRequiredConfig = Boolean.parseBoolean(params.getSimpleValue("restartIfRequired"));
+        }
+
+        if (restartIfRequiredConfig && restartIsRequired) {
+            try {
+                OperationResult restartResult = this.invokeOperation("restart", null);
+                if (restartResult.getErrorMessage() != null) {
+                    result.setErrorMessage(restartResult.getErrorMessage());
+                }
+            } catch (Exception e) {
+                result.setErrorMessage(e.getMessage());
+            }
+        }
+
+        return result;
+    }
+
+    private OperationResult updateKnownNodes(Configuration params) {
+        OperationResult result = new OperationResult();
+
+        PropertyList propertyList = params.getList("addresses");
+        Set<String> ipAddresses = new HashSet<String>();
+
+        for (Property property : propertyList.getList()) {
+            PropertySimple propertySimple = (PropertySimple) property;
+            ipAddresses.add(propertySimple.getStringValue());
+        }
+
+        try {
+            updateInternodeAuthConfFile(ipAddresses);
+
+            EmsBean authBean = getEmsConnection().getBean("org.rhq.cassandra.auth:type=RhqInternodeAuthenticator");
+            EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
+            emsOperation.invoke();
+
+            result.setSimpleResult("Successfully updated the set of known nodes.");
+
+            return result;
+        } catch (InternodeAuthConfUpdateException e) {
+            File authFile = getInternodeAuthConfFile();
+            log.error("Failed to update set of trusted nodes in " + authFile + " due to the following error(s): " +
+                ThrowableUtil.getAllMessages(e)) ;
+            result.setErrorMessage("Failed to update set of trusted nodes in " + authFile + " due to the following " +
+                "error(s): " + ThrowableUtil.getAllMessages(e));
+            return result;
+        }
+    }
+
+    private OperationResult prepareForBootstrap(Configuration params) {
+        log.info("Preparing " + this + " for bootstrap...");
+
+        ResourceContext context = getResourceContext();
+        OperationResult result = new OperationResult();
+
+        log.info("Stopping storage node");
+        OperationResult stopNodeResult = shutdownStorageNode();
+        if (stopNodeResult.getErrorMessage() != null) {
+            log.error("Failed to stop storage node " + this + " Cannot prepare the node for bootstrap which means " +
+                "that the storage node cannot join the cluster. Make sure the storage node is not running and retry " +
+                "the operation");
+            result.setErrorMessage("Failed to stop storage node. Cannot prepare the node for bootstrap which means " +
+                "that it cannot join the cluster. Make sure that the node is not running and retry the operation. " +
+                "Stopping the storage node failed with this error: " + stopNodeResult.getErrorMessage());
+            return result;
+        }
+
+        Configuration pluginConfig = context.getPluginConfiguration();
+        String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
+        File yamlFile = new File(yamlProp);
+
+        ConfigEditor configEditor = new ConfigEditor(yamlFile);
+        try {
+            configEditor.load();
+
+            purgeDir(new File(configEditor.getCommitLogDirectory()));
+            for (String dir : configEditor.getDataFileDirectories()) {
+                purgeDir(new File(dir));
+            }
+            purgeDir(new File(configEditor.getSavedCachesDirectory()));
+
+            log.info("Updating cluster settings");
+
+            String address = pluginConfig.getSimpleValue("host");
+            int cqlPort = Integer.parseInt(params.getSimpleValue("cqlPort"));
+            int gossipPort = Integer.parseInt(params.getSimpleValue("gossipPort"));
+            List<String> addresses = getAddresses(params.getList("addresses"));
+
+            // Make sure this node's address is not in the list; otherwise, it
+            // won't bootstrap properly.
+            List<String> seeds = new ArrayList<String>(addresses);
+            seeds.remove(address);
+
+            configEditor.setSeeds(seeds.toArray(new String[seeds.size()]));
+            configEditor.setNativeTransportPort(cqlPort);
+            configEditor.setStoragePort(gossipPort);
+
+            configEditor.save();
+            log.info("Cluster configuration settings have been applied to " + yamlFile);
+
+            updateInternodeAuthConfFile(new HashSet<String>(addresses));
+
+            log.info(this + " is ready to be bootstrap. Restarting storage node...");
+            OperationResult startResult = startNode();
+            if (startResult.getErrorMessage() != null) {
+                log.error("Failed to restart storage node:\n" + startResult.getErrorMessage());
+                result.setErrorMessage("Failed to restart storage node:\n" + startResult.getErrorMessage());
+            } else {
+                result.setSimpleResult("The storage node was succesfully updated is now bootstrapping into the cluster.");
+            }
+
+            return result;
+        } catch (ConfigEditorException e) {
+            log.error("There was an error while trying to update " + yamlFile, e);
+            if (e.getCause() instanceof YAMLException) {
+                log.info("Attempting to restore " + yamlFile);
+                try {
+                    configEditor.restore();
+                    result.setErrorMessage("Failed to update configuration file [" + yamlFile + "]: " +
+                        ThrowableUtil.getAllMessages(e.getCause()));
+                } catch (ConfigEditorException e1) {
+                    log.error("Failed to restore " + yamlFile + ". A copy of the file prior to any modifications " +
+                        "can be found at " + configEditor.getBackupFile());
+                    result.setErrorMessage("There was an error updating [" + yamlFile + "] and undoing the changes " +
+                        "Failed. A copy of the file can be found at " + configEditor.getBackupFile() + ". See the " +
+                        "agent logs for more details");
+                }
+            }
+            return result;
+        } catch (InternodeAuthConfUpdateException e) {
+            File authFile = getInternodeAuthConfFile();
+            result.setErrorMessage("Failed to update " + authFile + " due to the following error(s): " +
+                ThrowableUtil.getAllMessages(e));
+            return result;
+        }
+    }
+
+    private void purgeDir(File dir) {
+        log.info("Purging " + dir);
+        FileUtil.purge(dir, true);
+    }
+
+    private void updateInternodeAuthConfFile(Set<String> ipAddresses) throws InternodeAuthConfUpdateException {
+        File authFile = getInternodeAuthConfFile();
+
+        log.info("Updating " + authFile);
+
+        try {
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(ipAddresses, "\n")),
+                new FileWriter(authFile), true);
+        } catch (Exception e) {
+            log.error("An error occurred while trying to update " + authFile, e);
+            throw new InternodeAuthConfUpdateException("An error occurred while trying to update " + authFile, e);
         }
     }
 
@@ -203,12 +510,12 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
         return result;
     }
-    
+
     private OperationResult prepareForUpgrade(Configuration parameters) throws Exception {
         EmsConnection emsConnection = getEmsConnection();
         EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
         Class<?>[] emptyParams = new Class<?>[0];
-        
+
         if (log.isDebugEnabled()) {
             log.debug("Disabling native transport...");
         }
@@ -230,7 +537,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             snapshotName = System.currentTimeMillis() + "";
         }
         operation.invoke(snapshotName, new String[] {});
-        
+
         // max 2 sec
         waitForTaskToComplete(500, 10, 150);
 
@@ -242,7 +549,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
         return new OperationResult();
     }
-    
+
     private void waitForTaskToComplete(int initialWaiting, int maxTries, int sleepMillis) {
         // initial waiting
         try {
@@ -284,5 +591,11 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         String operation;
         boolean succeeded;
         String details;
+    }
+
+    @Override
+    public String toString() {
+        return StorageNodeComponent.class.getSimpleName() + "[resourceKey: " + getResourceContext().getResourceKey() +
+            "]";
     }
 }

@@ -25,14 +25,7 @@
 
 package org.rhq.enterprise.server.cloud;
 
-import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_GROUP_NAME;
-import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_PLUGIN_NAME;
-import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_RESOURCE_TYPE_NAME;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -40,19 +33,16 @@ import javax.ejb.EJB;
 import javax.persistence.Query;
 import javax.transaction.Transaction;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -80,70 +70,6 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
     private SubjectManagerLocal subjectManager;
 
     private static final String TEST_PREFIX = "test-";
-
-    @Test
-    public void testInit() throws Exception {
-        final String cassandraSeedsProperty = "rhq.cassandra.seeds";
-        final String originalSeedValue = System.getProperty(cassandraSeedsProperty);
-
-        try {
-            prepareScheduler();
-            cleanDatabase();
-            executeInTransaction(new TransactionCallback() {
-
-                @Override
-                public void execute() throws Exception {
-                    String testHostName = TEST_PREFIX + "hostname";
-                    List<String> addresses = Arrays.asList(testHostName, TEST_PREFIX + "hostWithNoFoundResource",
-                        TEST_PREFIX + "secondHostWithNoFoundResource");
-                    System.setProperty(cassandraSeedsProperty, addresses.get(0) + "|123|123," + addresses.get(1)
-                        + "|987|987," + addresses.get(2) + "|123|123");
-
-                    // create the resource type if it doesn't exist
-                    ResourceType testResourceType = typeManager.getResourceTypeByNameAndPlugin("RHQ Storage Node",
-                        "RHQStorage");
-                    if (testResourceType == null) {
-                        testResourceType = createResourceType();
-                    }
-                    Resource testResource = createResource(testResourceType, testHostName);
-
-                    // finds the storage nodes and pairs them w/ the associated resources
-                    nodeManager.scanForStorageNodes();
-
-                    // get the storage nodes and checks some properties on them
-                    List<StorageNode> storageNodes = nodeManager.getStorageNodes();
-                    Assert.assertNotNull(storageNodes, "The list of storage nodes shouldn't be null.");
-                    Assert.assertFalse(storageNodes.isEmpty(), "The list of storage nodes shouldn't be empty.");
-                    Assert.assertTrue(storageNodes.size() >= addresses.size(),
-                        "The size of the list of storage nodes should be at least " + addresses.size());
-
-                    List<String> obtainedAddresses = new ArrayList<String>(storageNodes.size());
-                    for (StorageNode storageNode : storageNodes) {
-                        Assert.assertNotNull(storageNode.getAddress(), "Address of storage node cannot be null.");
-                        obtainedAddresses.add(storageNode.getAddress());
-                        if (storageNode.getAddress().equals(testHostName)) {
-                            Assert.assertEquals(storageNode.getResource().getId(), testResource.getId());
-                            Assert.assertNotNull(storageNode.getResource(), "Associated resource cannot be null.");
-                        } else {
-                            Assert.assertNull(storageNode.getResource(),
-                                "The resource field should be null at this point.");
-                        }
-                    }
-
-                    Assert.assertTrue(obtainedAddresses.containsAll(addresses),
-                        "There are some storage nodes that should be created but were not discovered and returned."
-                            + " The storage nodes that should be returned: " + addresses
-                            + "  The storage nodes that were returned: " + obtainedAddresses
-                            + "  (the second should be a super-set (not necessarily strict) of the first.)");
-
-                }
-            });
-        } finally {
-            unprepareScheduler();
-            cleanDatabase();
-            System.setProperty(cassandraSeedsProperty, originalSeedValue);
-        }
-    }
 
     @Test(groups = "integration.ejb3")
     public void testStorageNodeCriteriaFinder() throws Exception {
@@ -213,26 +139,6 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
     private void cleanDatabase() throws Exception {
         // this method is still needed, because tests calls SLSB methods that are executed in their own transaction
         // and the  rollback performed once the TransactionCallback is finished just wont clean everything
-
-        // We can only filter on the group name because the resource type info might not exist in the test
-        // database.
-        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-        criteria.addFilterName(STORAGE_NODE_GROUP_NAME);
-
-        List<ResourceGroup> groups = resourceGroupManager.findResourceGroupsByCriteria(subjectManager.getOverlord(),
-            criteria);
-
-        if (!groups.isEmpty()) {
-            resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), groups.get(0).getId());
-        }
-
-//        for (ResourceGroup group : groups) {
-//            if (group.getName().equals(STORAGE_NODE_GROUP_NAME)) {
-//                resourceGroupManager.deleteResourceGroup(subjectManager.getOverlord(), group.getId());
-//                break;
-//            }
-//        }
-
 
         // pause the currently running TX
         Transaction runningTransaction = getTransactionManager().suspend();

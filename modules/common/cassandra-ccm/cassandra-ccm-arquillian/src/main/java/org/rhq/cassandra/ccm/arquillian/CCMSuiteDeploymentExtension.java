@@ -26,7 +26,6 @@
 package org.rhq.cassandra.ccm.arquillian;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -115,7 +114,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
                     SchemaManager schemaManager;
                     ClusterInitService clusterInitService = new ClusterInitService();
-                    List<StorageNode> nodes = Collections.emptyList();
+                    List<StorageNode> nodes = null;
 
                     if (!Boolean.valueOf(System.getProperty("itest.use-external-storage-node", "false"))) {
 
@@ -148,7 +147,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                         }
                     } else {
                         try {
-                            String seed = System.getProperty("rhq.cassandra.seeds", "127.0.0.1|7199|9042");
+                            String seed = System.getProperty("rhq.cassandra.seeds", "127.0.0.1|7299|9042");
                             schemaManager = new SchemaManager("rhqadmin", "rhqadmin", seed);
 
                         } catch (Exception e) {

@@ -777,7 +777,7 @@ public class GroupTest extends AbstractBase {
         list.add("");
         list.add(" ");
         list.add(null);
-        list.add("resource.type = 'bla'");
+        list.add("resource.availability = DOWN");
         gd.setExpression(list);
 
         Response response =
@@ -808,8 +808,8 @@ public class GroupTest extends AbstractBase {
         GroupDef gd = new GroupDef("-x-test-def");
         gd.setDescription("Just testing");
         List<String> list = new ArrayList<String>();
-        list.add("groupby resource");
-        list.add("resource.name");
+        list.add("groupby resource.type.plugin");
+        list.add("groupby resource.type.name");
         gd.setExpression(list);
 
         Response response =

@@ -12,7 +12,11 @@
            discovery="JBossASDiscoveryComponent"
            class="JBossASServerComponent"
            description="JBoss Application Server Description">
-      
+     <subcategories>
+       <subcategory name="Applications" />
+       <subcategory name="Framework" />
+     </subcategories>
+
       <operation name="stop" displayName="Stop JBossAS Server" description="Kills the server" timeout="30">
          <parameters>
             <c:simple-property name="force"
@@ -29,7 +33,7 @@
                              required="true"
                              description="If true, the server is definitely down; otherwise, the shutdown was issued but it is unclear if it really died"/>
          </results>
-      </operation>     
+      </operation>
       <server name="EmbeddedTomcatServer"
               description="Embedded Tomcat Web Server Description"
               sourcePlugin="Tomcat"
@@ -37,6 +41,6 @@
               discovery="JBossASTomcatDiscoveryComponent"
               class="JBossASTomcatServerComponent">
       </server>
-      
+
    </server>
 </plugin>

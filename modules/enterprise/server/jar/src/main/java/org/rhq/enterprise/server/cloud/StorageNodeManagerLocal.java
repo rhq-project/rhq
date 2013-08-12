@@ -18,23 +18,34 @@
  */
 package org.rhq.enterprise.server.cloud;
 
+import java.net.InetAddress;
 import java.util.List;
+import java.util.Map;
 
 import javax.ejb.Local;
 
+import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 
 @Local
 public interface StorageNodeManagerLocal {
 
-    List<StorageNode> scanForStorageNodes();
+    // The following have package visibility to make accessible to StorageNodeManagerBeanTest
+    String STORAGE_NODE_GROUP_NAME = "RHQ Storage Nodes";
+    String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
+    String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
     List<StorageNode> getStorageNodes();
+    
+    PageList<StorageNodeLoadComposite> getStorageNodeComposites();
 
     void linkResource(Resource resource);
 
@@ -51,6 +62,10 @@ public interface StorageNodeManagerLocal {
      */
     StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime);
 
+    StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode);
+
+    boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
+
     /**
      * Fetches the list of StorageNode entities based on provided criteria.
      *
@@ -61,13 +76,73 @@ public interface StorageNodeManagerLocal {
      * @return list of nodes
      */
     PageList<StorageNode> findStorageNodesByCriteria(Subject subject, StorageNodeCriteria criteria);
-    
+
+    /**
+     * Fetches the list of Storage Node related alerts that have not yet been acknowledged.
+     *
+     * @param subject subject
+     * @return storage nodes alerts not acknowledged
+     */
+    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject);
+
+    /**
+     * Fetches the list of Storage Node related alerts that have not yet been acknowledged for the
+     * specified storage node.
+     *
+     * @param subject subject
+     * @return storage nodes alerts not acknowledged
+     */
+    PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode);
+
+    /**
+     * Fetches all the Storage Node related alerts.
+     *
+     * @param subject subject
+     * @return all storage nodes alerts
+     */
+    PageList<Alert> findAllStorageNodeAlerts(Subject subject);
+
+    /**
+     * Fetches all the Storage Node related alerts for the specified storage node.
+     *
+     * @param subject subject
+     * @return all storage nodes alerts
+     */
+    PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
+
+    StorageNode findStorageNodeByAddress(InetAddress address);
+
+
+    /**
+     * Find ids for all resources and sub-resources of Storage Nodes that
+     * have alert definitions. This can be used by the resource criteria queries to find
+     * all alerts triggered for storage nodes resources.
+     *
+     * @return resource ids
+     */
+    Integer[] findResourcesWithAlertDefinitions();
+
+    /**
+     * Find ids for all resources and sub-resources, of the specified storage node, that
+     * have alert definitions. This can be used by the resource criteria queries to find
+     * all alerts triggered for storage nodes resources.
+     *
+     * If storage node is null it find ids for all resources and sub-resources of Storage Nodes that
+     * have alert definitions. Please see {@link #findResourcesWithAlertDefinitions()} for more details.
+     *
+     * @param storageNode storage node
+     *
+     * @return resource ids
+     */
+    Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode);
+
+
     /**
      * <p>Prepares the node for subsequent upgrade.</p>
      * <p> CAUTION: this method will set the RHQ server to maintenance mode, RHQ storage flushes all the data to disk
      * and backup of all the keyspaces is created</p>
      * <p>the subject needs to have <code>MANAGE_SETTINGS</code> and <code>MANAGE_INVENTORY</code> permissions.</p>
-     * 
+     *
      * @param subject caller
      * @param storageNode storage node on which the prepareForUpgrade operation should be run
      */
@@ -86,4 +161,9 @@ public interface StorageNodeManagerLocal {
      */
     void runReadRepair();
 
+    void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
+
+    Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject, StorageNode node, long beginTime, long endTime, int numPoints);
+
+    boolean isAddNodeMaintenanceInProgress();
 }

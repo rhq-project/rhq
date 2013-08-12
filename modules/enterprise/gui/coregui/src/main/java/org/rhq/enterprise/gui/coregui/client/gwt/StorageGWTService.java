@@ -22,11 +22,16 @@
  */
 package org.rhq.enterprise.gui.coregui.client.gwt;
 
+import java.util.List;
+import java.util.Map;
+
 import com.google.gwt.user.client.rpc.RemoteService;
 
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.util.PageList;
 
 /**
@@ -66,4 +71,18 @@ public interface StorageGWTService extends RemoteService {
      * @return instance of {@link StorageNodeLoadComposite} with the aggregate measurement data of selected metrics
      */
     StorageNodeLoadComposite getLoad(StorageNode node, int lastN, int unit) throws RuntimeException;
+    
+    PageList<StorageNodeLoadComposite> getStorageNodeComposites() throws RuntimeException;
+    
+    Integer[] findResourcesWithAlertDefinitions() throws RuntimeException;
+    
+    int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException;
+        
+    List<Integer> findNotAcknowledgedStorageNodeAlertsCounts(List<Integer> storageNodeIds) throws RuntimeException;
+    
+    Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(StorageNode node, int lastN, int unit, int numPoints) throws RuntimeException;
+    
+    StorageNodeConfigurationComposite retrieveConfiguration(StorageNode storageNode) throws RuntimeException;
+    
+    boolean updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException;
 }

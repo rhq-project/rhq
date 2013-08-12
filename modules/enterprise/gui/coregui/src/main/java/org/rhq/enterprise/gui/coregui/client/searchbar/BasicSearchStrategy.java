@@ -26,7 +26,6 @@ import com.smartgwt.client.data.fields.DataSourceTextField;
 import com.smartgwt.client.widgets.form.fields.events.KeyUpEvent;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.events.RecordClickEvent;
 
@@ -89,17 +88,14 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
      */
     @Override
     public void onRecordClick(RecordClickEvent event) {
-        Log.debug("BasicSearchStrategy click");
 
         String kind = event.getRecord().getAttribute(ATTR_KIND);
         String searchExpression;
 
         if (kind.equals("SAVED") || kind.equals("GLOBAL")) {
-            Log.debug("Saved or Global Search Click");
             searchExpression = event.getRecord().getAttribute(ATTR_PATTERN);
 
         } else {
-            Log.debug("Regular Search Click");
             searchExpression = event.getRecord().getAttribute(ATTR_NAME);
         }
 
@@ -112,14 +108,12 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
     @Override
     public void searchFocusHandler() {
-        Log.debug("focus in BasicSearchStrategy");
         String searchExpression = searchBar.getSearchTextItem().getValueAsString();
         doSearch(searchExpression);
     }
 
     @Override
     public void searchKeyUpHandler(KeyUpEvent keyUpEvent) {
-        Log.debug("Keyup in BasicSearchStrategy: " + keyUpEvent.getKeyName());
         String searchExpression = searchBar.getSearchTextItem().getValueAsString();
         doSearch(searchExpression);
     }
@@ -131,20 +125,16 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
     private void doSearch(String searchExpression) {
         if (isSearchInProgress) {
-            Log.debug("Adding pending search [" + searchExpression + "]");
             pendingSearchExpression = (null == searchExpression) ? "" : searchExpression;
             return;
         }
 
-        Log.debug("Search Start");
         isSearchInProgress = true;
 
         if (null == searchExpression || searchExpression.isEmpty()) {
-            Log.debug("Empty Search expression");
             getSearchSuggestions(SearchSubsystem.RESOURCE, null, 0);
 
         } else {
-            Log.debug("doSearch: " + searchExpression);
             getSearchSuggestions(SearchSubsystem.RESOURCE, searchBar.getSearchTextItem().getValueAsString(), searchBar
                 .getSearchTextItem().getValueAsString().length());
         }
@@ -154,7 +144,6 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
         final long suggestStart = System.currentTimeMillis();
 
-        Log.debug("Searching for: " + expression);
 
         searchService.getTabAwareSuggestions(searchSubsystem, expression, caretPosition, null,
             new AsyncCallback<List<SearchSuggestion>>() {
@@ -179,7 +168,6 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                             ds.setFields(idField, valueField);
 
                             searchBarPickListGrid.setDataSource(ds);
-                            ListGridField[] fields = searchBarPickListGrid.getAllFields();
                             searchBarPickListGrid.getField(ATTR_VALUE).setShowHover(true);
                             searchBarPickListGrid.getField(ATTR_VALUE).setHoverCustomizer(new HoverCustomizer() {
 
@@ -223,7 +211,7 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
                             searchBarPickListGrid.setData(new ListGridRecord[] {});
                             searchBarPickListGrid.fetchData();
                         } catch (Exception e) {
-                            Log.debug("Caught exception on fetchData: " + e);
+                            Log.info("Caught exception on fetchData: " + e);
                         }
 
                         long suggestFetchTime = System.currentTimeMillis() - suggestStart;
@@ -250,7 +238,6 @@ public class BasicSearchStrategy extends AbstractSearchStrategy {
 
                 @Override
                 public void onFailure(Throwable caught) {
-                    Log.debug("Search End");
                     isSearchInProgress = false;
                     pendingSearchExpression = null;
                     CoreGUI.getErrorHandler().handleError(MSG.view_searchBar_suggest_failSuggest(), caught);

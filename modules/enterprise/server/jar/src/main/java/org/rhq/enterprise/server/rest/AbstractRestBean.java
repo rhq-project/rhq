@@ -379,7 +379,7 @@ public class AbstractRestBean {
 
         // A link to the last page
         if (!pc.isUnlimited()) {
-            int lastPage = resultList.getTotalSize() / pc.getPageSize();
+            int lastPage = (resultList.getTotalSize() / pc.getPageSize() ) -1;
             uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
             uriBuilder.replaceQueryParam("page",lastPage);
             builder.header("Link", new Link("last",uriBuilder.build().toString()).rfc5988String());
@@ -409,7 +409,8 @@ public class AbstractRestBean {
         pColl.setPageSize(pageControl.getPageSize());
         int page = pageControl.getPageNumber();
         pColl.setCurrentPage(page);
-        pColl.setLastPage(originalList.getTotalSize()/pageControl.getPageSize());
+        int lastPage = (originalList.getTotalSize() / pageControl.getPageSize()) -1 ; // -1 as page # is 0 based
+        pColl.setLastPage(lastPage);
 
         UriBuilder uriBuilder;
         if (originalList.getTotalSize() > (page +1 ) * pageControl.getPageSize()) {
@@ -427,7 +428,6 @@ public class AbstractRestBean {
 
         // A link to the last page
         if (!pageControl.isUnlimited()) {
-            int lastPage = originalList.getTotalSize() / pageControl.getPageSize();
             uriBuilder = uriInfo.getRequestUriBuilder(); // adds ?q, ?ps and ?category if needed
             uriBuilder.replaceQueryParam("page",lastPage);
             pColl.addLink( new Link("last",uriBuilder.build().toString()));

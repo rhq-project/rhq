@@ -22,6 +22,9 @@
  */
 package org.rhq.core.domain.measurement;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rhq.core.domain.measurement.util.MeasurementConversionException;
 
 /**
@@ -116,6 +119,16 @@ public enum MeasurementUnits {
         }
 
         return null;
+    }
+    
+    public List<MeasurementUnits> getFamilyUnits() {
+        List<MeasurementUnits> returnList = new ArrayList<MeasurementUnits>();
+        for (MeasurementUnits units : MeasurementUnits.values()) {
+            if (units.family == family) {
+                returnList.add(units);
+            }
+        }
+        return returnList;
     }
 
     public boolean isComparableTo(MeasurementUnits other) {

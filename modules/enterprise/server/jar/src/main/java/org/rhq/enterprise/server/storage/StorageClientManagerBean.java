@@ -41,15 +41,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.util.ClusterBuilder;
-import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
-import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 import org.rhq.server.metrics.DateTimeService;
 import org.rhq.server.metrics.MetricsConfiguration;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.MetricsServer;
+import org.rhq.server.metrics.StorageSession;
 
 /**
  * @author John Sanda
@@ -65,16 +64,14 @@ public class StorageClientManagerBean {
     private static final String RHQ_KEYSPACE = "rhq";
 
     @EJB
-    private ServerManagerLocal serverManager;
-
-    @EJB
     private StorageNodeManagerLocal storageNodeManager;
 
-    private Session session;
+    private StorageSession session;
     private MetricsConfiguration metricsConfiguration;
     private MetricsDAO metricsDAO;
     private MetricsServer metricsServer;
     private boolean initialized;
+    private StorageClusterMonitor storageClusterMonitor;
 
     public synchronized void init() {
         if (initialized) {
@@ -86,20 +83,26 @@ public class StorageClientManagerBean {
 
         log.info("Initializing storage client subsystem");
 
-        //decide if there are no storage nodes persisted before doing anything
-        boolean isNewServerInstall = storageNodeManager.getStorageNodes().isEmpty();
-
-        storageNodeManager.scanForStorageNodes();
-
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
         metricsConfiguration = new MetricsConfiguration();
-        session = createSession(username, password, storageNodeManager.getStorageNodes());
+        List<StorageNode> storageNodes = storageNodeManager.getStorageNodes();
+        if (storageNodes.isEmpty()) {
+            throw new IllegalStateException(
+                "There is no storage node metadata stored in the relational database. This may have happened as a "
+                    + "result of running dbsetup or deleting rows from rhq_storage_node table. Please re-install the "
+                    + "storage node to fix this issue.");
+        }
+        Session wrappedSession = createSession(username, password, storageNodeManager.getStorageNodes());
+        session = new StorageSession(wrappedSession);
+
+        storageClusterMonitor = new StorageClusterMonitor();
+        session.addStorageStateListener(storageClusterMonitor);
+
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
-        Server server = serverManager.getServer();
-        initMetricsServer(isNewServerInstall, server.getCtime());
+        initMetricsServer();
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");
@@ -121,19 +124,23 @@ public class StorageClientManagerBean {
     }
 
     public MetricsDAO getMetricsDAO() {
-        return this.metricsDAO;
+        return metricsDAO;
     }
 
     public MetricsServer getMetricsServer() {
-        return this.metricsServer;
+        return metricsServer;
     }
 
-    public Session getSession() {
-        return this.session;
+    public StorageSession getSession() {
+        return session;
     }
 
     public MetricsConfiguration getMetricsConfiguration() {
-        return this.metricsConfiguration;
+        return metricsConfiguration;
+    }
+
+    public boolean isClusterAvailable() {
+        return storageClusterMonitor != null && storageClusterMonitor.isClusterAvailable();
     }
 
     private Session createSession(String username, String password, List<StorageNode> storageNodes) {
@@ -168,7 +175,7 @@ public class StorageClientManagerBean {
         return cluster.connect(RHQ_KEYSPACE);
     }
 
-    private void initMetricsServer(boolean isNewInstall, long serverInstallTime) {
+    private void initMetricsServer() {
         if (log.isDebugEnabled()) {
             log.debug("Initializing " + MetricsServer.class.getName());
         }
@@ -179,7 +186,7 @@ public class StorageClientManagerBean {
         DateTimeService dateTimeService = new DateTimeService();
         dateTimeService.setConfiguration(metricsConfiguration);
         metricsServer.setDateTimeService(dateTimeService);
-        metricsServer.init(isNewInstall, serverInstallTime);
+        metricsServer.init();
     }
 
     private String getRequiredStorageProperty(String property) {

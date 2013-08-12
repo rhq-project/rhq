@@ -27,9 +27,6 @@ package org.rhq.cassandra.schema;
 
 import java.util.List;
 
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.PreparedStatement;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -38,12 +35,11 @@ import org.rhq.core.domain.cloud.StorageNode;
 /**
  * @author Stefan Negrea
  */
-public class TopologyManager extends AbstractManager {
-
-    private final Log log = LogFactory.getLog(TopologyManager.class);
+class TopologyManager extends AbstractManager {
 
     private static final String TOPOLOGY_BASE_FOLDER = "topology";
 
+    private final Log log = LogFactory.getLog(TopologyManager.class);
 
     private enum Task {
         UpdateReplicationFactor("0001.xml"),
@@ -64,78 +60,65 @@ public class TopologyManager extends AbstractManager {
         super(username, password, nodes);
     }
 
-    public boolean updateTopology() throws Exception {
-        boolean result = false;
-
-        initCluster();
-        if (schemaExists()) {
-            log.info("Applying topology updates...");
-            result = this.updateReplicationFactor(nodes.size());
-            this.updateGCGrace(nodes.size());
-        } else {
-            log.info("Topology updates cannot be applied because the schema is not installed.");
+    /**
+     * Updates cluster topology settings:
+     * 1) replication factor
+     * 2) gc grace period
+     *
+     * @return true if update successful, false otherwise.
+     */
+    public void updateTopology() {
+        try {
+            initClusterSession();
+            if (schemaExists()) {
+                log.info("Applying topology updates...");
+                updateReplicationFactor();
+                updateGCGrace();
+            } else {
+                log.info("Topology updates cannot be applied because the schema is not installed.");
+            }
+        } finally {
+            shutdownClusterConnection();
         }
-        shutdown();
-
-        return result;
     }
 
-    private boolean updateReplicationFactor(int numberOfNodes) throws Exception {
+    /**
+     * Update replication factor based on the current set of storage nodes.
+     *
+     * @return true if successful, false otherwise.
+     */
+    private void updateReplicationFactor() {
         log.info("Starting to execute " + Task.UpdateReplicationFactor + " task.");
 
-        int replicationFactor = 1;
-
-        if (numberOfNodes == 2) {
-            replicationFactor = 2;
-        } else if (numberOfNodes == 3) {
-            replicationFactor = 2;
-        } else if (numberOfNodes > 3) {
-            replicationFactor = 3;
+        int newReplicationFactor = calculateNewReplicationFactor();
+        int existingReplicationFactor = queryReplicationFactor();
+        if (existingReplicationFactor == newReplicationFactor) {
+            log.info("No need to update replication factor. Replication factor already " + newReplicationFactor);
+        } else {
+            execute(new UpdateFile(Task.UpdateReplicationFactor.getFile()), "replication_factor", newReplicationFactor
+                + "");
+            log.info("Updated replication factor from " + existingReplicationFactor + " to  " + newReplicationFactor);
         }
-
-        if (getReplicationFactor() == replicationFactor) {
-            return false;
-        }
-
-        log.info("Applying file " + Task.UpdateReplicationFactor.getFile() + " for " + Task.UpdateReplicationFactor
-            + " task.");
-        for (String query : this.getSteps(Task.UpdateReplicationFactor.getFile())) {
-            executedPreparedStatement(query, replicationFactor);
-        }
-        log.info("File " + Task.UpdateReplicationFactor.getFile() + " applied for " + Task.UpdateReplicationFactor
-            + " task.");
 
         log.info("Successfully executed " + Task.UpdateReplicationFactor + " task.");
-        return true;
     }
 
-    private boolean updateGCGrace(int numberOfNodes) throws Exception {
+    /**
+     * Update gc grace interval based on the current set of storage nodes.
+     */
+    private void updateGCGrace() {
         log.info("Starting to execute " + Task.UpdateGCGrace + " task.");
 
         int gcGraceSeconds = 864000;
-        if (numberOfNodes == 1) {
+        if (getClusterSize() == 1) {
             gcGraceSeconds = 0;
         } else {
             gcGraceSeconds = 691200; // 8 days
         }
 
-
-        log.info("Applying file " + Task.UpdateGCGrace.getFile() + " for " + Task.UpdateGCGrace + " task.");
-        for (String query : this.getSteps(Task.UpdateGCGrace.getFile())) {
-            executedPreparedStatement(query, gcGraceSeconds);
-        }
-        log.info("File " + Task.UpdateGCGrace.getFile() + " applied for " + Task.UpdateGCGrace + " task.");
+        execute(new UpdateFile(Task.UpdateGCGrace.getFile()), "gc_grace_seconds", gcGraceSeconds + "");
+        log.info("Updated gc_grace_seconds to " + gcGraceSeconds);
 
         log.info("Successfully executed " + Task.UpdateGCGrace + " task.");
-        return true;
     }
-
-    private void executedPreparedStatement(String query, Object... values) {
-        String formattedQuery = String.format(query, values);
-        log.info("Statement: \n" + formattedQuery);
-        PreparedStatement preparedStatement = session.prepare(formattedQuery);
-        BoundStatement boundStatement = preparedStatement.bind();
-        session.execute(boundStatement);
-    }
-
 }

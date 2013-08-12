@@ -20,6 +20,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
@@ -29,25 +30,24 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
-import com.smartgwt.client.util.SC;
-import com.smartgwt.client.widgets.IButton;
-import com.smartgwt.client.widgets.events.ClickEvent;
-import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
+import com.smartgwt.client.widgets.layout.LayoutSpacer;
 import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.domain.cloud.StorageNode.OperationMode;
-import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
@@ -60,8 +60,9 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -76,15 +77,22 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
     private static final int SECTION_COUNT = 3;
     private final SectionStack sectionStack;
-    private SectionStackSection detailsSection;
-    private SectionStackSection loadSection;
-    private SectionStackSection historySection;
+    private EnhancedVLayout detailsLayout;
+    private EnhancedHLayout detailsAndLoadLayout;
+    private EnhancedVLayout loadLayout;
+    private SectionStackSection configurationSection;
+    private SectionStackSection operationSection;
+    private SectionStackSection detailsAndLoadSection;
+    private StaticTextItem alertsItem;
+    private HTMLFlow header;
 
     private volatile int initSectionCount = 0;
+    private int unackAlerts = -1;
 
-    public StorageNodeDetailView(int storageNodeId) {
+    public StorageNodeDetailView(int storageNodeId, HTMLFlow header) {
         super();
         this.storageNodeId = storageNodeId;
+        this.header = header;
         setHeight100();
         setWidth100();
         setOverflow(Overflow.AUTO);
@@ -93,8 +101,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         sectionStack.setVisibilityMode(VisibilityMode.MULTIPLE);
         sectionStack.setWidth100();
         sectionStack.setHeight100();
-        sectionStack.setMargin(5);
-        sectionStack.setOverflow(Overflow.VISIBLE);
+        sectionStack.setCanResizeSections(false);
     }
 
     @Override
@@ -112,15 +119,11 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         initSectionCount = SECTION_COUNT;
                     }
                     final StorageNode node = storageNodes.get(0);
-                    Resource res = node.getResource();
-                    if (res != null) {
-                        fetchResourceComposite(node.getResource().getId());
-                    } else {
-                        // skip this if the resource id is not there
-                        initSectionCount++;
-                    }
-                    prepareDetailsSection(sectionStack, node);
-                    prepareLoadSection(sectionStack, node);
+                    header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
+                        + node.getAddress() + ")</div>");
+                    fetchStorageNodeConfigurationComposite(node);
+                    prepareDetailsSection(node);
+                    fetchSparkLineDataForLoadComponent(node);
                 }
 
                 public void onFailure(Throwable caught) {
@@ -130,29 +133,64 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     initSectionCount = SECTION_COUNT;
                 }
             });
+        fetchUnackAlerts(storageNodeId);
     }
     
-    private void fetchResourceComposite(final int resourceId) {
-        ResourceCriteria resourceCriteria = new ResourceCriteria();
-        resourceCriteria.addFilterId(resourceId);
-        GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(resourceCriteria,
-            new AsyncCallback<PageList<ResourceComposite>>() {
+    
+    private void fetchStorageNodeConfigurationComposite(final StorageNode node) {
+        GWTServiceLookup.getStorageService().retrieveConfiguration(node,
+            new AsyncCallback<StorageNodeConfigurationComposite>() {
                 @Override
                 public void onFailure(Throwable caught) {
-                    Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(resourceId)),
+                    Message message = new Message(MSG.view_configurationHistoryDetails_error_loadFailure(),
+                        Message.Severity.Warning);
+                    initSectionCount = SECTION_COUNT;
+                }
+
+                @Override
+                public void onSuccess(StorageNodeConfigurationComposite result) {
+                    prepareResourceConfigEditor(result);
+                }
+            });
+    }
+    
+    private void fetchSparkLineDataForLoadComponent(final StorageNode storageNode) {
+
+        GWTServiceLookup.getStorageService().findStorageNodeLoadDataForLast(storageNode, 8, MeasurementUtility.UNIT_HOURS,
+            60, new AsyncCallback<Map<String, List<MeasurementDataNumericHighLowComposite>>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+
+                }
+
+                @Override
+                public void onSuccess(Map<String, List<MeasurementDataNumericHighLowComposite>> result) {
+                    prepareLoadSection(sectionStack, storageNode, result);
+                }
+
+            });
+    }
+    
+    private void fetchUnackAlerts(final int storageNodeId) {
+        GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCounts(Arrays.asList(storageNodeId),
+            new AsyncCallback<List<Integer>>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(storageNodeId)),
                         Message.Severity.Warning);
                     CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
                     initSectionCount = SECTION_COUNT;
                 }
 
                 @Override
-                public void onSuccess(PageList<ResourceComposite> result) {
+                public void onSuccess(List<Integer> result) {
                     if (result.isEmpty()) {
-                        onFailure(new Exception("Resource with id [" + resourceId + "] does not exist."));
-                        initSectionCount = SECTION_COUNT;
+                        onFailure(new Exception("Resource with id [" + storageNodeId + "] does not exist."));
                     } else {
-                        final ResourceComposite resourceComposite = result.get(0);
-                        prepareOperationHistory(resourceComposite);
+                        unackAlerts = result.get(0);
+                        if (alertsItem != null) {
+                            alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", unackAlerts));
+                        }
                     }
                 }
             });
@@ -173,14 +211,18 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
             public void run() {
                 if (isInitialized()) {
-                    if (null != detailsSection) {
-                        sectionStack.addSection(detailsSection);
+                    if (null != detailsAndLoadLayout) {
+                        LayoutSpacer spacer = new LayoutSpacer();
+                        spacer.setWidth(30);
+                        detailsAndLoadLayout.setMembers(detailsLayout, spacer, loadLayout);
+                        detailsAndLoadLayout.setHeight(220);
+                        detailsAndLoadSection = new SectionStackSection("Storage Node Information");
+                        detailsAndLoadSection.setExpanded(true);
+                        detailsAndLoadSection.setItems(detailsAndLoadLayout);
+                        sectionStack.addSection(detailsAndLoadSection);
                     }
-                    if (null != loadSection) {
-                        sectionStack.addSection(loadSection);
-                    }
-                    if (null != historySection) {
-                        sectionStack.addSection(historySection);
+                    if (null != configurationSection) {
+                        sectionStack.addSection(configurationSection);
                     }
                     addMember(sectionStack);
                     markForRedraw();
@@ -197,7 +239,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         }.run(); // fire the timer immediately
     }
 
-    private void prepareDetailsSection(SectionStack stack, final StorageNode storageNode) {
+    private void prepareDetailsSection(final StorageNode storageNode) {
         final DynamicForm form = new DynamicForm();
         form.setMargin(10);
         form.setWidth100();
@@ -207,16 +249,15 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         final StaticTextItem nameItem = new StaticTextItem(FIELD_ADDRESS.propertyName(), FIELD_ADDRESS.title());
         nameItem.setValue("<b>" + storageNode.getAddress() + "</b>");
 
-//        final TextItem jmxPortItem = new TextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
+        final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
+        cqlPortItem.setValue(storageNode.getCqlPort());
+        
         final StaticTextItem jmxPortItem = new StaticTextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
         jmxPortItem.setValue(storageNode.getJmxPort());
 
-        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",
-            MSG.view_adminTopology_storageNode_jmxConnectionUrl());
-        jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
-
-        final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
-        cqlPortItem.setValue(storageNode.getCqlPort());
+//        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",
+//            MSG.view_adminTopology_storageNode_jmxConnectionUrl());
+//        jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
 
         final StaticTextItem operationModeItem = new StaticTextItem(FIELD_OPERATION_MODE.propertyName(), MSG.view_adminTopology_serverDetail_operationMode());
         operationModeItem.setValue(storageNode.getOperationMode());
@@ -241,47 +282,51 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         StaticTextItem lastUpdateItem = new StaticTextItem(FIELD_MTIME.propertyName(), FIELD_MTIME.title());
         lastUpdateItem.setValue(TimestampCellFormatter.format(Long.valueOf(storageNode.getMtime()),
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
-
-        IButton saveButton = new IButton();
-        saveButton.setOverflow(Overflow.VISIBLE);
-        saveButton.setTitle(MSG.common_button_save());
-        saveButton.addClickHandler(new ClickHandler() {
-            public void onClick(ClickEvent event) {
-                if (form.validate()) {
-//                    storageNode.setOperationMode(OperationMode.valueOf(operationModeItem.getValueAsString()));
-                    storageNode.setOperationMode(OperationMode.valueOf((String) operationModeItem.getValue()));
-                    SC.say(storageNode.toString());
-                    // TODO: logic
-                }
-            }
-        });
-        List<FormItem> formItems = new ArrayList<FormItem>(8);
-        formItems.addAll(Arrays.asList(nameItem, jmxPortItem, cqlPortItem, jmxConnectionUrlItem));
-        if (!CoreGUI.isDebugMode()) formItems.add(operationModeItem); // debug mode fails if this item is added
-        formItems.addAll(Arrays.asList(resourceItem, installationDateItem, lastUpdateItem));
-        form.setItems(formItems.toArray(new FormItem[]{}));
-
-        EnhancedToolStrip footer = new EnhancedToolStrip();
-        footer.setPadding(5);
-        footer.setWidth100();
-        footer.setMembersMargin(15);
-        footer.addMember(saveButton);
-
-        SectionStackSection section = new SectionStackSection(MSG.common_title_details());
-        section.setExpanded(true);
         
-        section.setItems(form);
-        detailsSection = section;
+        alertsItem = new StaticTextItem(FIELD_ALERTS.propertyName(), FIELD_ALERTS.title());
+        if (unackAlerts != -1) {
+            alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", unackAlerts));
+        }
+        
+        StaticTextItem memoryStatusItem = new StaticTextItem("memoryStatus", "Memory");
+        memoryStatusItem.setValue("No action needed");
+        
+        StaticTextItem diskStatusItem = new StaticTextItem("mdiskStatus", "Disk");
+        diskStatusItem.setValue("No action needed");
+        
+        List<FormItem> formItems = new ArrayList<FormItem>(6);
+        formItems.addAll(Arrays.asList(nameItem, resourceItem,cqlPortItem, jmxPortItem/*, jmxConnectionUrlItem*/));
+        if (!CoreGUI.isDebugMode()) formItems.add(operationModeItem); // debug mode fails if this item is added
+        formItems.addAll(Arrays.asList(installationDateItem, lastUpdateItem, alertsItem, memoryStatusItem, diskStatusItem));
+        form.setItems(formItems.toArray(new FormItem[]{}));
+        
+        detailsLayout = new EnhancedVLayout();
+        detailsLayout.setWidth(450);
+        detailsLayout.addMember(form);
+        if (detailsAndLoadLayout == null) {
+            detailsAndLoadLayout = new EnhancedHLayout(0);
+        }
         initSectionCount++;
     }
 
-    private void prepareLoadSection(SectionStack stack, final StorageNode storageNode) {
-        StorageNodeLoadComponent loadDataComponent = new StorageNodeLoadComponent(storageNode.getId());
-        SectionStackSection section = new SectionStackSection("Load");
-        section.setItems(loadDataComponent);
-        section.setExpanded(true);
+    private void prepareLoadSection(SectionStack stack, final StorageNode storageNode,
+        final Map<String, List<MeasurementDataNumericHighLowComposite>> sparkLineData) {
+        StorageNodeLoadComponent loadDataComponent = new StorageNodeLoadComponent(storageNode.getId(), sparkLineData);
+        loadDataComponent.setExtraSpace(5);
+        loadLayout = new EnhancedVLayout();
+        loadLayout.setWidth100();
+        LayoutSpacer spacer = new LayoutSpacer();
+        spacer.setHeight(10);
+//        HTMLFlow loadLabel = new HTMLFlow("<span style='font-weight:bold'>Status</span>");
+        HTMLFlow loadLabel = new HTMLFlow("Status");
+        loadLabel.addStyleName("formTitle");
+        loadLabel.setTooltip("Contains selected metrics collected for last 8 hours.");
+        loadLabel.setHoverWidth(300);
+        loadLayout.setMembers(spacer, loadLabel, loadDataComponent);
 
-        loadSection = section;
+        if (detailsAndLoadLayout == null) {
+            detailsAndLoadLayout = new EnhancedHLayout();
+        }
         initSectionCount++;
     }
     
@@ -291,12 +336,27 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         section.setItems(historyView);
         section.setExpanded(false);
 
-        historySection = section;
+        operationSection = section;
         initSectionCount++;
     }
+    
+    private void prepareResourceConfigEditor(final StorageNodeConfigurationComposite configuration) {
+      LayoutSpacer spacer = new LayoutSpacer();
+      spacer.setHeight(15);
+      StorageNodeConfigurationEditor editorView = new StorageNodeConfigurationEditor(configuration);
+        SectionStackSection section = new SectionStackSection("Configuration");
+        section.setItems(spacer, editorView);
+        section.setExpanded(true);
+        section.setCanCollapse(false);
 
+        configurationSection = section;
+        initSectionCount++;
+    }
+    
     @Override
     public void renderView(ViewPath viewPath) {
+//        if (viewPath.toString().endsWith("/Config")) {
+//        }
         Log.debug("StorageNodeDetailView: " + viewPath);
     }
 }

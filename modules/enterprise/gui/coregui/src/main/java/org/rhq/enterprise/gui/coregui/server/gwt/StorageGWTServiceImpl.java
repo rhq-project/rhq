@@ -22,12 +22,16 @@
  */
 package org.rhq.enterprise.gui.coregui.server.gwt;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.StorageGWTService;
@@ -87,6 +91,81 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
             List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
             return SerialUtility.prepare(storageNodeManager.getLoad(getSessionSubject(), node, beginEnd.get(0), beginEnd.get(1)),
                 "StorageGWTServiceImpl.getLoad");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public PageList<StorageNodeLoadComposite> getStorageNodeComposites() throws RuntimeException {
+        try {
+            return SerialUtility.prepare(storageNodeManager.getStorageNodeComposites(),
+                "StorageGWTServiceImpl.getStorageNodeComposites");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public Integer[] findResourcesWithAlertDefinitions() throws RuntimeException {
+        try {
+            return storageNodeManager.findResourcesWithAlertDefinitions();
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException {
+        try {
+            return storageNodeManager.findNotAcknowledgedStorageNodeAlerts(getSessionSubject()).size();
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public List<Integer> findNotAcknowledgedStorageNodeAlertsCounts(List<Integer> storageNodeIds) throws RuntimeException {
+        try {
+            List<Integer> unackAlertCounts = new ArrayList<Integer>(storageNodeIds.size());
+            for (int storageNodeId : storageNodeIds) {
+                StorageNode node = new StorageNode();
+                node.setId(storageNodeId);
+                int num = storageNodeManager.findNotAcknowledgedStorageNodeAlerts(getSessionSubject(), node).size();
+                unackAlertCounts.add(num);
+            }
+            assert storageNodeIds.size() == unackAlertCounts.size();
+            return unackAlertCounts;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(StorageNode node, int lastN, int unit, int numPoints) throws RuntimeException {
+        try {
+            List<Long> beginEnd = MeasurementUtils.calculateTimeFrame(lastN, unit);
+            return SerialUtility.prepare(storageNodeManager.findStorageNodeLoadDataForLast(getSessionSubject(), node,
+                beginEnd.get(0), beginEnd.get(1), numPoints), "StorageGWTServiceImpl.findStorageNodeLoadDataForLast");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public StorageNodeConfigurationComposite retrieveConfiguration(StorageNode storageNode) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(storageNodeManager.retrieveConfiguration(getSessionSubject(), storageNode),
+                "StorageGWTServiceImpl.retrieveConfiguration");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public boolean updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException {
+        try {
+            return storageNodeManager.updateConfiguration(getSessionSubject(), storageNodeConfiguration);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

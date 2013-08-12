@@ -58,7 +58,7 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
  * @author Greg Hinkle
  */
 @Entity
-@NamedQueries( {
+@NamedQueries({
 
     @NamedQuery(name = Subject.QUERY_GET_SUBJECTS_ASSIGNED_TO_ROLE, query = "" //
         + "SELECT s " //
@@ -139,6 +139,16 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                                          JOIN r.permissions p " //
         + "                                          JOIN r.subjects s " //
         + "                                         WHERE s.id = :subjectId and p = :permission ) ) "),
+
+    @NamedQuery(name = Subject.QUERY_HAS_BUNDLE_PERMISSION, query = "SELECT COUNT(b) "
+        + "FROM Bundle b, IN (b.bundleGroups) bg, IN (bg.roles) r, IN (r.subjects) s, IN (r.permissions) p "
+        + "WHERE s = :subject AND b.id = :bundleId AND p = :permission"),
+
+    @NamedQuery(name = Subject.QUERY_HAS_BUNDLE_GROUP_PERMISSION, query = "SELECT count(r) "
+        + "FROM Role r JOIN r.subjects s JOIN r.permissions p "
+        + "WHERE r in (SELECT r2 from BundleGroup bg JOIN bg.roles r2 WHERE bg.id = :bundleGroupId) "
+        + "  AND s = :subject " + "  AND p = :permission"),
+
     @NamedQuery(name = Subject.QUERY_CAN_VIEW_RESOURCE, query = "SELECT COUNT(res) "
         + "FROM Resource res, IN (res.implicitGroups) g, IN (g.roles) r, IN (r.subjects) s "
         + "WHERE s = :subject AND res.id = :resourceId"),
@@ -175,6 +185,20 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                                          JOIN g.roles r " //
         + "                                          JOIN r.subjects s " //
         + "                                         WHERE s.id = :subjectId ) ) "),
+
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_BUNDLE, query = "SELECT COUNT(b) "
+        + "FROM Bundle b, IN (b.bundleGroups) bg, IN (bg.roles) r, IN (r.subjects) s "
+        + "WHERE s = :subject AND b.id = :bundleId"),
+
+    @NamedQuery(name = Subject.QUERY_CAN_VIEW_BUNDLE_GROUP, query = "" //
+        + "SELECT count(bg) " //
+        + "  FROM BundleGroup bg " //
+        + " WHERE bg.id = :bundleGroupId " //  
+        + "   AND bg.id IN (SELECT innerbg.id " //
+        + "                   FROM BundleGroup innerbg " //
+        + "                   JOIN innerbg.roles r " //
+        + "                   JOIN r.subjects s " //
+        + "                  WHERE s = :subject) "),
 
     /*
      * No easy way to test whether ALL resources are      in some group     in some role     in some subject     where
@@ -228,12 +252,16 @@ public class Subject implements Serializable {
     public static final String QUERY_HAS_PRIVATE_GROUP_PERMISSION = "Subject.hasPrivateGroupPermission";
     public static final String QUERY_HAS_RESOURCE_PERMISSION = "Subject.hasResourcePermission";
     public static final String QUERY_HAS_AUTO_GROUP_PERMISSION = "Subject.hasAutoGroupPermission";
+    public static final String QUERY_HAS_BUNDLE_PERMISSION = "Subject.hasBundlePermission";
+    public static final String QUERY_HAS_BUNDLE_GROUP_PERMISSION = "Subject.hasBundleGroupPermission";
 
     /** This query can return more than 1 if the resource is accessible via separate groups */
     public static final String QUERY_CAN_VIEW_RESOURCE = "Subject.canViewResource";
     public static final String QUERY_CAN_VIEW_RESOURCES = "Subject.canViewResources";
     public static final String QUERY_CAN_VIEW_GROUP = "Subject.canViewGroup";
     public static final String QUERY_CAN_VIEW_AUTO_GROUP = "Subject.canViewAutoGroup";
+    public static final String QUERY_CAN_VIEW_BUNDLE = "Subject.canViewBundle";
+    public static final String QUERY_CAN_VIEW_BUNDLE_GROUP = "Subject.canViewBundleGroup";
 
     public static final String QUERY_GET_RESOURCES_BY_PERMISSION = "Subject.getResourcesByPermission";
 
@@ -314,7 +342,8 @@ public class Subject implements Serializable {
         init();
     }
 
-    public Subject(@NotNull String name, boolean factive, boolean fsystem) {
+    public Subject(@NotNull
+    String name, boolean factive, boolean fsystem) {
         init();
         this.name = name;
         this.factive = factive;
@@ -353,7 +382,8 @@ public class Subject implements Serializable {
         return this.name;
     }
 
-    public void setName(@NotNull String name) {
+    public void setName(@NotNull
+    String name) {
         this.name = name;
     }
 

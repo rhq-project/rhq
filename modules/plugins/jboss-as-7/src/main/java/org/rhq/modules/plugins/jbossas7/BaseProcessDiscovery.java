@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7;
+
+import static org.rhq.core.util.StringUtil.arrayToString;
+import static org.rhq.core.util.StringUtil.isNotBlank;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -42,6 +45,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.resource.ResourceUpgradeReport;
 import org.rhq.core.pluginapi.event.log.LogFileEventResourceComponentHelper;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
@@ -49,6 +53,8 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeContext;
+import org.rhq.core.pluginapi.upgrade.ResourceUpgradeFacet;
 import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.core.pluginapi.util.FileUtils;
 import org.rhq.core.pluginapi.util.JavaCommandLine;
@@ -66,11 +72,14 @@ import org.rhq.modules.plugins.jbossas7.json.Result;
  * Abstract base discovery component for the two server types - "JBossAS7 Host Controller" and
  * "JBossAS7 Standalone Server".
  */
-public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent, ManualAddFacet {
+public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent, ManualAddFacet, ResourceUpgradeFacet {
 
     private static final String JBOSS_AS_PREFIX = "jboss-as-";
     private static final String JBOSS_EAP_PREFIX = "jboss-eap-";
     private static final String WILDFLY_PREFIX = "wildfly-";
+
+    private static final String LOCAL_RESOURCE_KEY_PREFIX = "hostConfig: ";
+    private static final String REMOTE_RESOURCE_KEY_PREFIX = "hostPort: ";
 
     private static final String HOME_DIR_SYSPROP = "jboss.home.dir";
 
@@ -202,24 +211,11 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         setStartScriptPluginConfigProps(process, commandLine, pluginConfig, agentProcess);
         setUserAndPasswordPluginConfigProps(serverPluginConfig, hostConfig, baseDir);
 
-        String key = baseDir.getPath();
+        String key = createKeyForLocalResource(serverPluginConfig);
         HostPort hostPort = hostConfig.getDomainControllerHostPort(commandLine);
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
         String description = buildDefaultResourceDescription(hostPort, productType);
-
-        String version;
-        String versionFromHomeDir = determineServerVersionFromHomeDir(homeDir);
-        if (productType == JBossProductType.AS) {
-            version = versionFromHomeDir;
-        } else {
-            ProductInfo productInfo = new ProductInfo(managementHostPort.host, serverPluginConfig.getUser(),
-                serverPluginConfig.getPassword(), managementHostPort.port);
-            productInfo = productInfo.getFromRemote();
-            String productVersion = (productInfo.fromRemote) ? productInfo.productVersion : versionFromHomeDir;
-            // TODO: Grab the product version from the product info properties file, so we aren't relying on connecting
-            //       to the server to obtain it.
-            version = productType.SHORT_NAME + " " + productVersion;
-        }
+        String version = getVersion(homeDir, productType);
 
         return new DiscoveredResourceDetails(discoveryContext.getResourceType(), key, name, version, description,
             pluginConfig, process);
@@ -455,7 +451,7 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
         HostPort managementHostPort = new HostPort(false);
         managementHostPort.host = hostname;
         managementHostPort.port = port;
-        String key = hostname + ":" + port;
+        String key = createKeyForRemoteResource(hostname + ":" + port);
         String name = buildDefaultResourceName(hostPort, managementHostPort, productType);
         String version = productInfo.getProductVersion();
         String description = buildDefaultResourceDescription(hostPort, productType);
@@ -467,6 +463,43 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
             version, description, pluginConfig, null);
 
         return detail;
+    }
+
+    @Override
+    public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
+        String currentResourceKey = inventoriedResource.getResourceKey();
+        Configuration pluginConfiguration = inventoriedResource.getPluginConfiguration();
+        ServerPluginConfiguration serverPluginConfiguration = new ServerPluginConfiguration(pluginConfiguration);
+
+        if (currentResourceKey.startsWith(LOCAL_RESOURCE_KEY_PREFIX)
+            || currentResourceKey.startsWith(REMOTE_RESOURCE_KEY_PREFIX)) {
+            // Resource key already in right format 
+            return null;
+        }
+
+        ResourceUpgradeReport report = new ResourceUpgradeReport();
+
+        if (new File(currentResourceKey).isDirectory()) {
+            // Old key format for a local resource (key is base dir)
+            report.setNewResourceKey(createKeyForLocalResource(serverPluginConfiguration));
+        } else if (currentResourceKey.contains(":")) {
+            // Old key format for a remote (manually added) resource (key is base dir)
+            report.setNewResourceKey(createKeyForRemoteResource(currentResourceKey));
+        } else {
+            log.warn("Unknown format, cannot upgrade resource key [" + currentResourceKey + "]");
+            return null;
+        }
+
+        return report;
+    }
+
+    private String createKeyForRemoteResource(String hostPort) {
+        return REMOTE_RESOURCE_KEY_PREFIX + hostPort; 
+    }
+
+    private String createKeyForLocalResource(ServerPluginConfiguration serverPluginConfiguration) {
+        return LOCAL_RESOURCE_KEY_PREFIX
+            + serverPluginConfiguration.getHostConfigFile().getAbsolutePath();
     }
 
     private <T>T getServerAttribute(ASConnection connection, String attributeName) {
@@ -560,6 +593,52 @@ public abstract class BaseProcessDiscovery implements ResourceDiscoveryComponent
                 LogFileEventResourceComponentHelper.LogEventSourcePropertyNames.ENABLED, Boolean.FALSE));
             logEventSources.add(serverLogEventSource);
         }
+    }
+
+    private String getVersion(File homeDir, JBossProductType productType) {
+        // Products should have a version.txt file at root dir
+        File versionFile = new File(homeDir, "version.txt");
+        String version = getProductVersionInFile(versionFile, " - Version ", productType);
+        if (version == null && productType != JBossProductType.AS && productType != JBossProductType.WILDFLY8) {
+            // No version.txt file. Try modules/system/layers/base/org/jboss/as/product/slot/dir/META-INF/MANIFEST.MF
+            String layeredProductManifestFilePath = arrayToString(
+                new String[] { "modules", "system", "layers", "base", "org", "jboss", "as", "product",
+                    productType.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" }, File.separatorChar);
+            File productManifest = new File(homeDir, layeredProductManifestFilePath);
+            version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", productType);
+            if (version == null) {
+                // Try modules/org/jboss/as/product/slot/dir/META-INF/MANIFEST.MF
+                String productManifestFilePath = arrayToString(new String[] { "modules", "org", "jboss", "as",
+                    "product", productType.SHORT_NAME.toLowerCase(), "dir", "META-INF", "MANIFEST.MF" },
+                    File.separatorChar);
+                productManifest = new File(homeDir, productManifestFilePath);
+                version = getProductVersionInFile(productManifest, "JBoss-Product-Release-Version: ", productType);
+            }
+        }
+        if (version == null) {
+            // Fallback
+            version = determineServerVersionFromHomeDir(homeDir);
+        }
+        return version;
+    }
+
+    private String getProductVersionInFile(File file, String versionPrefix, JBossProductType productType) {
+        if (!file.exists() || file.isDirectory()) {
+            return null;
+        }
+        try {
+            String versionLine = FileUtils.findString(file.getAbsolutePath(), versionPrefix);
+            if (isNotBlank(versionLine)) {
+                return new StringBuilder(productType.SHORT_NAME).append(" ")
+                    .append(versionLine.substring(versionLine.lastIndexOf(versionPrefix) + versionPrefix.length()))
+                    .toString();
+            }
+        } catch (IOException e) {
+            if (log.isDebugEnabled()) {
+                log.debug("Could not read file " + file.getAbsolutePath(), e);
+            }
+        }
+        return null;
     }
 
     protected String determineServerVersionFromHomeDir(File homeDir) {

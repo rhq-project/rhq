@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.enterprise.server.resource.group;
@@ -33,6 +33,7 @@ import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.naming.CompositeName;
 import javax.naming.Context;
 import javax.naming.NamingEnumeration;
 import javax.naming.NamingException;
@@ -93,28 +94,31 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     private SystemManagerLocal systemManager;
 
     public Set<Map<String, String>> findAvailableGroups() {
-        Properties systemConfig = systemManager.getSystemConfiguration(subjectManager.getOverlord());
-        Set<Map<String, String>> emptyAvailableGroups = new HashSet<Map<String, String>>();
+        //load current system properties
+        Properties systemConfig = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
 
         //retrieve the filters.
-        String groupFilter = (String) systemConfig.get(RHQConstants.LDAPGroupFilter);
+        String groupFilter = (String) systemConfig.get(SystemSetting.LDAP_GROUP_FILTER.name());
         if ((groupFilter != null) && (!groupFilter.trim().isEmpty())) {
             String filter;
-            if (groupFilter.startsWith("(") && groupFilter.endsWith(")"))
+            if (groupFilter.startsWith("(") && groupFilter.endsWith(")")) {
                 filter = groupFilter;  // RFC 2254 does not allow for ((expression))
-            else
+            } else {
                 filter = String.format("(%s)", groupFilter); // not wrapped in (), wrap it
+            }
 
             return buildGroup(systemConfig, filter);
         }
+
+        Set<Map<String, String>> emptyAvailableGroups = new HashSet<Map<String, String>>();
         return emptyAvailableGroups;
     }
 
     public Set<String> findAvailableGroupsFor(String userName) {
-        Properties options = systemManager.getSystemConfiguration(subjectManager.getOverlord());
-        String groupFilter = options.getProperty(RHQConstants.LDAPGroupFilter, "");
-        String groupMember = options.getProperty(RHQConstants.LDAPGroupMember, "");
-        String groupUsePosix = options.getProperty(SystemSetting.LDAP_GROUP_USE_POSIX.getInternalName(), "false");
+        Properties options = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+        String groupFilter = options.getProperty(SystemSetting.LDAP_GROUP_FILTER.name(), "");
+        String groupMember = options.getProperty(SystemSetting.LDAP_GROUP_MEMBER.name(), "");
+        String groupUsePosix = options.getProperty(SystemSetting.LDAP_GROUP_USE_POSIX.name(), "false");
         if (groupUsePosix == null) {
             groupUsePosix = Boolean.toString(false);//default to false
         }
@@ -152,6 +156,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             throw new IllegalArgumentException("Role with id [" + roleId + "] does not exist.");
         }
 
+        //add some code to synch up the current list of ldap groups.
         Set<LdapGroup> currentGroups = role.getLdapGroups();
         List<String> currentGroupNames = new ArrayList<String>(currentGroups.size());
         for (LdapGroup group : currentGroups) {
@@ -163,10 +168,12 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             newGroupNames.add(group.getName());
         }
 
+        //figure out which ones are new then add them.
         List<String> namesOfGroupsToBeAdded = new ArrayList<String>(newGroupNames);
         namesOfGroupsToBeAdded.removeAll(currentGroupNames);
         addLdapGroupsToRole(subject, roleId, namesOfGroupsToBeAdded);
 
+        //figure out which ones need to be removed. then remove them.
         List<String> namesOfGroupsToBeRemoved = new ArrayList<String>(currentGroupNames);
         namesOfGroupsToBeRemoved.removeAll(newGroupNames);
         int[] idsOfGroupsToBeRemoved = new int[namesOfGroupsToBeRemoved.size()];
@@ -286,34 +293,34 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
     }
 
     public Map<String, String> findLdapUserDetails(String userName) {
-        Properties systemConfig = systemManager.getSystemConfiguration(subjectManager.getOverlord());
-        HashMap<String, String> userDetails = new HashMap<String, String>();
         // Load our LDAP specific properties
-        Properties env = getProperties(systemConfig);
+        Properties systemConfig = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
+
+        HashMap<String, String> userDetails = new HashMap<String, String>();
 
         // Load the BaseDN
-        String baseDN = (String) systemConfig.get(RHQConstants.LDAPBaseDN);
+        String baseDN = (String) systemConfig.get(SystemSetting.LDAP_BASE_DN.name());
 
         // Load the LoginProperty
-        String loginProperty = (String) systemConfig.get(RHQConstants.LDAPLoginProperty);
+        String loginProperty = (String) systemConfig.get(SystemSetting.LDAP_LOGIN_PROPERTY.name());
         if (loginProperty == null) {
             // Use the default
             loginProperty = "cn";
         }
         // Load any information we may need to bind
-        String bindDN = (String) systemConfig.get(RHQConstants.LDAPBindDN);
-        String bindPW = (String) systemConfig.get(RHQConstants.LDAPBindPW);
+        String bindDN = (String) systemConfig.get(SystemSetting.LDAP_BIND_DN.name());
+        String bindPW = (String) systemConfig.get(SystemSetting.LDAP_BIND_PW.name());
 
         // Load any search filter
-        String searchFilter = (String) systemConfig.get(RHQConstants.LDAPFilter);
+        String searchFilter = (String) systemConfig.get(SystemSetting.LDAP_FILTER.name());
         if (bindDN != null) {
-            env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
-            env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
-            env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+            systemConfig.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
+            systemConfig.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
+            systemConfig.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
         }
 
         try {
-            InitialLdapContext ctx = new InitialLdapContext(env, null);
+            InitialLdapContext ctx = new InitialLdapContext(systemConfig, null);
             SearchControls searchControls = getSearchControls();
 
             // Add the search filter if specified.  This only allows for a single search filter.. i.e. foo=bar.
@@ -345,14 +352,10 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                 try {
                     userDN = si.getNameInNamespace();
                 } catch (UnsupportedOperationException use) {
-                    userDN = si.getName();
-                    if (userDN.startsWith("\"")) {
-                        userDN = userDN.substring(1, userDN.length());
+                    userDN = new CompositeName(si.getName()).get(0);
+                    if (si.isRelative()) {
+                        userDN += "," + baseDNs[x];
                     }
-                    if (userDN.endsWith("\"")) {
-                        userDN = userDN.substring(0, userDN.length() - 1);
-                    }
-                    userDN = userDN + "," + baseDNs[x];
                 }
                 userDetails.put("dn", userDN);
 
@@ -378,29 +381,27 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
      * @see org.jboss.security.auth.spi.UsernamePasswordLoginModule#validatePassword(java.lang.String,java.lang.String)
      */
     protected Set<Map<String, String>> buildGroup(Properties systemConfig, String filter) {
-        Set<Map<String, String>> ret = new HashSet<Map<String, String>>();
-        // Load our LDAP specific properties
-        Properties env = getProperties(systemConfig);
-
+        Set<Map<String, String>> groupDetailsMap = new HashSet<Map<String, String>>();
+        //Load our LDAP specific properties
         // Load the BaseDN
-        String baseDN = (String) systemConfig.get(RHQConstants.LDAPBaseDN);
+        String baseDN = (String) systemConfig.get(SystemSetting.LDAP_BASE_DN.name());
 
         // Load the LoginProperty
-        String loginProperty = (String) systemConfig.get(RHQConstants.LDAPLoginProperty);
+        String loginProperty = (String) systemConfig.get(SystemSetting.LDAP_LOGIN_PROPERTY.name());
         if (loginProperty == null) {
             // Use the default
             loginProperty = "cn";
         }
         // Load any information we may need to bind
-        String bindDN = (String) systemConfig.get(RHQConstants.LDAPBindDN);
-        String bindPW = (String) systemConfig.get(RHQConstants.LDAPBindPW);
+        String bindDN = (String) systemConfig.get(SystemSetting.LDAP_BIND_DN.name());
+        String bindPW = (String) systemConfig.get(SystemSetting.LDAP_BIND_PW.name());
         if (bindDN != null) {
-            env.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
-            env.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
-            env.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
+            systemConfig.setProperty(Context.SECURITY_PRINCIPAL, bindDN);
+            systemConfig.setProperty(Context.SECURITY_CREDENTIALS, bindPW);
+            systemConfig.setProperty(Context.SECURITY_AUTHENTICATION, "simple");
         }
         try {
-            InitialLdapContext ctx = new InitialLdapContext(env, null);
+            InitialLdapContext ctx = new InitialLdapContext(systemConfig, null);
             SearchControls searchControls = getSearchControls();
             /*String filter = "(&(objectclass=groupOfUniqueNames)(uniqueMember=uid=" + userName
                 + ",ou=People, dc=rhndev, dc=redhat, dc=com))";*/
@@ -410,7 +411,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             searchControls.setReturningAttributes(attributes);
 
             //detect whether to use Query Page Control
-            String groupUseQueryPaging = systemConfig.getProperty(SystemSetting.LDAP_GROUP_PAGING.getInternalName(),
+            String groupUseQueryPaging = systemConfig.getProperty(SystemSetting.LDAP_GROUP_PAGING.name(),
                 "false");
             if (groupUseQueryPaging == null) {
                 groupUseQueryPaging = Boolean.toString(false);//default to false
@@ -424,8 +425,8 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             int defaultPageSize = 1000;
             // only if they're enabled in the UI.
             if (useQueryPaging) {
-                Properties options = populateProperties(systemManager.getSystemSettings(subjectManager.getOverlord()));
-                String groupPageSize = options.getProperty(SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
+                String groupPageSize = systemConfig.getProperty(
+SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
                     + defaultPageSize);
                 if ((groupPageSize != null) && (!groupPageSize.trim().isEmpty())) {
                     int passedInPageSize = -1;
@@ -448,11 +449,12 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             String[] baseDNs = baseDN.split(BASEDN_DELIMITER);
 
             for (int x = 0; x < baseDNs.length; x++) {
-                executeGroupSearch(filter, ret, ctx, searchControls, baseDNs, x);
+                executeGroupSearch(filter, groupDetailsMap, ctx, searchControls, baseDNs, x);
 
                 // continually parsing pages of results until we're done.
                 // only if they're enabled in the UI.
                 if (useQueryPaging) {
+
                     //handle paged results if they're being used here
                     byte[] cookie = null;
                     Control[] controls = ctx.getResponseControls();
@@ -469,7 +471,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                         //ensure the next requests contains the session/cookie details
                         ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, cookie,
                             Control.CRITICAL) });
-                        executeGroupSearch(filter, ret, ctx, searchControls, baseDNs, x);
+                        executeGroupSearch(filter, groupDetailsMap, ctx, searchControls, baseDNs, x);
                         //empty out cookie
                         cookie = null;
                         //test for further iterations
@@ -479,6 +481,25 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
                                 if (control instanceof PagedResultsResponseControl) {
                                     PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
                                     cookie = pagedResult.getCookie();
+                                }
+                            }
+                        }
+                        //continually parsing pages of results until we're done.
+                        while (cookie != null) {
+                            //ensure the next requests contains the session/cookie details
+                            ctx.setRequestControls(new Control[] { new PagedResultsControl(defaultPageSize, cookie,
+                                Control.CRITICAL) });
+                            executeGroupSearch(filter, groupDetailsMap, ctx, searchControls, baseDNs, x);
+                            //empty out cookie
+                            cookie = null;
+                            //test for further iterations
+                            controls = ctx.getResponseControls();
+                            if (controls != null) {
+                                for (Control control : controls) {
+                                    if (control instanceof PagedResultsResponseControl) {
+                                        PagedResultsResponseControl pagedResult = (PagedResultsResponseControl) control;
+                                        cookie = pagedResult.getCookie();
+                                    }
                                 }
                             }
                         }
@@ -501,38 +522,13 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
             log.error("Unexpected LDAP communciation error:" + iex.getMessage(), iex);
             throw new LdapCommunicationException(iex);
         }
-
-        return ret;
-    }
-
-    /** Translate SystemSettings to familiar Properties instance since we're
-     *  passing not one but multiple values.
-     * 
-     * @param systemSettings
-     * @return
-     */
-    private Properties populateProperties(SystemSettings systemSettings) {
-        Properties properties = null;
-        if (systemSettings != null) {
-            properties = new Properties();
-            Set<Entry<SystemSetting, String>> entries = systemSettings.entrySet();
-            for (Entry<SystemSetting, String> entry : entries) {
-                SystemSetting key = entry.getKey();
-                if (key != null) {
-                    String value = entry.getValue();
-                    if (value != null) {
-                        properties.put(key.name(), value);
-                    }
-                }
-            }
-        }
-        return properties;
+        return groupDetailsMap;
     }
 
     /** Executes the LDAP group query using the filters, context and search controls, etc. parameters passed in.
      *  The matching groups located during processing this pages of results are added as new entries to the
      *  groupDetailsMap passed in.
-     * 
+     *
      * @param filter
      * @param groupDetailsMap
      * @param ctx
@@ -569,6 +565,59 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         }
     }
 
+    /** Translate SystemSettings to familiar Properties instance since we're
+     *  passing not one but multiple values.
+     * 
+     * @param systemSettings
+     * @return
+     */
+    private Properties populateProperties(SystemSettings systemSettings) {
+        Properties properties = null;
+        if (systemSettings != null) {
+            properties = new Properties();
+            Set<Entry<SystemSetting, String>> entries = systemSettings.entrySet();
+            for (Entry<SystemSetting, String> entry : entries) {
+                SystemSetting key = entry.getKey();
+                if (key != null) {
+                    String value = entry.getValue();
+                    if (value != null) {
+                        properties.put(key.name(), value);
+                    }
+                }
+            }
+            //now load default/shared LDAP properties as we always have
+            // Set our default factory name if one is not given
+            String factoryName = properties.getProperty(SystemSetting.LDAP_NAMING_FACTORY.name());
+            properties.setProperty(Context.INITIAL_CONTEXT_FACTORY, factoryName);
+
+            // Setup SSL if requested
+            String value = properties.getProperty(SystemSetting.USE_SSL_FOR_LDAP.name());
+            boolean ldapSsl = "ssl".equalsIgnoreCase(value);
+            if (ldapSsl) {
+                String ldapSocketFactory = properties.getProperty("java.naming.ldap.factory.socket");
+                if (ldapSocketFactory == null) {
+                    properties.put("java.naming.ldap.factory.socket", UntrustedSSLSocketFactory.class.getName());
+                }
+                properties.put(Context.SECURITY_PROTOCOL, "ssl");
+            }
+
+            // Set the LDAP url
+            String providerUrl = properties.getProperty(SystemSetting.LDAP_NAMING_PROVIDER_URL.name());
+            if (providerUrl == null) {
+                int port = (ldapSsl) ? 636 : 389;
+                providerUrl = "ldap://localhost:" + port;
+            }
+
+            properties.setProperty(Context.PROVIDER_URL, providerUrl);
+
+            // Follow referrals automatically
+            properties.setProperty(Context.REFERRAL, "ignore"); //BZ:582471- active directory query change
+
+            //            properties = getProperties(properties);
+        }
+        return properties;
+    }
+
     /**
      * Load a default set of properties to use when connecting to the LDAP server. If basic authentication is needed,
      * the caller must set Context.SECURITY_PRINCIPAL, Context.SECURITY_CREDENTIALS and Context.SECURITY_AUTHENTICATION
@@ -576,10 +625,11 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
      *
      * @return properties that are to be used when connecting to LDAP server
      */
+    @Deprecated
     private Properties getProperties(Properties systemConfig) {
         Properties env = new Properties(systemConfig);
         // Set our default factory name if one is not given
-        String factoryName = env.getProperty(RHQConstants.LDAPFactory);
+        String factoryName = env.getProperty(SystemSetting.LDAP_NAMING_FACTORY.name());
         env.setProperty(Context.INITIAL_CONTEXT_FACTORY, factoryName);
 
         // Setup SSL if requested
@@ -594,7 +644,7 @@ public class LdapGroupManagerBean implements LdapGroupManagerLocal {
         }
 
         // Set the LDAP url
-        String providerUrl = env.getProperty(RHQConstants.LDAPUrl);
+        String providerUrl = env.getProperty(SystemSetting.LDAP_NAMING_PROVIDER_URL.name());
         if (providerUrl == null) {
             int port = (ldapSsl) ? 636 : 389;
             providerUrl = "ldap://localhost:" + port;

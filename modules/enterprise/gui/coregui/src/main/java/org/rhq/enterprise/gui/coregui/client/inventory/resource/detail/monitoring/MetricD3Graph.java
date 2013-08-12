@@ -22,6 +22,7 @@ import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -30,7 +31,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * A D3 graph implementation for graphing Resource metrics.
  * Just the graph only. No avail graph no buttons just he graph.
  */
-public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVLayout {
+public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVLayout implements Refreshable {
 
     protected StackedBarMetricGraphImpl graph;
     private HTMLFlow graphDiv = null;
@@ -59,18 +60,18 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
      */
     private static String getSvgDefs() {
         return " <defs>"
-            + "               <linearGradient id=\"headerGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">"
-            + "                   <stop offset=\"0%\" style=\"stop-color:#E6E6E6;stop-opacity:1\"/>"
-            + "                   <stop offset=\"100%\" style=\"stop-color:#F0F0F0;stop-opacity:1\"/>"
-            + "               </linearGradient>"
-            + "               <pattern id=\"noDataStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
-            + "                        width=\"6\" height=\"3\">"
-            + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#CCCCCC; fill:none;\"/>"
-            + "               </pattern>"
-            + "               <pattern id=\"unknownStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
-            + "                        width=\"6\" height=\"3\">"
-            + "                   <path d=\"M 0 0 6 0\" style=\"stroke:#2E9EC2; fill:none;\"/>"
-            + "               </pattern>"
+            + " <linearGradient id=\"headerGrad\" x1=\"0%\" y1=\"0%\" x2=\"0%\" y2=\"100%\">"
+            + "   <stop offset=\"0%\" style=\"stop-color:#E6E6E6;stop-opacity:1\"/>"
+            + "   <stop offset=\"100%\" style=\"stop-color:#F0F0F0;stop-opacity:1\"/>"
+            + " </linearGradient>"
+            + " <pattern id=\"noDataStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
+            + " width=\"6\" height=\"3\">"
+            + "   <path d=\"M 0 0 6 0\" style=\"stroke:#CCCCCC; fill:none;\"/>"
+            + " </pattern>"
+            + " <pattern id=\"unknownStripes\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\""
+            + " width=\"6\" height=\"3\">"
+            + "   <path d=\"M 0 0 6 0\" style=\"stroke:#2E9EC2; fill:none;\"/>"
+            + " </pattern>"
             + "<pattern id=\"diagonalHatchFill\" patternUnits=\"userSpaceOnUse\" x=\"0\" y=\"0\" width=\"105\" height=\"105\">"
             + "<g style=\"fill:none; stroke:black; stroke-width:1\">"
             + "<path d=\"M0 90 l15,15\"/>"
@@ -204,8 +205,8 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
     /**
      * Allow the graph to refresh  the whole d3GraphListView.
      */
-    public void redrawGraphs(){
-        d3GraphListView.redrawGraphs();
+    public void refreshData(){
+        d3GraphListView.refreshData();
     }
 
 }

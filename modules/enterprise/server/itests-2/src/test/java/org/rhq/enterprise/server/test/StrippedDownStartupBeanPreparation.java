@@ -20,6 +20,10 @@
 
 package org.rhq.enterprise.server.test;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.ejb.EJB;
@@ -28,11 +32,15 @@ import javax.ejb.Startup;
 import javax.ejb.Timeout;
 import javax.ejb.TimerConfig;
 import javax.ejb.TimerService;
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.cloud.Server;
+import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
 
 /**
@@ -56,6 +64,9 @@ public class StrippedDownStartupBeanPreparation {
     @EJB
     private ServerManagerLocal serverManager;
 
+    @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
+    private EntityManager entityManager;
+
     @Resource
     private TimerService timerService; // needed to schedule our startup bean init call
 
@@ -66,6 +77,8 @@ public class StrippedDownStartupBeanPreparation {
 
         startupBean.purgeTestServerAndStorageNodes();
         createTestServer();
+        loadCassandraConnectionProps();
+        createStorageNodes();
     }
 
     /**
@@ -86,11 +99,41 @@ public class StrippedDownStartupBeanPreparation {
         System.setProperty(TestConstants.RHQ_SERVER_NAME_PROPERTY, TestConstants.RHQ_TEST_SERVER_NAME);
     }
 
+    private void createStorageNodes() {
+        String[] seedsInfo = System.getProperty("rhq.cassandra.seeds").split(",");
+        for (String seedInfo : seedsInfo) {
+            StorageNode storageNode = new StorageNode();
+            storageNode.parseNodeInformation(seedInfo);
+            storageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
+            entityManager.persist(storageNode);
+        }
+    }
+
+    public void loadCassandraConnectionProps() {
+        InputStream stream = null;
+        try {
+            stream = getClass().getResourceAsStream("/cassandra-test.properties");
+            Properties props = new Properties();
+            props.load(stream);
+
+            // DO NOT use System.setProperties(Properties). I previously tried that and it
+            // caused some arquillian deployment exception.
+            //
+            // jsanda
+            System.setProperty("rhq.cassandra.username", props.getProperty("rhq.cassandra.username"));
+            System.setProperty("rhq.cassandra.password", props.getProperty("rhq.cassandra.password"));
+            System.setProperty("rhq.cassandra.seeds", props.getProperty("rhq.cassandra.seeds"));
+        } catch (IOException e) {
+            throw new RuntimeException(("Failed to load cassandra-test.properties"));
+        }
+    }
+
     @Timeout
     public void initializeServer() throws RuntimeException {
         try {
             log.info("Initializing the testing RHQ deployment");
             this.startupBean.init();
+            log.info("Initialization complete");
         } catch (Throwable t) {
             // do NOT allow exceptions to bubble out of our method because then
             // the EJB container would simply re-trigger the timer and call us again

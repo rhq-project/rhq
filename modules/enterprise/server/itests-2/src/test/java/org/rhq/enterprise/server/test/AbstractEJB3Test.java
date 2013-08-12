@@ -37,6 +37,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.regex.Pattern;
 
+import javax.ejb.EJB;
 import javax.management.MBeanServer;
 import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
@@ -87,6 +88,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
 import org.rhq.test.MatchResult;
@@ -114,25 +116,28 @@ public abstract class AbstractEJB3Test extends Arquillian {
     @ArquillianResource
     protected InitialContext initialContext;
 
+    @EJB
+    private StorageClientManagerBean storageClientManager;
+
     // We originally (in 4.2.3 days) ran these tests as "unit" tests in the server/jar module using
     // the embedded container.  With Arquillian it makes sense to actually deploy an EAR because
     // we need a way to deploy dependent ears needed to support the server/jar classes. But
     // building this jar up (as is done in core/domain) was too difficult due to the huge number
     // of dependencies. It was easier, and made sense, to use the already built rhq.ear
-    // and run as true integration tests.  We do thin rhq.ear by removing all of the WAR files, and 
+    // and run as true integration tests.  We do thin rhq.ear by removing all of the WAR files, and
     // deploy only the EJB jars, and the services, which are really the objects under test.
 
     @Deployment
     protected static EnterpriseArchive getBaseDeployment() {
 
-        // Ensure the test working dir exists       
+        // Ensure the test working dir exists
         tmpdirRoot.mkdirs();
 
         // deploy the test classes in their own jar, under /lib
         JavaArchive testClassesJar = ShrinkWrap.create(JavaArchive.class, "test-classes.jar");
         testClassesJar = addClasses(testClassesJar, new File("target/test-classes/org"), null);
 
-        // add non itests-2 RHQ classes used by the test classes, as well as needed resources 
+        // add non itests-2 RHQ classes used by the test classes, as well as needed resources
         testClassesJar.addClass(ThrowableUtil.class);
         testClassesJar.addClass(MessageDigestGenerator.class);
         testClassesJar.addClass(StreamUtil.class);
@@ -325,6 +330,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v1.xml");
         testClassesJar.addAsResource("test/metadata/resource-type/updateResourceTypeBundleTarget-v2.xml");
 
+        testClassesJar.addAsResource("org/rhq/enterprise/server/plugins/ant/recipe-no-manageRootDir.xml");
+
         // create test ear by starting with rhq.ear and thinning it
         String projectVersion = System.getProperty("project.version");
         MavenResolverSystem earResolver = Resolvers.use(MavenResolverSystem.class);
@@ -335,22 +342,22 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .withoutTransitivity().asSingle(EnterpriseArchive.class);
         // merge rhq.ear into testEar but include only the EJB jars and the supporting libraries. Note that we
         // don't include the services sar because tests are responsible for prepare/unprepare of all required services,
-        // we don't want the production services performing any unexpected work. 
-        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*"));
+        // we don't want the production services performing any unexpected work.
+        testEar = testEar.merge(rhqEar, Filters.include("/lib.*|/rhq.*ejb3\\.jar.*|/rhq-server.jar.*"));
         // remove startup beans and shutdown listeners, we don't want this to be a full server deployment. The tests
         // start/stop what they need, typically with test services or mocks.
         testEar.delete(ArchivePaths
-            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBean.class"));
+            .create("/rhq-server.jar/org/rhq/enterprise/server/core/StartupBean.class"));
         testEar.delete(ArchivePaths
-            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/StartupBean$1.class"));
+            .create("/rhq-server.jar/org/rhq/enterprise/server/core/StartupBean$1.class"));
         testEar.delete(ArchivePaths
-            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/core/ShutdownListener.class"));
+            .create("/rhq-server.jar/org/rhq/enterprise/server/core/ShutdownListener.class"));
 
         //replace the above startup beans with stripped down versions
         testEar.add(new ClassAsset(StrippedDownStartupBean.class), ArchivePaths
-            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/test/StrippedDownStartupBean.class"));
+            .create("/rhq-server.jar/org/rhq/enterprise/server/test/StrippedDownStartupBean.class"));
         testEar.add(new ClassAsset(StrippedDownStartupBeanPreparation.class), ArchivePaths
-            .create("/rhq-enterprise-server-ejb3.jar/org/rhq/enterprise/server/test/"
+            .create("/rhq-server.jar/org/rhq/enterprise/server/test/"
                 + "StrippedDownStartupBeanPreparation.class"));
         testEar.addAsManifestResource(new ByteArrayAsset("<beans/>".getBytes()), ArchivePaths.create("beans.xml"));
 
@@ -363,7 +370,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         // add the application xml declaring the ejb jars
         testEar.setApplicationXML("application.xml");
 
-        // add additional 3rd party dependent jars needed to support test classes        
+        // add additional 3rd party dependent jars needed to support test classes
         Collection thirdPartyDeps = new ArrayList();
         thirdPartyDeps.add("joda-time:joda-time");
         thirdPartyDeps.add("org.jboss.shrinkwrap:shrinkwrap-impl-base");
@@ -408,7 +415,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         //System.out.println("** The Deployment EAR: " + testEar.toString(true) + "\n");
 
         // Save the test EAR to a zip file for inspection (set file explicitly)
-        //exportZip(testEar, new File("c:/temp/test-ear.ear"));
+        //String tmpDir = System.getProperty("java.io.tmpdir");
+        //exportZip(testEar, new File(tmpDir, "test.ear"));
 
         return testEar;
     }
@@ -491,15 +499,15 @@ public abstract class AbstractEJB3Test extends Arquillian {
     /**
      * <p>DO NOT OVERRIDE.</p>
      * <p>DO NOT DEFINE AN @BeforeMethod</p>
-     * 
+     *
      * Instead, override {@link #beforeMethod()}.  If you must override, for example, if you
      * need to use special attributes on your annotation, then ensure you protect the code with
      * and {@link #inContainer()} call.
      */
     @BeforeMethod
     protected void __beforeMethod(Method method) throws Throwable {
-        // Note that Arquillian calls the testng BeforeMethod twice (as of 1.0.2.Final, once 
-        // out of container and once in container. In general the expectation is to execute it 
+        // Note that Arquillian calls the testng BeforeMethod twice (as of 1.0.2.Final, once
+        // out of container and once in container. In general the expectation is to execute it
         // one time, and doing it in container allows for the expected injections and context.
         if (inContainer()) {
             try {
@@ -518,7 +526,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
                         }
                     }
                 }
-
+                storageClientManager.init();
                 beforeMethod();
                 beforeMethod(method);
 
@@ -534,7 +542,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     /**
      * <p>DO NOT OVERRIDE.</p>
      * <p>DO NOT DEFINE AN @AfterMethod</p>
-     * 
+     *
      * Instead, override {@link #afterMethod()}.
      */
     @AfterMethod(alwaysRun = true)
@@ -554,33 +562,33 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     protected boolean inContainer() {
-        // If the injection is done we're running in the container. 
+        // If the injection is done we're running in the container.
         return (null != initialContext);
     }
 
     /**
-     * Override Point!  Do not implement a @BeforeMethod, instead override this method. 
+     * Override Point!  Do not implement a @BeforeMethod, instead override this method.
      */
     protected void beforeMethod() throws Exception {
         // do nothing if we're not overridden
     }
 
     /**
-     * Override Point!  Do not implement a @BeforeMethod, instead override this method. 
+     * Override Point!  Do not implement a @BeforeMethod, instead override this method.
      */
     protected void beforeMethod(Method method) throws Exception {
         // do nothing if we're not overridden
     }
 
     /**
-     * Override Point!  Do not implement an @AfterMethod, instead override this method. note: alwaysRun=true 
+     * Override Point!  Do not implement an @AfterMethod, instead override this method. note: alwaysRun=true
      */
     protected void afterMethod() throws Exception {
         // do nothing if we're not overridden
     }
 
     /**
-     * Override Point!  Do not implement an @AfterMethod, instead override this method. note: alwaysRun=true 
+     * Override Point!  Do not implement an @AfterMethod, instead override this method. note: alwaysRun=true
      */
     protected void afterMethod(ITestResult result, Method meth) throws Exception {
         // do nothing if we're not overridden
@@ -701,7 +709,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     }
 
     /* The old AbstractEJB3Test impl extended AssertJUnit. Continue to support the used methods
-     * with various call-thru methods. 
+     * with various call-thru methods.
      */
 
     protected void assertNotNull(Object o) {
@@ -1015,7 +1023,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
         scanner.setAgentPluginDir(pluginDirPath); // we don't want to scan for these
         scanner.setServerPluginDir("ignore no plugins here"); // we don't want to scan for these
         scanner.setUserPluginDir("ignore no plugins here"); // we don't want to scan for these
-        scanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen        
+        scanner.setScanPeriod("9999999"); // we want to manually scan - don't allow for auto-scan to happen
 
         return preparePluginScannerService(scanner);
     }
@@ -1023,7 +1031,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
     /**
      * Note that the standard plugin scanner service is deployed automatically with the test rhq ear,
      * this is only necessary if you want a custom service.
-     *  
+     *
      * @param scannerService
      */
     public PluginDeploymentScannerMBean preparePluginScannerService(PluginDeploymentScannerMBean scannerService) {
@@ -1067,7 +1075,7 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * annotations by creating sessions for different users with different permissions.
      *
      * @param subject a JON subject
-     * @return the session activated subject, a copy of the subject passed in. 
+     * @return the session activated subject, a copy of the subject passed in.
      */
     public Subject createSession(Subject subject) {
         return SessionManager.getInstance().put(subject);
@@ -1081,9 +1089,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
      * A utility for writing out various objects that need to be persisted for use between
      * tests.  Arquillian (1.0.2) basically "new"s the testng test class on each test, so instance
      * variables can not be used between tests. Instead, the db or this mechanism needs to be used.
-     * 
+     *
      * The file will be placed in the standard temp dir.  If it already exists it will be replaced.
-     *  
+     *
      * @param filename Do not include the directory. The value will be prepended with the class name.
      * @param objects
      * @throws Exception
@@ -1101,9 +1109,9 @@ public abstract class AbstractEJB3Test extends Arquillian {
     /**
      * A utility for reading in objects written with {@link #writeObjects(String, Object...). They are
      * placed in the result List in the same order they were written.
-     * 
+     *
      * @param filename The same filename used in the write. Do not include the directory.
-     * @param numObjects the number of objects to read out. Can be less than total written, not greater. 
+     * @param numObjects the number of objects to read out. Can be less than total written, not greater.
      * @throws Exception
      */
     protected List<Object> readObjects(String filename, int numObjects) throws Exception {
@@ -1125,16 +1133,16 @@ public abstract class AbstractEJB3Test extends Arquillian {
 
     /**
      * A utility for cleaning up files created with {@link #writeObjects(String, Object...).
-     * 
-     * @param filename The same filename used in the write. Do not include the directory. 
-     * @return true if deleted, false otherwise. 
+     *
+     * @param filename The same filename used in the write. Do not include the directory.
+     * @return true if deleted, false otherwise.
      */
     protected boolean deleteObjects(String filename) {
         File file = new File(getTempDir(), filename);
         return file.delete();
     }
 
-    /**     
+    /**
      * @return a temp directory for testing that is specific to this test class. Specifically tmpdirRoot/this.getClass().getSimpleName().
      */
     public File getTempDir() {

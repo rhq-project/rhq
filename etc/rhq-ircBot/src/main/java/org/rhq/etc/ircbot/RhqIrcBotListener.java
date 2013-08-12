@@ -77,8 +77,7 @@ public class RhqIrcBotListener extends ListenerAdapter<RhqIrcBot> {
 
     private static final Set<String> JON_DEVS = new HashSet<String>();
     static {
-        JON_DEVS.add("ccrouch");
-        JON_DEVS.add("ips");
+        JON_DEVS.add("theute");
         JON_DEVS.add("jkremser");
         JON_DEVS.add("jsanda");
         JON_DEVS.add("jshaughn");

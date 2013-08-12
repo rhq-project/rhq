@@ -114,6 +114,12 @@ public enum IconEnum {
     STORAGE_NODE("global/StorageNode_16.png", "global/StorageNode_24.png"),
 
     /////////////////////////////
+    //  General
+    /////////////////////////////
+    EXPANDED_ICON("[SKIN]/ListGrid/row_expanded.png"),
+    COLLAPSED_ICON("[SKIN]/ListGrid/row_collapsed.png"),
+
+    /////////////////////////////
     //  Resource Specific Tabs
     /////////////////////////////
     CALLTIME("global/Recent_16.png", "global/Recent_24.png");

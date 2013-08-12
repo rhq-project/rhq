@@ -56,7 +56,6 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.CustomConfigMeasurementRangeEditor;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
@@ -70,7 +69,7 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3GraphListView;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupMultiLineGraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.monitoring.table.CompositeGroupD3MultiLineGraph;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
@@ -163,7 +162,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
     }
 
     public static final class Factory implements PortletViewFactory {
-        public static PortletViewFactory INSTANCE = new Factory();
+        public static final PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(EntityContext context) {
 
@@ -407,7 +406,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
                                                             @Override
                                                             public void onClick(ClickEvent event) {
                                                                 ChartViewWindow window = new ChartViewWindow(title);
-                                                                CompositeGroupD3GraphListView graph = new CompositeGroupMultiLineGraphListView(
+                                                                CompositeGroupD3GraphListView graph = new CompositeGroupD3MultiLineGraph(
                                                                     groupId, md.getId(), isAutoGroup);
                                                                 window.addItem(graph);
                                                                 graph.populateData();

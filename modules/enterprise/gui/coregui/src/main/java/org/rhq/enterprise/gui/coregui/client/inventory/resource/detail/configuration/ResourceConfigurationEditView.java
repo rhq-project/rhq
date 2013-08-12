@@ -67,6 +67,7 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
     private ToolStrip buttonbar;
     private IButton saveButton;
     private boolean refreshing = false;
+    private ConfigurationFilter filter;
 
     public ResourceConfigurationEditView(ResourceComposite resourceComposite) {
         super();
@@ -91,7 +92,7 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
     private ToolStrip createButtonBar() {
         this.buttonbar = new ToolStrip();
         buttonbar.setWidth100();
-        buttonbar.setExtraSpace(10);
+//        buttonbar.setExtraSpace(10);
         buttonbar.setMembersMargin(5);
         buttonbar.setLayoutMargin(5);
 
@@ -153,6 +154,9 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
                                         @Override
                                         public void onSuccess(ConfigurationDefinition configurationDefinition) {
                                             Configuration configuration = configurationUpdate.getConfiguration();
+                                            if (filter != null) {
+                                                configurationDefinition = filter.filter(configurationDefinition);
+                                            }
                                             editor = new ConfigurationEditor(configurationDefinition, configuration);
                                             editor.setOverflow(Overflow.AUTO);
                                             editor.addPropertyValueChangeListener(ResourceConfigurationEditView.this);
@@ -229,4 +233,7 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
         }
     }
 
+    public void setFilter(ConfigurationFilter filter) {
+        this.filter = filter;
+    }
 }

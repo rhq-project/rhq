@@ -64,6 +64,7 @@ import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.core.util.updater.DeployDifferences;
 import org.rhq.core.util.updater.DeploymentsMetadata;
+import org.rhq.core.util.updater.DestinationComplianceMode;
 import org.rhq.core.util.updater.FileHashcodeMap;
 
 /**
@@ -190,7 +191,12 @@ public class AntBundlePluginComponent implements ResourceComponent, BundleFacet 
             DeploymentsMetadata metadata = new DeploymentsMetadata(deployDir);
             if (metadata.isManaged()) {
                 metadataDirectoryToPurge = metadata.getMetadataDirectory();
-                manageAllDeployDir = metadata.getCurrentDeploymentProperties().getManageRootDir();
+
+                //as of RHQ 4.9.0, we only only support "full" and "filesAndDirectories" destination compliance modes
+                //which we used to describe by boolean "manageRootDir"... Let's not use the deprecated API's but not
+                // change the code too much...
+                manageAllDeployDir = metadata.getCurrentDeploymentProperties().getDestinationCompliance() == DestinationComplianceMode.full;
+
                 int totalExternalFiles = 0;
                 ArrayList<String> externalDeleteSuccesses = new ArrayList<String>(0);
                 ArrayList<String> externalDeleteFailures = new ArrayList<String>(0);

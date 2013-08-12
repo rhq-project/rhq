@@ -21,10 +21,11 @@
   </scm>
 
   <properties>
+    <rhq.ant-bundle.serverplugin.path>${settings.localRepository}/org/rhq/rhq-serverplugin-ant-bundle/${project.version}/rhq-serverplugin-ant-bundle-${project.version}.jar</rhq.ant-bundle.serverplugin.path>
     <jboss.zip>${settings.localRepository}/org/jboss/as/jboss-as-dist/${jboss.version}/jboss-as-dist-${jboss.version}.zip</jboss.zip>
     <jboss.unzip.location>${basedir}/target/${jboss.eap.version}</jboss.unzip.location>
     <jboss.vm.args>-Xmx700m -XX:MaxPermSize=200m -Djava.security.manager
-      -Djava.security.policy==${jboss.unzip.location}/security.policy</jboss.vm.args>
+      -Djava.security.policy==${jboss.unzip.location}/security.policy -Drhq.ant-bundle.serverplugin.path=${rhq.ant-bundle.serverplugin.path}</jboss.vm.args>
     <jboss.vm.args.debug></jboss.vm.args.debug> <!-- -Ditest.debug can override this, see below -->
     <!-- These properties guide which datasources are used for integration tests. Only one should be true. The default is
       Postgres, specify -Pitest.oracle to use Oracle -->
@@ -326,7 +327,7 @@
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
                 <copy file="${settings.localRepository}/org/slf4j/slf4j-log4j12/1.7.2/slf4j-log4j12-1.7.2.jar"
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
-                <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/1.0.5-M3-p1/snappy-java-1.0.5-M3-p1.jar"
+                <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
                       toDir="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main" verbose="true"/>
 
                 <echo file="${jboss.modules.dir}/com/datastax/cassandra/cassandra-driver-core/main/module.xml"><![CDATA[<?xml version="1.0" encoding="UTF-8"?>
@@ -341,7 +342,7 @@
         <resource-root path="metrics-core-2.2.0.jar"/>
         <resource-root path="slf4j-api-1.7.2.jar"/>
         <resource-root path="slf4j-log4j12-1.7.2.jar"/>
-        <resource-root path="snappy-java-1.0.5-M3-p1.jar"/>
+        <resource-root path="snappy-java-${cassandra.snappy.version}.jar"/>
         <resource-root path="avro-1.4.0-cassandra-1.jar"/>
     </resources>
 
@@ -602,6 +603,13 @@
 
       <dependencies>
         <!-- Note, the test dep ordering can be important. Maven orders the [test] classpath in the order listed in the pom. -->
+
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>rhq-serverplugin-ant-bundle</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
           <groupId>org.jboss.as</groupId>

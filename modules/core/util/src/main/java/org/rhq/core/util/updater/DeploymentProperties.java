@@ -39,8 +39,16 @@ public class DeploymentProperties extends Properties {
     private static final String BUNDLE_NAME = "bundle.name";
     private static final String BUNDLE_VERSION = "bundle.version";
     private static final String BUNDLE_DESCRIPTION = "bundle.description";
+    //note that this really does not make sense as a generic deployment property once we support multiple deployment
+    //units in a bundle.
+    private static final String DESTINATION_COMPLIANCE = "bundle.destination.compliance";
 
     // optional properties
+
+    /**
+     * @deprecated superseded by destination compliance
+     */
+    @Deprecated
     private static final String MANAGE_ROOT_DIR = "manage.root.dir";
 
     public static DeploymentProperties loadFromFile(File file) throws Exception {
@@ -51,6 +59,13 @@ public class DeploymentProperties extends Properties {
         } finally {
             is.close();
         }
+
+        //Backwards compatibility handling - manageRootDir wasn't required but compliance is.. We need to make the
+        //previously valid files valid now, too, with the original behavior
+        if (props.get(DESTINATION_COMPLIANCE) == null) {
+            props.setDestinationCompliance(DestinationComplianceMode.BACKWARDS_COMPATIBLE_DEFAULT);
+        }
+
         props.validate();
         return props;
     }
@@ -71,13 +86,32 @@ public class DeploymentProperties extends Properties {
      * @param bundleName see {@link #getBundleName()}
      * @param bundleVersion see {@link #getBundleVersion()}
      * @param description see {@link #getDescription()}
+     *
+     * @deprecated use {@link #DeploymentProperties(int, String, String, String, DestinationComplianceMode)}.
+     * This constructor sets the compliance mode to {@link DestinationComplianceMode#full}.
      */
+    @Deprecated
     public DeploymentProperties(int deploymentId, String bundleName, String bundleVersion, String description) {
-        super();
+        this(deploymentId, bundleName, bundleVersion, description, DestinationComplianceMode.full);
+    }
+
+    /**
+     * Convenience constructor whose parameters are all the required values that
+     * this object needs.
+     *
+     * @param deploymentId see {@link #getDeploymentId()}
+     * @param bundleName see {@link #getBundleName()}
+     * @param bundleVersion see {@link #getBundleVersion()}
+     * @param description see {@link #getDescription()}
+     * @param destinationCompliance see {@link #getDestinationCompliance()}
+     */
+    public DeploymentProperties(int deploymentId, String bundleName, String bundleVersion, String description, DestinationComplianceMode destinationCompliance) {
         setDeploymentId(deploymentId);
         setBundleName(bundleName);
         setBundleVersion(bundleVersion);
         setDescription(description);
+        setDestinationCompliance(destinationCompliance);
+
         try {
             validate();
         } catch (Exception e) {
@@ -119,6 +153,7 @@ public class DeploymentProperties extends Properties {
             getBundleName();
             getBundleVersion();
             getDescription();
+            getDestinationCompliance();
         } catch (Exception e) {
             throw new Exception("Deployment properties are invalid: " + e.getMessage());
         }
@@ -196,18 +231,76 @@ public class DeploymentProperties extends Properties {
     }
 
     /**
+     * Note that as of RHQ 4.9.0, this attribute is deprecated.
+     * There is an attempt made to handle reading the old version of the attribute:
+     * <ol>
+     * <li>if "bundle.destination.compliance" attribute is set, base the value on it. If the compliance is "full"
+     * this method returns true, otherwise it returns false.</li>
+     * <li>if "manage.root.dir" attribute is set, base the return value on it (this handles the previous
+     * behavior).</li>
+     * <li>if none of the above attributes is set, return the default value of the deprecated manageRootDir attribute,
+     * which is true.</li>
+     * </ol>
+     *
      * @return the flag to indicate if the entire root directory content is to be managed.
      *         If there is no property, this method returns a default of <code>true</code>
+     *
+     * @deprecated use {@link #getDestinationCompliance()}
      */
+    @Deprecated
     public boolean getManageRootDir() {
-        String str = getProperty(MANAGE_ROOT_DIR);
-        if (str == null) {
-            return true;
+        DestinationComplianceMode mode = getDestinationComplianceNoException();
+        if (mode == null) {
+            String str = getProperty(MANAGE_ROOT_DIR);
+            if (str == null) {
+                return true;
+            }
+            return Boolean.parseBoolean(str);
         }
-        return Boolean.parseBoolean(str);
+
+        return mode == DestinationComplianceMode.full;
     }
 
+    /**
+     * As of RHQ 4.9.0, this is equivalent to {@link #setDestinationCompliance(DestinationComplianceMode)
+     * setDestinationCompliance(willManageRootDir ? DestinationComplianceMode.full :
+     * DestinationComplianceMode.filesAndDirectories)}.
+     *
+     * @param willManageRootDir whether to manage the root directory
+     *
+     * @deprecated use {@link #setDestinationCompliance(DestinationComplianceMode)} instead
+     */
+    @Deprecated
     public void setManageRootDir(boolean willManageRootDir) {
-        setProperty(MANAGE_ROOT_DIR, Boolean.toString(willManageRootDir));
+        setDestinationCompliance(
+            willManageRootDir ? DestinationComplianceMode.full : DestinationComplianceMode.filesAndDirectories);
+    }
+
+    /**
+     * Returns the compliance mode of the destination. This is a required attribute.
+     *
+     * @since 4.9.0
+     */
+    public DestinationComplianceMode getDestinationCompliance() {
+        DestinationComplianceMode mode = getDestinationComplianceNoException();
+        if (mode == null) {
+            throw new IllegalStateException("Destination compliance not specified");
+        }
+
+        return mode;
+    }
+
+    public void setDestinationCompliance(DestinationComplianceMode compliance) {
+        String str = compliance == null ? null : compliance.name();
+        setProperty(DESTINATION_COMPLIANCE, str);
+    }
+
+    private DestinationComplianceMode getDestinationComplianceNoException() {
+        String str = getProperty(DESTINATION_COMPLIANCE);
+        if (str == null) {
+            return null;
+        }
+
+        return Enum.valueOf(DestinationComplianceMode.class, str);
     }
 }

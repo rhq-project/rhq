@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.resource;
+
+import static org.rhq.core.domain.criteria.Criteria.Restriction.COLLECTION_ONLY;
+import static org.rhq.core.domain.criteria.Criteria.Restriction.COUNT_ONLY;
+import static org.rhq.enterprise.server.util.CriteriaQueryGenerator.getPageControl;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,6 +34,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
+import java.util.Set;
 
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
@@ -2921,4 +2926,51 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return reports;
     }
 
+    @Override
+    public PageList<Resource> findGroupMemberCandidateResources(Subject subject, ResourceCriteria criteria,
+        int[] alreadySelectedResourceIds) {
+
+        PageControl originalPageControl = getPageControl(criteria);
+        if (originalPageControl.isUnlimited()) {
+            throw new UnsupportedOperationException("Supplied criteria has an unlimited PageControl");
+        }
+
+        Set<Integer> alreadySelectedResourceIdSet = new HashSet<Integer>(
+            ArrayUtils.wrapInList(alreadySelectedResourceIds == null ? new int[0] : alreadySelectedResourceIds));
+
+        PageControl pageControl = (PageControl) originalPageControl.clone();
+        criteria.setPageControl(pageControl);
+
+        int requiredPageSize = pageControl.getPageSize();
+        criteria.setRestriction(COUNT_ONLY);
+        int totalSize = findResourcesByCriteria(subject, criteria).getTotalSize();
+        int totalPages = (totalSize / requiredPageSize) + (((totalSize % requiredPageSize) > 0) ? 1 : 0);
+
+        criteria.setRestriction(COLLECTION_ONLY);
+        List<Resource> candidates = new LinkedList<Resource>();
+        for (int pageNumber = 0; candidates.size() < requiredPageSize && pageNumber < totalPages; pageNumber++) {
+            pageControl.setPageNumber(pageNumber);
+            PageList<Resource> foundResources = findResourcesByCriteria(subject, criteria);
+            Collection<Resource> filteredResources = filterOutAlreadySelectedResources(foundResources,
+                alreadySelectedResourceIdSet);
+
+            candidates.addAll(filteredResources);
+        }
+        if (candidates.size() > requiredPageSize) {
+            candidates = candidates.subList(0, requiredPageSize);
+        }
+
+        return new PageList<Resource>(candidates, totalSize, originalPageControl);
+    }
+
+    private Collection<Resource> filterOutAlreadySelectedResources(Collection<Resource> foundResources,
+        Collection<Integer> alreadySelectedResourceIds) {
+        List<Resource> result = new LinkedList<Resource>();
+        for (Resource foundResource : foundResources) {
+            if (!alreadySelectedResourceIds.contains(foundResource.getId())) {
+                result.add(foundResource);
+            }
+        }
+        return result;
+    }
 }

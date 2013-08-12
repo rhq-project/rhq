@@ -48,6 +48,7 @@ public class AlertDefinitionCriteria extends Criteria {
     private String filterName;
     private String filterDescription;
     private AlertPriority filterPriority;
+    private Integer filterAlertId; // requires overrides
     private NonBindingOverrideFilter filterAlertTemplateOnly; // requires overrides - finds only alert templates    
     private Integer filterAlertTemplateParentId; // requires overrides
     private Integer filterAlertTemplateResourceTypeId; // requires overrides
@@ -75,6 +76,10 @@ public class AlertDefinitionCriteria extends Criteria {
     private PageOrdering sortResourceName; // requires sort override    
 
     public AlertDefinitionCriteria() {
+        filterOverrides.put("alertId", "" 
+            + "id IN ( SELECT alert.alertDefinition.id " //
+            + "          FROM Alert alert " //
+            + "         WHERE alert.id = ? )");
         filterOverrides.put("alertTemplateOnly", "resourceType IS NOT NULL");
         filterOverrides.put("alertTemplateParentId", "parentId = ?");
         filterOverrides.put("alertTemplateResourceTypeId", "resourceType.id = ?");
@@ -112,6 +117,10 @@ public class AlertDefinitionCriteria extends Criteria {
 
     public void addFilterAlertTemplateParentId(Integer filterAlertTemplateParentId) {
         this.filterAlertTemplateParentId = filterAlertTemplateParentId;
+    }
+    
+    public void addFilterAlertId(Integer filterAlertId) {
+        this.filterAlertId = filterAlertId;
     }
 
     public void addFilterAlertTemplateResourceTypeId(Integer filterAlertTemplateResourceTypeId) {

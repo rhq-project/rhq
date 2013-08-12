@@ -91,11 +91,7 @@ public class NumberWithUnitsValidator extends CustomValidator {
 
         if (unitsToUse != null) {
             try {
-                if (MeasurementParser.parse(value.toString(), unitsToUse) != null) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return MeasurementParser.parse(value.toString(), unitsToUse) != null;
             } catch (Exception e) {
                 return false;
             }

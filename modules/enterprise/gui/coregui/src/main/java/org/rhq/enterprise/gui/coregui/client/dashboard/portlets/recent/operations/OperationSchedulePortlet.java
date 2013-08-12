@@ -71,9 +71,9 @@ public class OperationSchedulePortlet extends EnhancedVLayout implements CustomS
 
     public static final String OPERATIONS_RANGE_SCHEDULED_ENABLED = "operations-scheduled-enabled";
     public static final String OPERATIONS_RANGE_SCHEDULED = "operations-range-scheduled";
-    public static String RANGE_DISABLED_MESSAGE = MSG.view_portlet_operations_disabled();
+    public static final String RANGE_DISABLED_MESSAGE = MSG.view_portlet_operations_disabled();
     //TODO: change this to use the Smart GWT default value.
-    public static String RANGE_DISABLED_MESSAGE_DEFAULT = MSG.common_msg_noItemsToShow();
+    public static final String RANGE_DISABLED_MESSAGE_DEFAULT = MSG.common_msg_noItemsToShow();
 
     private static final int WIDTH_RECENT_TIME = 150;
     private static final int WIDTH_RECENT_STATUS = 50;
@@ -86,10 +86,10 @@ public class OperationSchedulePortlet extends EnhancedVLayout implements CustomS
     private ListGrid scheduledOperationsGrid = null;
 
     private ScheduledOperationsDataSource dataSourceScheduled;
-    public static String unlimited = "-1";
+    public static final String unlimited = "-1";
     public static final String unlimitedString = MSG.common_label_unlimited();
-    public static String defaultValue = "5";
-    public static boolean defaultEnabled = true;
+    public static final String defaultValue = "5";
+    public static final boolean defaultEnabled = true;
 
     private Timer refreshTimer;
 
@@ -348,7 +348,7 @@ public class OperationSchedulePortlet extends EnhancedVLayout implements CustomS
     }
 
     public static final class Factory implements PortletViewFactory {
-        public static PortletViewFactory INSTANCE = new Factory();
+        public static final PortletViewFactory INSTANCE = new Factory();
 
         public final Portlet getInstance(EntityContext context) {
 

@@ -45,7 +45,7 @@ public class SnmpSender extends AlertSender {
     private AlertManagerLocal alertManager;
 
     /**
-     * Default constructor needed for instanciation by server plugin container
+     * Default constructor needed for instantiation by server plugin container
      */
     public SnmpSender() {
         this(LookupUtil.getResourceManager(), LookupUtil.getAlertManager());
@@ -59,7 +59,7 @@ public class SnmpSender extends AlertSender {
     @Override
     public SenderResult send(Alert alert) {
 
-        SnmpInfo info = SnmpInfo.load(alertParameters);
+        SnmpInfo info = SnmpInfo.load(alertParameters, preferences);
         if (info.error != null) {
             return SenderResult.getSimpleFailure(info.error);
         }
@@ -75,8 +75,8 @@ public class SnmpSender extends AlertSender {
             String platformName = lineage.get(0).getName();
             String conditions = alertManager.prettyPrintAlertConditions(alert, false);
             String alertUrl = alertManager.prettyPrintAlertURL(alert);
-            
-        	
+
+
         	String hierarchy = getResourceHierarchyAsString(lineage);
 
             Date bootTime = new Date(); // TODO: want to use LookupUtil.getCoreServer().getBootTime() but ServiceMBean is not visible
@@ -102,7 +102,7 @@ public class SnmpSender extends AlertSender {
 
     @Override
     public String previewConfiguration() {
-        SnmpInfo info = SnmpInfo.load(alertParameters);
+        SnmpInfo info = SnmpInfo.load(alertParameters, preferences);
         return info.toString();
     }
 }

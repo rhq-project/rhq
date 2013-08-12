@@ -175,9 +175,7 @@ public class GeneralPropertiesAlertDefinitionForm extends DynamicForm implements
     public void saveAlertDefinition() {
         alertDefinition.setName(nameField.getValue().toString());
         Object description = descriptionField.getValue();
-        if (null != description) {
-            alertDefinition.setDescription(description.toString());
-        }
+        alertDefinition.setDescription(null == description ? "" : description.toString());
 
         String prioritySelected = prioritySelection.getValue().toString();
         alertDefinition.setPriority(AlertPriority.valueOf(prioritySelected));

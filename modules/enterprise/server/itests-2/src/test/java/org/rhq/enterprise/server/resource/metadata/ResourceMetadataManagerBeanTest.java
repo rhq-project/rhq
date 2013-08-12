@@ -684,7 +684,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         BundleType bundleType = bundleMgr.getBundleType(subjectMgr.getOverlord(), bundleTypeName);
         assertNotNull("Cannot create bundle. Unable to find bundle type for [name: " + bundleTypeName + "]", bundleType);
         Bundle bundle = bundleMgr.createBundle(subjectMgr.getOverlord(), bundleName, "test bundle: " + bundleName,
-            bundleType.getId());
+            bundleType.getId(), 0);
 
         assertNotNull("Failed create bundle for [name: " + bundleName + "]", bundle);
     }

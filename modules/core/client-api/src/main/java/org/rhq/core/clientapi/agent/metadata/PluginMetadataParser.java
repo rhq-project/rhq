@@ -417,16 +417,56 @@ public class PluginMetadataParser {
         return serviceResourceType;
     }
 
-    private static void setSubCategory(ResourceDescriptor resourceDescriptor, ResourceType resourceType)
+    /**
+     * Try to find the subCategory of the p/s/s descriptor in one of the parents
+     * &lt;subcategories>&lt;subcategory>Foo&lt;/subcategory>&lt;/subcategories> elements and
+     * set it on the resourceType if found.
+     *
+     * It is not enough to look at the direct parents, but we need to also look at the
+     * &lt;runs-inside> types if our type is "embedded" in a different type.
+     * @param resourceDescriptor Descriptor to get the subCategory attribute from
+     * @param resourceType The type to attach the ResourceSubCategory to.
+     * @throws InvalidPluginDescriptorException If the descriptor.subCategory can not be found in any parent.
+     */
+    private  void setSubCategory(ResourceDescriptor resourceDescriptor, ResourceType resourceType)
         throws InvalidPluginDescriptorException {
         String subCatName = resourceDescriptor.getSubCategory();
         if (subCatName != null) {
             ResourceSubCategory subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(
                 resourceType, subCatName);
-            if (subCat == null)
+
+            // We need to look at resourceDescriptor -> runsInside to see if one of those defines the
+            // subcategories that we are looking for.
+            if (subCat == null && resourceDescriptor.getRunsInside() != null) {
+                RunsInsideType rit = resourceDescriptor.getRunsInside();
+                List<ParentResourceType> parentResourceTypeList = rit.getParentResourceType();
+                for (ParentResourceType parentResourceType : parentResourceTypeList) {
+                    ResourceType parentType = getResourceTypeFromPlugin(parentResourceType.getName(),parentResourceType.getPlugin());
+                    // check on the parent
+                    if (parentType.getChildSubCategories()!=null ) {
+                        for (ResourceSubCategory parentSubcat : parentType.getChildSubCategories()) {
+                            if (parentSubcat.getName().equals(subCatName)) {
+                                subCat = parentSubcat;
+                                break;
+                            }
+                        }
+                    }
+
+                    // Not found on runs-inside type look at the ancestor of those runs-inside types?
+                    if (subCat==null) {
+                        subCat = SubCategoriesMetadataParser.findSubCategoryOnResourceTypeAncestor(parentType,subCatName);
+                    }
+                    if (subCat!=null) {
+                        break;
+                    }
+                }
+            }
+
+            if (subCat == null) {
                 throw new InvalidPluginDescriptorException("Resource type [" + resourceType.getName()
                     + "] specified a subcategory (" + subCatName
                     + ") that is not defined as a child subcategory of one of its ancestor resource types.");
+            }
             resourceType.setSubCategory(subCat);
         }
     }

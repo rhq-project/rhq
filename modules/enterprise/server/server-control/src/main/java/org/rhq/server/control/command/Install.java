@@ -142,7 +142,7 @@ public class Install extends AbstractInstall {
                 if (!isStorageInstalled()) {
                     installStorageNode(getStorageBasedir(), commandLine);
                 } else if (isWindows()) {
-                    installWindowsService(getBinDir(), "rhq-storage");
+                    installWindowsService(getBinDir(), "rhq-storage", true);
                 }
 
                 if (!isServerInstalled()) {
@@ -150,7 +150,7 @@ public class Install extends AbstractInstall {
                     runRHQServerInstaller();
                     waitForRHQServerToInitialize();
                 } else if (isWindows()) {
-                    installWindowsService(getBinDir(), "rhq-server");
+                    installWindowsService(getBinDir(), "rhq-server", true);
                 }
 
                 if (!isAgentInstalled()) {
@@ -158,13 +158,15 @@ public class Install extends AbstractInstall {
                     File agentBasedir = getAgentBasedir();
                     installAgent(agentBasedir);
                     configureAgent(agentBasedir, commandLine);
-                    if (Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"))) {
+                    boolean start = Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
+                    if (start) {
                         startAgent(agentBasedir, true);
                     } else {
                         log.info("The agent was installed but was told not to start automatically.");
                     }
                 } else if (isWindows()) {
-                    installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper");
+                    boolean start = Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
+                    installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", start);
                 }
 
             } else {
@@ -173,7 +175,7 @@ public class Install extends AbstractInstall {
                         log.info("The RHQ storage node is already installed in " + new File(getBaseDir(), "storage"));
 
                         if (isWindows()) {
-                            installWindowsService(getBinDir(), "rhq-storage");
+                            installWindowsService(getBinDir(), "rhq-storage", true);
                         } else {
                             log.info("Skipping storage node installation.");
                         }
@@ -200,7 +202,7 @@ public class Install extends AbstractInstall {
                         log.warn("The RHQ server is already installed.");
 
                         if (isWindows()) {
-                            installWindowsService(getBinDir(), "rhq-server");
+                            installWindowsService(getBinDir(), "rhq-server", true);
                         } else {
                             log.info("Skipping server installation.");
                         }
@@ -217,8 +219,10 @@ public class Install extends AbstractInstall {
                     if (isAgentInstalled() && !commandLine.hasOption(STORAGE_OPTION)) {
                         log.info("The RHQ agent is already installed in [" + getAgentBasedir() + "]");
 
+                        boolean start = Boolean
+                            .parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
                         if (isWindows()) {
-                            installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper");
+                            installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", start);
                         } else {
                             log.info("Skipping agent installation.");
                         }
@@ -354,7 +358,7 @@ public class Install extends AbstractInstall {
 
     private File getAgentInstaller() {
         File agentDownloadDir = new File(getBaseDir(),
-            "modules/org/rhq/rhq-enterprise-server-startup-subsystem/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/rhq-agent");
         return agentDownloadDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {

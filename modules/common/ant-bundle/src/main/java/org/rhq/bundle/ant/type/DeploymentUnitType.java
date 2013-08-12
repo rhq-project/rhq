@@ -37,6 +37,7 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Target;
 
 import org.rhq.bundle.ant.BundleAntProject.AuditStatus;
+import org.rhq.core.util.updater.DestinationComplianceMode;
 import org.rhq.bundle.ant.DeployPropertyNames;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
@@ -56,7 +57,8 @@ import org.rhq.core.util.updater.DeploymentProperties;
  */
 public class DeploymentUnitType extends AbstractBundleType {
     private String name;
-    private String manageRootDir = Boolean.TRUE.toString();
+
+    private DestinationComplianceMode compliance;
 
     private Map<File, File> files = new LinkedHashMap<File, File>();
     private Map<URL, File> urlFiles = new LinkedHashMap<URL, File>();
@@ -103,13 +105,14 @@ public class DeploymentUnitType extends AbstractBundleType {
 
         try {
             boolean dryRun = getProject().isDryRun();
-            boolean willManageRootDir = Boolean.parseBoolean(this.manageRootDir);
+
+            DestinationComplianceMode complianceToUse = DestinationComplianceMode.instanceOrDefault(this.compliance);
+
             File deployDir = getProject().getDeployDir();
             TemplateEngine templateEngine = createTemplateEngine(getProject().getUserProperties());
             int deploymentId = getProject().getDeploymentId();
             DeploymentProperties deploymentProps = new DeploymentProperties(deploymentId, getProject().getBundleName(),
-                getProject().getBundleVersion(), getProject().getBundleDescription());
-            deploymentProps.setManageRootDir(willManageRootDir);
+                getProject().getBundleVersion(), getProject().getBundleDescription(), complianceToUse);
 
             if (this.preinstallTarget != null) {
                 getProject().auditLog(AuditStatus.SUCCESS, "Pre-Install Started", "The pre install target will start",
@@ -156,23 +159,28 @@ public class DeploymentUnitType extends AbstractBundleType {
                     "You must specify at least one file to deploy via nested file, archive, url-file, url-archive types in your recipe");
             }
 
-            if (willManageRootDir) {
-                log("Managing the root directory of this deployment unit - unrelated files found will be removed",
-                    Project.MSG_VERBOSE);
-                // don't send an audit message on this unless we are really going to move files out of the way (i.e. !dryrun)
+            log("Destination compliance set to '" + complianceToUse + "'.", Project.MSG_VERBOSE);
+            switch (complianceToUse) {
+            case full:
                 if (!dryRun) {
                     getProject()
                         .auditLog(
                             AuditStatus.INFO,
                             "Managing Top Level Deployment Directory",
                             "The top level deployment directory will be managed - files found there will be backed up and removed!",
-                            "The bundle recipe has requested that the top level deployment directory be fully managed by RHQ."
-                                + "This means any files currently located in the top level deployment directory will be removed and backed up",
+                            "The bundle recipe has requested that the top level deployment directory be fully managed by RHQ." +
+                            "This means any files currently located in the top level deployment directory will be removed and backed up",
                             null);
                 }
-            } else {
-                log("Not managing the root directory of this deployment unit - unrelated files will remain intact",
-                    Project.MSG_VERBOSE);
+                break;
+            case filesAndDirectories:
+                log("Files and directories in the destination directory not contained in the bundle will be kept intact.\n" +
+                    "Note that the contents of the directories that ARE contained in the bundle will be synced with " +
+                    "the contents as specified in the bundle. I.e. the subdirectories in the destination that are also " +
+                    "contained in the bundle are made compliant with the bundle.", Project.MSG_VERBOSE);
+                break;
+            default:
+                throw new IllegalStateException("Unhandled destination compliance mode: " + complianceToUse.toString());
             }
 
             Set<File> allArchives = new HashSet<File>(this.archives);
@@ -186,7 +194,7 @@ public class DeploymentUnitType extends AbstractBundleType {
             try {
                 DeploymentData deploymentData = new DeploymentData(deploymentProps, allArchives, allFiles, getProject()
                     .getBaseDir(), deployDir, allArchiveReplacePatterns, allRawFilesToReplace, templateEngine,
-                    this.ignorePattern, willManageRootDir, allArchivesExploded);
+                    this.ignorePattern, allArchivesExploded);
                 Deployer deployer = new Deployer(deploymentData);
                 DeployDifferences diffs = getProject().getDeployDifferences();
 
@@ -392,16 +400,42 @@ public class DeploymentUnitType extends AbstractBundleType {
         this.name = name;
     }
 
+    /**
+     * @deprecated since RHQ 4.9.0, use {@link #getCompliance()}
+     */
     public String getManageRootDir() {
-        return manageRootDir;
+        return Boolean.toString(getCompliance() == DestinationComplianceMode.full);
     }
 
+    /**
+     * @deprecated since RHQ 4.9.0, use {@link #setCompliance(org.rhq.core.util.updater.DestinationComplianceMode)}
+     */
     public void setManageRootDir(String booleanString) {
         if (!Boolean.TRUE.toString().equalsIgnoreCase(booleanString)
             && !Boolean.FALSE.toString().equalsIgnoreCase(booleanString)) {
             throw new BuildException("manageRootDir attribute must be 'true' or 'false': " + booleanString);
         }
-        this.manageRootDir = booleanString;
+
+        log("The deprecated 'manageRootDir' attribute was detected. Please consider replacing it with the 'compliance' attribute.",
+            Project.MSG_INFO);
+
+        boolean val = Boolean.parseBoolean(booleanString);
+
+        setCompliance(val ? DestinationComplianceMode.full : DestinationComplianceMode.filesAndDirectories);
+    }
+
+    /**
+     * @since 4.9.0
+     */
+    public DestinationComplianceMode getCompliance() {
+        return compliance;
+    }
+
+    /**
+     * @since 4.9.0
+     */
+    public void setCompliance(DestinationComplianceMode value) {
+        this.compliance = value;
     }
 
     /**

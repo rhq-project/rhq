@@ -30,8 +30,11 @@ import static org.rhq.core.util.StringUtil.collectionToString;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.StringReader;
 import java.io.StringWriter;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -50,6 +53,7 @@ import org.rhq.core.system.ProcessExecution;
 import org.rhq.core.system.ProcessExecutionResults;
 import org.rhq.core.system.SystemInfo;
 import org.rhq.core.system.SystemInfoFactory;
+import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
 
@@ -106,6 +110,13 @@ public class CassandraClusterManager {
 
         List<StorageNode> nodes = new ArrayList<StorageNode>(deploymentOptions.getNumNodes());
         String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
+        Set<InetAddress> ipAddresses = null;
+
+        try {
+            ipAddresses = getClusterIPAddresses();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to get cluster IP addresses", e);
+        }
 
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
             File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
@@ -138,6 +149,8 @@ public class CassandraClusterManager {
                 storageNode.setCqlPort(nodeOptions.getNativeTransportPort());
                 nodes.add(storageNode);
 
+                deployer.updateStorageAuthConf(ipAddresses);
+
                 installedNodeDirs.add(basedir);
             } catch (Exception e) {
                 log.error("Failed to install node at " + basedir);
@@ -150,6 +163,21 @@ public class CassandraClusterManager {
             log.warn("Failed to write installed file marker to " + installedMarker, e);
         }
         return nodes;
+    }
+
+    private void updateStorageAuthConf(File basedir) {
+        File confDir = new File(basedir, "conf");
+        File authFile = new File(confDir, "rhq-storage-auth.conf");
+        authFile.delete();
+
+        Set<String> addresses = calculateLocalIPAddresses(deploymentOptions.getNumNodes());
+
+        try {
+            StreamUtil.copy(new StringReader(StringUtil.collectionToString(addresses, "\n")),
+                new FileWriter(authFile), true);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update " + authFile);
+        }
     }
 
     private Set<String> calculateLocalIPAddresses(int numNodes) {
@@ -171,6 +199,15 @@ public class CassandraClusterManager {
 
         String[] seedsArray = seeds.split(",");
         return i <= seedsArray.length ? seedsArray[i - 1] : ("127.0.0." + i);
+    }
+
+    private Set<InetAddress> getClusterIPAddresses() throws IOException {
+        Set<InetAddress> ipAddresses = new HashSet<InetAddress>();
+        for (String address : calculateLocalIPAddresses(deploymentOptions.getNumNodes())) {
+            ipAddresses.add(InetAddress.getByName(address));
+        }
+
+        return ipAddresses;
     }
 
     private List<StorageNode> calculateNodes() {
@@ -303,7 +340,7 @@ public class CassandraClusterManager {
         return nodeIds;
     }
 
-    private void killNode(File nodeDir) throws Exception {
+    public void killNode(File nodeDir) throws Exception {
         long pid = getPid(nodeDir);
         CLibrary.kill((int) pid, 9);
     }

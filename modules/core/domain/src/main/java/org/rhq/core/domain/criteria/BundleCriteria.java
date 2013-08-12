@@ -26,6 +26,7 @@ import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.Bundle;
+import org.rhq.core.domain.util.CriteriaUtils;
 import org.rhq.core.domain.util.PageOrdering;
 
 /**
@@ -42,10 +43,12 @@ public class BundleCriteria extends TaggedCriteria {
     private String filterBundleTypeName; // needs override    
     private String filterDescription;
     private List<Integer> filterDestinationIds; // needs overrides
+    private List<Integer> filterBundleGroupIds; // needs overrides
     private String filterName;
     private Integer filterPackageTypeId; // needs override
     private String filterPackageTypeName; // needs override    
 
+    private boolean fetchBundleGroups;
     private boolean fetchBundleVersions;
     private boolean fetchDestinations;
     private boolean fetchPackageType;
@@ -61,6 +64,11 @@ public class BundleCriteria extends TaggedCriteria {
             + "         WHERE bv.id IN ( ? ) )");
         filterOverrides.put("bundleTypeId", "bundleType.id = ?");
         filterOverrides.put("bundleTypeName", "bundleType.name like ?");
+        filterOverrides.put("bundleGroupIds", "" //
+            + "id IN ( SELECT innerbundle.id " //
+            + "          FROM Bundle innerbundle " //
+            + "          JOIN innerbundle.bundleGroups bg"
+            + "         WHERE bg.id IN ( ? ) )");
         filterOverrides.put("destinationIds", "" //
             + "id IN ( SELECT bd.bundle.id " //
             + "          FROM BundleDestination bd " //
@@ -97,6 +105,10 @@ public class BundleCriteria extends TaggedCriteria {
         this.filterDescription = filterDescription;
     }
 
+    public void addFilterBundleGroupIds(Integer... filterBundleGroupIds) {
+        this.filterBundleGroupIds = CriteriaUtils.getListIgnoringNulls(filterBundleGroupIds);
+    }
+
     /** Convenience routine calls addFilterDestinationIds */
     public void addFilterDestinationId(Integer filterDestinationId) {
         List<Integer> ids = new ArrayList<Integer>(1);
@@ -120,10 +132,20 @@ public class BundleCriteria extends TaggedCriteria {
         this.filterPackageTypeName = filterPackageTypeName;
     }
 
+    public void fetchBundleGroups(boolean fetchBundleGroups) {
+        this.fetchBundleGroups = fetchBundleGroups;
+    }
+
     public void fetchBundleVersions(boolean fetchBundleVersions) {
         this.fetchBundleVersions = fetchBundleVersions;
     }
 
+    /**
+     * Unless called by an InventoryManager the destinations will be filtered to those the caller can view, based
+     * on the resource groups associated with his roles and the group associated wuth the destination.
+     *  
+     * @param fetchDestinations
+     */
     public void fetchDestinations(boolean fetchDestinations) {
         this.fetchDestinations = fetchDestinations;
     }
@@ -145,4 +167,9 @@ public class BundleCriteria extends TaggedCriteria {
         addSortField("description");
         this.sortDescription = sortDescription;
     }
+
+    public boolean isInventoryManagerRequired() {
+        return fetchDestinations;
+    }
+
 }

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.resource;
 
@@ -54,7 +54,6 @@ import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.util.IntExtractor;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
-import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
 import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 
 /**
@@ -220,16 +219,9 @@ public interface ResourceManagerLocal {
     PageList<Resource> findChildResourcesByCategoryAndInventoryStatus(Subject user, Resource parent,
         ResourceCategory category, InventoryStatus status, PageControl pageControl);
 
-    /**
-     * 
-     * @see ResourceManagerRemote#findResourcesByCategory(Subject, ResourceCategory, InventoryStatus, PageControl)
-     */
     PageList<Resource> findResourcesByCategory(Subject user, ResourceCategory category,
         InventoryStatus inventoryStatus, PageControl pageControl);
 
-    /**
-     * @see ResourceManagerRemote#findResourceComposites(Subject, ResourceCategory, String, int, String, PageControl)
-     */
     PageList<ResourceComposite> findResourceComposites(Subject user, ResourceCategory category, String typeName,
         String pluginName, Resource parentResource, String searchString, boolean attachParentResource,
         PageControl pageControl);
@@ -542,7 +534,6 @@ public interface ResourceManagerLocal {
     Resource getParentResource(Subject subject, int resourceId);
 
     /**
-     * @see Disambiguator#disambiguate(List, boolean, IntExtractor, javax.persistence.EntityManager)
      * @return the disambiguation result or null on error
      */
     <T> List<DisambiguationReport<T>> disambiguate(List<T> results, IntExtractor<? super T> resourceIdExtractor,
@@ -557,4 +548,7 @@ public interface ResourceManagerLocal {
     List<Integer> disableResources(Subject subject, int[] resourceIds);
 
     List<Integer> enableResources(Subject subject, int[] resourceIds);
+
+    PageList<Resource> findGroupMemberCandidateResources(Subject subject, ResourceCriteria criteria,
+        int[] alreadySelectedResourceIds);
 }

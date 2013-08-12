@@ -18,15 +18,12 @@
  */
 package org.rhq.core.domain.criteria;
 
-import java.util.List;
-
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
-import org.rhq.core.domain.util.CriteriaUtils;
 
 /**
  * @author Jay Shaughnessy
@@ -85,11 +82,7 @@ public class BundleResourceDeploymentCriteria extends Criteria {
 
     /**
      * By setting this fetch to true, it will cause {@link #isInventoryManagerRequired()} to return true as well.
-     * 
-     * In practice, however, MANAGE_INVENTORY is too restrictive; a bundle manager who has MANAGE_BUNDLE but not
-     * MANAGE_INVENTORY would not be able to see any resource deployments.  So, until it is possible to handle granular
-     * authorization checks on optionally fetched criteria data, a bundle manager will be allowed to see resource 
-     * deployments to any platform.
+     * Without Inventory Manager permission results will be limited to only the resources viewable to the caller.
      * 
      * @see org.rhq.enterprise.server.bundle.BundleManagerBean#findBundleResourceDeploymentsByCriteria(org.rhq.core.domain.auth.Subject, BundleResourceDeploymentCriteria)
      */

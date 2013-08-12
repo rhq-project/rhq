@@ -75,7 +75,11 @@
       </results>
     </operation>
 
-    <operation name="updateSeedsList" description="Updatess the node's seeds property in cassandra.yaml">
+    <operation name="updateSeedsList"
+               description="Updates the node's seeds property in cassandra.yaml. seedsList must be a list of valid
+               hostnames or IP addresses that are reachable from the agent machine. Note that if hostnames are
+               specified they will be converted to IP addresses so that the seeds property will consist solely of IP
+               addresses.">
       <parameters>
         <c:list-property name="seedsList">
           <c:simple-property name="seed" type="string"/>
@@ -155,7 +159,7 @@
       <operation name="takeSnapshot"
                  description="Takes a snapshot of all keyspaces. A snapshot first flushes all in-memory writes to disk and then creates a hard
                   link of each SSTable file for each keyspace. Note that a column family can have multiple
-                  SSTables on disk. By default snapshots are stored in the &lt;cassandra_data_dir&gt;/&lt;keyspace_name&gt;/&lt;column_family_name&gt;/snapshots
+                  SSTables on disk. By default snapshots are stored in the [cassandra_data_dir]/[keyspace_name]/[column_family_name]/snapshots
                   directory. On Linux/UNIX systems cassandra_data_dir defaults to /var/lib/cassandra/data">
         <parameters>
           <c:simple-property name="snapshotName" required="false" type="string" displayName="Snapshot Name"
@@ -182,8 +186,11 @@
         </parameters>
       </operation>
 
+      <metric property="Calculated.DataDiskUsedPercentage" displayName="Data File Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of disk space used by Cassandra data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+      <metric property="Calculated.TotalDiskUsedPercentage" displayName="Total Disk Used Percentage" dataType="measurement" units="percentage" displayType="summary" description="Percentage of total disk space used. The metric acounts overall disk usage (including system files), not just disk space used by Cassandra. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+      <metric property="Calculated.FreeDiskToDataSizeRatio" displayName="Free Disk to Data Size Ratio" dataType="measurement" displayType="summary" description="Ratio of (Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. The aggregate accross all the partitions will be reported if multiple data locations are specified. This is a calculated metric derived from system and Cassandra runtime information."/>
+
       <metric property="CurrentGenerationNumber" dataType="trait" displayType="summary" description="Current generation number"/>
-      <metric property="Calculated.DiskSpaceUsedPercentage" dataType="measurement" units="percentage" displayType="summary" description="How much of diskspace is already used. This takes into account the installation path, where Cassandra was installed."/>
       <metric property="ExceptionCount" measurementType="trendsup" dataType="measurement" displayType="summary" description="Exception Count"/>
       <metric property="Initialized" dataType="trait" displayType="summary" description="Initialized"/>
       <metric property="Joined" dataType="trait" displayType="summary" description="Joined"/>
@@ -272,7 +279,7 @@
         <c:simple-property name="nameTemplate" readOnly="true" type="string" default="Commit Log" />
       </plugin-configuration>
 
-      <metric property="TotalCommitlogSize" measurementType="trendsup" dataType="measurement" displayType="summary" description="Size of all commit log segments"/>
+      <metric property="TotalCommitlogSize" measurementType="dynamic" displayType="summary" description="Size of all commit log segments"/>
       <metric property="PendingTasks" measurementType="dynamic" displayType="summary" description="Number of tasks waiting to be executed"/>
       <metric property="CompletedTasks" measurementType="trendsup" displayType="summary" description="Number of completed tasks"/>
     </service>
@@ -393,8 +400,8 @@
       <metric property="KeyCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Key cache capacity in bytes"/>
       <metric property="RowCacheCapacityInBytes" measurementType="dynamic" displayType="summary" description="Row cache capacity in bytes"/>
 
-      <metric property="KeyCacheSize" measurementType="dynamic" displayType="detail" description="Key cache size"/>
-      <metric property="RowCacheSize" measurementType="dynamic" displayType="detail" description="Row cache size"/>
+      <metric property="KeyCacheSize" measurementType="dynamic" displayType="summary" description="Key cache size"/>
+      <metric property="RowCacheSize" measurementType="dynamic" displayType="summary" description="Row cache size"/>
 
       <resource-configuration>
         <c:simple-property name="KeyCacheCapacityInMB" type="long" required="true" displayName="Key Cache Capacity In MB" description="Key cache capacity in MB"/>

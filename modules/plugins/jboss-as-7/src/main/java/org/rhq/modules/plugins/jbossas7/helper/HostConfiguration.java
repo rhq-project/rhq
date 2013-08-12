@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.modules.plugins.jbossas7.helper;
+
+import static org.rhq.core.util.StringUtil.EMPTY_STRING;
+import static org.w3c.dom.Node.ELEMENT_NODE;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,6 +36,7 @@ import javax.xml.xpath.XPathFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.Document;
+import org.w3c.dom.Node;
 
 import org.rhq.core.pluginapi.util.CommandLineOption;
 import org.rhq.modules.plugins.jbossas7.AS7CommandLine;
@@ -234,11 +238,15 @@ public class HostConfiguration {
     }
 
     public String getDomainApiVersion() {
-
-        String version = document.getFirstChild().getAttributes().getNamedItem("xmlns").getTextContent();
-
-        version = version.substring(version.lastIndexOf(':')+1);
-        return version;
+        // Look for the first child node of type element (<host> in domain mode or <server> in standalone mode)
+        // We can't just call getFirstChild because first child could be a node of type comment
+        for (Node childNode = document.getFirstChild(); childNode != null; childNode = childNode.getNextSibling()) {
+            if (childNode.getNodeType() == ELEMENT_NODE) {
+                String xmlns = childNode.getAttributes().getNamedItem("xmlns").getTextContent();
+                return xmlns.substring(xmlns.lastIndexOf(':') + 1);
+            }
+        }
+        return EMPTY_STRING;
     }
 
     /**

@@ -48,7 +48,7 @@ import org.rhq.enterprise.gui.coregui.client.Messages;
  */
 public class SimpleEditableFormItem extends CanvasItem {
 
-    protected static Messages MSG = CoreGUI.getMessages();
+    protected static final Messages MSG = CoreGUI.getMessages();
 
     protected FormItem staticItem;
     protected FormItem editItem;

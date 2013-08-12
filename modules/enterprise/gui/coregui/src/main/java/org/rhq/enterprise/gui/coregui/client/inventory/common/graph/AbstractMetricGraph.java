@@ -202,6 +202,10 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
         return metricGraphData.getPortalId();
     }
 
+    public boolean isHideLegend(){
+        return metricGraphData.isHideLegend();
+    }
+
     public void setGraphListView(AbstractD3GraphListView graphListView) {
         this.graphListView = graphListView;
     }
@@ -231,6 +235,6 @@ public abstract class AbstractMetricGraph extends VLayout implements HasD3Metric
     }
 
     public void redrawGraphs(){
-       graphListView.redrawGraphs();
+       graphListView.refreshData();
     }
 }

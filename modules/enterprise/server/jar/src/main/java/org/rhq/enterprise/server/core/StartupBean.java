@@ -53,7 +53,6 @@ import org.quartz.SchedulerException;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.Server;
-import org.rhq.core.domain.cloud.Server.OperationMode;
 import org.rhq.core.domain.common.ProductInfo;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.util.ObjectNameFactory;
@@ -89,9 +88,7 @@ import org.rhq.enterprise.server.scheduler.jobs.PurgePluginsJob;
 import org.rhq.enterprise.server.scheduler.jobs.PurgeResourceTypesJob;
 import org.rhq.enterprise.server.scheduler.jobs.SavedSearchResultCountRecalculationJob;
 import org.rhq.enterprise.server.scheduler.jobs.StorageClusterReadRepairJob;
-import org.rhq.enterprise.server.scheduler.jobs.StorageNodeMaintenanceJob;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
-import org.rhq.enterprise.server.storage.StorageClusterHeartBeatJob;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
@@ -143,9 +140,6 @@ public class StartupBean implements StartupLocal {
 
     @EJB
     private StorageClientManagerBean storageClientManager;
-
-    @EJB
-    private StorageClusterHeartBeatJob storageClusterHeartBeatJob;
 
     @Resource
     private TimerService timerService; // needed to schedule our plugin scanner
@@ -275,8 +269,7 @@ public class StartupBean implements StartupLocal {
             log.info("Server is configured to start up in MAINTENANCE mode.");
             Server server = serverManager.getServer();
             Integer[] serverId = new Integer[] { server.getId() };
-            topologyManager.updateServerMode(LookupUtil.getSubjectManager().getOverlord(), serverId,
-                OperationMode.MAINTENANCE);
+            topologyManager.updateServerManualMaintenance(LookupUtil.getSubjectManager().getOverlord(), serverId, true);
         }
 
         // Establish the current server mode for the server. This will move the server to NORMAL
@@ -442,15 +435,8 @@ public class StartupBean implements StartupLocal {
      * Initalizes the storage client subsystem which is needed for reading/writing metric data.
      */
     private void initStorageClient() {
-        try {
-            //add the cluster maintenance job to the list of available jobs.
-            schedulerBean.scheduleTriggeredJob(StorageNodeMaintenanceJob.class, false, null);
-        } catch (Exception e) {
-            log.error("Cannot create storage node maintenance job.", e);
-        }
-
         storageClientManager.init();
-        storageClusterHeartBeatJob.scheduleJob();
+        serverManager.establishCurrentServerMode();
     }
 
     /**

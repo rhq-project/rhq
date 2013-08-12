@@ -6,6 +6,6 @@
     <ejb>rhq-core-domain-ejb3.jar</ejb>
   </module>
   <module>
-    <ejb>rhq-enterprise-server-ejb3.jar</ejb>
-  </module> 
+    <ejb>rhq-server.jar</ejb>
+  </module>
 </application>

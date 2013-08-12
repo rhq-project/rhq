@@ -19,12 +19,14 @@
 
 package org.rhq.modules.integrationTests.restApi.d;
 
-import org.codehaus.jackson.map.annotate.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 /**
  * A Link inside objects
  * @author Heiko W. Rupp
  */
+@JsonSerialize(using = LinkSerializer.class)
 @JsonDeserialize(using = LinkDeserializer.class)
 public class Link {
 

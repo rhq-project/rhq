@@ -131,7 +131,7 @@ public class OverviewForm extends EnhancedDynamicForm {
 
     private void buildForm(ResourceType type) {
         StringLengthValidator notEmptyOrNullValidator = new StringLengthValidator(1, null, false);
-        StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
+        //StringLengthValidator notNullValidator = new StringLengthValidator(null, null, false);
 
         List<FormItem> formItems = new ArrayList<FormItem>();
 
@@ -320,7 +320,7 @@ public class OverviewForm extends EnhancedDynamicForm {
 
         Collections.sort(summaryTraitDefs, new Comparator<MeasurementDefinition>() {
             public int compare(MeasurementDefinition md1, MeasurementDefinition md2) {
-                return new Integer(md1.getDisplayOrder()).compareTo(md2.getDisplayOrder());
+                return Integer.valueOf(md1.getDisplayOrder()).compareTo(md2.getDisplayOrder());
             }
         });
 

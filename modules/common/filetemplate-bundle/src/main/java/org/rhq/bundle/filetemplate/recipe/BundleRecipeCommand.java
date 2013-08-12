@@ -27,6 +27,7 @@ import gnu.getopt.Getopt;
 import gnu.getopt.LongOpt;
 
 import org.rhq.core.util.updater.DeploymentProperties;
+import org.rhq.core.util.updater.DestinationComplianceMode;
 
 public class BundleRecipeCommand implements RecipeCommand {
 
@@ -99,6 +100,9 @@ public class BundleRecipeCommand implements RecipeCommand {
             props.setDescription(description);
         }
         props.setDeploymentId(0);
+
+        //file templates don't support destination compliance, so let's just provide something dummy
+        props.setDestinationCompliance(DestinationComplianceMode.full);
 
         return;
     }

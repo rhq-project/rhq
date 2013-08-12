@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.postfix;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import net.augeas.Augeas;
 
@@ -27,24 +30,38 @@ import org.rhq.core.domain.configuration.definition.PropertySimpleType;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.system.ProcessInfo;
+import org.rhq.core.system.ProcessInfo.ProcessInfoSnapshot;
 import org.rhq.plugins.augeas.AugeasConfigurationComponent;
 import org.rhq.plugins.augeas.helper.AugeasNode;
 
-/**
- * TODO
- */
 public class PostfixServerComponent extends AugeasConfigurationComponent {
+
+    private ProcessInfo processInfo;
 
     public void start(ResourceContext resourceContext) throws Exception {
         super.start(resourceContext);
+        processInfo = resourceContext.getNativeProcess();
     }
 
     public void stop() {
+        processInfo = null;
         super.stop();
     }
 
     public AvailabilityType getAvailability() {
-        return super.getAvailability();
+        ProcessInfoSnapshot processInfoSnapshot = getProcessInfoSnapshot();
+        return (processInfoSnapshot != null && processInfoSnapshot.isRunning()) ? UP : DOWN;
+    }
+
+    private ProcessInfoSnapshot getProcessInfoSnapshot() {
+        ProcessInfoSnapshot processInfoSnapshot = (processInfo == null) ? null : processInfo.freshSnapshot();
+        if (processInfoSnapshot == null || !processInfoSnapshot.isRunning()) {
+            processInfo = getResourceContext().getNativeProcess();
+            // Safe to get prior snapshot here, we've just recreated the process info instance
+            processInfoSnapshot = (processInfo == null) ? null : processInfo.priorSnaphot();
+        }
+        return processInfoSnapshot;
     }
 
     public Configuration loadResourceConfiguration() throws Exception {
@@ -73,35 +90,5 @@ public class PostfixServerComponent extends AugeasConfigurationComponent {
         }
         return super.toNodeValue(augeas, node, propDefSimple, propSimple);
     }
-
-    /*
-
-        @Override
-        public CreateResourceReport createResource(CreateResourceReport reportIn) {
-            CreateResourceReport report = reportIn;
-            Configuration config = report.getResourceConfiguration();
-            String name = config.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP).getStringValue();
-            report.setResourceKey(name);
-            report.setResourceName(name);
-            return super.createResource(report);
-        }
-        @Override
-        protected String getChildResourceConfigurationRootPath(ResourceType resourceType, Configuration resourceConfig) {
-            if (resourceType.getName().equals(SambaShareComponent.RESOURCE_TYPE_NAME)) {
-                String targetName = resourceConfig.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP).getStringValue();
-                return "/files/etc/samba/smb.conf/target[.='" + targetName + "']";
-            } else {
-                throw new IllegalArgumentException("Unsupported child Resource type: " + resourceType);
-            }
-        }
-        @Override
-        protected String getChildResourceConfigurationRootLabel(ResourceType resourceType, Configuration resourceConfig) {
-            if (resourceType.getName().equals(SambaShareComponent.RESOURCE_TYPE_NAME)) {
-                return resourceConfig.getSimple(SambaShareComponent.NAME_RESOURCE_CONFIG_PROP).getStringValue();
-            } else {
-                throw new IllegalArgumentException("Unsupported child Resource type: " + resourceType);
-            }
-        }
-    */
 
 }

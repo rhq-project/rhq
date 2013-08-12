@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<differences>
+    <difference>
+        <className>org/rhq/core/domain/cloud/StorageNode</className>
+        <differenceType>6003</differenceType><!-- Value of compile-time constant has changed -->
+        <field>QUERY_FIND_BY_ADDRESS</field>
+        <justification>
+            Changing StorageNode.QUERY_FIND_BY_ADDRESS. The constants for native queries shouldn't be part of the public API.
+        </justification>
+    </difference>
+</differences>

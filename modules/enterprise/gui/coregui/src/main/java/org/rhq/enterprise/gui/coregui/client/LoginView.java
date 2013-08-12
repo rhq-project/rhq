@@ -80,7 +80,7 @@ public class LoginView extends Canvas {
 
     private static boolean loginShowing = false;
 
-    private Messages MSG = CoreGUI.getMessages();
+    private static final Messages MSG = CoreGUI.getMessages();
 
     private Window window;
     private DynamicForm form;

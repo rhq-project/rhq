@@ -36,19 +36,25 @@ public class StorageNodeLoadComposite implements Serializable {
     private StorageNode storageNode;
     private long beginTime;
     private long endTime;
-    
+    private int unackAlerts;
+
     private MeasurementAggregateWithUnits heapCommitted;
     private MeasurementAggregateWithUnits heapUsed;
     private MeasurementAggregateWithUnits heapPercentageUsed;
     private MeasurementAggregateWithUnits load;
-    private MeasurementAggregateWithUnits diskSpacePercentageUsed;
-    private MeasurementAggregate tokens; 
+    private MeasurementAggregateWithUnits dataDiskUsed;
+    private MeasurementAggregate tokens;
+
+    private MeasurementAggregateWithUnits dataDiskUsedPercentage;
+    private MeasurementAggregateWithUnits totalDiskUsedPercentage;
+    private MeasurementAggregate freeDiskToDataSizeRatio;
+
     private MeasurementAggregateWithUnits actuallyOwns;
 
     public StorageNodeLoadComposite() {
         // GWT needs this
     }
-    
+
     public StorageNodeLoadComposite(StorageNode storageNode, long beginTime, long endTime) {
         this.storageNode = storageNode;
         this.beginTime = beginTime;
@@ -77,6 +83,14 @@ public class StorageNodeLoadComposite implements Serializable {
 
     public void setEndTime(long endTime) {
         this.endTime = endTime;
+    }
+
+    public int getUnackAlerts() {
+        return unackAlerts;
+    }
+
+    public void setUnackAlerts(int unackAlerts) {
+        this.unackAlerts = unackAlerts;
     }
 
     /**
@@ -114,15 +128,68 @@ public class StorageNodeLoadComposite implements Serializable {
     }
 
     /**
-     * @return A computed metric for the space used on disk by all SSTables of all column families expressed as a
-     * percentage.
+     * @deprecated use {@link #getPartitionDiskUsedPercentage() getPartitionDiskUsedPercentage()} instead
+     *
+     * @return partitionDiskUsedPercentage
      */
     public MeasurementAggregateWithUnits getDiskSpacePercentageUsed() {
-        return diskSpacePercentageUsed;
+        return getDataDiskUsedPercentage();
     }
 
-    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits diskSpacePercentageUsed) {
-        this.diskSpacePercentageUsed = diskSpacePercentageUsed;
+    /**
+     * @deprecated use {@link #setPartitionDiskUsedPercentage() setPartitionDiskUsedPercentage()} instead
+     *
+     * @param partitionDiskUsedPercentage
+     */
+    public void setDiskSpacePercentageUsed(MeasurementAggregateWithUnits diskUsedPercentage) {
+        setDataDiskUsedPercentage(diskUsedPercentage);
+    }
+
+    /**
+     * @return A computed metric for the percentage of disk space used by data file on the corresponding partitions.
+     *         If multiple data locations are configured then the aggregate is calculated.
+     */
+    public MeasurementAggregateWithUnits getDataDiskUsedPercentage() {
+        return dataDiskUsedPercentage;
+    }
+
+    public void setDataDiskUsedPercentage(MeasurementAggregateWithUnits dataDiskUsedPercentage) {
+        this.dataDiskUsedPercentage = dataDiskUsedPercentage;
+    }
+
+    /**
+     * @return A computed metric for the percentage of total (system + Storage Node data file) disk space used the partitions where data files are stored.
+     *         If multiple data locations are configured then the aggregate is calculated.
+     */
+    public MeasurementAggregateWithUnits getTotalDiskUsedPercentage() {
+        return totalDiskUsedPercentage;
+    }
+
+    public void setTotalDiskUsedPercentage(MeasurementAggregateWithUnits totalDiskUsedPercentage) {
+        this.totalDiskUsedPercentage = totalDiskUsedPercentage;
+    }
+
+    /**
+     * @return A computed metric for the percentage of total (system + Storage Node data file) disk space used the partitions where data files are stored.
+     *         If multiple data locations are configured then the aggregate is calculated.
+     */
+    public MeasurementAggregate getFreeDiskToDataSizeRatio() {
+        return freeDiskToDataSizeRatio;
+    }
+
+    public void setFreeDiskToDataSizeRatio(MeasurementAggregate freeDiskToDataSizeRatio) {
+        this.freeDiskToDataSizeRatio = freeDiskToDataSizeRatio;
+    }
+
+    /**
+     * @return A computed metric for the space used on disk by all data files, commit logs, and saved caches.
+     */
+    public MeasurementAggregateWithUnits getDataDiskUsed() {
+        return dataDiskUsed;
+    }
+
+    public void setDataDiskUsed(MeasurementAggregateWithUnits dataDiskUsed) {
+        this.dataDiskUsed = dataDiskUsed;
     }
 
     /**
@@ -163,36 +230,28 @@ public class StorageNodeLoadComposite implements Serializable {
 
     public String toString() {
         StringBuilder builder = new StringBuilder();
-        // gwt doesn't support String.format
-//        builder.append("average values for last ");
-//        builder.append((endtime - begintime) / (1000 * 60 * 60));
-//        builder.append(" hours");
-//        builder.append("\naddress        load       tokens  owns (effective)\n");
-//        builder.append(string.format("%15s", storagenode.getaddress()));
-//        builder.append(string.format("%11s", load.getaggregate().getavg())).append(" ").append(load.getunits().getname());
-//        builder.append(string.format("%8s", tokens.getavg()));
-//        builder.append(string.format("%16s", actuallyowns.getavg()));
-        
         builder.append("storageNode.addresss=").append(storageNode.getAddress()).append(", ");
         builder.append("beginTime=").append(beginTime).append(", ");
-        builder.append("heapCommitted=").append(heapCommitted).append(", ");
+        builder.append("beginTime=").append(beginTime).append(", ");
+        builder.append("unackAlerts=").append(unackAlerts).append(", ");
         builder.append("heapUsed=").append(heapUsed).append(", ");
         builder.append("heapPercentageUsed=").append(heapPercentageUsed).append(", ");
         builder.append("load=").append(load).append(", ");
-        builder.append("diskSpacePercentageUsed=").append(diskSpacePercentageUsed).append(", ");
+        builder.append("dataUsedPercentage=").append(dataDiskUsedPercentage).append(", ");
+        builder.append("dataDiskUsed=").append(dataDiskUsed).append(", ");
         builder.append("tokens=").append(tokens).append(", ");
         builder.append("actuallyOwns=").append(actuallyOwns);
         return builder.toString();
     }
 
-    
+
     public static class MeasurementAggregateWithUnits implements Serializable {
         private static final long serialVersionUID = 1L;
-        
+
         private MeasurementAggregate aggregate;
         private MeasurementUnits units;
         private String formattedValue;
-        
+
         public MeasurementAggregateWithUnits() {
             // GWT needs this
         }
@@ -209,7 +268,7 @@ public class StorageNodeLoadComposite implements Serializable {
         public MeasurementUnits getUnits() {
             return units;
         }
-        
+
         public void setFormattedValue(String formattedValue) {
             this.formattedValue = formattedValue;
         }

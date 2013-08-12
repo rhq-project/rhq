@@ -65,6 +65,8 @@ public interface StorageNodeManagerLocal {
     StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode);
 
     boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
+    
+    void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration);
 
     /**
      * Fetches the list of StorageNode entities based on provided criteria.

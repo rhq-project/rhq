@@ -84,5 +84,5 @@ public interface StorageGWTService extends RemoteService {
     
     StorageNodeConfigurationComposite retrieveConfiguration(StorageNode storageNode) throws RuntimeException;
     
-    boolean updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException;
+    void updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException;
 }

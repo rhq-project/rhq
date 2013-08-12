@@ -258,6 +258,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         newTemplate.setResourceType(resourceType);
         newTemplate.setPriority(AlertPriority.MEDIUM);
         newTemplate.setConditionExpression(BooleanExpression.ANY);
+        newTemplate.setDescription(storageNodeHighHeapTemplate.getDescription());
         newTemplate.setRecoveryId(0);
         newTemplate.setEnabled(true);
 
@@ -308,6 +309,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         newTemplate.setResourceType(resourceType);
         newTemplate.setPriority(AlertPriority.MEDIUM);
         newTemplate.setConditionExpression(BooleanExpression.ANY);
+        newTemplate.setDescription(storageNodeHighDiskUsageTemplate.getDescription());
         newTemplate.setRecoveryId(0);
         newTemplate.setEnabled(true);
 
@@ -377,6 +379,7 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         newTemplate.setResourceType(resourceType);
         newTemplate.setPriority(AlertPriority.MEDIUM);
         newTemplate.setConditionExpression(BooleanExpression.ANY);
+        newTemplate.setDescription(storageNodeSnapshotFailureTemplate.getDescription());
         newTemplate.setRecoveryId(0);
         newTemplate.setEnabled(true);
 

@@ -36,6 +36,11 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 
+import org.rhq.enterprise.server.storage.StorageClusterSettings;
+import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
+import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
+
+import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionAttribute;
@@ -83,9 +88,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.storage.StorageClusterSettings;
-import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
-import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -623,6 +625,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
 
         return configuration;
+    }
+    
+    @Override
+    @Asynchronous
+    public void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
+        updateConfiguration(subject, storageNodeConfiguration);
     }
 
     @Override

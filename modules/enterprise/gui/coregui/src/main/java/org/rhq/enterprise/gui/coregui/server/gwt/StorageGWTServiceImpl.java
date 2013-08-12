@@ -163,9 +163,9 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
     }
     
     @Override
-    public boolean updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException {
+    public void updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException {
         try {
-            return storageNodeManager.updateConfiguration(getSessionSubject(), storageNodeConfiguration);
+            storageNodeManager.updateConfigurationAsync(getSessionSubject(), storageNodeConfiguration);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

@@ -74,15 +74,12 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
 
     private void save() {
         updateConfiguration();
-        GWTServiceLookup.getStorageService().updateConfiguration(configuration, new AsyncCallback<Boolean>() {
-            public void onSuccess(Boolean result) {
-                if (result) {
-                    Message msg = new Message("Storage node settings were successfully updated.", Message.Severity.Info);
-                    CoreGUI.getMessageCenter().notify(msg);
-                } else {
-                    onFailure(new Exception("Operation failed."));
-                }
+        GWTServiceLookup.getStorageService().updateConfiguration(configuration, new AsyncCallback<Void>() {
+            public void onSuccess(Void result) {
+                Message msg = new Message("Storage node settings were successfully updated.", Message.Severity.Info);
+                CoreGUI.getMessageCenter().notify(msg);
             }
+
             public void onFailure(Throwable caught) {
                 CoreGUI.getErrorHandler().handleError("Unable to update the storage node settings.", caught);
             }

@@ -18,14 +18,22 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
+import java.util.ArrayList;
 import java.util.EnumSet;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.data.DataSourceField;
+import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.Label;
+import com.smartgwt.client.widgets.grid.CellFormatter;
+import com.smartgwt.client.widgets.grid.ListGrid;
+import com.smartgwt.client.widgets.grid.ListGridField;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
@@ -34,17 +42,22 @@ import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
+import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
+import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -120,7 +133,8 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
             tabset.getTabByName(tabInfo.name.getName()).setPane(new Label("in progress.."));
         } else if (tabInfo.equals(alertsTabInfo)) {
             if (resIds != null) {
-                tabset.getTabByName(tabInfo.name.getName()).setPane(new AlertHistoryView("storageNodesAlerts", resIds));
+                tabset.getTabByName(tabInfo.name.getName()).setPane(
+                    new StorageNodeAlertHistoryView("storageNodesAlerts", resIds));
             } else {
                 GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new AsyncCallback<Integer[]>() {
                     @Override
@@ -137,7 +151,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
                         } else {
                             resIds = ArrayUtils.unwrapArray(result);
                             tabset.getTabByName(tabInfo.name.getName()).setPane(
-                                new AlertHistoryView("storageNodesAlerts", resIds));
+                                new StorageNodeAlertHistoryView("storageNodesAlerts", resIds));
                             tabset.selectTab(tabInfo.index);
                         }
                     }

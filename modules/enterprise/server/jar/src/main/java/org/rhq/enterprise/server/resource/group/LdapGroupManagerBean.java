@@ -604,7 +604,13 @@ SystemSetting.LDAP_GROUP_QUERY_PAGE_SIZE.name(), ""
             entry.put("name", name);
             entry.put("description", description);
             groupDetailsMap.add(entry);
-            resultCount++;
+
+            resultCount++;//monitor the number of groups returned during this query.
+            groupQueryResultCount = resultCount;//update result count
+            if (groupQueryPageCount == 0) {
+                groupQueryPageCount++;
+            }
+            groupQueryCurrentTime = System.currentTimeMillis();
         }
     }
 

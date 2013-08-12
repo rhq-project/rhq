@@ -6,11 +6,11 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
 
+import mazz.i18n.Logger;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DbUtilsI18NFactory;
 import org.rhq.core.db.DbUtilsI18NResourceKeys;
-
-import mazz.i18n.Logger;
 
 /**
  * Updates the address field of storage node entities to ensure we are storing IP addresses and not hostnames. We want
@@ -34,7 +34,7 @@ public class StorageNodeAddressUpgradeTask implements DatabaseUpgradeTask {
         String storageNodeAddress = null;
         try {
             for (Object[] row : results) {
-                id = (Integer) row[0];
+                id = databaseType.getInteger(row[0]);
                 storageNodeAddress = (String) row[1];
                 InetAddress address = InetAddress.getByName(storageNodeAddress);
                 if (!storageNodeAddress.equals(address.getHostAddress())) {

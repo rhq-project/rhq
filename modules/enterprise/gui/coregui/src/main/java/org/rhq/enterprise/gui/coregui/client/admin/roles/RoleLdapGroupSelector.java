@@ -72,7 +72,8 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
     public static final String FIELD_DESCRIPTION = "description";
     final TextItem searchTextItem = new TextItem();
     protected int cursorPosition;
-    private static int retryAttempt = 0;
+    private static int retryAttempt = 0;//limit retries on failure
+    private static int noProgressAttempts = 0;//limit really slow attempt parse times
 
     //override the selector key for ldap group selection.
     protected String getSelectorKey() {
@@ -263,6 +264,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                             groupQueryStatus.setIcons(failIcon);
                             groupQueryStatus.setDefaultValue(MSG.view_adminRoles_failLdapGroupsSettings());
                             CoreGUI.getErrorHandler().handleError(MSG.view_adminRoles_failLdapGroupsSettings(), caught);
+                            Log.debug(MSG.view_adminRoles_failLdapGroupsSettings());
                         }
 
                         @Override
@@ -308,6 +310,7 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                             retryAttempt++;
                             if (retryAttempt > 3) {
                                 cancel();//kill thread
+                                Log.debug(MSG.view_adminRoles_failLdapRetry());
                                 retryAttempt = 0;
                             }
                         }
@@ -338,6 +341,10 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                                     pageCountItem.setValue(value);
                                     pageCount = Integer.valueOf(value);
                                 }
+                            }
+
+                            if (resultCountValue == 0) {
+                                noProgressAttempts++;
                             }
                             //Update status information
                             String warnTooManyResults = MSG.view_adminRoles_ldapWarnTooManyResults();
@@ -378,12 +385,15 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                                 if (resultCountValue > 20000) {//results throttled
                                     adviceItem.setValue(tooManyResults);
                                     adviceItem.setTooltip(tooManyResults);
+                                    Log.debug(tooManyResults);//log error to client.
                                 } else if ((current - start) >= 10 * 1000) {// took longer than 10s
                                     adviceItem.setValue(queryTookLongResults);
                                     adviceItem.setTooltip(queryTookLongResults);
+                                    Log.debug(queryTookLongResults);//log error to client.
                                 } else if (pageCount >= 20) {// required more than 20 pages of results
                                     adviceItem.setValue(queryTookManyPagesResults);
                                     adviceItem.setTooltip(queryTookManyPagesResults);
+                                    Log.debug(queryTookManyPagesResults);//log error to client.
                                 } else {//simple success.
                                     groupQueryStatus.setDefaultValue(success);
                                     groupQueryStatus.setIcons(successIcon);
@@ -391,8 +401,19 @@ public class RoleLdapGroupSelector extends AbstractSelector<LdapGroup, org.rhq.c
                                     adviceItem.setTooltip(none);
                                     adviceItem.setDisabled(true);
                                 }
+                                noProgressAttempts = 0;
                                 //now cancel the timer
                                 cancel();
+                            } else if (noProgressAttempts >= 10) {//availGroups query stuck on server side  
+                                //cancel the timer. 
+                                cancel();
+                                String clientSideQuitting = MSG.view_adminRoles_failLdapCancelling();//catch all
+                                adviceItem.setDisabled(false);
+                                groupQueryStatus.setIcons(attentionIcon);
+                                adviceItem.setValue(clientSideQuitting);
+                                adviceItem.setTooltip(clientSideQuitting);
+                                noProgressAttempts = 0;
+                                Log.debug(clientSideQuitting);//log error to client.
                             }
                             availableGroupDetails.markForRedraw();
                         }

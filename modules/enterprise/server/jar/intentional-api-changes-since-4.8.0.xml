@@ -74,7 +74,7 @@
   <difference>
     <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
     <differenceType>7012</differenceType>  <!-- method added to an interface -->
-    <method>org.rhq.core.domain.bundle.BundleGroup createBundleGroup(org.rhq.core.domain.auth.Subject, java.lang.String, java.lang.String)</method>
+    <method>org.rhq.core.domain.bundle.BundleGroup createBundleGroup(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.bundle.BundleGroup)</method>
     <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
   </difference>
   
@@ -166,6 +166,13 @@
     <className>org/rhq/enterprise/server/authz/RoleManagerRemote</className>
     <differenceType>7012</differenceType>  <!-- method added to an interface -->
     <method>void setAssignedBundleGroups(org.rhq.core.domain.auth.Subject, int, int[])</method>
+    <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
+  </difference>
+
+  <difference>
+    <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>org.rhq.core.domain.bundle.BundleGroup updateBundleGroup(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.bundle.BundleGroup)</method>
     <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
   </difference>
 

@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.JarURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -40,6 +41,8 @@ import java.util.jar.JarFile;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import org.jboss.vfs.VirtualFile;
 
 /**
  * @author Stefan Negrea
@@ -83,6 +86,19 @@ class UpdateFolder {
     }
 
     /**
+     * The version represented by the latest/highest xml update file.
+     *
+     * @return the version
+     */
+    public int getLatestVersion() {
+        if (this.updateFiles != null && this.updateFiles.size() > 0) {
+            return this.updateFiles.get(this.updateFiles.size() - 1).extractVersion();
+        }
+
+        return 0;
+    }
+
+    /**
      * Loads the initial set of update files based on the input folder.
      *
      * @return list of update files
@@ -115,9 +131,13 @@ class UpdateFolder {
                     }
                 }
             } else if (resourceFolderURL.getProtocol().equals("vfs")) {
-                // TODO need to add support for VFS if going to use inside EAP
-                throw new RuntimeException("The URL protocol [" + resourceFolderURL.getProtocol() + "] is not " +
-                    "supported");
+                URLConnection conn = resourceFolderURL.openConnection();
+                VirtualFile virtualFolder = (VirtualFile)conn.getContent();
+                for (VirtualFile virtualChild : virtualFolder.getChildren()) {
+                    if (!virtualChild.isDirectory()) {
+                        files.add(new UpdateFile(virtualChild.getPathNameRelativeTo(virtualFolder.getParent())));
+                    }
+                }
             } else {
                 // In the event we get another protocol that we do not recognize, throw an
                 // exception instead of failing silently.

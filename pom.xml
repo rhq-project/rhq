@@ -108,6 +108,8 @@
     <jboss-modules.version>1.1.1.GA</jboss-modules.version>
     <jboss-dmr.version>1.1.1.Final</jboss-dmr.version>
     <jboss-msc.version>1.0.2.GA</jboss-msc.version>
+    <jboss-vfs.version>3.1.0.Final</jboss-vfs.version>
+
 
     <!-- Not Provided - some of these are needed by the agent -->
     <jboss-annotations.version>4.2.3.GA</jboss-annotations.version>

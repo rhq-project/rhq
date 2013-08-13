@@ -80,7 +80,7 @@ public class SchemaManager {
     }
 
     /**
-     * Install and update the RHQ schema.
+     * Install and update the storage cluster schema.
      *
      * @throws Exception
      */
@@ -90,7 +90,18 @@ public class SchemaManager {
     }
 
     /**
-     * Drop RHQ schema and revert the database to pre-RHQ state.
+     * Check the existing storage cluster schema version to ensure it is compatible with the
+     * current installation.
+     *
+     * @throws Exception
+     */
+    public void checkCompatibility() throws Exception {
+        VersionManager version = new VersionManager(username, password, nodes);
+        version.checkCompatibility();
+    }
+
+    /**
+     * Drop storage cluster schema and revert the storage cluster to pre-RHQ state.
      *
      * @throws Exception
      */

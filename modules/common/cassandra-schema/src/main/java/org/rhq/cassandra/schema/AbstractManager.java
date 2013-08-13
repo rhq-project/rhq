@@ -92,7 +92,7 @@ abstract class AbstractManager {
     }
 
     /**
-     * Init the Cassandra cluster session with the username and password provided
+     * Init the storage cluster session with the username and password provided
      * at creation.
      */
     protected void initClusterSession() {
@@ -100,7 +100,7 @@ abstract class AbstractManager {
     }
 
     /**
-     * Init the Cassandra cluster session with provided username and password.
+     * Init the storage cluster session with provided username and password.
      *
      * @param username
      * @param password
@@ -125,7 +125,7 @@ abstract class AbstractManager {
     }
 
     /**
-     * Shutdown the Cassandra cluster connection.
+     * Shutdown the storage cluster connection.
      */
     protected void shutdownClusterConnection() {
         log.info("Shutting down existing cluster connections");
@@ -135,7 +135,7 @@ abstract class AbstractManager {
     }
 
     /**
-     * Get cluster size.
+     * Get storage cluster size.
      *
      * @return cluster size
      */
@@ -158,7 +158,7 @@ abstract class AbstractManager {
     }
 
     /**
-     * Runs a CQL query to check the existence of the RHQ user
+     * Runs a CQL query to check the existence of the RHQ user on the storage cluster.
      *
      * @return true if the RHQ user exists, false otherwise
      */
@@ -173,7 +173,7 @@ abstract class AbstractManager {
     }
 
     /**
-     * Run a CQL query to check the existence of the RHQ schema
+     * Run a CQL query to check the existence of the RHQ schema.
      *
      * @return true if the RHQ schema exists, false otherwise
      */
@@ -192,11 +192,11 @@ abstract class AbstractManager {
     }
 
     /**
-     * Run a CQL query to retrieve the current RHQ schema version
+     * Run a CQL query to retrieve the installed storage schema version.
      *
      * @return current RHQ schema version
      */
-    protected int getSchemaVersion() {
+    protected int getInstalledSchemaVersion() {
         int maxVersion = 0;
         try {
             ResultSet resultSet = executeManagementQuery(Query.VERSION);

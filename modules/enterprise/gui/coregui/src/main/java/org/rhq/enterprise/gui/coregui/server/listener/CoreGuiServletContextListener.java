@@ -54,7 +54,11 @@ public class CoreGuiServletContextListener implements ServletContextListener {
         scheduledExecutorService.schedule(new Runnable() {
             @Override
             public void run() {
-                startupBean.init();
+                try {
+                    startupBean.init();
+                } catch (Exception e) {
+                    shutdownListener.handleNotification();
+                }
             }
         }, 10, SECONDS);
     }

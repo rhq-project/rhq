@@ -40,6 +40,7 @@ import com.datastax.driver.core.Session;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.util.ClusterBuilder;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.StringUtil;
@@ -86,7 +87,6 @@ public class StorageClientManagerBean {
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
-        metricsConfiguration = new MetricsConfiguration();
         List<StorageNode> storageNodes = storageNodeManager.getStorageNodes();
         if (storageNodes.isEmpty()) {
             throw new IllegalStateException(
@@ -94,18 +94,39 @@ public class StorageClientManagerBean {
                     + "result of running dbsetup or deleting rows from rhq_storage_node table. Please re-install the "
                     + "storage node to fix this issue.");
         }
+
+        checkSchemaCompability(username, password, storageNodes);
+
+
         Session wrappedSession = createSession(username, password, storageNodeManager.getStorageNodes());
         session = new StorageSession(wrappedSession);
 
         storageClusterMonitor = new StorageClusterMonitor();
         session.addStorageStateListener(storageClusterMonitor);
 
+        metricsConfiguration = new MetricsConfiguration();
         metricsDAO = new MetricsDAO(session, metricsConfiguration);
 
         initMetricsServer();
 
         initialized = true;
         log.info("Storage client subsystem is now initialized");
+    }
+
+    /**
+     * Checks storage node schema compatibility.
+     *
+     * @param username username
+     * @param password password
+     * @param storageNodes storage nodes
+     */
+    private void checkSchemaCompability(String username, String password, List<StorageNode> storageNodes) {
+        SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
+        try {
+            schemaManager.checkCompatibility();
+        } catch (Exception e) {
+            throw new RuntimeException(e.getMessage(), e);
+        }
     }
 
     public synchronized void shutdown() {

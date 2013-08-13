@@ -11,7 +11,7 @@
     <difference>
         <className>org/rhq/core/domain/cloud/Server</className>
         <differenceType>7004</differenceType><!-- num argments changed -->
-        <method>clearStatus()</method>
+        <method>void clearStatus()</method>
         <justification>
             This class is not exposed remotely. The previous method signature was doing a blind clear of the status.
             The new method will clear only the specified status.

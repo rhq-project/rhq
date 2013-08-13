@@ -34,6 +34,8 @@ import com.datastax.driver.core.exceptions.AuthenticationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.cassandra.schema.exception.InstalledSchemaTooAdvancedException;
+import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
 import org.rhq.core.domain.cloud.StorageNode;
 
 /**
@@ -73,14 +75,14 @@ class VersionManager extends AbstractManager {
      * @throws Exception
      */
     public void install() throws Exception {
-        log.info("Preparing to install schema");
+        log.info("Preparing to install storage schema");
 
         boolean clusterSessionInitialized = false;
         try {
             initClusterSession();
             clusterSessionInitialized = true;
         } catch (AuthenticationException e) {
-            log.debug("Authentication exception. Will now attempt to create the schema.");
+            log.debug("Authentication exception. Will now attempt to create the storage schema.");
             log.debug(e);
         } finally {
             shutdownClusterConnection();
@@ -119,7 +121,7 @@ class VersionManager extends AbstractManager {
             if (!schemaExists()) {
                 execute(updateFolder.getUpdateFiles().get(0), properties);
             } else {
-                log.info("RHQ schema already exists.");
+                log.info("Storage schema already exists.");
             }
         } catch (Exception ex) {
             log.error(ex);
@@ -147,28 +149,44 @@ class VersionManager extends AbstractManager {
             initClusterSession();
 
             if (!schemaExists()) {
-                log.error("Schema not installed.");
-                throw new RuntimeException("Schema not installed propertly, cannot apply schema updates.");
+                log.error("Storage schema not installed.");
+                throw new RuntimeException("Storage schema not installed propertly, cannot apply schema updates.");
             }
 
             UpdateFolder updateFolder = new UpdateFolder(Task.Update.getFolder());
 
-            int currentSchemaVersion = getSchemaVersion();
-            log.info("Current schema version is " + currentSchemaVersion);
-            updateFolder.removeAppliedUpdates(currentSchemaVersion);
+            int installedSchemaVersion = getInstalledSchemaVersion();
+            log.info("Installed storage schema version is " + installedSchemaVersion);
 
-            if (updateFolder.getUpdateFiles().size() == 0) {
-                log.info("RHQ schema is current! No updates applied.");
+            int requiredSchemaVersion = updateFolder.getLatestVersion();
+            log.info("Required storage schema version is " + requiredSchemaVersion);
+
+            if (requiredSchemaVersion == installedSchemaVersion) {
+                log.info("Storage schema version is current ( " + installedSchemaVersion + " ). No updates applied.");
+            } else if (requiredSchemaVersion < installedSchemaVersion) {
+                log.error("Installed storage cluster schema version: " + installedSchemaVersion +
+                    ". Required schema version: " + requiredSchemaVersion
+                    + ". Storage cluster schema has been updated beyond the capability of the existing server installation.");
+                throw new InstalledSchemaTooAdvancedException();
             } else {
-                for (UpdateFile updateFile : updateFolder.getUpdateFiles()) {
-                    execute(updateFile);
+                log.info("Storage schema requires udpates. Updating from version " + installedSchemaVersion
+                    + " to version " + requiredSchemaVersion + ".");
 
-                    Properties versionProperties = new Properties();
-                    versionProperties.put("version", updateFile.extractVersion() + "");
-                    versionProperties.put("time", System.currentTimeMillis() + "");
-                    executeManagementQuery(Query.INSERT_SCHEMA_VERSION, versionProperties);
+                updateFolder.removeAppliedUpdates(installedSchemaVersion);
 
-                    log.info("RHQ schema update " + updateFile +" applied.");
+                if (updateFolder.getUpdateFiles().size() == 0) {
+                    log.info("Storage schema is current! No updates applied.");
+                } else {
+                    for (UpdateFile updateFile : updateFolder.getUpdateFiles()) {
+                        execute(updateFile);
+
+                        Properties versionProperties = new Properties();
+                        versionProperties.put("version", updateFile.extractVersion() + "");
+                        versionProperties.put("time", System.currentTimeMillis() + "");
+                        executeManagementQuery(Query.INSERT_SCHEMA_VERSION, versionProperties);
+
+                        log.info("Storage schema update " + updateFile + " applied.");
+                    }
                 }
             }
         } finally {
@@ -185,7 +203,7 @@ class VersionManager extends AbstractManager {
      * @throws Exception
      */
     public void drop() throws Exception {
-        log.info("Preparing to drop RHQ schema");
+        log.info("Preparing to drop storage schema.");
 
         UpdateFolder updateFolder = new UpdateFolder(Task.Drop.getFolder());
         Properties properties = new Properties(System.getProperties());
@@ -209,22 +227,60 @@ class VersionManager extends AbstractManager {
             if (schemaExists()) {
                 //2. Drop RHQ schema
                 execute(updateFolder.getUpdateFiles().get(1), properties);
-                log.info("RHQ schema dropped.");
+                log.info("Storage schema dropped.");
             } else {
-                log.info("RHQ schema does not exist. Drop operation not required.");
+                log.info("Storage schema does not exist. Drop operation not required.");
             }
 
             if (userExists()) {
                 //3. Drop RHQ user
                 execute(updateFolder.getUpdateFiles().get(2), properties);
-                log.info("RHQ admin user dropped.");
+                log.info("RHQ admin user dropped from storage cluster.");
             } else {
-                log.info("RHQ admin user does not exist. Drop operation not required.");
+                log.info("RHQ admin user does not exist on the storage cluster. Drop operation not required.");
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
             shutdownClusterConnection();
+        }
+    }
+
+    /**
+     * Check storage cluster schema version compatibility.
+     * If the version installed on the storage cluster is too advanced or too old compared
+     * to the version available in the current schema manager an error will thrown.
+     *
+     * @throws Exception schema compatibility exception
+     */
+    public void checkCompatibility() throws Exception {
+        log.info("Preparing to check storage schema compatibility.");
+        try {
+            initClusterSession();
+
+            int installedSchemaVersion = this.getInstalledSchemaVersion();
+
+            UpdateFolder folder = new UpdateFolder(Task.Update.getFolder());
+            int requiredSchemaVersion = folder.getLatestVersion();
+
+            if (installedSchemaVersion < requiredSchemaVersion) {
+                log.error("Storage cluster schema version:" + installedSchemaVersion + ". Required schema version: "
+                    + requiredSchemaVersion + ". Please update storage cluster schema version.");
+                throw new InstalledSchemaTooOldException();
+            }
+
+            if (installedSchemaVersion > requiredSchemaVersion) {
+                log.error("Storage cluster schema version:" + installedSchemaVersion + ". Required schema version: "
+                    + requiredSchemaVersion
+                    + ". Storage clutser has been updated beyond the capability of the current server installation.");
+                throw new InstalledSchemaTooAdvancedException();
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            shutdownClusterConnection();
+
+            log.info("Completed check for storage schema compatibility.");
         }
     }
 }

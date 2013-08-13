@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ImageStyle;
-import com.smartgwt.client.types.SummaryFunctionType;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -37,6 +36,8 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
+import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
@@ -45,6 +46,7 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  *
  */
 public class StorageNodeAlertHistoryView extends AlertHistoryView {
+    private boolean isGouped = true;
     
     public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds) {
         super(tableTitle, resourceIds);
@@ -64,8 +66,32 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                         continue;
                     } if (AlertCriteria.SORT_FIELD_CTIME.equals(field.getName())) {
                         field.setWidth(240);
+                        field.setShowGridSummary(true);  
+                        field.setShowGroupSummary(true);
+                        field.setSummaryFunction(new SummaryFunction() {  
+                            public Object getSummaryValue(Record[] records, ListGridField field) {
+                                if (records != null && records.length > 0 && records[0] != null) {
+                                    Integer resourceId = records[0].getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                                    Integer defId = records[0].getAttributeAsInt("definitionId");
+                                    String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
+                                    return LinkManager.getHref(url, "Link to Definition");
+                                } else return "";
+                            }  
+                        });
+                        field.setCellFormatter(new CellFormatter() {
+                            public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                                if (listGridRecord.getAttribute("groupValue") != null) {
+                                    return (String) o;
+                                }
+                                Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                                Integer defId = listGridRecord.getAttributeAsInt("definitionId");
+                                String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
+                                return LinkManager.getHref(url, o.toString());
+                            }
+                        });
+                        field.setWidth(240);
                     } else if ("conditionValue".equals(field.getName())) {
-                        field.setWidth(90);
+                        field.setWidth(140);
                     } else if ("acknowledgingSubject".equals(field.getName())) {
                         field.setSummaryFunction(new SummaryFunction() {  
                             public Object getSummaryValue(Record[] records, ListGridField field) {
@@ -74,8 +100,8 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                                     if (record.getAttribute("acknowledgingSubject") != null) {
                                         count++;
                                     }
-                                }  
-                                return count + " Unacked";  
+                                }
+                                return "(" + count + " / " + records.length + ")";
                             }  
                         });
                         field.setCellFormatter(new CellFormatter() {
@@ -100,20 +126,12 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                         newFields.add(1, field);
                         continue;
                     } else if ("name".equals(field.getName())) {
-                        field.setShowGridSummary(true);  
-                        field.setShowGroupSummary(true);
-                        field.setSummaryFunction(SummaryFunctionType.COUNT);
                         field.setCellFormatter(new CellFormatter() {
                             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
-                                if (listGridRecord.getAttribute("groupValue") != null) {
-                                    return (String) o;
-                                }
-                                Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                                Integer defId = listGridRecord.getAttributeAsInt("definitionId");
-                                String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
-                                return LinkManager.getHref(url, o.toString());
+                                return o.toString();
                             }
                         });
+                        field.setHidden(true);
                     }
                     newFields.add(field);
                 }
@@ -142,6 +160,9 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                 if (value == null) {
                     return "";
                 }
+                if (record.getAttribute("groupValue") != null) {
+                    return value.toString();
+                }
                 String detailsUrl = getDetailUrlFromRecord(record);
                 String formattedValue = StringUtility.escapeHtml(value.toString());
                 return LinkManager.getHref(detailsUrl, formattedValue);
@@ -169,5 +190,20 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
             throw new IllegalArgumentException(msg);
         }
     }
-
+    
+    @Override
+    protected void configureTable() {
+        super.configureTable();
+        addTableAction("(Un)Group Alerts", new AbstractTableAction(TableActionEnablement.ALWAYS) {
+            public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                if (isGouped) {
+                    getListGrid().ungroup();
+                } else {
+                    getListGrid().groupBy("name");
+                }
+                isGouped = !isGouped;
+                refreshTableInfo();
+            }
+        });
+    }
 }

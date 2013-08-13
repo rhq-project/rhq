@@ -146,7 +146,8 @@ public interface BundleManagerRemote {
         throws Exception;
 
     /**
-     * Assign the specified bundles to the specified bundle group.
+     * Assign the specified bundles to the specified bundle group. This adds bundles that were not previously
+     * assigned.  Others are ignored.
      * <pre>
      * Requires VIEW permission for the relevant bundle and one of:
      * - Global.MANAGE_BUNDLE_GROUPS
@@ -206,18 +207,17 @@ public interface BundleManagerRemote {
         String destBaseDirName, String deployDir, Integer groupId) throws Exception;
 
     /**
-     * Create a new bundle group.
+     * Create a new bundle group. Bundles, if specified will be set as the initial bundles in the group.
      * <pre>
      * Require Permissions:
      * - Global.MANAGE_BUNDLE_GROUPS
      * </pre> 
      * @param subject user that must have proper permissions
-     * @param name the unique bundle group name
-     * @param description an optional description
+     * @param bundleGroup the new bundle group name the unique bundle group name
      * @return the persisted BundleGroup
      * @throws Exception
      */
-    BundleGroup createBundleGroup(Subject subject, String name, String description) throws Exception;
+    BundleGroup createBundleGroup(Subject subject, BundleGroup bundleGroup) throws Exception;
 
     /**
      * Creates a bundle version based on single recipe string. The recipe specifies the bundle name,
@@ -624,7 +624,8 @@ public interface BundleManagerRemote {
         String deploymentDescription, boolean isCleanDeployment) throws Exception;
 
     /**
-     * Unassign the specified bundles from the specified bundle group.
+     * Unassign the specified bundles from the specified bundle group. This removes bundles that were previously
+     * assigned. Others are ignored.
      * <pre>
      * Requires VIEW permission for the relevant bundles and one of:
      * - Global.MANAGE_BUNDLE_GROUPS 
@@ -637,4 +638,18 @@ public interface BundleManagerRemote {
      * @param bundleIds
      */
     void unassignBundlesFromBundleGroup(Subject subject, int bundleGroupId, int[] bundleIds);
+
+    /**
+     * Updates an existing bundle group. The set of bundles will  be updated if non-null.
+     * <pre>
+     * Require Permissions:
+     * - Global.MANAGE_BUNDLE_GROUPS
+     * </pre> 
+     * @param subject user that must have proper permissions
+     * @param bundleGroup the updated bundle group
+     * @return the updated BundleGroup
+     * @throws Exception
+     */
+    BundleGroup updateBundleGroup(Subject subject, BundleGroup bundleGroup) throws Exception;
+
 }

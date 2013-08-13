@@ -45,8 +45,7 @@ public interface RoleManagerRemote {
     Role getRole(Subject subject, int roleId);
 
     /**
-     * Persists the new role to the database. The subjects assigned to the role are ignored - this only creates the
-     * role entity with 0 subjects initially assigned to it.
+     * Persists the new role to the database.
      *
      * @param subject The user attempting to create the role
      * @param newRole The new role being created
@@ -64,7 +63,8 @@ public interface RoleManagerRemote {
     void deleteRoles(Subject subject, int[] roleIds);
 
     /**
-     * Updates the given role, excluding the subjects and groups. This updates permissions, name, description, etc.
+     * Updates the given role including permissions. To update subjects, resource groups, ldap groups
+     * or bundle groups pass a non-null value.
      *
      * @param subject The user updating the role
      * @param role The role being updated

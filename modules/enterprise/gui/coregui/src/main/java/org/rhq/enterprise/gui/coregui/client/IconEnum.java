@@ -80,6 +80,7 @@ public enum IconEnum {
     //  Bundle Tab
     /////////////////////////////
     BUNDLE("subsystems/bundle/Bundle_16.png", "subsystems/bundle/Bundle_24.png"),
+    BUNDLE_GROUP("subsystems/bundle/BundleGroup_16.png", "subsystems/bundle/BundleGroup_24.png"),
     BUNDLE_DELETE("subsystems/bundle/BundleAction_Delete_16.png", "subsystems/bundle/BundleAction_Delete_24.png"),
     BUNDLE_DEPLOY("subsystems/bundle/BundleAction_Deploy_16.png", "subsystems/bundle/BundleAction_Deploy_24.png"),
     BUNDLE_DESTINATION("subsystems/bundle/BundleDestination_16.png", "subsystems/bundle/BundleDestination_24.png"),

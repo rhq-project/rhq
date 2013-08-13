@@ -102,4 +102,11 @@ public interface BundleGWTService extends RemoteService {
         boolean isCleanDeployment) throws RuntimeException;
 
     void purgeBundleDestination(int bundleDestinationId) throws RuntimeException;
+
+    BundleGroup createBundleGroup(BundleGroup bundleGroup) throws RuntimeException;
+
+    void deleteBundleGroups(int[] bundleGroupIds) throws RuntimeException;
+
+    BundleGroup updateBundleGroup(BundleGroup bundleGroup) throws RuntimeException;
+
 }

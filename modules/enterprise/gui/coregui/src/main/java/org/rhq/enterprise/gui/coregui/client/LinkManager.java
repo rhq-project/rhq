@@ -505,6 +505,10 @@ public class LinkManager {
         return "#Bundles/Bundle/" + bundleId;
     }
 
+    public static String getBundleGroupLink(int bundleGroupId) {
+        return "#Bundles/BundleGroup/" + bundleGroupId;
+    }
+
     public static String getBundleVersionLink(int bundleId, int bundleVersionId) {
         return "#Bundles/Bundle/" + bundleId + "/versions" + (bundleVersionId == 0 ? "" : ("/" + bundleVersionId));
     }

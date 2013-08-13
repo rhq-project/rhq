@@ -62,7 +62,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
         ListGridField descriptionField = new ListGridField(BundleDestinationDataSource.FIELD_DESCRIPTION,
             MSG.common_title_description());
         ListGridField bundleNameField = new ListGridField(BundleDestinationDataSource.FIELD_BUNDLE_NAME,
-            MSG.view_bundle_bundle());
+            MSG.common_title_bundle());
         ListGridField groupNameField = new ListGridField(BundleDestinationDataSource.FIELD_GROUP_NAME,
             MSG.view_bundle_dest_group());
         ListGridField baseDirNameField = new ListGridField(BundleDestinationDataSource.FIELD_BASE_DIR_NAME,

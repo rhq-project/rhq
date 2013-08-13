@@ -79,9 +79,9 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallb
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -148,7 +148,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         form.setPadding(5);
 
         StaticTextItem bundleName = new StaticTextItem("bundle");
-        bundleName.setTitle(MSG.view_bundle_bundle());
+        bundleName.setTitle(MSG.common_title_bundle());
         bundleName.setValue("<a href=\"" + LinkManager.getBundleLink(bundle.getId()) + "\">"
             + StringUtility.escapeHtml(bundle.getName()) + "</a>");
 

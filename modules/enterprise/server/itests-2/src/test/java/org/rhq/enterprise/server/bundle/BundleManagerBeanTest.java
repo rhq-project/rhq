@@ -1330,9 +1330,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
 
+        BundleGroup bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("test");
+
         // deny bundle group create
         try {
-            bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+            bundleManager.createBundleGroup(subject, bundleGroup);
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1340,7 +1343,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // allow bundle group create
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
 
         // deny bundle group delete
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
@@ -1413,7 +1416,11 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // deny global perm bundle assign
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+
+        bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("test");
+
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         try {
@@ -1538,7 +1545,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup1 = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME + "_1", "bg-1");
+        BundleGroup bundleGroup1 = new BundleGroup(TEST_BUNDLE_GROUP_NAME + "_1");
+        bundleGroup1.setDescription("bg-1");
+        bundleGroup1 = bundleManager.createBundleGroup(subject, bundleGroup1);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg1 to the role, but no perms
@@ -1578,7 +1587,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create second bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup2 = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME + "_2", "bg-2");
+        BundleGroup bundleGroup2 = new BundleGroup(TEST_BUNDLE_GROUP_NAME + "_2");
+        bundleGroup2.setDescription("bg-2");
+        bundleGroup2 = bundleManager.createBundleGroup(subject, bundleGroup2);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // deny bundle create in bg2 (not associated with role)
@@ -1676,7 +1687,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup1 = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME + "_1", "bg-1");
+        BundleGroup bundleGroup1 = new BundleGroup(TEST_BUNDLE_GROUP_NAME + "_1");
+        bundleGroup1.setDescription("bg-1");
+        bundleGroup1 = bundleManager.createBundleGroup(subject, bundleGroup1);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg1 to the role with group create
@@ -1719,7 +1732,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "bg");
+        BundleGroup bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("bg");
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg to the role with group create
@@ -1810,7 +1825,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "bg");
+        BundleGroup bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("bg");
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg to the role with group create

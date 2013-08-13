@@ -83,7 +83,7 @@ public class BundleDestinationDataSource extends RPCDataSource<BundleDestination
         DataSourceTextField description = new DataSourceTextField(FIELD_DESCRIPTION, MSG.common_title_description());
         fields.add(description);
 
-        DataSourceTextField bundle = new DataSourceTextField(FIELD_BUNDLE_NAME, MSG.view_bundle_bundle());
+        DataSourceTextField bundle = new DataSourceTextField(FIELD_BUNDLE_NAME, MSG.common_title_bundle());
         fields.add(bundle);
 
         DataSourceTextField group = new DataSourceTextField(FIELD_GROUP_NAME, MSG.view_bundle_dest_group());

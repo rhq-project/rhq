@@ -73,7 +73,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
     }
 
     public BundlesListView(Criteria criteria, Set<Permission> perms) {
-        super(MSG.view_bundle_bundles(), criteria, IconEnum.BUNDLE.getIcon24x24Path());
+        super(MSG.common_title_bundles(), criteria, IconEnum.BUNDLE.getIcon24x24Path());
         this.permissions = perms;
         setHeaderIcon(IconEnum.BUNDLE.getIcon24x24Path());
         setDataSource(new BundlesWithLatestVersionDataSource());

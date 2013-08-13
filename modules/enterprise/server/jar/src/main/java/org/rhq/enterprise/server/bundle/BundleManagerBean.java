@@ -1973,7 +1973,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     @RequiredPermission(Permission.MANAGE_BUNDLE_GROUPS)
-    public BundleGroup createBundleGroup(Subject subject, String name, String description) throws Exception {
+    public BundleGroup createBundleGroup(Subject subject, BundleGroup bundleGroup) throws Exception {
+        String name = bundleGroup.getName();
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleGroupName: " + name);
         }
@@ -1986,14 +1987,19 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
                 + name);
         }
 
-        // create and add the required Repo. the Repo is a detached object which helps in its eventual
-        // removal.
-        BundleGroup bg = new BundleGroup(name);
-        bg.setDescription(description);
+        entityManager.persist(bundleGroup);
 
-        entityManager.persist(bg);
+        Set<Bundle> bundles = bundleGroup.getBundles();
+        if (null != bundles) {
+            int[] bundleIds = new int[bundles.size()];
+            int i = 0;
+            for (Bundle b : bundles) {
+                bundleIds[i++] = b.getId();
+            }
+            assignBundlesToBundleGroup(subject, bundleGroup.getId(), bundleIds);
+        }
 
-        return bg;
+        return bundleGroup;
     }
 
     @Override
@@ -2335,6 +2341,42 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             + "] requires either Global.DELETE_BUNDLES + BundleGroup.VIEW_BUNDLES_IN_GROUP, or BundleGroup.DELETE_BUNDLES_FROM_GROUP, to delete bundle ["
             + bundleId + "].";
         throw new PermissionException(msg);
+    }
+
+    @Override
+    public BundleGroup updateBundleGroup(Subject subject, BundleGroup bundleGroup) throws Exception {
+        BundleGroup attachedBundleGroup = entityManager.find(BundleGroup.class, bundleGroup.getId());
+        if (attachedBundleGroup == null) {
+            throw new IllegalStateException("Cannot update " + bundleGroup
+                + ", because no bundle group exists with id [" + bundleGroup.getId() + "].");
+        }
+
+        // First update the simple fields and the permissions.
+        attachedBundleGroup.setName(bundleGroup.getName());
+        attachedBundleGroup.setDescription(bundleGroup.getDescription());
+
+        Set<Bundle> newBundles = bundleGroup.getBundles();
+        if (newBundles != null) {
+            Set<Bundle> currentBundles = attachedBundleGroup.getBundles();
+            // wrap in new HashSet to avoid ConcurrentModificationExceptions.
+            Set<Bundle> BundlesToRemove = new HashSet<Bundle>(currentBundles);
+            for (Bundle bg : currentBundles) {
+                BundlesToRemove.remove(bg);
+            }
+            for (Bundle bg : BundlesToRemove) {
+                attachedBundleGroup.removeBundle(bg);
+            }
+
+            for (Bundle bg : newBundles) {
+                Bundle attachedBundle = entityManager.find(Bundle.class, bg.getId());
+                attachedBundleGroup.addBundle(attachedBundle);
+            }
+        }
+
+        // Fetch the lazy Set for the return
+        attachedBundleGroup.getBundles().size();
+
+        return attachedBundleGroup;
     }
 
 }

@@ -177,8 +177,6 @@
 	<classpathentry kind="src" path="modules/plugins/perftest/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/src/test/java"/>
 	<classpathentry kind="src" path="modules/plugins/perftest/target/generated-sources/xjc"/>
-	<classpathentry kind="src" path="modules/helpers/pluginAnnotations/src/main/java"/>
-	<classpathentry kind="src" path="modules/helpers/pluginGen/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/perftest-support/src/main/java"/>
 	<classpathentry kind="src" path="modules/helpers/rtfilter/src/main/java"/>
 	<classpathentry kind="src" path="modules/core/plugin-container-itest/src/test/java"/>
@@ -380,7 +378,7 @@
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-submit/1.5.2/byteman-submit-1.5.2-sources.jar"/>
 	<classpathentry exported="true" kind="var" path="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2.jar" sourcepath="M2_REPO/org/jboss/byteman/byteman-bmunit/1.5.2/byteman-bmunit-1.5.2-sources.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/cassandra/cassandra-all/1.2.4/cassandra-all-1.2.4.jar"/>
-	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.0-rhq-1.2.4/cassandra-driver-core-1.0.0-rhq-1.2.4.jar"/>
+	<classpathentry kind="var" path="M2_REPO/com/datastax/cassandra/cassandra-driver-core/1.0.2-rhq-1.2.4/cassandra-driver-core-1.0.2-rhq-1.2.4.jar"/>
 	<classpathentry kind="var" path="M2_REPO/org/apache/thrift/libthrift/0.7.0/libthrift-0.7.0.jar"/>
 	<classpathentry kind="var" path="M2_REPO/commons-cli/commons-cli/1.2/commons-cli-1.2.jar"/>
 	<classpathentry kind="var" path="M2_REPO/com/google/guava/guava/12.0/guava-12.0.jar"/>

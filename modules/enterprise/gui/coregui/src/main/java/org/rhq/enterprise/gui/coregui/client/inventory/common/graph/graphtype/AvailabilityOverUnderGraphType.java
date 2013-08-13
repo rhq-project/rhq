@@ -250,6 +250,44 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                         .attr("opacity", ".75")
                         .attr("fill", function (d) {
                             return calcBarFill(d);
+                        }).on("mouseover",function (d) {
+
+                            var timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
+                                    dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
+                                    availStart = new Date(+d.availStart),
+                                    xPosition = parseFloat($wnd.d3.select(this).attr("x")),
+                                    availTooltipDiv =  $wnd.d3.select("#availTooltip")
+                                    .style("left", xPosition + "px")
+                                    .style("top",  "0px");
+
+                            availTooltipDiv.select("#availTooltipLabel")
+                                    .text(availChartContext.hoverBarAvailabilityLabel);
+
+                            availTooltipDiv
+                                    .select("#availTooltipType")
+                                    .text(d.availTypeMessage);
+
+                            availTooltipDiv
+                                    .select("#availTooltipStartDate")
+                                    .text(dateFormatter(availStart));
+
+                            availTooltipDiv
+                                    .select("#availTooltipStartTime")
+                                    .text(timeFormatter(availStart));
+
+                            availTooltipDiv
+                                    .select("#availTooltipDurationLabel")
+                                    .text(availChartContext.hoverBarLabel);
+
+                            availTooltipDiv
+                                    .select("#availTooltipDuration")
+                                    .text(d.availDuration);
+
+                            //Show the tooltip
+                            $wnd.d3.select("#availTooltip").classed("hidden", false);
+                        }).on("mouseout", function () {
+                            //Hide the tooltip
+                            $wnd.d3.select("#availTooltip").classed("hidden", true);
                         });
 
                 xAxis.tickFormat($wnd.rhqCommon.getD3CustomTimeFormat(availChartContext.chartXaxisTimeFormatHours, availChartContext.chartXaxisTimeFormatHoursMinutes));
@@ -295,42 +333,11 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             }
 
 
-
-            function createHovers() {
-                $wnd.jQuery('svg rect.availBars').tipsy({
-                    gravity: 's',
-                    html: true,
-                    trigger: 'hover',
-                    title: function () {
-                        var d = this.__data__;
-                        return formatHovers(d);
-                    },
-                    show: function (e, el) {
-                        el.css({ 'z-index': '990000'})
-                    }
-                });
-            }
-
-
-            function formatHovers(d) {
-                var  timeFormatter = $wnd.d3.time.format(availChartContext.chartHoverTimeFormat),
-                        dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
-                        availStart = new Date(+d.availStart);
-
-                return '<div class="chartHoverEnclosingDiv">' +
-                                '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarAvailabilityLabel + ': </span><span style="width:50px;">' + d.availTypeMessage + '</span></div>' +
-                                '<div class="chartHoverAlignLeft"><span>' + dateFormatter(availStart) + ' ' + timeFormatter(availStart) + '</span></div>' +
-                                '<div class="chartHoverAlignLeft"><span >' + availChartContext.hoverBarLabel + ': </span><span style="width:50px;">' + d.availDuration + '</span></div>' +
-                                '</div>';
-
-            }
-
             return {
                 // Public API
                 draw: function (availChartContext) {
                     "use strict";
                     drawBars(availChartContext);
-                    createHovers();
                 }
             }; // end public closure
 

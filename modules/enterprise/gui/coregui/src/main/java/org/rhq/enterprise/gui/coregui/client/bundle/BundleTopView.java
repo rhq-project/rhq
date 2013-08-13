@@ -105,9 +105,12 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
                         bundleSectionView.refresh();
                     } else {
                         bundleSectionView = new BundleSectionView(globalPermissions);
-                        if (viewPath.isNextEnd() && viewPath.getNext().getPath().equals("BundleGroup")) {
-                            bundleSectionView.setBundlesExpanded(false);
-                            bundleSectionView.setBundleGroupsExpanded(true);
+                        if (!viewPath.isEnd()) {
+                            if (viewPath.getCurrent().getPath().equals("BundleGroup")) {
+                                bundleSectionView.setExpansion(false, true);
+                            } else {
+                                bundleSectionView.setExpansion(true, false);
+                            }
                         }
                         setContent(bundleSectionView);
                     }

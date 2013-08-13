@@ -56,19 +56,24 @@ public class BundleSectionView extends SectionStack implements RefreshableView {
         setVisibilityMode(VisibilityMode.MULTIPLE);
         setWidth100();
         setHeight100();
+        
+        init();
     }
 
-    public void onDraw() {
+    public void init() {
         bundlesSection = new SectionStackSection(MSG.common_title_bundles());
-        bundlesSection.setExpanded(true);
         bundlesListView = new BundlesListView(globalPermissions);
         bundlesSection.addItem(bundlesListView);
+        bundlesSection.setExpanded(true);
         this.addSection(bundlesSection);
 
         bundleGroupsSection = new SectionStackSection(MSG.common_title_bundleGroups());
         bundleGroupsListView = new BundleGroupsListView(globalPermissions);
         bundleGroupsSection.addItem(bundleGroupsListView);
+        bundleGroupsSection.setExpanded(true);
         this.addSection(bundleGroupsSection);
+
+        setExpansion(true, true);
     }
 
     @Override
@@ -78,12 +83,10 @@ public class BundleSectionView extends SectionStack implements RefreshableView {
         markForRedraw();
     }
 
-    public void setBundlesExpanded(boolean expanded) {
-        bundlesSection.setExpanded(expanded);
-    }
-
-    public void setBundleGroupsExpanded(boolean expanded) {
-        bundleGroupsSection.setExpanded(expanded);
+    public void setExpansion(boolean bundlesExpanded, boolean bundleGroupsExpanded) {
+        bundlesSection.setExpanded(bundlesExpanded);
+        bundleGroupsSection.setExpanded(bundleGroupsExpanded);
+        markForRedraw();
     }
 
 }

@@ -37,7 +37,6 @@ import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesWithLatestVersionDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
@@ -88,7 +87,7 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
         nameField.setWidth("33%");
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int i, int i1) {
-                return "<a href=\"" + record.getAttribute(BundlesWithLatestVersionDataSource.FIELD_NAMELINK) + "\">"
+                return "<a href=\"" + record.getAttribute(BundleGroupsDataSource.FIELD_NAMELINK) + "\">"
                     + StringUtility.escapeHtml(String.valueOf(value)) + "</a>";
             }
         });
@@ -147,13 +146,13 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
                     public void onFailure(Throwable caught) {
                         String names = doomedNames.toString();
                         String error = ErrorHandler.getAllMessages(caught);
-                        Message m = new Message(MSG.view_bundle_list_deletesFailure(), names + "<br/>\n" + error,
+                        Message m = new Message(MSG.view_bundleGroup_deletesFailure(), names + "<br/>\n" + error,
                             Severity.Error);
                         CoreGUI.getMessageCenter().notify(m);
                     }
 
                     public void onSuccess(Void result) {
-                        Message m = new Message(MSG.view_bundle_list_deletesSuccessful(), doomedNames.toString(),
+                        Message m = new Message(MSG.view_bundleGroup_deletesSuccessful(), doomedNames.toString(),
                             Severity.Info);
                         CoreGUI.getMessageCenter().notify(m);
                         CoreGUI.refresh();

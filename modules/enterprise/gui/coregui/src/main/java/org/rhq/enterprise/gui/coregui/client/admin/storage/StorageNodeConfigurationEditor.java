@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -194,7 +196,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                 FIELD_HEAP_MAX,
                 "Max Heap Size",
                 configuration.getHeapSize(),
-                "The maximum heap size. This value will be used with the -Xmx JVM option. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
+                "The maximum heap size. This value will be used with the -Xmx JVM option. If you are going to increase/decrease this value, then you should also increase/decrease the new generation proportionally. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
         items
             .addAll(buildOneFormRowWithCombobox(
                 FIELD_HEAP_NEW,
@@ -233,6 +235,13 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         saveButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 if (form.validate()) {
+                    if (!checkNewHeapLowerThanMaxHeap()) {
+                        Map<String, String> errors = new HashMap<String, String>(2);
+                        errors.put(FIELD_HEAP_MAX, "Should be lower than Heap New Size.");
+                        errors.put(FIELD_HEAP_NEW, "Should be higher than Max Heap Size.");
+                        form.setErrors(errors, true);
+                        return;
+                    }
                     SC.ask(
                         "Changing the storage node configuration requires restart of storage node. Do you want to continue?",
                         new BooleanCallback() {
@@ -261,6 +270,30 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         configuration.setThreadStackSize(form.getValueAsString(FIELD_THREAD_STACK_SIZE));
         configuration.setJmxPort(Integer.parseInt(form.getValueAsString(FIELD_JMX_PORT)));
         return configuration;
+    }
+    
+    private boolean checkNewHeapLowerThanMaxHeap() {
+        // let's be paranoid
+        Object maxHeapObject = form.getField(FIELD_HEAP_MAX).getValue();
+        Object newHeapObject = form.getField(FIELD_HEAP_NEW).getValue();
+        
+        String maxHeapString = maxHeapObject != null ? maxHeapObject.toString().trim() : "";
+        String newHeapString = newHeapObject != null ? newHeapObject.toString().trim() : "";
+        
+        if (maxHeapString.isEmpty() || newHeapString.isEmpty()) {
+            return false;
+        }
+        
+        int maxHeap = Integer.parseInt(maxHeapString.substring(0, maxHeapString.length() - 2));
+        int newHeap = Integer.parseInt(newHeapString.substring(0, newHeapString.length() - 2));
+        
+        boolean isMaxHeapInMegs = maxHeapString.toLowerCase().indexOf("m") != -1;
+        boolean isNewHeapInMegs = newHeapString.toLowerCase().indexOf("m") != -1;
+        
+        maxHeap = isMaxHeapInMegs ? maxHeap : maxHeap * 1024;
+        newHeap = isNewHeapInMegs ? newHeap : newHeap * 1024;
+        
+        return newHeap < maxHeap;
     }
     
     private String getJVMMemoryString(String raw) {

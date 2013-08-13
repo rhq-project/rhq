@@ -83,7 +83,22 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
         divAndSvgDefs.append("<div id=\"availChart-" + availabilityGraphType.getChartId()
             + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:65px;\">");
         divAndSvgDefs.append(getSvgDefs());
-        divAndSvgDefs.append("</svg></div>");
+        divAndSvgDefs.append("</svg>");
+        divAndSvgDefs.append("<div id=\"availTooltip\" class=\"hidden\" >");
+        divAndSvgDefs.append("<div>");
+        divAndSvgDefs.append("<span id=\"availTooltipLabel\" class=\"availTooltipLabel\"></span>");
+        divAndSvgDefs.append("<span> : </span>");
+        divAndSvgDefs.append("<span id=\"availTooltipType\" style=\"width:40px;font-weight:bold;\"></span>");
+        divAndSvgDefs.append("<span> - </span>");
+        divAndSvgDefs.append("<span id=\"availTooltipDuration\" ></span>");
+        divAndSvgDefs.append("<div/>");
+        divAndSvgDefs.append("<div>");
+        divAndSvgDefs.append("<span id=\"availTooltipStartDate\" ></span>");
+        divAndSvgDefs.append("<span>  </span>");
+        divAndSvgDefs.append("<span id=\"availTooltipStartTime\" ></span>");
+        divAndSvgDefs.append("</div>");
+        divAndSvgDefs.append("</div>");   // end availTooltipDiv
+        divAndSvgDefs.append("</div>");
         HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
         graph.setWidth100();
         graph.setHeight(65);

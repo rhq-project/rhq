@@ -469,8 +469,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                 svg.append("g")
                         .attr("class", "x axis")
                         .attr("transform", "translate(0," + height + ")")
-                        .attr("letter-spacing", "3")
-                        .style("text-anchor", "end")
                         .call(xAxis);
 
 
@@ -481,7 +479,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .append("text")
                         .attr("transform", "rotate(-90),translate( -60,0)")
                         .attr("y", -30)
-                        .attr("letter-spacing", "3")
                         .style("text-anchor", "end")
                         .text(chartContext.yAxisUnits === "NONE" ? "" : chartContext.yAxisUnits);
 

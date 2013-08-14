@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.core.clientapi.agent.metadata;
 
@@ -40,6 +36,7 @@ import org.rhq.core.clientapi.descriptor.configuration.ConfigurationProperty;
 import org.rhq.core.clientapi.descriptor.configuration.ConfigurationTemplateDescriptor;
 import org.rhq.core.clientapi.descriptor.configuration.ConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.DynamicProperty;
+import org.rhq.core.clientapi.descriptor.configuration.ExpressionScope;
 import org.rhq.core.clientapi.descriptor.configuration.FloatConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.IntegerConstraintType;
 import org.rhq.core.clientapi.descriptor.configuration.ListProperty;
@@ -256,6 +253,11 @@ public class ConfigurationMetadataParser {
                 throw new IllegalArgumentException("Filter expression must be less than 40 chars long");
             }
             optionsSource.setFilter(source.getFilter());
+            ExpressionScope expressionScope = source.getExpressionScope();
+            if (expressionScope != null) {
+                optionsSource.setExpressionScope(PropertyOptionsSource.ExpressionScope.fromValue(expressionScope
+                    .value()));
+            }
             String expression = source.getExpression();
             if (expression == null || expression.isEmpty())
                 throw new IllegalArgumentException("Expression must not be empty");

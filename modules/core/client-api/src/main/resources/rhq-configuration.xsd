@@ -479,7 +479,11 @@
                 Expressions are written in the syntax of the search bar.</xs:documentation>
             </xs:annotation>
         </xs:attribute>
-
+        <xs:attribute name="expressionScope" use="optional" default="unlimited" type="config:expressionScope">
+            <xs:annotation>
+                <xs:documentation>A scope for expression searches. Default value is 'unlimited'.</xs:documentation>
+            </xs:annotation>
+        </xs:attribute>
     </xs:complexType>
 
    <xs:complexType name="option">
@@ -606,5 +610,17 @@
          <xs:enumeration value="fahrenheit"/>
       </xs:restriction>
    </xs:simpleType>
+
+  <xs:simpleType name="expressionScope">
+    <xs:annotation>
+      <xs:documentation>A scope for expression searches. Must be one of 'unlimited' or 'baseResource'.
+      'unlimited' means that search results may include any resource in inventory. 'baseResource' narrows down to the
+      top level server or service.</xs:documentation>
+    </xs:annotation>
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="unlimited"/>
+      <xs:enumeration value="baseResource"/>
+    </xs:restriction>
+  </xs:simpleType>
 
 </xs:schema>

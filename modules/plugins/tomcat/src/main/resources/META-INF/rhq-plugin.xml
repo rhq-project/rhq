@@ -734,7 +734,9 @@
                <c:simple-property
                   name="name"
                   type="string"
-                  readOnly="true" />
+                  readOnly="true" 
+                  default="Default Tomcat Connector name" 
+                  description="Connector name."/>
                <c:simple-property
                   name="port"
                   type="string"
@@ -748,8 +750,8 @@
                <c:simple-property
                   name="connector"
                   type="string"
-                  description="Connector protocol connector. Note: Only available on Tomcat 7."
-                  required="false"
+                  description="Connector protocol connector."
+		  default="Default connector"
                   readOnly="true" />
                <c:simple-property
                   name="address"

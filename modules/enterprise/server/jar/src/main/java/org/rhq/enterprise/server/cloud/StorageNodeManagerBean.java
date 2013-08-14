@@ -575,7 +575,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     public Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) {
-        List<StorageNode> initialStorageNodes = getStorageNodes();
+        List<StorageNode> initialStorageNodes = null;
         if (storageNode == null) {
             initialStorageNodes = getStorageNodes();
         } else {
@@ -626,6 +626,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return configuration;
     }
     
+    @Override
+    @Asynchronous
+    public void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
+        updateConfiguration(subject, storageNodeConfiguration);
+    }
+
     @Override
     @Asynchronous
     public void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {

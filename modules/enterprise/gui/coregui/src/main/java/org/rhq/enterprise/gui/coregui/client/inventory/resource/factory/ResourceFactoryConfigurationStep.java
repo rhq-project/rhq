@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2010 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.factory;
 
@@ -97,7 +97,7 @@ public class ResourceFactoryConfigurationStep extends AbstractWizardStep impleme
                 this.startingConfig = wizard.getNewResourceStartingConfiguration();
 
                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup.getConfigurationService();
-                configurationService.getOptionValuesForConfigDefinition(-1, def,
+                configurationService.getOptionValuesForConfigDefinition(-1, wizard.getParentResource().getId(), def,
                     new AsyncCallback<ConfigurationDefinition>() {
                         public void onSuccess(ConfigurationDefinition result) {
                             createAndAddConfigurationEditor(result);

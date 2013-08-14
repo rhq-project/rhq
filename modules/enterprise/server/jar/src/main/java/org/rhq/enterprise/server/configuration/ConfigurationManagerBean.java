@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.configuration;
 
@@ -37,6 +37,9 @@ import javax.persistence.EntityNotFoundException;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+
+import com.google.common.base.Predicate;
+import com.google.common.collect.Iterables;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -96,6 +99,7 @@ import org.rhq.core.domain.util.OrderingField;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.ResourceUtility;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.collection.ArrayUtils;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -2534,26 +2538,37 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
     @Override
     public ConfigurationDefinition getOptionsForConfigurationDefinition(Subject subject, int resourceId,
-        ConfigurationDefinition def) {
+        int parentResourceId, ConfigurationDefinition def) {
+        
+        Resource resource = null, baseResource = null;
+        if (resourceId >= 0) {
+            resource = resourceManager.getResource(subject, resourceId);
+        }
+        if (parentResourceId >= 0) {
+            Resource parentResource = resourceManager.getResource(subject, parentResourceId);
+            baseResource = ResourceUtility.getBaseServerOrService(parentResource);
+        } else if (resource != null) {
+            baseResource = ResourceUtility.getBaseServerOrService(resource);
+        }
 
         for (Map.Entry<String, PropertyDefinition> entry : def.getPropertyDefinitions().entrySet()) {
             PropertyDefinition pd = entry.getValue();
 
             if (pd instanceof PropertyDefinitionSimple) {
                 PropertyDefinitionSimple pds = (PropertyDefinitionSimple) pd;
-                handlePDS(subject, resourceId, pds);
+                handlePDS(subject, resource, baseResource, pds);
 
             } else if (pd instanceof PropertyDefinitionList) {
                 PropertyDefinitionList pdl = (PropertyDefinitionList) pd;
                 PropertyDefinition memberDef = pdl.getMemberDefinition();
                 if (memberDef instanceof PropertyDefinitionSimple) {
                     PropertyDefinitionSimple pds = (PropertyDefinitionSimple) memberDef;
-                    handlePDS(subject, resourceId, pds);
+                    handlePDS(subject, resource, baseResource, pds);
                 } else if (memberDef instanceof PropertyDefinitionMap) {
                     PropertyDefinitionMap pdm = (PropertyDefinitionMap) memberDef;
                     for (PropertyDefinition inner : pdm.getOrderedPropertyDefinitions()) {
                         if (inner instanceof PropertyDefinitionSimple) {
-                            handlePDS(subject, resourceId, (PropertyDefinitionSimple) inner);
+                            handlePDS(subject, resource, baseResource, (PropertyDefinitionSimple) inner);
                         }
                         log.debug("3 ____[ " + inner.toString() + " in " + pdl.toString() + " ]____ not yet supported");
                     }
@@ -2565,7 +2580,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                 PropertyDefinitionMap pdm = (PropertyDefinitionMap) pd;
                 for (PropertyDefinition inner : pdm.getOrderedPropertyDefinitions()) {
                     if (inner instanceof PropertyDefinitionSimple) {
-                        handlePDS(subject, resourceId, (PropertyDefinitionSimple) inner);
+                        handlePDS(subject, resource, baseResource, (PropertyDefinitionSimple) inner);
                     } else {
                         log.debug("4 ____[ " + inner.toString() + " in " + pdm.toString() + " ]____ not yet supported");
                     }
@@ -2583,21 +2598,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
      * @param subject Subject of the caller - may limit search results
      * @param pds the PropertyDefinitionSimple to work on
      */
-    private void handlePDS(final Subject subject, int resourceId, PropertyDefinitionSimple pds) {
+    private void handlePDS(final Subject subject, Resource resource, Resource baseResource, PropertyDefinitionSimple pds) {
 
         if (pds.getOptionsSource() != null) {
             // evaluate the source parameters
             PropertyOptionsSource pos = pds.getOptionsSource();
             PropertyOptionsSource.TargetType tt = pos.getTargetType();
             String expression = pos.getExpression();
+            PropertyOptionsSource.ExpressionScope expressionScope = pos.getExpressionScope();
             String filter = pos.getFilter();
             Pattern filterPattern = null;
             if (filter != null)
                 filterPattern = Pattern.compile(filter);
 
             if (tt == PropertyOptionsSource.TargetType.RESOURCE || tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
-                List<Resource> resources = null;
-                CriteriaQuery<Resource, ResourceCriteria> resourcesPaged = null;
                 ResourceCriteria criteria = new ResourceCriteria();
 
                 //Use CriteriaQuery to automatically chunk/page through criteria query results
@@ -2608,6 +2622,7 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     }
                 };
 
+                Iterable<Resource> foundResources = null;
                 if (tt == PropertyOptionsSource.TargetType.CONFIGURATION) {
                     // split out expression part for target=configuration
                     // return if no property specifier is given
@@ -2617,10 +2632,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
 
                         if (!"self".equals(expr)) {
                             criteria.setSearchExpression(expr);
-                            resourcesPaged = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
-                        } else if (resourceId >= 0) {
-                            resources = new ArrayList<Resource>();
-                            resources.add(resourceManager.getResourceById(subject, resourceId));
+                            foundResources = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+                            if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE && baseResource != null) {
+                                foundResources = Iterables.filter(foundResources, new IsInBaseResourcePredicate(
+                                        baseResource));
+                            }
+                        } else if (resource != null) {
+                            ArrayList<Resource> resourceList = new ArrayList<Resource>();
+                            resourceList.add(resource);
+                            foundResources = resourceList;
                         } else {
                             log.warn("Self reference requested but resource id is not valid."
                                 + "Option source expression:" + expression);
@@ -2633,17 +2653,15 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
                     }
                 } else {
                     criteria.setSearchExpression(expression);
-                    resourcesPaged = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+                    foundResources = new CriteriaQuery<Resource, ResourceCriteria>(criteria, queryExecutor);
+                    if (expressionScope == PropertyOptionsSource.ExpressionScope.BASE_RESOURCE && baseResource != null) {
+                        foundResources = Iterables.filter(foundResources, new IsInBaseResourcePredicate(
+                            baseResource));
+                    }
                 }
-
-                if (resources != null) {//process resources
-                    for (Resource resource : resources) {
-                        processPropertyOptionsSource(pds, tt, expression, filterPattern, resource);
-                    }
-                } else {// process resourcesPaged(CriteriaQuery parsing)
-                    for (Resource resource : resourcesPaged) {
-                        processPropertyOptionsSource(pds, tt, expression, filterPattern, resource);
-                    }
+                
+                for (Resource foundResource : foundResources) {
+                    processPropertyOptionsSource(pds, tt, expression, filterPattern, foundResource);
                 }
             } else if (tt == PropertyOptionsSource.TargetType.GROUP) {
                 // spinder 2-15-13: commenting out this code below as we don't appear to be using any of it. Half done.                
@@ -2771,5 +2789,20 @@ public class ConfigurationManagerBean implements ConfigurationManagerLocal, Conf
         }
 
         return true;
+    }
+
+    private static final class IsInBaseResourcePredicate implements Predicate<Resource> {
+
+        private Resource baseResource;
+
+        private IsInBaseResourcePredicate(Resource baseResource) {
+            this.baseResource = baseResource;
+        }
+
+        @Override
+        public boolean apply(Resource resource) {
+            Resource baseServerOrService = ResourceUtility.getBaseServerOrService(resource);
+            return baseResource.equals(baseServerOrService);
+        }
     }
 }

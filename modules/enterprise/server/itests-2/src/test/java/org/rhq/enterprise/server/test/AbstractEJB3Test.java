@@ -88,6 +88,7 @@ import org.rhq.enterprise.server.plugin.pc.ServerPluginService;
 import org.rhq.enterprise.server.plugin.pc.ServerPluginServiceMBean;
 import org.rhq.enterprise.server.scheduler.SchedulerService;
 import org.rhq.enterprise.server.scheduler.SchedulerServiceMBean;
+import org.rhq.enterprise.server.storage.FakeStorageClusterSettingsManagerBean;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.test.AssertUtils;
@@ -352,6 +353,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
             .create("/rhq-server.jar/org/rhq/enterprise/server/core/StartupBean$1.class"));
         testEar.delete(ArchivePaths
             .create("/rhq-server.jar/org/rhq/enterprise/server/core/ShutdownListener.class"));
+        testEar.delete(ArchivePaths
+            .create("/rhq-server.jar/org/rhq/enterprise/server/storage/StorageClusterSettingsManagerBean.class"));
 
         //replace the above startup beans with stripped down versions
         testEar.add(new ClassAsset(StrippedDownStartupBean.class), ArchivePaths
@@ -359,6 +362,8 @@ public abstract class AbstractEJB3Test extends Arquillian {
         testEar.add(new ClassAsset(StrippedDownStartupBeanPreparation.class), ArchivePaths
             .create("/rhq-server.jar/org/rhq/enterprise/server/test/"
                 + "StrippedDownStartupBeanPreparation.class"));
+        testEar.add(new ClassAsset(FakeStorageClusterSettingsManagerBean.class), ArchivePaths
+            .create("/rhq-server.jar/org/rhq/enterprise/server/storage/FakeStorageClusterSettingsManagerBean.class"));
         testEar.addAsManifestResource(new ByteArrayAsset("<beans/>".getBytes()), ArchivePaths.create("beans.xml"));
 
         // add the test classes to the deployment

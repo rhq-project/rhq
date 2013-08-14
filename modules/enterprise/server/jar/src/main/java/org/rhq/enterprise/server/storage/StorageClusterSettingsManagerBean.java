@@ -3,7 +3,7 @@ package org.rhq.enterprise.server.storage;
 import java.util.Map;
 
 import javax.ejb.EJB;
-import javax.ejb.Singleton;
+import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.common.composite.SystemSetting;
@@ -13,12 +13,13 @@ import org.rhq.enterprise.server.system.SystemManagerLocal;
 /**
  * @author John Sanda
  */
-@Singleton
-public class StorageClusterSettingsManagerBean {
+@Stateless
+public class StorageClusterSettingsManagerBean implements StorageClusterSettingsManagerLocal {
 
     @EJB
     private SystemManagerLocal systemManager;
 
+    @Override
     public StorageClusterSettings getClusterSettings(Subject subject) {
         SystemSettings settings = systemManager.getSystemSettings(subject);
         Map<String, String> settingsMap = settings.toMap();
@@ -41,6 +42,7 @@ public class StorageClusterSettingsManagerBean {
         return clusterSettings;
     }
 
+    @Override
     public void setClusterSettings(Subject subject, StorageClusterSettings clusterSettings) {
         SystemSettings settings = new SystemSettings();
         settings.put(SystemSetting.STORAGE_CQL_PORT, Integer.toString(clusterSettings.getCqlPort()));

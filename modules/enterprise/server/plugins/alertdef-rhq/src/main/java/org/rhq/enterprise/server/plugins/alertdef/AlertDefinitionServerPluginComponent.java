@@ -66,11 +66,14 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
     private static final String TOTAL_DISK_USED_PERCENTAGE_METRIC_NAME = "Calculated.TotalDiskUsedPercentage";
     private static final String FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME = "Calculated.FreeDiskToDataSizeRatio";
     private static final String TAKE_SNAPSHOT_OPERATION_NAME = "takeSnapshot";
+    private static final String[] MAINTENANCE_OPERATIONS = new String[] { "readRepair", "addNodeMaintenance",
+        "updateKnownNodes", "prepareForBootstrap", "prepareForUpgrade", "updateSeedsList", "updateConfiguration" };
 
     static private final List<InjectedTemplate> injectedTemplates;
     static private final InjectedTemplate storageNodeHighHeapTemplate;
     static private final InjectedTemplate storageNodeHighDiskUsageTemplate;
     static private final InjectedTemplate storageNodeSnapshotFailureTemplate;
+    static private final InjectedTemplate storageNodeMaintenanceOperationsFailureTemplate;
 
     static {
         storageNodeHighHeapTemplate = new InjectedTemplate(
@@ -91,10 +94,18 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
             "StorageNodeSnapshotFailureTemplate", //
             "An alert template to notify users when a snapshot operations fails for an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
 
+        storageNodeMaintenanceOperationsFailureTemplate = new InjectedTemplate(
+            "RHQStorage", //
+            "RHQ Storage Node", //
+            "StorageNodeMaintenanceOperationsFailureTemplate", //
+            "An alert template to notify users when a maintenance operation fails for an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
+
         injectedTemplates = new ArrayList<InjectedTemplate>();
         injectedTemplates.add(storageNodeHighHeapTemplate);
         injectedTemplates.add(storageNodeHighDiskUsageTemplate);
         injectedTemplates.add(storageNodeSnapshotFailureTemplate);
+        injectedTemplates.add(storageNodeMaintenanceOperationsFailureTemplate);
+
     }
 
     private ServerPluginContext context;
@@ -239,6 +250,8 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
             newAlertDefId = injectStorageNodeHighDiskUsageTemplate(resourceType);
         } else if (storageNodeSnapshotFailureTemplate.equals(injectedAlertDef)) {
             newAlertDefId = injectStorageNodeSnapshotFailureTemplate(resourceType);
+        } else if (storageNodeMaintenanceOperationsFailureTemplate.equals(injectedAlertDef)) {
+            newAlertDefId = injectStorageNodeMaintenanceOperationsFailureTemplate(resourceType);
         }
 
         adc.addFilterId(newAlertDefId);
@@ -388,6 +401,36 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         snapshotFailureCondition.setName(TAKE_SNAPSHOT_OPERATION_NAME);
         snapshotFailureCondition.setOption(OperationRequestStatus.FAILURE.name());
         newTemplate.addCondition(snapshotFailureCondition);
+
+        AlertDampening dampener = new AlertDampening(AlertDampening.Category.NONE);
+        newTemplate.setAlertDampening(dampener);
+
+        int newTemplateId = alertTemplateManager.createAlertTemplate(subjectManager.getOverlord(), newTemplate,
+            resourceType.getId());
+
+        return newTemplateId;
+    }
+
+    private int injectStorageNodeMaintenanceOperationsFailureTemplate(ResourceType resourceType) {
+        AlertTemplateManagerLocal alertTemplateManager = LookupUtil.getAlertTemplateManager();
+        SubjectManagerLocal subjectManager = LookupUtil.getSubjectManager();
+
+        AlertDefinition newTemplate = new AlertDefinition();
+        newTemplate.setName(storageNodeMaintenanceOperationsFailureTemplate.getName());
+        newTemplate.setResourceType(resourceType);
+        newTemplate.setPriority(AlertPriority.MEDIUM);
+        newTemplate.setConditionExpression(BooleanExpression.ANY);
+        newTemplate.setDescription(storageNodeMaintenanceOperationsFailureTemplate.getDescription());
+        newTemplate.setRecoveryId(0);
+        newTemplate.setEnabled(true);
+
+        for (String operation : MAINTENANCE_OPERATIONS) {
+            AlertCondition snapshotFailureCondition = new AlertCondition();
+            snapshotFailureCondition.setCategory(AlertConditionCategory.CONTROL);
+            snapshotFailureCondition.setName(operation);
+            snapshotFailureCondition.setOption(OperationRequestStatus.FAILURE.name());
+            newTemplate.addCondition(snapshotFailureCondition);
+        }
 
         AlertDampening dampener = new AlertDampening(AlertDampening.Category.NONE);
         newTemplate.setAlertDampening(dampener);

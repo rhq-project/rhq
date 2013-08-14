@@ -118,6 +118,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
         //criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
 
         criteria.addFilterName(getFilter(request, "search", String.class));
+        criteria.addFilterBundleIds(getArrayFilter(request, "bundleIds", Integer.class));
         criteria.fetchBundles(true);
 
         return criteria;

@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.group;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -64,7 +65,7 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
     /**
      * Creates a new list view.
      * 
-     * @param globalPermissions if perms is null, no button actions will be shown in the table
+     * @param globalPermissions if null, no buttons will be active, otherwise normal authz in place
      */
     public BundleGroupsListView(Set<Permission> globalPermissions) {
         this(null, globalPermissions);
@@ -72,7 +73,7 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
 
     public BundleGroupsListView(Criteria criteria, Set<Permission> globalpermissions) {
         super(MSG.common_title_bundleGroups(), criteria);
-        this.globalPermissions = globalpermissions;
+        this.globalPermissions = (null != globalpermissions) ? globalpermissions : new HashSet<Permission>();
         setHeaderIcon(IconEnum.BUNDLE_GROUP.getIcon24x24Path());
         setDataSource(new BundleGroupsDataSource());
     }
@@ -115,9 +116,9 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
             }
         });
 
-        boolean hasAuth = globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS);
+        boolean hasAuthz = globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS);
 
-        addTableAction(MSG.common_button_new(), null, new AbstractTableAction((hasAuth) ? TableActionEnablement.ALWAYS
+        addTableAction(MSG.common_button_new(), null, new AbstractTableAction((hasAuthz) ? TableActionEnablement.ALWAYS
             : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selection, Object actionValue) {
                 newDetails();
@@ -125,7 +126,7 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
         });
 
         addTableAction(MSG.common_button_delete(), MSG.view_bundleGroup_deleteConfirm(), new AbstractTableAction(
-            (hasAuth) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
+            (hasAuthz) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
             public void executeAction(ListGridRecord[] selections, Object actionValue) {
                 if (selections == null || selections.length == 0) {
                     return;

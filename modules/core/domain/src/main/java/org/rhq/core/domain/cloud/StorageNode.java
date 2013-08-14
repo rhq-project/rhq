@@ -40,6 +40,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -134,9 +135,16 @@ public class StorageNode implements Serializable {
     @Column(name = "MTIME", nullable = false)
     private long mtime;
 
+    @Column(name = "ERROR_MSG", nullable = true)
+    private String errorMessage;
+
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(fetch = FetchType.EAGER, optional = true)
     private Resource resource;
+
+    @JoinColumn(name = "RESOURCE_OP_HIST_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(optional = true)
+    private ResourceOperationHistory failedOperation;
 
     // required for JPA
     public StorageNode() {
@@ -196,6 +204,22 @@ public class StorageNode implements Serializable {
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public ResourceOperationHistory getFailedOperation() {
+        return failedOperation;
+    }
+
+    public void setFailedOperation(ResourceOperationHistory failedOperation) {
+        this.failedOperation = failedOperation;
     }
 
     public OperationMode getOperationMode() {

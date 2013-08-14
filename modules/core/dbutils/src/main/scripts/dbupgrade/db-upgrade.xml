@@ -2184,6 +2184,19 @@
             <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" nullable="false" default="unlimited"/>
           </schemaSpec>
 
+          <schemaSpec version="2.137">
+              <schema-addColumn table="RHQ_STORAGE_NODE" column="ERROR_MSG" columnType="LONGVARCHAR"/>
+              <schema-addColumn table="RHQ_STORAGE_NODE" column="RESOURCE_OP_HIST_ID" columnType="INTEGER"/>
+              <schema-directSQL>
+                <statement desc="Creating RHQ_STORAGE_NODE foreign key to RHQ_OPERATION_HISTORY">
+                  ALTER TABLE RHQ_STORAGE_NODE
+                  ADD CONSTRAINT RHQ_SN_OP_HIST_ID_FK
+                  FOREIGN KEY (RESOURCE_OP_HIST_ID)
+                  REFERENCES RHQ_OPERATION_HISTORY (ID)
+              </statement>
+            </schema-directSQL>
+          </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

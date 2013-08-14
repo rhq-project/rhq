@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooAdvancedException;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
+import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
 import org.rhq.core.domain.cloud.StorageNode;
 
 /**
@@ -258,6 +259,11 @@ class VersionManager extends AbstractManager {
         try {
             initClusterSession();
 
+            if (!this.schemaExists()) {
+                log.error("Storage cluster schema not installed. Please re-run the server installer to install the storage cluster schema properly.");
+                throw new SchemaNotInstalledException();
+            }
+
             int installedSchemaVersion = this.getInstalledSchemaVersion();
 
             UpdateFolder folder = new UpdateFolder(Task.Update.getFolder());
@@ -280,7 +286,7 @@ class VersionManager extends AbstractManager {
         } finally {
             shutdownClusterConnection();
 
-            log.info("Completed check for storage schema compatibility.");
+            log.info("Completed storage schema compatibility check.");
         }
     }
 }

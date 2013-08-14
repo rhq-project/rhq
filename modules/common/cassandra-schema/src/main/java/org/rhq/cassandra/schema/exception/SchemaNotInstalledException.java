@@ -29,11 +29,10 @@ package org.rhq.cassandra.schema.exception;
 /**
  * @author Stefan Negrea
  */
-public class InstalledSchemaTooAdvancedException extends Exception {
+@SuppressWarnings("serial")
+public class SchemaNotInstalledException extends Exception {
 
-    public InstalledSchemaTooAdvancedException() {
-        super(
-            "Storage schema is too advanced for the current installation. Schema revisions have been applied beyond the capability of the installation. "
-                + "Please install a newer version of the server that is compatibile with the storage schema version.");
+    public SchemaNotInstalledException() {
+        super("Storage schema is not properly installed. Please re-run the server installer to install storage schema.");
     }
 }

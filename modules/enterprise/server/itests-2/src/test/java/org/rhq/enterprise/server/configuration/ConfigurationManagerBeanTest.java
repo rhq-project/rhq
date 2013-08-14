@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.configuration;
 
@@ -776,7 +776,7 @@ public class ConfigurationManagerBeanTest extends AbstractEJB3Test {
             assert configurationDefinition != null : "Configuration Definition could not be located.";
             //retrieve the options for ConfigurationDefinition
             ConfigurationDefinition options = configurationManager.getOptionsForConfigurationDefinition(overlord,
-                newResource1.getId(), configurationDefinition);
+                newResource1.getId(), -1, configurationDefinition);
             assert options != null : "Unable able to retrieve options for resource with id [" + newResource1.getId()
                 + "].";
             assert !options.getPropertyDefinitions().entrySet().isEmpty() : "No PropertyDefinitionSimple instances found.";

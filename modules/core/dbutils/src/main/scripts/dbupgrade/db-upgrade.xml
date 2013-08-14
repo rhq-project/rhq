@@ -1,4 +1,3 @@
-
 <project name="db-upgrade" default="upgrade" basedir=".">
 
     <!--
@@ -2179,6 +2178,11 @@
               </schema-directSQL>
 
             </schemaSpec>
+
+          <schemaSpec version="2.136">
+            <schema-addColumn   table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" columnType="VARCHAR2" precision="12"/>
+            <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" nullable="false" default="unlimited"/>
+          </schemaSpec>
 
         </dbupgrade>
     </target>

@@ -215,8 +215,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             }
         }
         int value = from.getUnackAlerts();
-        record.setAttribute(FIELD_ALERTS.propertyName(), "New Alerts"
-            + (value != 0 ? " <span style='color: #CC0000;'>(" + value + ")</span>" : " (" + value + ")"));
+        record.setAttribute(FIELD_ALERTS.propertyName(),
+            StorageNodeAdminView.getAlertsString("New Alerts", node.getId(), value));
         String memory = null;
         if (from.getHeapPercentageUsed() != null && from.getHeapPercentageUsed().getAggregate().getAvg() != null)
             memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(), from

@@ -116,6 +116,15 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
     }
     
     @Override
+    public Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) throws RuntimeException {
+        try {
+            return storageNodeManager.findResourcesWithAlertDefinitions(storageNode);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+        
+    @Override
     public int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException {
         try {
             return storageNodeManager.findNotAcknowledgedStorageNodeAlerts(getSessionSubject()).size();

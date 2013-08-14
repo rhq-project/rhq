@@ -83,7 +83,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
     @Override
     protected void doOnDraw() {
         super.doOnDraw();
-        scheduleUnacknowledgedAlertsPollingJob(getListGrid());
+//        scheduleUnacknowledgedAlertsPollingJob(getListGrid());
     }
 
     @Override
@@ -153,8 +153,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                         public void onSuccess(List<Integer> result) {
                             for (int i = 0; i < records.length; i++) {
                                 int value = result.get(i);
+                                int storageNodeId = records[i].getAttributeAsInt("id");
                                 records[i].setAttribute(FIELD_ALERTS.propertyName(),
-                                    StorageNodeAdminView.getAlertsString("New Alerts", value));
+                                    StorageNodeAdminView.getAlertsString("New Alerts", storageNodeId, value));
                                 listGrid.setData(records);
                             }
                             schedule(15 * 1000);

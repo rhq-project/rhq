@@ -218,16 +218,18 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
             }
         }.run();
     }
-
-//    @Override
-//    public ViewName getViewName() {
-//        return VIEW_ID;
-//    }
     
     public static String getAlertsString(String prefix, int numOfUnackAlerts) {
-        return prefix
-            + (numOfUnackAlerts != 0 ? " <font color='#CC0000;'>(" + numOfUnackAlerts + ")</font>" : " ("
+        return getAlertsString(prefix, -1, numOfUnackAlerts);
+    }
+
+    public static String getAlertsString(String prefix, int storageNodeId, int numOfUnackAlerts) {
+        String detailsUrl = "#" + VIEW_PATH + "/" + storageNodeId + "/Alerts";
+        detailsUrl = StringUtility.escapeHtml(detailsUrl);
+        String value = prefix
+            + (numOfUnackAlerts != 0 ? " <span style='color: #CC0000;'>(" + numOfUnackAlerts + ")</span>" : " ("
                 + numOfUnackAlerts + ")");
+        return storageNodeId == -1 ? value : LinkManager.getHref(detailsUrl, value);
     }
     
     private static final class TabInfo {
@@ -274,7 +276,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
                 showTab(alertsTabInfo);
             } else if (backupTabInfo.name.getName().equals(viewId)) {
                 showTab(backupTabInfo);
-            } else {
+            } else { //default
                 showTab(tableTabInfo);
                 table.renderView(viewPath);
             }

@@ -76,6 +76,8 @@ public interface StorageGWTService extends RemoteService {
     
     Integer[] findResourcesWithAlertDefinitions() throws RuntimeException;
     
+    Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) throws RuntimeException;
+    
     int findNotAcknowledgedStorageNodeAlertsCount() throws RuntimeException;
         
     List<Integer> findNotAcknowledgedStorageNodeAlertsCounts(List<Integer> storageNodeIds) throws RuntimeException;

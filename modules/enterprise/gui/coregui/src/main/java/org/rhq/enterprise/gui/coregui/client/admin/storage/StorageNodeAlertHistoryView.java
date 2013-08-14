@@ -20,9 +20,11 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.ArrayList;
 
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ImageStyle;
+import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -30,7 +32,10 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
 
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -38,6 +43,7 @@ import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
+import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
@@ -47,9 +53,45 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  */
 public class StorageNodeAlertHistoryView extends AlertHistoryView {
     private boolean isGouped = true;
+    private final HTMLFlow header;
+    private final int storageNodeId;
     
     public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds) {
+        this(tableTitle, resourceIds, null, -1);
+    }
+    
+    public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds, HTMLFlow header, int storageNodeId) {
         super(tableTitle, resourceIds);
+        this.header = header;
+        this.storageNodeId = storageNodeId;
+    }
+    
+    @Override
+    protected void onInit() {
+        super.onInit();
+        if (header != null && storageNodeId != -1) {
+            StorageNodeCriteria criteria = new StorageNodeCriteria();
+            criteria.addFilterId(storageNodeId);
+            GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria,
+                new AsyncCallback<PageList<StorageNode>>() {
+                    public void onSuccess(final PageList<StorageNode> storageNodes) {
+                        if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)));
+                        }
+                        final StorageNode node = storageNodes.get(0);
+                        header
+                            .setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
+                                + node.getAddress() + ")</div>");
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                                + caught.getMessage(), caught);
+                    }
+                });
+        }
     }
         
     @Override

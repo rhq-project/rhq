@@ -153,7 +153,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private ResourceManagerLocal resourceManager;
 
     @EJB
-    private StorageClusterSettingsManagerBean storageClusterSettingsManager;
+    private StorageClusterSettingsManagerLocal storageClusterSettingsManager;
 
     @EJB
     private StorageNodeOperationsHandlerLocal storageNodeOperationsHandler;
@@ -640,7 +640,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         return configuration;
     }
-    
+
     @Override
     @Asynchronous
     public void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {

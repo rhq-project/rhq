@@ -1,26 +1,27 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2009 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.jbossas5;
+
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static org.rhq.core.util.StringUtil.isBlank;
+import static org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties.START_WAIT_MAX_PROP;
+import static org.rhq.plugins.jbossas5.ApplicationServerPluginConfigurationProperties.STOP_WAIT_MAX_PROP;
 
 import java.io.File;
 import java.util.List;
@@ -54,7 +55,7 @@ import org.rhq.core.system.SystemInfo;
  * @author Jay Shaughnessy
  */
 public class ApplicationServerOperationsDelegate {
-    
+
     private static class ExecutionFailedException extends Exception {
 
         private static final long serialVersionUID = 1L;
@@ -76,12 +77,12 @@ public class ApplicationServerOperationsDelegate {
             super(cause);
         }       
     }
-    
+
     /**
-     * max amount of time to wait for server to show as unavailable after
+     * default max amount of time to wait for server to show as unavailable after
      * executing stop - in milliseconds
      */
-    private static long STOP_WAIT_MAX = 1000L * 150; // 2.5 minutes
+    private static final long DEFAULT_STOP_WAIT_MAX = 1000L * 150; // 2.5 minutes
 
     /**
      * amount of time to wait between availability checks when performing a stop
@@ -95,8 +96,8 @@ public class ApplicationServerOperationsDelegate {
      */
     private static final long STOP_WAIT_FINAL = 1000L * 30; // 30 seconds
 
-    /** max amount of time to wait for start to complete - in milliseconds */
-    private static long START_WAIT_MAX = 1000L * 300; // 5 minutes
+    /** default max amount of time to wait for start to complete - in milliseconds */
+    private static final long DEFAULT_START_WAIT_MAX = 1000L * 300; // 5 minutes
 
     /**
      * amount of time to wait between availability checks when performing a
@@ -503,17 +504,9 @@ public class ApplicationServerOperationsDelegate {
         AvailabilityType avail;
         //detect whether startWaitMax property has been set.
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
-        PropertySimple property = pluginConfig
-            .getSimple(ApplicationServerPluginConfigurationProperties.START_WAIT_MAX_PROP);
-        //if set and valid, update startWaitMax value
-        if ((property != null) && (property.getIntegerValue() != null)) {
-            int newValue = property.getIntegerValue();
-            if (newValue >= 1) {
-                START_WAIT_MAX = 1000L * 60 * newValue;
-            }
-        }
+        long startWaitMax = getMaxWait(pluginConfig.getSimple(START_WAIT_MAX_PROP), DEFAULT_START_WAIT_MAX);
         while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.DOWN)
-            && (System.currentTimeMillis() < (start + START_WAIT_MAX))) {
+            && (System.currentTimeMillis() < (start + startWaitMax))) {
             try {
                 Thread.sleep(START_WAIT_INTERVAL);
             } catch (InterruptedException e) {
@@ -528,17 +521,9 @@ public class ApplicationServerOperationsDelegate {
         AvailabilityType avail;
         //detect whether stopWaitMax property has been set.
         Configuration pluginConfig = serverComponent.getResourceContext().getPluginConfiguration();
-        PropertySimple property = pluginConfig
-            .getSimple(ApplicationServerPluginConfigurationProperties.STOP_WAIT_MAX_PROP);
-        //if set and valid update stopWaitMax value
-        if ((property != null) && (property.getIntegerValue() != null)) {
-            int newValue = property.getIntegerValue();
-            if (newValue >= 1) {
-                STOP_WAIT_MAX = 1000L * 60 * newValue;
-            }
-        }
+        long stopWaitMax = getMaxWait(pluginConfig.getSimple(STOP_WAIT_MAX_PROP), DEFAULT_STOP_WAIT_MAX);
         while (((avail = this.serverComponent.getAvailability()) == AvailabilityType.UP)
-            && (System.currentTimeMillis() < (start + STOP_WAIT_MAX))) {
+            && (System.currentTimeMillis() < (start + stopWaitMax))) {
             try {
                 Thread.sleep(STOP_WAIT_INTERVAL);
             } catch (InterruptedException e) {
@@ -554,6 +539,22 @@ public class ApplicationServerOperationsDelegate {
             // ignore
         }
         return avail;
+    }
+
+    private long getMaxWait(PropertySimple propertySimple, long defaultValueInMillis) {
+        if (propertySimple == null || isBlank(propertySimple.getStringValue())) {
+            return defaultValueInMillis;
+        }
+        try {
+            long valueInMinutes = Long.parseLong(propertySimple.getStringValue());
+            if (valueInMinutes > 0) {
+                return MINUTES.toMillis(valueInMinutes);
+            } else {
+                return defaultValueInMillis;
+            }
+        } catch (NumberFormatException e) {
+            return defaultValueInMillis;
+        }
     }
 
     /**
@@ -659,4 +660,3 @@ public class ApplicationServerOperationsDelegate {
         }
     }
 }
-

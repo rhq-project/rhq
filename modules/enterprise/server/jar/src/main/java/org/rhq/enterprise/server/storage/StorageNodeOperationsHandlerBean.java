@@ -1,15 +1,20 @@
 package org.rhq.enterprise.server.storage;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import javax.persistence.PersistenceException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,6 +34,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.util.StringUtil;
 import org.rhq.enterprise.server.RHQConstants;
+import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -69,39 +75,72 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     private StorageClientManagerBean storageClientManager;
 
     @Override
-    public void announceNewStorageNode(StorageNode newStorageNode, StorageNode clusterNode, PropertyList addresses) {
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void announceStorageNode(Subject subject, StorageNode storageNode) {
         if (log.isInfoEnabled()) {
-            log.info("Announcing new storage node " + newStorageNode + " to cluster node " + clusterNode);
+            log.info("Announcing " + storageNode + " to storage node cluster.");
         }
-        Subject overlord = subjectManager.getOverlord();
+        storageNode.setOperationMode(StorageNode.OperationMode.ANNOUNCE);
+        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
+        List<StorageNode> allNodes = new ArrayList<StorageNode>(clusterNodes);
+        allNodes.add(storageNode);
+
+        announceStorageNode(subject, storageNode, createPropertyListOfAddresses("addresses", allNodes),
+            getAddresses(clusterNodes));
+
+    }
+
+    private void announceStorageNode(Subject subject, StorageNode storageNode, PropertyList addresses,
+        List<String> remainingNodes) {
+        String address = remainingNodes.remove(0);
+        StorageNode clusterNode = findStorageNodeByAddress(address);
+
+        if (log.isInfoEnabled()) {
+            log.info("Announcing " + storageNode + " to cluster node " + clusterNode);
+        }
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(clusterNode.getResource());
         schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(overlord);
+        schedule.setSubject(subject);
         schedule.setOperationName("updateKnownNodes");
         Configuration parameters = new Configuration();
         parameters.put(addresses);
+        parameters.put(new PropertySimple("remainingNodes", StringUtil.listToString(remainingNodes)));
         schedule.setParameters(parameters);
 
-        operationManager.scheduleResourceOperation(overlord, schedule);
+        operationManager.scheduleResourceOperation(subject, schedule);
     }
 
     @Override
-    public void performAddNodeMaintenance(InetAddress storageNodeAddress) {
+    public void performAddNodeMaintenanceIfNecessary(InetAddress storageNodeAddress) {
         StorageNode storageNode = entityManager.createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
             StorageNode.class).setParameter("address", storageNodeAddress.getHostAddress()).getSingleResult();
-        storageNode.setOperationMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
 
-        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.ADD_NODE_MAINTENANCE)
-            .getResultList();
-
-        boolean runRepair = updateSchemaIfNecessary(clusterNodes);
-
-        performAddNodeMaintenance(storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST, clusterNodes));
+        if (storageNode.getOperationMode() == StorageNode.OperationMode.BOOTSTRAP) {
+            performAddNodeMaintenance(subjectManager.getOverlord(), storageNode);
+        } else {
+            log.info(storageNode + " has already been bootstrapped. Skipping add node maintenance.");
+        }
     }
 
-    private void performAddNodeMaintenance(StorageNode storageNode, boolean runRepair, PropertyList seedsList) {
+    @Override
+    public void performAddNodeMaintenance(Subject subject, StorageNode storageNode) {
+        storageNode.setOperationMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
+            .getResultList();
+        for (StorageNode node : clusterNodes) {
+            node.setOperationMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+        }
+        clusterNodes.add(storageNode);
+        boolean runRepair = updateSchemaIfNecessary(clusterNodes);
+        performAddNodeMaintenance(subject, storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST,
+            clusterNodes));
+    }
+
+    private void performAddNodeMaintenance(Subject subject, StorageNode storageNode, boolean runRepair,
+        PropertyList seedsList) {
         if (log.isInfoEnabled()) {
             log.info("Running addNodeMaintenance for storage node " + storageNode);
         }
@@ -111,7 +150,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(storageNode.getResource());
         schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(overlord);
+        schedule.setSubject(subject);
         schedule.setOperationName("addNodeMaintenance");
 
         Configuration config = new Configuration();
@@ -192,20 +231,26 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 if (log.isInfoEnabled()) {
                     log.info("Finished announcing cluster nodes to " + storageNode);
                 }
-                storageNode.setOperationMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
                 Configuration parameters = resourceOperationHistory.getParameters();
                 PropertyList addresses = parameters.getList("addresses");
-                StorageNode nextNode = takeFromQueue(storageNode, StorageNode.OperationMode.ANNOUNCE);
+                List<String> remainingNodes = getRemainingNodes(resourceOperationHistory);
 
-                if (nextNode == null) {
+                StorageNode newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ANNOUNCE);
+                Subject subject = getSubject(resourceOperationHistory);
+
+                if (remainingNodes.isEmpty()) {
                     log.info("Successfully announced new storage node to cluster");
-                    StorageNode installedNode = findStorageNodeToPrepareForBootstrap(addresses);
-                    // Pass a copy of addresses to avoid a TransientObjectException
-                    prepareNodeForBootstrap(installedNode, addresses.deepCopy(false));
+                    newStorageNode.setOperationMode(StorageNode.OperationMode.BOOTSTRAP);
+                    prepareNodeForBootstrap(subject, newStorageNode, addresses.deepCopy(false));
                 } else {
-                    announceNewStorageNode(storageNode, nextNode, addresses.deepCopy(false));
+                    announceStorageNode(subject, newStorageNode, addresses.deepCopy(false), remainingNodes);
                 }
         }
+    }
+
+    private Subject getSubject(ResourceOperationHistory resourceOperationHistory) {
+        Subject subject = subjectManager.getSubjectByName(resourceOperationHistory.getSubjectName());
+        return SessionManager.getInstance().put(subject);
     }
 
     private void handleAddNodeMaintenance(ResourceOperationHistory resourceOperationHistory) {
@@ -238,7 +283,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                     Configuration parameters = resourceOperationHistory.getParameters();
                     boolean runRepair = parameters.getSimple(RUN_REPAIR_PROPERTY).getBooleanValue();
                     PropertyList seedsList = parameters.getList(SEEDS_LIST).deepCopy(false);
-                    performAddNodeMaintenance(nextNode, runRepair, seedsList);
+                    Subject subject = getSubject(resourceOperationHistory);
+                    performAddNodeMaintenance(subject, nextNode, runRepair, seedsList);
                 }
         }
     }
@@ -277,7 +323,15 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         return set;
     }
 
-    private void prepareNodeForBootstrap(StorageNode storageNode, PropertyList addresses) {
+    @Override
+    public void bootstrapStorageNode(Subject subject, StorageNode storageNode) {
+        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
+        clusterNodes.add(storageNode);
+        prepareNodeForBootstrap(subject, storageNode, createPropertyListOfAddresses("addresses", clusterNodes));
+    }
+
+    private void prepareNodeForBootstrap(Subject subject, StorageNode storageNode, PropertyList addresses) {
         if (log.isInfoEnabled()) {
             log.info("Preparing to bootstrap " + storageNode + " into cluster...");
         }
@@ -285,11 +339,10 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(storageNode.getResource());
         schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subjectManager.getOverlord());
+        schedule.setSubject(subject);
         schedule.setOperationName("prepareForBootstrap");
 
-        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
-            subjectManager.getOverlord());
+        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subject);
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("cqlPort", clusterSettings.getCqlPort()));
         parameters.put(new PropertySimple("gossipPort", clusterSettings.getGossipPort()));
@@ -297,7 +350,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
         schedule.setParameters(parameters);
 
-        operationManager.scheduleResourceOperation(subjectManager.getOverlord(), schedule);
+        operationManager.scheduleResourceOperation(subject, schedule);
     }
 
     private StorageNode takeFromQueue(StorageNode lastTaken, StorageNode.OperationMode queue) {
@@ -309,6 +362,40 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             return null;
         }
         return nodes.get(0);
+    }
+
+    private List<String> getRemainingNodes(ResourceOperationHistory resourceOperationHistory) {
+        LinkedList<String> addresses = new LinkedList<String>();
+        Configuration results = resourceOperationHistory.getResults();
+        String remainingNodes = results.getSimpleValue("remainingNodes");
+
+        if (!StringUtil.isEmpty(remainingNodes)) {
+            for (String address : remainingNodes.split(",")) {
+                addresses.add(address);
+            }
+        }
+        return addresses;
+    }
+
+    private StorageNode findStorageNodeByAddress(String address) {
+        try {
+            return entityManager.createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS, StorageNode.class)
+                .setParameter("address", address).getSingleResult();
+
+        } catch (PersistenceException e) {
+            throw new StorageNodeDeploymentException("Storage node deployment has failed! Failed to fetch the next " +
+                "storage node at " + address + " to be updated.", e);
+        }
+    }
+
+    private StorageNode findNewStorgeNode(StorageNode.OperationMode operationMode) {
+        try {
+            return entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE, StorageNode.class)
+                .setParameter("operationMode", operationMode).getSingleResult();
+        } catch (PersistenceException e) {
+            throw new StorageNodeDeploymentException("Storage node deployment has failed! Failed to fetch the " +
+                "storage node to be deployed.", e);
+        }
     }
 
     private boolean isStorageNodeOperation(OperationDefinition operationDefinition) {
@@ -409,6 +496,14 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             list.add(new PropertySimple("address", storageNode.getAddress()));
         }
         return list;
+    }
+
+    private List<String> getAddresses(List<StorageNode> storageNodes) {
+        List<String> addresses = new LinkedList<String>();
+        for (StorageNode storageNode : storageNodes) {
+            addresses.add(storageNode.getAddress());
+        }
+        return addresses;
     }
 
 }

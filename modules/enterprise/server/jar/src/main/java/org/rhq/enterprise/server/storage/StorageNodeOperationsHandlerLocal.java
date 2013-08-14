@@ -4,8 +4,8 @@ import java.net.InetAddress;
 
 import javax.ejb.Asynchronous;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.operation.OperationHistory;
 
 /**
@@ -16,7 +16,11 @@ public interface StorageNodeOperationsHandlerLocal {
     @Asynchronous
     void handleOperationUpdateIfNecessary(OperationHistory operationHistory);
 
-    void announceNewStorageNode(StorageNode newStorageNode, StorageNode clusterNode, PropertyList addresses);
+    void announceStorageNode(Subject subject, StorageNode storageNode);
 
-    void performAddNodeMaintenance(InetAddress storageNodeAddress);
+    void bootstrapStorageNode(Subject subject, StorageNode storageNode);
+
+    void performAddNodeMaintenanceIfNecessary(InetAddress storageNodeAddress);
+
+    void performAddNodeMaintenance(Subject subject, StorageNode storageNode);
 }

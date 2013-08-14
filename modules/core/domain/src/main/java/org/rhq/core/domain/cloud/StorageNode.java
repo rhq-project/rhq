@@ -209,11 +209,13 @@ public class StorageNode implements Serializable {
     public enum OperationMode {
 
         DOWN("This storage node is down"), //
-        INSTALLED("This storage node is newly installed but not yet operationial"), //
+        INSTALLED("This storage node is newly installed but not yet operational"), //
         MAINTENANCE("This storage node is in maintenance mode"), //
         NORMAL("This storage node is running normally"),
-        ANNOUNCE("The storage node is running normally and is being updated to have newly deployed storage nodes " +
-            "announced to it so that those new nodes can join the cluster."),
+        ANNOUNCE("The storage node is installed but not yet part of the cluster. It is being announced so that it " +
+            "can join the cluster."),
+        BOOTSTRAP("The storage is installed but not yet part of the cluster. It is getting bootstrapped into the " +
+            "cluster"),
         ADD_NODE_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
             "necessary when a new node joins the cluster.");
 

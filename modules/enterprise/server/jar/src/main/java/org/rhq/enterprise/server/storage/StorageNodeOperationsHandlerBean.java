@@ -2,10 +2,8 @@ package org.rhq.enterprise.server.storage;
 
 import java.net.InetAddress;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import javax.ejb.Asynchronous;
 import javax.ejb.EJB;
@@ -23,7 +21,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
-import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.operation.OperationDefinition;
@@ -194,15 +191,20 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 // nothing to do here
                 return;
             case CANCELED:
+                // TODO Verify whether or not the node has been bootstrapped
+                // If the operation is canceled the plugin will get an InterruptedException.
+                // The actual bootstrapping may very well complete so we need to add in some
+                // checks to find out if the node is up and part of the cluster.
+
                 log.error("The operation [prepareForBootstrap] was canceled for " + newStorageNode +
                     ". Deployment of the new storage node cannot proceed.");
-                // TODO update workflow status (the status needs to be accessible in the UI)
+                operationCanceled(newStorageNode, resourceOperationHistory);
                 return;
             case FAILURE:
                 log.error("The operation [preparedForBootstrap] failed for " + newStorageNode + ". The reported " +
                     "failure is: " + resourceOperationHistory.getErrorMessage());
                 log.error("Deployment of the new storage node cannot proceed.");
-                // TODO update workflow status (the status needs to be accessible in the UI)
+                operationFailed(newStorageNode, resourceOperationHistory);
                 return;
             default:  // SUCCESS
                 // Nothing to do because we wait for the C* driver to notify us that the
@@ -212,6 +214,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     private void handleUpdateKnownNodes(ResourceOperationHistory resourceOperationHistory) {
         StorageNode storageNode = findStorageNode(resourceOperationHistory.getResource());
+        StorageNode newStorageNode = null;
         switch (resourceOperationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
@@ -219,13 +222,14 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             case CANCELED:
                 log.error("The operation [updateKnownNodes] was canceled for " + storageNode +
                     ". Deployment of the new storage node cannot proceed.");
-                // TODO update workflow status (the status needs to be accessible in the UI)
-                return;
+                newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ANNOUNCE);
+                operationCanceled(storageNode, resourceOperationHistory, newStorageNode);
             case FAILURE:
                 log.error("The operation [updateKnownNodes] failed for " + storageNode + ". The reported " +
                     "failure is: " + resourceOperationHistory.getErrorMessage());
                 log.error("Deployment of the new storage node cannot proceed.");
-                // TODO update workflow status (the status needs to be accessible in the UI)
+                newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ANNOUNCE);
+                operationFailed(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             default:  // SUCCESS
                 if (log.isInfoEnabled()) {
@@ -235,7 +239,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 PropertyList addresses = parameters.getList("addresses");
                 List<String> remainingNodes = getRemainingNodes(resourceOperationHistory);
 
-                StorageNode newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ANNOUNCE);
+                newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ANNOUNCE);
                 Subject subject = getSubject(resourceOperationHistory);
 
                 if (remainingNodes.isEmpty()) {
@@ -248,13 +252,9 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
     }
 
-    private Subject getSubject(ResourceOperationHistory resourceOperationHistory) {
-        Subject subject = subjectManager.getSubjectByName(resourceOperationHistory.getSubjectName());
-        return SessionManager.getInstance().put(subject);
-    }
-
     private void handleAddNodeMaintenance(ResourceOperationHistory resourceOperationHistory) {
         StorageNode storageNode = findStorageNode(resourceOperationHistory.getResource());
+        StorageNode newStorageNode = null;
         switch (resourceOperationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
@@ -262,13 +262,15 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             case CANCELED:
                 log.error("The operation [addNodeMaintenance] was canceled for " + storageNode + ". This operation " +
                     "needs to be run on each storage node when a new node is added to the cluster.");
-                    // TODO update workflow status (the status needs to be accessible in the UI)
+                newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+                operationCanceled(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             case FAILURE:
                 log.error("The operation [addNodeMaintenance] failed for " + storageNode + ". This operation " +
                     "needs to be run on each storage node when a new node is added to the cluster. The reported " +
                     "failure is: " + resourceOperationHistory.getErrorMessage());
-                // TODO update workflow status (the status needs to be accessible in the UI)
+                newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+                operationFailed(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             default:  // SUCCESS
                 if (log.isInfoEnabled()) {
@@ -289,6 +291,42 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
     }
 
+    private Subject getSubject(ResourceOperationHistory resourceOperationHistory) {
+        Subject subject = subjectManager.getSubjectByName(resourceOperationHistory.getSubjectName());
+        return SessionManager.getInstance().put(subject);
+    }
+
+    private void operationCanceled(StorageNode storageNode, ResourceOperationHistory operationHistory,
+        StorageNode newStorageNode) {
+        newStorageNode.setErrorMessage("Deployment has been aborted due to canceled resource operation on " +
+            storageNode.getAddress());
+        storageNode.setErrorMessage("Deployment of " + newStorageNode.getAddress() + " has been aborted due " +
+            "to cancellation of resource operation [" + operationHistory.getOperationDefinition().getDisplayName() +
+            "].");
+        storageNode.setFailedOperation(operationHistory);
+    }
+
+    private void operationCanceled(StorageNode newStorageNode, ResourceOperationHistory operationHistory) {
+        newStorageNode.setErrorMessage("Deployment has been aborted due to canceled resource operation [" +
+            operationHistory.getOperationDefinition().getDisplayName() + "].");
+        newStorageNode.setFailedOperation(operationHistory);
+    }
+
+    private void operationFailed(StorageNode storageNode, ResourceOperationHistory operationHistory,
+        StorageNode newStorageNode) {
+        newStorageNode.setErrorMessage("Deployment has been aborted due to failed resource operation on " +
+            storageNode.getAddress());
+        storageNode.setErrorMessage("Deployment of " + newStorageNode.getAddress() + " has been aborted due " +
+            "to failed resource operation [" + operationHistory.getOperationDefinition().getDisplayName() + "].");
+        storageNode.setFailedOperation(operationHistory);
+    }
+
+    private void operationFailed(StorageNode newStorageNode, ResourceOperationHistory operationHistory) {
+        newStorageNode.setErrorMessage("Deployment has been aborted due to failed resource operation [" +
+            operationHistory.getOperationDefinition().getDisplayName() + "].");
+        newStorageNode.setFailedOperation(operationHistory);
+    }
+
     private StorageNode findStorageNode(Resource resource) {
         for (StorageNode storageNode : storageNodeManager.getStorageNodes()) {
             if (storageNode.getResource().getId() == resource.getId()) {
@@ -296,31 +334,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             }
         }
         return null;
-    }
-
-    private StorageNode findStorageNodeToPrepareForBootstrap(PropertyList addressList) {
-        // It is possible that we could have more that one INSTALLED node. We want to make
-        // sure we grab the one that was just announced to the cluster.
-        Set<String> addresses = toSet(addressList);
-        List<StorageNode> installedNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.INSTALLED).getResultList();
-
-        for (StorageNode installedNode : installedNodes) {
-            if (addresses.contains(installedNode.getAddress())) {
-                return installedNode;
-            }
-        }
-        // TODO What should we do in the very unlikely event that we do not find the IP address?
-        throw new IllegalStateException("Failed to find storage node to be bootstrapped.");
-    }
-
-    private Set<String> toSet(PropertyList propertyList) {
-        Set<String> set = new HashSet<String>();
-        for (Property property : propertyList.getList()) {
-            PropertySimple simple = (PropertySimple) property;
-            set.add(simple.getStringValue());
-        }
-        return set;
     }
 
     @Override

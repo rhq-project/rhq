@@ -182,7 +182,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 if (log.isInfoEnabled()) {
                     log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
                 }
-                deployStorageNode(subjectManager.getOverlord(), storageNode.getId());
+                deployStorageNode(subjectManager.getOverlord(), storageNode);
             }
         } catch (UnknownHostException e) {
             throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
@@ -233,23 +233,33 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
-    public void deployStorageNode(Subject subject, int storageNodeId) {
-        StorageNode storageNode = entityManager.find(StorageNode.class, storageNodeId);
+    public void deployStorageNode(Subject subject, StorageNode storageNode) {
+        storageNode = entityManager.find(StorageNode.class, storageNode.getId());
 
         switch (storageNode.getOperationMode()) {
             case INSTALLED:
             case ANNOUNCE:
+                reset();
                 storageNodeOperationsHandler.announceStorageNode(subject, storageNode);
                 break;
             case BOOTSTRAP:
+                reset();
                 storageNodeOperationsHandler.bootstrapStorageNode(subject, storageNode);
                 break;
             case ADD_NODE_MAINTENANCE:
+                reset();
                 storageNodeOperationsHandler.performAddNodeMaintenance(subject, storageNode);
             default:
                 // For any other operation mode, the storage node should already be part of
                 // the cluster.
                 // TODO Make sure that the storage node is in fact part of the cluster
+        }
+    }
+
+    private void reset() {
+        for (StorageNode storageNode : getStorageNodes()) {
+            storageNode.setErrorMessage(null);
+            storageNode.setFailedOperation(null);
         }
     }
 

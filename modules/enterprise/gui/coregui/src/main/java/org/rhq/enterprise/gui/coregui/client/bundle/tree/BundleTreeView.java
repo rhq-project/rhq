@@ -39,6 +39,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 
 /**
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class BundleTreeView extends TreeGrid {
 
@@ -46,12 +47,14 @@ public class BundleTreeView extends TreeGrid {
     // If so, hold it here and retry after the datasource pulls the data.
     private ViewPath pendingPath = null;
 
-    public BundleTreeView(boolean canManageBundles) {
+    private Integer currentlySelectedBundleGroupId;
+
+    public BundleTreeView() {
         super();
         setWidth100();
         setHeight100();
         setLeaveScrollbarGap(false);
-        // fetch the top bundle nodes at the inital onDraw()
+        // fetch the top bundle group nodes at the inital onDraw()
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
@@ -59,13 +62,27 @@ public class BundleTreeView extends TreeGrid {
         setSortField("name");
         setShowHeader(false);
 
-        setDataSource(new BundleTreeDataSource(canManageBundles));
+        setDataSource(new BundleTreeDataSource());
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
                 TreeNode node = event.getNode();
                 String path = node.getAttribute("id").replaceAll("_", "/");
-                CoreGUI.goToView("Bundles/Bundle/" + path);
+
+                // the node ID is the path the form <bundleGroupId>_<the rest of the node ID>
+                String[] splitPath = path.split("/", 2);
+
+                try {
+                    currentlySelectedBundleGroupId = Integer.parseInt(splitPath[0]);
+                } catch (NumberFormatException e) {
+                    CoreGUI.getErrorHandler().handleError("Cannot determine the selected bundle group: " + path);
+                }
+
+                if (splitPath.length == 1) {
+                    CoreGUI.goToView("Bundles");
+                } else {
+                    CoreGUI.goToView("Bundles/Bundle/" + splitPath[1]);
+                }
             }
         });
     }

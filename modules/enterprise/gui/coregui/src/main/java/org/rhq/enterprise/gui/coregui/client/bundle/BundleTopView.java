@@ -80,8 +80,7 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
                     sectionStack.setHeight100();
 
                     SectionStackSection bundlesSection = new SectionStackSection(MSG.common_title_bundles());
-                    // TODO: Need to fix perm stuff in tree view
-                    bundleTreeView = new BundleTreeView(true);
+                    bundleTreeView = new BundleTreeView();
                     bundlesSection.addItem(bundleTreeView);
                     sectionStack.addSection(bundlesSection);
 

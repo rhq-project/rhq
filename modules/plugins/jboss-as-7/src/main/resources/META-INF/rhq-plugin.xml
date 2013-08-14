@@ -1701,13 +1701,13 @@
     <resource-configuration>
       <!-- IF you add properties here, you also need to update org.rhq.modules.plugins.jbossas7.ManagedASComponent.loadResourceConfiguration -->
       <c:simple-property name="hostname" displayName="Name of the host to put the server on" required="true" readOnly="true">
-        <c:option-source target="resource" expression="type=^Host$ plugin=&pluginName;"/>
+        <c:option-source target="resource" expression="type=^Host$ plugin=&pluginName;" expressionScope="baseResource"/>
       </c:simple-property>
       <c:simple-property name="group" readOnly="false" displayName="Server Group" description="Server Group this instance belongs to.">
-        <c:option-source target="resource" expression="type=ServerGroup"/>
+        <c:option-source target="resource" expression="type=ServerGroup" expressionScope="baseResource"/>
       </c:simple-property>
-      <c:simple-property name="socket-binding-group" readOnly="false" displayName="Socket binding group" description="Socket bindings to use" required="true" default="standard-sockets">
-        <c:option-source target="resource" expression="type=SocketBindingGroup"/>
+      <c:simple-property name="socket-binding-group" readOnly="false" displayName="Socket binding group" description="Socket bindings to use" required="true">
+        <c:option-source target="resource" expression="type=SocketBindingGroup" expressionScope="baseResource"/>
       </c:simple-property>
       <c:simple-property name="socket-binding-port-offset" readOnly="false" displayName="Port Offset" type="integer" default="0" description="Offset to the base ports"/>
       <c:simple-property name="auto-start" displayName="Autostart" default="false" type="boolean"/>

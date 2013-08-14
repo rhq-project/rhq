@@ -141,7 +141,7 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
                             public void onTypesLoaded(ResourceType type) {
                                 ConfigurationGWTServiceAsync configurationService = GWTServiceLookup
                                     .getConfigurationService();
-                                configurationService.getOptionValuesForConfigDefinition(resource.getId(),
+                                configurationService.getOptionValuesForConfigDefinition(resource.getId(), -1,
                                     type.getResourceConfigurationDefinition(),
                                     new AsyncCallback<ConfigurationDefinition>() {
                                         @Override

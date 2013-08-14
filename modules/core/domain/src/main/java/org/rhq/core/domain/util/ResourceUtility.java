@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.core.domain.util;
+
+import static org.rhq.core.domain.resource.ResourceCategory.PLATFORM;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -24,6 +27,7 @@ import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
 
 /**
@@ -32,7 +36,7 @@ import org.rhq.core.domain.resource.ResourceType;
  * @since 4.4
  * @author Ian Springer
  */
-public abstract class ResourceUtility {
+public class ResourceUtility {
 
     public static Resource getChildResource(Resource parent, ResourceType type, String key) {
         for (Resource resource : parent.getChildResources()) {
@@ -68,7 +72,27 @@ public abstract class ResourceUtility {
         return acceptedChildResources;
     }
 
+    /**
+     * Returns the base server or service of the specified <code>resource</code>.
+     *
+     * @param resource
+     * @return the base server or service of the specified <code>resource</code>.
+     * @throws IllegalArgumentException if <code>resource</code> is null
+     */
+    public static Resource getBaseServerOrService(Resource resource) {
+        if (resource == null) {
+            throw new IllegalArgumentException("resource is null");
+        }
+        Resource current, parent = resource;
+        do {
+            current = parent;
+            parent = current.getParentResource();
+        } while (parent != null && parent.getResourceType().getCategory() != PLATFORM);
+        return current;
+    }
+
     private ResourceUtility() {
+        // Defensive
     }
 
 }

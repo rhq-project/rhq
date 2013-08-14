@@ -36,6 +36,7 @@ import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Overflow;
 import com.smartgwt.client.types.VisibilityMode;
+import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.FormItem;
@@ -51,6 +52,7 @@ import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowCo
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -63,6 +65,7 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
@@ -85,6 +88,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private SectionStackSection detailsAndLoadSection;
     private StaticTextItem alertsItem;
     private HTMLFlow header;
+    private boolean alerts = false;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
@@ -107,6 +111,9 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     @Override
     protected void onInit() {
         super.onInit();
+        if (alerts) {
+            return;
+        }
         StorageNodeCriteria criteria = new StorageNodeCriteria();
         criteria.addFilterId(storageNodeId);
         criteria.fetchResource(true);
@@ -189,7 +196,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     } else {
                         unackAlerts = result.get(0);
                         if (alertsItem != null) {
-                            alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", unackAlerts));
+                            alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", storageNodeId, unackAlerts));
                         }
                     }
                 }
@@ -203,6 +210,9 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     @Override
     protected void onDraw() {
         super.onDraw();
+        if (alerts) {
+            return;
+        }
 
         // wait until we have all of the sections before we show them. We don't use InitializableView because,
         // it seems they are not supported (in the applicable renderView()) at this level.
@@ -284,8 +294,9 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             TimestampCellFormatter.DATE_TIME_FORMAT_LONG));
         
         alertsItem = new StaticTextItem(FIELD_ALERTS.propertyName(), FIELD_ALERTS.title());
+        alertsItem.setPrompt("The number in brackets represents the number of unacknowledged alerts for this storage node.");
         if (unackAlerts != -1) {
-            alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", unackAlerts));
+            alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", storageNodeId, unackAlerts));
         }
         
         StaticTextItem memoryStatusItem = new StaticTextItem("memoryStatus", "Memory");
@@ -341,9 +352,9 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     }
     
     private void prepareResourceConfigEditor(final StorageNodeConfigurationComposite configuration) {
-      LayoutSpacer spacer = new LayoutSpacer();
-      spacer.setHeight(15);
-      StorageNodeConfigurationEditor editorView = new StorageNodeConfigurationEditor(configuration);
+        LayoutSpacer spacer = new LayoutSpacer();
+        spacer.setHeight(15);
+        StorageNodeConfigurationEditor editorView = new StorageNodeConfigurationEditor(configuration);
         SectionStackSection section = new SectionStackSection("Configuration");
         section.setItems(spacer, editorView);
         section.setExpanded(true);
@@ -353,10 +364,40 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         initSectionCount++;
     }
     
+    private void showAlertsForSingleStorageNode() {
+        GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new StorageNode(storageNodeId),
+            new AsyncCallback<Integer[]>() {
+                @Override
+                public void onFailure(Throwable caught) {
+                    alerts = false;
+                    Message message = new Message("foobar", Message.Severity.Warning);
+//                  CoreGUI.goToView(VIEW_ID.getName(), message);
+                }
+
+                @Override
+                public void onSuccess(Integer[] result) {
+                    if (result == null || result.length == 0) {
+                        onFailure(new Exception("foobaz"));
+                    } else {
+                        removeMember(sectionStack);
+                        sectionStack.destroy();
+                        int[] resIds = ArrayUtils.unwrapArray(result);
+                        Canvas alertsView = new StorageNodeAlertHistoryView("storageNode_" + storageNodeId + "_Alerts",
+                            resIds, header, storageNodeId);
+                        addMember(alertsView);
+                    }
+                }
+            });
+    }
+
     @Override
     public void renderView(ViewPath viewPath) {
-//        if (viewPath.toString().endsWith("/Config")) {
-//        }
+        if (viewPath.toString().endsWith("/Alerts")) {
+            alerts = true;
+            showAlertsForSingleStorageNode();
+        } else {
+            alerts = false;
+        }
         Log.debug("StorageNodeDetailView: " + viewPath);
     }
 }

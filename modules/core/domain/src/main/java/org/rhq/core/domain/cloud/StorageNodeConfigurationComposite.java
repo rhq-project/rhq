@@ -115,6 +115,54 @@ public class StorageNodeConfigurationComposite implements Serializable {
         this.heapNewSize = heapNewSize;
     }
 
+    public boolean validate() {
+        //validate heap settings
+        boolean validHeap = false;
+
+        String heapSize = getHeapSize() == null ? null : (getHeapSize().trim().length() == 0 ? null : getHeapSize()
+            .trim().toLowerCase());
+        String heapNewSize = getHeapNewSize() == null ? null : (getHeapNewSize().trim().length() == 0 ? null
+            : getHeapNewSize().trim().toLowerCase());
+
+        if (heapSize == null && heapNewSize == null) {
+            validHeap = true;
+        } else if (heapSize != null && heapNewSize != null) {
+            try {
+                int heapSizeParsed = 0;
+                if (heapSize.contains("g")) {
+                    heapSizeParsed = Integer.parseInt(heapSize.replace("g", "")) * 1024;
+                } else if (heapSize.contains("m")) {
+                    heapSizeParsed = Integer.parseInt(heapSize.toLowerCase().replace("m", ""));
+                } else {
+                    throw new IllegalArgumentException();
+                }
+
+                int heapNewSizeParsed = 0;
+                if (heapNewSize.contains("g")) {
+                    heapNewSizeParsed = Integer.parseInt(heapNewSize.replace("g", "")) * 1024;
+                } else if (heapNewSize.contains("m")) {
+                    heapNewSizeParsed = Integer.parseInt(heapNewSize.toLowerCase().replace("m", ""));
+                } else {
+                    throw new IllegalArgumentException();
+                }
+
+                if (heapNewSizeParsed < heapSizeParsed) {
+                    validHeap = true;
+                }
+            } catch (Exception e) {
+                //Nothing to do heap settings are not valid since parsing failed at some point
+            }
+        }
+
+        //validate JMX Port
+        boolean validJMXPort = false;
+        if (this.getJmxPort() < 65535) {
+            validJMXPort = true;
+        }
+
+        return validHeap && validJMXPort;
+    }
+
     /* (non-Javadoc)
      * @see java.lang.Object#toString()
      */

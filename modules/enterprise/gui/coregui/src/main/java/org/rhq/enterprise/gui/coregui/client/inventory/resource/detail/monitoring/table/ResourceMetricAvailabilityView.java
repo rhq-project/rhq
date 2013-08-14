@@ -140,7 +140,7 @@ public class ResourceMetricAvailabilityView extends EnhancedVLayout {
 
         CanvasItem availPieChartItem = new CanvasItem();
         availPieChartItem.setTitle(MSG.pie_chart_availability_summary_label());
-        availPieChartItem.setCanvas(availabilitySummaryPieGraph.createGraphMarker());
+        availPieChartItem.setCanvas(availabilitySummaryPieGraph.addGraphMarkerMember());
         availPieChartItem.setRowSpan(3);
         availPieChartItem.setVAlign(VerticalAlignment.TOP);
         availPieChartItem.setTitleVAlign(VerticalAlignment.TOP);

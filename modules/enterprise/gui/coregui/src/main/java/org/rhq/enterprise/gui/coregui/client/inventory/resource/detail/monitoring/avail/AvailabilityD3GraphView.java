@@ -24,6 +24,7 @@ import com.smartgwt.client.widgets.HTMLFlow;
 
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
+import org.rhq.enterprise.gui.coregui.client.GraphMarker;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AvailabilityGraphType;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -34,7 +35,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  *
  * @author Mike Thompson
  */
-public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends EnhancedVLayout {
+public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends EnhancedVLayout implements GraphMarker {
 
     protected T availabilityGraphType;
 
@@ -49,14 +50,14 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
     protected void onDraw() {
         super.onDraw();
         removeMembers(getMembers());
-        createGraphMarker();
+        addGraphMarkerComponent();
     }
 
     @Override
     public void parentResized() {
         super.parentResized();
         removeMembers(getMembers());
-        createGraphMarker();
+        addGraphMarkerComponent();
         drawJsniChart();
     }
 
@@ -76,7 +77,7 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
      *
      */
 
-    public void createGraphMarker() {
+    public String createGraphMarker() {
         Log.debug("drawGraph marker in AvailabilityD3Graph for: " + availabilityGraphType.getChartId());
 
         StringBuilder divAndSvgDefs = new StringBuilder();
@@ -99,11 +100,14 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
         divAndSvgDefs.append("</div>");
         divAndSvgDefs.append("</div>");   // end availTooltipDiv
         divAndSvgDefs.append("</div>");
-        HTMLFlow graph = new HTMLFlow(divAndSvgDefs.toString());
+        return divAndSvgDefs.toString();
+    }
+
+    public void addGraphMarkerComponent(){
+        HTMLFlow graph = new HTMLFlow(createGraphMarker());
         graph.setWidth100();
         graph.setHeight(65);
         addMember(graph);
-
     }
 
     /**

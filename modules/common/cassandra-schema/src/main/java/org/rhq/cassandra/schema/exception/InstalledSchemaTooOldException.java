@@ -29,10 +29,12 @@ package org.rhq.cassandra.schema.exception;
 /**
  * @author Stefan Negrea
  */
+@SuppressWarnings("serial")
 public class InstalledSchemaTooOldException extends Exception {
 
     public InstalledSchemaTooOldException() {
         super(
-            "Storage schema needs to be updated. The schema manager contains updates not yet applied to the storage cluster installation.");
+            "Storage schema is not properly updated. The schema manager contains updates not yet applied to the storage cluster installation."
+                + "Please re-run the server installer to update the current schema to the latest version.");
     }
 }

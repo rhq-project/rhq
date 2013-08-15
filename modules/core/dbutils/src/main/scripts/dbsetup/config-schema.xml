@@ -65,7 +65,7 @@
         <column name="LINK_TO_TARGET" type="BOOLEAN" required="false"/>
         <column name="FILTER" type="VARCHAR2" required="false" size="40"/>
         <column name="EXPRESSION" type="VARCHAR2" required="true" size="400"/>
-        <column name="EXPRESSION_SCOPE" type="VARCHAR2" required="true" size="12" default="unlimited"/>
+        <column name="EXPRESSION_SCOPE" type="VARCHAR2" required="true" size="15" default="UNLIMITED"/>
         <column name="TARGET_TYPE" type="VARCHAR2" required="true" size="20"/>
         <column name="PROPERTY_DEF_ID" type="INTEGER" required="false" references="RHQ_CONFIG_PROP_DEF"/>
     </table>

@@ -2180,15 +2180,15 @@
             </schemaSpec>
 
           <schemaSpec version="2.136">
-            <schema-addColumn   table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" columnType="VARCHAR2" precision="12"/>
+            <schema-addColumn   table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" columnType="VARCHAR2" precision="15"/>
             <schema-directSQL>
               <statement desc="Fill in defaults">
                 UPDATE RHQ_CONFIG_PD_OSRC
-                SET EXPRESSION_SCOPE = 'unlimited'
+                SET EXPRESSION_SCOPE = 'UNLIMITED'
                 WHERE EXPRESSION_SCOPE IS NULL
               </statement>
             </schema-directSQL>
-            <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" nullable="false" default="unlimited"/>
+            <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" nullable="false" default="UNLIMITED"/>
           </schemaSpec>
 
           <schemaSpec version="2.137">

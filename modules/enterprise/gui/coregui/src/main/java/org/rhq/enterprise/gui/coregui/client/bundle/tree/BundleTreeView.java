@@ -79,7 +79,7 @@ public class BundleTreeView extends TreeGrid {
                 }
 
                 if (splitPath.length == 1) {
-                    CoreGUI.goToView("Bundles");
+                    CoreGUI.goToView("Bundles/BundleGroup/" + currentlySelectedBundleGroupId);
                 } else {
                     CoreGUI.goToView("Bundles/Bundle/" + splitPath[1]);
                 }
@@ -109,8 +109,11 @@ public class BundleTreeView extends TreeGrid {
         if (viewPath.viewsLeft() > 0) {
             String key = "";
             for (ViewId view : viewPath.getViewPath().subList(2, viewPath.getViewPath().size())) {
-                if (key.length() > 0)
+                if (key.length() > 0) {
                     key += "_";
+                } else {
+                    key = String.valueOf(currentlySelectedBundleGroupId); // all keys start with the parent group ID
+                }
 
                 key += view.getPath();
 

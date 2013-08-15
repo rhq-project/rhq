@@ -84,18 +84,19 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         List<StorageNode> allNodes = new ArrayList<StorageNode>(clusterNodes);
         allNodes.add(storageNode);
 
-        announceStorageNode(subject, storageNode, createPropertyListOfAddresses("addresses", allNodes),
-            getAddresses(clusterNodes));
+        for (StorageNode clusterNode : clusterNodes) {
+            clusterNode.setMaintenancePending(true);
+        }
+
+        announceStorageNode(subject, storageNode, clusterNodes.get(0), createPropertyListOfAddresses("addresses",
+            allNodes));
 
     }
 
-    private void announceStorageNode(Subject subject, StorageNode storageNode, PropertyList addresses,
-        List<String> remainingNodes) {
-        String address = remainingNodes.remove(0);
-        StorageNode clusterNode = findStorageNodeByAddress(address);
-
+    private void announceStorageNode(Subject subject, StorageNode newStorageNode, StorageNode clusterNode,
+        PropertyList addresses) {
         if (log.isInfoEnabled()) {
-            log.info("Announcing " + storageNode + " to cluster node " + clusterNode);
+            log.info("Announcing " + newStorageNode + " to cluster node " + clusterNode);
         }
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(clusterNode.getResource());
@@ -104,7 +105,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         schedule.setOperationName("updateKnownNodes");
         Configuration parameters = new Configuration();
         parameters.put(addresses);
-        parameters.put(new PropertySimple("remainingNodes", StringUtil.listToString(remainingNodes)));
         schedule.setParameters(parameters);
 
         operationManager.scheduleResourceOperation(subject, schedule);
@@ -141,8 +141,9 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
             .getResultList();
         for (StorageNode node : clusterNodes) {
-            node.setOperationMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+            node.setMaintenancePending(true);
         }
+        storageNode.setMaintenancePending(true);
         clusterNodes.add(storageNode);
         boolean runRepair = updateSchemaIfNecessary(clusterNodes);
         performAddNodeMaintenance(subject, storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST,
@@ -231,19 +232,20 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             operationFailed(storageNode, resourceOperationHistory, newStorageNode);
             return;
         default:  // SUCCESS
+            storageNode.setMaintenancePending(false);
             Configuration parameters = resourceOperationHistory.getParameters();
             PropertyList addresses = parameters.getList("addresses");
-            List<String> remainingNodes = getRemainingNodes(resourceOperationHistory);
+            StorageNode nextNode = takeFromMaintenanceQueue();
 
             newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ANNOUNCE);
             Subject subject = getSubject(resourceOperationHistory);
 
-            if (remainingNodes.isEmpty()) {
+            if (nextNode == null) {
                 log.info("Successfully announced new storage node to storage cluster");
                 newStorageNode.setOperationMode(StorageNode.OperationMode.BOOTSTRAP);
                 prepareNodeForBootstrap(subject, newStorageNode, addresses.deepCopy(false));
             } else {
-                announceStorageNode(subject, newStorageNode, addresses.deepCopy(false), remainingNodes);
+                announceStorageNode(subject, newStorageNode, nextNode, addresses.deepCopy(false));
             }
         }
     }
@@ -293,11 +295,14 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 if (log.isInfoEnabled()) {
                     log.info("Finished cluster maintenance for " + storageNode + " for addition of new node");
                 }
-                storageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
-                StorageNode nextNode = takeFromQueue(storageNode, StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+                storageNode.setMaintenancePending(false);
+                StorageNode nextNode = takeFromMaintenanceQueue();
 
                 if (nextNode == null) {
                     log.info("Finished running cluster maintenance for addition of new node");
+                    // TODO replace this with an UPDATE statement
+                    newStorageNode = findNewStorgeNode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+                    newStorageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
                 } else {
                     Configuration parameters = resourceOperationHistory.getParameters();
                     boolean runRepair = parameters.getSimple(RUN_REPAIR_PROPERTY).getBooleanValue();
@@ -399,33 +404,16 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         operationManager.scheduleResourceOperation(subject, schedule);
     }
 
-    private StorageNode takeFromQueue(StorageNode lastTaken, StorageNode.OperationMode queue) {
-        List<StorageNode> nodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE_EXCLUDING,
-            StorageNode.class).setParameter("operationMode", queue).setParameter("storageNode", lastTaken)
+    private StorageNode takeFromMaintenanceQueue() {
+        List<StorageNode> storageNodes = entityManager.createQuery("SELECT s FROM StorageNode s WHERE " +
+            "s.operationMode = :operationMode AND s.maintenancePending = :maintenancePending", StorageNode.class)
+            .setParameter("operationMode", StorageNode.OperationMode.NORMAL).setParameter("maintenancePending", true)
             .getResultList();
 
-        if (nodes.isEmpty()) {
+        if (storageNodes.isEmpty()) {
             return null;
         }
-        return nodes.get(0);
-    }
-
-    private List<String> getRemainingNodes(ResourceOperationHistory resourceOperationHistory) {
-        LinkedList<String> addresses = new LinkedList<String>();
-        Configuration results = resourceOperationHistory.getResults();
-        String remainingNodes = results.getSimpleValue("remainingNodes");
-
-        if (!StringUtil.isEmpty(remainingNodes)) {
-            for (String address : remainingNodes.split(",")) {
-                addresses.add(address);
-            }
-        }
-        return addresses;
-    }
-
-    private StorageNode findStorageNodeByAddress(String address) {
-        return entityManager.createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS, StorageNode.class)
-                .setParameter("address", address).getSingleResult();
+        return storageNodes.get(0);
     }
 
     private StorageNode findNewStorgeNode(StorageNode.OperationMode operationMode) {
@@ -535,14 +523,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             list.add(new PropertySimple("address", storageNode.getAddress()));
         }
         return list;
-    }
-
-    private List<String> getAddresses(List<StorageNode> storageNodes) {
-        List<String> addresses = new LinkedList<String>();
-        for (StorageNode storageNode : storageNodes) {
-            addresses.add(storageNode.getAddress());
-        }
-        return addresses;
     }
 
 }

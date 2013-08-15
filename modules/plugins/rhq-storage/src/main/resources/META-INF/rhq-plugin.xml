@@ -102,11 +102,9 @@
         <c:list-property name="addresses">
           <c:simple-property name="address"/>
         </c:list-property>
-        <c:simple-property name="remainingNodes"/>
       </parameters>
       <results>
         <c:simple-property name="details"/>
-        <c:simple-property name="remainingNodes"/>
       </results>
     </operation>
 

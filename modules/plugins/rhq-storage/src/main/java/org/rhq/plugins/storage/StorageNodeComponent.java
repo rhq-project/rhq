@@ -257,7 +257,6 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
 
             Configuration complexResults = result.getComplexResults();
             complexResults.put(new PropertySimple("details", "Successfully updated the set of known nodes."));
-            complexResults.put(params.get("remainingNodes").deepCopy(false));
 
             return result;
         } catch (InternodeAuthConfUpdateException e) {

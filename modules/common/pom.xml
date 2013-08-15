@@ -32,7 +32,6 @@
       <module>jboss-as-dmr-client</module>
       <module>cassandra-auth</module>
       <module>cassandra-util</module>
-      <module>cassandra-jmx</module>
       <module>cassandra-schema</module>
       <module>cassandra-ccm</module>
       <module>cassandra-installer</module>

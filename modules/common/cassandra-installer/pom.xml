@@ -95,11 +95,6 @@
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>
-                  <groupId>${project.groupId}</groupId>
-                  <artifactId>rhq-cassandra-jmx</artifactId>
-                  <version>${project.version}</version>
-                </artifactItem>
-                <artifactItem>
                   <groupId>org.yaml</groupId>
                   <artifactId>snakeyaml</artifactId>
                   <version>${cassandra.snakeyaml.version}</version>

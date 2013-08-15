@@ -2212,6 +2212,7 @@
           </schemaSpec>
 
           <schemaSpec version="2.137">
+              <schema-addColumn table="RHQ_STORAGE_NODE" column="MAINTENANCE_PENDING" columnType="BOOLEAN"/>
               <schema-addColumn table="RHQ_STORAGE_NODE" column="ERROR_MSG" columnType="LONGVARCHAR"/>
               <schema-addColumn table="RHQ_STORAGE_NODE" column="RESOURCE_OP_HIST_ID" columnType="INTEGER"/>
               <schema-directSQL>
@@ -2221,6 +2222,12 @@
                   FOREIGN KEY (RESOURCE_OP_HIST_ID)
                   REFERENCES RHQ_OPERATION_HISTORY (ID)
               </statement>
+                <statement targetDBVendor="postgresql" desc="Set maintenance_pending flag to false for existing storage nodes">
+                  UPDATE RHQ_STORAGE_NODE SET IGNORED = false
+                </statement>
+                <statement targetDBVendor="oracle" desc="Set maintenance_pending flag to false for existing storage nodes">
+                  UPDATE RHQ_STORAGE_NODE SET IGNORED = 0
+                </statement>
             </schema-directSQL>
           </schemaSpec>
 

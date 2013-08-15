@@ -109,8 +109,8 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
                 public void onSuccess(PageList<Bundle> result) {
                     BundleGroup unassignedBundleGroup = new BundleGroup();
                     unassignedBundleGroup.setId(0); // ID=0 is an indicator we use to denote the unassigned group
-                    unassignedBundleGroup.setName("TODO i18n Unassigned Bundles");
-                    unassignedBundleGroup.setDescription("TODO i18n These are bundles that are not assigned to any bundle group.");
+                    unassignedBundleGroup.setName(MSG.view_bundle_tree_unassigned_name());
+                    unassignedBundleGroup.setDescription(MSG.view_bundle_tree_unassigned_desc());
 
                     // Because findBundleGroupsByCriteria would not have given us all unassigned bundles, we used
                     // findBundlesByCriteria. But we need to organize our tree structure with groups at the top, so

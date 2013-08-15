@@ -79,14 +79,14 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     }
 
     public ResourceGroupListView(String title) {
-        this(null, title);
+        this(null, title, null);
     }
 
-    public ResourceGroupListView(Criteria criteria, String title, String... headerIcons) {
+    public ResourceGroupListView(Criteria criteria, String title, String headerIcon) {
         super(title, criteria);
 
-        for (String headerIcon : headerIcons) {
-            addHeaderIcon(headerIcon);
+        if (headerIcon != null) {
+            setTitleIcon(headerIcon);
         }
 
         final ResourceGroupCompositeDataSource datasource = ResourceGroupCompositeDataSource.getInstance();
@@ -273,7 +273,7 @@ public class ResourceGroupListView extends Table<ResourceGroupCompositeDataSourc
     public static ResourceGroupListView getGroupsOf(int explicitResourceId, boolean canModifyMembership) {
 
         ResourceGroupListView view = new ResourceGroupListView(new Criteria("explicitResourceId",
-            String.valueOf(explicitResourceId)), MSG.common_title_resourceGroups());
+            String.valueOf(explicitResourceId)), MSG.common_title_resourceGroups(), null);
         if (canModifyMembership) {
             view.resourceIdToModify = Integer.valueOf(explicitResourceId);
         }

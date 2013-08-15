@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
@@ -54,10 +55,9 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
     private final boolean canManageBundles;
 
     public BundleDeploymentListView(Criteria criteria, boolean canManageBundles) {
-        super(MSG.view_bundle_bundleDeployments(), criteria);
+        super(MSG.view_bundle_bundleDeployments(), criteria, IconEnum.BUNDLE_DEPLOYMENT.getIcon24x24Path());
         this.canManageBundles = canManageBundles;
         setDataSource(new BundleDeploymentDataSource());
-        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
 
     @Override

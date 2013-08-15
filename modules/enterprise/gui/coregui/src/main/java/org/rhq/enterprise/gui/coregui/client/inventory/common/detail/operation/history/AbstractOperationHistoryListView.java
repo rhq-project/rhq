@@ -71,7 +71,7 @@ public abstract class AbstractOperationHistoryListView<T extends AbstractOperati
     public AbstractOperationHistoryListView(T dataSource, String title) {
         super(title);
         setDataSource(dataSource);
-        setHeaderIcon(HEADER_ICON);
+        setTitleIcon(HEADER_ICON);
     }
 
     public AbstractOperationHistoryListView(T dataSource, String title, Criteria criteria) {

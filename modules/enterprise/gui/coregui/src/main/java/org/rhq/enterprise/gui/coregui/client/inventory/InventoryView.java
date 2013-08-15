@@ -33,7 +33,6 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.components.TitleBar;
@@ -157,10 +156,7 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem allResourcesItem = new NavigationItem(PAGE_ALL_RESOURCES, new ViewFactory() {
             public Canvas createView() {
-                return new ResourceSearchViewWrapper(PAGE_ALL_RESOURCES, null,
-                    ImageManager.getResourceLargeIcon(ResourceCategory.PLATFORM),
-                    ImageManager.getResourceLargeIcon(ResourceCategory.SERVER),
-                    ImageManager.getResourceLargeIcon(ResourceCategory.SERVICE));
+                return new ResourceSearchViewWrapper(PAGE_ALL_RESOURCES, null, null);
             }
         });
 
@@ -272,13 +268,13 @@ public class InventoryView extends AbstractSectionedLeftNavigationView {
         private final boolean showIgnoreButton;
         private final boolean showUnignoreButton;
 
-        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String... headerIcons) {
-            this(true, false, viewName, criteria, headerIcons);
+        public ResourceSearchViewWrapper(ViewName viewName, Criteria criteria, String headerIcon) {
+            this(true, false, viewName, criteria, headerIcon);
         }
 
         public ResourceSearchViewWrapper(boolean showIgnoredButton, boolean showUnignoreButton, ViewName viewName,
-            Criteria criteria, String... headerIcons) {
-            super(criteria, viewName.getTitle(), headerIcons);
+            Criteria criteria, String headerIcon) {
+            super(criteria, viewName.getTitle(), headerIcon);
             this.viewName = viewName;
             this.showIgnoreButton = showIgnoredButton;
             this.showUnignoreButton = showUnignoreButton;

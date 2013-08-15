@@ -17,7 +17,7 @@
     <description>Database schema setup, upgrade and other utilities</description>
 
     <properties>
-        <db.schema.version>2.136</db.schema.version>
+        <db.schema.version>2.137</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.server-name>${rhq.test.ds.server-name}</rhq.ds.server-name>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>

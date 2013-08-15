@@ -344,7 +344,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             node.setIcon("subsystems/bundle/BundleDeployment_16.png");
             parentID = bundleGroupId.toString() + "_" + bundleId + "_destinations_" + deployment.getDestination().getId();
             node.setParentID(parentID);
-            node.setID(bundleId + "_deployments_" + deployment.getId());
+            node.setID(bundleGroupId.toString() + "_" + bundleId + "_deployments_" + deployment.getId());
             String name = StringUtility.escapeHtml(deployment.getName());
             if (deployment.isLive()) {
                 node.setName("<span style=\"color: green; font-weight: bold\">(live)</span> " + name);

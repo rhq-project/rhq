@@ -112,7 +112,7 @@ public class BundleTreeView extends TreeGrid {
                 if (key.length() > 0) {
                     key += "_";
                 } else {
-                    key = String.valueOf(currentlySelectedBundleGroupId); // all keys start with the parent group ID
+                    key = String.valueOf(currentlySelectedBundleGroupId) + '_'; // all keys start with the parent group ID
                 }
 
                 key += view.getPath();

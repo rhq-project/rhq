@@ -18,17 +18,40 @@
  */
 package org.rhq.enterprise.server.resource.test;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
 import javax.transaction.NotSupportedException;
 import javax.transaction.SystemException;
 
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
+import org.jboss.remoting.InvokerLocator;
+
+import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
+import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
@@ -39,8 +62,13 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.enterprise.communications.ServiceContainer;
+import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics;
+import org.rhq.enterprise.server.agentclient.AgentClient;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SessionNotFoundException;
+import org.rhq.enterprise.server.core.comm.ServerConfiguration;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
 import org.rhq.enterprise.server.operation.OperationDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
@@ -51,6 +79,7 @@ import org.rhq.enterprise.server.resource.group.ResourceGroupNotFoundException;
 import org.rhq.enterprise.server.resource.group.definition.exception.GroupDefinitionNotFoundException;
 import org.rhq.enterprise.server.resource.metadata.test.UpdatePluginMetadataTestBase;
 import org.rhq.enterprise.server.test.TestServerCommunicationsService;
+import org.rhq.enterprise.server.test.TestServerCommunicationsServiceMBean;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -58,31 +87,17 @@ import org.rhq.enterprise.server.util.LookupUtil;
  */
 @Test
 public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
-    private Subject overlord;
     private Resource newResource;
     private ResourceGroup newGroup;
     private ResourceGroupManagerLocal groupManager;
-
-    TestServerCommunicationsService agentServiceContainer;
 
     @Override
     protected void beforeMethod() throws Exception {
         super.beforeMethod();
 
-        overlord = LookupUtil.getSubjectManager().getOverlord();
         newResource = createNewResourceWithNewType();
         groupManager = LookupUtil.getResourceGroupManager();
         newGroup = createNewGroup();
-    }
-
-    @Override
-    protected void afterMethod() throws Exception {
-        if (newGroup != null) {
-            groupManager.deleteResourceGroup(overlord, newGroup.getId());
-        }
-        deleteNewResourceAgentResourceType(newResource);
-
-        super.afterMethod();
     }
 
     public void testResourceErrors() {
@@ -90,7 +105,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         List<ResourceError> errors;
         DiscoveryServerServiceImpl serverService = new DiscoveryServerServiceImpl();
 
-        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
+        errors = resourceManager.findResourceErrors(getOverlord(), newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 0;
 
@@ -100,7 +115,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         // simulate the agent notifying the server about an error
         // this will exercise the addResourceError in the SLSB
         serverService.setResourceError(error);
-        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
+        errors = resourceManager.findResourceErrors(getOverlord(), newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 1;
         error = errors.get(0);
@@ -118,7 +133,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         error.setSummary("another summary");
         error.setDetail("another detail");
         serverService.setResourceError(error);
-        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
+        errors = resourceManager.findResourceErrors(getOverlord(), newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 1;
         error = errors.get(0);
@@ -128,10 +143,20 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         assert error.getErrorType() == ResourceErrorType.INVALID_PLUGIN_CONFIGURATION;
         assert error.getTimeOccurred() == 567890;
 
-        resourceManager.deleteResourceError(overlord, error.getId());
-        errors = resourceManager.findResourceErrors(overlord, newResource.getId(),
+        resourceManager.deleteResourceError(getOverlord(), error.getId());
+        errors = resourceManager.findResourceErrors(getOverlord(), newResource.getId(),
             ResourceErrorType.INVALID_PLUGIN_CONFIGURATION);
         assert errors.size() == 0;
+    }
+
+    @Override
+    protected void afterMethod() throws Exception {
+        if (newGroup != null) {
+            groupManager.deleteResourceGroup(getOverlord(), newGroup.getId());
+        }
+        deleteNewResourceAgentResourceType(newResource);
+
+        super.afterMethod();
     }
 
     public void testResourceLineage() throws Exception {
@@ -162,7 +187,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
     // Make sure our application exceptions are not wrapped
     public void bz886850Test() {
         try {
-            resourceManager.getResourceById(overlord, 2637426);
+            resourceManager.getResourceById(getOverlord(), 2637426);
             fail("Should have thrown a ResourceNotFoundException");
         } catch (Throwable t) {
             if (!(t instanceof ResourceNotFoundException)) {
@@ -178,7 +203,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             }
         }
         try {
-            LookupUtil.getOperationManager().getOperationDefinition(overlord, 3456347);
+            LookupUtil.getOperationManager().getOperationDefinition(getOverlord(), 3456347);
             fail("Should have thrown a OperationDefinitionNotFoundException");
         } catch (Throwable t) {
             if (!(t instanceof OperationDefinitionNotFoundException)) {
@@ -186,7 +211,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             }
         }
         try {
-            LookupUtil.getResourceTypeManager().getResourceTypeById(overlord, 3456347);
+            LookupUtil.getResourceTypeManager().getResourceTypeById(getOverlord(), 3456347);
             fail("Should have thrown a ResourceTypeNotFoundException");
         } catch (Throwable t) {
             if (!(t instanceof ResourceTypeNotFoundException)) {
@@ -194,7 +219,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             }
         }
         try {
-            LookupUtil.getResourceGroupManager().getResourceGroup(overlord, 3456347);
+            LookupUtil.getResourceGroupManager().getResourceGroup(getOverlord(), 3456347);
             fail("Should have thrown a ResourceGroupNotFoundException");
         } catch (Throwable t) {
             if (!(t instanceof ResourceGroupNotFoundException)) {
@@ -215,7 +240,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(newGroup.getId());
         criteria.fetchExplicitResources(true);
-        PageList<ResourceGroup> persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        PageList<ResourceGroup> persistedGroups = groupManager.findResourceGroupsByCriteria(getOverlord(), criteria);
         assertEquals("There should be just one group with id " + newGroup.getId(), 1,
             persistedGroups.size());
         
@@ -226,8 +251,8 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             .getExplicitResources().size());
 
         // add resource to group
-        groupManager.addResourcesToGroup(overlord, newGroup.getId(), new int[] { newResource.getId() });
-        persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        groupManager.addResourcesToGroup(getOverlord(), newGroup.getId(), new int[] { newResource.getId() });
+        persistedGroups = groupManager.findResourceGroupsByCriteria(getOverlord(), criteria);
         assertEquals("There should be one member in the newly created group.", 1, persistedGroups.get(0).getExplicitResources()
             .size());
     }
@@ -237,39 +262,108 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(newGroup.getId());
         criteria.fetchExplicitResources(true);
-        PageList<ResourceGroup> persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        PageList<ResourceGroup> persistedGroups = groupManager.findResourceGroupsByCriteria(getOverlord(), criteria);
         assertEquals("There should be just one group with id " + newGroup.getId(), 1,
             persistedGroups.size());
         assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroups.get(0)
             .getGroupCategory());
 
         // add resource to group
-        groupManager.addResourcesToGroup(overlord, persistedGroups.get(0).getId(), new int[] { newResource.getId() });
-        persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        groupManager.addResourcesToGroup(getOverlord(), persistedGroups.get(0).getId(), new int[] { newResource.getId() });
+        persistedGroups = groupManager.findResourceGroupsByCriteria(getOverlord(), criteria);
         assertEquals("A group with just one explicit member is considered as COMPATIBLE.", GroupCategory.COMPATIBLE,
             persistedGroups.get(0).getGroupCategory());
 
         // now uninventorize the only resource
-        resourceManager.uninventoryResource(overlord, newResource.getId());
-        persistedGroups = groupManager.findResourceGroupsByCriteria(overlord, criteria);
+        resourceManager.uninventoryResource(getOverlord(), newResource.getId());
+        persistedGroups = groupManager.findResourceGroupsByCriteria(getOverlord(), criteria);
         assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroups.get(0)
             .getGroupCategory());
     }
 
     public void testResourceRemovalFromGroup() {
-        ResourceGroup persistedGroup = groupManager.getResourceGroup(overlord, newGroup.getId());
+        ResourceGroup persistedGroup = groupManager.getResourceGroup(getOverlord(), newGroup.getId());
         assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroup.getGroupCategory());
         
         // add resource to group
-        groupManager.addResourcesToGroup(overlord, persistedGroup.getId(), new int[] { newResource.getId() });
-        persistedGroup = groupManager.getResourceGroup(overlord, newGroup.getId());
+        groupManager.addResourcesToGroup(getOverlord(), persistedGroup.getId(), new int[] { newResource.getId() });
+        persistedGroup = groupManager.getResourceGroup(getOverlord(), newGroup.getId());
         assertEquals("A group with just one explicit member is considered as COMPATIBLE.", GroupCategory.COMPATIBLE,
             persistedGroup.getGroupCategory());
         
         // now remove the only resource from the group
-        groupManager.removeResourcesFromGroup(overlord, persistedGroup.getId(), new int[] { newResource.getId() });
-        persistedGroup = groupManager.getResourceGroup(overlord, newGroup.getId());
+        groupManager.removeResourcesFromGroup(getOverlord(), persistedGroup.getId(), new int[] { newResource.getId() });
+        persistedGroup = groupManager.getResourceGroup(getOverlord(), newGroup.getId());
         assertEquals("An empty group is considered as MIXED.", GroupCategory.MIXED, persistedGroup.getGroupCategory());     
+    }
+
+    public void testLiveAvailability() throws Exception {
+        agentServiceContainer.discoveryService = Mockito.mock(DiscoveryAgentService.class);
+
+        Mockito.when(agentServiceContainer.discoveryService.getCurrentAvailability(Mockito.any(Resource.class))).then(
+            new Answer<Availability>() {
+                int count = 0;
+
+                @Override
+                public Availability answer(InvocationOnMock invocation) throws Throwable {
+                    Resource res = (Resource) invocation.getArguments()[0];
+                    AvailabilityType avail = count++ == 0 ? AvailabilityType.DOWN : AvailabilityType.UP;
+                    return new Availability(res, avail);
+                }
+            });
+
+        AlertDefinition alertDef = new AlertDefinition();
+
+        AlertCondition cond = new AlertCondition(alertDef, AlertConditionCategory.AVAILABILITY);
+        cond.setName(AlertConditionOperator.AVAIL_GOES_UP.name());
+        alertDef.setName("liveAvailabilityTestAlert");
+        alertDef.setResource(newResource);
+        alertDef.setPriority(AlertPriority.MEDIUM);
+        alertDef.setRecoveryId(0);
+        alertDef.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+        alertDef.setConditions(Collections.singleton(cond));
+        alertDef.setEnabled(true);
+        alertDef.setConditionExpression(BooleanExpression.ALL);
+
+        AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+        alertDefinitionManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDef, newResource.getId(), true);
+
+        //obvious, right? This needs to be done for the alert subsystem to become aware of the new def
+        LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
+
+        ResourceCriteria crit = new ResourceCriteria();
+        crit.addFilterId(newResource.getId());
+        crit.fetchCurrentAvailability(true);
+        Resource fromDb = resourceManager.findResourcesByCriteria(getOverlord(), crit).get(0);
+
+        assertEquals(AvailabilityType.UNKNOWN, fromDb.getCurrentAvailability().getAvailabilityType());
+
+        //ask for the live avail - the mock agent response will return "DOWN" the first time
+        resourceManager.getLiveResourceAvailability(getOverlord(), newResource.getId());
+
+        //check that the resource changed its avail in the db
+        fromDb = resourceManager.getResource(getOverlord(), newResource.getId());
+        assertEquals(AvailabilityType.DOWN, fromDb.getCurrentAvailability().getAvailabilityType());
+
+        //ask for the live avail - the mock agent response will return "UP" the second time
+        resourceManager.getLiveResourceAvailability(getOverlord(), newResource.getId());
+
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(3000);
+
+        //check that the resource changed its avail in the db
+        fromDb = resourceManager.getResource(getOverlord(), newResource.getId());
+        assertEquals(AvailabilityType.UP, fromDb.getCurrentAvailability().getAvailabilityType());
+
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(3000);
+
+        //check that the alert fired when going from DOWN to UP
+        AlertCriteria aCrit = new AlertCriteria();
+        aCrit.addFilterResourceIds(newResource.getId());
+
+        List<Alert> alerts = LookupUtil.getAlertManager().findAlertsByCriteria(getOverlord(), aCrit);
+        assertEquals("Unexpected number of alerts on the resource.", 1, alerts.size());
     }
 
     private int givenASampleResourceHierarchy() throws NotSupportedException, SystemException {
@@ -339,15 +433,14 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
             em.persist(resourceType);
 
-            Agent agent = new Agent("testagent", "testaddress", 16163, "", "testtoken");
-            em.persist(agent);
-            em.flush();
-
             resource = new Resource("reskey" + System.currentTimeMillis(), "resname", resourceType);
+            setUpAgent(resource);
+
             resource.setUuid("" + new Random().nextInt());
-            resource.setAgent(agent);
             resource.setInventoryStatus(InventoryStatus.COMMITTED);
             em.persist(resource);
+
+            createServerIdentity();
         } catch (Exception e) {
             System.out.println("CANNOT PREPARE TEST: " + e);
             getTransactionManager().rollback();
@@ -361,7 +454,7 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
 
     private ResourceGroup createNewGroup() {
         ResourceGroup group = new ResourceGroup("testGroup");
-        groupManager.createResourceGroup(overlord, group);
+        groupManager.createResourceGroup(getOverlord(), group);
         return group;
     }
 
@@ -372,9 +465,9 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
             try {
                 Resource res = em.find(Resource.class, resource.getId());
                 System.out.println("Removing " + res + "...");
-                List<Integer> deletedIds = resourceManager.uninventoryResource(overlord, res.getId());
+                List<Integer> deletedIds = resourceManager.uninventoryResource(getOverlord(), res.getId());
                 for (Integer deletedResourceId : deletedIds) {
-                    resourceManager.uninventoryResourceAsyncWork(overlord, deletedResourceId);
+                    resourceManager.uninventoryResourceAsyncWork(getOverlord(), deletedResourceId);
                 }
                 em.flush();
 

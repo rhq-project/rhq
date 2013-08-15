@@ -38,6 +38,7 @@ import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
 import org.rhq.core.clientapi.descriptor.DescriptorPackages;
 import org.rhq.core.clientapi.descriptor.plugin.PluginDescriptor;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
 import org.rhq.core.domain.measurement.MeasurementData;
@@ -61,6 +62,10 @@ import org.rhq.enterprise.server.util.LookupUtil;
 
 public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
+    // this must match the constant found in ServerManagerBean
+    protected static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+    protected static final String RHQ_SERVER_NAME_PROPERTY_VALUE = "TestServer";
+
     protected TestServerCommunicationsService agentServiceContainer;
 
     protected static final String PLUGIN_NAME = "UpdatePluginMetadataTestBasePlugin"; // don't change this - our test descriptor .xml files use it as plugin name
@@ -70,6 +75,7 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
     protected static PluginManagerLocal pluginMgr;
     protected static ResourceTypeManagerLocal resourceTypeManager;
     protected static ResourceManagerLocal resourceManager;
+    private Server server;
 
     @Override
     protected void beforeMethod() throws Exception {
@@ -86,6 +92,8 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         pluginMgr = LookupUtil.getPluginManager();
         resourceTypeManager = LookupUtil.getResourceTypeManager();
         resourceManager = LookupUtil.getResourceManager();
+
+        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
     }
 
     @Override
@@ -96,6 +104,10 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
         unpreparePluginScannerService();
         unprepareScheduler();
         unprepareForTestAgents();
+
+        deleteServerIdentity();
+
+        System.setProperty(RHQ_SERVER_NAME_PROPERTY, "");
     }
 
     protected void prepareMockAgentServiceContainer() {
@@ -259,6 +271,35 @@ public class UpdatePluginMetadataTestBase extends AbstractEJB3Test {
 
         testResource.setAgent(agent);
         agentServiceContainer.addStartedAgent(agent);
+    }
+
+    protected void createServerIdentity() {
+        server = new Server();
+        server.setName(RHQ_SERVER_NAME_PROPERTY_VALUE);
+        server.setAddress("localhost");
+        server.setPort(7080);
+        server.setSecurePort(7443);
+        server.setComputePower(1);
+        server.setOperationMode(Server.OperationMode.MAINTENANCE);
+        int serverId = LookupUtil.getServerManager().create(server);
+        assert serverId > 0 : "could not create our server identity in the DB";
+
+        // simulate the agent being "connected" to the server
+        try {
+            Agent agent = getAgent();
+            agent.setServer(server);
+            LookupUtil.getAgentManager().updateAgent(agent);
+        } catch (NoResultException nre) {
+            // no agent to attach
+        }
+    }
+
+    protected void deleteServerIdentity() throws Exception {
+        if (server != null) {
+            cleanupAgent(); // can't remove the server before we purge the agent
+            LookupUtil.getTopologyManager().deleteServer(LookupUtil.getSubjectManager().getOverlord(), server.getId());
+            server = null;
+        }
     }
 
     /**

@@ -23,8 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.NoResultException;
-
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -38,7 +36,6 @@ import org.rhq.core.domain.alert.AlertDampening.Category;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
-import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.discovery.AvailabilityReport;
@@ -49,7 +46,6 @@ import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
-import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.util.PageControl;
@@ -69,22 +65,11 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class AlertConditionTest extends UpdatePluginMetadataTestBase {
     private static final boolean ENABLED = true;
 
-    // this must match the constant found in ServerManagerBean
-    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
-    private static final String RHQ_SERVER_NAME_PROPERTY_VALUE = "AlertConditionTestServer";
-
     private Resource resource;
-    private Server server;
 
     @Override
     protected String getSubsystemDirectory() {
         return "alerts";
-    }
-
-    @Override
-    protected void beforeMethod() throws Exception {
-        super.beforeMethod();
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
     }
 
     @Override
@@ -93,10 +78,6 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
             deleteNewResource(resource);
             resource = null;
         }
-
-        deleteServerIdentity();
-
-        System.setProperty(RHQ_SERVER_NAME_PROPERTY, "");
 
         super.afterMethod();
     }
@@ -661,32 +642,4 @@ public class AlertConditionTest extends UpdatePluginMetadataTestBase {
         LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
     }
 
-    private void createServerIdentity() {
-        server = new Server();
-        server.setName(RHQ_SERVER_NAME_PROPERTY_VALUE);
-        server.setAddress("localhost");
-        server.setPort(7080);
-        server.setSecurePort(7443);
-        server.setComputePower(1);
-        server.setOperationMode(Server.OperationMode.MAINTENANCE);
-        int serverId = LookupUtil.getServerManager().create(server);
-        assert serverId > 0 : "could not create our server identity in the DB";
-
-        // simulate the agent being "connected" to the server
-        try {
-            Agent agent = getAgent();
-            agent.setServer(server);
-            LookupUtil.getAgentManager().updateAgent(agent);
-        } catch (NoResultException nre) {
-            // no agent to attach
-        }
-    }
-
-    private void deleteServerIdentity() throws Exception {
-        if (server != null) {
-            cleanupAgent(); // can't remove the server before we purge the agent
-            LookupUtil.getTopologyManager().deleteServer(LookupUtil.getSubjectManager().getOverlord(), server.getId());
-            server = null;
-        }
-    }
 }

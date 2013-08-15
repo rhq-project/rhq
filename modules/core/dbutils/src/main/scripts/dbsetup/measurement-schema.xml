@@ -455,6 +455,7 @@
     <column name="CTIME" required="true" type="LONG" />
     <column name="MTIME" required="true" type="LONG" />
     <column name="ERROR_MSG" required="false" type="LONGVARCHAR"/>
+    <column name="MAINTENANCE_PENDING" required="true" type="BOOLEAN" default="false"/>
     <column name="RESOURCE_ID" required="false" type="INTEGER" references="RHQ_RESOURCE(ID)" />
     <column name="RESOURCE_OP_HIST_ID" required="false" type="INTEGER" references="RHQ_OPERATION_HISTORY(ID)"/>
 

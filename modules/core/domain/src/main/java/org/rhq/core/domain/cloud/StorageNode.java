@@ -135,6 +135,9 @@ public class StorageNode implements Serializable {
     @Column(name = "MTIME", nullable = false)
     private long mtime;
 
+    @Column(name = "MAINTENANCE_PENDING", nullable = false)
+    private boolean maintenancePending;
+
     @Column(name = "ERROR_MSG", nullable = true)
     private String errorMessage;
 
@@ -196,6 +199,14 @@ public class StorageNode implements Serializable {
 
     public void setMtime(long mtime) {
         this.mtime = mtime;
+    }
+
+    public boolean isMaintenancePending() {
+        return maintenancePending;
+    }
+
+    public void setMaintenancePending(boolean maintenancePending) {
+        this.maintenancePending = maintenancePending;
     }
 
     public Resource getResource() {

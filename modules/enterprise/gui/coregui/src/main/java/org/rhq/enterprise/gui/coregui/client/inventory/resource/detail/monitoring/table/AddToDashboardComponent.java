@@ -134,14 +134,16 @@ public class AddToDashboardComponent extends EnhancedToolStrip implements Enhanc
                 }
 
                 public void onSuccess(PageList<Dashboard> dashboards) {
-                    for (final Dashboard dashboard : dashboards) {
-                        dashboardMenuMap.put(String.valueOf(dashboard.getId()),
-                            MSG.view_tree_common_contextMenu_addChartToDashboard(dashboard.getName()));
-                        dashboardMap.put(dashboard.getId(), dashboard);
+                    if(dashboards.size() > 0){
+                        for (final Dashboard dashboard : dashboards) {
+                            dashboardMenuMap.put(String.valueOf(dashboard.getId()),
+                                MSG.view_tree_common_contextMenu_addChartToDashboard(dashboard.getName()));
+                            dashboardMap.put(dashboard.getId(), dashboard);
+                        }
+                        selectedDashboard = dashboards.get(0);
+                        dashboardSelectItem.setValueMap(dashboardMenuMap);
+                        dashboardSelectItem.setValue(selectedDashboard.getId());
                     }
-                    selectedDashboard = dashboards.get(0);
-                    dashboardSelectItem.setValueMap(dashboardMenuMap);
-                    dashboardSelectItem.setValue(selectedDashboard.getId());
                 }
             });
     }

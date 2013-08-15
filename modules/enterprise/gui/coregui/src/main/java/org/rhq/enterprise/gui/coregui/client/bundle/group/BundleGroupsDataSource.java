@@ -117,6 +117,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
         //criteria.addFilterTagName(getFilter(request, "tagName", String.class));       
         //criteria.addFilterTagSemantic(getFilter(request, "tagSemantic", String.class));
 
+        criteria.addFilterId(getFilter(request, FIELD_ID, Integer.class));
         criteria.addFilterName(getFilter(request, "search", String.class));
         criteria.addFilterBundleIds(getArrayFilter(request, "bundleIds", Integer.class));
         criteria.fetchBundles(true);
@@ -192,7 +193,7 @@ public class BundleGroupsDataSource extends RPCDataSource<BundleGroup, BundleGro
         record.setAttribute(FIELD_ID, from.getId());
         record.setAttribute(FIELD_NAME, from.getName());
         record.setAttribute(FIELD_NAMELINK, LinkManager.getBundleGroupLink(from.getId()));
-        record.setAttribute(FIELD_DESCRIPTION, from.getDescription());
+        record.setAttribute(FIELD_DESCRIPTION, (from.getDescription() == null) ? "" : from.getDescription());
 
         if (cascade) {
             Set<Bundle> bundles = from.getBundles();

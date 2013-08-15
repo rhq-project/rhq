@@ -74,7 +74,7 @@ public class BundleGroupsListView extends TableSection<BundleGroupsDataSource> i
     public BundleGroupsListView(Criteria criteria, Set<Permission> globalpermissions) {
         super(MSG.common_title_bundleGroups(), criteria);
         this.globalPermissions = (null != globalpermissions) ? globalpermissions : new HashSet<Permission>();
-        setHeaderIcon(IconEnum.BUNDLE_GROUP.getIcon24x24Path());
+        setTitleIcon(IconEnum.BUNDLE_GROUP.getIcon24x24Path());
         setDataSource(new BundleGroupsDataSource());
     }
 

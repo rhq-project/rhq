@@ -25,7 +25,6 @@
 
 package org.rhq.cassandra;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -33,27 +32,16 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import javax.naming.Context;
-
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.domain.cloud.StorageNode;
 
 /**
@@ -273,8 +261,6 @@ public final class ClusterInitService {
         String url = storageNode.getJMXConnectionURL();
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         Map<String, String> env = new HashMap<String, String>();
-        // see https://issues.jboss.org/browse/AS7-2138
-        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
         JMXConnector connector = null;
 
         try {
@@ -310,8 +296,6 @@ public final class ClusterInitService {
         String url = storageNode.getJMXConnectionURL();
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         Map<String, String> env = new HashMap<String, String>();
-        // see https://issues.jboss.org/browse/AS7-2138
-        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
         JMXConnector connector = null;
 
         try {

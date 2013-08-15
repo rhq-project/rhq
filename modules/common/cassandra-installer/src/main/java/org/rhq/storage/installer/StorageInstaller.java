@@ -46,7 +46,6 @@ import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import javax.naming.Context;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -66,7 +65,6 @@ import org.yaml.snakeyaml.Yaml;
 import org.rhq.cassandra.Deployer;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
-import org.rhq.cassandra.installer.RMIContextFactory;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -651,8 +649,6 @@ public class StorageInstaller {
         }
 
         Map<String, String> env = new HashMap<String, String>();
-        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
-
         for (int i = 0; i < retries; ++i) {
             try {
                 connector = JMXConnectorFactory.connect(serviceURL, env);

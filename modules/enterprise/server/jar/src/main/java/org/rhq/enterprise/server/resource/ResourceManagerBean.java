@@ -128,6 +128,7 @@ import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.core.AgentManagerLocal;
 import org.rhq.enterprise.server.discovery.DiscoveryServerServiceImpl;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.resource.disambiguation.DisambiguationUpdateStrategy;
 import org.rhq.enterprise.server.resource.disambiguation.Disambiguator;
@@ -172,6 +173,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @EJB
     //@IgnoreDependency
     private MeasurementScheduleManagerLocal measurementScheduleManager;
+    @EJB
+    private AvailabilityManagerLocal availabilityManager;
 
     public void createResource(Subject user, Resource resource, int parentId) throws ResourceAlreadyExistsException {
         Resource parent = null;
@@ -2436,18 +2439,19 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
         return getResourceById(subject, resourceId);
     }
 
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
         Resource res = getResourceById(subject, resourceId);
         ResourceAvailability results = new ResourceAvailability(res, AvailabilityType.UNKNOWN);
 
         try {
-            Agent agent = res.getAgent();
-            if (agent == null) {
+            // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
+            AgentClient client = agentManager.getAgentClient(subject, res.getId());
+            if (client == null) {
                 throw new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
             }
 
-            // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
-            AgentClient client = agentManager.getAgentClient(agent);
             boolean agentPing = client.ping(5000L);
             if (agentPing) {
                 // we can't serialize the resource due to the hibernate proxies (agent can't deserialize hibernate objs)
@@ -2458,10 +2462,17 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 Availability avail = client.getDiscoveryAgentService().getCurrentAvailability(bareResource);
                 if (avail != null) {
                     results.setAvailabilityType(avail.getAvailabilityType());
+
+                    AvailabilityReport report = new AvailabilityReport(true, client.getAgent().getName());
+                    avail.setStartTime(System.currentTimeMillis());
+                    report.addAvailability(avail);
+                    availabilityManager.mergeAvailabilityReport(report);
                 }
-                entityManager.flush();
             }
-        } catch (Throwable ignore) {
+        } catch (Exception e) {
+            if (log.isInfoEnabled()) {
+                log.info("Failed to get live availability.", e);
+            }
         }
 
         return results;

@@ -23,9 +23,12 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
+import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.types.VerticalAlignment;
+import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -33,13 +36,13 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.Window;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.events.DoubleClickEvent;
-import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SpacerItem;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceError;
@@ -53,6 +56,9 @@ import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.async.Command;
+import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -74,6 +80,8 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private static final String COLLAPSED_TOOLTIP = MSG.view_portlet_inventory_tooltip_expand();
     private static final String EXPANDED_TOOLTIP = MSG.view_portlet_inventory_tooltip_collapse();
     private static final String PLUGIN_ERRORS_ICON = "[SKIN]/Dialog/warn.png";
+    private static final String LOADING_ICON = "ajax-loader.gif";
+
     private Img expandCollapseArrow;
 
     private Resource resource;
@@ -87,6 +95,14 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private EnhancedHLayout detailsForm;
     private OverviewForm detailsFormSummary;
     private Img pluginErrors;
+    private Img loading;
+
+    private Timer resourceAvailAndErrorsRefreshTime = new Timer() {
+        @Override
+        public void run() {
+            refreshAvailAndResourceErrors();
+        }
+    };
 
     public ResourceTitleBar() {
         super();
@@ -116,14 +132,9 @@ public class ResourceTitleBar extends EnhancedVLayout {
         this.title.setWidth("*");
 
         this.availabilityImage = new Img(ImageManager.getAvailabilityLargeIcon(null), 24, 24);
-        this.availabilityImage.addDoubleClickHandler(new DoubleClickHandler() {
-            public void onDoubleClick(DoubleClickEvent event) {
-                refresh();
-            }
-        });
 
         this.favoriteButton = new Img(NOT_FAV_ICON, 24, 24);
-
+        this.favoriteButton.setCursor(Cursor.POINTER);
         this.favoriteButton.addClickHandler(new ClickHandler() {
             public void onClick(ClickEvent clickEvent) {
                 Set<Integer> favorites = toggleFavoriteLocally();
@@ -179,7 +190,6 @@ public class ResourceTitleBar extends EnhancedVLayout {
 
         pluginErrors = new Img(PLUGIN_ERRORS_ICON, 24, 24);
         pluginErrors.setVisible(false);
-        refreshPluginErrors(); // this is an async call
 
         //define tool tip
         pluginErrors.setPrompt(MSG.view_resource_title_component_errors_tooltip());
@@ -227,10 +237,15 @@ public class ResourceTitleBar extends EnhancedVLayout {
             }
         });
 
+        loading = new Img(LOADING_ICON, 16, 16);
+        loading.setVisible(false);
+        loading.setValign(VerticalAlignment.CENTER);
+
         //top information
         top.addMember(expandCollapseArrow);
         top.addMember(badge);
         top.addMember(title);
+        top.addMember(loading);
         top.addMember(pluginErrors);
         top.addMember(availabilityImage);
         top.addMember(favoriteButton);
@@ -267,6 +282,17 @@ public class ResourceTitleBar extends EnhancedVLayout {
         }
         addMember(details);
         ResourceTitleBar.this.markForRedraw();
+
+        resourceAvailAndErrorsRefreshTime.scheduleRepeating(15000);
+    }
+
+    @Override
+    protected void onUnload() {
+        if (resourceAvailAndErrorsRefreshTime != null) {
+            resourceAvailAndErrorsRefreshTime.cancel();
+        }
+
+        super.onUnload();
     }
 
     private void loadTags(final TagEditorView tagEditorView) {
@@ -344,11 +370,27 @@ public class ResourceTitleBar extends EnhancedVLayout {
         return favorites;
     }
 
-    public void refresh() {
-        refreshPluginErrors();
+    public void refreshResourceErrors() {
+        refreshErrors(null);
     }
 
-    private void refreshPluginErrors() {
+    public void refreshAvailAndResourceErrors() {
+        CountDownLatch latch = CountDownLatch.create(2, new Command() {
+            @Override
+            public void execute() {
+                loading.setVisible(false);
+                markForRedraw();
+            }
+        });
+
+        loading.setVisible(true);
+        loading.markForRedraw();
+
+        refreshAvailability(latch);
+        refreshErrors(latch);
+    }
+
+    private void refreshErrors(final CountDownLatch latch) {
         GWTServiceLookup.getResourceService().findResourceErrors(resourceComposite.getResource().getId(),
             new AsyncCallback<List<ResourceError>>() {
                 public void onFailure(Throwable caught) {
@@ -356,13 +398,57 @@ public class ResourceTitleBar extends EnhancedVLayout {
                     CoreGUI.getErrorHandler().handleError(
                         MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
                             .getId())), caught);
+
+                    if (latch != null) {
+                        latch.countDown();
+                    } else {
+                        markForRedraw();
+                    }
                 }
 
                 public void onSuccess(List<ResourceError> result) {
                     pluginErrors.setVisible(!result.isEmpty());
-                    markForRedraw();
+
+                    if (latch != null) {
+                        latch.countDown();
+                    } else {
+                        markForRedraw();
+                    }
                 }
             });
+    }
+
+    private void refreshAvailability(final CountDownLatch latch) {
+        final AvailabilityType currentAvail = resource.getCurrentAvailability().getAvailabilityType();
+
+        GWTServiceLookup.getResourceService().getLiveResourceAvailability(resource.getId(),
+            new AsyncCallback<ResourceAvailability>() {
+
+            @Override
+            public void onFailure(Throwable caught) {
+                availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
+                CoreGUI.getErrorHandler().handleError("I18N: Failed to refresh the availability", caught);
+                    //MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
+                    //    .getId())), caught);
+                if (latch != null) {
+                    latch.countDown();
+                } else {
+                    markForRedraw();
+                }
+            }
+
+            @Override
+            public void onSuccess(ResourceAvailability result) {
+                availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(result.getAvailabilityType()));
+                resource.setCurrentAvailability(result);
+                availabilityImage.markForRedraw();
+                if (latch != null) {
+                    latch.countDown();
+                } else {
+                    markForRedraw();
+                }
+            }
+        });
     }
 
     public class UpdateFavoritesCallback implements AsyncCallback<Subject> {

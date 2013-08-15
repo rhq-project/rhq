@@ -832,6 +832,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             }
         }
 
+        if (result != null && !result.isEmpty()) {
+            //we just got data from the agent so let's push them through the alerting
+            pushToAlertSubsystem(result);
+        }
+
         //[BZ 760139] always return non-null value even when there are errors on the server side.  Avoids cryptic
         //            Global UI Exceptions when attempting to serialize null responses.
         if (null == result) {
@@ -881,6 +886,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 }
             }
         }
+
+        if (values != null && !values.isEmpty()) {
+            //we just got data from the agent so let's push them through the alerting
+            pushToAlertSubsystem(values);
+        }
+
+
         return values;
     }
 
@@ -976,5 +988,18 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     private MeasurementDataManagerUtility getConnectedUtilityInstance() {
         return MeasurementDataManagerUtility.getInstance(rhqDs);
+    }
+
+    private void pushToAlertSubsystem(Set<MeasurementData> data) {
+        MeasurementReport fakeReport = new MeasurementReport();
+        for(MeasurementData datum : data) {
+            if (datum instanceof MeasurementDataTrait) {
+                fakeReport.addData((MeasurementDataTrait) datum);
+            } else if (datum instanceof MeasurementDataNumeric) {
+                fakeReport.addData((MeasurementDataNumeric) datum);
+            }
+        }
+
+        this.measurementDataManager.mergeMeasurementReport(fakeReport);
     }
 }

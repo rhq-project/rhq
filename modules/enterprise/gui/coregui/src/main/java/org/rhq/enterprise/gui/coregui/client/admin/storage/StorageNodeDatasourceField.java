@@ -43,6 +43,10 @@ public enum StorageNodeDatasourceField {
     FIELD_MEMORY("memory", "Memory"),
     
     FIELD_DISK("disk", "Disk"),
+    
+    FIELD_ERROR_MESSAGE("errorMessage", "Error"),
+    
+    FIELD_FAILED_OPERATION("failedOperation", "Failed Operation"),
 
     FIELD_CTIME("ctime", CoreGUI.getMessages().view_adminTopology_serverDetail_installationDate()),
 

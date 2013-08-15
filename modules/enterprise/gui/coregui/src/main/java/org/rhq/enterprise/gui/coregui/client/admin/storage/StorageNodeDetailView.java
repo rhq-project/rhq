@@ -23,6 +23,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_FAILED_OPERATION;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
@@ -49,6 +50,7 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
@@ -299,16 +301,26 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", storageNodeId, unackAlerts));
         }
         
-        StaticTextItem memoryStatusItem = new StaticTextItem("memoryStatus", "Memory");
-        memoryStatusItem.setValue("No action needed");
+        StaticTextItem message = new StaticTextItem("message", "Note");
+        message.setValue(storageNode.getErrorMessage() == null ? "Everything is ok" : storageNode.getErrorMessage());
         
-        StaticTextItem diskStatusItem = new StaticTextItem("mdiskStatus", "Disk");
-        diskStatusItem.setValue("No action needed");
+        StaticTextItem lastOperation = null;
+        boolean isOperationFailed = storageNode.getFailedOperation() != null && storageNode.getFailedOperation().getResource() != null;
+        if (isOperationFailed) {
+            ResourceOperationHistory operationHistory = storageNode.getFailedOperation();
+            String value = LinkManager.getSubsystemResourceOperationHistoryLink(operationHistory.getResource().getId(), operationHistory.getId());
+//            String value = "#Resource/" + operationHistory.getResource().getId() + "/Operations/History/" + operationHistory.getId());
+            lastOperation = new StaticTextItem("lastOp", "Operation");
+            lastOperation.setValue(LinkManager.getHref(value, operationHistory.getOperationDefinition().getDisplayName()));
+        }
+        
+        
         
         List<FormItem> formItems = new ArrayList<FormItem>(6);
         formItems.addAll(Arrays.asList(nameItem, resourceItem,cqlPortItem, jmxPortItem/*, jmxConnectionUrlItem*/));
         if (!CoreGUI.isDebugMode()) formItems.add(operationModeItem); // debug mode fails if this item is added
-        formItems.addAll(Arrays.asList(installationDateItem, lastUpdateItem, alertsItem, memoryStatusItem, diskStatusItem));
+        formItems.addAll(Arrays.asList(installationDateItem, lastUpdateItem, alertsItem, message));
+        if (isOperationFailed) formItems.add(lastOperation);
         form.setItems(formItems.toArray(new FormItem[]{}));
         
         detailsLayout = new EnhancedVLayout();

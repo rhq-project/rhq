@@ -23,6 +23,8 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_DISK;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ERROR_MESSAGE;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_FAILED_OPERATION;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ID;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MEMORY;
@@ -41,6 +43,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -51,13 +54,16 @@ import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite.MeasurementAggregateWithUnits;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.StorageNodeLoadCompositeDatasourceField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -137,8 +143,29 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 //        ListGridField cqlField = FIELD_CQL_PORT.getListGridField("90");
 //        cqlField.setHidden(true);
 //        fields.add(cqlField);
-        fields.add(FIELD_OPERATION_MODE.getListGridField("90"));
-
+        
+        field = FIELD_OPERATION_MODE.getListGridField("90");
+        field.setCellFormatter(new CellFormatter() {
+            public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
+                if (listGridRecord.getAttribute(FIELD_ERROR_MESSAGE.propertyName()) != null
+                    || listGridRecord.getAttribute(FIELD_FAILED_OPERATION.propertyName()) != null) {
+                    return "<span style='" + DONT_MISS_ME_COLOR + "'>" + value.toString() + "</span>";
+                } else
+                    return value.toString();
+            }
+        });
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                if (record.getAttribute(FIELD_ERROR_MESSAGE.propertyName()) != null
+                    || record.getAttribute(FIELD_FAILED_OPERATION.propertyName()) != null) {
+                    return value.toString() + ": Something went wrong. Please double click on the storage node to show the detail page to know more.";
+                } else
+                    return value.toString();
+            }
+        });
+        fields.add(field);
+        
         ListGridField createdTimeField = FIELD_CTIME.getListGridField("120");
         TimestampCellFormatter.prepareDateField(createdTimeField);
         fields.add(createdTimeField);
@@ -208,6 +235,13 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             record.setAttribute(FIELD_JMX_PORT.propertyName(), node.getJmxPort());
             record.setAttribute(FIELD_CQL_PORT.propertyName(), node.getCqlPort());
             record.setAttribute(FIELD_OPERATION_MODE.propertyName(), node.getOperationMode());
+            record.setAttribute(FIELD_ERROR_MESSAGE.propertyName(), node.getErrorMessage());
+            if (node.getFailedOperation() != null && node.getFailedOperation().getResource() != null) {
+                ResourceOperationHistory operationHistory = node.getFailedOperation();
+                String value = LinkManager.getSubsystemResourceOperationHistoryLink(operationHistory.getResource().getId(), operationHistory.getId());
+//                String value = "#Resource/" + operationHistory.getResource().getId() + "/Operations/History/" + operationHistory.getId());
+                record.setAttribute(FIELD_FAILED_OPERATION.propertyName(), value);
+            }
             record.setAttribute(FIELD_CTIME.propertyName(), node.getCtime());
             record.setAttribute(FIELD_MTIME.propertyName(), node.getMtime());
             if (node.getResource() != null) {

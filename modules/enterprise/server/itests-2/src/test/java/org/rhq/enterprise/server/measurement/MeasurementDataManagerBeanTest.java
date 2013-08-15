@@ -34,8 +34,11 @@ import static org.rhq.test.AssertUtils.assertPropertiesMatch;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import javax.ejb.EJB;
 
@@ -43,12 +46,30 @@ import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.joda.time.DateTime;
 import org.joda.time.Hours;
+import org.mockito.Mockito;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 import org.testng.annotations.Test;
 
+import org.rhq.core.clientapi.agent.discovery.DiscoveryAgentService;
+import org.rhq.core.clientapi.agent.measurement.MeasurementAgentService;
+import org.rhq.core.domain.alert.Alert;
+import org.rhq.core.domain.alert.AlertCondition;
+import org.rhq.core.domain.alert.AlertConditionCategory;
+import org.rhq.core.domain.alert.AlertConditionOperator;
+import org.rhq.core.domain.alert.AlertDampening;
+import org.rhq.core.domain.alert.AlertDefinition;
+import org.rhq.core.domain.alert.AlertPriority;
+import org.rhq.core.domain.alert.BooleanExpression;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.Server;
 import org.rhq.core.domain.common.EntityContext;
+import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.Availability;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
+import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.MeasurementReport;
@@ -56,14 +77,18 @@ import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.resource.Agent;
+import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.drift.DriftServerPluginService;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.test.AbstractEJB3Test;
+import org.rhq.enterprise.server.test.TestServerCommunicationsService;
 import org.rhq.enterprise.server.test.TransactionCallback;
+import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.ResourceTreeHelper;
 import org.rhq.server.metrics.MetricsDAO;
 import org.rhq.server.metrics.StorageSession;
@@ -76,6 +101,10 @@ import org.rhq.test.AssertUtils;
  * @author John Sanda
  */
 public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
+
+    // this must match the constant found in ServerManagerBean
+    private static final String RHQ_SERVER_NAME_PROPERTY = "rhq.server.high-availability.name";
+    private static final String RHQ_SERVER_NAME_PROPERTY_VALUE = "TestServer";
 
     //private final Log log = LogFactory.getLog(MeasurementDataManagerBeanTest.class);
 
@@ -101,6 +130,8 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private ResourceType resourceType;
 
+    private Server server;
+
     private Agent agent;
 
     private MeasurementDefinition dynamicMeasuremenDef;
@@ -109,7 +140,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private MeasurementSchedule dynamicSchedule;
 
-    private Subject overlord;
+    private AlertDefinition alertDefinition;
 
     @EJB
     private SubjectManagerLocal subjectManager;
@@ -125,9 +156,17 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private MetricsDAO metricsDAO;
 
+    private TestServerCommunicationsService agentServiceContainer;
+
+    private Subject getOverlord() {
+        return subjectManager.getOverlord();
+    }
+
     @Override
     protected void beforeMethod() throws Exception {
-        overlord = subjectManager.getOverlord();
+        agentServiceContainer = prepareForTestAgents();
+
+        prepareScheduler();
 
         metricsDAO = storageClientManager.getMetricsDAO();
 
@@ -137,15 +176,21 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         prepareCustomServerPluginService(driftServerPluginService);
         driftServerPluginService.masterConfig.getPluginDirectory().mkdirs();
 
+        System.setProperty(RHQ_SERVER_NAME_PROPERTY, RHQ_SERVER_NAME_PROPERTY_VALUE);
+
         createInventory();
         insertDummyReport();
+
+        agentServiceContainer.addStartedAgent(agent);
     }
 
     @Override
     protected void afterMethod() throws Exception {
-        purgeDB();
+        purgeDB(true);
 
         unprepareServerPluginService();
+        unprepareScheduler();
+        unprepareForTestAgents();
     }
 
     @Test(enabled = ENABLED)
@@ -168,7 +213,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         dataManager.mergeMeasurementReport(report);
         waitForRawInserts();
 
-        List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(overlord,
+        List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(getOverlord(),
             EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(), endTime.getMillis());
 
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
@@ -213,7 +258,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
         dataManager.mergeMeasurementReport(report);
         waitForRawInserts();
 
-        MeasurementAggregate actual = dataManager.getAggregate(overlord, dynamicSchedule.getId(),
+        MeasurementAggregate actual = dataManager.getAggregate(getOverlord(), dynamicSchedule.getId(),
             beginTime.getMillis(), endTime.getMillis());
 
         MeasurementAggregate expected = new MeasurementAggregate(1.1, divide((1.1 + 2.2 + 3.3 + 4.4 + 5.5 + 6.6), 6),
@@ -244,7 +289,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
         insert1HourData(data);
 
-        List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(overlord,
+        List<MeasurementDataNumericHighLowComposite> actualData = findDataForContext(getOverlord(),
             EntityContext.forResource(resource.getId()), dynamicSchedule, beginTime.getMillis(), endTime.getMillis());
 
         assertEquals("Expected to get back 60 data points.", buckets.getNumDataPoints(), actualData.size());
@@ -260,8 +305,50 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
             actualData.get(59), 0.0001D);
     }
 
+    @Test(enabled = ENABLED)
+    public void gettingLiveDataTriggersAlerts() throws Exception {
+        agentServiceContainer.measurementService = Mockito.mock(MeasurementAgentService.class);
+
+        Mockito.when(agentServiceContainer.measurementService.getRealTimeMeasurementValue(Mockito.anyInt(), Mockito.anySetOf(MeasurementScheduleRequest.class))).then(
+            new Answer<Set<MeasurementData>>() {
+                @Override
+                @SuppressWarnings("unchecked")
+                public Set<MeasurementData> answer(InvocationOnMock invocation) throws Throwable {
+                    Set<MeasurementScheduleRequest> requests = (Set<MeasurementScheduleRequest>) invocation.getArguments()[1];
+
+                    Set<MeasurementData> ret = new HashSet<MeasurementData>();
+                    for(MeasurementScheduleRequest req : requests) {
+                        ret.add(new MeasurementDataNumeric(System.currentTimeMillis(), req, (double) System.nanoTime()));
+                    }
+
+                    return ret;
+                }
+            });
+
+        dataManager.findLiveData(getOverlord(), resource.getId(), new int[] { dynamicMeasuremenDef.getId()}, Long.MAX_VALUE);
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(3000);
+
+        //need to do this so that we don't have to wait on server's heartbeat to propagate the
+        //collected value into the alert condition cache
+        LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
+
+        //this first metric collection doesn't trigger alerts because there's no "history" to compare against
+        //let's trigger another metric collection so that we see the alert fire...
+        dataManager.findLiveData(getOverlord(), resource.getId(), new int[] { dynamicMeasuremenDef.getId()}, Long.MAX_VALUE);
+        // wait for our JMS messages to process and see if we get any alerts
+        Thread.sleep(3000);
+
+        //check that the alert fired when the value of the measurement changed.
+        AlertCriteria aCrit = new AlertCriteria();
+        aCrit.addFilterResourceIds(resource.getId());
+
+        List<Alert> alerts = LookupUtil.getAlertManager().findAlertsByCriteria(getOverlord(), aCrit);
+        assertEquals("Unexpected number of alerts on the resource.", 1, alerts.size());
+    }
+
     private void createInventory() throws Exception {
-        purgeDB();
+        purgeDB(false);
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
@@ -269,7 +356,18 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
                 resourceType = new ResourceType(RESOURCE_TYPE, PLUGIN, SERVER, null);
                 em.persist(resourceType);
 
+                server = new Server();
+                server.setName(RHQ_SERVER_NAME_PROPERTY_VALUE);
+                server.setAddress("localhost");
+                server.setPort(7080);
+                server.setSecurePort(7443);
+                server.setComputePower(1);
+                server.setOperationMode(Server.OperationMode.MAINTENANCE);
+                int serverId = LookupUtil.getServerManager().create(server);
+                assert serverId > 0 : "could not create our server identity in the DB";
+
                 agent = new Agent(AGENT_NAME, "localhost", 9999, "", "randomToken");
+                agent.setServer(server);
                 em.persist(agent);
 
                 dynamicMeasuremenDef = new MeasurementDefinition(resourceType, DYNAMIC_DEF_NAME);
@@ -281,6 +379,7 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
                 resource = new Resource(RESOURCE_KEY, RESOURCE_NAME, resourceType);
                 resource.setUuid(RESOURCE_UUID);
+                resource.setInventoryStatus(InventoryStatus.COMMITTED);
                 resource.setAgent(agent);
 
                 em.persist(resource);
@@ -292,29 +391,65 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
                 em.persist(dynamicSchedule);
             }
         });
+
+        alertDefinition = new AlertDefinition();
+        AlertCondition cond = new AlertCondition(alertDefinition, AlertConditionCategory.CHANGE);
+        cond.setName(DYNAMIC_DEF_NAME);
+        cond.setMeasurementDefinition(dynamicMeasuremenDef);
+        alertDefinition.setName("liveDataTestAlert");
+        alertDefinition.setResource(resource);
+        alertDefinition.setPriority(AlertPriority.MEDIUM);
+        alertDefinition.setRecoveryId(0);
+        alertDefinition.setAlertDampening(new AlertDampening(AlertDampening.Category.NONE));
+        alertDefinition.setConditions(Collections.singleton(cond));
+        alertDefinition.setEnabled(true);
+        alertDefinition.setConditionExpression(BooleanExpression.ALL);
+
+        AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+        //needs to be done outside of the above transaction, so that the createAlert... method can "see" the resource.
+        alertDefinitionManager.createAlertDefinitionInNewTransaction(getOverlord(), alertDefinition, resource.getId(), true);
+
+        //obvious, right? This needs to be done for the alert subsystem to become aware of the new def
+        LookupUtil.getAlertConditionCacheManager().reloadAllCaches();
     }
 
-    private void purgeDB() {
+    private void purgeDB(final boolean assumeResourceExists) {
         purgeMetricsTables();
+
+        ResourceCriteria c = new ResourceCriteria();
+        c.addFilterInventoryStatus(null);
+        c.addFilterResourceKey(RESOURCE_KEY);
+        c.fetchSchedules(true);
+        c.fetchAlertDefinitions(true);
+
+        final List<Resource> r = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), c);
+        if (assumeResourceExists && !r.isEmpty()) {
+            assertTrue("Should be only 1 resource", r.size() == 1);
+        }
+
+        if (!r.isEmpty()) {
+            Resource doomedResource = r.get(0);
+            deleteAlertDefinitions(doomedResource.getAlertDefinitions());
+        }
 
         executeInTransaction(false, new TransactionCallback() {
             @Override
             public void execute() throws Exception {
-                ResourceCriteria c = new ResourceCriteria();
-                c.addFilterInventoryStatus(null);
-                c.addFilterResourceKey(RESOURCE_KEY);
-                c.fetchSchedules(true);
-                List<Resource> r = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), c);
 
-                // Note that the order of deletes is important due to FK
-                // constraints.
                 if (!r.isEmpty()) {
-                    assertTrue("Should be only 1 resource", r.size() == 1);
-                    Resource doomedResource = r.get(0);
-                    deleteMeasurementSchedules(doomedResource);
-                    deleteResource(doomedResource);
+                    //load the resource entity again within this transaction so that we
+                    //have an attached copy of it.
+                    Resource delete = em.find(Resource.class, r.get(0).getId());
+
+
+                    // Note that the order of deletes is important due to FK
+                    // constraints.
+                    deleteMeasurementSchedules(delete);
+                    deleteResource(delete);
                 }
+
                 deleteAgent();
+                deleteServer();
                 deleteDynamicMeasurementDef();
                 deleteResourceType();
             }
@@ -328,6 +463,10 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
 
     private void deleteAgent() {
         em.createQuery("delete from Agent where name = :name").setParameter("name", AGENT_NAME).executeUpdate();
+    }
+
+    private void deleteServer() {
+        em.createQuery("delete from Server where name = :name").setParameter("name", RHQ_SERVER_NAME_PROPERTY_VALUE).executeUpdate();
     }
 
     private void deleteResourceType() {
@@ -346,6 +485,26 @@ public class MeasurementDataManagerBeanTest extends AbstractEJB3Test {
                 .executeUpdate();
             em.flush();
             System.out.println("Deleted [" + i + "] schedules with id [" + ms.getId() + "]");
+        }
+    }
+
+    private void deleteAlertDefinitions(Collection<AlertDefinition> defs) {
+        AlertDefinitionManagerLocal alertDefinitionManager = LookupUtil.getAlertDefinitionManager();
+
+        int[] ids = new int[defs.size()];
+        int i = 0;
+        for(AlertDefinition def : defs) {
+            ids[i++] = def.getId();
+
+            LookupUtil.getAlertManager()
+                .deleteAlertsByContext(getOverlord(), EntityContext.forResource(def.getResource().getId()));
+        }
+
+        alertDefinitionManager.removeAlertDefinitions(getOverlord(), ids);
+
+        alertDefinitionManager.purgeUnusedAlertDefinitions();
+        for(i = 0; i < ids.length; ++i) {
+            alertDefinitionManager.purgeInternals(ids[i]);
         }
     }
 

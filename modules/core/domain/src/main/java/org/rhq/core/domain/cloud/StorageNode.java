@@ -40,6 +40,7 @@ import javax.persistence.PrePersist;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
+import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -134,9 +135,19 @@ public class StorageNode implements Serializable {
     @Column(name = "MTIME", nullable = false)
     private long mtime;
 
+    @Column(name = "MAINTENANCE_PENDING", nullable = false)
+    private boolean maintenancePending;
+
+    @Column(name = "ERROR_MSG", nullable = true)
+    private String errorMessage;
+
     @JoinColumn(name = "RESOURCE_ID", referencedColumnName = "ID", nullable = true)
     @OneToOne(fetch = FetchType.EAGER, optional = true)
     private Resource resource;
+
+    @JoinColumn(name = "RESOURCE_OP_HIST_ID", referencedColumnName = "ID", nullable = true)
+    @OneToOne(optional = true)
+    private ResourceOperationHistory failedOperation;
 
     // required for JPA
     public StorageNode() {
@@ -190,12 +201,36 @@ public class StorageNode implements Serializable {
         this.mtime = mtime;
     }
 
+    public boolean isMaintenancePending() {
+        return maintenancePending;
+    }
+
+    public void setMaintenancePending(boolean maintenancePending) {
+        this.maintenancePending = maintenancePending;
+    }
+
     public Resource getResource() {
         return resource;
     }
 
     public void setResource(Resource resource) {
         this.resource = resource;
+    }
+
+    public String getErrorMessage() {
+        return errorMessage;
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public ResourceOperationHistory getFailedOperation() {
+        return failedOperation;
+    }
+
+    public void setFailedOperation(ResourceOperationHistory failedOperation) {
+        this.failedOperation = failedOperation;
     }
 
     public OperationMode getOperationMode() {
@@ -209,11 +244,13 @@ public class StorageNode implements Serializable {
     public enum OperationMode {
 
         DOWN("This storage node is down"), //
-        INSTALLED("This storage node is newly installed but not yet operationial"), //
+        INSTALLED("This storage node is newly installed but not yet operational"), //
         MAINTENANCE("This storage node is in maintenance mode"), //
         NORMAL("This storage node is running normally"),
-        ANNOUNCE("The storage node is running normally and is being updated to have newly deployed storage nodes " +
-            "announced to it so that those new nodes can join the cluster."),
+        ANNOUNCE("The storage node is installed but not yet part of the cluster. It is being announced so that it " +
+            "can join the cluster."),
+        BOOTSTRAP("The storage is installed but not yet part of the cluster. It is getting bootstrapped into the " +
+            "cluster"),
         ADD_NODE_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
             "necessary when a new node joins the cluster.");
 

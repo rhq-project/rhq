@@ -4,6 +4,8 @@ import static java.util.Arrays.asList;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +20,7 @@ import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.alert.BooleanExpression;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
@@ -54,6 +57,9 @@ import org.rhq.enterprise.server.util.LookupUtil;
 public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
 
     private static final String PLUGIN_NAME = "ResourceMetadataManagerBeanTestPlugin";
+    //this is used in afterclass, which might execute with a different instance than the rest of the tests
+    //therefore we need to make this static. Not sure who causes this, if it is Arq or TestNG itself.
+    private static Set<Integer> groupIds = Collections.synchronizedSet(new HashSet<Integer>());
 
     @Test(groups = { "plugin.resource.metadata.test", "NewPlugin" })
     public void testRemovalOfObsoleteBundleAndDriftConfig() throws Exception {
@@ -607,9 +613,16 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
     }
 
     // this needs to be the last test executed in the class, it does cleanup
-    @Test(priority = 10, alwaysRun = true, dependsOnGroups = { "RemoveTypes" })
+    @Test(priority = 1000, alwaysRun = true, dependsOnGroups = { "RemoveTypes" })
     public void afterClassWorkTest() throws Exception {
         afterClassWork();
+
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
+        ResourceGroupManagerLocal groupManager = LookupUtil.getResourceGroupManager();
+
+        for(int id : groupIds) {
+            groupManager.deleteResourceGroup(overlord, id);
+        }
     }
 
     void assertTypesPersisted(String msg, List<String> types, String plugin) {
@@ -714,6 +727,7 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         ResourceGroup resourceGroup = new ResourceGroup(groupName, resourceType);
         resourceGroup.setRecursive(recursive);
         ResourceGroup result = resourceGroupMgr.createResourceGroup(subjectMgr.getOverlord(), resourceGroup);
+        groupIds.add(result.getId());
         return result;
     }
 

@@ -23,6 +23,7 @@ import java.util.List;
 
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.enterprise.gui.coregui.client.GraphMarker;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 
 /**
@@ -32,7 +33,7 @@ import org.rhq.enterprise.gui.coregui.client.util.Log;
  *
  * @author Mike Thompson
  */
-public class AvailabilitySummaryPieGraphType {
+public class AvailabilitySummaryPieGraphType implements GraphMarker{
 
     public static final int HEIGHT = 75;
     public static final int WIDTH = 75;
@@ -42,7 +43,14 @@ public class AvailabilitySummaryPieGraphType {
     public AvailabilitySummaryPieGraphType() {
     }
 
-    public HTMLFlow createGraphMarker() {
+    public HTMLFlow addGraphMarkerMember(){
+        HTMLFlow graphFlow = new HTMLFlow(createGraphMarker());
+        graphFlow.setWidth(WIDTH);
+        graphFlow.setHeight(HEIGHT);
+        return graphFlow;
+
+    }
+    public String createGraphMarker() {
         Log.debug("drawGraph marker in AvailabilitySummaryPieGraph");
 
         StringBuilder divAndSvgDefs = new StringBuilder();
@@ -50,10 +58,7 @@ public class AvailabilitySummaryPieGraphType {
         divAndSvgDefs.append("<svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:" + HEIGHT
             + "px;\" ></svg>");
         divAndSvgDefs.append("</div>");
-        HTMLFlow graphFlow = new HTMLFlow(divAndSvgDefs.toString());
-        graphFlow.setWidth(WIDTH);
-        graphFlow.setHeight(HEIGHT);
-        return graphFlow;
+        return divAndSvgDefs.toString();
     }
 
     public void setAvailabilityData(String upLabel, double upPercent, String downLabel, double downPercent,

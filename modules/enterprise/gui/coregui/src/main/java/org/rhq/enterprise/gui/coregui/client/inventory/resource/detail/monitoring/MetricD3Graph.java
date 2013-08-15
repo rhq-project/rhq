@@ -21,6 +21,7 @@ package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitori
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.widgets.HTMLFlow;
 
+import org.rhq.enterprise.gui.coregui.client.GraphMarker;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.Refreshable;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.StackedBarMetricGraphImpl;
@@ -31,7 +32,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
  * A D3 graph implementation for graphing Resource metrics.
  * Just the graph only. No avail graph no buttons just he graph.
  */
-public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVLayout implements Refreshable {
+public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVLayout implements Refreshable,GraphMarker {
 
     protected StackedBarMetricGraphImpl graph;
     private HTMLFlow graphDiv = null;

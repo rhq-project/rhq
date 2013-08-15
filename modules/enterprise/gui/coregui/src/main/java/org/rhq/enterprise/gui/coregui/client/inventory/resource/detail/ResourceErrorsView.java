@@ -169,7 +169,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
     @Override
     public void refresh() {
         super.refresh();
-        this.titleBar.refresh();
+        this.titleBar.refreshResourceErrors();
     }
 
     private void popupDetails(String details) {
@@ -188,7 +188,7 @@ public class ResourceErrorsView extends Table<ResourceErrorsDataSource> {
         winModal.addCloseClickHandler(new CloseClickHandler() {
             public void onCloseClick(CloseClickEvent event) {
                 winModal.markForDestroy();
-                titleBar.refresh();
+                titleBar.refreshResourceErrors();
             }
         });
 

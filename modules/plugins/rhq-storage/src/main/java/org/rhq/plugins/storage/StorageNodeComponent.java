@@ -255,7 +255,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             EmsOperation emsOperation = authBean.getOperation("reloadConfiguration");
             emsOperation.invoke();
 
-            result.setSimpleResult("Successfully updated the set of known nodes.");
+            Configuration complexResults = result.getComplexResults();
+            complexResults.put(new PropertySimple("details", "Successfully updated the set of known nodes."));
 
             return result;
         } catch (InternodeAuthConfUpdateException e) {

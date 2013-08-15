@@ -40,7 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
  */
 public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
-    private static Messages MSG = CoreGUI.getMessages();
+    private static final Messages MSG = CoreGUI.getMessages();
     private List<Availability> availabilityList;
     private List<ResourceGroupAvailability> groupAvailabilityList;
     private Integer entityId;

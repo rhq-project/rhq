@@ -103,6 +103,9 @@
           <c:simple-property name="address"/>
         </c:list-property>
       </parameters>
+      <results>
+        <c:simple-property name="details"/>
+      </results>
     </operation>
 
     <operation name="prepareForBootstrap">

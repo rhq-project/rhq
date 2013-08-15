@@ -1291,7 +1291,7 @@
                         ALTER TABLE RHQ_OPERATION_SCHEDULE ADD PRIMARY KEY (ID)
                     </statement>
                 </schema-directSQL>
-                <schema-directSQL ignoreError="true">                    
+                <schema-directSQL ignoreError="true">
                     <statement desc="Changing primary key of RHQ_OPERATION_SCHEDULE to ID. Step3/3...">
                         CREATE UNIQUE INDEX RHQ_OPERATION_SCHEDULE_KEY_IDX ON RHQ_OPERATION_SCHEDULE (JOB_NAME, JOB_GROUP)
                     </statement>
@@ -1373,7 +1373,7 @@
                 <schema-directSQL>
                     <statement>
                         INSERT INTO RHQ_PERMISSION (role_id, operation)
-                            SELECT role_id, 15 FROM RHQ_PERMISSION WHERE operation = 1 AND NOT role_id = 2 
+                            SELECT role_id, 15 FROM RHQ_PERMISSION WHERE operation = 1 AND NOT role_id = 2
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -1469,11 +1469,11 @@
                  <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="NAME" columnType="VARCHAR2" precision="512" />
                  <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="NAME" nullable="FALSE" />
                  <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="INTERVAL" columnType="LONG" />
-                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="INTERVAL" nullable="FALSE" />                
+                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="INTERVAL" nullable="FALSE" />
                  <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="IS_ENABLED" columnType="BOOLEAN" />
                  <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="IS_ENABLED" nullable="FALSE" />
                  <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" columnType="INTEGER" />
-                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="FALSE" />                
+                 <schema-alterColumn table="RHQ_DRIFT_CONFIG" column="CONFIG_ID" nullable="FALSE" />
                  <schema-directSQL>
                      <statement desc="Creating RHQ_DRIFT_CONFIG foreign key relation to RHQ_CONFIG">
                          ALTER TABLE RHQ_DRIFT_CONFIG
@@ -1482,7 +1482,7 @@
                          REFERENCES RHQ_CONFIG (ID)
                      </statement>
                  </schema-directSQL>
-                 <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="RESOURCE_ID" columnType="INTEGER" />                
+                 <schema-addColumn   table="RHQ_DRIFT_CONFIG" column="RESOURCE_ID" columnType="INTEGER" />
                  <schema-directSQL>
                      <statement desc="Creating RHQ_DRIFT_CONFIG foreign key relation to RHQ_RESOURCE">
                          ALTER TABLE RHQ_DRIFT_CONFIG
@@ -1492,7 +1492,7 @@
                      </statement>
                  </schema-directSQL>
 
-                 
+
                  <!-- RHQ_DRIFT_CHANGE_SET -->
                  <schema-createSequence name="RHQ_DRIFT_CHANGE_SET_ID_SEQ" initial="10001" />
                  <schema-directSQL>
@@ -1507,7 +1507,7 @@
                  <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="CATEGORY" columnType="VARCHAR2" precision="20" />
                  <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="CATEGORY" nullable="FALSE" />
                  <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" columnType="INTEGER" />
-                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" nullable="FALSE" />                
+                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" nullable="FALSE" />
                  <schema-directSQL>
                      <statement desc="Creating RHQ_DRIFT_CHANGE_SET foreign key relation to RHQ_RESOURCE">
                          ALTER TABLE RHQ_DRIFT_CHANGE_SET
@@ -1515,9 +1515,9 @@
                          FOREIGN KEY (RESOURCE_ID)
                          REFERENCES RHQ_RESOURCE (ID)
                      </statement>
-                 </schema-directSQL>                
+                 </schema-directSQL>
                  <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_CONFIG_ID" columnType="INTEGER" />
-                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_CONFIG_ID" nullable="FALSE" />                
+                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_CONFIG_ID" nullable="FALSE" />
                  <schema-directSQL>
                      <statement desc="Creating RHQ_DRIFT_CHANGE_SET foreign key relation to RHQ_DRIFT_CONFIG">
                          ALTER TABLE RHQ_DRIFT_CHANGE_SET
@@ -1631,10 +1631,10 @@
 <!-- RHQ 4.2 RELEASE uses DB Schema 2.114
      Note, the 4.1 to 4.2 upgrade is broken because a 4.2 dbsetup actually creates a 2.115 schema. So,
      for 4.2 dbs to upgrade to 4.3 the schema version must first be corrected and set the schema
-     version to 2.115. 
+     version to 2.115.
 -->
 
-            <schemaSpec version="2.115">                                                                
+            <schemaSpec version="2.115">
                 <!-- RHQ_DRIFT_DEF_TEMPLATE -->
                 <schema-createSequence name="RHQ_DRIFT_DEF_TEMPLATE_ID_SEQ" initial="10001" />
                 <schema-directSQL>
@@ -1654,7 +1654,7 @@
                 <schema-addColumn   table="RHQ_DRIFT_DEF_TEMPLATE" column="CTIME" columnType="LONG" />
                 <schema-alterColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="CTIME" nullable="FALSE" />
                 <schema-addColumn   table="RHQ_DRIFT_DEF_TEMPLATE" column="IS_USER_DEFINED" columnType="BOOLEAN" />
-                <schema-alterColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="IS_USER_DEFINED" nullable="FALSE" />                
+                <schema-alterColumn table="RHQ_DRIFT_DEF_TEMPLATE" column="IS_USER_DEFINED" nullable="FALSE" />
                 <schema-directSQL>
                     <statement desc="Creating RHQ_DRIFT_DEF_TEMPLATE foreign key to RHQ_RESOURCE_TYPE">
                         ALTER TABLE RHQ_DRIFT_DEF_TEMPLATE
@@ -1676,7 +1676,7 @@
                 </schema-directSQL>
 
                 <!-- RHQ_DRIFT_CONFIG => RHQ_DRIFT_DEFINITION -->
-                <schema-directSQL>                
+                <schema-directSQL>
                      <statement>
                           ALTER TABLE RHQ_DRIFT_CONFIG RENAME TO RHQ_DRIFT_DEFINITION
                      </statement>
@@ -1685,17 +1685,17 @@
                      </statement>
                      <statement targetDBVendor="oracle">
                           RENAME RHQ_DRIFT_CONFIG_ID_SEQ TO RHQ_DRIFT_DEFINITION_ID_SEQ
-                     </statement>                
+                     </statement>
                 </schema-directSQL>
 
                 <!--  add new columns -->
-                <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="DESCRIPTION" columnType="VARCHAR2" precision="512" />                
+                <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="DESCRIPTION" columnType="VARCHAR2" precision="512" />
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="DRIFT_HANDLING_MODE" columnType="VARCHAR2" precision="20" />
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="IS_PINNED" columnType="BOOLEAN"/>
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" columnType="BOOLEAN"/>
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="DRIFT_DEF_TEMPLATE_ID" columnType="INTEGER"/>
-           
-                <!--  initialize new required columns -->            
+
+                <!--  initialize new required columns -->
                 <schema-directSQL>
                     <statement targetDBVendor="postgresql" desc="RHQ_DRIFT_DEFINITION: set is_pinned column (false)">
                         UPDATE RHQ_DRIFT_DEFINITION SET IS_PINNED = FALSE
@@ -1712,9 +1712,9 @@
                     <statement desc="RHQ_DRIFT_DEFINITION: set drift_handling_mode column (normal)">
                         UPDATE RHQ_DRIFT_DEFINITION SET DRIFT_HANDLING_MODE = 'normal'
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
                 <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_PINNED" nullable="FALSE"/>
-                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" nullable="FALSE"/>   
+                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="IS_ATTACHED" nullable="FALSE"/>
                 <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="DRIFT_HANDLING_MODE" nullable="FALSE" />
 
                 <!--  add new FK -->
@@ -1740,7 +1740,7 @@
                 <!-- RHQ_DRIFT_CHANGE_SET -->
                 <!-- Resource column is now nullable -->
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="RESOURCE_ID" nullable="TRUE" />
-                
+
                 <!--  Add new drift_set column with FK -->
                 <schema-addColumn   table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_SET_ID" columnType="INTEGER"/>
                 <schema-directSQL>
@@ -1750,9 +1750,9 @@
                         FOREIGN KEY (DRIFT_SET_ID)
                         REFERENCES RHQ_DRIFT_SET (ID)
                     </statement>
-                </schema-directSQL>                
+                </schema-directSQL>
 
-                
+
                 <!--  Rename column DRIFT_CONFIG_ID to DRIFT_DEFINITION_ID -->
                 <schema-directSQL>
                     <statement desc="Renaming RHQ_DRIFT_CHANGE_SET.DRIFT_CONFIG_ID column to DRIFT_DEFINITION_ID">
@@ -1768,20 +1768,20 @@
                     <statement desc="RHQ_DRIFT_CHANGE_SET: set drift_handling_mode column (normal)">
                         UPDATE RHQ_DRIFT_CHANGE_SET SET DRIFT_HANDLING_MODE = 'normal'
                     </statement>
-                </schema-directSQL>                                
+                </schema-directSQL>
                 <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_HANDLING_MODE" nullable="FALSE" />
 
 
                 <!-- RHQ_DRIFT -->
-                <!--  Add new path_directory column -->                
+                <!--  Add new path_directory column -->
                 <schema-addColumn   table="RHQ_DRIFT" column="PATH_DIRECTORY" columnType="VARCHAR2" precision="1024" />
-                
+
                 <!-- Set the new path_directory column using the current path column values -->
-                <schema-javaTask className="DriftPathDirectoryDatabaseUpgradeTask" />                
+                <schema-javaTask className="DriftPathDirectoryDatabaseUpgradeTask" />
 
                 <!-- Now it is safe to set the new path_directory column not null -->
-                <schema-alterColumn table="RHQ_DRIFT" column="PATH_DIRECTORY" nullable="FALSE" />      
-                          
+                <schema-alterColumn table="RHQ_DRIFT" column="PATH_DIRECTORY" nullable="FALSE" />
+
                 <!--  add new drift_set_id column and FK -->
                 <schema-addColumn   table="RHQ_DRIFT" column="DRIFT_SET_ID" columnType="INTEGER"/>
                 <schema-directSQL>
@@ -1795,48 +1795,48 @@
 
                 <!-- Morph rhq_drift_template_map rows into rhq_drift_def_template rows. The rhq_drift_template_map
                      table is obsolete. -->
-                <schema-javaTask className="DriftTemplateMapDatabaseUpgradeTask" />                
+                <schema-javaTask className="DriftTemplateMapDatabaseUpgradeTask" />
 
             </schemaSpec>
 
 <!-- RHQ 4.2 RELEASE uses DB Schema 2.114, which is incorrect, it should have been 2.115. So, for the
      upgrade to work for an RHQ 4.2 install the schema version must be set to 2.115 prior to the upgrade.
-     
+
      The 4.2 upgrade should start with 2.116.
 -->
             <schemaSpec version="2.116">
-                <!-- RHQ_DRIFT_DEFINITION changes -->                                
+                <!-- RHQ_DRIFT_DEFINITION changes -->
                 <schema-addColumn   table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" columnType="INTEGER"/>
                 <schema-directSQL>
                     <statement desc="RHQ_DRIFT_DEFINITION: set compliance_status column (in compliance)">
                         UPDATE RHQ_DRIFT_DEFINITION SET COMPLIANCE_STATUS = 0
                     </statement>
                 </schema-directSQL>
-                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" nullable="FALSE"/>                
-                
+                <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="COMPLIANCE_STATUS" nullable="FALSE"/>
+
                 <schema-alterColumn table="RHQ_DRIFT_DEFINITION" column="NAME" columnType="VARCHAR2" precision="512" />
-                
-                
-                <!-- RHQ_PRD_VER changes -->                
+
+
+                <!-- RHQ_PRD_VER changes -->
                 <!-- Increase the max length of a product version from 50 to 100. -->
                 <schema-alterColumn table="RHQ_PRD_VER" column="VERSION" columnType="VARCHAR2" precision="100" />
             </schemaSpec>
 
 <!-- JON 3.0 RELEASE uses DB Schema 2.116 -->
-            
+
             <schemaSpec version="2.117">
                 <!-- Remove an obsolete drift table that may be hanging around -->
                 <schema-dropTable table="RHQ_DRIFT_TEMPLATE_MAP" ignoreError="true" />
-                
+
                 <!-- Remove an unwanted null constraint -->
-                <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_DEFINITION_ID" nullable="TRUE" />                
+                <schema-alterColumn table="RHQ_DRIFT_CHANGE_SET" column="DRIFT_DEFINITION_ID" nullable="TRUE" />
             </schemaSpec>
 
             <schemaSpec version="2.118">
                 <!-- Correct an earlier upgrade issue where 'All Resources Role' was granted MANAGE_REPOSITORIES. -->
                 <schema-directSQL>
                     <statement>
-                        DELETE FROM RHQ_PERMISSION WHERE role_id = 2 AND operation = 15  
+                        DELETE FROM RHQ_PERMISSION WHERE role_id = 2 AND operation = 15
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
@@ -1849,42 +1849,42 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
-            
+
             <schemaSpec version="2.120">
-                <!-- RHQ_AGENT changes -->                
+                <!-- RHQ_AGENT changes -->
                 <schema-addColumn   table="RHQ_AGENT" column="LAST_AVAILABILITY_PING" columnType="LONG"/>
                 <schema-directSQL>
                     <statement desc="RHQ_AGENT: init last_availability_ping to last_availability_report">
-                        UPDATE RHQ_AGENT SET LAST_AVAILABILITY_PING = LAST_AVAILABILITY_REPORT 
+                        UPDATE RHQ_AGENT SET LAST_AVAILABILITY_PING = LAST_AVAILABILITY_REPORT
                     </statement>
                 </schema-directSQL>
 
                 <!-- Drop agent quiet time (i.e. suspect agent time) from 15 to 5 minutes -->
                 <schema-directSQL>
                     <statement desc="Changing AGENT_MAX_QUIET_TIME_ALLOWED to 5 minutes from 15 minutes">
-                        UPDATE RHQ_SYSTEM_CONFIG 
-                           SET PROPERTY_VALUE = '300000', DEFAULT_PROPERTY_VALUE = '300000' 
+                        UPDATE RHQ_SYSTEM_CONFIG
+                           SET PROPERTY_VALUE = '300000', DEFAULT_PROPERTY_VALUE = '300000'
                          WHERE PROPERTY_KEY = 'AGENT_MAX_QUIET_TIME_ALLOWED'
                     </statement>
                 </schema-directSQL>
-                
+
                 <!-- set null availabilities to UNKNOWN -->
                 <schema-directSQL>
                     <statement desc="Changing NULL RHQ_AVAILABILITY.AVAILABILITY_TYPE to UNKNOWN">
                         UPDATE RHQ_AVAILABILITY
-                           SET AVAILABILITY_TYPE = 2 
+                           SET AVAILABILITY_TYPE = 2
                          WHERE AVAILABILITY_TYPE IS NULL
                     </statement>
                     <statement desc="Changing NULL RHQ_RESOURCE_AVAIL.AVAILABILITY_TYPE to UNKNOWN">
                         UPDATE RHQ_RESOURCE_AVAIL
-                           SET AVAILABILITY_TYPE = 2 
+                           SET AVAILABILITY_TYPE = 2
                          WHERE AVAILABILITY_TYPE IS NULL
                     </statement>
                 </schema-directSQL>
 
                 <schema-alterColumn table="RHQ_AVAILABILITY"   column="AVAILABILITY_TYPE" nullable="FALSE"/>
-                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" nullable="FALSE"/>                    
-                
+                <schema-alterColumn table="RHQ_RESOURCE_AVAIL" column="AVAILABILITY_TYPE" nullable="FALSE"/>
+
             </schemaSpec>
 
             <schemaSpec version="2.121">
@@ -1892,27 +1892,27 @@
             </schemaSpec>
 
 <!-- RHQ 4.4, JON 3.1.0 RELEASE uses DB Schema 2.121 -->
-            
+
             <schemaSpec version="2.122">
-                <schema-directSQL>                
+                <schema-directSQL>
                    <statement desc="Updating DOWN Alert Conditions to new format">
                       UPDATE RHQ_ALERT_CONDITION
                          SET NAME = 'AVAIL_GOES_DOWN', OPTION_STATUS = NULL
-                       WHERE TYPE = 'AVAILABILITY' 
+                       WHERE TYPE = 'AVAILABILITY'
                          AND NAME IS NULL
                          AND OPTION_STATUS = 'DOWN'
                    </statement>
                    <statement desc="Updating UP Alert Conditions to new format">
                       UPDATE RHQ_ALERT_CONDITION
-                         SET NAME = 'AVAIL_GOES_UP', OPTION_STATUS = NULL 
+                         SET NAME = 'AVAIL_GOES_UP', OPTION_STATUS = NULL
                        WHERE TYPE = 'AVAILABILITY'
                          AND NAME IS NULL
                          AND OPTION_STATUS = 'UP'
-                   </statement>      
-                </schema-directSQL>                    
+                   </statement>
+                </schema-directSQL>
             </schemaSpec>
-            
-<!-- JON 3.1.1 RELEASE uses DB Schema 2.122 -->            
+
+<!-- JON 3.1.1 RELEASE uses DB Schema 2.122 -->
 
             <schemaSpec version="2.123">
 
@@ -1989,8 +1989,8 @@
                 </schema-directSQL>
             </schemaSpec>
 
-<!-- RHQ 4.6.0 uses DB Schema 2.128 -->        	
-        	
+<!-- RHQ 4.6.0 uses DB Schema 2.128 -->
+
             <!-- BZ 881848 -->
             <schemaSpec version="2.129">
                 <schema-directSQL>
@@ -2080,12 +2080,12 @@
 
             <schemaSpec version="2.135">
               <!-- Fine Grained Bundle Permissions -->
-              
+
               <!-- Add new perms to superuser/all-resources roles -->
               <schema-directSQL>
                 <statement desc="Inserting MANAGE_BUNDLE_GROUPS permission for all MANAGE_BUNDLE (12) roles">
                     INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 18 FROM rhq_permission p where p.operation = 12
-                </statement>              	
+                </statement>
                 <statement desc="Inserting CREATE_BUNDLES permission for all MANAGE_BUNDLE (12) roles">
                     INSERT INTO rhq_permission (role_id, operation) SELECT role_id, 19 FROM rhq_permission p where p.operation = 12
                 </statement>
@@ -2180,8 +2180,35 @@
             </schemaSpec>
 
           <schemaSpec version="2.136">
-            <schema-addColumn   table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" columnType="VARCHAR2" precision="12"/>
-            <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" nullable="false" default="unlimited"/>
+            <schema-addColumn   table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" columnType="VARCHAR2" precision="15"/>
+            <schema-directSQL>
+              <statement desc="Fill in defaults">
+                UPDATE RHQ_CONFIG_PD_OSRC
+                SET EXPRESSION_SCOPE = 'UNLIMITED'
+                WHERE EXPRESSION_SCOPE IS NULL
+              </statement>
+            </schema-directSQL>
+            <schema-alterColumn table="RHQ_CONFIG_PD_OSRC" column="EXPRESSION_SCOPE" nullable="false" default="UNLIMITED"/>
+          </schemaSpec>
+
+          <schemaSpec version="2.137">
+              <schema-addColumn table="RHQ_STORAGE_NODE" column="MAINTENANCE_PENDING" columnType="BOOLEAN"/>
+              <schema-addColumn table="RHQ_STORAGE_NODE" column="ERROR_MSG" columnType="LONGVARCHAR"/>
+              <schema-addColumn table="RHQ_STORAGE_NODE" column="RESOURCE_OP_HIST_ID" columnType="INTEGER"/>
+              <schema-directSQL>
+                <statement desc="Creating RHQ_STORAGE_NODE foreign key to RHQ_OPERATION_HISTORY">
+                  ALTER TABLE RHQ_STORAGE_NODE
+                  ADD CONSTRAINT RHQ_SN_OP_HIST_ID_FK
+                  FOREIGN KEY (RESOURCE_OP_HIST_ID)
+                  REFERENCES RHQ_OPERATION_HISTORY (ID)
+              </statement>
+                <statement targetDBVendor="postgresql" desc="Set maintenance_pending flag to false for existing storage nodes">
+                  UPDATE RHQ_STORAGE_NODE SET MAINTENANCE_PENDING = false
+                </statement>
+                <statement targetDBVendor="oracle" desc="Set maintenance_pending flag to false for existing storage nodes">
+                  UPDATE RHQ_STORAGE_NODE SET MAINTENANCE_PENDING = 0
+                </statement>
+            </schema-directSQL>
           </schemaSpec>
 
         </dbupgrade>

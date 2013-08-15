@@ -33,6 +33,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.ConfigurationTemplate;
 import org.rhq.core.domain.criteria.ResourceCriteria;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.resource.Agent;
 import org.rhq.core.domain.resource.CannotConnectToAgentException;
 import org.rhq.core.domain.resource.CreateResourceHistory;
@@ -130,6 +131,15 @@ public class ResourceGWTServiceImpl extends AbstractGWTServiceImpl implements Re
             ResourceAvailabilitySummary result;
             result = resourceManager.getAvailabilitySummary(getSessionSubject(), resourceId);
             return result;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public ResourceAvailability getLiveResourceAvailability(int resourceId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(resourceManager.getLiveResourceAvailability(getSessionSubject(), resourceId), "ResourceService.getLiveResourceAvailability");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

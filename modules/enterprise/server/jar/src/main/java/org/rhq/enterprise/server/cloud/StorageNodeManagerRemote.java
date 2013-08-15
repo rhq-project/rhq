@@ -96,4 +96,6 @@ public interface StorageNodeManagerRemote {
      * @return all storage nodes alerts
      */
     PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode);
+
+    void deployStorageNode(Subject sbubject, StorageNode storageNode);
 }

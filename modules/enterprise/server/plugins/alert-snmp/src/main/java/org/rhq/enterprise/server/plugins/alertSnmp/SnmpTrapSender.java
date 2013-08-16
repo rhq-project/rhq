@@ -83,6 +83,7 @@ public class SnmpTrapSender implements PDUFactory {
     public static final int DEFAULT = 0;
     private static final String UDP_TRANSPORT = "udp";
     private static final String TCP_TRANSPORT = "tcp";
+    private static final String DEFAULT_RHQ_BINDING = "1.3.6.1.4.1.18016.2.1";
 
     private Log log = LogFactory.getLog(SnmpTrapSender.class);
 
@@ -494,8 +495,8 @@ public class SnmpTrapSender implements PDUFactory {
         if (!this.snmpEnabled) {
             return "SNMP is not enabled.";
         }
-
-        String variableBindingPrefix = alertParameters.getSimpleValue(SnmpInfo.PARAM_VARIABLE_BINDING_PREFIX, null);
+        String variableBindingPrefix = alertParameters.getSimpleValue(SnmpInfo.PARAM_VARIABLE_BINDING_PREFIX,
+            DEFAULT_RHQ_BINDING);
 
         // request id and a timestamp are added below in setSysUpTime..
 

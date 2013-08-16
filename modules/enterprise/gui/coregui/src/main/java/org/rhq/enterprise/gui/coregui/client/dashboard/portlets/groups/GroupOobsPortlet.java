@@ -38,10 +38,11 @@ import com.smartgwt.client.widgets.layout.VLayout;
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshPortlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.dashboard.CustomSettingsPortlet;
@@ -53,6 +54,7 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigura
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.D3GroupGraphListView;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -68,6 +70,8 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
     // A default displayed, persisted name for the portlet
     public static final String NAME = MSG.view_portlet_defaultName_group_oobs();
     public static final String ID = "id";
+
+    private EntityContext groupContext;
 
     private int groupId = -1;
     protected Canvas recentOobContent = new Canvas();
@@ -88,6 +92,7 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
     public GroupOobsPortlet(int groupId) {
         super();
         this.groupId = groupId;
+        groupContext = EntityContext.forGroup(groupId);
     }
 
     @Override
@@ -193,76 +198,118 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
         final Configuration portletConfig = storedPortlet.getConfiguration();
 
         final int groupId = this.groupId;
-        int resultCount = 5;//default to
 
         //result count
         PropertySimple property = portletConfig.getSimple(Constant.RESULT_COUNT);
-        if (property != null) {
-            String currentSetting = property.getStringValue();
-            if (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) {
-                resultCount = 5;
-            } else {
-                resultCount = Integer.valueOf(currentSetting);
-            }
+        String currentSetting = property.getStringValue();
+        final int resultCountFinal = (currentSetting.trim().isEmpty() || currentSetting.equalsIgnoreCase("5")) ? 5: Integer.valueOf(currentSetting);
+
+        //locate resourceGroupRef
+        ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+        criteria.addFilterId(groupId);
+        criteria.fetchConfigurationUpdates(false);
+        criteria.fetchExplicitResources(false);
+        criteria.fetchGroupDefinition(false);
+        criteria.fetchOperationHistories(false);
+
+        // for autoclusters and autogroups we need to add more criteria
+        final boolean isAutoCluster = isAutoCluster();
+        final boolean isAutoGroup = isAutoGroup();
+        if (isAutoCluster) {
+            criteria.addFilterVisible(false);
+        } else if (isAutoGroup) {
+            criteria.addFilterVisible(false);
+            criteria.addFilterPrivate(true);
         }
 
-        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForGroup(groupId, resultCount,
-            new AsyncCallback<PageList<MeasurementOOBComposite>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
-                        + caught.getMessage());
-                    currentlyLoading = false;
-                }
+        //locate the resource group
+        GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceGroupComposite>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Log.debug("Error retrieving resource group composite for group [" + groupId + "]:"
+                                + caught.getMessage());
+                    }
 
-                @Override
-                public void onSuccess(PageList<MeasurementOOBComposite> result) {
-                    VLayout column = new VLayout();
-                    column.setHeight(10);
-                    if (!result.isEmpty()) {
-                        for (MeasurementOOBComposite oob : result) {
-                            DynamicForm row = new DynamicForm();
-                            row.setNumCols(2);
+                    @Override
+                    public void onSuccess(PageList<ResourceGroupComposite> results) {
+                        if (!results.isEmpty()) {
+                            final ResourceGroupComposite groupComposite = results.get(0);
 
-                            final String title = oob.getScheduleName();
-                            final String destination = "/resource/common/monitor/Visibility.do?m="
-                                //                                                            + oob.getDefinitionId() + "&id=" + groupId + "&mode=chartSingleMetricSingleResource";
-                                + oob.getDefinitionId() + "&groupId=" + groupId
-                                + "&mode=chartSingleMetricSingleResource";
-                            LinkItem link = AbstractActivityView.newLinkItem(title, destination);
-                            link.addClickHandler(new ClickHandler() {
-                                @Override
-                                public void onClick(ClickEvent event) {
-                                    ChartViewWindow window = new ChartViewWindow(title);
-                                    //generate and include iframed content
-                                    FullHTMLPane iframe = new FullHTMLPane(destination);
-                                    window.addItem(iframe);
-                                    window.show();
-                                }
-                            });
 
-                            StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
-                                .format(oob.getTimestamp()));
+                            GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForGroup(groupId, resultCountFinal,
+                                    new AsyncCallback<PageList<MeasurementOOBComposite>>() {
+                                        @Override
+                                        public void onFailure(Throwable caught) {
+                                            Log.debug("Error retrieving recent out of bound metrics for group [" + groupId + "]:"
+                                                    + caught.getMessage());
+                                            currentlyLoading = false;
+                                        }
 
-                            row.setItems(link, time);
-                            column.addMember(row);
+                                        @Override
+                                        public void onSuccess(PageList<MeasurementOOBComposite> result) {
+                                            VLayout column = new VLayout();
+                                            column.setHeight(10);
+                                            if (!result.isEmpty()) {
+                                                for (final MeasurementOOBComposite oob : result) {
+                                                    DynamicForm row = new DynamicForm();
+                                                    row.setNumCols(2);
+
+                                                    final String title = oob.getScheduleName();
+                                                    LinkItem link = new LinkItem();
+                                                    link.setLinkTitle(title);
+                                                    link.setTitle(title);
+                                                    link.setShowTitle(false);
+                                                    link.addClickHandler(new ClickHandler() {
+                                                        @Override
+                                                        public void onClick(ClickEvent event) {
+                                                            ChartViewWindow window = new ChartViewWindow(title);
+                                                            D3GroupGraphListView graphView = new D3GroupGraphListView
+                                                                    (groupComposite.getResourceGroup(), false);
+
+                                                            window.addItem(graphView);
+                                                            window.show();
+
+                                                        }
+                                                    });
+
+                                                    StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
+                                                            .format(oob.getTimestamp()));
+
+                                                    row.setItems(link, time);
+                                                    column.addMember(row);
+                                                }
+                                                //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
+                                            } else {
+                                                DynamicForm row = AbstractActivityView
+                                                        .createEmptyDisplayRow(AbstractActivityView.RECENT_OOB_NONE);
+                                                column.addMember(row);
+                                            }
+                                            recentOobContent.setContents("");
+                                            for (Canvas child : recentOobContent.getChildren()) {
+                                                child.destroy();
+                                            }
+                                            recentOobContent.addChild(column);
+                                            recentOobContent.markForRedraw();
+                                            currentlyLoading = false;
+                                            markForRedraw();
+                                        }
+                                    });
+
                         }
-                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
-                    } else {
-                        DynamicForm row = AbstractActivityView
-                            .createEmptyDisplayRow(AbstractActivityView.RECENT_OOB_NONE);
-                        column.addMember(row);
                     }
-                    recentOobContent.setContents("");
-                    for (Canvas child : recentOobContent.getChildren()) {
-                        child.destroy();
-                    }
-                    recentOobContent.addChild(column);
-                    recentOobContent.markForRedraw();
-                    currentlyLoading = false;
-                    markForRedraw();
-                }
-            });
+                });
+
+
+
+    }
+
+    private boolean isAutoGroup() {
+        return groupContext.isAutoGroup();
+    }
+
+    private boolean isAutoCluster() {
+        return groupContext.isAutoCluster();
     }
 
     public void startRefreshCycle() {

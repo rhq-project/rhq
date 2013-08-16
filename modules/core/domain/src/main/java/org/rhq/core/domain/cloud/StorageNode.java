@@ -241,6 +241,25 @@ public class StorageNode implements Serializable {
         this.operationMode = operationMode;
     }
 
+    public Status getStatus() {
+        if (operationMode == OperationMode.INSTALLED) {
+            return Status.INSTALLED;
+        }
+        if (operationMode == OperationMode.ANNOUNCE || operationMode == OperationMode.BOOTSTRAP ||
+            operationMode == OperationMode.ADD_NODE_MAINTENANCE) {
+            if (errorMessage == null && failedOperation == null) {
+                return Status.JOINING;
+            } else {
+                return Status.DOWN;
+            }
+        }
+        if (operationMode == OperationMode.NORMAL) {
+            return Status.NORMAL;
+        }
+        // else operation mode is DOWN
+        return Status.DOWN;
+    }
+
     public enum OperationMode {
 
         DOWN("This storage node is down"), //
@@ -263,6 +282,14 @@ public class StorageNode implements Serializable {
         public String getMessage() {
             return message;
         }
+    }
+
+    public enum Status {
+        INSTALLED,
+        DOWN,
+        NORMAL,
+        JOINING,
+        LEAVING
     }
 
     public String getJMXConnectionURL() {

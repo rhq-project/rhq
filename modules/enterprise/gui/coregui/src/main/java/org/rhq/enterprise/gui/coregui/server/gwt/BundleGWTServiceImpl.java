@@ -20,10 +20,8 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
-import org.rhq.core.domain.authz.Permission;
-import org.rhq.core.domain.authz.Role;
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
@@ -33,6 +31,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -42,7 +41,6 @@ import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
-import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -105,6 +103,17 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
             BundleVersion results = bundleManager.createInitialBundleVersionViaRecipe(getSessionSubject(),
                 bundleGroupIds, recipe);
             return SerialUtility.prepare(results, "createInitialBundleVersionViaRecipe");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public BundleVersion createInitialBundleVersionViaToken(int[] bundleGroupIds, String token) throws RuntimeException {
+        try {
+            BundleVersion results = bundleManager.createInitialBundleVersionViaToken(getSessionSubject(),
+                bundleGroupIds, token);
+            return SerialUtility.prepare(results, "createInitialBundleVersionViaToken");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -358,26 +367,32 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     @Override
-    public HashSet<BundleGroup> getCreateBundleGroups() throws RuntimeException {
+    public BundleGroupAssignmentComposite getAssignableBundleGroups(int bundleId) throws RuntimeException {
         try {
-            RoleCriteria c = new RoleCriteria();
-            c.addFilterSubjectId(getSessionSubject().getId());
-            ArrayList<Permission> l = new ArrayList<Permission>(1);
-            l.add(Permission.CREATE_BUNDLES_IN_GROUP);
-            c.addFilterPermissions(l);
-            c.fetchBundleGroups(true);
+            Subject subject = getSessionSubject();
+            BundleGroupAssignmentComposite results = bundleManager
+                .getAssignableBundleGroups(subject, subject, bundleId);
+            return SerialUtility.prepare(results, "getAssignableBundleGroups");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
-            PageList<Role> roles = LookupUtil.getRoleManager().findRolesByCriteria(
-                LookupUtil.getSubjectManager().getOverlord(), c);
+    @Override
+    public void assignBundlesToBundleGroups(int[] bundleGroupIds, int[] bundleIds) throws RuntimeException {
+        try {
+            Subject subject = getSessionSubject();
+            bundleManager.assignBundlesToBundleGroups(subject, bundleGroupIds, bundleIds);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 
-            HashSet<BundleGroup> result = new HashSet<BundleGroup>();
-            for (Role role : roles) {
-                for (BundleGroup bundleGroup : role.getBundleGroups()) {
-                    result.add(bundleGroup);
-                }
-            }
-
-            return SerialUtility.prepare(result, "getCreateBundleGroups");
+    @Override
+    public void unassignBundlesFromBundleGroups(int[] bundleGroupIds, int[] bundleIds) throws RuntimeException {
+        try {
+            Subject subject = getSessionSubject();
+            bundleManager.unassignBundlesFromBundleGroups(subject, bundleGroupIds, bundleIds);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

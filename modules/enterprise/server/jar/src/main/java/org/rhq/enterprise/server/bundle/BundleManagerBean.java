@@ -78,6 +78,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
@@ -97,6 +98,7 @@ import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.ResourceTypeCriteria;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.group.ResourceGroup;
@@ -124,6 +126,7 @@ import org.rhq.enterprise.server.util.CriteriaQuery;
 import org.rhq.enterprise.server.util.CriteriaQueryExecutor;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
+import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
  * Manages the creation and usage of bundles.
@@ -2004,21 +2007,24 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    public void assignBundlesToBundleGroup(Subject subject, int bundleGroupId, int[] bundleIds) {
-        BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
-        if (null == bundleGroup) {
-            throw new IllegalArgumentException("BundleGroup does not exist for bundleGroupId [" + bundleGroupId + "]");
-        }
-
-        checkAssignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
-
-        for (int bundleId : bundleIds) {
-            Bundle bundle = entityManager.find(Bundle.class, bundleId);
-            if (null == bundle) {
-                throw new IllegalArgumentException("Bundle does not exist for bundleId [" + bundleId + "]");
+    public void assignBundlesToBundleGroups(Subject subject, int bundleGroupIds[], int[] bundleIds) {
+        for (int bundleGroupId : bundleGroupIds) {
+            BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+            if (null == bundleGroup) {
+                throw new IllegalArgumentException("BundleGroup does not exist for bundleGroupId [" + bundleGroupId
+                    + "]");
             }
 
-            bundleGroup.addBundle(bundle);
+            checkAssignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
+
+            for (int bundleId : bundleIds) {
+                Bundle bundle = entityManager.find(Bundle.class, bundleId);
+                if (null == bundle) {
+                    throw new IllegalArgumentException("Bundle does not exist for bundleId [" + bundleId + "]");
+                }
+
+                bundleGroup.addBundle(bundle);
+            }
         }
     }
 
@@ -2047,7 +2053,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             for (Bundle b : bundles) {
                 bundleIds[i++] = b.getId();
             }
-            assignBundlesToBundleGroup(subject, bundleGroup.getId(), bundleIds);
+            assignBundlesToBundleGroups(subject, new int[] { bundleGroup.getId() }, bundleIds);
         }
 
         return bundleGroup;
@@ -2096,21 +2102,24 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    public void unassignBundlesFromBundleGroup(Subject subject, int bundleGroupId, int[] bundleIds) {
-        BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
-        if (null == bundleGroup) {
-            throw new IllegalArgumentException("BundleGroup does not exist for bundleGroupId [" + bundleGroupId + "]");
-        }
-
-        checkUnassignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
-
-        for (int bundleId : bundleIds) {
-            Bundle bundle = entityManager.find(Bundle.class, bundleId);
-            if (null == bundle) {
-                throw new IllegalArgumentException("Bundle does not exist for bundleId [" + bundleId + "]");
+    public void unassignBundlesFromBundleGroups(Subject subject, int[] bundleGroupIds, int[] bundleIds) {
+        for (int bundleGroupId : bundleGroupIds) {
+            BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+            if (null == bundleGroup) {
+                throw new IllegalArgumentException("BundleGroup does not exist for bundleGroupId [" + bundleGroupId
+                    + "]");
             }
 
-            bundleGroup.removeBundle(bundle);
+            checkUnassignBundleGroupAuthz(subject, bundleGroupId, bundleIds);
+
+            for (int bundleId : bundleIds) {
+                Bundle bundle = entityManager.find(Bundle.class, bundleId);
+                if (null == bundle) {
+                    throw new IllegalArgumentException("Bundle does not exist for bundleId [" + bundleId + "]");
+                }
+
+                bundleGroup.removeBundle(bundle);
+            }
         }
     }
 
@@ -2447,4 +2456,93 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     }
 
+    @Override
+    public BundleGroupAssignmentComposite getAssignableBundleGroups(Subject subject, Subject assigningSubject,
+        int bundleId) throws Exception {
+
+        Bundle bundle = null;
+
+        if (0 != bundleId) {
+            bundle = entityManager.find(Bundle.class, bundleId);
+            if (null == bundle) {
+                throw new BundleNotFoundException("Bundle ID [" + bundleId + "]");
+            }
+        }
+
+        BundleGroupAssignmentComposite result = new BundleGroupAssignmentComposite(assigningSubject, bundle);
+        Set<Permission> globalPermissions = authorizationManager.getExplicitGlobalPermissions(assigningSubject);
+        boolean hasManageBundleGroups = globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS);
+
+        // can assign any bundle anywhere, or leave unassigned
+        if (hasManageBundleGroups) {
+            BundleGroupCriteria criteria = new BundleGroupCriteria();
+            // just get all the bundle groups by using overlord and no filters
+            List<BundleGroup> bundleGroups = findBundleGroupsByCriteria(subjectManager.getOverlord(), criteria);
+            result.setCanBeUnassigned(true);
+            result.setBundleGroupMap(populateBundleGroupMap(bundleGroups, bundle));
+            return result;
+        }
+
+        boolean hasViewBundles = globalPermissions.contains(Permission.VIEW_BUNDLES);
+        boolean hasCreateBundles = globalPermissions.contains(Permission.CREATE_BUNDLES);
+        boolean isNewBundle = (null == bundle);
+        ArrayList<Permission> permFilter = new ArrayList<Permission>(1);
+
+        if (isNewBundle) {
+            // set whether can leave unassigned
+            result.setCanBeUnassigned(hasCreateBundles && hasViewBundles);
+            // can assign to bundle groups for which he has create_bundles_in_group            
+            permFilter.add(Permission.CREATE_BUNDLES_IN_GROUP);
+
+        } else {
+            // if necessary, make sure the bundle is viewable
+            if (!hasViewBundles) {
+                if (authorizationManager.canViewBundle(assigningSubject, bundleId)) {
+                    throw new PermissionException("Bundle ID [" + bundleId + "] is not viewable by subject ["
+                        + assigningSubject.getName() + "]");
+                }
+            }
+
+            // can assign to bundle groups for which he has create_bundles_in_group or assign_bundles_to_group            
+            permFilter.add(Permission.CREATE_BUNDLES_IN_GROUP);
+            permFilter.add(Permission.ASSIGN_BUNDLES_TO_GROUP);
+        }
+
+        List<BundleGroup> bundleGroups;
+        if (hasCreateBundles) {
+            // can assign to any viewable bundle group
+            // get all the viewable bundle groups for the subject, no filters                
+            BundleGroupCriteria criteria = new BundleGroupCriteria();
+            bundleGroups = findBundleGroupsByCriteria(assigningSubject, criteria);
+
+        } else {
+            // can only assign to bundle groups for which he has the necessary permissions
+            RoleCriteria criteria = new RoleCriteria();
+            criteria.addFilterSubjectId(assigningSubject.getId());
+            criteria.addFilterPermissions(permFilter);
+            criteria.fetchBundleGroups(true);
+            List<Role> roles = LookupUtil.getRoleManager().findRolesByCriteria(subjectManager.getOverlord(), criteria);
+            bundleGroups = new ArrayList<BundleGroup>();
+            for (Role role : roles) {
+                for (BundleGroup bundleGroup : role.getBundleGroups()) {
+                    if (!bundleGroups.contains(bundleGroup)) {
+                        bundleGroups.add(bundleGroup);
+                    }
+                }
+            }
+        }
+
+        result.setBundleGroupMap(populateBundleGroupMap(bundleGroups, bundle));
+        return result;
+    }
+
+    private Map<BundleGroup, Boolean> populateBundleGroupMap(List<BundleGroup> bundleGroups, Bundle bundle) {
+        Map<BundleGroup, Boolean> result = new HashMap<BundleGroup, Boolean>(bundleGroups.size());
+        for (BundleGroup bundleGroup : bundleGroups) {
+            Boolean assigned = ((null != bundle) && bundle.getBundleGroups().contains(bundleGroup)) ? Boolean.TRUE
+                : Boolean.FALSE;
+            result.put(bundleGroup, assigned);
+        }
+        return result;
+    }
 }

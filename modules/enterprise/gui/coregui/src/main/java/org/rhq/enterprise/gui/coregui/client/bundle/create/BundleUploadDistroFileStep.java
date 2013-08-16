@@ -38,6 +38,7 @@ import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -274,7 +275,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                             Message.Severity.Info));
                     wizard.setBundleVersion(result);
                     setButtonsDisableMode(false);
-                    wizard.getView().incrementStep(); // go to the next step
+                    incrementStep(); // go to the next step
                 }
 
                 @Override
@@ -306,7 +307,30 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
         wizard.setCreateInitialBundleVersionToken(token);
         setButtonsDisableMode(false);
-        wizard.getView().incrementStep(); // go to the next step
+        incrementStep(); // go to the next step
+    }
+
+    private void incrementStep() {
+        // before moving to the next step, get the assignable/assigned bundle groups for this new bundle version  
+        boolean isInitialVersion = this.wizard.getBundleVersion() == null
+            || this.wizard.getBundleVersion().getVersionOrder() == 0;
+        int bundleId = isInitialVersion ? 0 : this.wizard.getBundleVersion().getBundle().getId();
+
+        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+        bundleServer.getAssignableBundleGroups(bundleId, new AsyncCallback<BundleGroupAssignmentComposite>() {
+
+            public void onSuccess(BundleGroupAssignmentComposite result) {
+                wizard.setBundleGroupAssignmentComposite(result);
+                wizard.getView().incrementStep(); // go to the next step
+            }
+
+            public void onFailure(Throwable caught) {
+                setButtonsDisableMode(false);
+                // TODO NEW MESSAGE
+                CoreGUI.getErrorHandler().handleError("Failed to determine assignable bundle groups.", caught);
+            }
+        });
+
     }
 
     private void processUpload() {
@@ -325,7 +349,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                             Message.Severity.Info));
                     wizard.setBundleVersion(bv);
                     setButtonsDisableMode(false);
-                    wizard.getView().incrementStep(); // go to the next step
+                    incrementStep(); // go to the next step
                 }
 
                 @Override
@@ -337,8 +361,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 }
             });
         } else if (null != uploadDistroForm.getCreateInitialBundleVersionToken()) {
-            handleIllegalStateException(new IllegalStateException(
-                uploadDistroForm.getCreateInitialBundleVersionToken()));
+            handleIllegalStateException(new IllegalStateException(uploadDistroForm.getCreateInitialBundleVersionToken()));
 
         } else {
             String errorMessage = uploadDistroForm.getUploadError();
@@ -368,7 +391,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                         Message.Severity.Info));
                 wizard.setBundleVersion(result);
                 setButtonsDisableMode(false);
-                wizard.getView().incrementStep(); // go to the next step
+                incrementStep(); // go to the next step
             }
 
             @Override
@@ -380,7 +403,7 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                     handled = true;
                     wizard.setCreateInitialBundleVersionRecipe(wizard.getRecipe());
                     setButtonsDisableMode(false);
-                    wizard.getView().incrementStep(); // go to the next step
+                    incrementStep(); // go to the next step
                 }
 
                 if (!handled) {
@@ -423,6 +446,5 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             radioGroup.destroyComponents();
             super.destroy();
         }
-
     }
 }

@@ -33,6 +33,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.configuration.Configuration;
 
 /**
@@ -323,4 +324,18 @@ public interface BundleManagerLocal extends BundleManagerRemote {
     BundleVersion createInitialBundleVersionViaToken(Subject subject, int[] bundleGroupIds, String token)
         throws Exception;
 
+    /**
+     * For the calling subject determines which bundle groups to which the user can assign the bundle. The composite
+     * includes a <code>Map<BundleGroup,Boolean></code> indicating the assignable BundleGroups and which are
+     * currently assigned.   It also indicates whether the bundle can be left unassigned.  When querying for
+     * new bundles the bundleId should be set to 0.
+     * 
+     * @param subject, the calling subject
+     * @param assigningSubject, the subject relevant to the bundle group assignment 
+     * @param bundleId, the bundle relevant to the bundle group assignment, or 0 for a new bundle 
+     * @return
+     * @throws Exception
+     */
+    BundleGroupAssignmentComposite getAssignableBundleGroups(Subject subject, Subject assigningSubject, int bundleId)
+        throws Exception;
 }

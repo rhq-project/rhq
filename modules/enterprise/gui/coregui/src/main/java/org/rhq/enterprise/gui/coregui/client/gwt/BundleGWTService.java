@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
@@ -33,6 +32,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -52,6 +52,8 @@ public interface BundleGWTService extends RemoteService {
         throws RuntimeException;
 
     BundleVersion createInitialBundleVersionViaRecipe(int[] bundleGroupIds, String recipe) throws RuntimeException;
+
+    BundleVersion createInitialBundleVersionViaToken(int[] bundleGroupIds, String token) throws RuntimeException;
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws RuntimeException;
 
@@ -113,6 +115,9 @@ public interface BundleGWTService extends RemoteService {
 
     BundleGroup updateBundleGroup(BundleGroup bundleGroup) throws RuntimeException;
 
-    HashSet<BundleGroup> getCreateBundleGroups() throws RuntimeException;
+    BundleGroupAssignmentComposite getAssignableBundleGroups(int bundleId) throws RuntimeException;
 
+    void assignBundlesToBundleGroups(int[] bundleGroupIds, int[] bundleIds) throws RuntimeException;
+
+    void unassignBundlesFromBundleGroups(int[] bundleGroupIds, int[] bundleIds) throws RuntimeException;
 }

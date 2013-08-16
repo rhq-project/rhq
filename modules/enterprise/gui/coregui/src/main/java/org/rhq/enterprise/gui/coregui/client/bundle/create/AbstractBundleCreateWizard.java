@@ -18,14 +18,14 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
 import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -41,7 +41,8 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
     private String createInitialBundleVersionToken;
     private String createInitialBundleVersionRecipe;
     private HashMap<String, Boolean> allBundleFilesStatus; // bundle file names with their upload status (true=they were uploaded)
-    private List<BundleGroup> initialBundleGroups = new ArrayList<BundleGroup>();
+    private BundleGroupAssignmentComposite bundleGroupAssignmentComposite;
+    private Set<BundleGroup> initialBundleGroups;
 
     public String getRecipe() {
         return recipe;
@@ -90,12 +91,19 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
         return ((null != createInitialBundleVersionToken) || (null != createInitialBundleVersionRecipe));
     }
 
-    
-    public List<BundleGroup> getInitialBundleGroups() {
+    public BundleGroupAssignmentComposite getBundleGroupAssignmentComposite() {
+        return bundleGroupAssignmentComposite;
+    }
+
+    public void setBundleGroupAssignmentComposite(BundleGroupAssignmentComposite bundleGroupAssignmentComposite) {
+        this.bundleGroupAssignmentComposite = bundleGroupAssignmentComposite;
+    }
+
+    public Set<BundleGroup> getInitialBundleGroups() {
         return initialBundleGroups;
     }
 
-    public void setInitialBundleGroups(List<BundleGroup> initialBundleGroups) {
+    public void setInitialBundleGroups(Set<BundleGroup> initialBundleGroups) {
         this.initialBundleGroups = initialBundleGroups;
     }
 

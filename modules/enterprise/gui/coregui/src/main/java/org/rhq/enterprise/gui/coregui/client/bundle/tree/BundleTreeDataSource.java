@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import com.google.gwt.i18n.client.NumberFormat;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.data.DSResponse;
@@ -60,6 +61,9 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  */
 public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
 
+    // this is the field that will contain data which can be used to sort the tree nodes
+    public static final String FIELD_SORT_VALUE = "sortValue";
+
     private final BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
 
     public BundleTreeDataSource() {
@@ -79,6 +83,10 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
         DataSourceTextField nameDataField = new DataSourceTextField("name", MSG.common_title_name());
         nameDataField.setCanEdit(false);
         fields.add(nameDataField);
+
+        DataSourceTextField sortValueDataField = new DataSourceTextField(FIELD_SORT_VALUE);
+        sortValueDataField.setCanView(false);
+        fields.add(sortValueDataField);
 
         DataSourceTextField parentIdField = new DataSourceTextField("parentId", MSG.common_title_id_parent());
         parentIdField.setForeignKey("id");
@@ -314,6 +322,8 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
     private ListGridRecord copyValuesForKnownBundle(Object from, Integer bundleGroupId, Integer bundleId) {
         String parentID;
         TreeNode node = new TreeNode();
+        String sortValue = "";
+
         if (from instanceof BundleGroup) {
             BundleGroup bundleGroup = (BundleGroup) from;
             node.setIsFolder(true);
@@ -323,6 +333,9 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
 
             if (bundleGroup.getId() == 0) {
                 node.setEnabled(false);
+                sortValue = "\uFFFDZZZZ"; // always show this as the last folder node in the tree
+            } else{
+                sortValue = bundleGroup.getName();
             }
         } else if (from instanceof Bundle) {
             Bundle bundle = (Bundle) from;
@@ -331,7 +344,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             node.setID(String.valueOf(bundleGroupId) + "_" + bundle.getId());
             node.setParentID(String.valueOf(bundleGroupId));
             node.setName(StringUtility.escapeHtml(bundle.getName()));
-
+            sortValue = bundle.getName();
         } else if (from instanceof BundleVersion) {
             BundleVersion version = (BundleVersion) from;
             node.setIsFolder(false);
@@ -340,6 +353,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             node.setParentID(parentID);
             node.setID(parentID + '_' + version.getId());
             node.setName(version.getVersion());
+            sortValue = NumberFormat.getFormat("000000").format(version.getVersionOrder());
 
         } else if (from instanceof BundleDeployment) {
             BundleDeployment deployment = (BundleDeployment) from;
@@ -354,6 +368,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             } else {
                 node.setName(name);
             }
+            sortValue = deployment.getName();
 
         } else if (from instanceof BundleDestination) {
             BundleDestination destination = (BundleDestination) from;
@@ -363,7 +378,10 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             node.setParentID(parentID);
             node.setID(parentID + '_' + destination.getId());
             node.setName(StringUtility.escapeHtml(destination.getName()));
+            sortValue = destination.getName();
         }
+
+        node.setAttribute(FIELD_SORT_VALUE, sortValue.toLowerCase());
 
         return node;
     }

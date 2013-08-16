@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.tree;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -59,7 +60,8 @@ public class BundleTreeView extends TreeGrid {
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
         setShowRollOver(false);
-        setSortField("name");
+        setSortField(BundleTreeDataSource.FIELD_SORT_VALUE);
+        setSortDirection(SortDirection.ASCENDING);
         setShowHeader(false);
 
         setDataSource(new BundleTreeDataSource());

@@ -163,8 +163,6 @@ public class BundleTreeView extends TreeGrid {
             });
         } else {
             deselectAllRecords();
-            if (getTotalRows() > 0)
-                selectRecord(0);
         }
     }
 

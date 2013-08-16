@@ -321,6 +321,9 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
             node.setID(String.valueOf(bundleGroup.getId()));
             node.setName(StringUtility.escapeHtml(bundleGroup.getName()));
 
+            if (bundleGroup.getId() == 0) {
+                node.setEnabled(false);
+            }
         } else if (from instanceof Bundle) {
             Bundle bundle = (Bundle) from;
             node.setIsFolder(true);

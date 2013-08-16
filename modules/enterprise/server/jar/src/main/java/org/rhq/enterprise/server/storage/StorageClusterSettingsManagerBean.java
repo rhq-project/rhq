@@ -6,8 +6,11 @@ import javax.ejb.EJB;
 import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.common.composite.SystemSetting;
 import org.rhq.core.domain.common.composite.SystemSettings;
+import org.rhq.enterprise.server.authz.RequiredPermission;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 
 /**
@@ -20,6 +23,7 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
     private SystemManagerLocal systemManager;
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageClusterSettings getClusterSettings(Subject subject) {
         SystemSettings settings = systemManager.getSystemSettings(subject);
         Map<String, String> settingsMap = settings.toMap();
@@ -43,6 +47,7 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void setClusterSettings(Subject subject, StorageClusterSettings clusterSettings) {
         SystemSettings settings = new SystemSettings();
         settings.put(SystemSetting.STORAGE_CQL_PORT, Integer.toString(clusterSettings.getCqlPort()));

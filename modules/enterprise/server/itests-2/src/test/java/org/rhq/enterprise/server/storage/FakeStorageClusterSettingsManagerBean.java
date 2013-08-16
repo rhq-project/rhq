@@ -3,6 +3,7 @@ package org.rhq.enterprise.server.storage;
 import javax.ejb.Stateless;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 
 /**
  * @author John Sanda

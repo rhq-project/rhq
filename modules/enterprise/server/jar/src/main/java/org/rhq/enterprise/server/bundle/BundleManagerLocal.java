@@ -18,6 +18,7 @@
  */
 package org.rhq.enterprise.server.bundle;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -78,10 +79,10 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * @param name not null or empty
      * @param description optional long description of the bundle
      * @param bundleTypeId valid bundleType
-     * @param bundleGroupId bundle group, existing bundle group for bundle assignment, or 0 for unassigned
+     * @param bundleGroupIds existing bundle groups for initial bundle assignment, null or 0 length for unassigned
      * @return the persisted Bundle (id is assigned)
      */
-    Bundle createBundle(Subject subject, String name, String description, int bundleTypeId, int bundleGroupId)
+    Bundle createBundle(Subject subject, String name, String description, int bundleTypeId, int[] bundleGroupIds)
         throws Exception;
 
     /**
@@ -100,15 +101,15 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      * @param bundleName name of the bundle to use (if not found, it will be created)
      * @param bundleDescription optional long description of the bundle
      * @param bundleTypeId the bundle type for the new bundle (if it is created) for which this will be the first version
-     * @param bundleGroupId the bundle group for the new bundle (if it is created) for which this will be the first version. 0 to leave unassigned. 
+     * @param bundleGroupIds the bundle groups for the new bundle (if it is created) for which this will be the first version. null to leave unassigned. 
      * @param bundleVersionName name of the bundle version
      * @param bundleVersionDescription optional long description of the bundle version
      * @param version optional. If not supplied set to 1.0 for first version, or incremented (as best as possible) for subsequent version
      * @return the persisted BundleVersion (id is assigned)
      */
     BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
-        int bundleTypeId, int bundleGroupId, String bundleVersionName, String bundleVersionDescription, String version,
-        String recipe) throws Exception;
+        int bundleTypeId, int[] bundleGroupIds, String bundleVersionName, String bundleVersionDescription,
+        String version, String recipe) throws Exception;
 
     /**
      * Internal use only, test entry point
@@ -269,5 +270,57 @@ public interface BundleManagerLocal extends BundleManagerRemote {
      */
     void _finalizePurge(Subject subject, BundleDeployment bundleDeployment,
         Map<BundleResourceDeployment, String> failedToPurge) throws Exception;
+
+    /**
+     * Like {@link #createBundleVersionViaFile(Subject, File)} with one additional feature.
+     * This method exists solely to support the GUI's wizard workflow which always first tries to create a bundle
+     * version for an existing bundle, because it does not know whether this is an initial bundle version (only 
+     * the server can figure that out after it cracks open the bundle distribution, parses the recipe, and
+     * looks for the bundle).  If this is an initialBundleVersion this method does two things. First, it stores the
+     * distribution file as a temp file, this is done to avoid having to upload the file a second time. Second, it
+     * throws IllegalStateException with special message text, a token that can be sent back to
+     * {@link #createInitialBundleVersionViaToken(Subject, int[], String)}.
+     */
+    BundleVersion createOrStoreBundleVersionViaFile(Subject subject, File distributionFile) throws Exception;
+
+    /**
+     * Like {@link #createBundleVersionViaURL(Subject, String, String, String)}  with one additional feature.
+     * This method exists solely to support the GUI's wizard workflow which always first tries to create a bundle
+     * version for an existing bundle, because it does not know whether this is an initial bundle version (only 
+     * the server can figure that out after it cracks open the bundle distribution, parses the recipe, and
+     * looks for the bundle).  If this is an initialBundleVersion this method does two things. First, it stores the
+     * distribution file as a temp file, this is done to avoid having to upload the file a second time. Second, it
+     * throws IllegalStateException with special message text, a token that can be sent back to
+     * {@link #createInitialBundleVersionViaToken(Subject, int[], String)}.
+     */
+    BundleVersion createOrStoreBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
+        String password) throws Exception;
+
+    /**
+     * This method exists solely to support the GUI's wizard workflow which always first tries to create a bundle
+     * version for an existing bundle, because it does not know whether this is an initial bundle version (only 
+     * the server can figure that out after it cracks open the bundle distribution, parses the recipe, and
+     * looks for the bundle).  It works in conjunction with {@link #createOrStoreBundleVersionViaFile(Subject, File)} or
+     * {@link #createOrStoreBundleVersionViaURL(Subject, String, String, String)}.
+     * <p/>
+     * This method will use the supplied token to access the distribution file. It assumes this is a new bundle and
+     * is responsible for creating the bundle as well as the bundle version. The caller can indicate which bundle
+     * groups the new bundle should be assigned to. If bundleGroupId is null, then the new bundle will not be 
+     * associated with any bundle group - this is only allowed if the caller has the permission Global.VIEW_BUNDLES.
+     * <pre>
+     * Required Permissions: Either:
+     * - Global.CREATE_BUNDLES and Global.VIEW_BUNDLES
+     * - Global.CREATE_BUNDLES and BundleGroup.VIEW_BUNDLES_IN_GROUP for bundle group BG
+     * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
+     * </pre>
+     * @param subject user that must have proper permissions
+     * @param bundleGroupIds identifies the bundle groups that the new bundle will be associated with; null or zero
+     * length to leave unassigned.
+     * @param token the token used to identify the distribution file stashed as a temp file. 
+     * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
+     *         understand all that this method did.
+     */
+    BundleVersion createInitialBundleVersionViaToken(Subject subject, int[] bundleGroupIds, String token)
+        throws Exception;
 
 }

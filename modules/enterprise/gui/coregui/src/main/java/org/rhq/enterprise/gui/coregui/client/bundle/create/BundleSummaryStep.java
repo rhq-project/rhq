@@ -24,6 +24,7 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizardStep;
 
@@ -80,7 +81,18 @@ public class BundleSummaryStep extends AbstractWizardStep {
         }
         filesLabel.setValue(filesValueStr.toString());
 
-        form.setFields(bundleTypeLabel, nameLabel, versionLabel, descriptionLabel, filesLabel);
+        StaticTextItem bundleGroupsLabel = new StaticTextItem("BundleGroups", MSG.common_title_bundleGroups());
+        bundleGroupsLabel.setTitleVAlign(VerticalAlignment.TOP);
+        bundleGroupsLabel.setTitleAlign(Alignment.LEFT);
+        bundleGroupsLabel.setAlign(Alignment.LEFT);
+        bundleGroupsLabel.setWrap(false);
+        StringBuilder bundleGroupsValueStr = new StringBuilder();
+        for (BundleGroup bundleGroup : wizard.getInitialBundleGroups()) {
+            bundleGroupsValueStr.append(bundleGroup.getName() + "<br/>\n");
+        }
+        bundleGroupsLabel.setValue(bundleGroupsValueStr.toString());
+
+        form.setFields(bundleTypeLabel, nameLabel, versionLabel, descriptionLabel, filesLabel, bundleGroupsLabel);
 
         return form;
     }

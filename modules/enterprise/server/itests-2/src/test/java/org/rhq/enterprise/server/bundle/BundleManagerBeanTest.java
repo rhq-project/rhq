@@ -1281,7 +1281,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         final BundleType type = createBundleType(name);
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
-            "description", type.getId(), 0, fullName, fullName + "-desc", "3.0", recipe);
+            "description", type.getId(), null, fullName, fullName + "-desc", "3.0", recipe);
         assertNotNull(bundleVerison);
 
         // find the previously created bundle
@@ -1311,7 +1311,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
-            "description", bundle.getBundleType().getId(), 0, fullName, fullName + "-desc", "3.0", recipe);
+            "description", bundle.getBundleType().getId(), null, fullName, fullName + "-desc", "3.0", recipe);
 
         // find the newly created bundle
         BundleCriteria c = new BundleCriteria();
@@ -2091,7 +2091,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
     private Bundle createBundle(Subject subject, String name, BundleType bt, int bundleGroupId) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManager.createBundle(subject, fullName, fullName + "-desc", bt.getId(), bundleGroupId);
+        Bundle b = bundleManager.createBundle(subject, fullName, fullName + "-desc", bt.getId(),
+            new int[] { bundleGroupId });
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);

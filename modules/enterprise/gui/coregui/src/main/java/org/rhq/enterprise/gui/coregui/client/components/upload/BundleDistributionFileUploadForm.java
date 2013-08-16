@@ -25,6 +25,7 @@ import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 public class BundleDistributionFileUploadForm extends FileUploadForm {
 
     private int bundleVersionId;
+    private String createInitialBundleVersionToken;
 
     public BundleDistributionFileUploadForm(boolean showUploadButton) {
 
@@ -34,8 +35,8 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
     }
 
     /**
-     * If this component successfully uploaded a bundle distribution file, this will return
-     * the new bundle version's ID. Otherwise, 0 is returned.
+     * If this component successfully uploaded a bundle distribution file and created the bundle version, this
+     * will return the new bundle version's ID. Otherwise, 0 is returned.
      * 
      * @return the new bundle version ID
      */
@@ -43,13 +44,40 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
         return this.bundleVersionId;
     }
 
+    /**
+     * If this component uploaded a bundle distribution file but failed to create the bundle version
+     * due to an IllegalStateException (signaling bundle not found), this will return the token necessary to then call
+     * createInitialBundleVersionViaToken(). Otherwise, null is returned.
+     * 
+     * @return the token required for a a subsequent call to createInitialBundleVersionViaToken().
+     */
+    public String getCreateInitialBundleVersionToken() {
+        return this.createInitialBundleVersionToken;
+    }
+
     protected boolean processSubmitCompleteResults(String submitCompleteEventResults) {
-        bundleVersionId = parseIdFromResponse(submitCompleteEventResults);
+        bundleVersionId = parseResponse(submitCompleteEventResults);
         return (bundleVersionId > 0);
     }
 
-    private int parseIdFromResponse(String results) {
-        String successMsgPrefix = "success ["; // the upload servlet will respond with "success [bundleVersionId]" on success
+    private int parseResponse(String results) {
+        // the upload servlet will respond with "BundleNotFoundException [createInitialBundleVersionToken]" to indicate
+        // that the BV create failed because the bundle does not yet exist. 
+        String IllegalStateMsgPrefix = "IllegalStateException [";
+        int startIllegalStateMsgPrefix = results.indexOf(IllegalStateMsgPrefix);
+        if (startIllegalStateMsgPrefix >= 0) {
+            int endIllegalStateMsgPrefix = startIllegalStateMsgPrefix + IllegalStateMsgPrefix.length();
+            int startIllegalStateMsgPostfix = results.indexOf(']', endIllegalStateMsgPrefix);
+            if (startIllegalStateMsgPostfix < 0) {
+                return 0; // this should never happen, we should always have the ending "]" bracket
+            }
+            this.createInitialBundleVersionToken = results.substring(endIllegalStateMsgPrefix,
+                startIllegalStateMsgPostfix);
+            return 0;
+        }
+
+        // the upload servlet will respond with "success [bundleVersionId]" on success
+        String successMsgPrefix = "success [";
         int startSuccessMsgPrefix = results.indexOf(successMsgPrefix);
         if (startSuccessMsgPrefix < 0) {
             return 0; // must mean it wasn't a success - results is probably an error message

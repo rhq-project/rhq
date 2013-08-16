@@ -215,7 +215,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
-    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId, int bundleGroupId)
+    public Bundle createBundle(Subject subject, String name, String description, int bundleTypeId, int[] bundleGroupIds)
         throws Exception {
         if (null == name || "".equals(name.trim())) {
             throw new IllegalArgumentException("Invalid bundleName: " + name);
@@ -226,15 +226,17 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             throw new IllegalArgumentException("Invalid bundleTypeId: " + bundleTypeId);
         }
 
-        BundleGroup bundleGroup = null;
-        if (bundleGroupId > 0) {
-            bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
+        bundleGroupIds = (null != bundleGroupIds) ? bundleGroupIds : new int[0];
+        List<BundleGroup> bundleGroups = new ArrayList<BundleGroup>(bundleGroupIds.length);
+        for (int bundleGroupId : bundleGroupIds) {
+            BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
             if (null == bundleGroup) {
                 throw new IllegalArgumentException("Invalid bundleGroupId: " + bundleGroupId);
             }
+            bundleGroups.add(bundleGroup);
         }
 
-        checkCreateInitialBundleVersionAuthz(subject, bundleGroupId);
+        checkCreateInitialBundleVersionAuthz(subject, bundleGroupIds);
 
         // create and add the required Repo. the Repo is a detached object which helps in its eventual removal.
         Repo repo = new Repo(name);
@@ -263,7 +265,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         log.info("Creating bundle: " + bundle);
         entityManager.persist(bundle);
 
-        if (null != bundleGroup) {
+        for (BundleGroup bundleGroup : bundleGroups) {
             bundleGroup.addBundle(bundle);
         }
 
@@ -475,8 +477,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     public BundleVersion createBundleAndBundleVersion(Subject subject, String bundleName, String bundleDescription,
-        int bundleTypeId, int bundleGroupId, String bundleVersionName, String bundleVersionDescription, String version,
-        String recipe) throws Exception {
+        int bundleTypeId, int[] bundleGroupIds, String bundleVersionName, String bundleVersionDescription,
+        String version, String recipe) throws Exception {
 
         // first see if the bundle exists or not; if not, create one
         BundleCriteria criteria = new BundleCriteria();
@@ -488,7 +490,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         PageList<Bundle> bundles = findBundlesByCriteria(subject, criteria);
         Bundle bundle;
         if (bundles.getTotalSize() == 0) {
-            bundle = createBundle(subject, bundleName, bundleDescription, bundleTypeId, bundleGroupId);
+            bundle = createBundle(subject, bundleName, bundleDescription, bundleTypeId, bundleGroupIds);
         } else {
             bundle = bundles.get(0);
         }
@@ -572,25 +574,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaRecipe(Subject subject, String recipe) throws Exception {
 
-        return createBundleVersionViaRecipeImpl(subject, recipe, false, 0);
+        return createBundleVersionViaRecipeImpl(subject, recipe, false, null);
     }
 
     @Override
-    public BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int bundleGroupId, String recipe)
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int[] bundleGroupIds, String recipe)
         throws Exception {
 
-        return createBundleVersionViaRecipeImpl(subject, recipe, true, bundleGroupId);
+        return createBundleVersionViaRecipeImpl(subject, recipe, true, bundleGroupIds);
     }
 
     private BundleVersion createBundleVersionViaRecipeImpl(Subject subject, String recipe,
-        boolean mustBeInitialVersion, int initialBundleGroupId) throws Exception {
+        boolean mustBeInitialVersion, int[] initialBundleGroupIds) throws Exception {
 
         BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
         BundleDistributionInfo info = manager.parseRecipe(recipe);
         BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info, mustBeInitialVersion,
-            initialBundleGroupId);
+            initialBundleGroupIds);
 
         return bundleVersion;
     }
@@ -599,24 +603,39 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
 
-        return createBundleVersionViaFileImpl(subject, distributionFile, false, 0);
+        return createBundleVersionViaFileImpl(subject, distributionFile, false, null);
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public BundleVersion createInitialBundleVersionViaFile(Subject subject, int bundleGroupId, File distributionFile)
+    public BundleVersion createOrStoreBundleVersionViaFile(Subject subject, File distributionFile) throws Exception {
+        try {
+            return createBundleVersionViaFileImpl(subject, distributionFile, false, null);
+
+        } catch (PermissionException e) {
+            if (null != e.getCause() && e.getCause() instanceof BundleNotFoundException) {
+                throw new IllegalStateException("[" + distributionFile.getName() + "]");
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaFile(Subject subject, int[] bundleGroupIds, File distributionFile)
         throws Exception {
 
-        return createBundleVersionViaFileImpl(subject, distributionFile, true, bundleGroupId);
+        return createBundleVersionViaFileImpl(subject, distributionFile, true, bundleGroupIds);
     }
 
     private BundleVersion createBundleVersionViaFileImpl(Subject subject, File distributionFile,
-        boolean mustBeInitialVersion, int initialBundleGroupId) throws Exception {
+        boolean mustBeInitialVersion, int[] initialBundleGroupIds) throws Exception {
 
         BundleServerPluginManager manager = BundleManagerHelper.getPluginContainer().getBundleServerPluginManager();
         BundleDistributionInfo info = manager.processBundleDistributionFile(distributionFile);
         BundleVersion bundleVersion = createBundleVersionViaDistributionInfo(subject, info, mustBeInitialVersion,
-            initialBundleGroupId);
+            initialBundleGroupIds);
 
         return bundleVersion;
     }
@@ -625,25 +644,25 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public BundleVersion createBundleVersionViaByteArray(Subject subject, byte[] fileBytes) throws Exception {
 
-        return createBundleVersionViaByteArrayImpl(subject, fileBytes, false, 0);
+        return createBundleVersionViaByteArrayImpl(subject, fileBytes, false, null);
     }
 
     @Override
     @TransactionAttribute(TransactionAttributeType.NEVER)
-    public BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int bundleGroupId, byte[] fileBytes)
+    public BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int[] bundleGroupIds, byte[] fileBytes)
         throws Exception {
 
-        return createBundleVersionViaByteArrayImpl(subject, fileBytes, true, bundleGroupId);
+        return createBundleVersionViaByteArrayImpl(subject, fileBytes, true, bundleGroupIds);
     }
 
     private BundleVersion createBundleVersionViaByteArrayImpl(Subject subject, byte[] fileBytes,
-        boolean mustBeInitialVersion, int bundleGroupId) throws Exception {
+        boolean mustBeInitialVersion, int[] bundleGroupIds) throws Exception {
 
         File tmpFile = File.createTempFile("bundleDistroBits", ".zip");
         try {
             StreamUtil.copy(new ByteArrayInputStream(fileBytes), new FileOutputStream(tmpFile));
             BundleVersion bundleVersion = createBundleVersionViaFileImpl(subject, tmpFile, mustBeInitialVersion,
-                bundleGroupId);
+                bundleGroupIds);
             return bundleVersion;
         } finally {
             if (tmpFile != null) {
@@ -664,25 +683,27 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public BundleVersion createBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
         String password) throws Exception {
 
-        return createBundleVersionViaURLImpl(subject, distributionFileUrl, username, password, false, 0);
+        return createBundleVersionViaURLImpl(subject, distributionFileUrl, username, password, false, null);
     }
 
     @Override
-    public BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl)
-        throws Exception {
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaURL(Subject subject, int[] bundleGroupIds,
+        String distributionFileUrl) throws Exception {
 
-        return createInitialBundleVersionViaURL(subject, bundleGroupId, distributionFileUrl, null, null);
+        return createInitialBundleVersionViaURL(subject, bundleGroupIds, distributionFileUrl, null, null);
     }
 
     @Override
-    public BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId,
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaURL(Subject subject, int[] bundleGroupIds,
         String distributionFileUrl, String username, String password) throws Exception {
 
-        return createBundleVersionViaURLImpl(subject, distributionFileUrl, username, password, true, bundleGroupId);
+        return createBundleVersionViaURLImpl(subject, distributionFileUrl, username, password, true, bundleGroupIds);
     }
 
     public BundleVersion createBundleVersionViaURLImpl(Subject subject, String distributionFileUrl, String username,
-        String password, boolean mustBeInitialVersion, int initialBundleGroupId) throws Exception {
+        String password, boolean mustBeInitialVersion, int[] initialBundleGroupIds) throws Exception {
         File file = null;
         try {
             file = downloadFile(distributionFileUrl, username, password);
@@ -690,9 +711,38 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into [" + file.getPath()
                 + "]");
 
-            return createBundleVersionViaFileImpl(subject, file, mustBeInitialVersion, initialBundleGroupId);
+            return createBundleVersionViaFileImpl(subject, file, mustBeInitialVersion, initialBundleGroupIds);
         } finally {
             if (file != null) {
+                file.delete();
+            }
+        }
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createOrStoreBundleVersionViaURL(Subject subject, String distributionFileUrl, String username,
+        String password) throws Exception {
+
+        File file = null;
+        boolean deleteFile = true;
+        try {
+            file = downloadFile(distributionFileUrl, username, password);
+
+            log.debug("Copied [" + file.length() + "] bytes from [" + distributionFileUrl + "] into [" + file.getPath()
+                + "]");
+
+            return createBundleVersionViaFileImpl(subject, file, false, null);
+
+        } catch (PermissionException e) {
+            if (null != e.getCause() && e.getCause() instanceof BundleNotFoundException) {
+                deleteFile = false;
+                throw new IllegalStateException("[" + file.getName() + "]");
+            } else {
+                throw e;
+            }
+        } finally {
+            if (deleteFile && file != null) {
                 file.delete();
             }
         }
@@ -741,7 +791,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     }
 
     private BundleVersion createBundleVersionViaDistributionInfo(Subject subject, BundleDistributionInfo info,
-        boolean mustBeInitialVersion, Integer initialBundleGroupId) throws Exception {
+        boolean mustBeInitialVersion, int[] initialBundleGroupIds) throws Exception {
 
         BundleType bundleType = bundleManager.getBundleType(subject, info.getBundleTypeName());
         String bundleName = info.getRecipeParseResults().getBundleMetadata().getBundleName();
@@ -768,7 +818,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         if (isInitialVersion) {
             bundle = bundleManager.createBundle(subject, bundleName, bundleDescription, bundleType.getId(),
-                initialBundleGroupId);
+                initialBundleGroupIds);
             createdBundle = true;
         } else {
             bundle = bundles.get(0);
@@ -1942,6 +1992,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         }
     }
 
+    @SuppressWarnings("unused")
     private void safeClose(OutputStream os) {
         if (null != os) {
             try {
@@ -2071,11 +2122,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      * </pre>  
      * @param subject
-     * @param bundleGroupId null or 0 for unassigned initial bundle version creation
+     * @param bundleGroupIds null or 0 length for unassigned initial bundle version creation
      * @throws PermissionException
      */
-    private void checkCreateInitialBundleVersionAuthz(Subject subject, Integer bundleGroupId)
-        throws PermissionException {
+    private void checkCreateInitialBundleVersionAuthz(Subject subject, int[] bundleGroupIds) throws PermissionException {
         Set<Permission> globalPerms = authorizationManager.getExplicitGlobalPermissions(subject);
         boolean hasGlobalCreateBundles = globalPerms.contains(Permission.CREATE_BUNDLES);
 
@@ -2083,28 +2133,32 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             return;
         }
 
-        if (null == bundleGroupId || bundleGroupId.intValue() <= 0) {
+        if (null == bundleGroupIds || bundleGroupIds.length == 0) {
             String msg = "Subject [" + subject.getName()
-                + "] requires Global CREATE_BUNDLES and VIEW_BUNDLES to create unsassigned initial bundle version.";
-            throw new PermissionException(msg);
+                + "] requires Global CREATE_BUNDLES and VIEW_BUNDLES to create unassigned initial bundle version.";
+            throw new PermissionException(msg, new BundleNotFoundException()); // set the cause to BNFE, this is helpful to some callers
         }
 
-        if (hasGlobalCreateBundles) {
-            if (authorizationManager.canViewBundleGroup(subject, bundleGroupId)) {
-                return;
+        for (int bundleGroupId : bundleGroupIds) {
+            boolean authzPassed;
+            if (hasGlobalCreateBundles) {
+                authzPassed = authorizationManager.canViewBundleGroup(subject, bundleGroupId);
+
+            } else {
+                authzPassed = authorizationManager.hasBundleGroupPermission(subject,
+                    Permission.CREATE_BUNDLES_IN_GROUP, bundleGroupId);
             }
-        } else {
-            if (authorizationManager.hasBundleGroupPermission(subject, Permission.CREATE_BUNDLES_IN_GROUP,
-                bundleGroupId)) {
-                return;
+
+            if (!authzPassed) {
+                String msg = "Subject ["
+                    + subject.getName()
+                    + "] requires either Global.CREATE_BUNDLES + BundleGroup.VIEW_BUNDLES_IN_GROUP, or BundleGroup.CREATE_BUNDLES_IN_GROUP, to create or update a bundle in bundle group ["
+                    + bundleGroupIds + "].";
+                throw new PermissionException(msg);
             }
         }
 
-        String msg = "Subject ["
-            + subject.getName()
-            + "] requires either Global.CREATE_BUNDLES + BundleGroup.VIEW_BUNDLES_IN_GROUP, or BundleGroup.CREATE_BUNDLES_IN_GROUP, to create or update a bundle in bundle group ["
-            + bundleGroupId + "].";
-        throw new PermissionException(msg);
+        return;
     }
 
     /**
@@ -2347,13 +2401,12 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
     public BundleGroup updateBundleGroup(Subject subject, BundleGroup bundleGroup) throws Exception {
         BundleGroup attachedBundleGroup = entityManager.find(BundleGroup.class, bundleGroup.getId());
         if (attachedBundleGroup == null) {
-            throw new IllegalStateException("Cannot update " + bundleGroup
+            throw new IllegalArgumentException("Cannot update " + bundleGroup
                 + ", because no bundle group exists with id [" + bundleGroup.getId() + "].");
         }
 
         // First update the simple fields and the permissions.
         attachedBundleGroup.setName(bundleGroup.getName());
-        attachedBundleGroup.setDescription(bundleGroup.getDescription());
 
         Set<Bundle> newBundles = bundleGroup.getBundles();
         if (newBundles != null) {
@@ -2377,6 +2430,21 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         attachedBundleGroup.getBundles().size();
 
         return attachedBundleGroup;
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.NEVER)
+    public BundleVersion createInitialBundleVersionViaToken(Subject subject, int[] bundleGroupIds, String token)
+        throws Exception {
+
+        File distributionFile = new File(System.getProperty("java.io.tmpdir"), token);
+        if (!distributionFile.isFile()) {
+            throw new IllegalArgumentException("Token did not result in valid file ["
+                + distributionFile.getAbsolutePath() + "]");
+        }
+
+        return createInitialBundleVersionViaFile(subject, bundleGroupIds, distributionFile);
+
     }
 
 }

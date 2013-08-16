@@ -264,27 +264,49 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         }
 
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(10 * 60 * 1000); // if upload takes more than 10m, you have other things to worry about
-        bundleServer.createBundleVersionViaURL(urlString, urlUserName, urlPassword, new AsyncCallback<BundleVersion>() {
-            @Override
-            public void onSuccess(BundleVersion result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
-                        Message.Severity.Info));
-                wizard.setBundleVersion(result);
-                setButtonsDisableMode(false);
-                wizard.getView().incrementStep(); // go to the next step
-            }
+        bundleServer.createOrStoreBundleVersionViaURL(urlString, urlUserName, urlPassword,
+            new AsyncCallback<BundleVersion>() {
+                @Override
+                public void onSuccess(BundleVersion result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(
+                            MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
+                            Message.Severity.Info));
+                    wizard.setBundleVersion(result);
+                    setButtonsDisableMode(false);
+                    wizard.getView().incrementStep(); // go to the next step
+                }
 
-            @Override
-            public void onFailure(Throwable caught) {
-                // Escape it, since it contains the URL, which the user entered.
-                String message = StringUtility.escapeHtml(caught.getMessage());
-                wizard.getView().showMessage(message);
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
-                wizard.setBundleVersion(null);
-                setButtonsDisableMode(false);
-            }
-        });
+                @Override
+                public void onFailure(Throwable caught) {
+                    // This signals that the bundle does not yet exist
+                    if (caught instanceof IllegalStateException) {
+                        handleIllegalStateException((IllegalStateException) caught);
+
+                    } else {
+                        // Escape it, since it contains the URL, which the user entered.
+                        String message = StringUtility.escapeHtml(caught.getMessage());
+                        wizard.getView().showMessage(message);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
+                        wizard.setBundleVersion(null);
+                        setButtonsDisableMode(false);
+                    }
+                }
+            });
+    }
+
+    private void handleIllegalStateException(IllegalStateException e) {
+        String token = e.getMessage();
+        if (null == token || token.isEmpty()) {
+            wizard.getView().showMessage("IllegalStateException: Unexpected failure creating bundle version.");
+            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), e);
+            wizard.setBundleVersion(null);
+            setButtonsDisableMode(false);
+        }
+
+        wizard.setCreateInitialBundleVersionToken(token);
+        setButtonsDisableMode(false);
+        wizard.getView().incrementStep(); // go to the next step
     }
 
     private void processUpload() {
@@ -314,6 +336,10 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                     setButtonsDisableMode(false);
                 }
             });
+        } else if (null != uploadDistroForm.getCreateInitialBundleVersionToken()) {
+            handleIllegalStateException(new IllegalStateException(
+                uploadDistroForm.getCreateInitialBundleVersionToken()));
+
         } else {
             String errorMessage = uploadDistroForm.getUploadError();
             handleUploadError(errorMessage, true);
@@ -347,11 +373,23 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
             @Override
             public void onFailure(Throwable caught) {
-                wizard.getView().showMessage(caught.getMessage());
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
-                wizard.setBundleVersion(null);
-                wizard.setRecipe("");
-                setButtonsDisableMode(false);
+                boolean handled = false;
+                String message = caught.getMessage();
+
+                if (message.contains("PermissionException") && message.contains("initial")) {
+                    handled = true;
+                    wizard.setCreateInitialBundleVersionRecipe(wizard.getRecipe());
+                    setButtonsDisableMode(false);
+                    wizard.getView().incrementStep(); // go to the next step
+                }
+
+                if (!handled) {
+                    wizard.getView().showMessage(caught.getMessage());
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
+                    wizard.setBundleVersion(null);
+                    wizard.setRecipe("");
+                    setButtonsDisableMode(false);
+                }
             }
         });
     }

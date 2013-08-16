@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.gwt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
@@ -47,7 +48,10 @@ public interface BundleGWTService extends RemoteService {
 
     ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(int compatGroupId) throws RuntimeException;
 
-    BundleVersion createBundleVersionViaURL(String url, String username, String password) throws RuntimeException;
+    BundleVersion createOrStoreBundleVersionViaURL(String url, String username, String password)
+        throws RuntimeException;
+
+    BundleVersion createInitialBundleVersionViaRecipe(int[] bundleGroupIds, String recipe) throws RuntimeException;
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws RuntimeException;
 
@@ -108,5 +112,7 @@ public interface BundleGWTService extends RemoteService {
     void deleteBundleGroups(int[] bundleGroupIds) throws RuntimeException;
 
     BundleGroup updateBundleGroup(BundleGroup bundleGroup) throws RuntimeException;
+
+    HashSet<BundleGroup> getCreateBundleGroups() throws RuntimeException;
 
 }

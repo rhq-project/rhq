@@ -22,9 +22,12 @@
  */
 package org.rhq.core.domain.criteria;
 
+import java.util.List;
+
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.util.PageOrdering;
 
@@ -41,6 +44,7 @@ public class RoleCriteria extends Criteria {
     private String filterName;
     private Integer filterSubjectId;     // needs overrides
     private Integer filterLdapSubjectId; // needs overrides
+    private List<Permission> filterPermissions; // needs override
 
     private boolean fetchPermissions;
     private boolean fetchResourceGroups;
@@ -63,6 +67,12 @@ public class RoleCriteria extends Criteria {
             + "          FROM Role innerRole " //
             + "          JOIN innerRole.ldapSubjects innerSubject " //
             + "         WHERE innerSubject.id = ? )");
+
+        filterOverrides.put("permissions", "" //
+            + "id IN ( SELECT innerRole.id " //
+            + "          FROM Role innerRole " //
+            + "          JOIN irole.permissions perm " //
+            + "         WHERE perm IN ( ? ) )");
     }
 
     @Override
@@ -84,6 +94,10 @@ public class RoleCriteria extends Criteria {
 
     public void addFilterLdapSubjectId(Integer filterLdapSubjectId) {
         this.filterLdapSubjectId = filterLdapSubjectId;
+    }
+
+    public void addFilterPermissions(List<Permission> filterPermissions) {
+        this.filterPermissions = filterPermissions;
     }
 
     /**

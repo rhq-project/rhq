@@ -51,8 +51,12 @@ public class BundleDistributionFileUploadServlet extends FileUploadServlet {
             File file = files.values().iterator().next();
 
             BundleManagerLocal bundleManager = LookupUtil.getBundleManager();
-            BundleVersion bundleVersion = bundleManager.createBundleVersionViaFile(subject, file);
+            BundleVersion bundleVersion = bundleManager.createOrStoreBundleVersionViaFile(subject, file);
             successMsg = "success [" + bundleVersion.getId() + "]";
+
+        } catch (IllegalStateException e) {
+            writeExceptionResponse(response, "IllegalStateException [" + e.getMessage() + "]", e); // clients will look for this string!
+            return;
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload bundle distribution file", e); // clients will look for this string!
             return;

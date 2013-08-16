@@ -119,7 +119,7 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
                     ViewPath nextViewPath = viewPath.next(); // the ID segment
 
                     if ("Bundle".equals(currentPath)) {
-                        if (!nextViewPath.equals(currentBundleViewId)) {
+                        if (!nextViewPath.getCurrent().equals(currentBundleViewId)) {
                             // set new bundle detail
                             currentBundleViewId = nextViewPath.getCurrent();
                             bundleView = new BundleView(globalPermissions);
@@ -128,7 +128,7 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
                         bundleView.renderView(nextViewPath);
 
                     } else if ("BundleGroup".equals(currentPath)) {
-                        if (!nextViewPath.equals(currentBundleGroupViewId)) {
+                        if (!nextViewPath.getCurrent().equals(currentBundleGroupViewId)) {
                             // set new bundle detail
                             currentBundleGroupViewId = nextViewPath.getCurrent();
                             bundleGroupView = new BundleGroupEditView(globalPermissions, Integer

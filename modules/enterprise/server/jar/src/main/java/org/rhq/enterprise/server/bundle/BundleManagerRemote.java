@@ -242,9 +242,9 @@ public interface BundleManagerRemote {
 
     /**
      * Like #createBundleVersionViaRecipe except this method will assume this is a new bundle and is responsible
-     * for creating the bundle as well as the bundle version. The caller can indicate which bundle group the new bundle
+     * for creating the bundle as well as the bundle version. The caller can indicate which bundle groups the new bundle
      * should be assigned to.
-     * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
+     * If bundleGroupIds is null, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
      * <pre>
      * Required Permissions: Either:
@@ -253,12 +253,13 @@ public interface BundleManagerRemote {
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      * </pre>
      * @param subject user that must have proper permissions
-     * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
+     * @param bundleGroupIds identifies the bundle groups that the new bundle will be associated with; null or zero
+     * length to leave unassigned.
      * @param recipe the recipe that defines the bundle version to be created
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did.
      */
-    BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int bundleGroupId, String recipe)
+    BundleVersion createInitialBundleVersionViaRecipe(Subject subject, int[] bundleGroupIds, String recipe)
         throws Exception;
 
     /**
@@ -285,9 +286,9 @@ public interface BundleManagerRemote {
 
     /**
      * Like #createBundleVersionViaFile except this method will assume this is a new bundle and is responsible
-     * for creating the bundle as well as the bundle version. The caller can indicate which bundle group the new bundle
+     * for creating the bundle as well as the bundle version. The caller can indicate which bundle groups the new bundle
      * should be assigned to.
-     * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
+     * If bundleGroupIds is null, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
      * <pre>
      * Required Permissions: Either:
@@ -296,13 +297,14 @@ public interface BundleManagerRemote {
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      * </pre>
      * @param subject user that must have proper permissions
-     * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
+     * @param bundleGroupIds identifies the bundle groups that the new bundle will be associated with; null or zero
+     * length to leave unassigned.
      * @param distributionFile a local Bundle Distribution file. It must be read accessible by the RHQ server process.
      * @return the persisted BundleVersion with alot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      */
-    BundleVersion createInitialBundleVersionViaFile(Subject subject, int bundleGroupId, File distributionFile)
+    BundleVersion createInitialBundleVersionViaFile(Subject subject, int[] bundleGroupIds, File distributionFile)
         throws Exception;
 
     /**
@@ -329,9 +331,9 @@ public interface BundleManagerRemote {
 
     /**
      * Like #createBundleVersionViaByteArray except this method will assume this is a new bundle and is responsible
-     * for creating the bundle as well as the bundle version. The caller can indicate which bundle group the new bundle
+     * for creating the bundle as well as the bundle version. The caller can indicate which bundle groups the new bundle
      * should be assigned to.
-     * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
+     * If bundleGroupIds is null, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
      * <pre>
      * Required Permissions: Either:
@@ -340,13 +342,14 @@ public interface BundleManagerRemote {
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      * </pre> 
      * @param subject user that must have proper permissions
-     * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
+     * @param bundleGroupIds identifies the bundle groups that the new bundle will be associated with; null or zero
+     * length to leave unassigned.
      * @param fileBytes the file bits that make up the entire bundle distribution file
      * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      */
-    BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int bundleGroupId, byte[] fileBytes)
+    BundleVersion createInitialBundleVersionViaByteArray(Subject subject, int[] bundleGroupIds, byte[] fileBytes)
         throws Exception;
 
     /**
@@ -377,9 +380,9 @@ public interface BundleManagerRemote {
 
     /**
      * Like #createBundleVersionViaURL except this method will assume this is a new bundle and is responsible
-     * for creating the bundle as well as the bundle version. The caller can indicate which bundle group the new bundle
+     * for creating the bundle as well as the bundle version. The caller can indicate which bundle groups the new bundle
      * should be assigned to.
-     * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
+     * If bundleGroupIds is null, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
      * <pre>
      * Required Permissions: Either:
@@ -388,14 +391,15 @@ public interface BundleManagerRemote {
      * - BundleGroup.CREATE_BUNDLES_IN_GROUP for bundle group BG
      * </pre>
      * @param subject user that must have proper permissions
-     * @param bundleGroupId identifies the bundle group that the new bundle will be associated with; 0 if no group
+     * @param bundleGroupIds identifies the bundle groups that the new bundle will be associated with; null or zero
+     * length to leave unassigned.
      * @param distributionFileUrl a URL String to the Bundle Distribution file. It must be live, resolvable and read accessible
      *                            by the RHQ server process.
      * @return the persisted BundleVersion with a lot of the internal relationships filled in to help the caller
      *         understand all that this method did. Bundle files specifically are returned.
      * @throws Exception
      */
-    BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl)
+    BundleVersion createInitialBundleVersionViaURL(Subject subject, int[] bundleGroupIds, String distributionFileUrl)
         throws Exception;
 
     /**
@@ -417,9 +421,9 @@ public interface BundleManagerRemote {
 
     /**
      * Like #createBundleVersionViaURL except this method will assume this is a new bundle and is responsible
-     * for creating the bundle as well as the bundle version. The caller can indicate which bundle group the new bundle
+     * for creating the bundle as well as the bundle version. The caller can indicate which bundle groups the new bundle
      * should be assigned to.
-     * If bundleGroupId is 0, then the new bundle will not be associated with any bundle group - this is only
+     * If bundleGroupIds is null, then the new bundle will not be associated with any bundle group - this is only
      * allowed if the caller has the permission Global.VIEW_BUNDLES.
      * <pre>
      * Required Permissions: Either:
@@ -429,7 +433,7 @@ public interface BundleManagerRemote {
      * </pre>
      * @see #createBundleVersionViaURL(org.rhq.core.domain.auth.Subject, String)
      */
-    BundleVersion createInitialBundleVersionViaURL(Subject subject, int bundleGroupId, String distributionFileUrl,
+    BundleVersion createInitialBundleVersionViaURL(Subject subject, int[] bundleGroupIds, String distributionFileUrl,
         String username, String password) throws Exception;
 
     /**

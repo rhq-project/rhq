@@ -18,10 +18,13 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
@@ -32,10 +35,13 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public abstract class AbstractBundleCreateWizard extends AbstractWizard {
 
-    // the things we buildNodes up in the wizard
+    // the things we build up in the wizard
     private String recipe;
     private BundleVersion bundleVersion;
+    private String createInitialBundleVersionToken;
+    private String createInitialBundleVersionRecipe;
     private HashMap<String, Boolean> allBundleFilesStatus; // bundle file names with their upload status (true=they were uploaded)
+    private List<BundleGroup> initialBundleGroups = new ArrayList<BundleGroup>();
 
     public String getRecipe() {
         return recipe;
@@ -62,6 +68,35 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
 
     public void setAllBundleFilesStatus(HashMap<String, Boolean> allBundleFilesStatus) {
         this.allBundleFilesStatus = allBundleFilesStatus;
+    }
+
+    public String getCreateInitialBundleVersionToken() {
+        return createInitialBundleVersionToken;
+    }
+
+    public void setCreateInitialBundleVersionToken(String createInitialBundleVersionToken) {
+        this.createInitialBundleVersionToken = createInitialBundleVersionToken;
+    }
+
+    public String getCreateInitialBundleVersionRecipe() {
+        return createInitialBundleVersionRecipe;
+    }
+
+    public void setCreateInitialBundleVersionRecipe(String createInitialBundleVersionRecipe) {
+        this.createInitialBundleVersionRecipe = createInitialBundleVersionRecipe;
+    }
+
+    public boolean isInitialVersion() {
+        return ((null != createInitialBundleVersionToken) || (null != createInitialBundleVersionRecipe));
+    }
+
+    
+    public List<BundleGroup> getInitialBundleGroups() {
+        return initialBundleGroups;
+    }
+
+    public void setInitialBundleGroups(List<BundleGroup> initialBundleGroups) {
+        this.initialBundleGroups = initialBundleGroups;
     }
 
     public void cancel() {

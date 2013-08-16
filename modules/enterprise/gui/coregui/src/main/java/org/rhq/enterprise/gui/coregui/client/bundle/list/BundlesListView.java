@@ -136,7 +136,7 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
             addTableAction(MSG.common_button_new(), null, new AbstractTableAction(
                 (hasAuth) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    new BundleCreateWizard().startWizard();
+                    new BundleCreateWizard(permissions).startWizard();
                     // we can refresh the table buttons immediately since the wizard is a dialog, the
                     // user can't access enabled buttons anyway.
                     BundlesListView.this.refreshTableInfo();

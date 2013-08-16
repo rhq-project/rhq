@@ -20,7 +20,10 @@ package org.rhq.enterprise.gui.coregui.server.gwt;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 
+import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.authz.Role;
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleDeployment;
 import org.rhq.core.domain.bundle.BundleDestination;
@@ -39,6 +42,7 @@ import org.rhq.core.domain.criteria.BundleFileCriteria;
 import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.criteria.BundleResourceDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
+import org.rhq.core.domain.criteria.RoleCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTService;
 import org.rhq.enterprise.gui.coregui.server.util.SerialUtility;
@@ -63,10 +67,12 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     @Override
-    public BundleVersion createBundleVersionViaURL(String url, String username, String password) throws RuntimeException {
+    public BundleVersion createOrStoreBundleVersionViaURL(String url, String username, String password)
+        throws RuntimeException {
         try {
-            BundleVersion results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url, username, password);
-            return SerialUtility.prepare(results, "createBundleVersionViaURL");
+            BundleVersion results = bundleManager.createBundleVersionViaURL(getSessionSubject(), url, username,
+                password);
+            return SerialUtility.prepare(results, "createOrStoreBundleVersionViaURL");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
@@ -93,13 +99,25 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
     }
 
     @Override
+    public BundleVersion createInitialBundleVersionViaRecipe(int[] bundleGroupIds, String recipe)
+        throws RuntimeException {
+        try {
+            BundleVersion results = bundleManager.createInitialBundleVersionViaRecipe(getSessionSubject(),
+                bundleGroupIds, recipe);
+            return SerialUtility.prepare(results, "createInitialBundleVersionViaRecipe");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
     public BundleDeployment createBundleDeployment(int bundleVersionId, int bundleDestinationId, String description,
         Configuration configuration, boolean enforcePolicy, int enforcementInterval, boolean pinToBundle)
         throws RuntimeException {
 
         try {
             BundleDeployment result = bundleManager.createBundleDeployment(getSessionSubject(), bundleVersionId,
-                    bundleDestinationId, description, configuration);
+                bundleDestinationId, description, configuration);
             return SerialUtility.prepare(result, "createBundleDeployment");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -112,7 +130,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
 
         try {
             BundleDestination result = bundleManager.createBundleDestination(getSessionSubject(), bundleId, name,
-                    description, destBaseDirName, deployDir, groupId);
+                description, destBaseDirName, deployDir, groupId);
             return SerialUtility.prepare(result, "createBundleDestination");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -225,7 +243,7 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         boolean isCleanDeployment) throws RuntimeException {
         try {
             BundleDeployment result = bundleManager.scheduleRevertBundleDeployment(getSessionSubject(),
-                    bundleDeploymentId, deploymentDescription, isCleanDeployment);
+                bundleDeploymentId, deploymentDescription, isCleanDeployment);
             return SerialUtility.prepare(result, "scheduleRevertBundleDeployment");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
@@ -334,6 +352,32 @@ public class BundleGWTServiceImpl extends AbstractGWTServiceImpl implements Bund
         try {
             BundleGroup results = bundleManager.updateBundleGroup(getSessionSubject(), bundleGroup);
             return SerialUtility.prepare(results, "updateBundleGroup");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public HashSet<BundleGroup> getCreateBundleGroups() throws RuntimeException {
+        try {
+            RoleCriteria c = new RoleCriteria();
+            c.addFilterSubjectId(getSessionSubject().getId());
+            ArrayList<Permission> l = new ArrayList<Permission>(1);
+            l.add(Permission.CREATE_BUNDLES_IN_GROUP);
+            c.addFilterPermissions(l);
+            c.fetchBundleGroups(true);
+
+            PageList<Role> roles = LookupUtil.getRoleManager().findRolesByCriteria(
+                LookupUtil.getSubjectManager().getOverlord(), c);
+
+            HashSet<BundleGroup> result = new HashSet<BundleGroup>();
+            for (Role role : roles) {
+                for (BundleGroup bundleGroup : role.getBundleGroups()) {
+                    result.add(bundleGroup);
+                }
+            }
+
+            return SerialUtility.prepare(result, "getCreateBundleGroups");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

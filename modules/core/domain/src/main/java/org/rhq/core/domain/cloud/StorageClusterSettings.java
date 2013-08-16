@@ -1,4 +1,4 @@
-package org.rhq.enterprise.server.storage;
+package org.rhq.core.domain.cloud;
 
 import java.io.Serializable;
 

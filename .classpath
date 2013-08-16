@@ -209,7 +209,6 @@
 	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-core/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-testng/src/main/java"/>
 	<classpathentry kind="src" path="modules/common/cassandra-ccm/cassandra-ccm-testng/src/test/java"/>
-	<classpathentry kind="src" path="modules/common/cassandra-jmx/src/main/java"/>
 	<classpathentry kind="src" path="modules/plugins/rhq-storage/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/data-migration/src/main/java"/>
 	<classpathentry kind="src" path="modules/enterprise/server/data-migration/src/test/java"/>

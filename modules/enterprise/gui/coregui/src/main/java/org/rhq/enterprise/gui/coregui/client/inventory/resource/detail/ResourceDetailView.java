@@ -114,6 +114,8 @@ public class ResourceDetailView extends
 
     private ResourceComposite resourceComposite;
 
+    private MetricsResourceView metricsResourceView;
+
     //private List<ResourceSelectListener> selectListeners = new ArrayList<ResourceSelectListener>();
 
     private TwoLevelTab summaryTab;
@@ -391,7 +393,10 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                return new MetricsResourceView(resource);
+                if(null == metricsResourceView){
+                    metricsResourceView = new MetricsResourceView(resource);
+                }
+                return  metricsResourceView;
             }
         };
         updateSubTab(this.monitoringTab, this.monitorMetrics, visible, visibleToIE8, viewFactory);

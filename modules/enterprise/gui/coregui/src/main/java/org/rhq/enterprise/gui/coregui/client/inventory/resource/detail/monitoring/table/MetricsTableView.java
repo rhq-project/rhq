@@ -81,6 +81,7 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
 public class MetricsTableView extends Table<MetricsViewDataSource> implements Refreshable {
 
     private final Resource resource;
+    private boolean rendered = false;
     private final AbstractD3GraphListView abstractD3GraphListView;
 
     private final MeasurementUserPreferences measurementUserPrefs;
@@ -115,19 +116,22 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
         ArrayList<ListGridField> fields = getDataSource().getListGridFields();
         setListGridFields(fields.toArray(new ListGridField[0]));
 
-        addTableAction(MSG.view_measureTable_getLive(), new ShowLiveDataTableAction(this));
-        addExtraWidget(addToDashboardComponent, false);
-        addToDashboardComponent.disableAddToDashboardButton();
-        metricsTableListGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
-            @Override
-            public void onSelectionChanged(SelectionEvent selectionEvent) {
-                if (metricsTableListGrid.getSelectedRecords().length > 0) {
-                    addToDashboardComponent.enableAddToDashboardButton();
-                } else {
-                    addToDashboardComponent.disableAddToDashboardButton();
+        if(!rendered){
+            addTableAction(MSG.view_measureTable_getLive(), new ShowLiveDataTableAction(this));
+            addExtraWidget(addToDashboardComponent, false);
+            addToDashboardComponent.disableAddToDashboardButton();
+            metricsTableListGrid.addSelectionChangedHandler(new SelectionChangedHandler() {
+                @Override
+                public void onSelectionChanged(SelectionEvent selectionEvent) {
+                    if (metricsTableListGrid.getSelectedRecords().length > 0) {
+                        addToDashboardComponent.enableAddToDashboardButton();
+                    } else {
+                        addToDashboardComponent.disableAddToDashboardButton();
+                    }
                 }
-            }
-        });
+            });
+            rendered = true;
+        }
     }
 
     private static class ShowLiveDataTableAction implements TableAction {

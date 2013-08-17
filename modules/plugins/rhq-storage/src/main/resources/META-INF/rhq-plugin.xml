@@ -12,8 +12,7 @@
     name="RHQ Storage Node"
     discovery="StorageNodeDiscoveryComponent"
     class="StorageNodeComponent"
-    description="RHQ Storage Node"
-    createDeletePolicy="delete-only">
+    description="RHQ Storage Node">
 
     <subcategories>
       <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
@@ -67,7 +66,9 @@
       </results>
     </operation>
 
-    <operation name="decommission" description="Take the Cassandra node out of service"/>
+    <operation name="decommission" description="Take the storage node out of service"/>
+
+    <operation name="uninstall" description="Removes all of the storage node files from disk"/>
 
     <operation name="readRepair" description="Runs read repair on primar range of rhq and system_auth keyspaces">
       <results>
@@ -119,7 +120,18 @@
       </results>
     </operation>
 
-    <operation name="updateKnownNodes">
+    <operation name="announce">
+      <parameters>
+        <c:list-property name="addresses">
+          <c:simple-property name="address"/>
+        </c:list-property>
+      </parameters>
+      <results>
+        <c:simple-property name="details"/>
+      </results>
+    </operation>
+
+    <operation name="unannounce">
       <parameters>
         <c:list-property name="addresses">
           <c:simple-property name="address"/>

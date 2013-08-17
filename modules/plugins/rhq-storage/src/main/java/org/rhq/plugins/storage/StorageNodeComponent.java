@@ -55,7 +55,6 @@ import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
 import org.rhq.core.pluginapi.configuration.ConfigurationUpdateReport;
-import org.rhq.core.pluginapi.inventory.DeleteResourceFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.operation.OperationFacet;
@@ -71,8 +70,7 @@ import org.rhq.plugins.cassandra.util.KeyspaceService;
 /**
  * @author John Sanda
  */
-public class StorageNodeComponent extends CassandraNodeComponent implements OperationFacet, ConfigurationFacet,
-    DeleteResourceFacet {
+public class StorageNodeComponent extends CassandraNodeComponent implements OperationFacet, ConfigurationFacet {
 
     private Log log = LogFactory.getLog(StorageNodeComponent.class);
 
@@ -89,29 +87,6 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     public void updateResourceConfiguration(ConfigurationUpdateReport configurationUpdateReport) {
         StorageNodeConfigDelegate configDelegate = new StorageNodeConfigDelegate(getBasedir());
         configDelegate.updateResourceConfiguration(configurationUpdateReport);
-    }
-
-    @Override
-    public void deleteResource() throws Exception {
-        OperationResult shutdownResult = shutdownIfNecessary();
-        if (shutdownResult.getErrorMessage() != null) {
-            throw new Exception("Cannot delete storage node [resourceKey: " + getResourceContext().getResourceKey() +
-                "]: " + shutdownResult.getErrorMessage());
-        }
-
-        log.info("Purging data directories");
-        Configuration pluginConfig = getResourceContext().getPluginConfiguration();
-        String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
-        File yamlFile = new File(yamlProp);
-        ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
-        yamlEditor.load();
-        purgeDataDirs(yamlEditor);
-
-        File basedir = getBasedir();
-        log.info("Purging installation directory " + basedir);
-        purgeDir(basedir);
-
-        log.info("Finished deleting storage node " + getResourceContext().getResourceKey());
     }
 
     private OperationResult shutdownIfNecessary() {
@@ -159,14 +134,18 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return readRepair();
         } else if (name.equals("updateConfiguration")) {
             return updateConfiguration(parameters);
-        } else if (name.equals("updateKnownNodes")) {
-            return updateKnownNodes(parameters);
+        } else if (name.equals("announce")) {
+            return announce(parameters);
+        } else if (name.equals("unannounce")) {
+            return unannounce(parameters);
         } else if (name.equals("prepareForBootstrap")) {
             return prepareForBootstrap(parameters);
         } else if (name.equals("shutdown")) {
             return shutdownStorageNode();
         } else if (name.equals("decommission")) {
             return decommission();
+        } else if (name.equals("uninstall")) {
+            return uninstall();
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -302,6 +281,41 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             result.setErrorMessage("Decommission operation failed: " + ThrowableUtil.getAllMessages(e));
         }
         return result;
+    }
+
+    private OperationResult uninstall() {
+        OperationResult result = new OperationResult();
+        OperationResult shutdownResult = shutdownIfNecessary();
+        if (shutdownResult.getErrorMessage() != null) {
+            result.setErrorMessage("Failed to shut down storage node: " + shutdownResult.getErrorMessage());
+        } else {
+            File basedir = getBasedir();
+            if (basedir.exists()) {
+                log.info("Purging data directories");
+                Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+                String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
+                File yamlFile = new File(yamlProp);
+                ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+                yamlEditor.load();
+                purgeDataDirs(yamlEditor);
+
+                log.info("Purging installation directory " + basedir);
+                purgeDir(basedir);
+
+                log.info("Finished deleting storage node " + getResourceContext().getResourceKey());
+            } else {
+                log.info(basedir + " does not exist. Storage node files have already been purged.");
+            }
+        }
+        return result;
+    }
+
+    private OperationResult announce(Configuration params) {
+        return updateKnownNodes(params);
+    }
+
+    private OperationResult unannounce(Configuration params) {
+        return updateKnownNodes(params);
     }
 
     private OperationResult updateKnownNodes(Configuration params) {

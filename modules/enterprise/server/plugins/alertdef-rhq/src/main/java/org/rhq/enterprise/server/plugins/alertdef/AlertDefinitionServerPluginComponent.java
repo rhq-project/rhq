@@ -67,7 +67,8 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
     private static final String FREE_DISK_TO_DATA_SIZE_RATIO_METRIC_NAME = "Calculated.FreeDiskToDataSizeRatio";
     private static final String TAKE_SNAPSHOT_OPERATION_NAME = "takeSnapshot";
     private static final String[] MAINTENANCE_OPERATIONS = new String[] { "readRepair", "addNodeMaintenance",
-        "updateKnownNodes", "prepareForBootstrap", "prepareForUpgrade", "updateSeedsList", "updateConfiguration" };
+        "removeNodeMaintenance", "announce", "unannounce", "prepareForBootstrap", "prepareForUpgrade",
+        "updateSeedsList", "updateConfiguration" };
 
     static private final List<InjectedTemplate> injectedTemplates;
     static private final InjectedTemplate storageNodeHighHeapTemplate;

@@ -170,4 +170,6 @@ public interface StorageNodeManagerLocal {
     StorageNode createStorageNode(Resource resource);
 
     void deployStorageNode(Subject subject, StorageNode storageNode);
+
+    void undeployStorageNode(Subject subject, StorageNode storageNode);
 }

@@ -256,6 +256,31 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
+    @Override
+    public void undeployStorageNode(Subject subject, StorageNode storageNode) {
+        storageNode = entityManager.find(StorageNode.class, storageNode.getId());
+        switch (storageNode.getOperationMode()) {
+            case INSTALLED:
+                reset();
+                storageNodeOperationsHandler.uninstall(subject, storageNode);
+                break;
+            case NORMAL:
+                reset();
+                storageNodeOperationsHandler.decommissionStorageNode(subject, storageNode);
+                break;
+            case UNANNOUNCE:
+                reset();
+                storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
+                break;
+            case UNINSTALL:
+                reset();
+                storageNodeOperationsHandler.uninstall(subject, storageNode);
+                break;
+            default:
+
+        }
+    }
+
     private void reset() {
         for (StorageNode storageNode : getStorageNodes()) {
             storageNode.setErrorMessage(null);

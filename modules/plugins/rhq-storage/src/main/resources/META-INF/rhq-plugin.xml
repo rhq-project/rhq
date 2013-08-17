@@ -12,7 +12,8 @@
     name="RHQ Storage Node"
     discovery="StorageNodeDiscoveryComponent"
     class="StorageNodeComponent"
-    description="RHQ Storage Node">
+    description="RHQ Storage Node"
+    createDeletePolicy="delete-only">
 
     <subcategories>
       <subcategory name="Client Request Metrics" description="Client Request Metrics"/>
@@ -66,6 +67,8 @@
       </results>
     </operation>
 
+    <operation name="decommission" description="Take the Cassandra node out of service"/>
+
     <operation name="readRepair" description="Runs read repair on primar range of rhq and system_auth keyspaces">
       <results>
         <c:list-property name="results">
@@ -79,6 +82,25 @@
     </operation>
 
     <operation name="addNodeMaintenance">
+      <parameters>
+        <c:simple-property name="runRepair" type="boolean" default="true"/>
+        <c:simple-property name="updateSeedsList" type="boolean" default="true"/>
+        <c:list-property name="seedsList">
+          <c:simple-property name="seed" type="string"/>
+        </c:list-property>
+      </parameters>
+      <results>
+        <c:list-property name="results">
+          <c:map-property name="resultsMap">
+            <c:simple-property name="task" type="string"/>
+            <c:simple-property name="succeeded" type="boolean"/>
+            <c:simple-property name="details" type="string"/>
+          </c:map-property>
+        </c:list-property>
+      </results>
+    </operation>
+
+    <operation name="removeNodeMaintenance">
       <parameters>
         <c:simple-property name="runRepair" type="boolean" default="true"/>
         <c:simple-property name="updateSeedsList" type="boolean" default="true"/>

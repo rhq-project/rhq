@@ -41,6 +41,8 @@ public class StorageClusterMonitor implements StorageStateListener {
     @Override
     public void onStorageNodeRemoved(InetAddress address) {
         log.info("Storage node at " + address.getHostAddress() + " has been removed from the cluster");
+        StorageNodeOperationsHandlerLocal storageNodeOperationsHandler = LookupUtil.getStorageNodeOperationsHandler();
+        storageNodeOperationsHandler.performRemoveNodeMaintenanceIfNecessary(address);
     }
 
     @Override

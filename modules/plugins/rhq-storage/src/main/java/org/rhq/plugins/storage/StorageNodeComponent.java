@@ -273,10 +273,16 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         try {
             EmsConnection emsConnection = getEmsConnection();
             EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
-            Class<?>[] emptyParams = new Class<?>[0];
 
-            EmsOperation operation = storageService.getOperation("decommission", emptyParams);
-            operation.invoke((Object[]) emptyParams);
+            EmsAttribute operationModeAttr = storageService.getAttribute("OperationMode");
+            String operationMode = (String) operationModeAttr.refresh();
+            if (operationMode.equals("DECOMMISSIONED")) {
+                log.info("The storage node at " + getResourceContext().getResourceKey() + " is already decommissioned.");
+            } else {
+                Class<?>[] emptyParams = new Class<?>[0];
+                EmsOperation operation = storageService.getOperation("decommission", emptyParams);
+                operation.invoke((Object[]) emptyParams);
+            }
         } catch (EmsInvocationException e) {
             result.setErrorMessage("Decommission operation failed: " + ThrowableUtil.getAllMessages(e));
         }

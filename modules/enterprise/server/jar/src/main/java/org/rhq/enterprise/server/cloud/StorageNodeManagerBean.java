@@ -250,9 +250,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 reset();
                 storageNodeOperationsHandler.performAddNodeMaintenance(subject, storageNode);
             default:
-                // For any other operation mode, the storage node should already be part of
-                // the cluster.
-                // TODO Make sure that the storage node is in fact part of the cluster
+                // TODO what do we do with/about maintenance mode?
+
+                // We do not want to deploying a node that is in the process of being
+                // undeployed. It is too hard to make sure we are in an inconsistent state.
+                // Instead finishe the undeployment and redeploy the storage node.
+                throw new RuntimeException("Cannot deploy " + storageNode);
         }
     }
 
@@ -264,6 +267,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 reset();
                 storageNodeOperationsHandler.uninstall(subject, storageNode);
                 break;
+            case ANNOUNCE:
+            case BOOTSTRAP:
+                reset();
+                storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
+                break;
+            case ADD_NODE_MAINTENANCE:
             case NORMAL:
             case DECOMMISSION:
                 reset();
@@ -281,7 +290,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNodeOperationsHandler.uninstall(subject, storageNode);
                 break;
             default:
-
+                // TODO what do we do with/about maintenance mode
+                throw new RuntimeException("Cannot undeploy " + storageNode);
         }
     }
 

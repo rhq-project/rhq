@@ -254,10 +254,17 @@ public class StorageNode implements Serializable {
                 return Status.DOWN;
             }
         }
+        if (operationMode == OperationMode.DECOMMISSION || operationMode == OperationMode.UNANNOUNCE ||
+            operationMode == OperationMode.REMOVE_MAINTENANCE || operationMode == OperationMode.UNINSTALL) {
+            if (errorMessage == null && failedOperation == null) {
+                return Status.LEAVING;
+            } else {
+                return Status.DOWN;
+            }
+        }
         if (operationMode == OperationMode.NORMAL) {
             return Status.NORMAL;
         }
-        // else operation mode is DOWN
         return Status.DOWN;
     }
 

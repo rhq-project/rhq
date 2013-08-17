@@ -265,9 +265,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 storageNodeOperationsHandler.uninstall(subject, storageNode);
                 break;
             case NORMAL:
+            case DECOMMISSION:
                 reset();
                 storageNodeOperationsHandler.decommissionStorageNode(subject, storageNode);
                 break;
+            case REMOVE_MAINTENANCE:
+                reset();
+                storageNodeOperationsHandler.performRemoveNodeMaintenance(subject, storageNode);
             case UNANNOUNCE:
                 reset();
                 storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);

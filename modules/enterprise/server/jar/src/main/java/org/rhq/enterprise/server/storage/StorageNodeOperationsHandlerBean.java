@@ -78,9 +78,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     @EJB
     private ResourceManagerLocal resourceManager;
 
-    @EJB
-    private ResourceFactoryManagerLocal resourceFactoryManager;
-
     @Override
     public void announceStorageNode(Subject subject, StorageNode storageNode) {
         if (log.isInfoEnabled()) {
@@ -150,19 +147,19 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
         storageNode.setOperationMode(StorageNode.OperationMode.UNINSTALL);
 
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setResource(storageNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subject);
-        schedule.setOperationName("uninstall");
-        Configuration parameters = new Configuration();
-        schedule.setParameters(parameters);
+        if (storageNode.getResource() == null) {
+            finishUninstall(subject, storageNode);
+        } else {
+            ResourceOperationSchedule schedule = new ResourceOperationSchedule();
+            schedule.setResource(storageNode.getResource());
+            schedule.setJobTrigger(JobTrigger.createNowTrigger());
+            schedule.setSubject(subject);
+            schedule.setOperationName("uninstall");
+            Configuration parameters = new Configuration();
+            schedule.setParameters(parameters);
 
-        operationManager.scheduleResourceOperation(subject, schedule);
-
-//        Resource resource = storageNode.getResource();
-//        storageNodeOperationsHandler.detachFromResource(storageNode);
-//        storageNodeOperationsHandler.deleteStorageNodeResource(subject, resource);
+            operationManager.scheduleResourceOperation(subject, schedule);
+        }
     }
 
     @Override
@@ -170,13 +167,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     public void detachFromResource(StorageNode storageNode) {
         storageNode.setResource(null);
         storageNode.setFailedOperation(null);
-    }
-
-    @Override
-    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void deleteStorageNodeResource(Subject subject, Resource resource) {
-        log.info("Preparing to delete storage node resource " + resource);
-        resourceFactoryManager.deleteResource(subject, resource.getId());
     }
 
     @Override
@@ -272,18 +262,23 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
         if (storageNode.getOperationMode() == StorageNode.OperationMode.DECOMMISSION) {
             storageNode.setOperationMode(StorageNode.OperationMode.REMOVE_MAINTENANCE);
-            List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-                StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
-                .getResultList();
-            for (StorageNode node : clusterNodes) {
-                node.setMaintenancePending(true);
-            }
-            boolean runRepair = storageNode.isMaintenancePending();
-            performRemoveNodeMaintenance(subjectManager.getOverlord(), clusterNodes.get(0), runRepair,
-                createPropertyListOfAddresses(SEEDS_LIST, clusterNodes));
+            performRemoveNodeMaintenance(subjectManager.getOverlord(), storageNode);
         } else {
             log.info("Remove node maintenance has already been run for " + storageNode);
         }
+    }
+
+    @Override
+    public void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode) {
+        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
+            .getResultList();
+        for (StorageNode node : clusterNodes) {
+            node.setMaintenancePending(true);
+        }
+        boolean runRepair = storageNode.isMaintenancePending();
+        performRemoveNodeMaintenance(subjectManager.getOverlord(), clusterNodes.get(0), runRepair,
+            createPropertyListOfAddresses(SEEDS_LIST, clusterNodes));
     }
 
     private void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode, boolean runRepair,
@@ -583,16 +578,18 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 break;
             default:  // SUCCESS
                 log.info("Successfully uninstalled " + storageNode + " from disk");
-                Resource resource = storageNode.getResource();
-
-                log.info("Remove storage node resource " + resource + " from inventory");
-
-                storageNodeOperationsHandler.detachFromResource(storageNode);
-                resourceManager.uninventoryResource(getSubject(operationHistory), resource.getId());
-
-                log.info("Removing storage node entity " + storageNode + " from database");
-                entityManager.remove(storageNode);
+                uninstall(getSubject(operationHistory), storageNode);
         }
+    }
+
+    private void finishUninstall(Subject subject, StorageNode storageNode) {
+        if (storageNode.getResource() != null) {
+            log.info("Removing storage node resource " + storageNode.getResource() + " from inventory");
+            storageNodeOperationsHandler.detachFromResource(storageNode);
+            resourceManager.uninventoryResource(subject, storageNode.getResource().getId());
+        }
+        log.info("Removing storage node entity " + storageNode + " from database");
+        entityManager.remove(storageNode);
     }
 
     private Subject getSubject(ResourceOperationHistory resourceOperationHistory) {

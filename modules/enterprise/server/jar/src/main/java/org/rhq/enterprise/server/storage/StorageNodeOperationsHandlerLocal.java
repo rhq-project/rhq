@@ -8,7 +8,6 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
-import org.rhq.core.domain.resource.Resource;
 
 /**
  * @author John Sanda
@@ -46,11 +45,11 @@ public interface StorageNodeOperationsHandlerLocal {
 
     void detachFromResource(StorageNode storageNode);
 
-    void deleteStorageNodeResource(Subject subject, Resource resource);
-
     void decommissionStorageNode(Subject subject, StorageNode storageNode);
 
     void performRemoveNodeMaintenanceIfNecessary(InetAddress storageNodeAddress);
+
+    void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode);
 
     void logError(StorageNode.OperationMode newStorageNodeOperationMode, String error, Exception e);
 }

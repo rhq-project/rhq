@@ -31,7 +31,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.server.metrics.domain.AggregateSimpleNumericMetric;
 import org.rhq.server.metrics.domain.AggregateType;
 
@@ -48,12 +47,12 @@ public class MetricsBaselineCalculator {
         this.metricsDAO = metricsDAO;
     }
 
-    public List<MeasurementBaseline> calculateBaselines(List<MeasurementSchedule> schedules, long startTime,
+    public List<MeasurementBaseline> calculateBaselines(List<Integer> schedules, long startTime,
         long endTime) {
         List<MeasurementBaseline> calculatedBaselines = new ArrayList<MeasurementBaseline>();
 
         MeasurementBaseline measurementBaseline;
-        for (MeasurementSchedule schedule : schedules) {
+        for (Integer schedule : schedules) {
             measurementBaseline = this.calculateBaseline(schedule, startTime, endTime);
             if (measurementBaseline != null) {
                 calculatedBaselines.add(measurementBaseline);
@@ -63,9 +62,9 @@ public class MetricsBaselineCalculator {
         return calculatedBaselines;
     }
 
-    private MeasurementBaseline calculateBaseline(MeasurementSchedule schedule, long startTime, long endTime) {
-        Iterable<AggregateSimpleNumericMetric> metrics = this.metricsDAO.findAggregatedSimpleOneHourMetric(
-            schedule.getId(), startTime, endTime);
+    private MeasurementBaseline calculateBaseline(Integer schedule, long startTime, long endTime) {
+        Iterable<AggregateSimpleNumericMetric> metrics = this.metricsDAO.findAggregatedSimpleOneHourMetric(schedule,
+            startTime, endTime);
 
         if (metrics != null && metrics.iterator() != null && metrics.iterator().hasNext()) {
             ArithmeticMeanCalculator mean = new ArithmeticMeanCalculator();
@@ -104,7 +103,7 @@ public class MetricsBaselineCalculator {
             baseline.setMax(max);
             baseline.setMin(min);
             baseline.setMean(mean.getArithmeticMean());
-            baseline.setSchedule(schedule);
+            baseline.setScheduleId(schedule);
 
             if (log.isDebugEnabled()) {
                 log.debug("Calculated baseline: " + baseline.toString());
@@ -113,12 +112,6 @@ public class MetricsBaselineCalculator {
             return baseline;
         }
 
-        MeasurementBaseline baseline = new MeasurementBaseline();
-        baseline.setMax(Double.NaN);
-        baseline.setMin(Double.NaN);
-        baseline.setMean(Double.NaN);
-        baseline.setSchedule(schedule);
-
-        return baseline;
+        return null;
     }
 }

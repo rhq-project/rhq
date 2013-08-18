@@ -94,6 +94,8 @@ public class MeasurementBaseline implements Serializable {
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     private MeasurementSchedule schedule;
 
+    @Column(name = "SCHEDULE_ID", insertable = false, updatable = false)
+    private int scheduleId;
 
     public MeasurementBaseline() {
         computeTime = System.currentTimeMillis();
@@ -173,6 +175,20 @@ public class MeasurementBaseline implements Serializable {
 
     public void setMin(Double min) {
         this.baselineMin = min;
+    }
+
+    /**
+     * @return the scheduleId
+     */
+    public int getScheduleId() {
+        return scheduleId;
+    }
+
+    /**
+     * @param scheduleId the scheduleId to set
+     */
+    public void setScheduleId(int scheduleId) {
+        this.scheduleId = scheduleId;
     }
 
     /**

@@ -24,7 +24,6 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.measurement.MeasurementBaseline;
-import org.rhq.core.domain.measurement.MeasurementSchedule;
 import org.rhq.core.domain.resource.Resource;
 
 /**
@@ -73,7 +72,7 @@ public interface MeasurementBaselineManagerLocal {
      * will be called repeatedly during baseline calculations to get all of the necessary
      * schedules.
      */
-    List<MeasurementSchedule> getSchedulesWithoutBaselines();
+    List<Integer> getSchedulesWithoutBaselines();
 
     /**
      * Given a list of schedules, this method calculates and stores baselines using the
@@ -87,7 +86,7 @@ public interface MeasurementBaselineManagerLocal {
      *                      is treated as a duration. For example, a value of 259200000
      *                      would be treated as 3 days.
      */
-    void calculateBaselines(List<MeasurementSchedule> schedules, long olderThan, long amountOfData);
+    void calculateBaselines(List<Integer> schedules, long olderThan, long amountOfData);
 
     /**
      * Persists the newly calculated baselines.
@@ -148,7 +147,7 @@ public interface MeasurementBaselineManagerLocal {
     /**
      * Return a list of {@link MeasurementBaseline} objects for the {@link Resource} represented by the given id.
      *
-     * @param subject    the user request to view the baseline history for the given resource 
+     * @param subject    the user request to view the baseline history for the given resource
      * @param resourceId the id of the resource whose baselines are to be returned
      *
      * @return a list of baselines for all measurements scheduled on the given resource

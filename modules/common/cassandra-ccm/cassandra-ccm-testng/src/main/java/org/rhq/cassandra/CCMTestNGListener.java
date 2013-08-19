@@ -27,7 +27,6 @@ package org.rhq.cassandra;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,7 +35,6 @@ import org.testng.IInvokedMethodListener;
 import org.testng.ITestResult;
 
 import org.rhq.cassandra.schema.SchemaManager;
-import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author John Sanda
@@ -105,13 +103,15 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         // we cannot initialize ccm here.
         ccm = new CassandraClusterManager(deploymentOptions);
         ClusterInitService clusterInitService = new ClusterInitService();
+        ccm.createCluster();
 
-        List<StorageNode> nodes = ccm.createCluster();
+        String[] nodes = ccm.getNodes();
+        int[] jmxPorts = ccm.getJmxPorts();
 
         if (System.getProperty("rhq.cassandra.cluster.skip-shutdown") == null) {
-            for (StorageNode node : nodes) {
+            for (int index = 0; index < nodes.length; index++) {
                 try {
-                    if (clusterInitService.isNativeTransportRunning(node)) {
+                    if (clusterInitService.isNativeTransportRunning(nodes[index], jmxPorts[index])) {
                         throw new RuntimeException("A cluster is already running on the same ports.");
                     }
                 } catch (Exception e) {
@@ -122,12 +122,13 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         ccm.startCluster(false);
 
 
-        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
+        clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 20, 2, 1500);
 
-        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes);
+        SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes,
+            ccm.getCqlPort());
         schemaManager.install();
         if (annotation.waitForSchemaAgreement()) {
-            clusterInitService.waitForSchemaAgreement(nodes);
+            clusterInitService.waitForSchemaAgreement(nodes, jmxPorts);
         }
         schemaManager.updateTopology();
     }

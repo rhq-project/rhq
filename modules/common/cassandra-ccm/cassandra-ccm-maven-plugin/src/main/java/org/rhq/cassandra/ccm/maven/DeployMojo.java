@@ -26,7 +26,6 @@
 package org.rhq.cassandra.ccm.maven;
 
 import java.io.File;
-import java.util.List;
 
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.plugin.MojoExecutionException;
@@ -38,7 +37,6 @@ import org.rhq.cassandra.CassandraClusterManager;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
-import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author John Sanda
@@ -63,14 +61,14 @@ public class DeployMojo extends AbstractMojo {
 
         long start = System.currentTimeMillis();
         getLog().info("Creating " + numNodes + " cluster in " + clusterDir);
-        List<StorageNode> nodes = ccm.createCluster();
+        ccm.createCluster();
 
         getLog().info("Starting cluster nodes");
         ccm.startCluster();
 
         getLog().info("Installing RHQ schema");
         SchemaManager schemaManager = new SchemaManager(deploymentOptions.getUsername(),
-            deploymentOptions.getPassword(), nodes);
+            deploymentOptions.getPassword(), ccm.getNodes(), ccm.getCqlPort());
 
         try {
             schemaManager.install();

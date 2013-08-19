@@ -40,8 +40,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.cassandra.util.ClusterBuilder;
-import org.rhq.core.domain.cloud.StorageNode;
-import org.rhq.core.util.StringUtil;
 
 /**
  * @author Stefan Negrea
@@ -71,13 +69,15 @@ abstract class AbstractManager {
     private Session session;
     private final String username;
     private final String password;
-    private List<StorageNode> nodes = new ArrayList<StorageNode>();
+    private final int cqlPort;
+    private final String[] nodes;
     private final UpdateFile managementTasks;
 
-    protected AbstractManager(String username, String password, List<StorageNode> nodes) {
+    protected AbstractManager(String username, String password, String[] nodes, int cqlPort) {
         try {
             this.username = username;
             this.password = password;
+            this.cqlPort = cqlPort;
             this.nodes = nodes;
         } catch (NoHostAvailableException e) {
             throw new RuntimeException("Unable create storage node session.", e);
@@ -108,15 +108,11 @@ abstract class AbstractManager {
     protected void initClusterSession(String username, String password) {
         shutdownClusterConnection();
 
-        String[] hostNames = new String[nodes.size()];
-        for (int i = 0; i < hostNames.length; ++i) {
-            hostNames[i] = nodes.get(i).getAddress();
-        }
 
-        log.info("Initializing session to connect to " + StringUtil.arrayToString(hostNames));
+        log.info("Initializing storage node session.");
 
-        Cluster cluster = new ClusterBuilder().addContactPoints(hostNames).withCredentials(username, password)
-            .withPort(nodes.get(0).getCqlPort()).withCompression(Compression.NONE).build();
+        Cluster cluster = new ClusterBuilder().addContactPoints(nodes).withCredentials(username, password)
+            .withPort(this.getCqlPort()).withCompression(Compression.NONE).build();
 
         log.info("Cluster connection configured.");
 
@@ -140,7 +136,7 @@ abstract class AbstractManager {
      * @return cluster size
      */
     protected int getClusterSize() {
-        return nodes.size();
+        return nodes.length;
     }
 
     /**
@@ -155,6 +151,13 @@ abstract class AbstractManager {
      */
     protected String getPassword() {
         return password;
+    }
+
+    /**
+     * @return the cqlPort
+     */
+    protected int getCqlPort() {
+        return cqlPort;
     }
 
     /**

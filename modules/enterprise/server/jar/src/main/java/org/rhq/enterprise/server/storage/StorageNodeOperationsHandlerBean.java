@@ -34,7 +34,6 @@ import org.rhq.enterprise.server.auth.SessionManager;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
-import org.rhq.enterprise.server.resource.ResourceFactoryManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.server.metrics.StorageSession;
 
@@ -193,7 +192,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     public void performAddNodeMaintenance(Subject subject, StorageNode storageNode) {
-        storageNode.setOperationMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+        storageNode.setOperationMode(StorageNode.OperationMode.ADD_MAINTENANCE);
         List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
             .getResultList();
@@ -294,7 +293,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 String msg = "Aborting storage node deployment due to unexpected error while performing add node " +
                     "maintenance.";
                 log.error(msg, e);
-                storageNodeOperationsHandler.logError(StorageNode.OperationMode.ADD_NODE_MAINTENANCE, msg, e);
+                storageNodeOperationsHandler.logError(StorageNode.OperationMode.ADD_MAINTENANCE, msg, e);
             }
         } else if (operationHistory.getOperationDefinition().getName().equals("decommission")) {
             try {
@@ -435,11 +434,11 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 // nothing to do here
                 return;
             case CANCELED:
-                newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+                newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_MAINTENANCE);
                 deploymentOperationCanceled(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             case FAILURE:
-                newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+                newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_MAINTENANCE);
                 deploymentOperationFailed(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             default:  // SUCCESS
@@ -450,7 +449,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 if (nextNode == null) {
                     log.info("Finished running add node maintenance on all cluster nodes");
                     // TODO replace this with an UPDATE statement
-                    newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_NODE_MAINTENANCE);
+                    newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_MAINTENANCE);
                     newStorageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
                 } else {
                     Configuration parameters = resourceOperationHistory.getParameters();

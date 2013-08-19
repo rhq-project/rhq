@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
@@ -201,5 +202,23 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
-    }    
+    }
+
+    @Override
+    public void undeployStorageNode(StorageNode storageNode) throws RuntimeException {
+        try {
+            storageNodeManager.undeployStorageNode(getSessionSubject(), storageNode);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void deployStorageNode(StorageNode storageNode) throws RuntimeException {
+        try {
+            storageNodeManager.deployStorageNode(getSessionSubject(), storageNode);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

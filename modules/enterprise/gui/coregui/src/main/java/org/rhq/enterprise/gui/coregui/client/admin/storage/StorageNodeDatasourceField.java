@@ -40,6 +40,8 @@ public enum StorageNodeDatasourceField {
 
     FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_server_mode()),
     
+    FIELD_STATUS("status", "Status"),
+    
     FIELD_MEMORY("memory", "Memory"),
     
     FIELD_DISK("disk", "Disk"),

@@ -793,7 +793,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testAddBundleFilesToDifferentBundles() throws Exception {
         // create a bundle type to use for both bundles.
         BundleType bt = createBundleType("one");
-        Bundle b1 = createBundle(overlord, "one", bt, 0);
+        Bundle b1 = createBundle(overlord, "one", bt, null);
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         assertNotNull(bv1);
@@ -801,7 +801,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             null, "Bundle #1 File # 1".getBytes());
 
         // create a second bundle but create file of the same name as above
-        Bundle b2 = createBundle(overlord, "two", bt, 0);
+        Bundle b2 = createBundle(overlord, "two", bt, null);
         assertNotNull(b2);
         BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
         assertNotNull(bv2);
@@ -2095,18 +2095,21 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     private Bundle createBundle(Subject subject, String name) throws Exception {
-        return createBundle(subject, name, 0);
+        return createBundle(subject, name, null);
     }
 
     private Bundle createBundle(Subject subject, String name, int bundleGroupId) throws Exception {
-        BundleType bt = createBundleType(name);
-        return createBundle(subject, name, bt, bundleGroupId);
+        return createBundle(subject, name, new int[] { bundleGroupId });
     }
 
-    private Bundle createBundle(Subject subject, String name, BundleType bt, int bundleGroupId) throws Exception {
+    private Bundle createBundle(Subject subject, String name, int[] bundleGroupIds) throws Exception {
+        BundleType bt = createBundleType(name);
+        return createBundle(subject, name, bt, bundleGroupIds);
+    }
+
+    private Bundle createBundle(Subject subject, String name, BundleType bt, int[] bundleGroupIds) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManager.createBundle(subject, fullName, fullName + "-desc", bt.getId(),
-            new int[] { bundleGroupId });
+        Bundle b = bundleManager.createBundle(subject, fullName, fullName + "-desc", bt.getId(), bundleGroupIds);
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);

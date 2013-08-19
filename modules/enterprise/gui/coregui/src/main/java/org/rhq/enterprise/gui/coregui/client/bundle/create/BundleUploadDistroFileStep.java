@@ -37,6 +37,7 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
+import org.rhq.core.domain.bundle.BundleNotFoundException;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
@@ -281,8 +282,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 @Override
                 public void onFailure(Throwable caught) {
                     // This signals that the bundle does not yet exist
-                    if (caught instanceof IllegalStateException) {
-                        handleIllegalStateException((IllegalStateException) caught);
+                    if (caught instanceof BundleNotFoundException) {
+                        handleBundleNotFoundException((BundleNotFoundException) caught);
 
                     } else {
                         // Escape it, since it contains the URL, which the user entered.
@@ -296,10 +297,10 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             });
     }
 
-    private void handleIllegalStateException(IllegalStateException e) {
+    private void handleBundleNotFoundException(BundleNotFoundException e) {
         String token = e.getMessage();
         if (null == token || token.isEmpty()) {
-            wizard.getView().showMessage("IllegalStateException: Unexpected failure creating bundle version.");
+            wizard.getView().showMessage("BundleNotFound: Unexpected failure creating bundle version.");
             CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), e);
             wizard.setBundleVersion(null);
             setButtonsDisableMode(false);
@@ -361,7 +362,8 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                 }
             });
         } else if (null != uploadDistroForm.getCreateInitialBundleVersionToken()) {
-            handleIllegalStateException(new IllegalStateException(uploadDistroForm.getCreateInitialBundleVersionToken()));
+            handleBundleNotFoundException(new BundleNotFoundException(
+                uploadDistroForm.getCreateInitialBundleVersionToken()));
 
         } else {
             String errorMessage = uploadDistroForm.getUploadError();

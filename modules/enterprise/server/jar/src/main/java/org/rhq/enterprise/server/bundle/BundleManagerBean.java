@@ -73,6 +73,7 @@ import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.core.domain.bundle.BundleDestination;
 import org.rhq.core.domain.bundle.BundleFile;
 import org.rhq.core.domain.bundle.BundleGroup;
+import org.rhq.core.domain.bundle.BundleNotFoundException;
 import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleResourceDeploymentHistory;
 import org.rhq.core.domain.bundle.BundleType;
@@ -617,7 +618,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         } catch (PermissionException e) {
             if (null != e.getCause() && e.getCause() instanceof BundleNotFoundException) {
-                throw new IllegalStateException("[" + distributionFile.getName() + "]");
+                // This application exception indicates the special token handling workflow
+                throw new BundleNotFoundException("[" + distributionFile.getName() + "]");
             } else {
                 throw e;
             }
@@ -740,7 +742,8 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
         } catch (PermissionException e) {
             if (null != e.getCause() && e.getCause() instanceof BundleNotFoundException) {
                 deleteFile = false;
-                throw new IllegalStateException("[" + file.getName() + "]");
+                // This application exception indicates the special token handling workflow 
+                throw new BundleNotFoundException("[" + file.getName() + "]");
             } else {
                 throw e;
             }

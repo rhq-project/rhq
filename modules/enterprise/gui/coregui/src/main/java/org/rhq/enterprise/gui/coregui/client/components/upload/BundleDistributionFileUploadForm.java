@@ -46,7 +46,7 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
 
     /**
      * If this component uploaded a bundle distribution file but failed to create the bundle version
-     * due to an IllegalStateException (signaling bundle not found), this will return the token necessary to then call
+     * due to a BundleNotFoundException, this will return the token necessary to then call
      * createInitialBundleVersionViaToken(). Otherwise, null is returned.
      * 
      * @return the token required for a a subsequent call to createInitialBundleVersionViaToken().
@@ -63,16 +63,16 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
     private int parseResponse(String results) {
         // the upload servlet will respond with "BundleNotFoundException [createInitialBundleVersionToken]" to indicate
         // that the BV create failed because the bundle does not yet exist. 
-        String IllegalStateMsgPrefix = "IllegalStateException [";
-        int startIllegalStateMsgPrefix = results.indexOf(IllegalStateMsgPrefix);
-        if (startIllegalStateMsgPrefix >= 0) {
-            int endIllegalStateMsgPrefix = startIllegalStateMsgPrefix + IllegalStateMsgPrefix.length();
-            int startIllegalStateMsgPostfix = results.indexOf(']', endIllegalStateMsgPrefix);
-            if (startIllegalStateMsgPostfix < 0) {
+        String bundleNotFoundMsgPrefix = "BundleNotFoundException [";
+        int startBundleNotFoundMsgPrefix = results.indexOf(bundleNotFoundMsgPrefix);
+        if (startBundleNotFoundMsgPrefix >= 0) {
+            int endBundleNotFoundMsgPrefix = startBundleNotFoundMsgPrefix + bundleNotFoundMsgPrefix.length();
+            int startBundleNotFoundMsgPostfix = results.indexOf(']', endBundleNotFoundMsgPrefix);
+            if (startBundleNotFoundMsgPostfix < 0) {
                 return 0; // this should never happen, we should always have the ending "]" bracket
             }
-            this.createInitialBundleVersionToken = results.substring(endIllegalStateMsgPrefix,
-                startIllegalStateMsgPostfix);
+            this.createInitialBundleVersionToken = results.substring(endBundleNotFoundMsgPrefix,
+                startBundleNotFoundMsgPostfix);
             return 0;
         }
 

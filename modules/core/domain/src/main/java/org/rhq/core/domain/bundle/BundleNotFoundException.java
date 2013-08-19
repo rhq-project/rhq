@@ -16,15 +16,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-package org.rhq.enterprise.server.bundle;
+package org.rhq.core.domain.bundle;
 
 import javax.ejb.ApplicationException;
 
 /**
- * Indicates a required RHQ bundle did not exist. Note, we intentionally do not provide
- * constructors that take a cause, since the three screen long Hibernate stack trace doesn't add any value here.<br/>
- * Declare this an {@link ApplicationException} because we don't want these to be wrapped or to rollback an ongoing
- * transaction.
+ * Indicates a required RHQ bundle did not exist. This class is defined in the in the domain module instead
+ * of the server/jar module because it needs to be accessible by the UI.  Note that this is an ApplicationException
+ * and when throwing this from an EJB it will not be wrapped as an EJBException, and as annotated, it will not rollback
+ * an ongoing transaction. 
  */
 @ApplicationException(rollback = false, inherited = true)
 public class BundleNotFoundException extends RuntimeException {

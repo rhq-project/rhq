@@ -27,6 +27,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.bundle.BundleNotFoundException;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.enterprise.server.bundle.BundleManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
@@ -54,8 +55,8 @@ public class BundleDistributionFileUploadServlet extends FileUploadServlet {
             BundleVersion bundleVersion = bundleManager.createOrStoreBundleVersionViaFile(subject, file);
             successMsg = "success [" + bundleVersion.getId() + "]";
 
-        } catch (IllegalStateException e) {
-            writeExceptionResponse(response, "IllegalStateException [" + e.getMessage() + "]", e); // clients will look for this string!
+        } catch (BundleNotFoundException e) {
+            writeExceptionResponse(response, "BundleNotFoundException " + e.getMessage(), e); // clients will look for this string!
             return;
         } catch (Exception e) {
             writeExceptionResponse(response, "Failed to upload bundle distribution file", e); // clients will look for this string!

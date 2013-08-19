@@ -128,6 +128,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
 
         formItems.add(radioGroupItem);
         formItems.add(new SpacerItem());
+        radioForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
         canvas.addMember(radioForm);
 
         // go get the assignable/assigned bundle groups for this new bundle version, initial or not 

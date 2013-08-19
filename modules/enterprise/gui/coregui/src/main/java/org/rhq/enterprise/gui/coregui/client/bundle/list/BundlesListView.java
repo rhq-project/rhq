@@ -131,7 +131,9 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
         // only show the buttons if we were given a set of permissions - passing in null is a way to say you only want the list, no actions 
         if (this.permissions != null) {
 
-            boolean hasAuth = permissions.contains(Permission.MANAGE_BUNDLE);
+            // TODO NEW BUNDLE ENABLEMENT
+            // boolean hasAuth = permissions.contains(Permission._BUNDLE);
+            boolean hasAuth = true;
 
             addTableAction(MSG.common_button_new(), null, new AbstractTableAction(
                 (hasAuth) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {

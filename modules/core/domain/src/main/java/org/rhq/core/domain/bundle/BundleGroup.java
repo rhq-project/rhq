@@ -165,18 +165,20 @@ public class BundleGroup implements Serializable {
     }
 
     /**
-     * This *does not* update the inverse relation. You may want {@link Role#addBundleGroup(BundleGroup)}
+     * This also updates the inverse relation (add this bundle group to role)
      * @param role
      */
     public void addRole(Role role) {
         getRoles().add(role);
+        role.addBundleGroup(this);
     }
 
     /**
-     * This *does not* update the inverse relation. You may want {@link Role#removeBundleGroup(BundleGroup)}
+     * This also updates the inverse relation (remove this bundle group from role)
      * @param role
      */
     public boolean removeRole(Role role) {
+        role.removeBundleGroup(this);
         return getRoles().remove(role);
     }
 

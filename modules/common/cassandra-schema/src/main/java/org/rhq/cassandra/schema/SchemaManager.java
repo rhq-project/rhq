@@ -25,7 +25,6 @@
 
 package org.rhq.cassandra.schema;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -33,8 +32,6 @@ import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
-
-import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author John Sanda
@@ -51,19 +48,29 @@ public class SchemaManager {
      */
     private final String password;
 
-    private final List<StorageNode> nodes = new ArrayList<StorageNode>();
+    /**
+     * Node addresses
+     */
+    private final String[] nodes;
 
     /**
      *
-     * @param username The username RHQ will use to connect to the storage cluster.
-     * @param password The password RHQ will use to connect to the storage cluster.
-     * @param nodes A list of seeds nodes that are assumed to be already running and
-     *              clustered prior to apply schema changes. The format for each node
-     *              should be address|jmx_port|cql_port,address|jmx_port|cql_port.
-     *              Each node consists of three fields that are pipe-delimited.
      */
-    public SchemaManager(String username, String password, String... nodes) {
-        this(username, password, parseNodeInformation(nodes));
+    private final int cqlPort;
+
+    /**
+    *
+    * @param username The username RHQ will use to connect to the storage cluster
+    * @param password The password RHQ will use to connect to the storage cluster
+    * @param nodes A list of seeds nodes that are assumed to be already running and
+    *              clustered prior to apply schema changes.
+    * @param cqlPort The native CQL port for the storage cluster
+    */
+    public SchemaManager(String username, String password, String[] nodes, int cqlPort) {
+        this.username = username;
+        this.password = password;
+        this.cqlPort = cqlPort;
+        this.nodes = nodes;
     }
 
     /**
@@ -72,11 +79,13 @@ public class SchemaManager {
      * @param password The password RHQ will use to connect to the storage cluster.
      * @param nodes A list of seeds nodes that are assumed to be already running and
      *              clustered prior to apply schema changes.
+     * @param cqlPort The native CQL port for the storage cluster
      */
-    public SchemaManager(String username, String password, List<StorageNode> nodes) {
+    public SchemaManager(String username, String password, List<String> nodes, int cqlPort) {
         this.username = username;
         this.password = password;
-        this.nodes.addAll(nodes);
+        this.cqlPort = cqlPort;
+        this.nodes = nodes.toArray(new String[nodes.size()]);
     }
 
     /**
@@ -85,7 +94,7 @@ public class SchemaManager {
      * @throws Exception
      */
     public void install() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort);
         version.install();
     }
 
@@ -96,7 +105,7 @@ public class SchemaManager {
      * @throws Exception
      */
     public void checkCompatibility() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort);
         version.checkCompatibility();
     }
 
@@ -106,7 +115,7 @@ public class SchemaManager {
      * @throws Exception
      */
     public void drop() throws Exception {
-        VersionManager version = new VersionManager(username, password, nodes);
+        VersionManager version = new VersionManager(username, password, nodes, cqlPort);
         version.drop();
     }
 
@@ -118,7 +127,7 @@ public class SchemaManager {
      * @throws Exception
      */
     public void updateTopology() throws Exception {
-        TopologyManager topology = new TopologyManager(username, password, nodes);
+        TopologyManager topology = new TopologyManager(username, password, nodes, cqlPort);
         topology.updateTopology();
     }
 
@@ -127,25 +136,8 @@ public class SchemaManager {
      *
      * @return list of storage nodes
      */
-    public List<StorageNode> getStorageNodes() {
+    protected String[] getStorageNodes() {
         return nodes;
-    }
-
-    /**
-     * Parse raw string that contains the list of storage nodes.
-     *
-     * @param nodes list of storage nodes
-     * @return
-     */
-    private static List<StorageNode> parseNodeInformation(String... nodes) {
-        List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
-        for (String node : nodes) {
-            StorageNode storageNode = new StorageNode();
-            storageNode.parseNodeInformation(node);
-            parsedNodes.add(storageNode);
-        }
-
-        return parsedNodes;
     }
 
     /**
@@ -164,19 +156,19 @@ public class SchemaManager {
             migratorLogging.setLevel(Level.ALL);
 
             if (args.length < 4) {
-                System.out.println("Usage      : command username password nodes...");
+                System.out.println("Usage      : command username password cqlPort nodes...");
                 System.out.println("\n");
                 System.out.println("Commands   : install | drop | topology");
-                System.out.println("Node format: hostname|jmxPort|cqlPort");
                 return;
             }
 
             String command = args[0];
             String username = args[1];
             String password = args[2];
-            String[] hosts = Arrays.copyOfRange(args, 3, args.length);
+            int cqlPort = Integer.parseInt(args[3]);
+            String[] hosts = Arrays.copyOfRange(args, 4, args.length);
 
-            SchemaManager schemaManager = new SchemaManager(username, password, hosts);
+            SchemaManager schemaManager = new SchemaManager(username, password, hosts, cqlPort);
 
             if ("install".equalsIgnoreCase(command)) {
                 schemaManager.install();

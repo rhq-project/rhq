@@ -13,16 +13,10 @@
   <name>RHQ Cassandra Schema</name>
 
   <dependencies>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-cassandra-ccm-core</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-cassandra-util</artifactId>
-      <version>${project.version}</version>
+     <dependency>
+       <groupId>${project.groupId}</groupId>
+       <artifactId>rhq-cassandra-util</artifactId>
+       <version>${project.version}</version>
     </dependency>
 
     <dependency>
@@ -34,13 +28,6 @@
       <groupId>commons-logging</groupId>
       <artifactId>commons-logging</artifactId>
     </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-core-domain</artifactId>
-      <version>${project.version}</version>
-    </dependency>
-
 
     <dependency>
       <groupId>com.datastax.cassandra</groupId>

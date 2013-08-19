@@ -25,7 +25,6 @@
 
 package org.rhq.cassandra.schema;
 
-import java.util.List;
 import java.util.Properties;
 import java.util.UUID;
 
@@ -37,7 +36,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooAdvancedException;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
 import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
-import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author Stefan Negrea
@@ -64,8 +62,8 @@ class VersionManager extends AbstractManager {
         }
     }
 
-    public VersionManager(String username, String password, List<StorageNode> nodes) throws Exception {
-        super(username, password, nodes);
+    public VersionManager(String username, String password, String[] nodes, int cqlPort) throws Exception {
+        super(username, password, nodes, cqlPort);
     }
 
     /**

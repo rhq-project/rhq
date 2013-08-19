@@ -26,7 +26,6 @@
 package org.rhq.cassandra.ccm.arquillian;
 
 import java.io.File;
-import java.util.List;
 import java.util.concurrent.Callable;
 
 import org.jboss.arquillian.config.descriptor.api.ArquillianDescriptor;
@@ -62,7 +61,6 @@ import org.rhq.cassandra.ClusterInitService;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
-import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * @author John Sanda
@@ -114,7 +112,10 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
                     SchemaManager schemaManager;
                     ClusterInitService clusterInitService = new ClusterInitService();
-                    List<StorageNode> nodes = null;
+
+                    String[] nodes = null;
+                    int[] jmxPorts = null;
+                    int cqlPort = -1;
 
                     if (!Boolean.valueOf(System.getProperty("itest.use-external-storage-node", "false"))) {
 
@@ -131,13 +132,17 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                         options.setStartRpc(true);
 
                         ccm = new CassandraClusterManager(options);
-                        nodes = ccm.createCluster();
+                        ccm.createCluster();
+
+                        nodes = ccm.getNodes();
+                        jmxPorts = ccm.getJmxPorts();
+                        cqlPort = ccm.getCqlPort();
 
                         ccm.startCluster(false);
 
                         try {
-                            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 5);
-                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
+                            clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 20, 5, 1500);
+                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes, cqlPort);
 
                         } catch (Exception e) {
                             if (null != ccm) {
@@ -148,7 +153,10 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                     } else {
                         try {
                             String seed = System.getProperty("rhq.cassandra.seeds", "127.0.0.1|7299|9042");
-                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", seed);
+                            nodes = parseNodeAddresses(seed);
+                            cqlPort = parseNodeCqlPort(seed);
+                            jmxPorts = parseNodeJmxPorts(seed);
+                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes, cqlPort);
 
                         } catch (Exception e) {
                             throw new RuntimeException("External Cassandra initialization failed", e);
@@ -157,7 +165,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
 
                     try {
                         schemaManager.install();
-                        clusterInitService.waitForSchemaAgreement(nodes);
+                        clusterInitService.waitForSchemaAgreement(nodes, jmxPorts);
                         schemaManager.updateTopology();
                     } catch (Exception e) {
                         if (null != ccm) {
@@ -260,5 +268,58 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                 throw new RuntimeException("Could not load defined deploymentClass: " + className, e);
             }
         }
+
+        private String[] parseNodeAddresses(String s) {
+            String[] unparsedNodes = s.split(",");
+
+            String[] nodes = new String[unparsedNodes.length];
+
+            for (int index = 0; index < 0; index++) {
+                String[] params = unparsedNodes[index].split("\\|");
+                if (params.length != 3) {
+                    throw new IllegalArgumentException(
+                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + s + "]");
+                }
+
+                nodes[index] = params[0];
+            }
+
+            return nodes;
+        }
+
+        private int[] parseNodeJmxPorts(String s) {
+            String[] unparsedNodes = s.split(",");
+
+            int[] jmxPorts = new int[unparsedNodes.length];
+
+            for (int index = 0; index < 0; index++) {
+                String[] params = unparsedNodes[index].split("\\|");
+                if (params.length != 3) {
+                    throw new IllegalArgumentException(
+                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + s + "]");
+                }
+
+                jmxPorts[index] = Integer.parseInt(params[1]);
+            }
+
+            return jmxPorts;
+        }
+
+        private int parseNodeCqlPort(String s) {
+            String[] unparsedNodes = s.split(",");
+
+            for (String unparsedNode : unparsedNodes) {
+                String[] params = unparsedNode.split("\\|");
+                if (params.length != 3) {
+                    throw new IllegalArgumentException(
+                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + s + "]");
+                }
+
+                return Integer.parseInt(params[2]);
+            }
+
+            throw new IllegalArgumentException("Seed property is not valid [" + s + "]");
+        }
+
     }
 }

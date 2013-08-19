@@ -24,6 +24,10 @@
              type="string" 
              required="true"
              description="The URL or path to the Yum repository" />
+         <c:simple-property name="username" type="string" required="false"
+                            description="The optional user name to authenticate with"/>
+         <c:simple-property name="password" type="password" required="false"
+                            description="The optional password to authenticate with"/>
      </configuration>
    </contentSourceType>
 

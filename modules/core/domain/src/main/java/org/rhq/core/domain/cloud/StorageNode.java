@@ -247,7 +247,7 @@ public class StorageNode implements Serializable {
             return Status.INSTALLED;
         }
         if (operationMode == OperationMode.ANNOUNCE || operationMode == OperationMode.BOOTSTRAP ||
-            operationMode == OperationMode.ADD_NODE_MAINTENANCE) {
+            operationMode == OperationMode.ADD_MAINTENANCE) {
             if (errorMessage == null && failedOperation == null) {
                 return Status.JOINING;
             } else {
@@ -280,7 +280,7 @@ public class StorageNode implements Serializable {
             "gossip from its IP address."),
         BOOTSTRAP("The storage is installed but not yet part of the cluster. It is getting bootstrapped into the " +
             "cluster"),
-        ADD_NODE_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
+        ADD_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
             "necessary when a new node joins the cluster."),
         REMOVE_MAINTENANCE("The storage node is no longer part of the cluster. Remaining storage node are " +
             "undergoing cluster maintenance due to the topology change."),

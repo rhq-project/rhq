@@ -246,7 +246,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 reset();
                 storageNodeOperationsHandler.bootstrapStorageNode(subject, storageNode);
                 break;
-            case ADD_NODE_MAINTENANCE:
+            case ADD_MAINTENANCE:
                 reset();
                 storageNodeOperationsHandler.performAddNodeMaintenance(subject, storageNode);
             default:
@@ -272,7 +272,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 reset();
                 storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
                 break;
-            case ADD_NODE_MAINTENANCE:
+            case ADD_MAINTENANCE:
             case NORMAL:
             case DECOMMISSION:
                 reset();

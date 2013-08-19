@@ -103,16 +103,11 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (log.isInfoEnabled()) {
             log.info("Announcing " + newStorageNode + " to cluster node " + clusterNode);
         }
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setResource(clusterNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subject);
-        schedule.setOperationName("announce");
+
         Configuration parameters = new Configuration();
         parameters.put(addresses);
-        schedule.setParameters(parameters);
 
-        operationManager.scheduleResourceOperation(subject, schedule);
+        scheduleOperation(subject, clusterNode, parameters, "announce");
     }
 
     @Override
@@ -129,16 +124,10 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     }
 
     private void unannounceStorageNode(Subject subject, StorageNode clusterNode, PropertyList addresses) {
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setResource(clusterNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subject);
-        schedule.setOperationName("unannounce");
         Configuration parameters = new Configuration();
         parameters.put(addresses);
-        schedule.setParameters(parameters);
 
-        operationManager.scheduleResourceOperation(subject, schedule);
+        scheduleOperation(subject, clusterNode, parameters, "unannounce");
     }
 
     @Override
@@ -150,15 +139,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (storageNode.getResource() == null) {
             finishUninstall(subject, storageNode);
         } else {
-            ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-            schedule.setResource(storageNode.getResource());
-            schedule.setJobTrigger(JobTrigger.createNowTrigger());
-            schedule.setSubject(subject);
-            schedule.setOperationName("uninstall");
-            Configuration parameters = new Configuration();
-            schedule.setParameters(parameters);
-
-            operationManager.scheduleResourceOperation(subject, schedule);
+            scheduleOperation(subject, storageNode, new Configuration(), "uninstall");
         }
     }
 
@@ -183,14 +164,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         // queue up storage nodes during cluster maintenance operations.
         storageNode.setMaintenancePending(runRepair);
 
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setOperationName("decommission");
-        schedule.setResource(storageNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subject);
-        schedule.setParameters(new Configuration());
-
-        operationManager.scheduleResourceOperation(subject, schedule);
+        scheduleOperation(subject, storageNode, new Configuration(), "decommission");
     }
 
     @Override
@@ -238,21 +212,12 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (log.isInfoEnabled()) {
             log.info("Running addNodeMaintenance for storage node " + storageNode);
         }
+        Configuration params = new Configuration();
+        params.put(seedsList);
+        params.put(new PropertySimple(RUN_REPAIR_PROPERTY, runRepair));
+        params.put(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
 
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setResource(storageNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subject);
-        schedule.setOperationName("addNodeMaintenance");
-
-        Configuration config = new Configuration();
-        config.put(seedsList);
-        config.put(new PropertySimple(RUN_REPAIR_PROPERTY, runRepair));
-        config.put(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
-
-        schedule.setParameters(config);
-
-        operationManager.scheduleResourceOperation(subject, schedule);
+        scheduleOperation(subject, storageNode, params, "addNodeMaintenance");
     }
 
     @Override
@@ -286,21 +251,12 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (log.isInfoEnabled()) {
             log.info("Running remove node maintenance for storage node " + storageNode);
         }
+        Configuration params = new Configuration();
+        params.put(seedsList);
+        params.put(new PropertySimple(RUN_REPAIR_PROPERTY, runRepair));
+        params.put(new PropertySimple(UPDATE_SEEDS_LIST, true));
 
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setResource(storageNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subject);
-        schedule.setOperationName("removeNodeMaintenance");
-
-        Configuration config = new Configuration();
-        config.put(seedsList);
-        config.put(new PropertySimple(RUN_REPAIR_PROPERTY, runRepair));
-        config.put(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
-
-        schedule.setParameters(config);
-
-        operationManager.scheduleResourceOperation(subject, schedule);
+        scheduleOperation(subject, storageNode, params, "removeNodeMaintenance");
     }
 
     @Override
@@ -578,7 +534,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 break;
             default:  // SUCCESS
                 log.info("Successfully uninstalled " + storageNode + " from disk");
-                uninstall(getSubject(operationHistory), storageNode);
+                finishUninstall(getSubject(operationHistory), storageNode);
         }
     }
 
@@ -701,22 +657,13 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (log.isInfoEnabled()) {
             log.info("Preparing to bootstrap " + storageNode + " into cluster...");
         }
-
-        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
-        schedule.setResource(storageNode.getResource());
-        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-        schedule.setSubject(subject);
-        schedule.setOperationName("prepareForBootstrap");
-
         StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subject);
         Configuration parameters = new Configuration();
         parameters.put(new PropertySimple("cqlPort", clusterSettings.getCqlPort()));
         parameters.put(new PropertySimple("gossipPort", clusterSettings.getGossipPort()));
         parameters.put(addresses);
 
-        schedule.setParameters(parameters);
-
-        operationManager.scheduleResourceOperation(subject, schedule);
+        scheduleOperation(subject, storageNode, parameters, "prepareForBootstrap");
     }
 
     private StorageNode takeFromMaintenanceQueue() {
@@ -830,6 +777,19 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 + "in rhq-server.properties.");
         }
         return value;
+    }
+
+    private void scheduleOperation(Subject subject, StorageNode storageNode, Configuration parameters,
+        String operation) {
+        ResourceOperationSchedule schedule = new ResourceOperationSchedule();
+        schedule.setResource(storageNode.getResource());
+        schedule.setJobTrigger(JobTrigger.createNowTrigger());
+        schedule.setSubject(subject);
+        schedule.setOperationName(operation);
+        schedule.setParameters(parameters);
+
+        operationManager.scheduleResourceOperation(subject, schedule);
+
     }
 
     private PropertyList createPropertyListOfAddresses(String propertyName, List<StorageNode> nodes) {

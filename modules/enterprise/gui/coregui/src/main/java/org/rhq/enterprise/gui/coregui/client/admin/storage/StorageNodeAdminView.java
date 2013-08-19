@@ -124,7 +124,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                     public void onFailure(Throwable caught) {
                         Message message = new Message("Unable to render storage node alert view: "
                             + caught.getMessage(), Message.Severity.Warning);
-                        CoreGUI.goToView(VIEW_ID.getName(), message);
+                        CoreGUI.goToView(StorageNodeTableView.VIEW_PATH, message);
                     }
 
                     @Override

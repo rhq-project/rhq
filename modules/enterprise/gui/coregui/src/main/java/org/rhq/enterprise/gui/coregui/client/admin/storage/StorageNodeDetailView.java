@@ -77,6 +77,9 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class StorageNodeDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int storageNodeId;
+    
+//    String path = StorageNodeAdminView.VIEW_PATH + "/" + storageNodeId;
+//    CoreGUI.goToView(path, message);
 
     private static final int SECTION_COUNT = 3;
     private final SectionStack sectionStack;
@@ -121,9 +124,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             new AsyncCallback<PageList<StorageNode>>() {
                 public void onSuccess(final PageList<StorageNode> storageNodes) {
                     if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)));
-                        initSectionCount = SECTION_COUNT;
+                        onFailure(new Exception("No storage nodes have been found."));
                     }
                     final StorageNode node = storageNodes.get(0);
                     header.setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
@@ -166,6 +167,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                         Message message = new Message(MSG.view_configurationHistoryDetails_error_loadFailure(),
                             Message.Severity.Warning);
                         initSectionCount = SECTION_COUNT;
+                        CoreGUI.getMessageCenter().notify(message);
                     }
 
                     @Override
@@ -199,7 +201,10 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                 new AsyncCallback<Map<String, List<MeasurementDataNumericHighLowComposite>>>() {
                     @Override
                     public void onFailure(Throwable caught) {
-
+                        Message message = new Message("Unable to fetch storage node load data.",
+                            Message.Severity.Warning);
+                        initSectionCount = SECTION_COUNT;
+                        CoreGUI.getMessageCenter().notify(message);
                     }
 
                     @Override
@@ -357,7 +362,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             ResourceOperationHistory operationHistory = storageNode.getFailedOperation();
             String value = LinkManager.getSubsystemResourceOperationHistoryLink(operationHistory.getResource().getId(),
                 operationHistory.getId());
-            //            String value = "#Resource/" + operationHistory.getResource().getId() + "/Operations/History/" + operationHistory.getId());
             lastOperation = new StaticTextItem("lastOp", "Operation");
             lastOperation.setValue(LinkManager.getHref(value, operationHistory.getOperationDefinition()
                 .getDisplayName()));
@@ -389,7 +393,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         loadLayout.setWidth100();
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setHeight(10);
-//        HTMLFlow loadLabel = new HTMLFlow("<span style='font-weight:bold'>Status</span>");
         HTMLFlow loadLabel = new HTMLFlow("Status");
         loadLabel.addStyleName("formTitle");
         loadLabel.setTooltip("Contains selected metrics collected for last 8 hours.");

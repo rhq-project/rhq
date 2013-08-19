@@ -122,15 +122,17 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                 GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new AsyncCallback<Integer[]>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        Message message = new Message("foobar",
-                            Message.Severity.Warning);
+                        Message message = new Message("Unable to render storage node alert view: "
+                            + caught.getMessage(), Message.Severity.Warning);
                         CoreGUI.goToView(VIEW_ID.getName(), message);
                     }
 
                     @Override
                     public void onSuccess(Integer[] result) {
                         if (result == null || result.length == 0) {
-                            onFailure(new Exception("foobaz"));
+                            onFailure(new Exception(
+                                "Unfortunately, there are no associated resources for the available storage nodes. " +
+                                "Check if the agents are running on the machines where the storage nodes are deployed."));
                         } else {
                             resIds = ArrayUtils.unwrapArray(result);
                             tabset.getTabByName(tabInfo.name.getName()).setPane(

@@ -27,7 +27,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -50,6 +50,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAct
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
@@ -83,6 +84,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
     @Override
     protected void doOnDraw() {
         super.doOnDraw();
+        // commenting out this call, because it caused UI to freeze
 //        scheduleUnacknowledgedAlertsPollingJob(getListGrid());
     }
 
@@ -178,6 +180,11 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         ListGrid listGrid = new ListGrid() {
             @Override
             protected Canvas getExpansionComponent(final ListGridRecord record) {
+                if (record.getAttribute(FIELD_RESOURCE_ID.propertyName()) == null) {
+                    // no resource set
+                    return new HTMLFlow("There is no load data available for this node. Is the agent running on the "
+                        + record.getAttributeAsString(FIELD_ADDRESS.propertyName() + "?"));
+                }
                 int id = record.getAttributeAsInt(FIELD_ID);
                 return new StorageNodeLoadComponent(id, null);
             }

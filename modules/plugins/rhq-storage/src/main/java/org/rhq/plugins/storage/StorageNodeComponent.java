@@ -290,6 +290,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private OperationResult uninstall() {
+        log.info("Uninstalling storage node at " + getResourceContext().getResourceKey());
+
         OperationResult result = new OperationResult();
         OperationResult shutdownResult = shutdownIfNecessary();
         if (shutdownResult.getErrorMessage() != null) {
@@ -363,14 +365,13 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         OperationResult result = new OperationResult();
 
         log.info("Stopping storage node");
-        OperationResult stopNodeResult = shutdownStorageNode();
-        if (stopNodeResult.getErrorMessage() != null) {
-            log.error("Failed to stop storage node " + this + " Cannot prepare the node for bootstrap which means " +
-                "that the storage node cannot join the cluster. Make sure the storage node is not running and retry " +
-                "the operation");
-            result.setErrorMessage("Failed to stop storage node. Cannot prepare the node for bootstrap which means " +
-                "that it cannot join the cluster. Make sure that the node is not running and retry the operation. " +
-                "Stopping the storage node failed with this error: " + stopNodeResult.getErrorMessage());
+        OperationResult shutdownResult = shutdownIfNecessary();
+        if (shutdownResult.getErrorMessage() != null) {
+            log.error("Failed to stop storage node " + getResourceContext().getResourceKey() + ". The storage node " +
+                "must be shut down in order for the changes made by this operation to take effect.");
+            result.setErrorMessage("Failed to stop the storage node. The storage node must be shut down in order " +
+                "for the changes made by this operation to take effect. The attempt to stop shut down the storage " +
+                "node failed with this error: " + shutdownResult.getErrorMessage());
             return result;
         }
 

@@ -82,7 +82,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (log.isInfoEnabled()) {
             log.info("Announcing " + storageNode + " to storage node cluster.");
         }
-        storageNode.setOperationMode(StorageNode.OperationMode.ANNOUNCE);
         List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
         List<StorageNode> allNodes = new ArrayList<StorageNode>(clusterNodes);
@@ -113,7 +112,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     public void unannounceStorageNode(Subject subject, StorageNode storageNode) {
         log.info("Unannouncing " + storageNode);
 
-        storageNode.setOperationMode(StorageNode.OperationMode.UNANNOUNCE);
         List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
         for (StorageNode clusterNode : clusterNodes) {
@@ -133,13 +131,24 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     public void uninstall(Subject subject, StorageNode storageNode) {
         log.info("Uninstalling " + storageNode);
 
-        storageNode.setOperationMode(StorageNode.OperationMode.UNINSTALL);
-
         if (storageNode.getResource() == null) {
             finishUninstall(subject, storageNode);
         } else {
             scheduleOperation(subject, storageNode, new Configuration(), "uninstall");
         }
+    }
+
+    private void finishUninstall(Subject subject, StorageNode storageNode) {
+        if (storageNode.getResource() != null) {
+            log.info("Removing storage node resource " + storageNode.getResource() + " from inventory");
+            Resource resource = storageNode.getResource();
+            storageNodeOperationsHandler.detachFromResource(storageNode);
+            resourceManager.uninventoryResource(subject, resource.getId());
+        }
+        log.info("Removing storage node entity " + storageNode + " from database");
+        entityManager.remove(storageNode);
+
+        log.info(storageNode + " has been undeployed");
     }
 
     @Override
@@ -153,12 +162,11 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     public void decommissionStorageNode(Subject subject, StorageNode storageNode) {
         log.info("Preparing to decommission " + storageNode);
 
-        storageNode.setOperationMode(StorageNode.OperationMode.DECOMMISSION);
+        storageNode = storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.DECOMMISSION);
         List<StorageNode> storageNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
-        storageNodes.add(storageNode);
 
-        boolean runRepair = updateSchemaIfNecessary(storageNodes);
+        boolean runRepair = updateSchemaIfNecessary(storageNodes.size() + 1, storageNodes.size());
         // This is a bit of a hack since the maintenancePending flag is really intended to
         // queue up storage nodes during cluster maintenance operations.
         storageNode.setMaintenancePending(runRepair);
@@ -184,6 +192,10 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             StorageNode.class).setParameter("address", storageNodeAddress.getHostAddress()).getSingleResult();
 
         if (storageNode.getOperationMode() == StorageNode.OperationMode.BOOTSTRAP) {
+            // TODO need to add support for HA deployments
+            // If multiple RHQ servers are running, they will all receive the event
+            // notification that the node is up and will all wind up calling this method.
+            storageNode = storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.ADD_MAINTENANCE);
             performAddNodeMaintenance(subjectManager.getOverlord(), storageNode);
         } else {
             log.info(storageNode + " has already been bootstrapped. Skipping add node maintenance.");
@@ -192,7 +204,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     public void performAddNodeMaintenance(Subject subject, StorageNode storageNode) {
-        storageNode.setOperationMode(StorageNode.OperationMode.ADD_MAINTENANCE);
         List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
             .getResultList();
@@ -201,7 +212,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
         storageNode.setMaintenancePending(true);
         clusterNodes.add(storageNode);
-        boolean runRepair = updateSchemaIfNecessary(clusterNodes);
+        boolean runRepair = updateSchemaIfNecessary(clusterNodes.size(), clusterNodes.size() + 1);
         performAddNodeMaintenance(subject, storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST,
             clusterNodes));
     }
@@ -225,7 +236,11 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             StorageNode.class).setParameter("address", storageNodeAddress.getHostAddress()).getSingleResult();
 
         if (storageNode.getOperationMode() == StorageNode.OperationMode.DECOMMISSION) {
-            storageNode.setOperationMode(StorageNode.OperationMode.REMOVE_MAINTENANCE);
+            // TODO need to add support for HA deployments
+            // If multiple RHQ servers are running, they will all receive the event
+            // notification that the node is up and will all wind up calling this method.
+            storageNode = storageNodeOperationsHandler.setMode(storageNode,
+                StorageNode.OperationMode.REMOVE_MAINTENANCE);
             performRemoveNodeMaintenance(subjectManager.getOverlord(), storageNode);
         } else {
             log.info("Remove node maintenance has already been run for " + storageNode);
@@ -241,7 +256,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             node.setMaintenancePending(true);
         }
         boolean runRepair = storageNode.isMaintenancePending();
-        performRemoveNodeMaintenance(subjectManager.getOverlord(), clusterNodes.get(0), runRepair,
+        performRemoveNodeMaintenance(subject, clusterNodes.get(0), runRepair,
             createPropertyListOfAddresses(SEEDS_LIST, clusterNodes));
     }
 
@@ -357,8 +372,9 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
             if (nextNode == null) {
                 log.info("Successfully announced new storage node to storage cluster");
-                newStorageNode.setOperationMode(StorageNode.OperationMode.BOOTSTRAP);
-                prepareNodeForBootstrap(subject, newStorageNode, addresses.deepCopy(false));
+                newStorageNode = storageNodeOperationsHandler.setMode(newStorageNode,
+                    StorageNode.OperationMode.BOOTSTRAP);
+                storageNodeOperationsHandler.bootstrapStorageNode(subject, newStorageNode);
             } else {
                 announceStorageNode(subject, newStorageNode, nextNode, addresses.deepCopy(false));
             }
@@ -369,32 +385,31 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void handleUnannounce(ResourceOperationHistory operationHistory) {
         StorageNode storageNode = findStorageNode(operationHistory.getResource());
-        StorageNode removedStorageNode = null;
+        StorageNode removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.UNANNOUNCE);
         switch (operationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
                 break;
             case CANCELED:
-                removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.UNANNOUNCE);
                 undeploymentOperationCanceled(storageNode, operationHistory, removedStorageNode);
                 break;
             case FAILURE:
-                removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.UNANNOUNCE);
                 deploymentOperationFailed(storageNode, operationHistory, removedStorageNode);
                 break;
             default:  // SUCCESS
                 storageNode.setMaintenancePending(false);
 
-                removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.UNANNOUNCE);
                 StorageNode nextNode = takeFromMaintenanceQueue();
                 Subject subject = getSubject(operationHistory);
-                Configuration params = operationHistory.getParameters();
-                PropertyList addresses = params.getList("addresses");
 
                 if (nextNode == null) {
                     log.info("Successfully unannounced " + removedStorageNode + " to storage cluster");
+                    removedStorageNode = storageNodeOperationsHandler.setMode(removedStorageNode,
+                        StorageNode.OperationMode.UNINSTALL);
                     uninstall(getSubject(operationHistory), removedStorageNode);
                 } else {
+                    Configuration params = operationHistory.getParameters();
+                    PropertyList addresses = params.getList("addresses");
                     unannounceStorageNode(subject, nextNode, addresses.deepCopy(false));
                 }
         }
@@ -428,17 +443,15 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void handleAddNodeMaintenance(ResourceOperationHistory resourceOperationHistory) {
         StorageNode storageNode = findStorageNode(resourceOperationHistory.getResource());
-        StorageNode newStorageNode = null;
+        StorageNode newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_MAINTENANCE);
         switch (resourceOperationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
                 return;
             case CANCELED:
-                newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_MAINTENANCE);
                 deploymentOperationCanceled(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             case FAILURE:
-                newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_MAINTENANCE);
                 deploymentOperationFailed(storageNode, resourceOperationHistory, newStorageNode);
                 return;
             default:  // SUCCESS
@@ -448,9 +461,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
                 if (nextNode == null) {
                     log.info("Finished running add node maintenance on all cluster nodes");
-                    // TODO replace this with an UPDATE statement
-                    newStorageNode = findStorageNodeByMode(StorageNode.OperationMode.ADD_MAINTENANCE);
-                    newStorageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
+                    storageNodeOperationsHandler.setMode(newStorageNode, StorageNode.OperationMode.NORMAL);
                 } else {
                     Configuration parameters = resourceOperationHistory.getParameters();
                     boolean runRepair = parameters.getSimple(RUN_REPAIR_PROPERTY).getBooleanValue();
@@ -463,19 +474,39 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void bootstrapStorageNode(Subject subject, StorageNode storageNode) {
+        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
+        clusterNodes.add(storageNode);
+        prepareNodeForBootstrap(subject, storageNode, createPropertyListOfAddresses("addresses", clusterNodes));
+    }
+
+    private void prepareNodeForBootstrap(Subject subject, StorageNode storageNode, PropertyList addresses) {
+        if (log.isInfoEnabled()) {
+            log.info("Preparing to bootstrap " + storageNode + " into cluster...");
+        }
+        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subject);
+        Configuration parameters = new Configuration();
+        parameters.put(new PropertySimple("cqlPort", clusterSettings.getCqlPort()));
+        parameters.put(new PropertySimple("gossipPort", clusterSettings.getGossipPort()));
+        parameters.put(addresses);
+
+        scheduleOperation(subject, storageNode, parameters, "prepareForBootstrap");
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void handleRemoveNodeMaintenance(ResourceOperationHistory operationHistory) {
         StorageNode storageNode = findStorageNode(operationHistory.getResource());
-        StorageNode removedStorageNode = null;
+        StorageNode removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.REMOVE_MAINTENANCE);
         switch (operationHistory.getStatus()) {
             case INPROGRESS:
                 // nothing to do here
                 break;
             case CANCELED:
-                removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.REMOVE_MAINTENANCE);
                 undeploymentOperationCanceled(storageNode, operationHistory, removedStorageNode);
                 break;
             case FAILURE:
-                removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.REMOVE_MAINTENANCE);
                 undeploymentOperationFailed(storageNode, operationHistory, removedStorageNode);
                 break;
             default:  // SUCCESS
@@ -485,8 +516,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
                 if (nextNode == null) {
                     log.info("Finished running remove node maintenance on all cluster nodes");
-                    // TODO replace this with an UPDATE statement
-                    removedStorageNode = findStorageNodeByMode(StorageNode.OperationMode.REMOVE_MAINTENANCE);
+                    removedStorageNode = storageNodeOperationsHandler.setMode(removedStorageNode,
+                        StorageNode.OperationMode.UNANNOUNCE);
                     unannounceStorageNode(getSubject(operationHistory), removedStorageNode);
                 } else {
                     Configuration parameters = operationHistory.getParameters();
@@ -537,14 +568,11 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
     }
 
-    private void finishUninstall(Subject subject, StorageNode storageNode) {
-        if (storageNode.getResource() != null) {
-            log.info("Removing storage node resource " + storageNode.getResource() + " from inventory");
-            storageNodeOperationsHandler.detachFromResource(storageNode);
-            resourceManager.uninventoryResource(subject, storageNode.getResource().getId());
-        }
-        log.info("Removing storage node entity " + storageNode + " from database");
-        entityManager.remove(storageNode);
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public StorageNode setMode(StorageNode storageNode, StorageNode.OperationMode newMode) {
+        storageNode.setOperationMode(newMode);
+        return entityManager.merge(storageNode);
     }
 
     private Subject getSubject(ResourceOperationHistory resourceOperationHistory) {
@@ -644,27 +672,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         return null;
     }
 
-    @Override
-    public void bootstrapStorageNode(Subject subject, StorageNode storageNode) {
-        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
-        clusterNodes.add(storageNode);
-        prepareNodeForBootstrap(subject, storageNode, createPropertyListOfAddresses("addresses", clusterNodes));
-    }
-
-    private void prepareNodeForBootstrap(Subject subject, StorageNode storageNode, PropertyList addresses) {
-        if (log.isInfoEnabled()) {
-            log.info("Preparing to bootstrap " + storageNode + " into cluster...");
-        }
-        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subject);
-        Configuration parameters = new Configuration();
-        parameters.put(new PropertySimple("cqlPort", clusterSettings.getCqlPort()));
-        parameters.put(new PropertySimple("gossipPort", clusterSettings.getGossipPort()));
-        parameters.put(addresses);
-
-        scheduleOperation(subject, storageNode, parameters, "prepareForBootstrap");
-    }
-
     private StorageNode takeFromMaintenanceQueue() {
         List<StorageNode> storageNodes = entityManager.createQuery("SELECT s FROM StorageNode s WHERE " +
             "s.operationMode = :operationMode AND s.maintenancePending = :maintenancePending", StorageNode.class)
@@ -692,59 +699,92 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             resourceType.getPlugin().equals(STORAGE_NODE_PLUGIN_NAME);
     }
 
-    private boolean updateSchemaIfNecessary(List<StorageNode> storageNodes) {
-        // The previous cluster size will be the current size - 1 since we currently only
-        // support deploying one node at a time.
-        int previousClusterSize = storageNodes.size() - 1;
+    private boolean updateSchemaIfNecessary(int previousClusterSize, int newClusterSize) {
         boolean isRepairNeeded;
         int replicationFactor = 1;
 
-        if (previousClusterSize >= 4) {
-            // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
-            // that for additional nodes; so, there is no need to run repair if we are
-            // expanding from a 4 node cluster since the RF remains the same.
-            isRepairNeeded = false;
-        } else if (previousClusterSize == 1) {
-            // The RF will increase since we are going from a single to a multi-node
-            // cluster; therefore, we want to run repair.
-            isRepairNeeded = true;
-            replicationFactor = 2;
-        } else if (previousClusterSize == 2) {
-            if (storageNodes.size() > 3) {
-                // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
-                // we want to run repair.
-                isRepairNeeded = true;
-                replicationFactor = 3;
-            } else {
-                // If we go from 2 to 3 nodes, we keep the RF at 2 so there is no need
-                // to run repair.
-                isRepairNeeded = false;
-            }
-        } else if (previousClusterSize == 3) {
-            // We are increasing the cluster size > 3 which means the RF will be
-            // updated to 3; therefore, we want to run repair.
-            isRepairNeeded = true;
-            replicationFactor = 3;
-        } else {
-            // If we cluster size of zero, then something is really screwed up. It
-            // should always be > 0.
-            throw new RuntimeException("The previous cluster size should never be zero at this point");
+        if (previousClusterSize == 0) {
+            throw new IllegalStateException("previousClusterSize cannot be 0");
+        }
+        if (newClusterSize == 0) {
+            throw new IllegalStateException("newClusterSize cannot be 0");
+        }
+        if (Math.abs(newClusterSize - previousClusterSize) != 1) {
+            throw new IllegalStateException("The absolute difference between previousClusterSize[" +
+                previousClusterSize + "] and newClusterSize[" + newClusterSize + "] must be 1");
         }
 
-        if (isRepairNeeded) {
-//            String username = getRequiredStorageProperty(USERNAME_PROPERTY);
-//            String password = getRequiredStorageProperty(PASSWORD_PROPERTY);
-//            SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
-//            try{
-//                schemaManager.updateTopology();
-//            } catch (Exception e) {
-//                log.error("An error occurred while applying schema topology changes", e);
-//            }
+        if (newClusterSize == 1) {
+            isRepairNeeded = false;
+            replicationFactor = 1;
+        } else if (previousClusterSize > 4 && newClusterSize == 4) {
+            isRepairNeeded = false;
+        } else if (previousClusterSize == 4 && newClusterSize == 3) {
+            isRepairNeeded = true;
+            replicationFactor = 2;
+        } else if (previousClusterSize == 3 && newClusterSize == 2) {
+            isRepairNeeded = false;
+        } else if (previousClusterSize == 1 && newClusterSize == 2) {
+            isRepairNeeded = true;
+            replicationFactor = 2;
+        } else if (previousClusterSize == 2 && newClusterSize == 3) {
+            isRepairNeeded = false;
+        } else if (previousClusterSize == 3 && newClusterSize == 4) {
+            isRepairNeeded = true;
+            replicationFactor = 3;
+        } else if (previousClusterSize == 4 && newClusterSize > 4) {
+            isRepairNeeded = false;
+        } else {
+            throw new IllegalStateException("previousClusterSize[" + previousClusterSize + "] and newClusterSize[" +
+                newClusterSize + "] is not supported");
+        }
 
+
+
+
+//        if (newClusterSize == 1) {
+//            isRepairNeeded = false;
+//            replicationFactor = 1;
+//        }  else if (previousClusterSize >= 4) {
+//            // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
+//            // that for additional nodes; so, there is no need to run repair if we are
+//            // expanding from a 4 node cluster since the RF remains the same.
+//            isRepairNeeded = false;
+//        } else if (previousClusterSize == 1) {
+//            // The RF will increase since we are going from a single to a multi-node
+//            // cluster; therefore, we want to run repair.
+//            isRepairNeeded = true;
+//            replicationFactor = 2;
+//        } else if (previousClusterSize == 2) {
+//            if (storageNodes.size() > 3) {
+//                // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
+//                // we want to run repair.
+//                isRepairNeeded = true;
+//                replicationFactor = 3;
+//            } else {
+//                // If we go from 2 to 3 nodes, we keep the RF at 2 so there is no need
+//                // to run repair.
+//                isRepairNeeded = false;
+//            }
+//        } else if (previousClusterSize == 3) {
+//            // We are increasing the cluster size > 3 which means the RF will be
+//            // updated to 3; therefore, we want to run repair.
+//            isRepairNeeded = true;
+//            replicationFactor = 3;
+//        } else {
+//            // If we cluster size of zero, then something is really screwed up. It
+//            // should always be > 0.
+//            throw new RuntimeException("The previous cluster size should never be zero at this point");
+//        }
+
+        if (isRepairNeeded) {
             updateReplicationFactor(replicationFactor);
             if (previousClusterSize == 1) {
                 updateGCGraceSeconds(691200);  // 8 days
             }
+        } else if (newClusterSize == 1) {
+            updateReplicationFactor(1);
+            updateGCGraceSeconds(0);
         }
 
         return isRepairNeeded;

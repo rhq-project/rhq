@@ -51,9 +51,9 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
-import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.common.JobTrigger;
@@ -684,12 +684,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
 
         return configuration;
-    }
-    
-    @Override
-    @Asynchronous
-    public void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
-        updateConfiguration(subject, storageNodeConfiguration);
     }
 
     @Override

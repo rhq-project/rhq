@@ -238,6 +238,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         switch (storageNode.getOperationMode()) {
             case INSTALLED:
+                storageNode.setOperationMode(OperationMode.ANNOUNCE);
             case ANNOUNCE:
                 reset();
                 storageNodeOperationsHandler.announceStorageNode(subject, storageNode);

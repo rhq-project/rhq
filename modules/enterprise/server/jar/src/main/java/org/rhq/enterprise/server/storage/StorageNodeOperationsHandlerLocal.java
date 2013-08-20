@@ -52,4 +52,6 @@ public interface StorageNodeOperationsHandlerLocal {
     void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode);
 
     void logError(StorageNode.OperationMode newStorageNodeOperationMode, String error, Exception e);
+
+    StorageNode setMode(StorageNode storageNode, StorageNode.OperationMode newMode);
 }

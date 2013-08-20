@@ -168,6 +168,7 @@
     <commons-validator.version>1.1.4</commons-validator.version>
     <commons-collections.version>3.2.1</commons-collections.version>
     <commons-configuration.version>1.6</commons-configuration.version>
+    <apache.httpcomponents.version>4.2.5</apache.httpcomponents.version>
 
     <junit.version>4.10</junit.version>
     <liquibase-core.version>2.0.3</liquibase-core.version>
@@ -483,6 +484,36 @@
         <groupId>commons-beanutils</groupId>
         <artifactId>commons-beanutils</artifactId>
         <version>1.8.2</version>
+      </dependency>
+
+      <!-- Apache HC HTTP Client 4+ -->
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpcore</artifactId>
+        <version>${apache.httpcomponents.version}</version>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpclient</artifactId>
+        <version>${apache.httpcomponents.version}</version>
+        <exclusions>
+          <exclusion>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+          </exclusion>
+          <exclusion>
+            <groupId>commons-logging</groupId>
+            <artifactId>commons-logging</artifactId>
+          </exclusion>
+        </exclusions>
+      </dependency>
+
+      <dependency>
+        <groupId>org.apache.httpcomponents</groupId>
+        <artifactId>httpmime</artifactId>
+        <version>${apache.httpcomponents.version}</version>
       </dependency>
 
       <!-- GNU GetOpt (any modules that need to do command-line argument parsing should use this) -->

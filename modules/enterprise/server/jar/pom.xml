@@ -246,6 +246,23 @@
        <scope>provided</scope>
     </dependency>
 
+    <!-- Apache HC HTTP Client 4+ -->
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpcore</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpclient</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.apache.httpcomponents</groupId>
+      <artifactId>httpmime</artifactId>
+    </dependency>
+
       <!-- Required by a couple APL and Lather classes - TODO: Remove this once APL and Lather have been excised. -->
     <dependency>
       <groupId>commons-beanutils</groupId>

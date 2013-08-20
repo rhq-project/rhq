@@ -395,9 +395,14 @@ public class ResourceTitleBar extends EnhancedVLayout {
             new AsyncCallback<List<ResourceError>>() {
                 public void onFailure(Throwable caught) {
                     pluginErrors.setVisible(false);
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
-                            .getId())), caught);
+
+                    if (UserSessionManager.isLoggedOut()) {
+                        resourceAvailAndErrorsRefreshTime.cancel();
+                    } else {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
+                                .getId())), caught);
+                    }
 
                     if (latch != null) {
                         latch.countDown();
@@ -427,9 +432,13 @@ public class ResourceTitleBar extends EnhancedVLayout {
             @Override
             public void onFailure(Throwable caught) {
                 availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
-                CoreGUI.getErrorHandler().handleError("I18N: Failed to refresh the availability", caught);
-                    //MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
-                    //    .getId())), caught);
+
+                if (UserSessionManager.isLoggedOut()) {
+                    resourceAvailAndErrorsRefreshTime.cancel();
+                } else {
+                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resource_loadFailed(String.valueOf(resource.getId())), caught);
+                }
+
                 if (latch != null) {
                     latch.countDown();
                 } else {

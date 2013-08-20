@@ -165,9 +165,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         storageNode = storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.DECOMMISSION);
         List<StorageNode> storageNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
-        storageNodes.add(storageNode);
 
-        boolean runRepair = updateSchemaIfNecessary(storageNodes);
+        boolean runRepair = updateSchemaIfNecessary(storageNodes.size() + 1, storageNodes.size());
         // This is a bit of a hack since the maintenancePending flag is really intended to
         // queue up storage nodes during cluster maintenance operations.
         storageNode.setMaintenancePending(runRepair);
@@ -205,7 +204,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     public void performAddNodeMaintenance(Subject subject, StorageNode storageNode) {
-        storageNode.setOperationMode(StorageNode.OperationMode.ADD_MAINTENANCE);
         List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
             StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
             .getResultList();
@@ -214,7 +212,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
         storageNode.setMaintenancePending(true);
         clusterNodes.add(storageNode);
-        boolean runRepair = updateSchemaIfNecessary(clusterNodes);
+        boolean runRepair = updateSchemaIfNecessary(clusterNodes.size(), clusterNodes.size() + 1);
         performAddNodeMaintenance(subject, storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST,
             clusterNodes));
     }
@@ -701,59 +699,92 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
             resourceType.getPlugin().equals(STORAGE_NODE_PLUGIN_NAME);
     }
 
-    private boolean updateSchemaIfNecessary(List<StorageNode> storageNodes) {
-        // The previous cluster size will be the current size - 1 since we currently only
-        // support deploying one node at a time.
-        int previousClusterSize = storageNodes.size() - 1;
+    private boolean updateSchemaIfNecessary(int previousClusterSize, int newClusterSize) {
         boolean isRepairNeeded;
         int replicationFactor = 1;
 
-        if (previousClusterSize >= 4) {
-            // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
-            // that for additional nodes; so, there is no need to run repair if we are
-            // expanding from a 4 node cluster since the RF remains the same.
-            isRepairNeeded = false;
-        } else if (previousClusterSize == 1) {
-            // The RF will increase since we are going from a single to a multi-node
-            // cluster; therefore, we want to run repair.
-            isRepairNeeded = true;
-            replicationFactor = 2;
-        } else if (previousClusterSize == 2) {
-            if (storageNodes.size() > 3) {
-                // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
-                // we want to run repair.
-                isRepairNeeded = true;
-                replicationFactor = 3;
-            } else {
-                // If we go from 2 to 3 nodes, we keep the RF at 2 so there is no need
-                // to run repair.
-                isRepairNeeded = false;
-            }
-        } else if (previousClusterSize == 3) {
-            // We are increasing the cluster size > 3 which means the RF will be
-            // updated to 3; therefore, we want to run repair.
-            isRepairNeeded = true;
-            replicationFactor = 3;
-        } else {
-            // If we cluster size of zero, then something is really screwed up. It
-            // should always be > 0.
-            throw new RuntimeException("The previous cluster size should never be zero at this point");
+        if (previousClusterSize == 0) {
+            throw new IllegalStateException("previousClusterSize cannot be 0");
+        }
+        if (newClusterSize == 0) {
+            throw new IllegalStateException("newClusterSize cannot be 0");
+        }
+        if (Math.abs(newClusterSize - previousClusterSize) != 1) {
+            throw new IllegalStateException("The absolute difference between previousClusterSize[" +
+                previousClusterSize + "] and newClusterSize[" + newClusterSize + "] must be 1");
         }
 
-        if (isRepairNeeded) {
-//            String username = getRequiredStorageProperty(USERNAME_PROPERTY);
-//            String password = getRequiredStorageProperty(PASSWORD_PROPERTY);
-//            SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
-//            try{
-//                schemaManager.updateTopology();
-//            } catch (Exception e) {
-//                log.error("An error occurred while applying schema topology changes", e);
-//            }
+        if (newClusterSize == 1) {
+            isRepairNeeded = false;
+            replicationFactor = 1;
+        } else if (previousClusterSize > 4 && newClusterSize == 4) {
+            isRepairNeeded = false;
+        } else if (previousClusterSize == 4 && newClusterSize == 3) {
+            isRepairNeeded = true;
+            replicationFactor = 2;
+        } else if (previousClusterSize == 3 && newClusterSize == 2) {
+            isRepairNeeded = false;
+        } else if (previousClusterSize == 1 && newClusterSize == 2) {
+            isRepairNeeded = true;
+            replicationFactor = 2;
+        } else if (previousClusterSize == 2 && newClusterSize == 3) {
+            isRepairNeeded = false;
+        } else if (previousClusterSize == 3 && newClusterSize == 4) {
+            isRepairNeeded = true;
+            replicationFactor = 3;
+        } else if (previousClusterSize == 4 && newClusterSize > 4) {
+            isRepairNeeded = false;
+        } else {
+            throw new IllegalStateException("previousClusterSize[" + previousClusterSize + "] and newClusterSize[" +
+                newClusterSize + "] is not supported");
+        }
 
+
+
+
+//        if (newClusterSize == 1) {
+//            isRepairNeeded = false;
+//            replicationFactor = 1;
+//        }  else if (previousClusterSize >= 4) {
+//            // At 4 nodes we increase the RF to 3. We are not increasing the RF beyond
+//            // that for additional nodes; so, there is no need to run repair if we are
+//            // expanding from a 4 node cluster since the RF remains the same.
+//            isRepairNeeded = false;
+//        } else if (previousClusterSize == 1) {
+//            // The RF will increase since we are going from a single to a multi-node
+//            // cluster; therefore, we want to run repair.
+//            isRepairNeeded = true;
+//            replicationFactor = 2;
+//        } else if (previousClusterSize == 2) {
+//            if (storageNodes.size() > 3) {
+//                // If we go from 2 to > 3 nodes we will increase the RF to 3; therefore
+//                // we want to run repair.
+//                isRepairNeeded = true;
+//                replicationFactor = 3;
+//            } else {
+//                // If we go from 2 to 3 nodes, we keep the RF at 2 so there is no need
+//                // to run repair.
+//                isRepairNeeded = false;
+//            }
+//        } else if (previousClusterSize == 3) {
+//            // We are increasing the cluster size > 3 which means the RF will be
+//            // updated to 3; therefore, we want to run repair.
+//            isRepairNeeded = true;
+//            replicationFactor = 3;
+//        } else {
+//            // If we cluster size of zero, then something is really screwed up. It
+//            // should always be > 0.
+//            throw new RuntimeException("The previous cluster size should never be zero at this point");
+//        }
+
+        if (isRepairNeeded) {
             updateReplicationFactor(replicationFactor);
             if (previousClusterSize == 1) {
                 updateGCGraceSeconds(691200);  // 8 days
             }
+        } else if (newClusterSize == 1) {
+            updateReplicationFactor(1);
+            updateGCGraceSeconds(0);
         }
 
         return isRepairNeeded;

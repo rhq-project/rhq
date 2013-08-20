@@ -161,7 +161,7 @@ public interface StorageNodeManagerLocal {
      * sure you know what you are doing if you invoke this method outside of the regularly scheduled maintenance window.
      * </p>
      */
-    void runReadRepair();
+    void runClusterMaintenance();
 
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
 

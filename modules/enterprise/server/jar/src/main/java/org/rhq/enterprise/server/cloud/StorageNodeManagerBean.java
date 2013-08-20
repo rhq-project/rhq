@@ -51,9 +51,9 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
-import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.common.JobTrigger;
@@ -61,6 +61,7 @@ import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.criteria.AlertCriteria;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
@@ -478,7 +479,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             } else { // newly installed node
                 result.add(new StorageNodeLoadComposite(node, beginTime, endTime));
             }
-            
+
         }
         return result;
     }
@@ -549,7 +550,32 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
-    public void runReadRepair() {
+    public void runClusterMaintenance() {
+        List<StorageNode> storageNodes = getStorageNodes();
+
+        for (StorageNode storageNode : storageNodes) {
+            Resource test = storageNode.getResource();
+
+            ResourceCriteria criteria = new ResourceCriteria();
+            criteria.addFilterParentResourceId(test.getId());
+            criteria.addFilterResourceTypeName("StorageService");
+            criteria.setPageControl(PageControl.getUnlimitedInstance());
+
+            PageList<Resource> resources = resourceManager.findResourcesByCriteria(subjectManager.getOverlord(), criteria);
+            if (resources.size() > 0) {
+                Resource storageServiceResource = resources.get(0);
+
+                ResourceOperationSchedule newSchedule = new ResourceOperationSchedule();
+                newSchedule.setJobTrigger(JobTrigger.createNowTrigger());
+                newSchedule.setResource(storageServiceResource);
+                newSchedule.setOperationName("takeSnapshot");
+                newSchedule.setDescription("Run by StorageNodeManagerBean");
+                newSchedule.setParameters(new Configuration());
+
+                storageNodeManger.scheduleOperationInNewTransaction(subjectManager.getOverlord(), newSchedule);
+            }
+        }
+
         // TODO Re-implement using work flow similar to how we deploy new nodes
 
 //        ResourceGroup storageNodeGroup = getStorageNodeGroup();

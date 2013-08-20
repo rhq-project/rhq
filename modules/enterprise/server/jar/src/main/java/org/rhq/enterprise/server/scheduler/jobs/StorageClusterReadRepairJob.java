@@ -19,6 +19,6 @@ public class StorageClusterReadRepairJob extends AbstractStatefulJob {
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
         log.info("Preparing to run read repair on storage cluster");
         StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
-        storageNodeManager.runReadRepair();
+        storageNodeManager.runClusterMaintenance();
     }
 }

@@ -168,11 +168,7 @@ public class ResourceMetricsPortlet extends GroupMetricsPortlet {
                         ResourceType resourceType = resource.getResourceType();
                         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
                             resourceType.getId(),
-                            EnumSet.of(ResourceTypeRepository.MetadataType.content,
-                                ResourceTypeRepository.MetadataType.operations,
-                                ResourceTypeRepository.MetadataType.measurements,
-                                ResourceTypeRepository.MetadataType.events,
-                                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
+                            EnumSet.of(ResourceTypeRepository.MetadataType.measurements ),
                             new ResourceTypeRepository.TypeLoadedCallback() {
                                 public void onTypesLoaded(ResourceType type) {
                                     resource.setResourceType(type);

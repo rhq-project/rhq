@@ -56,8 +56,8 @@ public abstract class AuthorizedTableAction extends AbstractTableAction {
             case GLOBAL:
                 globalPermissions.add(p);
                 break;
-            case RESOURCE:
-                throw new IllegalArgumentException("Does not support Resource permissions");
+            default:
+                throw new IllegalArgumentException("Does not support non-global permissions");
             }
         }
 

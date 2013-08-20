@@ -86,4 +86,17 @@ public interface AuthorizationGWTService extends RemoteService {
      */
     boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds) throws RuntimeException;
 
+    /**
+     * Returns true if the current user possesses either: 1) the specified bundle permission for *all* of the
+     * specified bundles, or 2) is a system superuser which, by definition, gives full access to all bundles
+     * NOTE: The size of the collection must be less than or equal to 1000 (due to an Oracle limitation).
+     *
+     * @param  subject     the current subject or caller
+     * @param  permission  a resource permission (i.e. permission.getTarget() == Permission.Target.RESOURCE)
+     * @param  bundleIds the ids of some Bundles to check permissions against (size of collection must be <= 1000)
+     *
+     * @return true if the current user possesses the specified resource permission for the specified resource
+     */
+    boolean hasBundlePermission(Permission permission, Collection<Integer> bundleIds);
+
 }

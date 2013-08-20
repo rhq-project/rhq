@@ -57,21 +57,21 @@ public class RoleCriteria extends Criteria {
 
     public RoleCriteria() {
         filterOverrides.put("subjectId", "" //
-            + "id IN ( SELECT innerRole.id " //
-            + "          FROM Role innerRole " //
-            + "          JOIN innerRole.subjects innerSubject " // 
-            + "         WHERE innerSubject.id = ? )");
+            + "id IN ( SELECT innerRole1.id " //
+            + "          FROM Role innerRole1 " //
+            + "          JOIN innerRole1.subjects innerSubject1 " // 
+            + "         WHERE innerSubject1.id = ? )");
 
         filterOverrides.put("ldapSubjectId", "" //
-            + "id IN ( SELECT innerRole.id " //
-            + "          FROM Role innerRole " //
-            + "          JOIN innerRole.ldapSubjects innerSubject " //
-            + "         WHERE innerSubject.id = ? )");
+            + "id IN ( SELECT innerRole2.id " //
+            + "          FROM Role innerRole2 " //
+            + "          JOIN innerRole2.ldapSubjects innerSubject2 " //
+            + "         WHERE innerSubject2.id = ? )");
 
         filterOverrides.put("permissions", "" //
-            + "id IN ( SELECT innerRole.id " //
-            + "          FROM Role innerRole " //
-            + "          JOIN irole.permissions perm " //
+            + "id IN ( SELECT innerRole3.id " //
+            + "          FROM Role innerRole3 " //
+            + "          JOIN innerRole3.permissions perm " //
             + "         WHERE perm IN ( ? ) )");
     }
 

@@ -190,7 +190,6 @@ public class Role implements Serializable {
     }
 
     public void addPermission(Permission permission) {
-        // permission.setRole(this);
         this.permissions.add(permission);
     }
 
@@ -229,7 +228,6 @@ public class Role implements Serializable {
             this.subjects = subjects;
             for (Subject subject : subjects) {
                 subject.addRole(this);
-                this.subjects.add(subject);
             }
         }
     }
@@ -286,37 +284,25 @@ public class Role implements Serializable {
     }
 
     /**
-     * This also updates the inverse relations (add this role to bundle groups)
-     * @param bundleGroups
+     * This *does not* update the inverse relation. You may want {@link BundleGroup#addRole(Role)}
      */
     public void setBundleGroups(Set<BundleGroup> bundleGroups) {
-        if (bundleGroups == null) {
-            this.bundleGroups = new HashSet<BundleGroup>();
-        } else {
-            this.bundleGroups = bundleGroups;
-            for (BundleGroup bundleGroup : this.bundleGroups) {
-                bundleGroup.addRole(this);
-                this.bundleGroups.add(bundleGroup);
-            }
-        }
+        this.bundleGroups = bundleGroups;
     }
 
     /**
-     * This also updates the inverse relation (add this role to bundle group)
-     * @param bundleGroup
+     * This *does not* update the inverse relation. You may want {@link BundleGroup#addRole(Role)}
      */
+
     public void addBundleGroup(BundleGroup bundleGroup) {
         getBundleGroups().add(bundleGroup);
-        bundleGroup.addRole(this);
     }
 
     /**
-     * This also updates the inverse relation (remove this role from bundle group)
-     * @param bundleGroup
+     * This *does not* update the inverse relation. You may want {@link BundleGroup#removeRole(Role)}
      */
     public void removeBundleGroup(BundleGroup bundleGroup) {
         getBundleGroups().remove(bundleGroup);
-        bundleGroup.removeRole(this);
     }
 
     public Set<ResourceGroup> getResourceGroups() {
@@ -330,7 +316,6 @@ public class Role implements Serializable {
             this.resourceGroups = resourceGroups;
             for (ResourceGroup resourceGroup : this.resourceGroups) {
                 resourceGroup.addRole(this);
-                this.resourceGroups.add(resourceGroup);
             }
         }
     }

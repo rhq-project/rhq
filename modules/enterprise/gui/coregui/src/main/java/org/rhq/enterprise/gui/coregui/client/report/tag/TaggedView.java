@@ -120,7 +120,7 @@ public class TaggedView extends EnhancedVLayout implements BookmarkableView, Has
 
             BundlesListView bundlesView = new BundlesListView(criteria, null);
             viewsWithTags.add(bundlesView);
-            tab = new Tab(MSG.view_bundle_bundles());
+            tab = new Tab(MSG.common_title_bundles());
             tab.setIcon(ImageManager.getBundleIcon());
             tab.setPane(bundlesView);
             container.addTab(tab);
@@ -147,7 +147,7 @@ public class TaggedView extends EnhancedVLayout implements BookmarkableView, Has
             tab.setPane(bundleDestinationListView);
             container.addTab(tab);
 
-            ResourceSearchView resourceView = new ResourceSearchView(criteria, MSG.view_taggedResources_title());
+            ResourceSearchView resourceView = new ResourceSearchView(criteria, MSG.view_taggedResources_title(), null);
             viewsWithTags.add(resourceView);
             tab = new Tab(MSG.view_taggedResources_title());
             tab.setIcon(ImageManager.getResourceIcon(ResourceCategory.SERVICE));

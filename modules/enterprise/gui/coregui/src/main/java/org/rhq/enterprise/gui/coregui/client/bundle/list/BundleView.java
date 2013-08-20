@@ -52,6 +52,7 @@ import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deployment.BundleDeploymentView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.destination.BundleDestinationView;
+import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupsListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.version.BundleVersionView;
 import org.rhq.enterprise.gui.coregui.client.components.HeaderLabel;
@@ -75,6 +76,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private TabSet tabs;
     private Tab versionsTab;
     private Tab destinationsTab;
+    private Tab bundleGroupsTab;
 
     private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
     private Bundle bundle;
@@ -100,8 +102,10 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         tabs = new TabSet();
         versionsTab = createVersionsTab();
         destinationsTab = createDestinationsTab();
+        bundleGroupsTab = createBundleGroupsTab();
         tabs.addTab(versionsTab);
         tabs.addTab(destinationsTab);
+        tabs.addTab(bundleGroupsTab);
 
         addMember(backButton);
         addMember(headerLabel);
@@ -159,6 +163,14 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         bundleVersionsTable = new BundleVersionListView(criteria);
         versionsTab.setPane(bundleVersionsTable);
         return versionsTab;
+    }
+
+    private Tab createBundleGroupsTab() {
+        Tab bundleGroupsTab = new Tab(MSG.common_title_bundleGroups());
+        Criteria criteria = new Criteria();
+        criteria.addCriteria("bundleIds", new Integer[] { bundle.getId() });
+        bundleGroupsTab.setPane(new BundleGroupsListView(criteria, (Set<Permission>) null));
+        return bundleGroupsTab;
     }
 
     private DynamicForm createSummaryForm() {

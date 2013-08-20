@@ -27,6 +27,7 @@ import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.Bundle;
 import org.rhq.core.domain.bundle.BundleType;
@@ -48,6 +49,11 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
 
     public BundleSelector() {
         super();
+    }
+
+    public BundleSelector(ListGridRecord[] initiallyAssigned, boolean isReadOnly) {
+        super(isReadOnly);
+        setAssigned(initiallyAssigned);
     }
 
     protected DynamicForm getAvailableFilterForm() {

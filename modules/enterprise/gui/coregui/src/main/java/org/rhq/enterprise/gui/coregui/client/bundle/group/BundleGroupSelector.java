@@ -22,6 +22,7 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.TextItem;
+import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.criteria.BundleGroupCriteria;
@@ -33,13 +34,27 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
  */
 public class BundleGroupSelector extends AbstractSelector<BundleGroup, BundleGroupCriteria> {
 
+    private Integer[] idsFilter;
 
     public BundleGroupSelector() {
-        this(false);
+        this(null, null, false);
     }
 
-    public BundleGroupSelector(boolean isReadOnly) {
+    public BundleGroupSelector(boolean isReadonly) {
+        this(null, null, isReadonly);
+    }
+
+    /**
+     * @param idsFilter optionally narrow the results to some predefined set, typically when narrowing to
+     *                  bundle groups associated with roles having specific permissions. ignored if null.
+     * @param initiallyAssigned
+     * @param isReadOnly
+     */
+    public BundleGroupSelector(Integer[] idsFilter, ListGridRecord[] initiallyAssigned, boolean isReadOnly) {
         super(isReadOnly);
+        setAssigned(initiallyAssigned);
+
+        this.idsFilter = idsFilter;
     }
 
     protected DynamicForm getAvailableFilterForm() {
@@ -76,6 +91,9 @@ public class BundleGroupSelector extends AbstractSelector<BundleGroup, BundleGro
             BundleGroupCriteria result = super.getFetchCriteria(request);
             if (null != result) {
                 result.setStrict(false);
+            }
+            if (null != idsFilter) {
+                result.addFilterIds(idsFilter);
             }
             return result;
         }

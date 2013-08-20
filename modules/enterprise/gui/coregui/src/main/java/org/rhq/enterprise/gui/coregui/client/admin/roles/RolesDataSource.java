@@ -320,6 +320,7 @@ public class RolesDataSource extends RPCDataSource<Role, RoleCriteria> {
             criteria.fetchSubjects(true);
             criteria.fetchResourceGroups(true);
             criteria.fetchLdapGroups(true);
+            criteria.fetchBundleGroups(true);
         }
 
         // TODO: instead of fetching subjects and resource groups, use a composite object that will pull the subject

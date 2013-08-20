@@ -211,6 +211,17 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "FROM Subject s, IN (s.roles) r, IN (r.permissions) p, IN (r.resourceGroups) g, IN (g.implicitResources) res "
         + "WHERE s = :subject AND p = :permission AND res.inventoryStatus = 'COMMITTED'"),
 
+    /*
+     * No easy way to test whether ALL bundles are      in some bundle group     in some role     in some subject     where
+     * subject.id = <id> & role.permission = <perm>
+     *
+     * Instead, we must use this potentially VERY costly query (costly because the result list could be huge in large
+     * environments).  However, we can return bundle.id only, to save a lot of traffic across the line and speed it up.
+     */
+    @NamedQuery(name = Subject.QUERY_GET_BUNDLES_BY_PERMISSION, query = "SELECT distinct bundle.id "
+        + "FROM Subject s, IN (s.roles) r, IN (r.permissions) p, IN (r.bundleGroups) g, IN (g.bundles) bundle "
+        + "WHERE s = :subject AND p = :permission"),
+
     @NamedQuery(name = Subject.QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES, query = "" //
         + "SELECT DISTINCT s " + "  FROM Subject AS s LEFT JOIN s.roles AS r " //
         + " WHERE s.id NOT IN " //
@@ -263,6 +274,7 @@ public class Subject implements Serializable {
     public static final String QUERY_CAN_VIEW_BUNDLE = "Subject.canViewBundle";
     public static final String QUERY_CAN_VIEW_BUNDLE_GROUP = "Subject.canViewBundleGroup";
 
+    public static final String QUERY_GET_BUNDLES_BY_PERMISSION = "Subject.getBundlesByPermission";
     public static final String QUERY_GET_RESOURCES_BY_PERMISSION = "Subject.getResourcesByPermission";
 
     public static final String QUERY_FIND_AVAILABLE_SUBJECTS_FOR_ROLE_WITH_EXCLUDES = "Subject.findAvailableSubjectsForRoleWithExcludes";

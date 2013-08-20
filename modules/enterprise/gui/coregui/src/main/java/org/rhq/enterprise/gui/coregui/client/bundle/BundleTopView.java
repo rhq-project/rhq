@@ -34,14 +34,12 @@ import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
 import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
+import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupEditView;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleView;
-import org.rhq.enterprise.gui.coregui.client.bundle.list.BundlesListView;
 import org.rhq.enterprise.gui.coregui.client.bundle.tree.BundleTreeView;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
-import org.rhq.enterprise.gui.coregui.client.content.repository.tree.ContentRepositoryTreeView;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
-
 
 /**
  * This is the main bundle view with left hand side trees and right hand side list/details view.
@@ -51,14 +49,15 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
  */
 public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
 
-    public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.view_bundle_bundles(), IconEnum.BUNDLE);
-
-    private ViewId currentNextPath;
+    public static final ViewName VIEW_ID = new ViewName("Bundles", MSG.common_title_bundles(), IconEnum.BUNDLE);
 
     private BundleTreeView bundleTreeView; // the tree of bundle destinations and versions 
     private VLayout contentCanvas; // the right-side canvas container
-    private BundleView bundleView; // if the user is viewing an individual bundle, this is that right-side view
-    private BundlesListView bundlesListView; // if the user is not viewing an indiv. bundle, this is the right-side list
+    private BundleSectionView bundleSectionView; // if the user is not viewing bundle or bundle group detail, this is the RHS view
+    private BundleView bundleView; // if the user is viewing bundle detail, this is the RHS view
+    private BundleGroupEditView bundleGroupView; // if the user is viewing bundle group detail, this is the RHS view
+    private ViewId currentBundleViewId;
+    private ViewId currentBundleGroupViewId;
 
     public BundleTopView() {
         super();
@@ -70,12 +69,9 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
     public void renderView(final ViewPath viewPath) {
         new PermissionsLoader().loadExplicitGlobalPermissions(new PermissionsLoadedListener() {
             @Override
-            public void onPermissionsLoaded(Set<Permission> permissions) {
+            public void onPermissionsLoaded(Set<Permission> globalPermissions) {
                 // if we haven't done it yet, build the view components
                 if (bundleTreeView == null) {
-                    boolean canManageInventory = permissions != null
-                        && permissions.contains(Permission.MANAGE_INVENTORY);
-                    boolean canManageBundles = permissions != null && permissions.contains(Permission.MANAGE_BUNDLE);
 
                     SectionStack sectionStack = new SectionStack();
                     sectionStack.setShowResizeBar(true);
@@ -83,23 +79,10 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
                     sectionStack.setWidth(250);
                     sectionStack.setHeight100();
 
-                    SectionStackSection bundlesSection = new SectionStackSection(MSG.view_bundle_bundles());
-                    bundleTreeView = new BundleTreeView(canManageBundles);
+                    SectionStackSection bundlesSection = new SectionStackSection(MSG.common_title_bundles());
+                    bundleTreeView = new BundleTreeView();
                     bundlesSection.addItem(bundleTreeView);
                     sectionStack.addSection(bundlesSection);
-
-                    // we only show repositories if the user has the global manage_inventory perms since that is required
-                    if (canManageInventory) {
-                        SectionStackSection repositoriesSection = new SectionStackSection(MSG
-                            .common_title_repositories());
-                        ContentRepositoryTreeView repoTree = new ContentRepositoryTreeView();
-                        repositoriesSection.addItem(repoTree);
-                        sectionStack.addSection(repositoriesSection);
-                    }
-
-                    // TODO: we aren't doing anything with providers yet
-                    // SectionStackSection providersSection = new SectionStackSection(MSG.common_title_providers());
-                    // sectionStack.addSection(providersSection);
 
                     addMember(sectionStack);
 
@@ -115,22 +98,45 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
 
                 bundleTreeView.selectPath(viewPath);
 
-                if (viewPath.isEnd()) {
-                    if (currentNextPath == null && bundlesListView != null) {
-                        bundlesListView.refresh();
+                if (viewPath.isEnd() || viewPath.isNextEnd()) {
+                    // We are navigating to the section view (ignore any trailing segment without an ID) 
+                    if (currentBundleViewId == null && currentBundleGroupViewId == null && bundleSectionView != null) {
+                        bundleSectionView.refresh();
                     } else {
-                        currentNextPath = null;
-                        bundlesListView = new BundlesListView(permissions);
-                        setContent(bundlesListView);
+                        bundleSectionView = new BundleSectionView(globalPermissions);
+                        if (!viewPath.isEnd()) {
+                            if (viewPath.getCurrent().getPath().equals("BundleGroup")) {
+                                bundleSectionView.setExpansion(false, true);
+                            } else {
+                                bundleSectionView.setExpansion(true, false);
+                            }
+                        }
+                        setContent(bundleSectionView);
                     }
                 } else {
-                    if (!viewPath.getNext().equals(currentNextPath)) {
-                        currentNextPath = viewPath.getNext();
-                        bundleView = new BundleView(permissions);
-                        setContent(bundleView);
-                        bundleView.renderView(viewPath.next());
-                    } else {
-                        bundleView.renderView(viewPath.next());
+                    // we are navigating to bundle detail or bundle group detail
+                    String currentPath = viewPath.getCurrent().getPath();
+                    ViewPath nextViewPath = viewPath.next(); // the ID segment
+
+                    if ("Bundle".equals(currentPath)) {
+                        if (!nextViewPath.getCurrent().equals(currentBundleViewId)) {
+                            // set new bundle detail
+                            currentBundleViewId = nextViewPath.getCurrent();
+                            bundleView = new BundleView(globalPermissions);
+                            setContent(bundleView);
+                        }
+                        bundleView.renderView(nextViewPath);
+
+                    } else if ("BundleGroup".equals(currentPath)) {
+                        if (!nextViewPath.getCurrent().equals(currentBundleGroupViewId)) {
+                            // set new bundle detail
+                            currentBundleGroupViewId = nextViewPath.getCurrent();
+                            bundleGroupView = new BundleGroupEditView(globalPermissions, Integer
+                                .parseInt(currentBundleGroupViewId.getPath()));
+                            setContent(bundleGroupView);
+                        }
+                        // redisplay the current bundle group detail                            
+                        bundleGroupView.renderView(nextViewPath);
                     }
                 }
             }

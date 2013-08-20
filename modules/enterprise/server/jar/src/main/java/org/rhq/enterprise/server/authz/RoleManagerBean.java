@@ -423,8 +423,8 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
         attachedRole.setPermissions(role.getPermissions());
         processDependentPermissions(attachedRole);
 
-        // Then update the subjects, resourceGroups, and/or ldapGroups, but only if those fields are non-null on the
-        // passed-in Role.
+        // Then update the subjects, resourceGroups, ldapGroups, and/or bundle groups, but only if those fields are
+        // non-null on the passed-in Role.
         Set<Subject> newSubjects = role.getSubjects();
         if (newSubjects != null) {
             Set<Subject> currentSubjects = attachedRole.getSubjects();
@@ -483,10 +483,29 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
             }
         }
 
+        Set<BundleGroup> newBundleGroups = role.getBundleGroups();
+        if (newBundleGroups != null) {
+            Set<BundleGroup> currentBundleGroups = attachedRole.getBundleGroups();
+            // wrap in new HashSet to avoid ConcurrentModificationExceptions.
+            Set<BundleGroup> bundleGroupsToRemove = new HashSet<BundleGroup>(currentBundleGroups);
+            for (BundleGroup bg : currentBundleGroups) {
+                bundleGroupsToRemove.remove(bg);
+            }
+            for (BundleGroup bg : bundleGroupsToRemove) {
+                attachedRole.removeBundleGroup(bg);
+            }
+
+            for (BundleGroup bg : newBundleGroups) {
+                BundleGroup attachedBundleGroup = entityManager.find(BundleGroup.class, bg.getId());
+                attachedRole.addBundleGroup(attachedBundleGroup);
+            }
+        }
+
         // Fetch the lazy Sets on the Role to be returned.
         attachedRole.getResourceGroups().size();
         attachedRole.getSubjects().size();
         attachedRole.getLdapGroups().size();
+        attachedRole.getBundleGroups().size();
 
         return attachedRole;
     }

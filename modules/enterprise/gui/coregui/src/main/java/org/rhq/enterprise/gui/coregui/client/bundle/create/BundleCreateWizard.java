@@ -19,22 +19,65 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import java.util.ArrayList;
+import java.util.Set;
 
+import org.rhq.core.domain.authz.Permission;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.WizardStep;
 
 public class BundleCreateWizard extends AbstractBundleCreateWizard {
 
-    public BundleCreateWizard() {
+    Set<Permission> globalPermissions;
+
+    public BundleCreateWizard(Set<Permission> globalPermissions) {
         setWindowTitle(MSG.view_bundle_createWizard_windowTitle());
         setTitle(MSG.view_bundle_createWizard_title());
 
+        //slightly increase the default dialog height so that we don't show the ugly scrollbar.
+        setDialogHeight(610);
+
+        this.globalPermissions = globalPermissions;
+
         ArrayList<WizardStep> steps = new ArrayList<WizardStep>();
         steps.add(new BundleUploadDistroFileStep(this));
+        steps.add(new BundleGroupsStep(this)); // this will be bypassed unless it's a new bundle
         steps.add(new BundleUploadDataStep(this));
         steps.add(new BundleSummaryStep(this));
         setSteps(steps);
-
-        //slightly increase the default dialog height so that we don't show the ugly scrollbar.
-        setDialogHeight(610);
     }
+
+    //    @Override
+    //    public void startWizard() {
+    //        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+    //
+    //        if (globalPermissions.contains(Permission.VIEW_BUNDLES)) {
+    //            bundleServer.findBundleGroupsByCriteria(new BundleGroupCriteria(),
+    //                new AsyncCallback<PageList<BundleGroup>>() {
+    //                    public void onSuccess(PageList<BundleGroup> result) {
+    //
+    //                    }
+    //
+    //                    public void onFailure(Throwable caught) {
+    //                        // TODO
+    //                    }
+    //                });
+    //
+    //        } else {
+    //
+    //            bundleServer.getCreateBundleGroups(new AsyncCallback<HashSet<BundleGroup>>() {
+    //                public void onSuccess(HashSet<BundleGroup> result) {
+    //
+    //                }
+    //
+    //                public void onFailure(Throwable caught) {
+    //                    // TODO
+    //                }
+    //            });
+    //
+    //
+    //            // TODO Auto-generated method stub
+    //            super.startWizard();
+    //
+    //        }
+    //
+    //    }
 }

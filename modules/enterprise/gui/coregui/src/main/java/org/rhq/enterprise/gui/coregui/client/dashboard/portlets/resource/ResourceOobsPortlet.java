@@ -31,11 +31,12 @@ import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
 import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -44,8 +45,14 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Set;
 
 /**This portlet allows the end user to customize the OOB display
  *
@@ -94,6 +101,7 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
 
         ResourceCriteria criteria = new ResourceCriteria();
         criteria.addFilterId(resourceId);
+        criteria.fetchResourceType(true);
 
         //locate the resource
         GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
@@ -108,6 +116,40 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                     public void onSuccess(PageList<ResourceComposite> results) {
                         if (!results.isEmpty()) {
                             final ResourceComposite resourceComposite = results.get(0);
+
+                            final Resource resource = resourceComposite.getResource();
+                            final ResourceType resourceType = resource.getResourceType();
+
+                            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                                    resourceType.getId(),
+                                    EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                                    new ResourceTypeRepository.TypeLoadedCallback() {
+                                        public void onTypesLoaded(ResourceType type) {
+                                            resource.setResourceType(type);
+                                            //metric definitions
+                                            final Set<MeasurementDefinition> definitions = type.getMetricDefinitions();
+
+                                            //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+                                            HashMap<String, MeasurementDefinition> measurementDefMapTemp = new HashMap<String, MeasurementDefinition>();
+                                            for (MeasurementDefinition definition : definitions) {
+                                                if(null != definition){
+                                                    measurementDefMapTemp.put(definition.getDisplayName(), definition);
+                                                }
+                                            }
+                                            final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>(measurementDefMapTemp);
+                                            //bundle definition ids for asynch call.
+                                            int[] definitionArrayIds = new int[definitions.size()];
+                                            final String[] displayOrder = new String[definitions.size()];
+                                            measurementDefMap.keySet().toArray(displayOrder);
+                                            //sort the charting data ex. Free Memory, Free Swap Space,..System Load
+                                            Arrays.sort(displayOrder);
+
+                                            //organize definitionArrayIds for ordered request on server.
+                                            int index = 0;
+                                            for (String definitionToDisplay : displayOrder) {
+                                                definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
+                                                        .getId();
+                                            }
 
 
                             GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId,
@@ -168,6 +210,8 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
                                     recentOobContent.markForRedraw();
                                 }
                             });
+                        }
+                    });
                         }
                     }
                 });

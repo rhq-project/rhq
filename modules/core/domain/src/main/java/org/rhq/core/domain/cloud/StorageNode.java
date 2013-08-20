@@ -24,6 +24,7 @@ package org.rhq.core.domain.cloud;
 
 import java.io.Serializable;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -146,7 +147,7 @@ public class StorageNode implements Serializable {
     private Resource resource;
 
     @JoinColumn(name = "RESOURCE_OP_HIST_ID", referencedColumnName = "ID", nullable = true)
-    @OneToOne(optional = true)
+    @OneToOne(optional = true, cascade = {CascadeType.REMOVE})
     private ResourceOperationHistory failedOperation;
 
     // required for JPA
@@ -241,18 +242,49 @@ public class StorageNode implements Serializable {
         this.operationMode = operationMode;
     }
 
-    public enum OperationMode {
+    public Status getStatus() {
+        if (operationMode == OperationMode.INSTALLED) {
+            return Status.INSTALLED;
+        }
+        if (operationMode == OperationMode.ANNOUNCE || operationMode == OperationMode.BOOTSTRAP ||
+            operationMode == OperationMode.ADD_MAINTENANCE) {
+            if (errorMessage == null && failedOperation == null) {
+                return Status.JOINING;
+            } else {
+                return Status.DOWN;
+            }
+        }
+        if (operationMode == OperationMode.DECOMMISSION || operationMode == OperationMode.UNANNOUNCE ||
+            operationMode == OperationMode.REMOVE_MAINTENANCE || operationMode == OperationMode.UNINSTALL) {
+            if (errorMessage == null && failedOperation == null) {
+                return Status.LEAVING;
+            } else {
+                return Status.DOWN;
+            }
+        }
+        if (operationMode == OperationMode.NORMAL) {
+            return Status.NORMAL;
+        }
+        return Status.DOWN;
+    }
 
+    public enum OperationMode {
+        DECOMMISSION("Remove the storage node from service"),
         DOWN("This storage node is down"), //
         INSTALLED("This storage node is newly installed but not yet operational"), //
         MAINTENANCE("This storage node is in maintenance mode"), //
         NORMAL("This storage node is running normally"),
         ANNOUNCE("The storage node is installed but not yet part of the cluster. It is being announced so that it " +
             "can join the cluster."),
+        UNANNOUNCE("The storage node has been decommissioned and the cluster is being notified to stop accepting " +
+            "gossip from its IP address."),
         BOOTSTRAP("The storage is installed but not yet part of the cluster. It is getting bootstrapped into the " +
             "cluster"),
-        ADD_NODE_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
-            "necessary when a new node joins the cluster.");
+        ADD_MAINTENANCE("The storage node is running and is preparing to undergo routine maintenance that is " +
+            "necessary when a new node joins the cluster."),
+        REMOVE_MAINTENANCE("The storage node is no longer part of the cluster. Remaining storage node are " +
+            "undergoing cluster maintenance due to the topology change."),
+        UNINSTALL("The storage node is being removed from inventory and its bits on disk are getting purged.");
 
         public final String message;
 
@@ -263,6 +295,14 @@ public class StorageNode implements Serializable {
         public String getMessage() {
             return message;
         }
+    }
+
+    public enum Status {
+        INSTALLED,
+        DOWN,
+        NORMAL,
+        JOINING,
+        LEAVING
     }
 
     public String getJMXConnectionURL() {

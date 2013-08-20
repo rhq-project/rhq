@@ -46,7 +46,6 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.pluginapi.util.ProcessExecutionUtility;
 import org.rhq.core.system.OperatingSystemType;
 import org.rhq.core.system.ProcessExecution;
@@ -67,6 +66,11 @@ public class CassandraClusterManager {
     private DeploymentOptions deploymentOptions;
     private List<File> installedNodeDirs = new ArrayList<File>();
     private Map<Integer, Process> nodeProcessMap = new HashMap<Integer, Process>();
+
+    private String[] nodes;
+    private int[] jmxPorts;
+    private int cqlPort;
+
 
     public CassandraClusterManager() {
         this(new DeploymentOptionsFactory().newDeploymentOptions());
@@ -90,7 +94,28 @@ public class CassandraClusterManager {
         }
     }
 
-    public List<StorageNode> createCluster() {
+    /**
+     * @return addresses of storage cluster nodes
+     */
+    public String[] getNodes() {
+        return nodes;
+    }
+
+    /**
+     * @return the JMX ports
+     */
+    public int[] getJmxPorts() {
+        return jmxPorts;
+    }
+
+    /**
+     * @return the CQL Port
+     */
+    public int getCqlPort() {
+        return cqlPort;
+    }
+
+    public void createCluster() {
         if (log.isDebugEnabled()) {
             log.debug("Installing embedded " + deploymentOptions.getNumNodes() + " node cluster to "
                 + deploymentOptions.getClusterDir());
@@ -104,11 +129,10 @@ public class CassandraClusterManager {
         if (installedMarker.exists()) {
             log.info("It appears that the cluster already exists in " + clusterDir);
             log.info("Skipping cluster creation.");
-            return calculateNodes();
+            getStorageClusterConfiguration();
         }
         FileUtil.purge(clusterDir, false);
 
-        List<StorageNode> nodes = new ArrayList<StorageNode>(deploymentOptions.getNumNodes());
         String seeds = collectionToString(calculateLocalIPAddresses(deploymentOptions.getNumNodes()));
         Set<InetAddress> ipAddresses = null;
 
@@ -117,6 +141,10 @@ public class CassandraClusterManager {
         } catch (IOException e) {
             throw new RuntimeException("Failed to get cluster IP addresses", e);
         }
+
+        this.nodes = new String[deploymentOptions.getNumNodes()];
+        this.jmxPorts = new int[deploymentOptions.getNumNodes()];
+        this.cqlPort = deploymentOptions.getNativeTransportPort();
 
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
             File basedir = new File(deploymentOptions.getClusterDir(), "node" + i);
@@ -142,14 +170,10 @@ public class CassandraClusterManager {
                 deployer.unzipDistro();
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
-
-                StorageNode storageNode = new StorageNode();
-                storageNode.setAddress(address);
-                storageNode.setJmxPort(deploymentOptions.getJmxPort() + i);
-                storageNode.setCqlPort(nodeOptions.getNativeTransportPort());
-                nodes.add(storageNode);
-
                 deployer.updateStorageAuthConf(ipAddresses);
+
+                this.nodes[i] = address;
+                this.jmxPorts[i] = deploymentOptions.getJmxPort() + i;
 
                 installedNodeDirs.add(basedir);
             } catch (Exception e) {
@@ -162,7 +186,6 @@ public class CassandraClusterManager {
         } catch (IOException e) {
             log.warn("Failed to write installed file marker to " + installedMarker, e);
         }
-        return nodes;
     }
 
     private void updateStorageAuthConf(File basedir) {
@@ -210,16 +233,14 @@ public class CassandraClusterManager {
         return ipAddresses;
     }
 
-    private List<StorageNode> calculateNodes() {
-        List<StorageNode> nodes = new ArrayList<StorageNode>(deploymentOptions.getNumNodes());
+    private void getStorageClusterConfiguration() {
+        this.nodes = new String[deploymentOptions.getNumNodes()];
         for (int i = 0; i < deploymentOptions.getNumNodes(); ++i) {
-            StorageNode storageNode = new StorageNode();
-            storageNode.setAddress(getLocalIPAddress(i + 1));
-            storageNode.setJmxPort(deploymentOptions.getJmxPort() + i);
-            storageNode.setCqlPort(deploymentOptions.getNativeTransportPort());
-            nodes.add(storageNode);
+            this.nodes[i] = getLocalIPAddress(i + 1);
+            this.jmxPorts[i] = deploymentOptions.getJmxPort() + i;
         }
-        return nodes;
+
+        this.cqlPort = deploymentOptions.getNativeTransportPort();
     }
 
     public void startCluster() {
@@ -230,9 +251,9 @@ public class CassandraClusterManager {
         startCluster(getNodeIds());
 
         if (waitForClusterToStart) {
-            List<StorageNode> nodes = calculateNodes();
+            getStorageClusterConfiguration();
             ClusterInitService clusterInitService = new ClusterInitService();
-            clusterInitService.waitForClusterToStart(nodes, nodes.size(), 20);
+            clusterInitService.waitForClusterToStart(this.nodes, this.jmxPorts, this.nodes.length, 20);
         }
     }
 

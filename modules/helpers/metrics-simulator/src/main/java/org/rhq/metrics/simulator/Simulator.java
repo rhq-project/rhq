@@ -28,7 +28,6 @@ package org.rhq.metrics.simulator;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashSet;
-import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -52,7 +51,6 @@ import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.cassandra.util.ClusterBuilder;
-import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.metrics.simulator.plan.ClusterConfig;
 import org.rhq.metrics.simulator.plan.ScheduleGroup;
 import org.rhq.metrics.simulator.plan.SimulationPlan;
@@ -84,17 +82,16 @@ public class Simulator implements ShutdownManager {
             }
         });
 
-        List<StorageNode> nodes = initCluster(plan);
-
-        createSchema(nodes);
+        initCluster(plan);
+        createSchema();
 
         Session session;
         if (plan.getClientCompression() == null) {
-            session = createSession(nodes);
+            session = createSession();
         } else {
             ProtocolOptions.Compression compression = Enum.valueOf(ProtocolOptions.Compression.class,
                 plan.getClientCompression().toUpperCase());
-            session = createSession(nodes, compression);
+            session = createSession(compression);
         }
 
         StorageSession storageSession = new StorageSession(session);
@@ -172,17 +169,16 @@ public class Simulator implements ShutdownManager {
         log.info("Shut down complete");
     }
 
-    private List<StorageNode> initCluster(SimulationPlan plan) {
+    private void initCluster(SimulationPlan plan) {
         try {
-            List<StorageNode> nodes = deployCluster(plan.getClusterConfig());
-            waitForClusterToInitialize(nodes);
-            return nodes;
+            deployCluster(plan.getClusterConfig());
+            waitForClusterToInitialize();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. Cluster initialization failed.", e);
         }
     }
 
-    private List<StorageNode> deployCluster(ClusterConfig clusterConfig) throws IOException {
+    private void deployCluster(ClusterConfig clusterConfig) throws IOException {
         File clusterDir = new File(clusterConfig.getClusterDir(), "cassandra");
         log.info("Deploying cluster to " + clusterDir);
         clusterDir.mkdirs();
@@ -200,10 +196,8 @@ public class Simulator implements ShutdownManager {
         deploymentOptions.load();
 
         ccm = new CassandraClusterManager(deploymentOptions);
-        List<StorageNode> nodes = ccm.createCluster();
+        ccm.createCluster();
         ccm.startCluster(false);
-
-        return nodes;
     }
 
     private void shutdownCluster() {
@@ -211,26 +205,25 @@ public class Simulator implements ShutdownManager {
         ccm.shutdownCluster();
     }
 
-    private void waitForClusterToInitialize(List<StorageNode> nodes) {
+    private void waitForClusterToInitialize() {
         log.info("Waiting for cluster to initialize");
         ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(nodes, nodes.size(), 1500, 20, 2);
+        clusterInitService.waitForClusterToStart(ccm.getNodes(), ccm.getJmxPorts(), ccm.getNodes().length, 20, 2, 1500);
     }
 
-    private void createSchema(List<StorageNode> nodes) {
+    private void createSchema() {
         try {
             log.info("Creating schema");
-            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes);
+            SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin", ccm.getNodes(), ccm.getCqlPort());
             schemaManager.install();
         } catch (Exception e) {
             throw new RuntimeException("Failed to start simulator. An error occurred during schema creation.", e);
         }
     }
 
-    private Session createSession(List<StorageNode> nodes) throws NoHostAvailableException {
+    private Session createSession() throws NoHostAvailableException {
         try {
-            Cluster cluster = new ClusterBuilder()
-                .addContactPoints(getHostNames(nodes))
+            Cluster cluster = new ClusterBuilder().addContactPoints(ccm.getNodes()).withPort(ccm.getCqlPort())
                 .withCredentials("rhqadmin", "rhqadmin")
                 .build();
 
@@ -244,13 +237,12 @@ public class Simulator implements ShutdownManager {
         }
     }
 
-    private Session createSession(List<StorageNode> nodes, ProtocolOptions.Compression compression)
+    private Session createSession(ProtocolOptions.Compression compression)
         throws NoHostAvailableException {
         try {
             log.debug("Creating session using " + compression.name() + " compression");
 
-            Cluster cluster = new ClusterBuilder()
-                .addContactPoints(getHostNames(nodes))
+            Cluster cluster = new ClusterBuilder().addContactPoints(ccm.getNodes()).withPort(ccm.getCqlPort())
                 .withCredentials("cassandra", "cassandra")
                 .withCompression(compression)
                 .build();
@@ -264,6 +256,7 @@ public class Simulator implements ShutdownManager {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private Session initSession(Cluster cluster) {
         NodeFailureListener listener = new NodeFailureListener();
         for (Host host : cluster.getMetadata().getAllHosts()) {
@@ -271,14 +264,6 @@ public class Simulator implements ShutdownManager {
         }
 
         return cluster.connect("rhq");
-    }
-
-    private String[] getHostNames(List<StorageNode> nodes) {
-        String[] hostnames = new String[nodes.size()];
-        for (int i = 0; i < hostnames.length; ++i) {
-            hostnames[i] = nodes.get(i).getAddress();
-        }
-        return hostnames;
     }
 
     private Set<Schedule> initSchedules(ScheduleGroup scheduleSet) {

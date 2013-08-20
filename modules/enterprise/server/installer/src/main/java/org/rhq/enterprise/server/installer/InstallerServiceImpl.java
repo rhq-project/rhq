@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.regex.Matcher;
@@ -39,6 +40,7 @@ import org.rhq.common.jbossas.client.controller.DatasourceJBossASClient;
 import org.rhq.common.jbossas.client.controller.DeploymentJBossASClient;
 import org.rhq.common.jbossas.client.controller.WebJBossASClient;
 import org.rhq.core.db.DatabaseTypeFactory;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
@@ -501,7 +503,7 @@ public class InstallerServiceImpl implements InstallerService {
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
 
         ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
-            storageNodeSchemaManager.getStorageNodes());
+            parseNodeInformation(serverProperties));
     }
 
     @Override
@@ -1154,12 +1156,31 @@ public class InstallerServiceImpl implements InstallerService {
         }
     }
 
+    private List<StorageNode> parseNodeInformation(HashMap<String, String> serverProps) {
+        String[] nodes = serverProps.get("rhq.cassandra.seeds").split(",");
+
+        List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
+        for (String node : nodes) {
+            StorageNode storageNode = new StorageNode();
+            storageNode.parseNodeInformation(node);
+            parsedNodes.add(storageNode);
+        }
+
+        return parsedNodes;
+    }
+
     private SchemaManager createStorageNodeSchemaManager(HashMap<String, String> serverProps) {
-        String[] hosts = serverProps.get("rhq.cassandra.seeds").split(",");
         String username = serverProps.get("rhq.cassandra.username");
         String password = serverProps.get("rhq.cassandra.password");
 
-        return new SchemaManager(username, password, hosts);
+        List<StorageNode> storageNodes = this.parseNodeInformation(serverProps);
+        String[] nodes = new String[storageNodes.size()];
+        for (int index = 0; index < storageNodes.size(); index++) {
+            nodes[index] = storageNodes.get(index).getAddress();
+        }
+        int cqlPort = storageNodes.get(0).getCqlPort();
+
+        return new SchemaManager(username, password, nodes, cqlPort);
     }
 
     private void writeInstalledFileMarker() throws Exception {

@@ -20,14 +20,14 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.rhq.enterprise.gui.coregui.client.util.Log;
+
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
@@ -42,6 +42,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.authz.Permission;
+import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -50,6 +51,7 @@ import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAct
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableSection;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
@@ -83,7 +85,8 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
     @Override
     protected void doOnDraw() {
         super.doOnDraw();
-//        scheduleUnacknowledgedAlertsPollingJob(getListGrid());
+        // commenting out this call, because it caused UI to freeze
+        //        scheduleUnacknowledgedAlertsPollingJob(getListGrid());
     }
 
     @Override
@@ -178,6 +181,11 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         ListGrid listGrid = new ListGrid() {
             @Override
             protected Canvas getExpansionComponent(final ListGridRecord record) {
+                if (record.getAttribute(FIELD_RESOURCE_ID.propertyName()) == null) {
+                    // no resource set
+                    return new HTMLFlow("There is no load data available for this node. Is the agent running on the "
+                        + record.getAttributeAsString(FIELD_ADDRESS.propertyName() + "?"));
+                }
                 int id = record.getAttributeAsInt(FIELD_ID);
                 return new StorageNodeLoadComponent(id, null);
             }
@@ -197,6 +205,80 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
 
     private void showCommonActions() {
         addInvokeOperationsAction();
+        addDeployAction();
+        addUndeployAction();
+    }
+
+    private void addUndeployAction() {
+        final ParametrizedMessage question = new ParametrizedMessage() {
+            @Override
+            public String getMessage(String... param) {
+                return "Are you sure, you want to run the undeploy operation on selected nodes: " + param[0]
+                    + " ? It may take a while to complete.";
+            }
+        };
+        final ParametrizedMessage success = new ParametrizedMessage() {
+            @Override
+            public String getMessage(String... param) {
+                return "Starting the undeploy operation on storage nodes " + param[0];
+            }
+        };
+        final ParametrizedMessage failure = new ParametrizedMessage() {
+            @Override
+            public String getMessage(String... param) {
+                return "Invoking the undeploy operation failed for storage nodes " + param[0] + " ids: " + param[1];
+            }
+        };
+
+        addTableAction("Undeploy Selected", null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
+            Permission.MANAGE_SETTINGS) {
+
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return StorageNodeTableView.this.isUndeployable(super.isEnabled(selection), selection);
+            }
+
+            @Override
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                executeBulkAction(selections, actionValue, question, success, failure, StorageNodeOperation.UNDEPLOY);
+            }
+        });
+    }
+
+    private void addDeployAction() {
+        final ParametrizedMessage question = new ParametrizedMessage() {
+            @Override
+            public String getMessage(String... param) {
+                return "Are you sure, you want to run the deploy operation on selected nodes: " + param[0]
+                    + " ? It may take a while to complete.";
+            }
+        };
+        final ParametrizedMessage success = new ParametrizedMessage() {
+            @Override
+            public String getMessage(String... param) {
+                return "Starting the deploy operation on storage nodes " + param[0];
+            }
+        };
+        final ParametrizedMessage failure = new ParametrizedMessage() {
+            @Override
+            public String getMessage(String... param) {
+                return "Invoking the deploy operation failed for storage nodes " + param[0] + " ids: " + param[1];
+            }
+        };
+
+        addTableAction("Deploy Selected", null, new AuthorizedTableAction(this, TableActionEnablement.SINGLE,
+            Permission.MANAGE_SETTINGS) {
+
+            @Override
+            public boolean isEnabled(ListGridRecord[] selection) {
+                return StorageNodeTableView.this.isDeployable(super.isEnabled(selection), selection);
+            }
+
+            @Override
+            public void executeAction(final ListGridRecord[] selections, Object actionValue) {
+                executeBulkAction(selections, actionValue, question, success, failure, StorageNodeOperation.DEPLOY);
+            }
+        });
     }
 
     private void addInvokeOperationsAction() {
@@ -206,7 +288,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         operationsMap.put("Restart", "restart");
         operationsMap.put("Disable Debug Mode", "stopRPCServer");
         operationsMap.put("Enable Debug Mode", "startRPCServer");
-        //        operationsMap.put("Decommission", "decommission");
 
         addTableAction(MSG.common_title_operation(), null, operationsMap, new AuthorizedTableAction(this,
             TableActionEnablement.ANY, Permission.MANAGE_SETTINGS) {
@@ -214,77 +295,129 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             @Override
             public boolean isEnabled(ListGridRecord[] selection) {
                 return StorageNodeTableView.this.isEnabled(super.isEnabled(selection), selection);
-            };
+            }
 
             @Override
             public void executeAction(final ListGridRecord[] selections, Object actionValue) {
-                final String operationName = (String) actionValue;
-                final List<String> selectedAddresses = getSelectedAddresses(selections);
-                //                String message = MSG.view_adminTopology_message_setModeConfirm(selectedAddresses.toString(), mode.name());
-                SC.ask("Are you sure, you want to run operation " + operationName + "?", new BooleanCallback() {
-                    public void execute(Boolean confirmed) {
-                        if (confirmed) {
-                            final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {
-                                @Override
-                                public void execute() {
-                                    //                                    Message msg = new Message(MSG.view_adminTopology_message_setMode(
-                                    //                                      String.valueOf(selections.length), mode.name()), Message.Severity.Info);
-                                    Message msg = new Message("Operation" + operationName
-                                        + " was successfully scheduled for resources with ids"
-                                        + Arrays.asList(getSelectedIds(selections)), Message.Severity.Info);
-                                    CoreGUI.getMessageCenter().notify(msg);
-                                    refreshTableInfo();
-                                }
-                            });
-                            boolean isStopStartOrRestart = Arrays.asList("start", "shutdown", "restart").contains(
-                                operationName);
-                            for (ListGridRecord storageNodeRecord : selections) {
-                                // NFE should never happen, because of the condition for table action enablement
-                                int resourceId = storageNodeRecord.getAttributeAsInt(FIELD_RESOURCE_ID.propertyName());
-                                if (isStopStartOrRestart) {
-                                    // start, stop or restart the storage node
-                                    GWTServiceLookup.getOperationService().scheduleResourceOperation(resourceId,
-                                        operationName, null, "Run by Storage Node Administrations UI", 0,
-                                        new AsyncCallback<Void>() {
-                                            public void onSuccess(Void result) {
-                                                latch.countDown();
-                                            }
+                ParametrizedMessage question = new ParametrizedMessage() {
+                    @Override
+                    public String getMessage(String... param) {
+                        return "Are you sure, you want to run operation " + param[0] + "?";
+                    }
+                };
+                ParametrizedMessage success = new ParametrizedMessage() {
+                    @Override
+                    public String getMessage(String... param) {
+                        return "Operation" + param[0] + " was successfully scheduled for storage nodes " + param[1];
+                    }
+                };
+                ParametrizedMessage failure = new ParametrizedMessage() {
+                    @Override
+                    public String getMessage(String... param) {
+                        return "Scheduling operation " + param[0] + " failed for storage nodes " + param[1];
+                    }
+                };
+                executeBulkAction(selections, actionValue, question, success, failure, StorageNodeOperation.OTHER);
+            }
+        });
+    }
 
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError(
-                                                    "Scheduling operation " + operationName
-                                                        + " failed for resources with ids"
-                                                        + Arrays.asList(getSelectedIds(selections)) + " "
-                                                        + caught.getMessage(), caught);
-                                                latch.countDown();
-                                                refreshTableInfo();
-                                            }
-                                        });
-                                } else {
-                                    // invoke the operation on the storage service resource
-                                    GWTServiceLookup.getStorageService().invokeOperationOnStorageService(resourceId,
-                                        operationName, new AsyncCallback<Void>() {
-                                            public void onSuccess(Void result) {
-                                                latch.countDown();
-                                            }
+    private enum StorageNodeOperation {
+        DEPLOY, UNDEPLOY, OTHER
+    }
 
-                                            public void onFailure(Throwable caught) {
-                                                CoreGUI.getErrorHandler().handleError(
-                                                    "Scheduling operation " + operationName
-                                                        + " failed for resources with ids"
-                                                        + Arrays.asList(getSelectedIds(selections)) + " "
-                                                        + caught.getMessage(), caught);
-                                                latch.countDown();
-                                                refreshTableInfo();
-                                            }
-                                        });
-                                }
+    private interface ParametrizedMessage {
+        String getMessage(String... param);
+    }
+
+    private void executeBulkAction(final ListGridRecord[] selections, Object actionValue, ParametrizedMessage question,
+        final ParametrizedMessage success, final ParametrizedMessage failure, final StorageNodeOperation operationType) {
+        final String operationName = (String) actionValue;
+        final List<String> selectedAddresses = getSelectedAddresses(selections);
+        SC.ask(question.getMessage(selectedAddresses.toString()), new BooleanCallback() {
+            public void execute(Boolean confirmed) {
+                if (confirmed) {
+                    final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {
+                        @Override
+                        public void execute() {
+                            String msgString = null;
+                            if (operationType == StorageNodeOperation.OTHER) {
+                                msgString = success.getMessage(operationName, selectedAddresses.toString());
+                            } else {
+                                msgString = success.getMessage(selectedAddresses.toString());
                             }
-                        } else {
+                            Message msg = new Message(msgString, Message.Severity.Info);
+                            CoreGUI.getMessageCenter().notify(msg);
                             refreshTableInfo();
                         }
+                    });
+                    boolean isStopStartOrRestart = Arrays.asList("start", "shutdown", "restart")
+                        .contains(operationName);
+                    for (ListGridRecord storageNodeRecord : selections) {
+                        // NFE should never happen, because of the condition for table action enablement
+                        int resourceId = storageNodeRecord.getAttributeAsInt(FIELD_RESOURCE_ID.propertyName());
+                        if (isStopStartOrRestart) {
+                            // start, stop or restart the storage node
+                            GWTServiceLookup.getOperationService().scheduleResourceOperation(resourceId, operationName,
+                                null, "Run by Storage Node Administrations UI", 0, new AsyncCallback<Void>() {
+                                    public void onSuccess(Void result) {
+                                        latch.countDown();
+                                    }
+
+                                    public void onFailure(Throwable caught) {
+                                        String msg = failure.getMessage(operationName,
+                                            selectedAddresses + " " + caught.getMessage());
+                                        CoreGUI.getErrorHandler().handleError(msg, caught);
+                                        latch.countDown();
+                                        refreshTableInfo();
+                                    }
+                                });
+                        } else {
+                            if (operationType != StorageNodeOperation.OTHER) { // (un)deploy
+                                AsyncCallback<Void> callback = new AsyncCallback<Void>() {
+                                    public void onSuccess(Void result) {
+                                        latch.countDown();
+                                    }
+
+                                    public void onFailure(Throwable caught) {
+                                        String msg = failure.getMessage(
+                                            selectedAddresses.toString(),
+                                            Arrays.asList(getSelectedIds(selections)).toString() + " "
+                                                + caught.getMessage());
+                                        CoreGUI.getErrorHandler().handleError(msg, caught);
+                                        latch.countDown();
+                                        refreshTableInfo();
+                                    }
+                                };
+                                int storageNodeId = storageNodeRecord.getAttributeAsInt("id");
+                                StorageNode node = new StorageNode(storageNodeId);
+                                if (operationType == StorageNodeOperation.DEPLOY) {
+                                    GWTServiceLookup.getStorageService().deployStorageNode(node, callback);
+                                } else {
+                                    GWTServiceLookup.getStorageService().undeployStorageNode(node, callback);
+                                }
+                            } else {
+                                // invoke the operation on the storage service resource
+                                GWTServiceLookup.getStorageService().invokeOperationOnStorageService(resourceId,
+                                    operationName, new AsyncCallback<Void>() {
+                                        public void onSuccess(Void result) {
+                                            latch.countDown();
+                                        }
+
+                                        public void onFailure(Throwable caught) {
+                                            String msg = failure.getMessage(operationName, selectedAddresses + " "
+                                                + caught.getMessage());
+                                            CoreGUI.getErrorHandler().handleError(msg, caught);
+                                            latch.countDown();
+                                            refreshTableInfo();
+                                        }
+                                    });
+                            }
+                        }
                     }
-                });
+                } else {
+                    refreshTableInfo();
+                }
             }
         });
     }
@@ -318,6 +451,33 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         }
         for (ListGridRecord storageNodeRecord : selection) {
             if (storageNodeRecord.getAttribute(FIELD_RESOURCE_ID.propertyName()) == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isDeployable(boolean parentsOpinion, ListGridRecord[] selection) {
+        if (!parentsOpinion || !isEnabled(parentsOpinion, selection)) {
+            return false;
+        }
+        for (ListGridRecord storageNodeRecord : selection) {
+            if ("NORMAL".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                || "JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isUndeployable(boolean parentsOpinion, ListGridRecord[] selection) {
+        if (!parentsOpinion || !isEnabled(parentsOpinion, selection)) {
+            return false;
+        }
+        for (ListGridRecord storageNodeRecord : selection) {
+            if ("JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
                 return false;
             }
         }

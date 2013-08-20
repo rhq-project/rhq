@@ -121,7 +121,13 @@ public class StorageClientManagerBean {
      * @param storageNodes storage nodes
      */
     private void checkSchemaCompability(String username, String password, List<StorageNode> storageNodes) {
-        SchemaManager schemaManager = new SchemaManager(username, password, storageNodes);
+        String[] nodes = new String[storageNodes.size()];
+        for (int index = 0; index < storageNodes.size(); index++) {
+            nodes[index] = storageNodes.get(index).getAddress();
+        }
+        int cqlPort = storageNodes.get(0).getCqlPort();
+
+        SchemaManager schemaManager = new SchemaManager(username, password, nodes, cqlPort);
         try {
             schemaManager.checkCompatibility();
         } catch (Exception e) {

@@ -27,6 +27,8 @@ import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
@@ -87,4 +89,12 @@ public interface StorageGWTService extends RemoteService {
     StorageNodeConfigurationComposite retrieveConfiguration(StorageNode storageNode) throws RuntimeException;
     
     void updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException;
+    
+    StorageClusterSettings retrieveClusterSettings() throws RuntimeException;
+    
+    void updateClusterSettings(StorageClusterSettings clusterSettings) throws RuntimeException;
+    
+    void undeployStorageNode(StorageNode storageNode) throws RuntimeException;
+    
+    void deployStorageNode(StorageNode storageNode) throws RuntimeException;
 }

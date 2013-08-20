@@ -1,8 +1,11 @@
 package org.rhq.cassandra.util;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
@@ -10,9 +13,6 @@ import java.util.Map;
 
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
-
-import org.rhq.core.util.StringUtil;
-import org.rhq.core.util.file.FileUtil;
 
 /**
  * @author John Sanda
@@ -57,7 +57,7 @@ public class ConfigEditor {
 
     public void restore() {
         try {
-            FileUtil.copyFile(backupFile, configFile);
+            this.copyFile(backupFile, configFile);
             backupFile.delete();
             yaml = null;
             config = null;
@@ -70,7 +70,7 @@ public class ConfigEditor {
     private void createBackup() {
         backupFile = new File(configFile.getParent(), "." + configFile.getName() + ".bak");
         try {
-            FileUtil.copyFile(configFile, backupFile);
+            this.copyFile(configFile, backupFile);
         } catch (IOException e) {
             throw new ConfigEditorException("Failed to create " + backupFile, e);
         }
@@ -113,7 +113,16 @@ public class ConfigEditor {
         Map seedProvider = (Map) seedProviderList.get(0);
         List paramsList = (List) seedProvider.get("parameters");
         Map params = (Map) paramsList.get(0);
-        params.put("seeds", StringUtil.arrayToString(seeds));
+
+        StringBuilder seedsString = new StringBuilder();
+        for (int i = 0; i < seeds.length; i++) {
+            if (i > 0) {
+                seedsString.append(",");
+            }
+
+            seedsString.append(seeds[i]);
+        }
+        params.put("seeds", seedsString.toString());
     }
 
     public Integer getNativeTransportPort() {
@@ -130,6 +139,26 @@ public class ConfigEditor {
 
     public void setStoragePort(Integer port) {
         config.put("storage_port", port);
+    }
+
+    public static void copyFile(File inFile, File outFile) throws FileNotFoundException, IOException {
+        BufferedInputStream is = new BufferedInputStream(new FileInputStream(inFile));
+        BufferedOutputStream os = new BufferedOutputStream(new FileOutputStream(outFile));
+
+        int bufferSize = 32768;
+        try {
+            is = new BufferedInputStream(is, bufferSize);
+            byte[] buffer = new byte[bufferSize];
+            for (int bytesRead = is.read(buffer); bytesRead != -1; bytesRead = is.read(buffer)) {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.flush();
+        } catch (IOException ioe) {
+            throw new RuntimeException("Stream data cannot be copied", ioe);
+        } finally {
+            os.close();
+            is.close();
+        }
     }
 
 }

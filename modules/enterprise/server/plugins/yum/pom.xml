@@ -32,6 +32,20 @@
             <scope>provided</scope> <!-- this version of jdom is included in the server, we'll juse reuse it -->
         </dependency>
 
+        <!-- Test deps -->
+        <dependency>
+            <groupId>org.rhq</groupId>
+            <artifactId>test-utils</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>tjws</artifactId>
+            <version>3.0.3.Final</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

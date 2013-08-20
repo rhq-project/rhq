@@ -15,6 +15,12 @@
     <description>A library with the code common to the agent and server plugins for File Template Bundles</description>
 
     <dependencies>
+        <dependency>
+          <groupId>${project.groupId}</groupId>
+          <artifactId>rhq-core-domain</artifactId>
+          <version>${project.version}</version>
+          <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>gnu-getopt</groupId>

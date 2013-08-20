@@ -18,26 +18,15 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
-import java.util.ArrayList;
 import java.util.EnumSet;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
-import com.smartgwt.client.data.DataSourceField;
-import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.widgets.Label;
-import com.smartgwt.client.widgets.grid.CellFormatter;
-import com.smartgwt.client.widgets.grid.ListGrid;
-import com.smartgwt.client.widgets.grid.ListGridField;
-import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
-import org.rhq.core.domain.criteria.AlertCriteria;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
-import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -45,16 +34,10 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
-import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
-import org.rhq.enterprise.gui.coregui.client.components.table.Table;
-import org.rhq.enterprise.gui.coregui.client.components.view.HasViewName;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.configuration.GroupResourceConfigurationEditView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -66,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
  *
  * @author Jirka Kremser
  */
-public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewName,*/ BookmarkableView {
+public class StorageNodeAdminView extends EnhancedVLayout implements BookmarkableView {
 
     public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(),
         IconEnum.STORAGE_NODE);
@@ -74,7 +57,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
     
-    private static final String GROUP_NAME = "RHQ Storage Nodes";
+//    private static final String GROUP_NAME = "RHQ Storage Nodes";
     
     private final NamedTabSet tabset;
     private TabInfo tableTabInfo = new TabInfo(0, new ViewName("Nodes"));
@@ -139,15 +122,17 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
                 GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new AsyncCallback<Integer[]>() {
                     @Override
                     public void onFailure(Throwable caught) {
-                        Message message = new Message("foobar",
-                            Message.Severity.Warning);
-                        CoreGUI.goToView(VIEW_ID.getName(), message);
+                        Message message = new Message("Unable to render storage node alert view: "
+                            + caught.getMessage(), Message.Severity.Warning);
+                        CoreGUI.goToView(StorageNodeTableView.VIEW_PATH, message);
                     }
 
                     @Override
                     public void onSuccess(Integer[] result) {
                         if (result == null || result.length == 0) {
-                            onFailure(new Exception("foobaz"));
+                            onFailure(new Exception(
+                                "Unfortunately, there are no associated resources for the available storage nodes. " +
+                                "Check if the agents are running on the machines where the storage nodes are deployed."));
                         } else {
                             resIds = ArrayUtils.unwrapArray(result);
                             tabset.getTabByName(tabInfo.name.getName()).setPane(
@@ -158,31 +143,36 @@ public class StorageNodeAdminView extends EnhancedVLayout implements/* HasViewNa
                 });
             }
         } else if (tabInfo.equals(settingsTabInfo)) {
-            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-            criteria.addFilterName(GROUP_NAME);
-            criteria.setStrict(true);
-            GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
-                new AsyncCallback<PageList<ResourceGroupComposite>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Message message = new Message(MSG.view_group_detail_failLoadComp(String.valueOf(GROUP_NAME)),
-                            Message.Severity.Warning);
-                        CoreGUI.goToView(VIEW_ID.getName(), message);
-                    }
-
-                    @Override
-                    public void onSuccess(PageList<ResourceGroupComposite> result) {
-                        if (result.isEmpty()) {
-                            onFailure(new Exception("Group with name [" + GROUP_NAME + "] does not exist."));
-                        } else {
-                            ResourceGroupComposite groupComposite = result.get(0);
-                            loadResourceType(groupComposite.getResourceGroup().getResourceType().getId());
-                            tabset.getTabByName(tabInfo.name.getName()).setPane(
-                                new GroupResourceConfigurationEditView(groupComposite));
-                            tabset.selectTab(tabInfo.index);
-                        }
-                    }
-                });
+            ClusterConfigurationEditor editor = new ClusterConfigurationEditor();
+            tabset.getTabByName(tabInfo.name.getName()).setPane(editor);
+            tabset.selectTab(tabInfo.index);
+            
+            // we don't group configuration editor anymore
+//            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
+//            criteria.addFilterName(GROUP_NAME);
+//            criteria.setStrict(true);
+//            GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
+//                new AsyncCallback<PageList<ResourceGroupComposite>>() {
+//                    @Override
+//                    public void onFailure(Throwable caught) {
+//                        Message message = new Message(MSG.view_group_detail_failLoadComp(String.valueOf(GROUP_NAME)),
+//                            Message.Severity.Warning);
+//                        CoreGUI.goToView(VIEW_ID.getName(), message);
+//                    }
+//
+//                    @Override
+//                    public void onSuccess(PageList<ResourceGroupComposite> result) {
+//                        if (result.isEmpty()) {
+//                            onFailure(new Exception("Group with name [" + GROUP_NAME + "] does not exist."));
+//                        } else {
+//                            ResourceGroupComposite groupComposite = result.get(0);
+//                            loadResourceType(groupComposite.getResourceGroup().getResourceType().getId());
+//                            tabset.getTabByName(tabInfo.name.getName()).setPane(
+//                                new GroupResourceConfigurationEditView(groupComposite));
+//                            tabset.selectTab(tabInfo.index);
+//                        }
+//                    }
+//                });
         }
     }
     

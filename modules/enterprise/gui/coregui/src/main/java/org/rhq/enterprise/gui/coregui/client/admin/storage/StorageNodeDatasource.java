@@ -31,6 +31,7 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,7 +64,6 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.StorageNodeLoadCompositeDatasourceField;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementConverterClient;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -144,7 +144,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 //        cqlField.setHidden(true);
 //        fields.add(cqlField);
         
-        field = FIELD_OPERATION_MODE.getListGridField("90");
+        field = FIELD_STATUS.getListGridField("90");
         field.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
                 if (listGridRecord.getAttribute(FIELD_ERROR_MESSAGE.propertyName()) != null
@@ -154,6 +154,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                     return value.toString();
             }
         });
+        
         field.setShowHover(true);
         field.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -235,6 +236,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             record.setAttribute(FIELD_JMX_PORT.propertyName(), node.getJmxPort());
             record.setAttribute(FIELD_CQL_PORT.propertyName(), node.getCqlPort());
             record.setAttribute(FIELD_OPERATION_MODE.propertyName(), node.getOperationMode());
+            record.setAttribute(FIELD_STATUS.propertyName(), node.getStatus());
             record.setAttribute(FIELD_ERROR_MESSAGE.propertyName(), node.getErrorMessage());
             if (node.getFailedOperation() != null && node.getFailedOperation().getResource() != null) {
                 ResourceOperationHistory operationHistory = node.getFailedOperation();
@@ -250,7 +252,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         }
         int value = from.getUnackAlerts();
         record.setAttribute(FIELD_ALERTS.propertyName(),
-            StorageNodeAdminView.getAlertsString("New Alerts", node.getId(), value));
+            node.getResource() != null ? StorageNodeAdminView.getAlertsString("New Alerts", node.getId(), value)
+                : "New Alerts (0)");
         String memory = null;
         if (from.getHeapPercentageUsed() != null && from.getHeapPercentageUsed().getAggregate().getAvg() != null)
             memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(), from

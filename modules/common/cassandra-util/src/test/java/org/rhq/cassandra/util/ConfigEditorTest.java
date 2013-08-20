@@ -3,10 +3,14 @@ package org.rhq.cassandra.util;
 import static java.util.Arrays.asList;
 import static org.testng.Assert.assertEquals;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Method;
 
 import org.apache.cassandra.config.Config;
@@ -16,9 +20,6 @@ import org.testng.annotations.Test;
 import org.yaml.snakeyaml.Loader;
 import org.yaml.snakeyaml.TypeDescription;
 import org.yaml.snakeyaml.Yaml;
-
-import org.rhq.core.util.file.FileUtil;
-import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * @author John Sanda
@@ -33,14 +34,14 @@ public class ConfigEditorTest {
     public void initTestDir(Method test) throws Exception {
         File dir = new File(getClass().getResource(".").toURI());
         basedir = new File(dir, getClass().getSimpleName() + "/" + test.getName());
-        FileUtil.purge(basedir, true);
+        purge(basedir, true);
         basedir.mkdirs();
 
         configFile = new File(basedir, "cassandra.yaml");
 
         InputStream inputStream = getClass().getResourceAsStream("/cassandra.yaml");
         FileOutputStream outputStream = new FileOutputStream(configFile);
-        StreamUtil.copy(inputStream, outputStream);
+        copyStreams(inputStream, outputStream);
     }
 
     @Test
@@ -117,6 +118,42 @@ public class ConfigEditorTest {
         Yaml yaml = new Yaml(new Loader(constructor));
 
         return (Config) yaml.load(inputStream);
+    }
+
+    private static void purge(File dir, boolean deleteIt) {
+        if (dir != null) {
+            if (dir.isDirectory()) {
+                File[] doomedFiles = dir.listFiles();
+                if (doomedFiles != null) {
+                    for (File doomedFile : doomedFiles) {
+                        purge(doomedFile, true); // call this method recursively
+                    }
+                }
+            }
+
+            if (deleteIt) {
+                dir.delete();
+            }
+        }
+
+        return;
+    }
+
+    public static void copyStreams(InputStream is, OutputStream os) throws FileNotFoundException, IOException {
+        int bufferSize = 32768;
+        try {
+            is = new BufferedInputStream(is, bufferSize);
+            byte[] buffer = new byte[bufferSize];
+            for (int bytesRead = is.read(buffer); bytesRead != -1; bytesRead = is.read(buffer)) {
+                os.write(buffer, 0, bytesRead);
+            }
+            os.flush();
+        } catch (IOException ioe) {
+            throw new RuntimeException("Stream data cannot be copied", ioe);
+        } finally {
+            os.close();
+            is.close();
+        }
     }
 
 }

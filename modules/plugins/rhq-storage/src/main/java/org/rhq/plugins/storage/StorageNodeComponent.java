@@ -39,6 +39,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.SigarException;
 import org.mc4j.ems.connection.EmsConnection;
+import org.mc4j.ems.connection.EmsInvocationException;
 import org.mc4j.ems.connection.bean.EmsBean;
 import org.mc4j.ems.connection.bean.attribute.EmsAttribute;
 import org.mc4j.ems.connection.bean.operation.EmsOperation;
@@ -88,9 +89,29 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         configDelegate.updateResourceConfiguration(configurationUpdateReport);
     }
 
+    private OperationResult shutdownIfNecessary() {
+        log.info("Shutting down " + getResourceContext().getResourceKey());
+
+        ProcessInfo process = getResourceContext().getNativeProcess();
+        if (process == null) {
+            File pidFile = new File(getBinDir(), "cassandra.pid");
+            if (pidFile.exists()) {
+                return shutdownStorageNode();
+            } else {
+                return new OperationResult("Storage node is not running");
+            }
+        } else {
+            return shutdownStorageNode();
+        }
+    }
+
     private File getBasedir() {
         Configuration pluginConfig = getResourceContext().getPluginConfiguration();
         return new File(pluginConfig.getSimpleValue("baseDir"));
+    }
+
+    private File getBinDir() {
+        return new File(getBasedir(), "bin");
     }
 
     private File getConfDir() {
@@ -105,18 +126,26 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     public OperationResult invokeOperation(String name, Configuration parameters) throws Exception {
         if (name.equals("addNodeMaintenance")) {
             return nodeAdded(parameters);
+        } else if (name.equals("removeNodeMaintenance")) {
+            return nodeRemoved(parameters);
         } else if (name.equals("prepareForUpgrade")) {
             return prepareForUpgrade(parameters);
         } else if (name.equals("readRepair")) {
             return readRepair();
         } else if (name.equals("updateConfiguration")) {
             return updateConfiguration(parameters);
-        } else if (name.equals("updateKnownNodes")) {
-            return updateKnownNodes(parameters);
+        } else if (name.equals("announce")) {
+            return announce(parameters);
+        } else if (name.equals("unannounce")) {
+            return unannounce(parameters);
         } else if (name.equals("prepareForBootstrap")) {
             return prepareForBootstrap(parameters);
         } else if (name.equals("shutdown")) {
             return shutdownStorageNode();
+        } else if (name.equals("decommission")) {
+            return decommission();
+        } else if (name.equals("uninstall")) {
+            return uninstall();
         } else {
             return super.invokeOperation(name, parameters);
         }
@@ -237,6 +266,66 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         return result;
     }
 
+    private OperationResult decommission() {
+        log.info("Decommissioning " + getResourceContext().getResourceKey());
+
+        OperationResult result = new OperationResult();
+        try {
+            EmsConnection emsConnection = getEmsConnection();
+            EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
+
+            EmsAttribute operationModeAttr = storageService.getAttribute("OperationMode");
+            String operationMode = (String) operationModeAttr.refresh();
+            if (operationMode.equals("DECOMMISSIONED")) {
+                log.info("The storage node at " + getResourceContext().getResourceKey() + " is already decommissioned.");
+            } else {
+                Class<?>[] emptyParams = new Class<?>[0];
+                EmsOperation operation = storageService.getOperation("decommission", emptyParams);
+                operation.invoke((Object[]) emptyParams);
+            }
+        } catch (EmsInvocationException e) {
+            result.setErrorMessage("Decommission operation failed: " + ThrowableUtil.getAllMessages(e));
+        }
+        return result;
+    }
+
+    private OperationResult uninstall() {
+        log.info("Uninstalling storage node at " + getResourceContext().getResourceKey());
+
+        OperationResult result = new OperationResult();
+        OperationResult shutdownResult = shutdownIfNecessary();
+        if (shutdownResult.getErrorMessage() != null) {
+            result.setErrorMessage("Failed to shut down storage node: " + shutdownResult.getErrorMessage());
+        } else {
+            File basedir = getBasedir();
+            if (basedir.exists()) {
+                log.info("Purging data directories");
+                Configuration pluginConfig = getResourceContext().getPluginConfiguration();
+                String yamlProp = pluginConfig.getSimpleValue("yamlConfiguration");
+                File yamlFile = new File(yamlProp);
+                ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+                yamlEditor.load();
+                purgeDataDirs(yamlEditor);
+
+                log.info("Purging installation directory " + basedir);
+                purgeDir(basedir);
+
+                log.info("Finished deleting storage node " + getResourceContext().getResourceKey());
+            } else {
+                log.info(basedir + " does not exist. Storage node files have already been purged.");
+            }
+        }
+        return result;
+    }
+
+    private OperationResult announce(Configuration params) {
+        return updateKnownNodes(params);
+    }
+
+    private OperationResult unannounce(Configuration params) {
+        return updateKnownNodes(params);
+    }
+
     private OperationResult updateKnownNodes(Configuration params) {
         OperationResult result = new OperationResult();
 
@@ -276,14 +365,13 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         OperationResult result = new OperationResult();
 
         log.info("Stopping storage node");
-        OperationResult stopNodeResult = shutdownStorageNode();
-        if (stopNodeResult.getErrorMessage() != null) {
-            log.error("Failed to stop storage node " + this + " Cannot prepare the node for bootstrap which means " +
-                "that the storage node cannot join the cluster. Make sure the storage node is not running and retry " +
-                "the operation");
-            result.setErrorMessage("Failed to stop storage node. Cannot prepare the node for bootstrap which means " +
-                "that it cannot join the cluster. Make sure that the node is not running and retry the operation. " +
-                "Stopping the storage node failed with this error: " + stopNodeResult.getErrorMessage());
+        OperationResult shutdownResult = shutdownIfNecessary();
+        if (shutdownResult.getErrorMessage() != null) {
+            log.error("Failed to stop storage node " + getResourceContext().getResourceKey() + ". The storage node " +
+                "must be shut down in order for the changes made by this operation to take effect.");
+            result.setErrorMessage("Failed to stop the storage node. The storage node must be shut down in order " +
+                "for the changes made by this operation to take effect. The attempt to stop shut down the storage " +
+                "node failed with this error: " + shutdownResult.getErrorMessage());
             return result;
         }
 
@@ -295,11 +383,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         try {
             configEditor.load();
 
-            purgeDir(new File(configEditor.getCommitLogDirectory()));
-            for (String dir : configEditor.getDataFileDirectories()) {
-                purgeDir(new File(dir));
-            }
-            purgeDir(new File(configEditor.getSavedCachesDirectory()));
+            purgeDataDirs(configEditor);
 
             log.info("Updating cluster settings");
 
@@ -357,6 +441,14 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
     }
 
+    private void purgeDataDirs(ConfigEditor configEditor) {
+        purgeDir(new File(configEditor.getCommitLogDirectory()));
+        for (String dir : configEditor.getDataFileDirectories()) {
+            purgeDir(new File(dir));
+        }
+        purgeDir(new File(configEditor.getSavedCachesDirectory()));
+    }
+
     private void purgeDir(File dir) {
         log.info("Purging " + dir);
         FileUtil.purge(dir, true);
@@ -377,6 +469,14 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
     }
 
     private OperationResult nodeAdded(Configuration params) {
+        return performTopologyChangeMaintenance(params);
+    }
+
+    private OperationResult nodeRemoved(Configuration params) {
+        return performTopologyChangeMaintenance(params);
+    }
+
+    private OperationResult performTopologyChangeMaintenance(Configuration params) {
         boolean runRepair = params.getSimple("runRepair").getBooleanValue();
         boolean updateSeedsList = params.getSimple("updateSeedsList").getBooleanValue();
 

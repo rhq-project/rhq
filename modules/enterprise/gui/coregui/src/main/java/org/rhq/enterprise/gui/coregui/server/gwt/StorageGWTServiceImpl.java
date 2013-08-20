@@ -26,6 +26,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
@@ -40,6 +42,7 @@ import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.measurement.util.MeasurementUtils;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
 /**
@@ -50,6 +53,8 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
     private static final long serialVersionUID = 1L;
     
     private StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
+    
+    private StorageClusterSettingsManagerLocal storageClusterSettingsManager = LookupUtil.getStorageClusterSettingsManagerLocal();
     
     private OperationManagerLocal operationManager = LookupUtil.getOperationManager();
     
@@ -175,6 +180,43 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
     public void updateConfiguration(StorageNodeConfigurationComposite storageNodeConfiguration) throws RuntimeException {
         try {
             storageNodeManager.updateConfigurationAsync(getSessionSubject(), storageNodeConfiguration);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public void updateClusterSettings(StorageClusterSettings clusterSettings) throws RuntimeException {
+        try {
+            storageClusterSettingsManager.setClusterSettings(getSessionSubject(), clusterSettings);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+    
+    @Override
+    public StorageClusterSettings retrieveClusterSettings() throws RuntimeException {
+        try {
+            return SerialUtility.prepare(storageClusterSettingsManager.getClusterSettings(getSessionSubject()),
+                "StorageGWTServiceImpl.retrieveClusterSettings");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void undeployStorageNode(StorageNode storageNode) throws RuntimeException {
+        try {
+            storageNodeManager.undeployStorageNode(getSessionSubject(), storageNode);
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public void deployStorageNode(StorageNode storageNode) throws RuntimeException {
+        try {
+            storageNodeManager.deployStorageNode(getSessionSubject(), storageNode);
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

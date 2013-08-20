@@ -25,36 +25,21 @@
 
 package org.rhq.cassandra;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.UUID;
 
 import javax.management.MBeanServerConnection;
 import javax.management.ObjectName;
 import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
-import javax.naming.Context;
-
-import com.datastax.driver.core.BoundStatement;
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.PreparedStatement;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import org.rhq.cassandra.installer.RMIContextFactory;
-import org.rhq.core.domain.cloud.StorageNode;
 
 /**
  * This class provides operations to ensure a cluster is initialized and in a consistent
@@ -68,13 +53,25 @@ public final class ClusterInitService {
 
     private final Log log = LogFactory.getLog(ClusterInitService.class);
 
-    public boolean ping(List<StorageNode> storageNodes, int numHosts) {
+    private static final String JMX_CONNECTION_STRING = "service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi";
+
+    /**
+     * Pings the storage nodes to verify if they are available and native transport
+     * is running.
+     *
+     * @param storageNodes storage node addresses
+     * @param jmxPorts JMX ports
+     * @param numHosts minimum number of active hosts
+     *
+     * @return [true] cluster available with at least minimum number of hosts available, [false] otherwise
+     */
+    public boolean ping(String[] storageNodes, int[] jmxPorts, int numHosts) {
         int connections = 0;
         long sleep = 100;
 
-        for (StorageNode host : storageNodes) {
+        for (int index = 0; index < jmxPorts.length; index++) {
             try {
-                boolean isNativeTransportRunning = this.isNativeTransportRunning(host);
+                boolean isNativeTransportRunning = this.isNativeTransportRunning(storageNodes[index], jmxPorts[index]);
                 if (isNativeTransportRunning) {
                     ++connections;
                 }
@@ -83,7 +80,8 @@ public final class ClusterInitService {
                 }
             } catch (Exception e) {
                 if (log.isDebugEnabled()) {
-                    log.debug("Unable to open JMX connection to cassandra node [" + host + "]", e);
+                    log.debug("Unable to open JMX connection on port [" + jmxPorts[index] + "] to cassandra node ["
+                        + storageNodes[index] + "]", e);
                 }
                 return false;
             }
@@ -101,12 +99,12 @@ public final class ClusterInitService {
      * hosts. A runtime exception will be thrown after 10 failed retries.
      * <br/><br/>
      * After connecting to all nodes, this method will then sleep for a fixed delay.
-     * See {@link #waitForClusterToStart(java.util.List, int, int)} for details.
-     *
-     * @param hosts The cluster nodes to which a connection should be made
+     * See {@link #waitForClusterToStart(int, java.util.List, int)} for details.
+     * @param storageNodes The cluster nodes to which a connection should be made
+     * @param jmxPorts JMX port for each cluster node address
      */
-    public void waitForClusterToStart(List<StorageNode> storageNodes) {
-        waitForClusterToStart(storageNodes, storageNodes.size(), 10);
+    public void waitForClusterToStart(String[] storageNodes, int jmxPorts[]) {
+        waitForClusterToStart(storageNodes, jmxPorts, storageNodes.length, 10);
     }
 
     /**
@@ -121,15 +119,14 @@ public final class ClusterInitService {
      * schema and to create the cassandra super user. Cassandra has a hard-coded delay of
      * 10 sceonds before it creates the super user, which means the rhq schema cannot be
      * created before that.
-     *
-     * @param hosts The cluster nodes to which a connection should be made
      * @param numHosts The number of hosts to which a successful connection has to be made
      *                 before returning.
      * @param retries The number of times to retry connecting. A runtime exception will be
      *                thrown when the number of failed connections exceeds this value.
+     * @param hosts The cluster nodes to which a connection should be made
      */
-    public void waitForClusterToStart(List<StorageNode> storageNodes, int numHosts, int retries) {
-        waitForClusterToStart(storageNodes, numHosts, 250, retries, 1);
+    public void waitForClusterToStart(String[] storageNodes, int jmxPorts[], int numHosts, int retries) {
+        waitForClusterToStart(storageNodes, jmxPorts, numHosts, 250, retries, 1);
     }
 
     /**
@@ -144,17 +141,16 @@ public final class ClusterInitService {
      * schema and to create the cassandra super user. Cassandra has a hard-coded delay of
      * 10 sceonds before it creates the super user, which means the rhq schema cannot be
      * created before that.
-     *
-     * @param hosts The cluster nodes to which a connection should be made
      * @param numHosts The number of hosts to which a successful connection has to be made
      *                 before returning.
      * @param delay The amount of time wait between attempts to make a connection
      * @param retries The number of times to retry connecting. A runtime exception will be
      *                thrown when the number of failed connections exceeds this value.
      * @param initialWait The amount of seconds before first try.
+     * @param hosts The cluster nodes to which a connection should be made
      */
-    public void waitForClusterToStart(List<StorageNode> storageNodes, int numHosts, long delay, int retries,
-        int initialWait) {
+    public void waitForClusterToStart(String[] storageNodes, int jmxPorts[], int numHosts, long delay,
+        int retries, int initialWait) {
         if (initialWait > 0) {
             try {
                 if (log.isDebugEnabled()) {
@@ -167,23 +163,28 @@ public final class ClusterInitService {
 
         int connections = 0;
         int failedConnections = 0;
-        Queue<StorageNode> queue = new LinkedList<StorageNode>(storageNodes);
-        StorageNode storageNode = queue.poll();
+        Queue<Integer> queue = new LinkedList<Integer>();
+        for (int index = 0; index < storageNodes.length; index++) {
+            queue.add(index);
+        }
 
-        while (storageNode != null) {
+        Integer storageNodeIndex = queue.poll();
+
+        while (storageNodeIndex != null) {
             if (failedConnections >= retries) {
                 throw new RuntimeException("Unable to verify that cluster nodes have started after "
                     + failedConnections + " failed attempts");
             }
             try {
-                boolean isNativeTransportRunning = this.isNativeTransportRunning(storageNode);
+                boolean isNativeTransportRunning = isNativeTransportRunning(storageNodes[storageNodeIndex],
+                    jmxPorts[storageNodeIndex]);
                 if (log.isDebugEnabled() && isNativeTransportRunning) {
-                    log.debug("Successfully connected to cassandra node [" + storageNode + "]");
+                    log.debug("Successfully connected to cassandra node [" + storageNodes[storageNodeIndex] + "]");
                 }
                 if (isNativeTransportRunning) {
                     ++connections;
                 } else {
-                    queue.offer(storageNode);
+                    queue.offer(storageNodeIndex);
                 }
                 if (connections == numHosts) {
                         if (log.isDebugEnabled()) {
@@ -198,9 +199,10 @@ public final class ClusterInitService {
                 }
             } catch (Exception e) {
                 ++failedConnections;
-                queue.offer(storageNode);
+                queue.offer(storageNodeIndex);
                 if (log.isDebugEnabled()) {
-                    log.debug("Unable to open JMX connection to cassandra node [" + storageNode + "].", e);
+                    log.debug("Unable to open JMX connection on port [" + jmxPorts[storageNodeIndex]
+                        + "] to cassandra node [" + storageNodes[storageNodeIndex] + "].", e);
                 } else if (log.isInfoEnabled()) {
                     log.debug("Unable to open connection to cassandra node.");
                 }
@@ -209,7 +211,7 @@ public final class ClusterInitService {
                 Thread.sleep(delay);
             } catch (InterruptedException e) {
             }
-            storageNode = queue.poll();
+            storageNodeIndex = queue.poll();
         }
     }
 
@@ -221,8 +223,8 @@ public final class ClusterInitService {
      *
      * @param hosts The cluster nodes
      */
-    public void waitForSchemaAgreement(List<StorageNode> storageNodes) throws Exception {
-        if (storageNodes == null) {
+    public void waitForSchemaAgreement(String[] storageNodes, int[] jmxPorts) throws Exception {
+        if (storageNodes == null || storageNodes.length == 0) {
             return;
         }
 
@@ -231,8 +233,8 @@ public final class ClusterInitService {
 
         while (!schemaInAgreement) {
             Set<String> schemaVersions = new HashSet<String>();
-                for (StorageNode host : storageNodes) {
-                    String otherSchchemaVersion = getSchemaVersionForNode(host);
+            for (int index = 0; index < storageNodes.length; index++) {
+                String otherSchchemaVersion = getSchemaVersionForNode(storageNodes[index], jmxPorts[index]);
                     if (otherSchchemaVersion != null) {
                         schemaVersions.add(otherSchchemaVersion);
                     }
@@ -268,13 +270,11 @@ public final class ClusterInitService {
         }
     }
 
-    public boolean isNativeTransportRunning(StorageNode storageNode) throws Exception {
+    public boolean isNativeTransportRunning(String storageNode, int jmxPort) throws Exception {
         Boolean nativeTransportRunning = false;
-        String url = storageNode.getJMXConnectionURL();
+        String url = getJMXConnectionURL(storageNode, jmxPort);
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         Map<String, String> env = new HashMap<String, String>();
-        // see https://issues.jboss.org/browse/AS7-2138
-        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
         JMXConnector connector = null;
 
         try {
@@ -306,12 +306,10 @@ public final class ClusterInitService {
         return nativeTransportRunning;
     }
 
-    private String getSchemaVersionForNode(StorageNode storageNode) throws Exception {
-        String url = storageNode.getJMXConnectionURL();
+    private String getSchemaVersionForNode(String storageNode, int jmxPort) throws Exception {
+        String url = this.getJMXConnectionURL(storageNode, jmxPort);
         JMXServiceURL serviceURL = new JMXServiceURL(url);
         Map<String, String> env = new HashMap<String, String>();
-        // see https://issues.jboss.org/browse/AS7-2138
-        env.put(Context.INITIAL_CONTEXT_FACTORY, RMIContextFactory.class.getName());
         JMXConnector connector = null;
 
         try {
@@ -341,5 +339,18 @@ public final class ClusterInitService {
             }
         }
         return null;
+    }
+
+    /**
+     * Constructs the JMX connection URL based on the node address and
+     * JMX port
+     *
+     * @param address
+     * @param jmxPort
+     * @return
+     */
+    private String getJMXConnectionURL(String address, int jmxPort) {
+        String[] split = JMX_CONNECTION_STRING.split("%s");
+        return split[0] + address + split[1] + jmxPort + split[2];
     }
 }

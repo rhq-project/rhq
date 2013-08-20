@@ -19,6 +19,9 @@
 package org.rhq.enterprise.server.plugins.yum;
 
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -84,20 +87,19 @@ public class RepoProvider implements ContentProvider, PackageSource {
             throw new IllegalArgumentException("Missing required 'location' property");
         }
 
-        location = trim(location);
+        location = location.trim();
+        String username = configuration.getSimpleValue("username");
+        String password = configuration.getSimpleValue("password");
+
+        URI uri = new URI(location);
+
         log.info("Initialized with location: " + location);
-        if (location.startsWith("http://")) {
-            reader = new HttpReader(location);
-            return;
+        try {
+            reader = UrlReader.fromUri(uri, username, password);
+        } catch (MalformedURLException e) {
+            log.error("Could not determine a reader for the URI [" + uri + "]");
+            throw e;
         }
-
-        if (location.startsWith("file://")) {
-            location = location.substring(7);
-            reader = new DiskReader(location);
-            return;
-        }
-
-        reader = new DiskReader(location);
     }
 
     /**
@@ -174,22 +176,6 @@ public class RepoProvider implements ContentProvider, PackageSource {
      */
     public void testConnection() throws Exception {
         reader.validate();
-    }
-
-    /**
-     * Trim white space and trailing (/) characters.
-     *
-     * @param  path A url/directory path string.
-     *
-     * @return A trimmed string.
-     */
-    private String trim(String path) {
-        path = path.trim();
-        while ((path.length() > 1) && path.endsWith("/")) {
-            path = path.substring(0, path.length() - 1);
-        }
-
-        return path;
     }
 
     public SyncProgressWeight getSyncProgressWeight() {

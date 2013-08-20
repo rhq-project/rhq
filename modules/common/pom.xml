@@ -15,12 +15,6 @@
    <description>parent POM for all RHQ common plugin libraries</description>
 
    <dependencies>
-      <dependency>
-         <groupId>${project.groupId}</groupId>
-         <artifactId>rhq-core-domain</artifactId>
-         <version>${project.version}</version>
-         <scope>provided</scope> <!-- by PC -->
-      </dependency>
 
    </dependencies>
 
@@ -32,7 +26,6 @@
       <module>jboss-as-dmr-client</module>
       <module>cassandra-auth</module>
       <module>cassandra-util</module>
-      <module>cassandra-jmx</module>
       <module>cassandra-schema</module>
       <module>cassandra-ccm</module>
       <module>cassandra-installer</module>

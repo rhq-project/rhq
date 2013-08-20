@@ -53,6 +53,7 @@ import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.common.JobTrigger;
@@ -84,7 +85,6 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
-import org.rhq.enterprise.server.storage.StorageClusterSettings;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -246,13 +246,52 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 reset();
                 storageNodeOperationsHandler.bootstrapStorageNode(subject, storageNode);
                 break;
-            case ADD_NODE_MAINTENANCE:
+            case ADD_MAINTENANCE:
                 reset();
                 storageNodeOperationsHandler.performAddNodeMaintenance(subject, storageNode);
             default:
-                // For any other operation mode, the storage node should already be part of
-                // the cluster.
-                // TODO Make sure that the storage node is in fact part of the cluster
+                // TODO what do we do with/about maintenance mode?
+
+                // We do not want to deploying a node that is in the process of being
+                // undeployed. It is too hard to make sure we are in an inconsistent state.
+                // Instead finishe the undeployment and redeploy the storage node.
+                throw new RuntimeException("Cannot deploy " + storageNode);
+        }
+    }
+
+    @Override
+    public void undeployStorageNode(Subject subject, StorageNode storageNode) {
+        storageNode = entityManager.find(StorageNode.class, storageNode.getId());
+        switch (storageNode.getOperationMode()) {
+            case INSTALLED:
+                reset();
+                storageNodeOperationsHandler.uninstall(subject, storageNode);
+                break;
+            case ANNOUNCE:
+            case BOOTSTRAP:
+                reset();
+                storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
+                break;
+            case ADD_MAINTENANCE:
+            case NORMAL:
+            case DECOMMISSION:
+                reset();
+                storageNodeOperationsHandler.decommissionStorageNode(subject, storageNode);
+                break;
+            case REMOVE_MAINTENANCE:
+                reset();
+                storageNodeOperationsHandler.performRemoveNodeMaintenance(subject, storageNode);
+            case UNANNOUNCE:
+                reset();
+                storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);
+                break;
+            case UNINSTALL:
+                reset();
+                storageNodeOperationsHandler.uninstall(subject, storageNode);
+                break;
+            default:
+                // TODO what do we do with/about maintenance mode
+                throw new RuntimeException("Cannot undeploy " + storageNode);
         }
     }
 
@@ -430,10 +469,15 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         long endTime = System.currentTimeMillis();
         long beginTime = endTime - (8 * 60 * 60 * 1000);
         for (StorageNode node : nodes) {
-            StorageNodeLoadComposite composite = getLoad(subjectManager.getOverlord(), node, beginTime, endTime);
-            int unackAlerts = findNotAcknowledgedStorageNodeAlerts(subjectManager.getOverlord(), node).size();
-            composite.setUnackAlerts(unackAlerts);
-            result.add(composite);
+            if (node.getOperationMode() != OperationMode.INSTALLED) {
+                StorageNodeLoadComposite composite = getLoad(subjectManager.getOverlord(), node, beginTime, endTime);
+                int unackAlerts = findNotAcknowledgedStorageNodeAlerts(subjectManager.getOverlord(), node).size();
+                composite.setUnackAlerts(unackAlerts);
+                result.add(composite);
+            } else { // newly installed node
+                result.add(new StorageNodeLoadComposite(node, beginTime, endTime));
+            }
+            
         }
         return result;
     }

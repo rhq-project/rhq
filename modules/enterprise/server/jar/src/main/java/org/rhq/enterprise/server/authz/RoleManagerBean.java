@@ -485,10 +485,10 @@ public class RoleManagerBean implements RoleManagerLocal, RoleManagerRemote {
 
         Set<BundleGroup> newBundleGroups = role.getBundleGroups();
         if (newBundleGroups != null) {
-            Set<BundleGroup> currentBundleGroups = attachedRole.getBundleGroups();
             // wrap in new HashSet to avoid ConcurrentModificationExceptions.
+            Set<BundleGroup> currentBundleGroups = attachedRole.getBundleGroups();
             Set<BundleGroup> bundleGroupsToRemove = new HashSet<BundleGroup>(currentBundleGroups);
-            for (BundleGroup bg : currentBundleGroups) {
+            for (BundleGroup bg : newBundleGroups) {
                 bundleGroupsToRemove.remove(bg);
             }
             for (BundleGroup bg : bundleGroupsToRemove) {

@@ -136,15 +136,12 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         // See https://bugzilla.redhat.com/show_bug.cgi?id=854773
 
         // What did the user say in the datasource creation form?
-        Boolean configValue = createResourceReport.getResourceConfiguration().getSimple(ENABLED_ATTRIBUTE)
-            .getBooleanValue();
-        if (configValue == null) {
-            // Let's assume the user wants the datasource enabled if he/she said nothing
-            configValue = TRUE;
-        }
+        PropertySimple enabledProperty = createResourceReport.getResourceConfiguration().getSimple(ENABLED_ATTRIBUTE);
+        // Let's assume the user wants the datasource enabled if he/she said nothing
+        Boolean enabledPropertyValue = enabledProperty == null ? TRUE : enabledProperty.getBooleanValue();
 
         EnabledAttributeHelper.on(new Address(resourceReport.getResourceKey())).with(getASConnection())
-            .setAttributeValue(configValue, new EnabledAttributeHelperCallbacks() {
+            .setAttributeValue(enabledPropertyValue, new EnabledAttributeHelperCallbacks() {
                 @Override
                 public void onReadAttributeFailure(Result opResult) {
                     resourceReport.setStatus(CreateResourceStatus.FAILURE);

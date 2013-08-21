@@ -1883,8 +1883,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             entityManager.flush();
         }
 
-        // remove bundle from relevant any assigned bundle groups
-        for (BundleGroup bg : bundle.getBundleGroups()) {
+        // remove bundle from any assigned bundle groups
+        // wrap in new HashSet to avoid ConcurrentModificationExceptions.        
+        Set<BundleGroup> BundleGroupsToRemove = new HashSet<BundleGroup>(bundle.getBundleGroups());
+        for (BundleGroup bg : BundleGroupsToRemove) {
             bg.removeBundle(bundle);
         }
 
@@ -2077,7 +2079,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
             }
 
             // unassign any bundles assigned to the bundle group
-            for (Bundle b : bundleGroup.getBundles()) {
+            // wrap in new HashSet to avoid ConcurrentModificationExceptions.        
+            Set<Bundle> bundlesToRemove = new HashSet<Bundle>(bundleGroup.getBundles());
+            for (Bundle b : bundlesToRemove) {
                 bundleGroup.removeBundle(b);
             }
 

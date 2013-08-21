@@ -70,7 +70,7 @@
 
     <operation name="uninstall" description="Removes all of the storage node files from disk"/>
 
-    <operation name="readRepair" description="Runs read repair on primar range of rhq and system_auth keyspaces">
+    <operation name="repair" description="Runs anti-entropy repair on the primary range of rhq and system_auth keyspaces">
       <results>
         <c:list-property name="results">
           <c:map-property name="resultsMap">

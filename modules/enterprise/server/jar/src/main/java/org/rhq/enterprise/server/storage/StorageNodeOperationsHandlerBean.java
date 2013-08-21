@@ -342,6 +342,13 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
                 log.error(msg, e);
                 storageNodeOperationsHandler.logError(StorageNode.OperationMode.UNINSTALL, msg, e);
             }
+        } else if (operationHistory.getOperationDefinition().getName().equals("repair")) {
+            try {
+                storageNodeOperationsHandler.handleRepair(resourceOperationHistory);
+            } catch (Exception e) {
+                String msg = "Abort scheduled repair maintenance due to unexpected error.";
+                log.error(msg, e);
+            }
         }
     }
 
@@ -530,6 +537,53 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
     }
 
     @Override
+    public void runRepair(Subject subject, List<StorageNode> clusterNodes) {
+        log.info("Starting anti-entropy repair on storage cluster");
+
+        for (StorageNode node : clusterNodes) {
+            node.setErrorMessage(null);
+            node.setFailedOperation(null);
+            node.setMaintenancePending(true);
+        }
+        StorageNode storageNode = storageNodeOperationsHandler.setMode(clusterNodes.get(0),
+            StorageNode.OperationMode.MAINTENANCE);
+        scheduleOperation(subject, storageNode, new Configuration(), "repair");
+    }
+
+    private void runRepair(Subject subject, StorageNode storageNode) {
+        scheduleOperation(subject, storageNode, new Configuration(), "repair");
+    }
+
+    @Override
+    @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    public void handleRepair(ResourceOperationHistory operationHistory) {
+        StorageNode storageNode = findStorageNode(operationHistory.getResource());
+        switch (operationHistory.getStatus()) {
+            case INPROGRESS:
+                // nothing to do here
+                break;
+            case CANCELED:
+                repairCanceled(storageNode, operationHistory);
+                break;
+            case FAILURE:
+                repairFailed(storageNode, operationHistory);
+                break;
+            default:  // SUCCESS
+                log.info("Finished running repair on " + storageNode);
+                storageNode.setMaintenancePending(false);
+                storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.NORMAL);
+                StorageNode nextNode = takeFromMaintenanceQueue();
+
+                if (nextNode == null) {
+                    log.info("Finished running repair on storage cluster");
+                } else {
+                    nextNode = storageNodeOperationsHandler.setMode(nextNode, StorageNode.OperationMode.MAINTENANCE);
+                    runRepair(getSubject(operationHistory), nextNode);
+                }
+        }
+    }
+
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void handleDecommission(ResourceOperationHistory operationHistory) {
         StorageNode storageNode = findStorageNode(operationHistory.getResource());
@@ -612,6 +666,10 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         operationCanceled(storageNode, operationHistory, "Undeployment");
     }
 
+    private void repairCanceled(StorageNode storageNode, ResourceOperationHistory operationHistory) {
+        operationCanceled(storageNode, operationHistory, "Scheduled repair");
+    }
+
     private void operationCanceled(StorageNode storageNode, ResourceOperationHistory operationHistory, String opType) {
         log.error(opType + " has been aborted due to canceled operation [" +
             operationHistory.getOperationDefinition().getDisplayName() + " on " + storageNode.getResource() +
@@ -638,6 +696,10 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     private void undeploymentOperationFailed(StorageNode storageNode, ResourceOperationHistory operationHistory) {
         operationFailed(storageNode, operationHistory, "Undeployment");
+    }
+
+    private void repairFailed(StorageNode storageNode, ResourceOperationHistory operationHistory) {
+        operationFailed(storageNode, operationHistory, "Scheduled repair");
     }
 
     private void operationFailed(StorageNode storageNode, ResourceOperationHistory operationHistory, String opType) {

@@ -1,6 +1,7 @@
 package org.rhq.enterprise.server.storage;
 
 import java.net.InetAddress;
+import java.util.List;
 
 import javax.ejb.Asynchronous;
 
@@ -50,6 +51,10 @@ public interface StorageNodeOperationsHandlerLocal {
     void performRemoveNodeMaintenanceIfNecessary(InetAddress storageNodeAddress);
 
     void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode);
+
+    void runRepair(Subject subject, List<StorageNode> clusterNodes);
+
+    void handleRepair(ResourceOperationHistory operationHistory);
 
     void logError(StorageNode.OperationMode newStorageNodeOperationMode, String error, Exception e);
 

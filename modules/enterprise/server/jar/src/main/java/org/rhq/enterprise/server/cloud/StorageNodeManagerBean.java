@@ -24,6 +24,8 @@
  */
 package org.rhq.enterprise.server.cloud;
 
+import static java.util.Arrays.asList;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
@@ -576,27 +578,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
 
-        // TODO Re-implement using work flow similar to how we deploy new nodes
-
-//        ResourceGroup storageNodeGroup = getStorageNodeGroup();
-//
-//        if (storageNodeGroup.getExplicitResources().size() < 2) {
-//            log.info("Skipping read repair since this is a single-node cluster");
-//            return;
-//        }
-//
-//        log.info("Scheduling read repair maintenance for storage cluster");
-//
-//        GroupOperationSchedule schedule = new GroupOperationSchedule();
-//        schedule.setGroup(storageNodeGroup);
-//        schedule.setHaltOnFailure(false);
-//        schedule.setExecutionOrder(new ArrayList<Resource>(storageNodeGroup.getExplicitResources()));
-//        schedule.setJobTrigger(JobTrigger.createNowTrigger());
-//        schedule.setSubject(subjectManager.getOverlord());
-//        schedule.setOperationName("readRepair");
-//        schedule.setDescription("Run scheduled read repair on storage node");
-//
-//        operationManager.scheduleGroupOperation(subjectManager.getOverlord(), schedule);
+        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODES,
+            StorageNode.class).setParameter("operationModes", asList(StorageNode.OperationMode.NORMAL,
+            StorageNode.OperationMode.MAINTENANCE)).getResultList();
+        if (clusterNodes.size() == 1) {
+            log.info("Skipping scheduled repair since this is a single-node cluster");
+        } else {
+            storageNodeOperationsHandler.runRepair(subjectManager.getOverlord(), clusterNodes);
+        }
     }
 
     @Override

@@ -60,6 +60,8 @@ import org.rhq.core.domain.resource.Resource;
         + "          WHERE s.address = :address"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE, query =
         "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode"),
+    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODES, query =
+        "SELECT s FROM StorageNode s WHERE s.operationMode IN (:operationModes)"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE_EXCLUDING, query =
         "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode AND s <> :storageNode"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NOT_INSTALLED, query = "SELECT s FROM StorageNode s WHERE NOT s.operationMode = 'INSTALLED'"),
@@ -99,6 +101,7 @@ public class StorageNode implements Serializable {
     public static final String QUERY_FIND_ALL = "StorageNode.findAll";
     public static final String QUERY_FIND_BY_ADDRESS = "StorageNode.findByAddress";
     public static final String QUERY_FIND_ALL_BY_MODE = "StorageNode.findAllByMode";
+    public static final String QUERY_FIND_ALL_BY_MODES = "StorageNode.findAllByModes";
     public static final String QUERY_FIND_ALL_BY_MODE_EXCLUDING = "StorageNode.findAllByModeExcluding";
     public static final String QUERY_FIND_ALL_NOT_INSTALLED = "StorageNode.findAllCloudMembers";
     public static final String QUERY_DELETE_BY_ID = "StorageNode.deleteById";

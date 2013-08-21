@@ -122,7 +122,7 @@ public class CCMTestNGListener implements IInvokedMethodListener {
         ccm.startCluster(false);
 
 
-        clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 20, 2, 1500);
+        clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 20, 2, 10);
 
         SchemaManager schemaManager = new SchemaManager(annotation.username(), annotation.password(), nodes,
             ccm.getCqlPort());

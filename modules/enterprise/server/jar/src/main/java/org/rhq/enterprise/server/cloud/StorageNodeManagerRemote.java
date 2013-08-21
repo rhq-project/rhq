@@ -100,4 +100,6 @@ public interface StorageNodeManagerRemote {
     void deployStorageNode(Subject sbubject, StorageNode storageNode);
 
     void undeployStorageNode(Subject subject, StorageNode storageNode);
+
+    void runClusterMaintenance();
 }

@@ -100,7 +100,7 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
 
                 if (viewPath.isEnd() || viewPath.isNextEnd()) {
                     // We are navigating to the section view (ignore any trailing segment without an ID) 
-                    if (currentBundleViewId == null && currentBundleGroupViewId == null && bundleSectionView != null) {
+                    if (bundleView == null && bundleGroupView == null && bundleSectionView != null) {
                         bundleSectionView.refresh();
                     } else {
                         bundleSectionView = new BundleSectionView(globalPermissions);

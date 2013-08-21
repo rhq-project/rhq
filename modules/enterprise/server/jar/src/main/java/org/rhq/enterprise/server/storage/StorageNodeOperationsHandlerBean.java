@@ -212,7 +212,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
         storageNode.setMaintenancePending(true);
         clusterNodes.add(storageNode);
-        boolean runRepair = updateSchemaIfNecessary(clusterNodes.size(), clusterNodes.size() + 1);
+        boolean runRepair = updateSchemaIfNecessary(clusterNodes.size() - 1, clusterNodes.size());
         performAddNodeMaintenance(subject, storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST,
             clusterNodes));
     }

@@ -140,7 +140,7 @@
 
         <!-- Whether the newly installed storage nodes will be automatically deployed to the storage cluster -->
         <data ID="60" PROPERTY_KEY="STORAGE_AUTOMATIC_DEPLOYMENT"
-              PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false"
+              PROPERTY_VALUE="true" DEFAULT_PROPERTY_VALUE="true"
               FREAD_ONLY="TRUE"/>
     </table>
 

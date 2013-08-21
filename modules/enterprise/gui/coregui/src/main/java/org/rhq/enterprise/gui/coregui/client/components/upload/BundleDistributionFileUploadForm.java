@@ -57,7 +57,7 @@ public class BundleDistributionFileUploadForm extends FileUploadForm {
 
     protected boolean processSubmitCompleteResults(String submitCompleteEventResults) {
         bundleVersionId = parseResponse(submitCompleteEventResults);
-        return (bundleVersionId > 0);
+        return (bundleVersionId > 0 || null != createInitialBundleVersionToken);
     }
 
     private int parseResponse(String results) {

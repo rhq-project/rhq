@@ -336,35 +336,37 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
     private void processUpload() {
         if (Boolean.TRUE.equals(uploadDistroForm.getUploadResult())) {
-            int bvId = uploadDistroForm.getBundleVersionId();
-            BundleVersionCriteria criteria = new BundleVersionCriteria();
-            criteria.addFilterId(bvId);
-            criteria.fetchBundle(true);
-            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-            bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
-                @Override
-                public void onSuccess(PageList<BundleVersion> result) {
-                    BundleVersion bv = result.get(0);
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_bundle_createWizard_createSuccessful(bv.getName(), bv.getVersion()),
-                            Message.Severity.Info));
-                    wizard.setBundleVersion(bv);
-                    setButtonsDisableMode(false);
-                    incrementStep(); // go to the next step
-                }
+            if (null != uploadDistroForm.getCreateInitialBundleVersionToken()) {
+                handleBundleNotFoundException(new BundleNotFoundException(
+                    uploadDistroForm.getCreateInitialBundleVersionToken()));
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    wizard.getView().showMessage(caught.getMessage());
-                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
-                    wizard.setBundleVersion(null);
-                    setButtonsDisableMode(false);
-                }
-            });
-        } else if (null != uploadDistroForm.getCreateInitialBundleVersionToken()) {
-            handleBundleNotFoundException(new BundleNotFoundException(
-                uploadDistroForm.getCreateInitialBundleVersionToken()));
+            } else {
+                int bvId = uploadDistroForm.getBundleVersionId();
+                BundleVersionCriteria criteria = new BundleVersionCriteria();
+                criteria.addFilterId(bvId);
+                criteria.fetchBundle(true);
+                BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+                bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+                    @Override
+                    public void onSuccess(PageList<BundleVersion> result) {
+                        BundleVersion bv = result.get(0);
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_bundle_createWizard_createSuccessful(bv.getName(), bv.getVersion()),
+                                Message.Severity.Info));
+                        wizard.setBundleVersion(bv);
+                        setButtonsDisableMode(false);
+                        incrementStep(); // go to the next step
+                    }
 
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        wizard.getView().showMessage(caught.getMessage());
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
+                        wizard.setBundleVersion(null);
+                        setButtonsDisableMode(false);
+                    }
+                });
+            }
         } else {
             String errorMessage = uploadDistroForm.getUploadError();
             handleUploadError(errorMessage, true);

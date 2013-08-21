@@ -158,7 +158,7 @@
   <difference>
     <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
     <differenceType>7012</differenceType>  <!-- method added to an interface -->
-    <method>org.rhq.core.domain.bundle.BundleGroup updateBundleGroup(org.rhq.core.domain.auth.Subject subject, org.rhq.core.domain.bundle.BundleGroup)</method>
+    <method>org.rhq.core.domain.bundle.BundleGroup updateBundleGroup(org.rhq.core.domain.auth.Subject, org.rhq.core.domain.bundle.BundleGroup)</method>    
     <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
   </difference>
 

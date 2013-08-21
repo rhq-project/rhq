@@ -35,7 +35,6 @@ import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
-import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
@@ -153,27 +152,32 @@ public class BundleGroupsStep extends AbstractWizardStep {
     private void prepareNonInitialVersionCanvas(EnhancedVLayout canvas) {
         BundleGroupAssignmentComposite composite = wizard.getBundleGroupAssignmentComposite();
         final Map<BundleGroup, Boolean> map = composite.getBundleGroupMap();
+        selector = getSelector(map, true);
 
-        if (map.isEmpty()) {
+        if (0 == selector.getSelectedRecords().length) {
+            selector.destroy();
+
             DynamicForm form = new DynamicForm();
+            form.setWidth100();
+            HeaderItem unassignedHeaderItem = new HeaderItem();
+            unassignedHeaderItem.setAttribute("wrap", true); // forum tip, only way I could get the text to wrap
+            unassignedHeaderItem.setWidth(650);
+            unassignedHeaderItem.setValue(MSG.view_bundle_createWizard_groupsStep_unassigned());
+            FormUtility.addContextualHelp(unassignedHeaderItem, MSG.view_bundle_createWizard_groupsStep_help());
+            form.setItems(unassignedHeaderItem);
 
-            StaticTextItem unassignedItem = new StaticTextItem("CurrentlyUnassigned");
-            unassignedItem.setShowTitle(false);
-            unassignedItem.setTitleOrientation(TitleOrientation.TOP);
-            unassignedItem.setAlign(Alignment.LEFT);
-            // The css style "formTitle" is what should work here, but for some reason I wasn't getting the
-            // proper color. So instead I grabbed the color from the smartgwt css and declared it explicitly.
-            //radioTitleItem.setCellStyle("formTitle");
-            unassignedItem.setValue("<span style=\"font-weight: bold; color: #003168\">"
-                + MSG.view_bundle_createWizard_groupsStep_unassigned() + " :</span>");
-            FormUtility.addContextualHelp(unassignedItem, MSG.view_bundle_createWizard_groupsStep_help());
-            form.setItems(unassignedItem);
             canvas.addMember(form);
 
         } else {
-            selector = getSelector(map, true);
-            selector.setTitle(MSG.view_bundle_createWizard_groupsStep_assigned());
-            selector.setTooltip(MSG.view_bundle_createWizard_groupsStep_help());
+            DynamicForm form = new DynamicForm();
+            form.setWidth100();
+            HeaderItem selectorTitleItem = new HeaderItem();
+            selectorTitleItem.setWidth(650);
+            selectorTitleItem.setValue(MSG.view_bundle_createWizard_groupsStep_assigned());
+            FormUtility.addContextualHelp(selectorTitleItem, MSG.view_bundle_createWizard_groupsStep_help());
+            form.setItems(selectorTitleItem);
+
+            canvas.addMember(form);
             canvas.addMember(selector);
         }
     }

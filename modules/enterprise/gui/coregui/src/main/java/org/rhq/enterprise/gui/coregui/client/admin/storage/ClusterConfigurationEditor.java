@@ -28,6 +28,7 @@ import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
+import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -57,36 +58,36 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private EnhancedIButton saveButton;
     private boolean oddRow;
     private StorageClusterSettings settings;
-    
+
     private static String FIELD_CQL_PORT = "cql_port";
     private static String FIELD_GOSSIP_PORT = "gossip_port";
+    private static String FIELD_AUTOMATIC_DEPLOYMENT = "automatic_deployment";
 
     public ClusterConfigurationEditor() {
         super();
     }
-    
-    private void fetchClusterSettings() {
-        GWTServiceLookup.getStorageService().retrieveClusterSettings(
-            new AsyncCallback<StorageClusterSettings>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    Message message = new Message(MSG.view_configurationHistoryDetails_error_loadFailure(),
-                        Message.Severity.Warning);
-                }
 
-                @Override
-                public void onSuccess(StorageClusterSettings settings) {
-                    ClusterConfigurationEditor.this.settings = settings;
-                    prepareForm();
-                }
-            });
+    private void fetchClusterSettings() {
+        GWTServiceLookup.getStorageService().retrieveClusterSettings(new AsyncCallback<StorageClusterSettings>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                Message message = new Message(MSG.view_configurationHistoryDetails_error_loadFailure(),
+                    Message.Severity.Warning);
+            }
+
+            @Override
+            public void onSuccess(StorageClusterSettings settings) {
+                ClusterConfigurationEditor.this.settings = settings;
+                prepareForm();
+            }
+        });
     }
 
     private void save() {
         updateSettings();
         GWTServiceLookup.getStorageService().updateClusterSettings(settings, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
-                Message msg = new Message("Storage node settings were successfully updated.", Message.Severity.Info);
+                Message msg = new Message("Storage cluster settings were successfully updated.", Message.Severity.Info);
                 CoreGUI.getMessageCenter().notify(msg);
             }
 
@@ -95,12 +96,12 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             }
         });
     }
-    
+
     private List<FormItem> buildOneFormRowWithValidator(String name, String title, String value, String description,
         Validator validator) {
         return buildOneFormRow(name, title, value, description, false, validator);
     }
-    
+
     private List<FormItem> buildOneFormRow(String name, String title, String value, String description,
         boolean unitsDropdown, Validator validator) {
         List<FormItem> fields = new ArrayList<FormItem>();
@@ -112,13 +113,13 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         fields.add(nameItem);
 
         FormItem valueItem = null;
-            valueItem = new TextItem();
-            valueItem.setName(name);
-            valueItem.setValue(value);
-            valueItem.setWidth(220);
-            if (validator != null) {
-                valueItem.setValidators(validator);
-            }
+        valueItem = new TextItem();
+        valueItem.setName(name);
+        valueItem.setValue(value);
+        valueItem.setWidth(220);
+        if (validator != null) {
+            valueItem.setValidators(validator);
+        }
         valueItem.setValidateOnChange(true);
         valueItem.setAlign(Alignment.CENTER);
         valueItem.setShowTitle(false);
@@ -158,7 +159,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         super.onDraw();
         refresh();
     }
-    
+
     private void prepareForm() {
         form = new EnhancedDynamicForm();
         form.setHiliteRequiredFields(true);
@@ -171,27 +172,46 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         oddRow = true;
 
         List<FormItem> items = buildHeaderItems();
-//          IntegerRangeValidator positiveInteger = new IntegerRangeValidator();
-//        positiveInteger.setMin(1);
-//        positiveInteger.setMax(Integer.MAX_VALUE);
+        //          IntegerRangeValidator positiveInteger = new IntegerRangeValidator();
+        //        positiveInteger.setMin(1);
+        //        positiveInteger.setMax(Integer.MAX_VALUE);
         IsIntegerValidator validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_CQL_PORT, "CQL Port", String.valueOf(settings.getCqlPort()),
             "The port on which the Storage Nodes listens for CQL client connections.", validator));
-        
-//        IntegerRangeValidator portValidator = new IntegerRangeValidator();
-//        portValidator.setMin(1);
-//        portValidator.setMax(65535); // (1 << 16) - 1
+
+        //        IntegerRangeValidator portValidator = new IntegerRangeValidator();
+        //        portValidator.setMin(1);
+        //        portValidator.setMax(65535); // (1 << 16) - 1
         validator = new IsIntegerValidator();
-        items.addAll(buildOneFormRowWithValidator(FIELD_GOSSIP_PORT, "Gossip Port", String.valueOf(settings.getGossipPort()),
+        items.addAll(buildOneFormRowWithValidator(FIELD_GOSSIP_PORT, "Gossip Port",
+            String.valueOf(settings.getGossipPort()),
             "The port used for internode communication. This is a shared, cluster-wide setting.", validator));
+
+        List<FormItem> automaticDeploymentItems = buildOneFormRow(
+            FIELD_AUTOMATIC_DEPLOYMENT,
+            "Automatic Deployment",
+            Boolean.toString(settings.getAutomaticDeployment()),
+            "If this is set, the newly installed storage nodes will be automatically deployed to the storage cluster.",
+            false, null);
+        CheckboxItem autoDeployCheckbox = new CheckboxItem(FIELD_AUTOMATIC_DEPLOYMENT);
+        autoDeployCheckbox.setValue(settings.getAutomaticDeployment());
+        autoDeployCheckbox.setValidateOnChange(true);
+        autoDeployCheckbox.setAlign(Alignment.CENTER);
+        autoDeployCheckbox.setShowTitle(false);
+        autoDeployCheckbox.setShowLabel(false);
+        autoDeployCheckbox.setRequired(true);
+        autoDeployCheckbox.setCellStyle(!oddRow ? "OddRow" : "EvenRow");
+        oddRow = !oddRow;
+        automaticDeploymentItems.set(1, autoDeployCheckbox);
+        items.addAll(automaticDeploymentItems);
         form.setFields(items.toArray(new FormItem[items.size()]));
         form.setWidth100();
         form.setOverflow(Overflow.VISIBLE);
         setWidth100();
-        
+
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setWidth100();
-        
+
         ToolStrip toolStrip = buildToolStrip();
         setMembers(form, spacer, toolStrip);
         form.validate();
@@ -202,7 +222,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     public void refresh() {
         fetchClusterSettings();
     }
-    
+
     private EnhancedToolStrip buildToolStrip() {
         saveButton = new EnhancedIButton(MSG.common_button_save());
         saveButton.addClickHandler(new ClickHandler() {
@@ -229,10 +249,11 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
 
         return toolStrip;
     }
-    
+
     private StorageClusterSettings updateSettings() {
         settings.setCqlPort(Integer.parseInt(form.getValueAsString(FIELD_CQL_PORT)));
         settings.setGossipPort(Integer.parseInt(form.getValueAsString(FIELD_GOSSIP_PORT)));
+        settings.setAutomaticDeployment(Boolean.parseBoolean(form.getValueAsString(FIELD_AUTOMATIC_DEPLOYMENT)));
         return settings;
     }
 }

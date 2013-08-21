@@ -14,6 +14,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -92,6 +93,16 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
 
     @Override
     public CreateResourceReport createResource(CreateResourceReport createResourceReport) {
+
+        List<String> validationErrors = ConfigurationUtility.validateConfiguration(createResourceReport
+            .getResourceConfiguration(), createResourceReport.getResourceType().getResourceConfigurationDefinition());
+
+        if (!validationErrors.isEmpty()) {
+            createResourceReport.setErrorMessage(validationErrors.toString());
+            createResourceReport.setStatus(CreateResourceStatus.FAILURE);
+            return createResourceReport;
+        }
+
         final CreateResourceReport resourceReport = super.createResource(createResourceReport);
 
         // No success -> no point in continuing
@@ -101,33 +112,35 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         // outer create resource did not cater for the xa properties, so lets add them now
         if (createResourceReport.getResourceType().getName().toLowerCase().contains("xa")) {
             PropertyList listPropertyWrapper = createResourceReport.getResourceConfiguration().getList("*2");
-            List<Property> listProperty = listPropertyWrapper.getList();
+            if (listPropertyWrapper != null) {
+                List<Property> listProperty = listPropertyWrapper.getList();
 
-            String baseAddress = resourceReport.getResourceKey();
+                String baseAddress = resourceReport.getResourceKey();
 
-            if (!listProperty.isEmpty()) {
-                CompositeOperation cop = new CompositeOperation();
-                for (Property p : listProperty) {
-                    PropertyMap map = (PropertyMap) p;
-                    String key = map.getSimpleValue("key", null);
-                    String value = map.getSimpleValue("value", null);
-                    if (key == null || value == null)
-                        continue;
+                if (!listProperty.isEmpty()) {
+                    CompositeOperation cop = new CompositeOperation();
+                    for (Property p : listProperty) {
+                        PropertyMap map = (PropertyMap) p;
+                        String key = map.getSimpleValue("key", null);
+                        String value = map.getSimpleValue("value", null);
+                        if (key == null || value == null)
+                            continue;
 
-                    Address propertyAddress = new Address(baseAddress);
-                    propertyAddress.add("xa-datasource-properties", key);
-                    Operation op = new Operation("add", propertyAddress);
-                    op.addAdditionalProperty("value", value);
-                    cop.addStep(op);
+                        Address propertyAddress = new Address(baseAddress);
+                        propertyAddress.add("xa-datasource-properties", key);
+                        Operation op = new Operation("add", propertyAddress);
+                        op.addAdditionalProperty("value", value);
+                        cop.addStep(op);
 
-                }
+                    }
 
-                Result res = getASConnection().execute(cop);
-                if (!res.isSuccess()) {
-                    resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
-                        + res.getFailureDescription());
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
-                    return resourceReport;
+                    Result res = getASConnection().execute(cop);
+                    if (!res.isSuccess()) {
+                        resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
+                            + res.getFailureDescription());
+                        resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                        return resourceReport;
+                    }
                 }
             }
         }

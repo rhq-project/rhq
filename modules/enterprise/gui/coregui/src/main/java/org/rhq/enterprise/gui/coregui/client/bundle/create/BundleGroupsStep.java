@@ -143,7 +143,19 @@ public class BundleGroupsStep extends AbstractWizardStep {
             canvas.addMember(selector);
 
         } else {
-            throw new IllegalStateException(MSG.view_bundle_createWizard_groupsStep_noAssignable());
+            // can't call wizard show message, the canvas is not yet created, so make the canvas the message
+            DynamicForm form = new DynamicForm();
+            form.setWidth100();
+            HeaderItem errorHeaderItem = new HeaderItem();
+            errorHeaderItem.setAttribute("wrap", true); // forum tip, only way I could get the text to wrap
+            errorHeaderItem.setWidth(650);
+            errorHeaderItem.setValue(MSG.view_bundle_createWizard_groupsStep_noAssignable());
+            FormUtility.addContextualHelp(errorHeaderItem, MSG.view_bundle_createWizard_groupsStep_help());
+            form.setItems(errorHeaderItem);
+
+            canvas.addMember(form);
+
+            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_groupsStep_noAssignable());
         }
     }
 

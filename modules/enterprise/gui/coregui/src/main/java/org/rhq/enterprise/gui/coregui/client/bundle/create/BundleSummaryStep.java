@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
+import java.util.Set;
+
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.VerticalAlignment;
 import com.smartgwt.client.widgets.Canvas;
@@ -86,11 +88,16 @@ public class BundleSummaryStep extends AbstractWizardStep {
         bundleGroupsLabel.setTitleAlign(Alignment.LEFT);
         bundleGroupsLabel.setAlign(Alignment.LEFT);
         bundleGroupsLabel.setWrap(false);
-        StringBuilder bundleGroupsValueStr = new StringBuilder();
-        for (BundleGroup bundleGroup : wizard.getInitialBundleGroups()) {
-            bundleGroupsValueStr.append(bundleGroup.getName() + "<br/>\n");
+        Set<BundleGroup> initialBundleGroups = wizard.getInitialBundleGroups();
+        if (null == initialBundleGroups || initialBundleGroups.isEmpty()) {
+            bundleGroupsLabel.setValue(MSG.view_bundle_createWizard_unassigned());
+        } else {
+            StringBuilder bundleGroupsValueStr = new StringBuilder();
+            for (BundleGroup bundleGroup : wizard.getInitialBundleGroups()) {
+                bundleGroupsValueStr.append(bundleGroup.getName() + "<br/>\n");
+            }
+            bundleGroupsLabel.setValue(bundleGroupsValueStr.toString());
         }
-        bundleGroupsLabel.setValue(bundleGroupsValueStr.toString());
 
         form.setFields(bundleTypeLabel, nameLabel, versionLabel, descriptionLabel, filesLabel, bundleGroupsLabel);
 

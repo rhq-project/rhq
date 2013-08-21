@@ -2011,6 +2011,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     public void assignBundlesToBundleGroups(Subject subject, int bundleGroupIds[], int[] bundleIds) {
+        if (null == bundleGroupIds || null == bundleIds) {
+            return;
+        }
+
         for (int bundleGroupId : bundleGroupIds) {
             BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
             if (null == bundleGroup) {
@@ -2106,6 +2110,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
     @Override
     public void unassignBundlesFromBundleGroups(Subject subject, int[] bundleGroupIds, int[] bundleIds) {
+        if (null == bundleGroupIds || null == bundleIds) {
+            return;
+        }
+
         for (int bundleGroupId : bundleGroupIds) {
             BundleGroup bundleGroup = entityManager.find(BundleGroup.class, bundleGroupId);
             if (null == bundleGroup) {

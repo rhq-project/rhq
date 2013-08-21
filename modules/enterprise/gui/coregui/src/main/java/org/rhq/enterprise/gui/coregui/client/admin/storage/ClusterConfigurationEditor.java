@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -30,6 +31,7 @@ import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
 import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
+import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
@@ -193,16 +195,19 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
             Boolean.toString(settings.getAutomaticDeployment()),
             "If this is set, the newly installed storage nodes will be automatically deployed to the storage cluster.",
             false, null);
-        CheckboxItem autoDeployCheckbox = new CheckboxItem(FIELD_AUTOMATIC_DEPLOYMENT);
-        autoDeployCheckbox.setValue(settings.getAutomaticDeployment());
-        autoDeployCheckbox.setValidateOnChange(true);
-        autoDeployCheckbox.setAlign(Alignment.CENTER);
-        autoDeployCheckbox.setShowTitle(false);
-        autoDeployCheckbox.setShowLabel(false);
-        autoDeployCheckbox.setRequired(true);
-        autoDeployCheckbox.setCellStyle(!oddRow ? "OddRow" : "EvenRow");
+        RadioGroupItem autoDeployRadio = new RadioGroupItem(FIELD_AUTOMATIC_DEPLOYMENT);
+        autoDeployRadio.setVertical(false);
+        LinkedHashMap<String, String> values = new LinkedHashMap<String, String>(2);
+        values.put("true", "On");
+        values.put("false", "Off");
+        autoDeployRadio.setValueMap(values);
+        autoDeployRadio.setValue(settings.getAutomaticDeployment());
+        autoDeployRadio.setAlign(Alignment.CENTER);
+        autoDeployRadio.setShowTitle(false);
+        autoDeployRadio.setRequired(true);
+        autoDeployRadio.setCellStyle(!oddRow ? "OddRow" : "EvenRow");
         oddRow = !oddRow;
-        automaticDeploymentItems.set(1, autoDeployCheckbox);
+        automaticDeploymentItems.set(1, autoDeployRadio);
         items.addAll(automaticDeploymentItems);
         form.setFields(items.toArray(new FormItem[items.size()]));
         form.setWidth100();

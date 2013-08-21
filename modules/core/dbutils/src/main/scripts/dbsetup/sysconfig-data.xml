@@ -133,11 +133,15 @@
         <data ID="58" PROPERTY_KEY="DRIFT_FILE_PURGE" PROPERTY_VALUE="2678400000"
               DEFAULT_PROPERTY_VALUE="2678400000" FREAD_ONLY="FALSE"/>
 
+        <!-- How long the UI session is allowed to be without any interaction before we consider it expired -->
         <data ID="59" PROPERTY_KEY="RHQ_SESSION_TIMEOUT"
               PROPERTY_VALUE="3600000" DEFAULT_PROPERTY_VALUE="3600000"
               FREAD_ONLY="FALSE"/>
 
-
+        <!-- Whether the newly installed storage nodes will be automatically deployed to the storage cluster -->
+        <data ID="60" PROPERTY_KEY="STORAGE_AUTOMATIC_DEPLOYMENT"
+              PROPERTY_VALUE="false" DEFAULT_PROPERTY_VALUE="false"
+              FREAD_ONLY="TRUE"/>
     </table>
 
 </dbsetup>

@@ -106,6 +106,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     private static final String RHQ_STORAGE_CQL_PORT_PROPERTY = "nativeTransportPort";
     private static final String RHQ_STORAGE_GOSSIP_PORT_PROPERTY = "storagePort";
     private static final String RHQ_STORAGE_JMX_PORT_PROPERTY = "jmxPort";
+    private static final String RHQ_STORAGE_AUTOMATIC_DEPLOYMENT_PROPERTY = "storagePort";
     private static final String RHQ_STORAGE_ADDRESS_PROPERTY = "host";
 
     private static final int OPERATION_QUERY_TIMEOUT = 20000;
@@ -215,6 +216,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         clusterSettings = new StorageClusterSettings();
         clusterSettings.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
         clusterSettings.setGossipPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_GOSSIP_PORT_PROPERTY)));
+//        clusterSettings.setAutomaticDeployment(Boolean.parseBoolean(pluginConfig.getSimpleValue(RHQ_STORAGE_GOSSIP_PORT_PROPERTY)));
         storageClusterSettingsManager.setClusterSettings(subjectManager.getOverlord(), clusterSettings);
     }
 

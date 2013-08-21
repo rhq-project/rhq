@@ -2211,6 +2211,15 @@
             </schema-directSQL>
           </schemaSpec>
 
+          <schemaSpec version="2.138">
+            <schema-directSQL>
+                <statement desc="Adding automatic deployment system setting">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value)
+                  VALUES (60, 'STORAGE_AUTOMATIC_DEPLOYMENT', 'false', 'false')
+                </statement>
+            </schema-directSQL>
+          </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

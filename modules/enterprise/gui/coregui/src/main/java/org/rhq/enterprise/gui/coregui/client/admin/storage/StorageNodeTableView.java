@@ -468,6 +468,17 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 return false;
             }
         }
+        List<ListGridRecord> selectionList = Arrays.asList(selection);
+        ListGridRecord[] allRecords = getListGrid().getRecords();
+        for (ListGridRecord storageNodeRecord : allRecords) {
+            if (!selectionList.contains(storageNodeRecord)) {
+                if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.DOWN.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                    return false;
+                }
+            }
+        }
         return true;
     }
 
@@ -481,7 +492,22 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 return false;
             }
         }
-        return true;
+        List<ListGridRecord> selectionList = Arrays.asList(selection);
+        ListGridRecord[] allRecords = getListGrid().getRecords();
+        int nodesInNormalCouner = 0;
+        for (ListGridRecord storageNodeRecord : allRecords) {
+            if (!selectionList.contains(storageNodeRecord)) {
+                if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.DOWN.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                    return false;
+                }
+            }
+            if (StorageNode.Status.NORMAL.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                nodesInNormalCouner++;
+            }
+        }
+        return nodesInNormalCouner > 1;
     }
 
     @Override

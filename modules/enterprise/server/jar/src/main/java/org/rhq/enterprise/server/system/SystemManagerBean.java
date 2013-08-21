@@ -286,6 +286,7 @@ public class SystemManagerBean implements SystemManagerLocal, SystemManagerRemot
         switch (setting) {
             case STORAGE_CQL_PORT: return true;
             case STORAGE_GOSSIP_PORT: return true;
+            case STORAGE_AUTOMATIC_DEPLOYMENT: return true;
             default: return false;
         }
     }

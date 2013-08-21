@@ -117,6 +117,7 @@ public enum SystemSetting {
      */
     STORAGE_CQL_PORT("STORAGE_CQL_PORT", PropertySimpleType.INTEGER, true, true),
     STORAGE_GOSSIP_PORT("STORAGE_GOSSIP_PORT", PropertySimpleType.INTEGER, true, true),
+    STORAGE_AUTOMATIC_DEPLOYMENT("STORAGE_AUTOMATIC_DEPLOYMENT", PropertySimpleType.BOOLEAN, true, true),
 
     //these seem to be unused yet still present in the database...
     @Deprecated

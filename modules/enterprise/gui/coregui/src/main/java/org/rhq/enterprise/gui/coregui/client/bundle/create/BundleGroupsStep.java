@@ -33,6 +33,7 @@ import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.TitleOrientation;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.form.DynamicForm;
+import com.smartgwt.client.widgets.form.fields.HeaderItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
 import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
@@ -92,9 +93,6 @@ public class BundleGroupsStep extends AbstractWizardStep {
             radioForm = new DynamicForm();
             radioForm.setNumCols(1);
             radioForm.setColWidths(350);
-            // These settings (as opposed to setWidth100()) allow for contextual help to be better placed
-            //radioForm.setAutoWidth();
-            //radioForm.setOverflow(Overflow.VISIBLE);
 
             RadioGroupItem radioGroupItem = new RadioGroupItem("RadioOptions");
             radioGroupItem.setTitleOrientation(TitleOrientation.TOP);
@@ -129,12 +127,19 @@ public class BundleGroupsStep extends AbstractWizardStep {
             canvas.addMember(radioForm);
 
             selector = getSelector(map, false);
-            selector.setTitle(MSG.view_bundle_createWizard_groupsStep_assign());
-            selector.setTooltip(MSG.view_bundle_createWizard_groupsStep_help());
             selector.enable();
             canvas.addMember(selector);
 
         } else if (!map.isEmpty()) {
+            DynamicForm form = new DynamicForm();
+            form.setWidth100();
+            HeaderItem selectorTitleItem = new HeaderItem();
+            selectorTitleItem.setWidth(375);
+            selectorTitleItem.setValue(MSG.view_bundle_createWizard_groupsStep_assign());
+            FormUtility.addContextualHelp(selectorTitleItem, MSG.view_bundle_createWizard_groupsStep_help());
+            form.setItems(selectorTitleItem);
+            canvas.addMember(form);
+
             selector = getSelector(map, false);
             selector.setTitle(MSG.view_bundle_createWizard_groupsStep_assign());
             selector.setTooltip(MSG.view_bundle_createWizard_groupsStep_help());

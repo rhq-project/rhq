@@ -2434,10 +2434,10 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         Set<Bundle> newBundles = bundleGroup.getBundles();
         if (newBundles != null) {
-            Set<Bundle> currentBundles = attachedBundleGroup.getBundles();
             // wrap in new HashSet to avoid ConcurrentModificationExceptions.
+            Set<Bundle> currentBundles = attachedBundleGroup.getBundles();
             Set<Bundle> BundlesToRemove = new HashSet<Bundle>(currentBundles);
-            for (Bundle bg : currentBundles) {
+            for (Bundle bg : newBundles) {
                 BundlesToRemove.remove(bg);
             }
             for (Bundle bg : BundlesToRemove) {

@@ -186,7 +186,15 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 if (log.isInfoEnabled()) {
                     log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
                 }
-                deployStorageNode(subjectManager.getOverlord(), storageNode);
+                StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
+                    subjectManager.getOverlord());
+                if (clusterSettings.getAutomaticDeployment()) {
+                    log.info("Deploying " + storageNode);
+                    deployStorageNode(subjectManager.getOverlord(), storageNode);
+                } else {
+                    log.info("Automatic deployment is disabled. " + storageNode + " will not become part of the " +
+                        "cluster until it is deployed.");
+                }
             }
         } catch (UnknownHostException e) {
             throw new RuntimeException("Could not resolve address [" + address + "]. The resource " + resource +
@@ -216,7 +224,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         clusterSettings = new StorageClusterSettings();
         clusterSettings.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
         clusterSettings.setGossipPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_GOSSIP_PORT_PROPERTY)));
-//        clusterSettings.setAutomaticDeployment(Boolean.parseBoolean(pluginConfig.getSimpleValue(RHQ_STORAGE_GOSSIP_PORT_PROPERTY)));
         storageClusterSettingsManager.setClusterSettings(subjectManager.getOverlord(), clusterSettings);
     }
 

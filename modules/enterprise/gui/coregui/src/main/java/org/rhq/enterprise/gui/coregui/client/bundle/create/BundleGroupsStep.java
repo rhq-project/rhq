@@ -140,8 +140,6 @@ public class BundleGroupsStep extends AbstractWizardStep {
             canvas.addMember(form);
 
             selector = getSelector(map, false);
-            selector.setTitle(MSG.view_bundle_createWizard_groupsStep_assign());
-            selector.setTooltip(MSG.view_bundle_createWizard_groupsStep_help());
             canvas.addMember(selector);
 
         } else {

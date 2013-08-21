@@ -44,6 +44,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupSelector;
 import org.rhq.enterprise.gui.coregui.client.bundle.group.BundleGroupsDataSource;
@@ -61,7 +62,6 @@ public class BundleGroupsStep extends AbstractWizardStep {
 
     private EnhancedVLayout canvas;
     private DynamicForm radioForm;
-    private final BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
     private AbstractBundleCreateWizard wizard = null;
     private boolean isInitialVersion;
     private BundleGroupSelector selector;
@@ -74,70 +74,134 @@ public class BundleGroupsStep extends AbstractWizardStep {
         canvas = new EnhancedVLayout();
         canvas.setWidth100();
 
-        radioForm = new DynamicForm();
-        radioForm.setNumCols(1);
-        // These settings (as opposed to setWidth100()) allow for contextual help to be better placed
-        radioForm.setAutoWidth();
-        radioForm.setOverflow(Overflow.VISIBLE);
-
-        List<FormItem> formItems = new ArrayList<FormItem>();
-
-        // Make the radio item title a separate item in the form in order to add contextual help
-        // to the right of the title text.  We could also add it to the radio item but then it floats to
-        // the right of the last radio button option (I'll leave that commented below if for some reason
-        // we want to switch to that approach.
-        StaticTextItem radioTitleItem = new StaticTextItem("RadioTitle");
-        radioTitleItem.setShowTitle(false);
-        radioTitleItem.setTitleOrientation(TitleOrientation.TOP);
-        radioTitleItem.setAlign(Alignment.LEFT);
-        // The css style "formTitle" is what should work here, but for some reason I wasn't getting the
-        // proper color. So instead I grabbed the color from the smartgwt css and declared it explicitly.
-        //radioTitleItem.setCellStyle("formTitle");
-        radioTitleItem.setValue("<span style=\"font-weight: bold; color: #003168\">"
-            + "The assigned bundle groups (I18N)" + " :</span>");
-        FormUtility.addContextualHelp(radioTitleItem, "Add actual help (I18N)");
-        formItems.add(radioTitleItem);
-
-        RadioGroupItem radioGroupItem = new RadioGroupItem("RadioOptions");
-        radioGroupItem.setShowTitle(false);
-        radioGroupItem.setRequired(true);
-        radioGroupItem.setAlign(Alignment.LEFT);
-        // TODO: I18N
-        LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
-        if (wizard.getBundleGroupAssignmentComposite().isCanBeUnassigned()) {
-            valueMap.put("unassigned", "Leave Unassigned");
-        }
-        valueMap.put("assigned", "Assign to at least one Bundle Group");
-        radioGroupItem.setValueMap(valueMap);
-
-        radioGroupItem.addChangedHandler(new ChangedHandler() {
-            public void onChanged(ChangedEvent event) {
-                if ("unassigned".equals(event.getValue())) {
-                    //SC.say(MSG.view_drift_wizard_pinTemplate_infoStepSelectBlocked());
-                    // event.getItem().setValue(CREATE_TEMPLATE);
-                    selector.disable();
-                    return;
-
-                } else {
-                    selector.enable();
-                }
-
-                canvas.markForRedraw();
-            }
-        });
-
-        formItems.add(radioGroupItem);
-        formItems.add(new SpacerItem());
-        radioForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
-        canvas.addMember(radioForm);
-
         // go get the assignable/assigned bundle groups for this new bundle version, initial or not 
         this.isInitialVersion = this.wizard.getBundleVersion() == null
             || this.wizard.getBundleVersion().getVersionOrder() == 0;
 
-        Map<BundleGroup, Boolean> map = wizard.getBundleGroupAssignmentComposite().getBundleGroupMap();
+        if (isInitialVersion) {
+            canvas = getInitialVersionCanvas();
+        } else {
+            canvas = getNonInitialVersionCanvas();
+        }
+
+        return canvas;
+    }
+
+    private EnhancedVLayout getInitialVersionCanvas() {
+        BundleGroupAssignmentComposite composite = wizard.getBundleGroupAssignmentComposite();
+        final Map<BundleGroup, Boolean> map = composite.getBundleGroupMap();
+
+        if (composite.isCanBeUnassigned()) {
+            radioForm = new DynamicForm();
+            radioForm.setNumCols(1);
+            // These settings (as opposed to setWidth100()) allow for contextual help to be better placed
+            radioForm.setAutoWidth();
+            radioForm.setOverflow(Overflow.VISIBLE);
+
+            List<FormItem> formItems = new ArrayList<FormItem>();
+
+            // Make the radio item title a separate item in the form in order to add contextual help
+            // to the right of the title text.  We could also add it to the radio item but then it floats to
+            // the right of the last radio button option (I'll leave that commented below if for some reason
+            // we want to switch to that approach.
+            StaticTextItem radioTitleItem = new StaticTextItem("RadioTitle");
+            radioTitleItem.setShowTitle(false);
+            radioTitleItem.setTitleOrientation(TitleOrientation.TOP);
+            radioTitleItem.setAlign(Alignment.LEFT);
+            // The css style "formTitle" is what should work here, but for some reason I wasn't getting the
+            // proper color. So instead I grabbed the color from the smartgwt css and declared it explicitly.
+            //radioTitleItem.setCellStyle("formTitle");
+            radioTitleItem.setValue("<span style=\"font-weight: bold; color: #003168\">"
+                + MSG.view_bundle_createWizard_groupsStep_radioTitle() + " :</span>");
+            FormUtility.addContextualHelp(radioTitleItem, MSG.view_bundle_createWizard_groupsStep_help());
+            formItems.add(radioTitleItem);
+
+            RadioGroupItem radioGroupItem = new RadioGroupItem("RadioOptions");
+            radioGroupItem.setShowTitle(false);
+            radioGroupItem.setRequired(true);
+            radioGroupItem.setAlign(Alignment.LEFT);
+            LinkedHashMap<String, String> valueMap = new LinkedHashMap<String, String>();
+            if (wizard.getBundleGroupAssignmentComposite().isCanBeUnassigned()) {
+                valueMap.put("unassigned", MSG.view_bundle_createWizard_groupsStep_leaveUnassigned());
+            }
+            valueMap.put("assign", MSG.view_bundle_createWizard_groupsStep_assign());
+            radioGroupItem.setValueMap(valueMap);
+
+            radioGroupItem.addChangedHandler(new ChangedHandler() {
+                public void onChanged(ChangedEvent event) {
+                    if ("unassigned".equals(event.getValue())) {
+                        selector.disable();
+                        return;
+
+                    } else {
+                        if (!map.isEmpty()) {
+                            selector.enable();
+                        }
+                    }
+
+                    canvas.markForRedraw();
+                }
+            });
+
+            formItems.add(radioGroupItem);
+            formItems.add(new SpacerItem());
+            radioForm.setItems(formItems.toArray(new FormItem[formItems.size()]));
+            canvas.addMember(radioForm);
+
+            selector = getSelector(map, false);
+            selector.setTitle(MSG.view_bundle_createWizard_groupsStep_assign());
+            selector.setTooltip(MSG.view_bundle_createWizard_groupsStep_help());
+            selector.disable();
+            canvas.addMember(selector);
+
+        } else if (!map.isEmpty()) {
+            selector = getSelector(map, false);
+            selector.setTitle(MSG.view_bundle_createWizard_groupsStep_assign());
+            selector.setTooltip(MSG.view_bundle_createWizard_groupsStep_help());
+            canvas.addMember(selector);
+
+        } else {
+            throw new IllegalStateException(MSG.view_bundle_createWizard_groupsStep_noAssignable());
+        }
+
+        return canvas;
+    }
+
+    private EnhancedVLayout getNonInitialVersionCanvas() {
+        BundleGroupAssignmentComposite composite = wizard.getBundleGroupAssignmentComposite();
+        final Map<BundleGroup, Boolean> map = composite.getBundleGroupMap();
+
         if (map.isEmpty()) {
-            selector = new BundleGroupSelector(!isInitialVersion);
+            DynamicForm form = new DynamicForm();
+
+            StaticTextItem unassignedItem = new StaticTextItem("CurrentlyUnassigned");
+            unassignedItem.setShowTitle(false);
+            unassignedItem.setTitleOrientation(TitleOrientation.TOP);
+            unassignedItem.setAlign(Alignment.LEFT);
+            // The css style "formTitle" is what should work here, but for some reason I wasn't getting the
+            // proper color. So instead I grabbed the color from the smartgwt css and declared it explicitly.
+            //radioTitleItem.setCellStyle("formTitle");
+            unassignedItem.setValue("<span style=\"font-weight: bold; color: #003168\">"
+                + MSG.view_bundle_createWizard_groupsStep_unassigned() + " :</span>");
+            FormUtility.addContextualHelp(unassignedItem, MSG.view_bundle_createWizard_groupsStep_help());
+            form.setItems(unassignedItem);
+            canvas.addMember(form);
+
+        } else {
+            selector = getSelector(map, true);
+            selector.setTitle(MSG.view_bundle_createWizard_groupsStep_assigned());
+            selector.setTooltip(MSG.view_bundle_createWizard_groupsStep_help());
+            canvas.addMember(selector);
+        }
+
+        return canvas;
+    }
+
+    private BundleGroupSelector getSelector(final Map<BundleGroup, Boolean> map, boolean readOnly) {
+        BundleGroupSelector result;
+
+        if (map.isEmpty()) {
+            result = new BundleGroupSelector(readOnly);
 
         } else {
             Set<BundleGroup> bundleGroups = map.keySet();
@@ -154,12 +218,11 @@ public class BundleGroupsStep extends AbstractWizardStep {
                     initiallyAssigned.add(ds.copyValues(bundleGroup));
                 }
             }
-            selector = new BundleGroupSelector(idsFilter,
-                initiallyAssigned.toArray(new ListGridRecord[initiallyAssigned.size()]), !isInitialVersion);
+            result = new BundleGroupSelector(idsFilter, initiallyAssigned.toArray(new ListGridRecord[initiallyAssigned
+                .size()]), readOnly);
         }
-        canvas.addMember(selector);
 
-        return canvas;
+        return result;
     }
 
     public Set<BundleGroup> getSelectedBundleGroups() {
@@ -167,6 +230,15 @@ public class BundleGroupsStep extends AbstractWizardStep {
     }
 
     public boolean nextPage() {
+        if (isInitialVersion) {
+            BundleGroupAssignmentComposite composite = wizard.getBundleGroupAssignmentComposite();
+
+            if (!composite.isCanBeUnassigned() && selector.getSelectedItems().isEmpty()) {
+                wizard.getView().showMessage(MSG.view_bundle_createWizard_groupsStep_noneAssigned());
+                return false;
+            }
+        }
+
         if (null == wizard.getBundleVersion()) {
             if (null != wizard.getCreateInitialBundleVersionRecipe()) {
                 processRecipe();

@@ -88,6 +88,7 @@ import org.rhq.enterprise.server.resource.ResourceManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerLocal;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
@@ -151,6 +152,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private StorageNodeManagerLocal storageNodeManger;
+    
+    @EJB
+    private StorageClientManagerBean storageClientManager;
 
     @EJB
     private ResourceManagerLocal resourceManager;
@@ -333,6 +337,9 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeLoadComposite getLoad(Subject subject, StorageNode node, long beginTime, long endTime) {
+        if (!storageClientManager.isClusterAvailable()) {
+            return new StorageNodeLoadComposite(node, beginTime, endTime);
+        }
         int resourceId = getResourceIdFromStorageNode(node);
         Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 

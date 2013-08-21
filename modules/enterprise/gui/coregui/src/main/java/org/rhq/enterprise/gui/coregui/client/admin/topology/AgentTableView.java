@@ -88,7 +88,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
-            if (field.getName() == FIELD_NAME) {
+            if (FIELD_NAME.equals(field.getName())) {
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -101,7 +101,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
                     }
                 });
-            } else if (field.getName() == FIELD_SERVER.propertyName()) {
+            } else if (FIELD_SERVER.propertyName().equals(field.getName())) {
                 // adding the cell formatter for server field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override
@@ -115,7 +115,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                         return LinkManager.getHref(detailsUrl, formattedValue);
                     }
                 });
-            } else if (field.getName() == FIELD_AFFINITY_GROUP.propertyName()) {
+            } else if (FIELD_AFFINITY_GROUP.propertyName().equals(field.getName())) {
                 // adding the cell formatter for affinity group field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override

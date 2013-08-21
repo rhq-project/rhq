@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_DISK;
@@ -44,6 +45,7 @@ import com.smartgwt.client.data.DataSourceField;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.fields.DataSourceIntegerField;
 import com.smartgwt.client.data.fields.DataSourceTextField;
+import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.HoverCustomizer;
 import com.smartgwt.client.widgets.grid.ListGridField;
@@ -54,6 +56,7 @@ import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite.MeasurementAggregateWithUnits;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.util.PageControl;
@@ -174,25 +177,38 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         ListGridField resourceIdField = FIELD_RESOURCE_ID.getListGridField("120");
 //        resourceIdField.setHidden(true);
         fields.add(resourceIdField);
-
+        
+        field = FIELD_AVAILABILITY.getListGridField("65");
+        field.setAlign(Alignment.CENTER);
+        field.setShowHover(true);
+        field.setHoverCustomizer(new HoverCustomizer() {
+            public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
+                Object availability = record.getAttribute(FIELD_AVAILABILITY.propertyName());
+                return "Storage Node is " + availability == null ? AvailabilityType.UNKNOWN.toString() : availability
+                    .toString();
+            }
+        });
+        fields.add(field);
+        
         return fields;
     }
 
     @Override
     protected void executeFetch(final DSRequest request, final DSResponse response, StorageNodeCriteria criteria) {
-        GWTServiceLookup.getStorageService().getStorageNodeComposites(new AsyncCallback<PageList<StorageNodeLoadComposite>>() {
-            public void onSuccess(PageList<StorageNodeLoadComposite> result) {                
-                response.setData(buildRecords(result));
-                response.setTotalRows(result.size());
-                processResponse(request.getRequestId(), response);
-            }
+        GWTServiceLookup.getStorageService().getStorageNodeComposites(
+            new AsyncCallback<PageList<StorageNodeLoadComposite>>() {
+                public void onSuccess(PageList<StorageNodeLoadComposite> result) {
+                    response.setData(buildRecords(result));
+                    response.setTotalRows(result.size());
+                    processResponse(request.getRequestId(), response);
+                }
 
-            public void onFailure(Throwable t) {
-                CoreGUI.getErrorHandler().handleError("td(i18n) Unable to fetch storage nodes.", t);
-                response.setStatus(DSResponse.STATUS_FAILURE);
-                processResponse(request.getRequestId(), response);
-            }
-        });
+                public void onFailure(Throwable t) {
+                    CoreGUI.getErrorHandler().handleError("td(i18n) Unable to fetch storage nodes.", t);
+                    response.setStatus(DSResponse.STATUS_FAILURE);
+                    processResponse(request.getRequestId(), response);
+                }
+            });
     }
 
     /**
@@ -248,6 +264,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             record.setAttribute(FIELD_MTIME.propertyName(), node.getMtime());
             if (node.getResource() != null) {
                 record.setAttribute(FIELD_RESOURCE_ID.propertyName(), node.getResource().getId());
+                record.setAttribute(FIELD_AVAILABILITY.propertyName(), node.getResource().getCurrentAvailability()
+                    .getAvailabilityType());
             }
         }
         int value = from.getUnackAlerts();

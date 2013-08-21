@@ -20,7 +20,9 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.*;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +46,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
@@ -93,6 +97,20 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
     protected void configureTable() {
         super.configureTable();
         List<ListGridField> fields = getDataSource().getListGridFields();
+
+        // this needs to be added here instead of the DS because of the Canvas.imgHTML method
+        for (ListGridField field : fields) {
+            if (FIELD_AVAILABILITY.propertyName().equals(field.getName())) {
+                field.setCellFormatter(new CellFormatter() {
+                    public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
+                        return imgHTML(ImageManager
+                            .getAvailabilityIconFromAvailType(value == null ? AvailabilityType.UNKNOWN
+                                : (AvailabilityType) value));
+                    }
+                });
+            }
+        }
+        
         ListGrid listGrid = getListGrid();
         listGrid.setAutoSaveEdits(false);
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
@@ -464,7 +482,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         for (ListGridRecord storageNodeRecord : selection) {
             if ("NORMAL".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
                 || "JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                || !AvailabilityType.UP.equals(String.valueOf(storageNodeRecord.getAttribute(FIELD_AVAILABILITY
+                    .propertyName())))) {
                 return false;
             }
         }
@@ -473,8 +493,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         for (ListGridRecord storageNodeRecord : allRecords) {
             if (!selectionList.contains(storageNodeRecord)) {
                 if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                    || StorageNode.Status.DOWN.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
                     return false;
                 }
             }
@@ -488,7 +507,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         }
         for (ListGridRecord storageNodeRecord : selection) {
             if ("JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                || !AvailabilityType.UP.equals(String.valueOf(storageNodeRecord.getAttribute(FIELD_AVAILABILITY
+                    .propertyName())))) {
                 return false;
             }
         }
@@ -498,12 +519,14 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         for (ListGridRecord storageNodeRecord : allRecords) {
             if (!selectionList.contains(storageNodeRecord)) {
                 if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                    || StorageNode.Status.DOWN.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
                     return false;
                 }
             }
-            if (StorageNode.Status.NORMAL.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+            if (StorageNode.Status.NORMAL.toString().equals(
+                storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                && AvailabilityType.UP.equals(String.valueOf(storageNodeRecord.getAttribute(FIELD_AVAILABILITY
+                    .propertyName())))) {
                 nodesInNormalCouner++;
             }
         }

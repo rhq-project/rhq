@@ -79,6 +79,13 @@
   </difference>
 
   <difference>
+    <className>org/rhq/enterprise/server/cloud/StorageNodeManagerRemote</className>
+    <differenceType>7012</differenceType>  <!-- method added to an interface -->
+    <method>void runClusterMaintenance()</method>
+    <justification>Adding a method to a remote API interface is safe. This is newly implemented functionality.</justification>
+  </difference>
+
+  <difference>
     <className>org/rhq/enterprise/server/bundle/BundleManagerRemote</className>
     <differenceType>7012</differenceType>  <!-- method added to an interface -->
     <method>void assignBundlesToBundleGroups(org.rhq.core.domain.auth.Subject, int[], int[])</method>

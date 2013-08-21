@@ -119,23 +119,28 @@ public class BundleTopView extends EnhancedHLayout implements BookmarkableView {
                     ViewPath nextViewPath = viewPath.next(); // the ID segment
 
                     if ("Bundle".equals(currentPath)) {
+                        // set new bundle detail if we are changing detail
                         if (!nextViewPath.getCurrent().equals(currentBundleViewId)) {
-                            // set new bundle detail
-                            currentBundleViewId = nextViewPath.getCurrent();
+                            // only  cache the bundle id if bundle detail is the target view
+                            currentBundleViewId = nextViewPath.isEnd() ? nextViewPath.getCurrent() : null;
                             bundleView = new BundleView(globalPermissions);
-                            setContent(bundleView);
+                            bundleGroupView = null;
+                            currentBundleGroupViewId = null;
                         }
+                        setContent(bundleView);
                         bundleView.renderView(nextViewPath);
 
                     } else if ("BundleGroup".equals(currentPath)) {
+                        // set new bundle detail if we are changing detail
                         if (!nextViewPath.getCurrent().equals(currentBundleGroupViewId)) {
-                            // set new bundle detail
-                            currentBundleGroupViewId = nextViewPath.getCurrent();
-                            bundleGroupView = new BundleGroupEditView(globalPermissions, Integer
-                                .parseInt(currentBundleGroupViewId.getPath()));
-                            setContent(bundleGroupView);
+                            // only  cache the bundle id if bundle detail is the target view                            
+                            currentBundleGroupViewId = nextViewPath.isEnd() ? nextViewPath.getCurrent() : null;
+                            bundleGroupView = new BundleGroupEditView(globalPermissions, Integer.parseInt(nextViewPath
+                                .getCurrent().getPath()));
+                            bundleView = null;
+                            currentBundleViewId = null;
                         }
-                        // redisplay the current bundle group detail                            
+                        setContent(bundleGroupView);
                         bundleGroupView.renderView(nextViewPath);
                     }
                 }

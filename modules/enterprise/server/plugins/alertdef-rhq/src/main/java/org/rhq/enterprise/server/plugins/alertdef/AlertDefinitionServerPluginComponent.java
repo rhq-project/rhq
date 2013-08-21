@@ -80,26 +80,28 @@ public class AlertDefinitionServerPluginComponent implements ServerPluginCompone
         storageNodeHighHeapTemplate = new InjectedTemplate(
             "RHQStorage", //
             "VM Memory System", //
-            "StorageNodeHighHeapTemplate", //
-            "An alert template to notify users of excessive heap use by an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
+            "StorageNodeHighHeap", //
+            "Increase the storage node heap. If you cannot increase the heap or if you continue receiving alerts, then" +
+            " deploy another storage node. Consult <a href='.#Help/Section1/Section1Item4'>wiki</a> for more info.");
 
         storageNodeHighDiskUsageTemplate = new InjectedTemplate(
             "RHQStorage", //
             "StorageService", //
-            "StorageNodeHighDiskUsageTemplate", //
-            "An alert template to notify users of excessive heap use by an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
+            "StorageNodeHighDiskUsage", //
+            "Increase the storage node disk size. If you cannot increase the disk size or if you continue receiving " +
+            "alerts, then deploy another storage node. Consult <a href='.#Help/Section1/Section1Item4'>wiki</a> for more info.");
 
         storageNodeSnapshotFailureTemplate = new InjectedTemplate(
             "RHQStorage", //
             "StorageService", //
-            "StorageNodeSnapshotFailureTemplate", //
-            "An alert template to notify users when a snapshot operations fails for an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
+            "StorageNodeSnapshotFailure", //
+            "Snapshot operation failed for an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
 
         storageNodeMaintenanceOperationsFailureTemplate = new InjectedTemplate(
             "RHQStorage", //
             "RHQ Storage Node", //
-            "StorageNodeMaintenanceOperationsFailureTemplate", //
-            "An alert template to notify users when a maintenance operation fails for an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
+            "StorageNodeMaintenanceOperationsFailure", //
+            "Maintenance operation failed for an RHQ Storage Node. When fired please see documentation for the proper corrective action.");
 
         injectedTemplates = new ArrayList<InjectedTemplate>();
         injectedTemplates.add(storageNodeHighHeapTemplate);

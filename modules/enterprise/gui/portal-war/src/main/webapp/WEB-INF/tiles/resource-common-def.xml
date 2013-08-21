@@ -346,9 +346,6 @@
    <definition name=".resource.common.monitor.visibility.metricsSeeMore"
                path="/resource/common/monitor/visibility/MetricsSeeMore.jsp"/>
 
-   <definition name=".resource.common.monitor.visibility.charts"
-               path="/resource/common/monitor/visibility/CurrentHealthCharts.jsp"/>
-
    <definition name=".resource.common.monitor.visibility.charts.availability"
                path="/resource/common/monitor/visibility/CurrentHealthAvailability.jsp"/>
 
@@ -364,31 +361,11 @@
    <definition name=".resource.common.monitor.visibility.charts.events"
                path="/resource/common/monitor/visibility/EventsList.jsp"/>
 
-   <definition name=".resource.common.monitor.visibility.charts.metric.smsr"
-               controllerUrl="/resource/common/monitor/visibility/ViewChartFormPrepare.do"
-               path="/resource/common/monitor/visibility/ChartLayout.jsp"/>
-
-   <definition name=".resource.common.monitor.visibility.charts.metric.smmr"
-               controllerUrl="/resource/common/monitor/visibility/ViewChartFormPrepare.do"
-               path="/resource/common/monitor/visibility/ChartLayout.jsp"/>
-
-   <definition name=".resource.common.monitor.visibility.charts.metric.mmsr"
-               controllerUrl="/resource/common/monitor/visibility/ViewChartFormPrepare.do"
-               path="/resource/common/monitor/visibility/ChartLayout.jsp"/>
 
    <definition name=".resource.common.monitor.visibility.trait.history"
                controllerUrl="/resource/common/monitor/visibility/TraitHistoryFormPrepare.do"
                path="/resource/common/monitor/visibility/TraitHistoryLayout.jsp"/>
 
-
-   <definition name=".resource.common.monitor.visibility.charts.metric.chart"
-               path="/resource/common/monitor/visibility/MetricChart.jsp"/>
-
-   <definition name=".resource.common.monitor.visibility.charts.metric.navigation"
-               path="/resource/common/monitor/visibility/ChartLinksNavigation.jsp"/>
-
-   <definition name=".resource.common.monitor.visibility.charts.metric.savecharttoolbar"
-               path="/resource/common/monitor/visibility/SaveChartToolbar.jsp"/>
 
    <definition name=".resource.common.monitor.visibility.charts.metric.partrsrcs"
                path="/resource/common/monitor/visibility/ParticipatingResources.jsp"/>
@@ -396,11 +373,6 @@
    <definition name=".resource.common.monitor.visibility.charts.metric.baselinerangeparams"
                path="/resource/common/monitor/visibility/BaselineExpectedRangeParams.jsp"/>
 
-   <definition name=".resource.common.monitor.visibility.charts.metric.chartparams"
-               path="/resource/common/monitor/visibility/ChartParams.jsp"/>
-
-   <definition name=".resource.common.monitor.visibility.charts.metric.chartlegend"
-               path="/resource/common/monitor/visibility/ChartLegend.jsp"/>
 
    <definition name=".resource.common.monitor.visibility.childResourcesCurrentHealthSummary"
                path="/resource/common/monitor/visibility/ChildResourcesCurrentHealthSummary.jsp"/>
@@ -457,61 +429,12 @@
    <definition name=".resource.common.monitor.config.ShowOneResourceType"
    			   path="/resource/common/monitor/config/ShowOneResourceType.jsp"/>
 
-   <!-- monitor mini charts -->
-   <definition name=".resource.common.monitor.visibility.minicharts"
-               path="/resource/common/monitor/visibility/MiniCharts.jsp"/>
 
    <!-- monitor problem metrics -->
    <definition name=".resource.common.monitor.visibility.problemmetrics"
                path="/resource/common/monitor/visibility/ProblemMetrics.jsp"
                controllerUrl="/resource/common/monitor/visibility/ProblemMetricsDisplay.do"/>
 
-   <!-- monitor dash minitabs -->
-   <definition name=".resource.common.monitor.visibility.dashminitabs"
-               path="/resource/common/monitor/visibility/DashMiniTabs.jsp">
-      <put name="tabUrl" value="/Resource.do"/>
-      <putList name="standard">
-         <item icon="Indicators"
-               mode="currentHealth"
-               value="0" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-         <item icon="MetricData"
-               mode="resourceMetrics"
-               value="1" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-      </putList>
-      <putList name="nometrics">
-         <item icon="Indicators"
-               mode="currentHealth"
-               value="0" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-         <item icon="Perf"
-               mode="performance"
-               value="1" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-      </putList>
-      <putList name="perf">
-         <item icon="Indicators"
-               mode="currentHealth"
-               value="0" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-         <item icon="MetricData"
-               mode="resourceMetrics"
-               value="1" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-         <item icon="Perf"
-               mode="performance"
-               value="2" link="XXX"
-               height="21" width="102"
-               classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
-      </putList>
-   </definition>
 
    <!-- monitor timeline -->
    <definition name=".resource.common.monitor.visibility.timeline"

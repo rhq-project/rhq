@@ -237,9 +237,6 @@
      <put name="section" value="common"/>
   </definition>
               
-  <!-- monitor mini charts -->
-  <definition name=".resource.platform.monitor.visibility.minicharts"
-              extends=".resource.common.monitor.visibility.minicharts"/>
 
   <definition name=".resource.platform.monitor.visibility.listchildresources"
               extends=".resource.common.monitor.visibility.listchildresources"

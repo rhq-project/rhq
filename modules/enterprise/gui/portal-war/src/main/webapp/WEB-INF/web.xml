@@ -335,46 +335,6 @@
    </servlet>
 
    <!-- standalone servlets used by the JSPs -->
-   <servlet>
-      <servlet-name>navMapImage</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.NavMapImageServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
-   <servlet>
-      <servlet-name>availHealthChart</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.AvailHealthChartServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
-   <servlet>
-      <servlet-name>usageHealthChart</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.UsageHealthChartServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
-   <servlet>
-      <servlet-name>utilizationHealthChart</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.UtilizationHealthChartServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
-   <servlet>
-      <servlet-name>highLowChart</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.HighLowChartServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
-   <servlet>
-      <servlet-name>metricChart</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.MetricChartServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
-   <servlet>
-      <servlet-name>performanceChart</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.PerformanceChartServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
-   <servlet>
-      <servlet-name>availStoplight</servlet-name>
-      <servlet-class>org.rhq.enterprise.gui.common.servlet.AvailabilityStoplightChartServlet</servlet-class>
-      <load-on-startup>3</load-on-startup>
-   </servlet>
 
    <!-- Struts ActionServlet configuration (with debugging) -->
    <servlet>
@@ -435,39 +395,7 @@
       <url-pattern>/downloads/*</url-pattern>
    </servlet-mapping>
 
-   <!-- standalone servlets used by the JSPs -->
-   <servlet-mapping>
-      <servlet-name>navMapImage</servlet-name>
-      <url-pattern>/resource/NavMapImage</url-pattern>
-   </servlet-mapping>
-   <servlet-mapping>
-      <servlet-name>availHealthChart</servlet-name>
-      <url-pattern>/resource/AvailHealthChart</url-pattern>
-   </servlet-mapping>
-   <servlet-mapping>
-      <servlet-name>usageHealthChart</servlet-name>
-      <url-pattern>/resource/UsageHealthChart</url-pattern>
-   </servlet-mapping>
-   <servlet-mapping>
-      <servlet-name>utilizationHealthChart</servlet-name>
-      <url-pattern>/resource/UtilizationHealthChart</url-pattern>
-   </servlet-mapping>
-   <servlet-mapping>
-      <servlet-name>highLowChart</servlet-name>
-      <url-pattern>/resource/HighLowChart</url-pattern>
-   </servlet-mapping>
-   <servlet-mapping>
-      <servlet-name>metricChart</servlet-name>
-      <url-pattern>/resource/MetricChart</url-pattern>
-   </servlet-mapping>
-   <servlet-mapping>
-      <servlet-name>performanceChart</servlet-name>
-      <url-pattern>/resource/PerformanceChart</url-pattern>
-   </servlet-mapping>
-   <servlet-mapping>
-      <servlet-name>availStoplight</servlet-name>
-      <url-pattern>/resource/AvailStoplight</url-pattern>
-   </servlet-mapping>
+
 
    <!-- mappings for Struts ActionServlet -->
    <servlet-mapping>

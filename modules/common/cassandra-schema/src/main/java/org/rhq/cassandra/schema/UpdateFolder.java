@@ -117,7 +117,7 @@ class UpdateFolder {
 
                 String updateFile;
                 while ((updateFile = reader.readLine()) != null) {
-                    files.add(new UpdateFile(folder + updateFile));
+                    files.add(new UpdateFile(folder + "/" + updateFile));
                 }
             } else if (resourceFolderURL.getProtocol().equals("jar")) {
                 URL jarURL = this.getClass().getClassLoader().getResources(folder).nextElement();

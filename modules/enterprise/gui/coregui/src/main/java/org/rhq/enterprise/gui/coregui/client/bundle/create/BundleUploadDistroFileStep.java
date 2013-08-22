@@ -327,11 +327,11 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
 
             public void onFailure(Throwable caught) {
                 setButtonsDisableMode(false);
-                // TODO NEW MESSAGE
-                CoreGUI.getErrorHandler().handleError("Failed to determine assignable bundle groups.", caught);
+                String message = MSG.view_bundle_createWizard_groupsStep_failedGetAssignable();
+                wizard.getView().showMessage(message);
+                CoreGUI.getErrorHandler().handleError(message, caught);
             }
         });
-
     }
 
     private void processUpload() {

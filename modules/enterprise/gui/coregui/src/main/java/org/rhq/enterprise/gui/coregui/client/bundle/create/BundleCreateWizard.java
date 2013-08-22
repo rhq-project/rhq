@@ -44,40 +44,4 @@ public class BundleCreateWizard extends AbstractBundleCreateWizard {
         steps.add(new BundleSummaryStep(this));
         setSteps(steps);
     }
-
-    //    @Override
-    //    public void startWizard() {
-    //        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-    //
-    //        if (globalPermissions.contains(Permission.VIEW_BUNDLES)) {
-    //            bundleServer.findBundleGroupsByCriteria(new BundleGroupCriteria(),
-    //                new AsyncCallback<PageList<BundleGroup>>() {
-    //                    public void onSuccess(PageList<BundleGroup> result) {
-    //
-    //                    }
-    //
-    //                    public void onFailure(Throwable caught) {
-    //                        // TODO
-    //                    }
-    //                });
-    //
-    //        } else {
-    //
-    //            bundleServer.getCreateBundleGroups(new AsyncCallback<HashSet<BundleGroup>>() {
-    //                public void onSuccess(HashSet<BundleGroup> result) {
-    //
-    //                }
-    //
-    //                public void onFailure(Throwable caught) {
-    //                    // TODO
-    //                }
-    //            });
-    //
-    //
-    //            // TODO Auto-generated method stub
-    //            super.startWizard();
-    //
-    //        }
-    //
-    //    }
 }

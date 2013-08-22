@@ -338,19 +338,18 @@ public class BundleGroupsStep extends AbstractWizardStep {
             .getBundle().getId() }, new AsyncCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                // I18N                
                 CoreGUI.getMessageCenter().notify(
-                    new Message("MSG.view_bundle_createWizard_assignSuccessful(result.getName(), result.getVersion())",
-                        Message.Severity.Info));
+                    new Message(MSG.view_bundle_createWizard_groupsStep_successAssign(wizard.getBundleVersion()
+                        .getBundle().getName(), wizard.getBundleVersion().getName()), Message.Severity.Info));
                 wizard.getView().incrementStep(); // go to the next step
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                wizard.getView().showMessage(caught.getMessage());
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
-                wizard.setBundleVersion(null);
-                wizard.setCreateInitialBundleVersionRecipe("");
+                String msg = MSG.view_bundle_createWizard_groupsStep_failedAssign(wizard.getBundleVersion().getBundle()
+                    .getName(), wizard.getBundleVersion().getName());
+                wizard.getView().showMessage(msg);
+                CoreGUI.getErrorHandler().handleError(msg, caught);
             }
         });
     }

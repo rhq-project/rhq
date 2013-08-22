@@ -110,7 +110,7 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
     public void cancel() {
         final BundleVersion bv = getBundleVersion();
         if (bv != null) {
-            // the user must have created it already after verification step, delete it
+            // the user must have created it already after verification step, delete it, if possible
             BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
             bundleServer.deleteBundleVersion(bv.getId(), true, new AsyncCallback<Void>() {
                 public void onSuccess(Void result) {
@@ -120,8 +120,12 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_bundle_createWizard_cancelFailure(bv.getName(), bv.getVersion()), caught);
+                    String msg = MSG.view_bundle_createWizard_cancelFailure(bv.getName(), bv.getVersion());
+                    // provide a more specific message if the cancel failed due to the user not having delete permission
+                    if (caught.getMessage().contains("PermissionException")) {
+                        msg = MSG.view_bundle_createWizard_cancelFailurePerm(bv.getName(), bv.getVersion());
+                    }
+                    CoreGUI.getErrorHandler().handleError(msg, caught);
                 }
             });
         }

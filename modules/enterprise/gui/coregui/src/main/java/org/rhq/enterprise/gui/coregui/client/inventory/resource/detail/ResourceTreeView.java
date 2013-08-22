@@ -250,14 +250,26 @@ public class ResourceTreeView extends EnhancedVLayout {
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
 
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                // expand the tree if nothing is selected
-                if (selectedNodeId == null) {
-                    updateSelection();
+                if (null == selectedNodeId) {
+                    return;
                 }
+
                 // do not update the selection when expanding other tree node (BZ 816086)
                 TreeNode parent = dataArrivedEvent.getParentNode();
-                if (parent instanceof EnhancedTreeNode && ((EnhancedTreeNode) parent).getID().equals(selectedNodeId)) {
-                    updateSelection();
+                if (parent instanceof EnhancedTreeNode) {
+                    String parentId = ((EnhancedTreeNode) parent).getID();
+                    if (parentId.equals(selectedNodeId)) {
+                        updateSelection();
+                    } else {
+                        TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
+                        TreeNode selectedParentNode = treeGrid.getTree().getParent(selectedNode);
+                        while (!(selectedParentNode instanceof ResourceTreeNode)) {
+                            selectedParentNode = treeGrid.getTree().getParent(selectedParentNode);
+                        }
+                        if (parentId.equals(((ResourceTreeNode) selectedParentNode).getID())) {
+                            updateSelection();
+                        }
+                    }
                 }
             }
         });
@@ -544,7 +556,8 @@ public class ResourceTreeView extends EnhancedVLayout {
         resourceContextMenu.addItem(operations);
 
         // Metric graph addition menu
-        resourceContextMenu.addItem(DashboardLinkUtility.buildMetricsMenu(resourceType, resource, MSG.view_tree_common_contextMenu_measurements()));
+        resourceContextMenu.addItem(DashboardLinkUtility.buildMetricsMenu(resourceType, resource,
+            MSG.view_tree_common_contextMenu_measurements()));
 
         // Create Child Menu and Manual Import Menu
         final Set<ResourceType> creatableChildTypes = getCreatableChildTypes(resourceType);
@@ -706,7 +719,6 @@ public class ResourceTreeView extends EnhancedVLayout {
 
         tree.reloadChildren(refreshNode);
     }
-
 
     private void setRootResource(Resource rootResource) {
         this.rootResource = rootResource;
@@ -874,36 +886,40 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                 public void onSuccess(PageList<ResourceGroup> result) {
                     final ResourceGroup backingGroup = result.get(0);
-                    boolean updateSelection = selectedNodeId != null && selectedNodeId != ResourceTreeNode.idOf(selectedAutoGroupId);
-                    
+                    boolean updateSelection = selectedNodeId != null
+                        && selectedNodeId != ResourceTreeNode.idOf(selectedAutoGroupId);
+
                     // load the tree up to the autogroup's parent resource. Don't select the resource node
                     // to avoid an unnecessary navigation to the resource, we just need the tree in place so
                     // we can navigate to the autogroup node.
-                    loadTree(backingGroup.getAutoGroupParentResource().getId(), updateSelection, true, new AsyncCallback<Void>() {
+                    loadTree(backingGroup.getAutoGroupParentResource().getId(), updateSelection, true,
+                        new AsyncCallback<Void>() {
 
-                        public void onFailure(Throwable caught) {
-                            loadingLabel.hide();
-                            CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
-                        }
+                            public void onFailure(Throwable caught) {
+                                loadingLabel.hide();
+                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(),
+                                    caught);
+                            }
 
-                        public void onSuccess(Void arg) {
-                            // get the node ID and use it to add a map entry, then call this again to finish up...
-                            selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(),
-                                backingGroup.getResourceType());
-                            AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(selectedNodeId);
-                            autoGroupNodeMap.put(backingGroup.getId(), agNode);
-                            updateSelection();
+                            public void onSuccess(Void arg) {
+                                // get the node ID and use it to add a map entry, then call this again to finish up...
+                                selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(),
+                                    backingGroup.getResourceType());
+                                AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(
+                                    selectedNodeId);
+                                autoGroupNodeMap.put(backingGroup.getId(), agNode);
+                                updateSelection();
 
-                            loadingLabel.hide();
-                        }
-                    });
+                                loadingLabel.hide();
+                            }
+                        });
                 }
             });
         }
     }
 
     public void renderView(ViewPath viewPath) {
-         ViewId currentViewId = viewPath.getCurrent();
+        ViewId currentViewId = viewPath.getCurrent();
         String currentViewIdPath = currentViewId.getPath();
         if ("AutoGroup".equals(currentViewIdPath)) {
             // Move the currentViewId to the ID portion to play better with other code

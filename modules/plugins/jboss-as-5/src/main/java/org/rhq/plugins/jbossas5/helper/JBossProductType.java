@@ -1,25 +1,21 @@
 /*
-* Jopr Management Platform
-* Copyright (C) 2005-2012 Red Hat, Inc.
-* All rights reserved.
-*
-* This program is free software; you can redistribute it and/or modify
-* it under the terms of the GNU General Public License, version 2, as
-* published by the Free Software Foundation, and/or the GNU Lesser
-* General Public License, version 2.1, also as published by the Free
-* Software Foundation.
-*
-* This program is distributed in the hope that it will be useful,
-* but WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-* GNU General Public License and the GNU Lesser General Public License
-* for more details.
-*
-* You should have received a copy of the GNU General Public License
-* and the GNU Lesser General Public License along with this program;
-* if not, write to the Free Software Foundation, Inc.,
-* 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-*/
+ * RHQ Management Platform
+ * Copyright (C) 2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 package org.rhq.plugins.jbossas5.helper;
 
 import java.util.jar.Attributes;
@@ -35,7 +31,8 @@ public enum JBossProductType {
     EAP("JBoss EAP", "JBoss Enterprise Application Platform", "default"),
     EWP("JBoss EWP", "JBoss Enterprise Web Platform", "default"),
     SOA("JBoss SOA-P", "JBoss Enterprise SOA Platform", "default"),
-    BRMS("JBoss BRMS", "JBoss Business Rules Management System", "default");
+    BRMS("JBoss BRMS", "JBoss Business Rules Management System", "default"),
+    EPP("JBoss EPP", "JBoss Enterprise Portal Platform", "default");
 
     public final String NAME;
     public final String DESCRIPTION;
@@ -45,6 +42,7 @@ public enum JBossProductType {
     private static final String EWP_IMPLEMENTATION_TITLE = "JBoss [EWP]";
     private static final String SOA_IMPLEMENTATION_TITLE = "JBoss [SOA]";
     private static final String BRMS_IMPLEMENTATION_TITLE = "JBoss [BRMS]";
+    private static final String EPP_IMPLEMENTATION_TITLE = "JBoss [EPP]";
 
     JBossProductType(String name, String description, String defaultConfigName) {
         this.NAME = name;
@@ -53,7 +51,8 @@ public enum JBossProductType {
     }
 
     /**
-     * Determines the product type (AS, EAP, EWP, or SOA) based on the Implementation-Title MANIFEST.MF attribute.
+     * Determines the product type (AS or EAP or a layered product like BRMS) based on the
+     * Implementation-Title MANIFEST.MF attribute.
      * <p>
      * Note that this method is <b>NOT</b> always correct about the actual version of the product, because
      * certain version of certain products don't advertise the correct product/version in the manifest.
@@ -62,7 +61,7 @@ public enum JBossProductType {
      * 
      * @param attributes the attributes from a manifest file (typically run.jar or jboss-j2ee.jar)
      *
-     * @return the product type (AS, EAP, EWP, or SOA)
+     * @return the product type (AS, EAP, EWP, SOA, BRMS, or EPP)
      */
     public static JBossProductType determineJBossProductType(Attributes attributes) {
         JBossProductType result = JBossProductType.AS;
@@ -77,7 +76,9 @@ public enum JBossProductType {
                 result = JBossProductType.SOA;
             } else if (implementationTitle.equalsIgnoreCase(BRMS_IMPLEMENTATION_TITLE)) {
                 result = JBossProductType.BRMS;
-            }
+            } else if (implementationTitle.equalsIgnoreCase(EPP_IMPLEMENTATION_TITLE)) {
+               result = JBossProductType.EPP;
+           }
         }
         return result;
     }

@@ -108,6 +108,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         }
 
 
+        Cluster cluster = null;
         try {
             Builder clusterBuilder = Cluster
                 .builder()
@@ -119,9 +120,21 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
                 clusterBuilder = clusterBuilder.withCredentials(username, password);
             }
 
-            this.cassandraSession = clusterBuilder.build().connect(clusterName);
+            cluster = clusterBuilder.build();
+
+            this.cassandraSession = cluster.connect(clusterName);
         } catch (Exception e) {
-            LOG.error("Connect to Cassandra " + host + ":" + nativePort, e);
+            LOG.error("Connecting to Cassandra " + host + ":" + nativePort
+                + " failed. Attempting to shutdown the cluster manager and all the connections.", e);
+
+            try {
+                if (cluster != null) {
+                    cluster.shutdown();
+                }
+            } catch (Exception shutdownException) {
+                LOG.error("Failed attempt to shutdown the cluster manager.", shutdownException);
+            }
+
             throw e;
         }
     };

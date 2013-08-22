@@ -48,7 +48,7 @@ abstract class AbstractManager {
 
     private static final String MANAGEMENT_BASE_FOLDER = "management";
     protected static final String DEFAULT_CASSANDRA_USER = "cassandra";
-    protected static final String DEFAULT_CASSANDRA_PASSWORD = "cassandra";
+    protected static final String DEFAULT_CASSANDRA_PASSWORD = "-1e4662ac0d7ddef155fd5fac8f894a49";
 
     private final Log log = LogFactory.getLog(AbstractManager.class);
 

@@ -384,7 +384,8 @@ public class ResourceDetailView extends
     }
 
     private void updateMonitoringTabContent(final Resource resource, Set<ResourceTypeFacet> facets) {
-        boolean visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT);
+        boolean visible = hasMetricsOfType(this.resourceComposite, DataType.MEASUREMENT)
+                || hasMetricsOfType(this.resourceComposite, DataType.AVAILABILITY);
         ViewFactory viewFactory;
 
         boolean visibleToIE8 = !BrowserUtility.isBrowserPreIE9();

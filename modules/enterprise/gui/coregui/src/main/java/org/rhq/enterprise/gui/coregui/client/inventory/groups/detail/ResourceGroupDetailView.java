@@ -268,18 +268,14 @@ public class ResourceGroupDetailView extends
         ViewFactory viewFactory;
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
-            final EntityContext groupContext = EntityContext.forGroup(groupComposite.getResourceGroup());
-            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
+            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT) ||
+                hasMetricsOfType(this.groupComposite, DataType.AVAILABILITY);
             boolean showOnPage;
 
             if(BrowserUtility.isBrowserPreIE9()){
                 showOnPage = false;
             }else{
-                if(visible) {
-                    showOnPage = true;
-                }else {
-                    showOnPage = false;
-                }
+                showOnPage = visible;
             }
 
             viewFactory = (!showOnPage) ? null : new ViewFactory() {

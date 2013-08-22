@@ -67,6 +67,7 @@ public class StorageClientManagerBean {
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
 
+    private Cluster cluster;
     private StorageSession session;
     private MetricsConfiguration metricsConfiguration;
     private MetricsDAO metricsDAO;
@@ -136,16 +137,24 @@ public class StorageClientManagerBean {
     }
 
     public synchronized void shutdown() {
-        if (!initialized) {
-            log.info("Storage client subsystem is already shut down. Skipping shutdown steps.");
-            return;
+        log.info("Shutting down storage client subsystem");
+
+        if (metricsServer != null) {
+            metricsServer.shutdown();
+            metricsServer = null;
         }
 
-        log.info("Shutting down storage client subsystem");
-        metricsServer.shutdown();
         metricsDAO = null;
-        metricsServer = null;
-        session.getCluster().shutdown();
+
+        try {
+            if (cluster != null) {
+                cluster.shutdown();
+            }
+        } catch (Exception e) {
+            log.error("Failed to shutdown the cluster connection manager for the storage cluster.", e);
+        }
+
+        cluster = null;
         session = null;
         initialized = false;
     }
@@ -192,7 +201,7 @@ public class StorageClientManagerBean {
             log.debug("Storage client compression is disabled");
         }
 
-        Cluster cluster = new ClusterBuilder()
+        cluster = new ClusterBuilder()
             .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
             .withCredentialsObfuscated(username, password)
             .withPort(port)

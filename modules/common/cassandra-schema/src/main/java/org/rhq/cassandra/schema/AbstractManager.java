@@ -66,6 +66,7 @@ abstract class AbstractManager {
         }
     }
 
+    private Cluster cluster;
     private Session session;
     private final String username;
     private final String password;
@@ -108,10 +109,9 @@ abstract class AbstractManager {
     protected void initClusterSession(String username, String password) {
         shutdownClusterConnection();
 
-
         log.info("Initializing storage node session.");
 
-        Cluster cluster = new ClusterBuilder().addContactPoints(nodes).withCredentialsObfuscated(username, password)
+        cluster = new ClusterBuilder().addContactPoints(nodes).withCredentialsObfuscated(username, password)
             .withPort(this.getCqlPort()).withCompression(Compression.NONE).build();
 
         log.info("Cluster connection configured.");
@@ -125,8 +125,8 @@ abstract class AbstractManager {
      */
     protected void shutdownClusterConnection() {
         log.info("Shutting down existing cluster connections");
-        if (session != null && session.getCluster() != null) {
-            session.getCluster().shutdown();
+        if (cluster != null) {
+            cluster.shutdown();
         }
     }
 

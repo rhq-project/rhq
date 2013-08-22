@@ -652,7 +652,7 @@ public class DataMigratorRunner {
      * @param session
      */
     private void closeCassandraSession(Session session) {
-        session.shutdown();
+        session.getCluster().shutdown();
     }
 
     /**
@@ -688,7 +688,13 @@ public class DataMigratorRunner {
                 (String) configuration.get(cassandraPasswordOption))
             .build();
 
-        return cluster.connect("rhq");
+        try {
+            return cluster.connect("rhq");
+        } catch (Exception e) {
+            log.debug("Failed to connect to the storage cluster.", e);
+            cluster.shutdown();
+            throw e;
+        }
     }
 
     /**

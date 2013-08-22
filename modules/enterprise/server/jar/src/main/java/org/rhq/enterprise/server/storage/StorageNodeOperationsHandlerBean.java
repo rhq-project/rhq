@@ -47,8 +47,6 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     private static final String STORAGE_NODE_TYPE_NAME = "RHQ Storage Node";
     private static final String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
-    private static final String USERNAME_PROPERTY = "rhq.cassandra.username";
-    private static final String PASSWORD_PROPERTY = "rhq.cassandra.password";
     private final static String RUN_REPAIR_PROPERTY = "runRepair";
     private final static String UPDATE_SEEDS_LIST = "updateSeedsList";
     private final static String SEEDS_LIST = "seedsList";

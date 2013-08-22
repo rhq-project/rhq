@@ -25,6 +25,8 @@
 
 package org.rhq.cassandra.util;
 
+import java.lang.reflect.Method;
+
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
@@ -66,6 +68,14 @@ public class ClusterBuilder {
     }
 
     /**
+     * @see Cluster.Builder#withCredentials(String, String)
+     */
+    public ClusterBuilder withCredentialsObfuscated(String username, String obfuscatedPassword) {
+        builder.withCredentials(username, ClusterBuilder.deobfuscatePassword(obfuscatedPassword));
+        return this;
+    }
+
+    /**
      * This method will throw an IllegalArgumentException if you try to use snappy
      * compression while running on an IBM JRE. See <a href="https://bugzilla.redhat.com/show_bug.cgi?id=907485">BZ 907485</a>
      * for details.
@@ -103,6 +113,29 @@ public class ClusterBuilder {
 
     private boolean isIBMJRE() {
         return System.getProperty("java.vm.vendor").startsWith("IBM");
+    }
+
+    /**
+     * Use the internal JBossAS mechanism to de-obfuscate a password back to its
+     * clear text form. This is not true encryption.
+     *
+     * @param obfuscatedPassword the obfuscated password
+     * @return the clear-text password
+     */
+    public static String deobfuscatePassword(String obfuscatedPassword) {
+        // We need to do some mumbo jumbo, as the interesting method is private
+        // in SecureIdentityLoginModule
+        try {
+            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
+            Class<?> clazz = Class.forName(className);
+            Object object = clazz.newInstance();
+            Method method = clazz.getDeclaredMethod("decode", String.class);
+            method.setAccessible(true);
+            char[] result = (char[]) method.invoke(object, obfuscatedPassword);
+            return new String(result);
+        } catch (Exception e) {
+            throw new RuntimeException("de-obfuscating db password failed: ", e);
+        }
     }
 
 }

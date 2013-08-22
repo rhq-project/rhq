@@ -145,8 +145,9 @@ public class Installer {
         usage.append("\t--force, -f: force the installer to try to install everything").append("\n");
         usage.append("\t--listservers, -l: show list of known installed servers (install not performed)").append("\n");
         usage.append("\t--setupdb, -b: only perform database schema creation or update").append("\n");
-        usage.append("\t--dbpassword, -d: encodes a DB password for rhq-server.properties (install not performed)")
-            .append("\n");
+        usage.append("\t--dbpassword, -d: encodes a DB password for rhq-server.properties (install not performed)");
+        usage.append("\t--encodepassword, -e: encodes a password (DB or RHQ Storage Cluster) for rhq-server.properties (install not performed)");
+        usage.append("\n");
         LOG.info(usage);
     }
 
@@ -156,6 +157,7 @@ public class Installer {
             new LongOpt("host", LongOpt.REQUIRED_ARGUMENT, null, 'h'),
             new LongOpt("port", LongOpt.REQUIRED_ARGUMENT, null, 'p'),
             new LongOpt("dbpassword", LongOpt.REQUIRED_ARGUMENT, null, 'd'),
+            new LongOpt("encodepassword", LongOpt.REQUIRED_ARGUMENT, null, 'e'),
             new LongOpt("setupdb", LongOpt.NO_ARGUMENT, null, 'b'),
             new LongOpt("listservers", LongOpt.NO_ARGUMENT, null, 'l'),
             new LongOpt("force", LongOpt.NO_ARGUMENT, null, 'f'),
@@ -164,7 +166,7 @@ public class Installer {
         boolean test = false;
         boolean listservers = false;
         boolean setupdb = false;
-        String dbpassword = null;
+        String passwordToEncode = null;
 
         Getopt getopt = new Getopt("installer", args, sopts, lopts);
         int code;
@@ -228,8 +230,16 @@ public class Installer {
             }
 
             case 'd': {
-                dbpassword = getopt.getOptarg();
-                if (dbpassword == null) {
+                passwordToEncode = getopt.getOptarg();
+                if (passwordToEncode == null) {
+                    throw new IllegalArgumentException("Missing password");
+                }
+                break;
+            }
+
+            case 'e': {
+                passwordToEncode = getopt.getOptarg();
+                if (passwordToEncode == null) {
                     throw new IllegalArgumentException("Missing password");
                 }
                 break;
@@ -258,8 +268,8 @@ public class Installer {
         }
 
         // if a password was asked to be obfuscated, that's all we are to do
-        if (dbpassword != null) {
-            String pw = new InstallerServiceImpl(installerConfig).obfuscatePassword(dbpassword);
+        if (passwordToEncode != null) {
+            String pw = new InstallerServiceImpl(installerConfig).obfuscatePassword(passwordToEncode);
             LOG.info("*** Encoded Password: " + pw);
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }

@@ -111,7 +111,7 @@ abstract class AbstractManager {
 
         log.info("Initializing storage node session.");
 
-        Cluster cluster = new ClusterBuilder().addContactPoints(nodes).withCredentials(username, password)
+        Cluster cluster = new ClusterBuilder().addContactPoints(nodes).withCredentialsObfuscated(username, password)
             .withPort(this.getCqlPort()).withCompression(Compression.NONE).build();
 
         log.info("Cluster connection configured.");

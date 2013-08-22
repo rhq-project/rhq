@@ -362,7 +362,8 @@ public class DataMigratorRunner {
         configuration.put(sqlConnectionUrlOption, serverProperties.getProperty("rhq.server.database.connection-url"));
 
         configuration.put(cassandraUserOption, serverProperties.getProperty("rhq.cassandra.username"));
-        configuration.put(cassandraPasswordOption, serverProperties.getProperty("rhq.cassandra.password"));
+        String cassandraPasswordProperty = serverProperties.getProperty("rhq.cassandra.password");
+        configuration.put(cassandraPasswordOption, deobfuscatePassword(cassandraPasswordProperty));
 
         if (serverProperties.getProperty("rhq.cassandra.seeds") != null
             && !serverProperties.getProperty("rhq.cassandra.seeds").trim().isEmpty()) {

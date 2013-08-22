@@ -194,7 +194,7 @@ public class StorageClientManagerBean {
 
         Cluster cluster = new ClusterBuilder()
             .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
-            .withCredentials(username, password)
+            .withCredentialsObfuscated(username, password)
             .withPort(port)
             .withCompression(compression)
             .build();

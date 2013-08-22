@@ -18,6 +18,12 @@
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.driver.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>org.picketbox</groupId>
+      <artifactId>picketbox</artifactId>
+      <version>${picketbox-version}</version>
+    </dependency>
   </dependencies>
 
   <profiles>

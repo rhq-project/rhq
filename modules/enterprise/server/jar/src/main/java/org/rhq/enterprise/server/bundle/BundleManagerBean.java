@@ -2511,11 +2511,9 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         } else {
             // if necessary, make sure the bundle is viewable
-            if (!hasViewBundles) {
-                if (authorizationManager.canViewBundle(assigningSubject, bundleId)) {
-                    throw new PermissionException("Bundle ID [" + bundleId + "] is not viewable by subject ["
-                        + assigningSubject.getName() + "]");
-                }
+            if (!hasViewBundles && !authorizationManager.canViewBundle(assigningSubject, bundleId)) {
+                throw new PermissionException("Bundle ID [" + bundleId + "] is not viewable by subject ["
+                    + assigningSubject.getName() + "]");
             }
 
             // can assign to bundle groups for which he has create_bundles_in_group or assign_bundles_to_group            

@@ -386,7 +386,10 @@ public class StorageInstaller {
                 deployer.unzipDistro();
                 deployer.applyConfigChanges();
                 deployer.updateFilePerms();
-                deployer.updateStorageAuthConf(getAddresses(hostname, seeds));
+
+                Set<InetAddress> addresses = new HashSet<InetAddress>();
+                addresses.add(InetAddress.getByName(hostname));
+                deployer.updateStorageAuthConf(addresses);
 
                 log.info("Finished installing RHQ Storage Node.");
 
@@ -498,19 +501,6 @@ public class StorageInstaller {
             dir = dir.getParentFile();
         }
         return dir;
-    }
-
-    private Set<InetAddress> getAddresses(String hostname, String seeds) throws IOException {
-        Set<InetAddress> addresses = new HashSet<InetAddress>();
-        addresses.add(InetAddress.getByName(hostname));
-
-        if (!StringUtil.isEmpty(seeds)) {
-            for (String seed : seeds.split(",")) {
-                addresses.add(InetAddress.getByName(seed));
-            }
-        }
-
-        return addresses;
     }
 
     private PropertiesFileUpdate getServerProperties() {

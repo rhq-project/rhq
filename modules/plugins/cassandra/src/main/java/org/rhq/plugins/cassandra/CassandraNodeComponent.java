@@ -81,6 +81,7 @@ import org.rhq.plugins.jmx.JMXServerComponent;
 public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent<?>> implements OperationFacet {
     private static final Log log = LogFactory.getLog(CassandraNodeComponent.class);
 
+    private Cluster cluster;
     private Session cassandraSession;
     private String host;
     private ProcessInfo processInfo;

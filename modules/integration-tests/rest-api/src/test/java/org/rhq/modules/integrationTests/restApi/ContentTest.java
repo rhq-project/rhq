@@ -235,6 +235,8 @@ public class ContentTest extends AbstractBase {
                 given()
                     .header(acceptJson)
                     .log().everything()
+                    .redirects().follow(false)
+                    .redirects().allowCircular(true)
                 .expect()
                     .statusCode(isOneOf(200, 201, 302))
                     .log().everything()

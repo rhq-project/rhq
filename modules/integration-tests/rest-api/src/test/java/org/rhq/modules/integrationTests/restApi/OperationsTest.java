@@ -387,13 +387,13 @@ public class OperationsTest extends AbstractBase {
     }
 
     private void waitAndCheckStatus(int platformId, String historyId) throws InterruptedException {
-        Thread.sleep(15000); // we need to wait a little as the execution may take time
+//        Thread.sleep(15000); // we need to wait a little as the execution may take time
 
         given()
             .pathParam("hid", historyId)
         .expect()
             .statusCode(200)
-            .log().ifError()
+            .log().everything()
         .when()
             .get("/operation/history/{hid}");
 
@@ -404,7 +404,7 @@ public class OperationsTest extends AbstractBase {
             .header(acceptJson)
         .expect()
             .statusCode(200)
-            .log().ifError()
+            .log().everything()
         .when()
             .get("/operation/history");
 
@@ -422,16 +422,22 @@ public class OperationsTest extends AbstractBase {
     private void waitForTerminationAndDelete(String historyId) throws InterruptedException {
         boolean done = false;
         int count = 0;
+        String status = "bla";
+        JsonPath jsonPath = null;
+
         while (!done) {
             Response response =
             given()
                 .header(acceptJson)
                 .pathParam("hid", historyId)
+            .expect()
+                .log().everything()
             .when()
                 .get("/operation/history/{hid}");
 
-            JsonPath jsonPath = response.jsonPath();
-            String status= jsonPath.getString("status");
+
+            jsonPath = response.jsonPath();
+            status = jsonPath.getString("status");
             int code = response.statusCode();
 
             if (code==200 && (status.equals("Success") || status.equals("Failed"))) {
@@ -441,6 +447,13 @@ public class OperationsTest extends AbstractBase {
             }
             count ++;
             assert count < 10 :"Waited for 20sec -- something is wrong";
+        }
+
+        if (done && status.equals("Success")) {
+            Object result = jsonPath.get("result"); // Can not test on result.operationResult, as not every op has this.
+            assert result != null;
+            String errorMessage = jsonPath.getString("errorMessage");
+            assert errorMessage == null;
         }
 
         // Delete the history item

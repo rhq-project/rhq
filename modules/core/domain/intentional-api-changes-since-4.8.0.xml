@@ -17,4 +17,12 @@
             The new method will clear only the specified status.
         </justification>
     </difference>
+    <difference>
+        <className>org/rhq/core/domain/operation/OperationHistory</className>
+        <differenceType>7012</differenceType><!-- method added -->
+        <method>void setStartedTime(long)</method>
+        <justification>
+            We are adding a method to explicitly set the start time.
+        </justification>
+    </difference>
 </differences>

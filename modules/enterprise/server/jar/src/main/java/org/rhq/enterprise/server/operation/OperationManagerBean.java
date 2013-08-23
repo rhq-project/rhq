@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.operation;
 
@@ -232,7 +232,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         ensureControlPermission(subject, resource);
 
-        validateOperationNameAndParameters(resource.getResourceType(), operationName, parameters);
+        OperationDefinition opDef = validateOperationNameAndParameters(resource.getResourceType(), operationName, parameters);
 
         String uniqueJobId = createUniqueJobName(resource, operationName);
 
@@ -254,7 +254,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         JobDetail jobDetail = new JobDetail();
         jobDetail.setName(uniqueJobId);
-        jobDetail.setGroup(createJobGroupName(resource));
+        String jobGroupName = createJobGroupName(resource);
+        jobDetail.setGroup(jobGroupName);
         jobDetail.setDescription(notes);
         jobDetail.setVolatility(false); // we want it persisted
         jobDetail.setDurability(false);
@@ -281,6 +282,13 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         ResourceOperationSchedule newSchedule = getResourceOperationSchedule(subject, jobDetail);
 
         LOG.debug("Scheduled Resource operation [" + newSchedule + "] - next fire time is [" + next + "]");
+
+        // Create an IN_PROGRESS item
+        ResourceOperationHistory history;
+                history = new ResourceOperationHistory(uniqueJobId, jobGroupName, subject.getName(), opDef, parameters,
+                    schedule.getResource(), null);
+
+        updateOperationHistory(subject,history);
 
         return newSchedule;
     }
@@ -896,7 +904,22 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             ensureControlPermission(subject, history);
         }
 
-        // we do not cascade add the param config (we probably can add that but), so let's persist it now
+
+        // The history item may have been created already, so find it in the database and
+        // set the new state from our input
+        if (history.getId()!=0) {
+            OperationHistory existingHistoryItem =entityManager.find(OperationHistory.class,history.getId());
+            existingHistoryItem.setStatus(history.getStatus());
+            existingHistoryItem.setErrorMessage(history.getErrorMessage());
+            if (existingHistoryItem.getStartedTime()==0) {
+                existingHistoryItem.setStartedTime(history.getStartedTime());
+            }
+            if (history instanceof ResourceOperationHistory) {
+                ((ResourceOperationHistory)existingHistoryItem).setResults(((ResourceOperationHistory) history).getResults());
+            }
+            history = existingHistoryItem;
+        }
+        // we do not cascade add the param config (we probably can add that but), so let's persist it now if needed
         Configuration parameters = history.getParameters();
         if ((parameters != null) && (parameters.getId() == 0)) {
             entityManager.persist(parameters);
@@ -1358,7 +1381,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
                 boolean neverStarted = ((System.currentTimeMillis() - createdTime) > (1000 * 60 * 60 * 24));
                 if (timedOut || neverStarted) {
                     if (timedOut) {
-                        // the operation started, but the agent never told us how it finished prior to exceeding the timeout 
+                        // the operation started, but the agent never told us how it finished prior to exceeding the timeout
                         LOG.info("Operation execution seems to have been orphaned - timing it out: " + history);
                         history.setErrorMessage("Timed out : did not complete after " + duration + " ms"
                             + " (the timeout period was " + timeout + " ms)");
@@ -2051,7 +2074,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return triggers[0];
     }
 
-    private static JobTrigger convertToJobTrigger(Trigger trigger) {
+    private JobTrigger convertToJobTrigger(Trigger trigger) {
         JobTrigger schedule;
         if (trigger instanceof SimpleTrigger) {
             SimpleTrigger simpleTrigger = (SimpleTrigger) trigger;
@@ -2106,7 +2129,7 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return schedule;
     }
 
-    private static Trigger convertToTrigger(JobTrigger jobTrigger) {
+    private Trigger convertToTrigger(JobTrigger jobTrigger) {
         Trigger trigger;
         if (jobTrigger.getRecurrenceType() == JobTrigger.RecurrenceType.CRON_EXPRESSION) {
             CronTrigger cronTrigger = new CronTrigger();
@@ -2146,8 +2169,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
         return trigger;
     }
 
-    private static void validateOperationNameAndParameters(ResourceType resourceType, String operationName,
-        Configuration parameters) {
+    private OperationDefinition validateOperationNameAndParameters(ResourceType resourceType,
+                                                                          String operationName,
+                                                                          Configuration parameters) {
         Set<OperationDefinition> operationDefinitions = resourceType.getOperationDefinitions();
         OperationDefinition matchingOperationDefinition = null;
         for (OperationDefinition operationDefinition : operationDefinitions) {
@@ -2167,6 +2191,8 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
             throw new IllegalArgumentException("Parameters for [" + operationName + "] on Resource of type ["
                 + resourceType.getName() + "] are not valid: " + errors);
         }
+
+        return matchingOperationDefinition;
     }
 
 }

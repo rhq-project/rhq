@@ -35,7 +35,7 @@ public enum JBossProductType {
     ISPN("ISPN", "Infinispan Server", "Infinispan Server", "ISPN"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "Portal Platform"),
-    JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "Portal Platform"),
+    JPP("JPP", "JBoss JPP 6", "JBoss Portal Platform 6", "Portal Platform"),
 //    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6", "EWP"),
     SOA("SOA-P", "JBoss SOA-P 6", "Red Hat JBoss Fuse Service Works", "SOAP"),
     WILDFLY8("WildFly","WildFly 8" ,"WildFly Application Server 8" , "WildFly");

@@ -181,6 +181,16 @@ public interface AuthorizationManagerLocal {
     boolean hasBundlePermission(Subject subject, Permission permission, Collection<Integer> bundleIds);
 
     /**
+     * Gets the set of permissions that the current user explicitly possesses for the specified {@link Bundle}.
+     *
+     * @param  subject    the current subject or caller
+     * @param  bundleId   the id of some Bundle to check permissions against
+     *
+     * @return the set of permissions that the current user possesses for the specified {@link Bundle} - never null
+     */
+    Set<Permission> getBundlePermissions(Subject subject, int bundleId);
+
+    /**
      * Returns true if the current user possesses the specified bundle permission for the specified bundle group.
      *
      * @param  subject     the current subject or caller

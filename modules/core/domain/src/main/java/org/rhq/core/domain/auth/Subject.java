@@ -140,6 +140,10 @@ import org.rhq.core.domain.resource.group.ResourceGroup;
         + "                                          JOIN r.subjects s " //
         + "                                         WHERE s.id = :subjectId and p = :permission ) ) "),
 
+    @NamedQuery(name = Subject.QUERY_GET_PERMISSIONS_BY_BUNDLE_ID, query = "SELECT distinct p "
+        + "FROM Bundle bundle, IN (bundle.bundleGroups) bg, IN (bg.roles) r, IN (r.subjects) s, IN (r.permissions) p "
+        + "WHERE s = :subject AND bundle.id = :bundleId"),
+
     @NamedQuery(name = Subject.QUERY_HAS_BUNDLE_PERMISSION, query = "SELECT COUNT(b) "
         + "FROM Bundle b, IN (b.bundleGroups) bg, IN (bg.roles) r, IN (r.subjects) s, IN (r.permissions) p "
         + "WHERE s = :subject AND b.id = :bundleId AND p = :permission"),
@@ -256,6 +260,7 @@ public class Subject implements Serializable {
     public static final String QUERY_GET_PERMISSIONS_BY_GROUP_ID = "Subject.getPermissionsByGroup";
     public static final String QUERY_GET_PERMISSIONS_BY_PRIVATE_GROUP_ID = "Subject.getPermissionsByPrivateGroup";
     public static final String QUERY_GET_PERMISSIONS_BY_RESOURCE_ID = "Subject.getPermissionsByResource";
+    public static final String QUERY_GET_PERMISSIONS_BY_BUNDLE_ID = "Subject.getPermissionsByBundle";
     public static final String QUERY_ROLES_BY_RESOURCE_IDS = "Subject.getRolesByResources";
 
     public static final String QUERY_HAS_GLOBAL_PERMISSION = "Subject.hasGlobalPermission";

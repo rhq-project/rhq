@@ -59,17 +59,16 @@ public class PermissionsLoader {
     }
 
     public void loadExplicitGlobalPermissions(final PermissionsLoadedListener callback) {
-        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(
-            new AsyncCallback<Set<Permission>>() {
+        GWTServiceLookup.getAuthorizationService().getExplicitGlobalPermissions(new AsyncCallback<Set<Permission>>() {
 
-                public void onSuccess(Set<Permission> result) {
-                    callback.onPermissionsLoaded(result);
-                }
+            public void onSuccess(Set<Permission> result) {
+                callback.onPermissionsLoaded(result);
+            }
 
-                public void onFailure(Throwable caught) {
-                    processFailure(MSG.util_userPerm_loadFailGlobal(), caught);
-                    callback.onPermissionsLoaded(null); // indicate an error by passing in null
-                }
+            public void onFailure(Throwable caught) {
+                processFailure(MSG.util_userPerm_loadFailGlobal(), caught);
+                callback.onPermissionsLoaded(null); // indicate an error by passing in null
+            }
         });
     }
 
@@ -101,6 +100,20 @@ public class PermissionsLoader {
                     callback.onPermissionsLoaded(null); // indicate an error by passing in null
                 }
             });
+    }
+
+    public void loadBundlePermissions(final int bundleId, final PermissionsLoadedListener callback) {
+        GWTServiceLookup.getAuthorizationService().getBundlePermissions(bundleId, new AsyncCallback<Set<Permission>>() {
+
+            public void onSuccess(Set<Permission> result) {
+                callback.onPermissionsLoaded(result);
+            }
+
+            public void onFailure(Throwable caught) {
+                processFailure(MSG.util_userPerm_loadFailBundle(String.valueOf(bundleId)), caught);
+                callback.onPermissionsLoaded(null); // indicate an error by passing in null
+            }
+        });
     }
 
     protected void processFailure(String msg, Throwable caught) {

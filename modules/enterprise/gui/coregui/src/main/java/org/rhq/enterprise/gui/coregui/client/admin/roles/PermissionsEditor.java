@@ -362,6 +362,11 @@ public class PermissionsEditor extends EnhancedVStack {
             MSG.view_adminRoles_permissions_permDesc_deleteBundlesFromGroup());
         records.add(record);
 
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deployBundlesToGroup(),
+            "subsystems/bundle/BundleGroup", Permission.DEPLOY_BUNDLES_TO_GROUP,
+            MSG.view_adminRoles_permissions_permDesc_deployBundlesToGroup());
+        records.add(record);
+
         grid.setData(records.toArray(new ListGridRecord[records.size()]));
 
         return grid;

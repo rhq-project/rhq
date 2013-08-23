@@ -25,6 +25,8 @@ package org.rhq.enterprise.gui.coregui.client.bundle.tree;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -46,10 +48,12 @@ import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.criteria.BundleCriteria;
 import org.rhq.core.domain.criteria.BundleDeploymentCriteria;
 import org.rhq.core.domain.criteria.BundleDestinationCriteria;
+import org.rhq.core.domain.criteria.BundleGroupCriteria;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.criteria.Criteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
@@ -114,7 +118,7 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
                     processResponse(request.getRequestId(), response);
                 }
 
-                public void onSuccess(PageList<Bundle> result) {
+                public void onSuccess(final PageList<Bundle> result) {
                     BundleGroup unassignedBundleGroup = new BundleGroup();
                     unassignedBundleGroup.setId(0); // ID=0 is an indicator we use to denote the unassigned group
                     unassignedBundleGroup.setName(MSG.view_bundle_tree_unassigned_name());
@@ -140,13 +144,42 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
                         }
                     }
 
-                    ArrayList<BundleGroup> allVisibleBundleGroups = new ArrayList<BundleGroup>(visibleBundleGroups.values());
+                    final ArrayList<BundleGroup> allVisibleBundleGroups = new ArrayList<BundleGroup>(visibleBundleGroups.values());
                     if (!unassignedBundleGroup.getBundles().isEmpty()) {
                         allVisibleBundleGroups.add(unassignedBundleGroup);
                     }
-                    response.setData(buildRecords(allVisibleBundleGroups));
-                    response.setTotalRows(allVisibleBundleGroups.size());
-                    processResponse(request.getRequestId(), response);
+
+                    BundleGroupCriteria bundleGroupCriteria = new BundleGroupCriteria();
+                    bundleGroupCriteria.addFilterIds(visibleBundleGroups.keySet().toArray(new Integer[0]));
+                    bundleService.findBundleGroupsByCriteria(bundleGroupCriteria, new AsyncCallback<PageList<BundleGroup>>() {
+                        public void onFailure(Throwable caught) {
+                            // just log a message, but keep going, this just means we can't show lock icons where applicable
+                            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_tree_loadFailure(), caught);
+                        }
+
+                        public void onSuccess(PageList<BundleGroup> result) {
+                            // if any of the bundle group tree nodes represent bundle groups the user isn't allowed
+                            // to see, then mark the node with a locked icon
+                            HashSet<Integer> permittedBundleGroups = new HashSet<Integer>();
+                            for (BundleGroup bg : result) {
+                                permittedBundleGroups.add(bg.getId());
+                            }
+                            ListGridRecord[] dataRecords = buildRecords(allVisibleBundleGroups);
+                            for (ListGridRecord dataRecord : dataRecords) {
+                                // we only want to examine bundle group records - and they are the only ones
+                                // with ID attributes that are a simple number without "_" character
+                                TreeNode dataRecordNode = (TreeNode) dataRecord;
+                                String idString = dataRecordNode.getAttribute("id");
+                                if (!idString.contains("_") && !permittedBundleGroups.contains(Integer.valueOf(idString))) {
+                                    dataRecordNode.setIcon(ImageManager.getLockedIcon());
+                                    dataRecordNode.setEnabled(false);
+                                }
+                            }
+                            response.setData(dataRecords);
+                            response.setTotalRows(allVisibleBundleGroups.size());
+                            processResponse(request.getRequestId(), response);
+                        }
+                    });
                 }
             });
 

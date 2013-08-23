@@ -133,7 +133,7 @@ public class TaggedView extends EnhancedVLayout implements BookmarkableView, Has
             container.addTab(tab);
 
             BundleDeploymentListView bundleDeploymentListView = new BundleDeploymentListView(criteria,
-                this.globalPermissions.contains(Permission.MANAGE_BUNDLE));
+                this.globalPermissions.contains(Permission.DEPLOY_BUNDLES));
             viewsWithTags.add(bundleDeploymentListView);
             tab = new Tab(MSG.view_bundle_bundleDeployments());
             tab.setIcon("subsystems/bundle/BundleDeployment_16.png");

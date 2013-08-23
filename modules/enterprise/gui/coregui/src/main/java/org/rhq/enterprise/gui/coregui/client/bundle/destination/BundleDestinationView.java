@@ -74,11 +74,15 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
 
     private Canvas detail;
 
-    private boolean canManageBundles;
+    private boolean canDelete;
+    private boolean canDeploy;
+    private boolean canTag;
 
-    public BundleDestinationView(boolean canManageBundles) {
+    public BundleDestinationView(boolean canDelete, boolean canDeploy, boolean canTag) {
         super();
-        this.canManageBundles = canManageBundles;
+        this.canDelete = canDelete;
+        this.canDeploy = canDeploy;
+        this.canTag = canTag;
         setWidth100();
         setHeight100();
         //setMargin(10); // do not set margin, we already have our margin set outside of us
@@ -159,7 +163,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
     }
 
     private TagEditorView createTagEditor() {
-        boolean readOnly = !this.canManageBundles;
+        boolean readOnly = !this.canTag;
         TagEditorView tagEditor = new TagEditorView(destination.getTags(), readOnly, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleDestinationTags(destination.getId(), tags,
@@ -269,11 +273,14 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
         });
         actionLayout.addMember(deleteButton);
 
-        if (!canManageBundles) {
+        if (!canDelete) {
+            deleteButton.setDisabled(true);
+        }
+
+        if (!canDeploy) {
             deployButton.setDisabled(true);
             revertButton.setDisabled(true);
             purgeButton.setDisabled(true);
-            deleteButton.setDisabled(true);
         }
 
         return actionLayout;
@@ -303,7 +310,7 @@ public class BundleDestinationView extends EnhancedVLayout implements Bookmarkab
     private Table createDeploymentsTable() {
         Criteria criteria = new Criteria();
         criteria.addCriteria("bundleDestinationId", destination.getId());
-        BundleDeploymentListView deployments = new BundleDeploymentListView(criteria, canManageBundles);
+        BundleDeploymentListView deployments = new BundleDeploymentListView(criteria, canDeploy);
         deployments.setHeight100();
         deployments.setShowResizeBar(true);
         return deployments;

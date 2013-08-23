@@ -69,11 +69,15 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
 
     private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
     private BundleVersion version;
-    private boolean canManageBundles = false;
+    private boolean canDelete;
+    private boolean canDeploy;
+    private boolean canTag;
 
-    public BundleVersionView(boolean canManageBundles) {
+    public BundleVersionView(boolean canDelete, boolean canDeploy, boolean canTag) {
         super();
-        this.canManageBundles = canManageBundles;
+        this.canDelete = canDelete;
+        this.canDeploy = canDeploy;
+        this.canTag = canTag;
         setWidth100();
         setHeight100();
         //setMargin(10); // do not set margin, we already have our margin set outside of us
@@ -186,7 +190,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         });
         actionLayout.addMember(deleteButton);
 
-        if (!canManageBundles) {
+        if (!canDelete) {
             deleteButton.setDisabled(true);
         }
 
@@ -194,7 +198,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
     }
 
     private TagEditorView createTagEditor() {
-        boolean readOnly = !this.canManageBundles;
+        boolean readOnly = !this.canTag;
         TagEditorView tagEditor = new TagEditorView(version.getTags(), readOnly, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleVersionTags(version.getId(), tags,
@@ -246,7 +250,7 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         Tab tab = new Tab(MSG.view_bundle_deployments());
         Criteria criteria = new Criteria();
         criteria.setAttribute("bundleVersionId", version.getId());
-        tab.setPane(new BundleDeploymentListView(criteria, this.canManageBundles));
+        tab.setPane(new BundleDeploymentListView(criteria, this.canDeploy));
         return tab;
     }
 
@@ -268,17 +272,16 @@ public class BundleVersionView extends EnhancedVLayout implements BookmarkableVi
         criteria.fetchConfigurationDefinition(true);
         criteria.fetchTags(true);
 
-        bundleManager.findBundleVersionsByCriteria(criteria,
-            new AsyncCallback<PageList<BundleVersion>>() {
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
-                }
+        bundleManager.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_version_loadFailure(), caught);
+            }
 
-                public void onSuccess(PageList<BundleVersion> result) {
-                    BundleVersion version = result.get(0);
-                    ViewId nextPath = viewPath.next().getCurrent();
-                    viewBundleVersion(version, nextPath);
-                }
-            });
+            public void onSuccess(PageList<BundleVersion> result) {
+                BundleVersion version = result.get(0);
+                ViewId nextPath = viewPath.next().getCurrent();
+                viewBundleVersion(version, nextPath);
+            }
+        });
     }
 }

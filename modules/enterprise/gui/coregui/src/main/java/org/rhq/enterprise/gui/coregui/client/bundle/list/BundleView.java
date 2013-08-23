@@ -45,6 +45,8 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewId;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleTopView;
@@ -78,20 +80,25 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     private Tab destinationsTab;
     private Tab bundleGroupsTab;
 
+    private Set<Permission> globalPermissions;
+    private int permissionCheckBundleId = 0;
+    private boolean canDelete;
+    private boolean canDeploy;
+    private boolean canTag;
+
     private BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
     private Bundle bundle;
-    private final boolean canManageBundles;
 
     public BundleView(Set<Permission> perms) {
         super();
-        this.canManageBundles = (perms != null) ? perms.contains(Permission.MANAGE_BUNDLE) : false;
+        this.globalPermissions = perms;
         setWidth100();
         setHeight100();
         setMargin(10);
         setOverflow(Overflow.AUTO);
     }
 
-    public void viewBundle(Bundle bundle, ViewId nextViewId) {
+    private void viewBundle(final Bundle bundle, final ViewId nextViewId) {
         // Whenever a new view request comes in, make sure to clean house to avoid ID conflicts for sub-widgets
         this.destroyMembers();
 
@@ -128,7 +135,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
     }
 
     private TagEditorView createTagEditor() {
-        boolean readOnly = !this.canManageBundles;
+        boolean readOnly = !canTag;
         TagEditorView tagEditor = new TagEditorView(bundle.getTags(), readOnly, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleTags(bundleBeingViewed, tags, new AsyncCallback<Void>() {
@@ -266,16 +273,47 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
         });
         layout.addMember(deleteButton);
 
-        if (!canManageBundles) {
-            deployButton.setDisabled(true);
-            deleteButton.setDisabled(true);
-        }
+        deployButton.setDisabled(!canDeploy);
+        deleteButton.setDisabled(!canDelete);
 
         return layout;
     }
 
     public void renderView(final ViewPath viewPath) {
-        int bundleId = Integer.parseInt(viewPath.getCurrent().getPath());
+        final int bundleId = Integer.parseInt(viewPath.getCurrent().getPath());
+
+        // if we have already determined permissions for this bundle, just proceed
+        if (permissionCheckBundleId == bundleId) {
+            authorizedRenderView(bundleId, viewPath);
+            return;
+        }
+
+        // check necessary global permissions
+        canDelete = globalPermissions.contains(Permission.DELETE_BUNDLES);
+        canDeploy = globalPermissions.contains(Permission.DEPLOY_BUNDLES);
+        canTag = globalPermissions.contains(Permission.CREATE_BUNDLES);
+
+        // If the user has global perms to enable/render any of the views then proceed, otherwise, we
+        // need to see what group level perms he has.
+        if (canDelete && canDeploy && canTag) {
+            authorizedRenderView(bundleId, viewPath);
+
+        } else {
+            new PermissionsLoader().loadBundlePermissions(bundleId, new PermissionsLoadedListener() {
+                @Override
+                public void onPermissionsLoaded(Set<Permission> bundlePermissions) {
+                    canDelete = canDelete || bundlePermissions.contains(Permission.DELETE_BUNDLES_FROM_GROUP);
+                    canDeploy = canDeploy || bundlePermissions.contains(Permission.DEPLOY_BUNDLES_TO_GROUP);
+                    canTag = canTag || bundlePermissions.contains(Permission.CREATE_BUNDLES_IN_GROUP);
+
+                    authorizedRenderView(bundleId, viewPath);
+                }
+            });
+        }
+    }
+
+    private void authorizedRenderView(final int bundleId, final ViewPath viewPath) {
+        permissionCheckBundleId = bundleId;
 
         viewPath.next();
         if (viewPath.isEnd() || viewPath.isNextEnd()) {
@@ -323,7 +361,7 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
             if (viewPath.getCurrent().getPath().equals("versions")) {
                 if (!viewPath.isEnd()) {
                     // a specific version
-                    BundleVersionView view = new BundleVersionView(canManageBundles);
+                    BundleVersionView view = new BundleVersionView(canDelete, canDeploy, canTag);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
@@ -337,18 +375,19 @@ public class BundleView extends EnhancedVLayout implements BookmarkableView {
                 } else {
                     // a specific deployment
                     //removeMembers(getMembers());
-                    BundleDeploymentView view = new BundleDeploymentView(canManageBundles);
+                    BundleDeploymentView view = new BundleDeploymentView(canDelete, canDeploy, canTag);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
             } else if (viewPath.getCurrent().getPath().equals("destinations")) {
                 if (!viewPath.isEnd()) {
                     // a specific destination
-                    BundleDestinationView view = new BundleDestinationView(canManageBundles);
+                    BundleDestinationView view = new BundleDestinationView(canDelete, canDeploy, canTag);
                     addMember(view);
                     view.renderView(viewPath.next());
                 }
             }
         }
     }
+
 }

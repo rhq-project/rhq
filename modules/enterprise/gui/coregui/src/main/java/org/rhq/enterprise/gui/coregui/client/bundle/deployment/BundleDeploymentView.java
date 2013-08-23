@@ -92,13 +92,17 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
     private Bundle bundle;
 
     private VLayout detail;
-    private boolean canManageBundles;
+    private boolean canDelete;
+    private boolean canDeploy;
+    private boolean canTag;
 
     private final HashMap<String, String> statusIcons;
 
-    public BundleDeploymentView(boolean canManageBundles) {
+    public BundleDeploymentView(boolean canDelete, boolean canDeploy, boolean canTag) {
         super();
-        this.canManageBundles = canManageBundles;
+        this.canDelete = canDelete;
+        this.canDeploy = canDeploy;
+        this.canTag = canTag;
         setWidth100();
         setHeight100();
         //setMargin(10); // do not set margin, we already have our margin set outside of us
@@ -263,7 +267,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
             });
             actionLayout.addMember(purgeButton);
 
-            if (!canManageBundles) {
+            if (!canDeploy) {
                 revertButton.setDisabled(true);
                 purgeButton.setDisabled(true);
             }
@@ -300,7 +304,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
         });
         actionLayout.addMember(deleteButton);
 
-        if (!canManageBundles) {
+        if (!canDelete) {
             deleteButton.setDisabled(true);
         }
 
@@ -308,7 +312,7 @@ public class BundleDeploymentView extends EnhancedVLayout implements Bookmarkabl
     }
 
     private TagEditorView createTagEditor() {
-        boolean readOnly = !this.canManageBundles;
+        boolean readOnly = !this.canTag;
         TagEditorView tagEditor = new TagEditorView(version.getTags(), readOnly, new TagsChangedCallback() {
             public void tagsChanged(HashSet<Tag> tags) {
                 GWTServiceLookup.getTagService().updateBundleDeploymentTags(deployment.getId(), tags,

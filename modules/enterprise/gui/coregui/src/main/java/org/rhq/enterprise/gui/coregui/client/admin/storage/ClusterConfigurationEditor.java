@@ -29,7 +29,6 @@ import com.smartgwt.client.util.BooleanCallback;
 import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.ClickEvent;
 import com.smartgwt.client.widgets.events.ClickHandler;
-import com.smartgwt.client.widgets.form.fields.CheckboxItem;
 import com.smartgwt.client.widgets.form.fields.FormItem;
 import com.smartgwt.client.widgets.form.fields.RadioGroupItem;
 import com.smartgwt.client.widgets.form.fields.StaticTextItem;
@@ -60,13 +59,15 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
     private EnhancedIButton saveButton;
     private boolean oddRow;
     private StorageClusterSettings settings;
+    private final boolean readOnly;
 
     private static String FIELD_CQL_PORT = "cql_port";
     private static String FIELD_GOSSIP_PORT = "gossip_port";
     private static String FIELD_AUTOMATIC_DEPLOYMENT = "automatic_deployment";
 
-    public ClusterConfigurationEditor() {
+    public ClusterConfigurationEditor(boolean readOnly) {
         super();
+        this.readOnly = readOnly;
     }
 
     private void fetchClusterSettings() {
@@ -127,6 +128,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         valueItem.setShowTitle(false);
         valueItem.setRequired(true);
         valueItem.setCellStyle(oddRow ? "OddRow" : "EvenRow");
+        valueItem.setDisabled(readOnly);
         fields.add(valueItem);
 
         StaticTextItem descriptionItem = new StaticTextItem();
@@ -187,7 +189,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_GOSSIP_PORT, "Gossip Port",
             String.valueOf(settings.getGossipPort()),
-            "The port used for internode communication. This is a shared, cluster-wide setting.", validator));
+            "The port used for internode communication in the storage cluster.", validator));
 
         List<FormItem> automaticDeploymentItems = buildOneFormRow(
             FIELD_AUTOMATIC_DEPLOYMENT,
@@ -206,6 +208,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         autoDeployRadio.setShowTitle(false);
         autoDeployRadio.setRequired(true);
         autoDeployRadio.setCellStyle(!oddRow ? "OddRow" : "EvenRow");
+        autoDeployRadio.setDisabled(readOnly);
         oddRow = !oddRow;
         automaticDeploymentItems.set(1, autoDeployRadio);
         items.addAll(automaticDeploymentItems);
@@ -246,6 +249,7 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
                 }
             }
         });
+        saveButton.setDisabled(readOnly);
         EnhancedToolStrip toolStrip = new EnhancedToolStrip();
         toolStrip.setWidth100();
         toolStrip.setMembersMargin(5);

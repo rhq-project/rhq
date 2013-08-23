@@ -111,6 +111,7 @@ public class ResourceDetailView extends
     }
 
     private Integer resourceId;
+    private Integer lastSelectedResourceId = 0;
 
     private ResourceComposite resourceComposite;
 
@@ -394,7 +395,7 @@ public class ResourceDetailView extends
         viewFactory = (!visible) ? null : new ViewFactory() {
             @Override
             public Canvas createView() {
-                if(null == metricsResourceView){
+                if(null == metricsResourceView || resource.getId() != lastSelectedResourceId){
                     metricsResourceView = new MetricsResourceView(resource);
                 }
                 return  metricsResourceView;
@@ -603,6 +604,7 @@ public class ResourceDetailView extends
                         resourceComposite.getResource().setResourceType(type);
                         updateTabContent(resourceComposite, viewPath.isRefresh());
                         selectTab(getTabName(), getSubTabName(), viewPath);
+                        lastSelectedResourceId = resourceComposite.getResource().getId();
                     } finally {
                         notifyViewRenderedListeners();
                     }

@@ -256,8 +256,10 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                                     dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
                                     availStart = new Date(+d.availStart),
                                     xPosition = parseFloat($wnd.d3.select(this).attr("x")),
+                                    xWidth = parseFloat($wnd.d3.select(this).attr("width")),
+                                    xMidPoint = xPosition + (xWidth/2),
                                     availTooltipDiv =  $wnd.d3.select("#availTooltip")
-                                    .style("left", xPosition + "px")
+                                    .style("left", + xMidPoint + "px")
                                     .style("top",  "0px");
 
                             availTooltipDiv.select("#availTooltipLabel")

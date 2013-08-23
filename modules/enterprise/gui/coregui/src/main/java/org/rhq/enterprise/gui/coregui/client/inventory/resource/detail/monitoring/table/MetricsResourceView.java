@@ -65,6 +65,7 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         this.resource = resource;
         metricsTableView = new MetricsTableView(resource, this);
         availabilityDetails = new ResourceMetricAvailabilityView(resource);
+
     }
 
 
@@ -158,6 +159,8 @@ public class MetricsResourceView extends AbstractD3GraphListView {
                         @Override
                         public void run() {
                             availabilityGraph.drawJsniChart();
+                            metricsTableView.refreshOpenGridRows();
+
                         }
                     }.schedule(150);
                 }

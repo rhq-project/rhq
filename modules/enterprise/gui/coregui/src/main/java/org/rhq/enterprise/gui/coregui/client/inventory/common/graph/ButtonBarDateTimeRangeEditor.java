@@ -173,7 +173,18 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
     public void updateDateTimeRangeDisplay(Date startDate, Date endDate) {
         String rangeString = fmt.format(startDate) + " - " + fmt.format(endDate);
         dateRangeLabel.setContents(rangeString);
+        //setTimeRangeDuration(startDate.getTime(), endDate.getTime());
     }
+
+  //  public native String setTimeRangeDuration(double startDate, double endDate) /*-{
+
+        //var formattedDateRange = startDate.format(chartContext.buttonBarDateTimeFormat) + '  -  ' + endDate.format(chartContext.buttonBarDateTimeFormat);
+        //var timeRange = endDate.from(startDate,true);
+        //$wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+' ('+timeRange+')');
+        //$wnd.jQuery('.graphDateTimeRangeLabel').text('Mike you are so cool');
+
+   // }-*/;
+
 
     /**
      * Whenever we make a change to the date range save it here so it gets propogated to

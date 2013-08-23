@@ -85,6 +85,12 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
             + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" style=\"height:65px;\">");
         divAndSvgDefs.append(getSvgDefs());
         divAndSvgDefs.append("</svg>");
+        createTooltip(divAndSvgDefs);
+        divAndSvgDefs.append("</div>");
+        return divAndSvgDefs.toString();
+    }
+
+    private void createTooltip(StringBuilder divAndSvgDefs) {
         divAndSvgDefs.append("<div id=\"availTooltip\" class=\"hidden\" >");
         divAndSvgDefs.append("<div>");
         divAndSvgDefs.append("<span id=\"availTooltipLabel\" class=\"availTooltipLabel\"></span>");
@@ -99,8 +105,6 @@ public class AvailabilityD3GraphView<T extends AvailabilityGraphType> extends En
         divAndSvgDefs.append("<span id=\"availTooltipStartTime\" ></span>");
         divAndSvgDefs.append("</div>");
         divAndSvgDefs.append("</div>");   // end availTooltipDiv
-        divAndSvgDefs.append("</div>");
-        return divAndSvgDefs.toString();
     }
 
     public void addGraphMarkerComponent(){

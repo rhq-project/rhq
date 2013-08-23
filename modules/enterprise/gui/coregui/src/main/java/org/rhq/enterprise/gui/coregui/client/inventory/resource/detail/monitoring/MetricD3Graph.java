@@ -167,8 +167,118 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
                         + "\" ><svg xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height:"
                         + height + "px;\">");
         divAndSvgDefs.append(getSvgDefs());
-        divAndSvgDefs.append("</svg></div>");
+        divAndSvgDefs.append("</svg>");
+        divAndSvgDefs.append(createMetricTooltip());
+        divAndSvgDefs.append(createSingleValueTooltip());
+        divAndSvgDefs.append(createNoDataTooltip());
+        divAndSvgDefs.append("</div>");
+
         return divAndSvgDefs.toString();
+    }
+
+    private static String createMetricTooltip() {
+        StringBuilder tooltipDivs = new StringBuilder();
+
+        tooltipDivs.append("<div id=\"metricGraphTooltip\" class=\"hidden\" >");
+        tooltipDivs.append("<div>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipTimeLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipTimeValue\" ></span>");
+        tooltipDivs.append("</div>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipDateLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipDateValue\" ></span>");
+        tooltipDivs.append("</div>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipDurationLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipDurationValue\" ></span>");
+        tooltipDivs.append("<div/>");
+        tooltipDivs.append("<hr></hr>");
+
+        tooltipDivs.append("<div >");
+        tooltipDivs.append("<span id=\"metricGraphTooltipMaxLabel\" ></span>");
+        tooltipDivs.append("<span> : </span>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipMaxValue\" ></span>");
+        tooltipDivs.append("<div/>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipAvgLabel\" ></span>");
+        tooltipDivs.append("<span> : </span>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipAvgValue\" ></span>");
+        tooltipDivs.append("<div/>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipMinLabel\" ></span>");
+        tooltipDivs.append("<span> : </span>");
+        tooltipDivs.append("<span id=\"metricGraphTooltipMinValue\" ></span>");
+        tooltipDivs.append("<div/>");
+
+
+        tooltipDivs.append("</div>");
+        tooltipDivs.append("</div>");   // end metricGraphTooltipDiv
+        return tooltipDivs.toString();
+    }
+
+    private static String createNoDataTooltip() {
+        StringBuilder tooltipDivs = new StringBuilder();
+
+        tooltipDivs.append("<div id=\"noDataTooltip\" class=\"hidden\" >");
+        tooltipDivs.append("<div>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"noDataTooltipTimeLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"noDataTooltipTimeValue\" ></span>");
+        tooltipDivs.append("</div>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"noDataTooltipDateLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"noDataTooltipDateValue\" ></span>");
+        tooltipDivs.append("</div>");
+        tooltipDivs.append("<hr></hr>");
+
+        tooltipDivs.append("<div id=\"noDataLabel\" ></div>");
+
+        tooltipDivs.append("</div>");
+        tooltipDivs.append("</div>");   // end metricGraphTooltipDiv
+        return tooltipDivs.toString();
+    }
+
+    private static String createSingleValueTooltip() {
+        StringBuilder tooltipDivs = new StringBuilder();
+
+        tooltipDivs.append("<div id=\"singleValueTooltip\" class=\"hidden\" >");
+        tooltipDivs.append("<div>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"singleValueTooltipTimeLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"singleValueTooltipTimeValue\" ></span>");
+        tooltipDivs.append("</div>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"singleValueTooltipDateLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"singleValueTooltipDateValue\" ></span>");
+        tooltipDivs.append("</div>");
+        tooltipDivs.append("<hr></hr>");
+
+        tooltipDivs.append("<div>");
+        tooltipDivs.append("<span id=\"singleValueTooltipValueLabel\" ></span>");
+        tooltipDivs.append("<span>: </span>");
+        tooltipDivs.append("<span id=\"singleValueTooltipValue\" ></span>");
+        tooltipDivs.append("</div>");
+
+        tooltipDivs.append("</div>");
+        tooltipDivs.append("</div>");   // end metricGraphTooltipDiv
+        return tooltipDivs.toString();
     }
 
     /**

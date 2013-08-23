@@ -93,69 +93,9 @@ rect.low {
     fill: #70c4e2;
 }
 
-/**
- * CSS for html chart hovers.
- */
-.chartHoverEnclosingDiv {
-    text-align: left;
-    z-index: 990000;
-}
 
-.chartHoverAlignLeft {
-    text-align: left;
-}
 
-.chartHoverAlignRight {
-    text-align: right;
-}
-
-.chartHoverDivider {
-    width: 100%;
-    text-align: center;
-    border: #d3d3d3 solid thin;
-}
-
-.chartHoverLabelSpan {
-    width: 100%;
-    font-weight: bold;
-    color: #d3d3d6;
-}
-
-.chartHoverTimeLabel {
-    width: 50px;
-    font-weight: bold;
-    color: #d3d3d6;
-}
-
-.chartHoverDateLabel {
-    width: 50px;
-    font-weight: bold;
-    color: #d3d3d6;
-}
-
-#chartHoverDownValue {
-    width: 100%;
-    font-weight: bold;
-    color: #ff8a9a;
-}
-
-#chartHoverPeakValue {
-    width: 50px;
-    font-weight: bold;
-    color: #1794BC;
-}
-
-#chartHoverAvgValue {
-    width: 50px;
-    font-weight: bold;
-    color: #2e376a;
-}
-
-#chartHoverLowValue {
-    width: 50px;
-    font-weight: bold;
-    color: #70c4e2;
-}
+/* CSS for new Chart Hovers*/
 
 #availTooltip {
     z-index: 990000;
@@ -191,4 +131,118 @@ rect.low {
     color: #d3d3d6;
 }
 
+/* CSS for metric graph tooltips */
+#metricGraphTooltip {
+    z-index: 990000;
+    position: absolute;
+    width: 100px;
+    height: auto;
+    padding: 5px;
+    background-color: #000;
+    opacity: 0.80;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+#metricGraphTooltip.hidden {
+    display: none;
+}
+
+#metricGraphTooltip div {
+    margin: 0;
+    font-family:  Arial, Verdana, sans-serif;
+    font-size: 10px;
+    color: #d3d3d6;
+}
+
+#metricGraphTooltipLabel {
+    width: 40px;
+    font-weight: bold;
+    color: #d3d3d6;
+}
+
+#metricGraphTooltipMaxLabel {
+    color: #1794BC;
+}
+
+#metricGraphTooltipAvgLabel {
+    color: #2e376a;
+}
+
+#metricGraphTooltipMinLabel {
+    color: #70c4e2;
+}
+
+#noDataTooltip {
+    z-index: 990000;
+    position: absolute;
+    width: 100px;
+    height: auto;
+    padding: 5px;
+    background-color: #000;
+    opacity: 0.80;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+#noDataTooltip.hidden {
+    display: none;
+}
+
+#noDataTooltip div {
+    margin: 0;
+    font-family:  Arial, Verdana, sans-serif;
+    font-size: 10px;
+    color: #d3d3d6;
+}
+
+/*#noDataTooltip {*/
+    /*width: 40px;*/
+    /*font-weight: bold;*/
+    /*color: #d3d3d6;*/
+/*}*/
+
+/*#metricGraphTooltipMaxLabel {*/
+    /*color: #1794BC;*/
+/*}*/
+
+
+
+#singleValueTooltip {
+    z-index: 990000;
+    position: absolute;
+    width: 100px;
+    height: auto;
+    padding: 5px;
+    background-color: #000;
+    opacity: 0.80;
+    -webkit-border-radius: 5px;
+    -moz-border-radius: 5px;
+    border-radius: 5px;
+    -webkit-box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    -moz-box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    box-shadow: 4px 4px 5px rgba(0, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+#singleValueTooltip.hidden {
+    display: none;
+}
+
+#singleValueTooltip div {
+    margin: 0;
+    font-family:  Arial, Verdana, sans-serif;
+    font-size: 10px;
+    color: #d3d3d6;
+}
 

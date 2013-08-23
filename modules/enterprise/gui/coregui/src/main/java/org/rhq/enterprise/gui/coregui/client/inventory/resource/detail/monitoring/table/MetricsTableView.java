@@ -265,6 +265,20 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
     }
 
+    public void refreshOpenGridRows(){
+        ListGridRecord[] metricsRecords = metricsTableListGrid.getRecords();
+        for (int i = 0; i < metricsRecords.length; i++) {
+            ListGridRecord metricsRecord = metricsRecords[i];
+            if(null != metricsRecord){
+                int metricDefinitionId = metricsRecord
+                        .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
+                if(expandedRows.contains(metricDefinitionId)){
+                    metricsTableListGrid.expandRecord(metricsRecord);
+                }
+            }
+        }
+    }
+
     public class MetricsTableListGrid extends ListGrid {
 
         private static final int TREEVIEW_DETAIL_CHART_HEIGHT = 205;

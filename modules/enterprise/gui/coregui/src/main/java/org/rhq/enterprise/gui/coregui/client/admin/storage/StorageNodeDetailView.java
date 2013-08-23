@@ -21,11 +21,13 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +50,8 @@ import com.smartgwt.client.widgets.layout.SectionStackSection;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
@@ -56,6 +60,7 @@ import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -308,21 +313,37 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         //        jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
 
         final StaticTextItem operationModeItem = new StaticTextItem(FIELD_OPERATION_MODE.propertyName(),
-            MSG.view_adminTopology_serverDetail_operationMode());
+            FIELD_OPERATION_MODE.title());
         operationModeItem.setValue(storageNode.getOperationMode());
+
+        final StaticTextItem clusterStatusItem = new StaticTextItem(FIELD_STATUS.propertyName(), FIELD_STATUS.title());
+        clusterStatusItem.setValue(storageNode.getStatus());
+
+        final StaticTextItem availabilityItem = new StaticTextItem(FIELD_AVAILABILITY.propertyName(),
+            FIELD_AVAILABILITY.title());
 
         // make clickable link to associated resource
         StaticTextItem resourceItem = new StaticTextItem("associatedResource", "Associated Resource");
         String storageNodeItemText = "";
+        String availabilityItemText = imgHTML(ImageManager.getAvailabilityIconFromAvailType(AvailabilityType.UNKNOWN));
         Resource storageNodeResource = storageNode.getResource();
         if (storageNodeResource != null && storageNodeResource.getName() != null) {
             String detailsUrl = LinkManager.getResourceLink(storageNodeResource.getId());
             String formattedValue = StringUtility.escapeHtml(storageNodeResource.getName());
             storageNodeItemText = LinkManager.getHref(detailsUrl, formattedValue);
+
+            // set the availability
+            ResourceAvailability availability = storageNodeResource.getCurrentAvailability();
+            if (storageNodeResource.getCurrentAvailability() != null
+                && storageNodeResource.getCurrentAvailability().getAvailabilityType() != null) {
+                availabilityItemText = imgHTML(ImageManager.getAvailabilityIconFromAvailType(availability
+                    .getAvailabilityType()));
+            }
         } else {
             storageNodeItemText = MSG.common_label_none();
         }
         resourceItem.setValue(storageNodeItemText);
+        availabilityItem.setValue(availabilityItemText);
 
         StaticTextItem installationDateItem = new StaticTextItem(FIELD_CTIME.propertyName(), FIELD_CTIME.title());
         installationDateItem.setValue(TimestampCellFormatter.format(Long.valueOf(storageNode.getCtime()),
@@ -368,10 +389,10 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         }
 
         List<FormItem> formItems = new ArrayList<FormItem>(6);
-        formItems.addAll(Arrays.asList(nameItem, resourceItem, cqlPortItem, jmxPortItem/*, jmxConnectionUrlItem*/));
+        formItems.addAll(Arrays.asList(nameItem, resourceItem, availabilityItem, cqlPortItem, jmxPortItem/*, jmxConnectionUrlItem*/));
         if (!CoreGUI.isDebugMode())
             formItems.add(operationModeItem); // debug mode fails if this item is added
-        formItems.addAll(Arrays.asList(installationDateItem, lastUpdateItem, alertsItem, messageItem));
+        formItems.addAll(Arrays.asList(clusterStatusItem, installationDateItem, lastUpdateItem, alertsItem, messageItem));
         if (isOperationFailed)
             formItems.add(lastOperation);
         form.setItems(formItems.toArray(new FormItem[] {}));

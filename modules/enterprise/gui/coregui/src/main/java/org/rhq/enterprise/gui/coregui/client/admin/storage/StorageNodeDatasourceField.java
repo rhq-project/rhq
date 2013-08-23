@@ -38,7 +38,7 @@ public enum StorageNodeDatasourceField {
     
     FIELD_CQL_PORT("cqlPort", "CQL Port"),
 
-    FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_server_mode()),
+    FIELD_OPERATION_MODE("operationMode", "Operation Mode"),
     
     FIELD_STATUS("status", "Cluster Status"),
     

@@ -134,10 +134,11 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         field.setShowHover(true);
         field.setHoverCustomizer(new HoverCustomizer() {
             public String hoverHTML(Object value, ListGridRecord record, int rowNum, int colNum) {
-                return "Average disk Ratio of (Free Disk)/(Data File Size) for last 8 hours. A value below 1 is not "
-                    + "recommended since a compaction or repair process could double the amount of disk "
-                    + "space used by data files. If multiple data locations are specified then the "
-                    + "aggregate accross all the partitions that contain data files is reported.";
+                return "Actual value: " + value.toString() + "<br/>Average disk Ratio of (Free Disk)/(Data File Size)" +
+                		" for last 8 hours. A value below 0.7 is not recommended since a compaction or repair" +
+                		" process could double the amount of disk space used by data files. Value between 0.7" +
+                		" and 1.5 is displayed as a oragne warning. If multiple data locations are specified" +
+                		" then the aggregate accross all the partitions that contain data files is reported.";
             }
         });
         fields.add(field);

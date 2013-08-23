@@ -320,13 +320,13 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 ParametrizedMessage question = new ParametrizedMessage() {
                     @Override
                     public String getMessage(String... param) {
-                        return "Are you sure, you want to run operation " + param[0] + "?";
+                        return "Are you sure, you want to run operation " + param[0] + "? On the selected nodes: " + param[1];
                     }
                 };
                 ParametrizedMessage success = new ParametrizedMessage() {
                     @Override
                     public String getMessage(String... param) {
-                        return "Operation" + param[0] + " was successfully scheduled for storage nodes " + param[1];
+                        return "Operation " + param[0] + " was successfully scheduled for storage nodes " + param[1];
                     }
                 };
                 ParametrizedMessage failure = new ParametrizedMessage() {
@@ -352,7 +352,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         final ParametrizedMessage success, final ParametrizedMessage failure, final StorageNodeOperation operationType) {
         final String operationName = (String) actionValue;
         final List<String> selectedAddresses = getSelectedAddresses(selections);
-        SC.ask(question.getMessage(selectedAddresses.toString()), new BooleanCallback() {
+        String areYouSureQuestion = operationType == StorageNodeOperation.OTHER ? question.getMessage(operationName,
+            selectedAddresses.toString()) : question.getMessage(selectedAddresses.toString());
+        SC.ask(areYouSureQuestion, new BooleanCallback() {
             public void execute(Boolean confirmed) {
                 if (confirmed) {
                     final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {

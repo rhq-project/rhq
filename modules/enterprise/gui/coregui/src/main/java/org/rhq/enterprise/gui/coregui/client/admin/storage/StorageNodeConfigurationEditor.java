@@ -74,8 +74,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         this.configuration = configuration; 
     }
 
-    private void save() {
-        updateConfiguration();
+    private void save(final StorageNodeConfigurationComposite configuration) {
         GWTServiceLookup.getStorageService().updateConfiguration(configuration, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
                 Message msg = new Message("Storage node settings were successfully updated.", Message.Severity.Info);
@@ -242,16 +241,21 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                         form.setErrors(errors, true);
                         return;
                     }
-                    SC.ask(
-                        "Changing the storage node configuration requires restart of storage node. Do you want to continue?",
-                        new BooleanCallback() {
-                            @Override
-                            public void execute(Boolean value) {
-                                if (value) {
-                                    save();
+                    final StorageNodeConfigurationComposite configuration = getConfiguration();
+                    if (StorageNodeConfigurationEditor.this.configuration.equals(configuration)) {
+                        SC.say("Info", "There were no changes done.");
+                    } else {
+                        SC.ask(
+                            "Changing the storage node configuration requires restart of storage node. Do you want to continue?",
+                            new BooleanCallback() {
+                                @Override
+                                public void execute(Boolean value) {
+                                    if (value) {
+                                        save(configuration);
+                                    }
                                 }
-                            }
-                        });
+                            });
+                    }
                 }
             }
         });
@@ -264,7 +268,8 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         return toolStrip;
     }
     
-    private StorageNodeConfigurationComposite updateConfiguration() {
+    private StorageNodeConfigurationComposite getConfiguration() {
+        StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite();
         configuration.setHeapSize(getJVMMemoryString(form.getField(FIELD_HEAP_MAX).getValue().toString()));
         configuration.setHeapNewSize(getJVMMemoryString(form.getField(FIELD_HEAP_NEW).getValue().toString()));
         configuration.setThreadStackSize(form.getValueAsString(FIELD_THREAD_STACK_SIZE));

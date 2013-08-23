@@ -2431,6 +2431,7 @@ public class BundleManagerBean implements BundleManagerLocal, BundleManagerRemot
 
         // First update the simple fields and the permissions.
         attachedBundleGroup.setName(bundleGroup.getName());
+        attachedBundleGroup.setDescription(bundleGroup.getDescription());
 
         Set<Bundle> newBundles = bundleGroup.getBundles();
         if (newBundles != null) {

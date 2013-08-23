@@ -266,6 +266,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             case ADD_MAINTENANCE:
                 reset();
                 storageNodeOperationsHandler.performAddNodeMaintenance(subject, storageNode);
+                break;
             default:
                 // TODO what do we do with/about maintenance mode?
 
@@ -299,6 +300,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             case REMOVE_MAINTENANCE:
                 reset();
                 storageNodeOperationsHandler.performRemoveNodeMaintenance(subject, storageNode);
+                break;
             case UNANNOUNCE:
                 reset();
                 storageNodeOperationsHandler.unannounceStorageNode(subject, storageNode);

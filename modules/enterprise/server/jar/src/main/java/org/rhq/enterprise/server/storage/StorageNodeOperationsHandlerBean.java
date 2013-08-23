@@ -168,7 +168,7 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         // This is a bit of a hack since the maintenancePending flag is really intended to
         // queue up storage nodes during cluster maintenance operations.
         storageNode.setMaintenancePending(runRepair);
-
+        storageNode = entityManager.merge(storageNode);
         scheduleOperation(subject, storageNode, new Configuration(), "decommission");
     }
 

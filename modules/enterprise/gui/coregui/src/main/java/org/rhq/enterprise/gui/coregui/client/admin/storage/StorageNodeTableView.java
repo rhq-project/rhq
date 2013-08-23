@@ -483,8 +483,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             if ("NORMAL".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
                 || "JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
                 || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || !AvailabilityType.UP.equals(String.valueOf(storageNodeRecord.getAttribute(FIELD_AVAILABILITY
-                    .propertyName())))) {
+                || !AvailabilityType.UP.equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
                 return false;
             }
         }
@@ -508,8 +507,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         for (ListGridRecord storageNodeRecord : selection) {
             if ("JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
                 || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || !AvailabilityType.UP.equals(String.valueOf(storageNodeRecord.getAttribute(FIELD_AVAILABILITY
-                    .propertyName())))) {
+                || !AvailabilityType.UP.equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
                 return false;
             }
         }
@@ -525,8 +523,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
             if (StorageNode.Status.NORMAL.toString().equals(
                 storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                && AvailabilityType.UP.equals(String.valueOf(storageNodeRecord.getAttribute(FIELD_AVAILABILITY
-                    .propertyName())))) {
+                && AvailabilityType.UP.equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
                 nodesInNormalCouner++;
             }
         }

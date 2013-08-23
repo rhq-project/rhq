@@ -160,8 +160,12 @@ public interface StorageNodeManagerLocal {
      * <strong>NOTE:</strong> Repair is one of the most resource-intensive operations that a storage node performs. Make
      * sure you know what you are doing if you invoke this method outside of the regularly scheduled maintenance window.
      * </p>
+     * 
+     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
+     *
+     * @param subject   user that must have proper permissions
      */
-    void runClusterMaintenance();
+    void runClusterMaintenance(Subject subject);
 
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
 

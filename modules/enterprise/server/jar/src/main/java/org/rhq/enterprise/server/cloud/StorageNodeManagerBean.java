@@ -30,6 +30,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -80,7 +81,6 @@ import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.RequiredPermission;
-import org.rhq.enterprise.server.authz.RequiredPermissions;
 import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
@@ -248,6 +248,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void deployStorageNode(Subject subject, StorageNode storageNode) {
         storageNode = entityManager.find(StorageNode.class, storageNode.getId());
 
@@ -276,6 +277,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void undeployStorageNode(Subject subject, StorageNode storageNode) {
         storageNode = entityManager.find(StorageNode.class, storageNode.getId());
         switch (storageNode.getOperationMode()) {
@@ -524,8 +526,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
-    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
-        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void prepareNodeForUpgrade(Subject subject, StorageNode storageNode) {
         int storageNodeResourceId = getResourceIdFromStorageNode(storageNode);
         OperationManagerLocal operationManager = LookupUtil.getOperationManager();
@@ -567,7 +568,8 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
-    public void runClusterMaintenance() {
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
+    public void runClusterMaintenance(Subject subject) {
         List<StorageNode> storageNodes = getStorageNodes();
 
         for (StorageNode storageNode : storageNodes) {
@@ -604,21 +606,25 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject) {
         return findStorageNodeAlerts(subject, false, null);
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Alert> findNotAcknowledgedStorageNodeAlerts(Subject subject, StorageNode storageNode) {
         return findStorageNodeAlerts(subject, false, storageNode);
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Alert> findAllStorageNodeAlerts(Subject subject) {
         return findStorageNodeAlerts(subject, true, null);
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public PageList<Alert> findAllStorageNodeAlerts(Subject subject, StorageNode storageNode) {
         return findStorageNodeAlerts(subject, true, storageNode);
     }
@@ -699,6 +705,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public StorageNodeConfigurationComposite retrieveConfiguration(Subject subject, StorageNode storageNode) {
         StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite(storageNode);
 
@@ -718,11 +725,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     @Asynchronous
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void updateConfigurationAsync(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
         updateConfiguration(subject, storageNodeConfiguration);
     }
 
     @Override
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public boolean updateConfiguration(Subject subject, StorageNodeConfigurationComposite storageNodeConfiguration) {
         try {
             StorageNode storageNode = findStorageNodeByAddress(InetAddress.getByName(
@@ -784,15 +793,19 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule) {
         operationManager.scheduleResourceOperation(subject, schedule);
     }
 
     @Override
-    @RequiredPermissions({ @RequiredPermission(Permission.MANAGE_SETTINGS),
-        @RequiredPermission(Permission.MANAGE_INVENTORY) })
+    @RequiredPermission(Permission.MANAGE_SETTINGS)
     public Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject,
         StorageNode node, long beginTime, long endTime, int numPoints) {
+        // this method is called to get the data for sparkline graphs
+        if (!storageClientManager.isClusterAvailable()) {
+            return Collections.<String, List<MeasurementDataNumericHighLowComposite>>emptyMap();
+        }
         int storageNodeResourceId = getResourceIdFromStorageNode(node);
         Map<String, List<MeasurementDataNumericHighLowComposite>> result = new LinkedHashMap<String, List<MeasurementDataNumericHighLowComposite>>();
 
@@ -836,7 +849,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         return result;
     }
-
+    
     private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
         Configuration parameters) {
 

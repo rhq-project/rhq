@@ -5,6 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.server.cloud.StorageNodeManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 
@@ -18,7 +19,8 @@ public class StorageClusterReadRepairJob extends AbstractStatefulJob {
     @Override
     public void executeJobCode(JobExecutionContext context) throws JobExecutionException {
         log.info("Preparing to run read repair on storage cluster");
+        Subject overlord = LookupUtil.getSubjectManager().getOverlord();
         StorageNodeManagerLocal storageNodeManager = LookupUtil.getStorageNodeManager();
-        storageNodeManager.runClusterMaintenance();
+        storageNodeManager.runClusterMaintenance(overlord);
     }
 }

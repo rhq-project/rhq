@@ -750,6 +750,8 @@ public class StorageInstaller {
                     throw new RuntimeException("Cannot determine JMX port");
                 }
 
+                jmxPort = jmxPort.replaceAll("\"","");
+
                 return Integer.parseInt(jmxPort);
             } catch (IOException e) {
                 log.error("Failed to parse JMX port. There was an unexpected IO error", e);

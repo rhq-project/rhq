@@ -322,7 +322,7 @@ public class ASConnection {
                 }
 
                 if (responseBody.contains("JBAS014807") || responseBody.contains("JBAS010850")
-                    || responseBody.contains("JBAS014793")) {
+                    || responseBody.contains("JBAS014792") || responseBody.contains("JBAS014793")) {
                     // management resource not found or not readable or no known child-type
                     if (LOG.isDebugEnabled()) {
                         LOG.debug("Requested management resource not found: " + operation.getAddress().getPath());

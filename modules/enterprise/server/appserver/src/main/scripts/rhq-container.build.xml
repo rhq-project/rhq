@@ -283,13 +283,13 @@
     </resources>
 </module>
 ]]></echo>
-              
+
         <echo>Updating JGroups module component for EAP to ${jgroups.patch.version}</echo>
         <!-- Remove the unpatched version -->
         <delete file="${jboss.home}/modules/system/layers/base/org/jgroups/main/jgroups-${jgroups.initial.version}.jar" />
         <delete file="${jboss.home}/modules/system/layers/base/org/jgroups/main/jgroups-${jgroups.initial.version}.jar.index" />
         <!-- Update the module metadata to the patched version -->
-        <replace file="${jboss.home}/modules/system/layers/base/org/jgroups/main/module.xml" 
+        <replace file="${jboss.home}/modules/system/layers/base/org/jgroups/main/module.xml"
         token="jgroups-${jgroups.initial.version}.jar" value="jgroups-${jgroups.patch.version}.jar"/>
         <!-- Copy in patched version -->
         <copy file="${settings.localRepository}/org/jgroups/jgroups/${jgroups.patch.version}/jgroups-${jgroups.patch.version}.jar"
@@ -461,7 +461,7 @@ rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 #############################################################################
 # Server Settings
 # ---------------
-# These are miscallenous settings that the server will use to customize itself
+# These are miscellaneous settings that the server will use to customize itself
 # to the environment in which it is running. These are settings you usually
 # want to change or at least be aware of.
 #############################################################################

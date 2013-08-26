@@ -83,7 +83,16 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
     protected final InventoryManager inventoryManager;
     private AtomicBoolean sendChangesOnlyReport;
+
+    // NOTE: this is probably useless. The concurrency of the availability checks is mainly guarded by the size of the
+    // availabilityThreadPoolExecutor in InventoryManager. While this lock object would prevent multiple avail checks
+    // from running concurrently even if the size of the above executor was more than 1 (which it isn't), the problem
+    // we'd then face would be that we use multiple instances of AvailabilityExecutor in InventoryManager:
+    // availabilityExecutor field but also local instances in executeAvailabilityScanImmediately() and
+    // getCurrentAvailability(). This means that the only thing preventing from the multiple availability checks
+    // happening concurrently is the size of the thread pool and this object serves little purpose in that regard.
     private final Object lock = new Object();
+
     private int scanHistorySize = 1;
     private LinkedList<Scan> scanHistory = new LinkedList<Scan>();
 

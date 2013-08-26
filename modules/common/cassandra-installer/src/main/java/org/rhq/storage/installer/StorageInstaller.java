@@ -258,6 +258,7 @@ public class StorageInstaller {
                 String cassandraJvmProps = "cassandra-jvm.properties";
                 File cassandraJvmPropsFile = new File(newConfDir, cassandraJvmProps);
                 String log4j = "log4j-server.properties";
+                File internodeAuthConfFile = new File(oldConfDir, "rhq-storage-auth.conf");
 
                 replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
                 replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
@@ -276,6 +277,10 @@ public class StorageInstaller {
                 } else {
                     jmxPort = parseJmxPort(cassandraJvmPropsFile);
                     replaceFile(new File(oldConfDir, cassandraJvmProps), cassandraJvmPropsFile);
+                }
+
+                if (internodeAuthConfFile.exists()) {
+                    replaceFile(internodeAuthConfFile, new File(newConfDir, internodeAuthConfFile.getName()));
                 }
 
                 log.info("Finished installing RHQ Storage Node.");

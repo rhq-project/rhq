@@ -263,10 +263,11 @@ public class ResourceTreeView extends EnhancedVLayout {
                     } else {
                         TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
                         TreeNode selectedParentNode = treeGrid.getTree().getParent(selectedNode);
-                        while (!(selectedParentNode instanceof ResourceTreeNode)) {
+                        while (null != selectedParentNode && !(selectedParentNode instanceof ResourceTreeNode)) {
                             selectedParentNode = treeGrid.getTree().getParent(selectedParentNode);
                         }
-                        if (parentId.equals(((ResourceTreeNode) selectedParentNode).getID())) {
+                        if (null != selectedParentNode
+                            && parentId.equals(((ResourceTreeNode) selectedParentNode).getID())) {
                             updateSelection();
                         }
                     }

@@ -167,10 +167,12 @@ public class BundleTreeDataSource extends RPCDataSource<Object, Criteria> {
                             ListGridRecord[] dataRecords = buildRecords(allVisibleBundleGroups);
                             for (ListGridRecord dataRecord : dataRecords) {
                                 // we only want to examine bundle group records - and they are the only ones
-                                // with ID attributes that are a simple number without "_" character
+                                // with ID attributes that are a simple number without "_" character.
+                                // Ignore the Unassigned Bundle Group (whose id = "0") - never show a lock for that.
                                 TreeNode dataRecordNode = (TreeNode) dataRecord;
                                 String idString = dataRecordNode.getAttribute("id");
-                                if (!idString.contains("_") && !permittedBundleGroups.contains(Integer.valueOf(idString))) {
+                                if (!idString.contains("_") && !idString.equals("0")
+                                    && !permittedBundleGroups.contains(Integer.valueOf(idString))) {
                                     dataRecordNode.setIcon(ImageManager.getLockedIcon());
                                     dataRecordNode.setEnabled(false);
                                 }

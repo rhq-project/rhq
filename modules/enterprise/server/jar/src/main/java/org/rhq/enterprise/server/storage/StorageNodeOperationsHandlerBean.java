@@ -186,33 +186,47 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     public void performAddNodeMaintenanceIfNecessary(InetAddress storageNodeAddress) {
-        StorageNode storageNode = entityManager.createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
-            StorageNode.class).setParameter("address", storageNodeAddress.getHostAddress()).getSingleResult();
+        try {
+            StorageNode storageNode = entityManager.createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
+                StorageNode.class).setParameter("address", storageNodeAddress.getHostAddress()).getSingleResult();
 
-        if (storageNode.getOperationMode() == StorageNode.OperationMode.BOOTSTRAP) {
-            // TODO need to add support for HA deployments
-            // If multiple RHQ servers are running, they will all receive the event
-            // notification that the node is up and will all wind up calling this method.
-            storageNode = storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.ADD_MAINTENANCE);
-            performAddNodeMaintenance(subjectManager.getOverlord(), storageNode);
-        } else {
-            log.info(storageNode + " has already been bootstrapped. Skipping add node maintenance.");
+            if (storageNode.getOperationMode() == StorageNode.OperationMode.BOOTSTRAP) {
+                // TODO need to add support for HA deployments
+                // If multiple RHQ servers are running, they will all receive the event
+                // notification that the node is up and will all wind up calling this method.
+                storageNode = storageNodeOperationsHandler.setMode(storageNode, StorageNode.OperationMode.ADD_MAINTENANCE);
+                performAddNodeMaintenance(subjectManager.getOverlord(), storageNode);
+            } else {
+                log.info(storageNode + " has already been bootstrapped. Skipping add node maintenance.");
+            }
+        } catch (Exception e) {
+            String msg = "Aborting storage node deployment due to unexpected error while performing add node " +
+                "maintenance.";
+            log.error(msg, e);
+            storageNodeOperationsHandler.logError(StorageNode.OperationMode.ADD_MAINTENANCE, msg, e);
         }
     }
 
     @Override
     public void performAddNodeMaintenance(Subject subject, StorageNode storageNode) {
-        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
-            .getResultList();
-        for (StorageNode node : clusterNodes) {
-            node.setMaintenancePending(true);
+        try {
+            List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+                StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
+                .getResultList();
+            for (StorageNode node : clusterNodes) {
+                node.setMaintenancePending(true);
+            }
+            storageNode.setMaintenancePending(true);
+            clusterNodes.add(storageNode);
+            boolean runRepair = updateSchemaIfNecessary(clusterNodes.size() - 1, clusterNodes.size());
+            performAddNodeMaintenance(subject, storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST,
+                clusterNodes));
+        } catch (Exception e) {
+            String msg = "Aborting storage node deployment due to unexpected error while performing add node " +
+                "maintenance.";
+            log.error(msg, e);
+            storageNodeOperationsHandler.logError(StorageNode.OperationMode.ADD_MAINTENANCE, msg, e);
         }
-        storageNode.setMaintenancePending(true);
-        clusterNodes.add(storageNode);
-        boolean runRepair = updateSchemaIfNecessary(clusterNodes.size() - 1, clusterNodes.size());
-        performAddNodeMaintenance(subject, storageNode, runRepair, createPropertyListOfAddresses(SEEDS_LIST,
-            clusterNodes));
     }
 
     private void performAddNodeMaintenance(Subject subject, StorageNode storageNode, boolean runRepair,
@@ -230,32 +244,45 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     @Override
     public void performRemoveNodeMaintenanceIfNecessary(InetAddress storageNodeAddress) {
-        StorageNode storageNode = entityManager.createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
-            StorageNode.class).setParameter("address", storageNodeAddress.getHostAddress()).getSingleResult();
+        try {
+            StorageNode storageNode = entityManager.createNamedQuery(StorageNode.QUERY_FIND_BY_ADDRESS,
+                StorageNode.class).setParameter("address", storageNodeAddress.getHostAddress()).getSingleResult();
 
-        if (storageNode.getOperationMode() == StorageNode.OperationMode.DECOMMISSION) {
-            // TODO need to add support for HA deployments
-            // If multiple RHQ servers are running, they will all receive the event
-            // notification that the node is up and will all wind up calling this method.
-            storageNode = storageNodeOperationsHandler.setMode(storageNode,
-                StorageNode.OperationMode.REMOVE_MAINTENANCE);
-            performRemoveNodeMaintenance(subjectManager.getOverlord(), storageNode);
-        } else {
-            log.info("Remove node maintenance has already been run for " + storageNode);
+            if (storageNode.getOperationMode() == StorageNode.OperationMode.DECOMMISSION) {
+                // TODO need to add support for HA deployments
+                // If multiple RHQ servers are running, they will all receive the event
+                // notification that the node is up and will all wind up calling this method.
+                storageNode = storageNodeOperationsHandler.setMode(storageNode,
+                    StorageNode.OperationMode.REMOVE_MAINTENANCE);
+                performRemoveNodeMaintenance(subjectManager.getOverlord(), storageNode);
+            } else {
+                log.info("Remove node maintenance has already been run for " + storageNode);
+            }
+        } catch (Exception e) {
+            String msg = "Aborting undeployment due to unexpected error while performing remove node maintenance for " +
+                storageNodeAddress.getHostAddress();
+            log.error(msg, e);
+            storageNodeOperationsHandler.logError(StorageNode.OperationMode.REMOVE_MAINTENANCE, msg, e);
         }
     }
 
     @Override
     public void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode) {
-        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
-            .getResultList();
-        for (StorageNode node : clusterNodes) {
-            node.setMaintenancePending(true);
+        try {
+            List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+                StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL)
+                .getResultList();
+            for (StorageNode node : clusterNodes) {
+                node.setMaintenancePending(true);
+            }
+            boolean runRepair = storageNode.isMaintenancePending();
+            performRemoveNodeMaintenance(subject, clusterNodes.get(0), runRepair,
+                createPropertyListOfAddresses(SEEDS_LIST, clusterNodes));
+        } catch (Exception e) {
+            String msg = "Aborting undeployment due to unexpected error while performing remove node maintenance.";
+            log.error(msg, e);
+            storageNodeOperationsHandler.logError(StorageNode.OperationMode.REMOVE_MAINTENANCE, msg, e);
         }
-        boolean runRepair = storageNode.isMaintenancePending();
-        performRemoveNodeMaintenance(subject, clusterNodes.get(0), runRepair,
-            createPropertyListOfAddresses(SEEDS_LIST, clusterNodes));
     }
 
     private void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode, boolean runRepair,

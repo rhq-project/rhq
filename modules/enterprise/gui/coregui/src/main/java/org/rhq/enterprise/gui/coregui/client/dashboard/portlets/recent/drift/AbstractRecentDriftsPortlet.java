@@ -303,7 +303,7 @@ public abstract class AbstractRecentDriftsPortlet extends DriftHistoryView imple
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     public boolean isRefreshing() {

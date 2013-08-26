@@ -58,18 +58,18 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
     private TwoLevelTabSet tabSet;
     private String tabName;
     private String subTabName;
-    private U titleBar;
+    private final U titleBar;
     protected Set<Permission> globalPermissions;
     protected V graphListView;
 
-    public AbstractTwoLevelTabSetView(String baseViewPath) {
+    public AbstractTwoLevelTabSetView(String baseViewPath, U titleBar, TwoLevelTab[] tabs) {
         super();
         this.baseViewPath = baseViewPath;
 
         setWidth100();
         setHeight100();
 
-        this.titleBar = createTitleBar();
+        this.titleBar = titleBar;
         addMember(this.titleBar);
 
         this.tabSet = new TwoLevelTabSet();
@@ -79,8 +79,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
         this.tabSet.setEdgeMarginSize(0);
         this.tabSet.setEdgeSize(0);
 
-        List<TwoLevelTab> tabsList = createTabs();
-        this.tabSet.setTabs(tabsList.toArray(new TwoLevelTab[tabsList.size()]));
+        this.tabSet.setTabs(tabs);
 
         this.tabSet.addTwoLevelTabSelectedHandler(this);
 
@@ -90,10 +89,7 @@ public abstract class AbstractTwoLevelTabSetView<T, U extends Layout, V extends 
     // ------------------ Abstract Methods --------------------
     public abstract Integer getSelectedItemId();
 
-    protected abstract U createTitleBar();
     protected abstract V createD3GraphListView();
-
-    protected abstract List<TwoLevelTab> createTabs();
 
     /**
      *

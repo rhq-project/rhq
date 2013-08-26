@@ -307,7 +307,7 @@ public class GroupOperationsPortlet extends EnhancedVLayout implements CustomSet
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     @Override

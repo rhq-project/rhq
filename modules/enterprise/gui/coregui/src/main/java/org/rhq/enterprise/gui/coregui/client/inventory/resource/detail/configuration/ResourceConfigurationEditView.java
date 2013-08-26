@@ -203,7 +203,8 @@ public class ResourceConfigurationEditView extends EnhancedVLayout implements Pr
                             Message.Severity.Warning);
                     }
                     String configHistoryUrl = LinkManager.getResourceTabLink(resource.getId(),
-                        ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                        ResourceDetailView.Tab.Configuration.NAME,
+                        ResourceDetailView.Tab.Configuration.SubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
                     CoreGUI.goToView(configHistoryView, message);
                 }

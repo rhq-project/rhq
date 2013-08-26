@@ -96,7 +96,7 @@ public class DriftComplianceReportResourceSearchView extends ResourceSearchView 
         nameField.setCellFormatter(new CellFormatter() {
             public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
                 String url = LinkManager.getResourceTabLink(record.getAttributeAsInt("id"),
-                    ResourceDetailView.Tab.DRIFT, null);
+                    ResourceDetailView.Tab.Drift.NAME, null);
                 String name = StringUtility.escapeHtml(value.toString());
                 return LinkManager.getHref(url, name);
             }
@@ -121,7 +121,7 @@ public class DriftComplianceReportResourceSearchView extends ResourceSearchView 
                 if (selectedRows != null && selectedRows.length == 1) {
                     String selectedId = selectedRows[0].getAttribute("id");
                     CoreGUI.goToView(LinkManager.getResourceTabLink(Integer.valueOf(selectedId),
-                        ResourceDetailView.Tab.DRIFT, null));
+                        ResourceDetailView.Tab.Drift.NAME, null));
                 }
             }
         });

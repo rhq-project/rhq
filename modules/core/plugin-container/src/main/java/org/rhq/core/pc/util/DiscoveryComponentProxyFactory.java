@@ -66,6 +66,15 @@ public class DiscoveryComponentProxyFactory {
     private static final String DAEMON_THREAD_POOL_NAME = "ResourceDiscoveryComponent.invoker.daemon";
     private ExecutorService daemonThreadPool = null;
     private final Set<ResourceType> blacklist = new HashSet<ResourceType>();
+    private static boolean blacklistDisable;
+    static {
+        try {
+            blacklistDisable = Boolean.valueOf(System.getProperty("rhq.agent.blacklist.disable", "false"));
+        } catch (Throwable t) {
+            blacklistDisable = false;
+        } // always catch here, always let the class load, use a default if the sysprop is invalid
+    }
+    
 
     /**
      * Same as {@link #getDiscoveryComponentProxy(org.rhq.core.domain.resource.ResourceType, org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent, long, org.rhq.core.pc.inventory.ResourceContainer)} except
@@ -152,12 +161,14 @@ public class DiscoveryComponentProxyFactory {
     }
 
     public boolean isResourceTypeBlacklisted(ResourceType type) {
+        if (blacklistDisable) return false;
         synchronized (this.blacklist) {
             return this.blacklist.contains(type);
         }
     }
 
     public void addResourceTypeToBlacklist(ResourceType type) {
+        if (blacklistDisable) return;
         synchronized (this.blacklist) {
             this.blacklist.add(type);
         }

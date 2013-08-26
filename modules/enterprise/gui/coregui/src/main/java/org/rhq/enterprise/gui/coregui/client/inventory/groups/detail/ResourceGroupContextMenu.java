@@ -171,7 +171,7 @@ public class ResourceGroupContextMenu extends Menu {
 
                 public void onClick(MenuItemClickEvent event) {
                     // refresh the tree and detail
-                    ResourceTreeView.contextMenuRefresh(treeGrid, node);
+                    ResourceTreeView.contextMenuRefresh(treeGrid, node, true);
                 }
             });
             addItem(refresh);
@@ -234,7 +234,7 @@ public class ResourceGroupContextMenu extends Menu {
                 operationItem.addClickHandler(new ClickHandler() {
                     public void onClick(MenuItemClickEvent event) {
                         String viewPath = LinkManager.getEntityTabLink(EntityContext.forGroup(group),
-                            ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                            ResourceDetailView.Tab.Operations.NAME, "Schedules")
                             + "/0/"
                             + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);

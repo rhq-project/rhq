@@ -161,7 +161,7 @@ public class DriftDefinitionEditView extends EnhancedVLayout implements Property
                         int resourceId = context.getResourceId();
 
                         String driftHistoryUrl = LinkManager.getResourceTabLink(resourceId,
-                            ResourceDetailView.Tab.DRIFT, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                            ResourceDetailView.Tab.Drift.NAME, ResourceDetailView.Tab.Configuration.SubTab.HISTORY);
                         driftHistoryUrl = driftHistoryUrl.substring(1); // chop off the leading '#'
                         CoreGUI.goToView(driftHistoryUrl, message);
 

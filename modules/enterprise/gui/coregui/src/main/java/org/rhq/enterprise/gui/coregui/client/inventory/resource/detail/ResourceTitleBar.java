@@ -28,7 +28,6 @@ import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.Cursor;
 import com.smartgwt.client.types.VerticalAlignment;
-import com.smartgwt.client.widgets.Button;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
@@ -54,11 +53,12 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagEditorView;
 import org.rhq.enterprise.gui.coregui.client.components.tagging.TagsChangedCallback;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
@@ -96,16 +96,168 @@ public class ResourceTitleBar extends EnhancedVLayout {
     private OverviewForm detailsFormSummary;
     private Img pluginErrors;
     private Img loading;
+    private final ResourceTreeView platformTree;
 
-    private Timer resourceAvailAndErrorsRefreshTime = new Timer() {
-        @Override
-        public void run() {
-            refreshAvailAndResourceErrors();
+    private class AvailAndErrorRefresher implements AutoRefresh {
+        private Timer availAndErrorsRefreshTimer;
+        private volatile boolean refreshingAvail;
+        private volatile boolean refreshingErrors;
+        private final int intervalMillis;
+
+        public AvailAndErrorRefresher(int intervalMillis) {
+            this.intervalMillis = intervalMillis;
         }
-    };
 
-    public ResourceTitleBar() {
+        @Override
+        public boolean isRefreshing() {
+            return refreshingAvail || refreshingErrors;
+        }
+
+        @Override
+        public void startRefreshCycle() {
+            availAndErrorsRefreshTimer = AutoRefreshUtil
+                .startRefreshCycle(this, ResourceTitleBar.this, availAndErrorsRefreshTimer, intervalMillis);
+        }
+
+        @Override
+        public void refresh() {
+            refresh(true, true);
+        }
+
+        public void refresh(boolean availability, boolean errors) {
+            int cnt = 0;
+
+            if (availability && !refreshingAvail) {
+                refreshingAvail = true;
+                ++cnt;
+            }
+
+            if (errors && !refreshingErrors) {
+                refreshingErrors = true;
+                ++cnt;
+            }
+
+            if (cnt == 0) {
+                return;
+            }
+
+            CountDownLatch latch = CountDownLatch.create(cnt, new Command() {
+                @Override
+                public void execute() {
+                    loading.setVisible(false);
+                    markForRedraw();
+
+                    //the checks at the start of the refresh() method above ensure that there is at most
+                    //1 avail check and 1 error check running at any single time.
+                    //we can therefore be sure here that if refreshing* variable is true, it has been set so when
+                    //the request that this latch is guarding has been started.
+                    if (refreshingAvail) {
+                        refreshingAvail = false;
+                    }
+                    if (refreshingErrors) {
+                        refreshingErrors = false;
+                    }
+                }
+            });
+
+            loading.setVisible(true);
+            loading.markForRedraw();
+
+            if (refreshingAvail) {
+                refreshAvailability(latch);
+            }
+
+            if (refreshingErrors) {
+                refreshErrors(latch);
+            }
+        }
+
+        public void stop() {
+            AutoRefreshUtil.onDestroy(availAndErrorsRefreshTimer);
+        }
+
+        private void refreshErrors(final CountDownLatch latch) {
+            GWTServiceLookup.getResourceService().findResourceErrors(resourceComposite.getResource().getId(),
+                new AsyncCallback<List<ResourceError>>() {
+                    public void onFailure(Throwable caught) {
+                        pluginErrors.setVisible(false);
+
+                        if (UserSessionManager.isLoggedOut()) {
+                            availAndErrorRefresher.stop();
+                        } else {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
+                                    .getId())), caught);
+                        }
+
+                        if (latch != null) {
+                            latch.countDown();
+                        } else {
+                            markForRedraw();
+                        }
+                    }
+
+                    public void onSuccess(List<ResourceError> result) {
+                        pluginErrors.setVisible(!result.isEmpty());
+
+                        if (latch != null) {
+                            latch.countDown();
+                        } else {
+                            markForRedraw();
+                        }
+                    }
+                });
+        }
+
+        private void refreshAvailability(final CountDownLatch latch) {
+            final AvailabilityType currentAvail = resource.getCurrentAvailability().getAvailabilityType();
+
+            GWTServiceLookup.getResourceService().getLiveResourceAvailability(resource.getId(),
+                new AsyncCallback<ResourceAvailability>() {
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
+
+                        if (UserSessionManager.isLoggedOut()) {
+                            availAndErrorRefresher.stop();
+                        } else {
+                            CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resource_loadFailed(String.valueOf(resource.getId())), caught);
+                        }
+
+                        if (latch != null) {
+                            latch.countDown();
+                        } else {
+                            markForRedraw();
+                        }
+                    }
+
+                    @Override
+                    public void onSuccess(ResourceAvailability result) {
+                        availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(result.getAvailabilityType()));
+                        resource.setCurrentAvailability(result);
+
+                        availabilityImage.markForRedraw();
+                        if (latch != null) {
+                            latch.countDown();
+                        } else {
+                            markForRedraw();
+                        }
+
+                        if (currentAvail != result.getAvailabilityType()) {
+                            platformTree.refreshResource(resource, true);
+                        }
+                    }
+                });
+        }
+    }
+    private AvailAndErrorRefresher availAndErrorRefresher = new AvailAndErrorRefresher(15000);
+
+    public ResourceTitleBar(ResourceTreeView platformTree) {
         super();
+
+        this.platformTree = platformTree;
+
         //define two rows of content
         top = new EnhancedHLayout();
         top.setPadding(0);
@@ -283,16 +435,16 @@ public class ResourceTitleBar extends EnhancedVLayout {
         addMember(details);
         ResourceTitleBar.this.markForRedraw();
 
-        resourceAvailAndErrorsRefreshTime.scheduleRepeating(15000);
+        availAndErrorRefresher.startRefreshCycle();
+
+        //make sure the tree is in sync with what we're showing in the detail
+        platformTree.refreshResource(resource, false);
     }
 
     @Override
-    protected void onUnload() {
-        if (resourceAvailAndErrorsRefreshTime != null) {
-            resourceAvailAndErrorsRefreshTime.cancel();
-        }
-
-        super.onUnload();
+    protected void onDestroy() {
+        availAndErrorRefresher.stop();
+        super.onDestroy();
     }
 
     private void loadTags(final TagEditorView tagEditorView) {
@@ -330,7 +482,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
             this.availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(resource
                 .getCurrentAvailability().getAvailabilityType()));
 
-            badge.setSrc(ImageManager.getResourceLargeIcon(this.resource));
+            badge.setSrc(ImageManager.getResourceLargeIcon(this.resource.getResourceType().getCategory()));
 
             markForRedraw();
         }
@@ -371,93 +523,11 @@ public class ResourceTitleBar extends EnhancedVLayout {
     }
 
     public void refreshResourceErrors() {
-        refreshErrors(null);
+        availAndErrorRefresher.refresh(false, true);
     }
 
     public void refreshAvailAndResourceErrors() {
-        CountDownLatch latch = CountDownLatch.create(2, new Command() {
-            @Override
-            public void execute() {
-                loading.setVisible(false);
-                markForRedraw();
-            }
-        });
-
-        loading.setVisible(true);
-        loading.markForRedraw();
-
-        refreshAvailability(latch);
-        refreshErrors(latch);
-    }
-
-    private void refreshErrors(final CountDownLatch latch) {
-        GWTServiceLookup.getResourceService().findResourceErrors(resourceComposite.getResource().getId(),
-            new AsyncCallback<List<ResourceError>>() {
-                public void onFailure(Throwable caught) {
-                    pluginErrors.setVisible(false);
-
-                    if (UserSessionManager.isLoggedOut()) {
-                        resourceAvailAndErrorsRefreshTime.cancel();
-                    } else {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.dataSource_resourceErrors_error_fetchFailure(String.valueOf(resourceComposite.getResource()
-                                .getId())), caught);
-                    }
-
-                    if (latch != null) {
-                        latch.countDown();
-                    } else {
-                        markForRedraw();
-                    }
-                }
-
-                public void onSuccess(List<ResourceError> result) {
-                    pluginErrors.setVisible(!result.isEmpty());
-
-                    if (latch != null) {
-                        latch.countDown();
-                    } else {
-                        markForRedraw();
-                    }
-                }
-            });
-    }
-
-    private void refreshAvailability(final CountDownLatch latch) {
-        final AvailabilityType currentAvail = resource.getCurrentAvailability().getAvailabilityType();
-
-        GWTServiceLookup.getResourceService().getLiveResourceAvailability(resource.getId(),
-            new AsyncCallback<ResourceAvailability>() {
-
-            @Override
-            public void onFailure(Throwable caught) {
-                availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(currentAvail));
-
-                if (UserSessionManager.isLoggedOut()) {
-                    resourceAvailAndErrorsRefreshTime.cancel();
-                } else {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_inventory_resource_loadFailed(String.valueOf(resource.getId())), caught);
-                }
-
-                if (latch != null) {
-                    latch.countDown();
-                } else {
-                    markForRedraw();
-                }
-            }
-
-            @Override
-            public void onSuccess(ResourceAvailability result) {
-                availabilityImage.setSrc(ImageManager.getAvailabilityLargeIconFromAvailType(result.getAvailabilityType()));
-                resource.setCurrentAvailability(result);
-                availabilityImage.markForRedraw();
-                if (latch != null) {
-                    latch.countDown();
-                } else {
-                    markForRedraw();
-                }
-            }
-        });
+        availAndErrorRefresher.refresh();
     }
 
     public class UpdateFavoritesCallback implements AsyncCallback<Subject> {

@@ -31,18 +31,26 @@ import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
  */
 public class AutoRefreshUtil {
 
-    public static Timer startRefreshCycle(final AutoRefresh autoRefresh,
+    public static Timer startRefreshCycleWithPageRefreshInterval(final AutoRefresh autoRefresh,
         final Canvas autoRefreshCanvas, Timer refreshTimer) {
 
         final int refreshInterval = UserSessionManager.getUserPreferences().getPageRefreshInterval();
 
+        return startRefreshCycle(autoRefresh, autoRefreshCanvas, refreshTimer, refreshInterval, (int) MeasurementUtility.MINUTES);
+    }
+
+    public static Timer startRefreshCycle(final AutoRefresh autoRefresh, final Canvas autoRefreshCanvas, Timer refreshTimer, int intervalMillis) {
+        return startRefreshCycle(autoRefresh, autoRefreshCanvas, refreshTimer, intervalMillis, -1);
+    }
+
+    private static Timer startRefreshCycle(final AutoRefresh autoRefresh, final Canvas autoRefreshCanvas, Timer refreshTimer, int intervalMillis, int minIntervalMillis) {
         //cancel any existing timer
         if (null != refreshTimer) {
             refreshTimer.cancel();
             refreshTimer = null;
         }
 
-        if (refreshInterval >= MeasurementUtility.MINUTES) {
+        if (minIntervalMillis <= 0 || intervalMillis >= minIntervalMillis) {
 
             refreshTimer = new Timer() {
                 public void run() {
@@ -58,7 +66,7 @@ public class AutoRefreshUtil {
                 }
             };
 
-            refreshTimer.scheduleRepeating(refreshInterval);
+            refreshTimer.scheduleRepeating(intervalMillis);
         }
 
         return refreshTimer;

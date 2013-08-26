@@ -295,7 +295,7 @@ public abstract class AbstractRecentAlertsPortlet extends AlertHistoryView imple
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     public boolean isRefreshing() {

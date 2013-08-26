@@ -313,7 +313,7 @@ public class GroupOobsPortlet extends EnhancedVLayout implements CustomSettingsP
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
         recentOobContent.markForRedraw();
         markForRedraw();
     }

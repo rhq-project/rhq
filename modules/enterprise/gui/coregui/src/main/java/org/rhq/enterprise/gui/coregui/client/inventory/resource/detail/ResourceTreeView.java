@@ -467,7 +467,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         refresh.addClickHandler(new ClickHandler() {
 
             public void onClick(MenuItemClickEvent event) {
-                contextMenuRefresh(treeGrid, node);
+                contextMenuRefresh(treeGrid, node, true);
             }
         });
         resourceContextMenu.addItem(refresh);
@@ -544,7 +544,7 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                     public void onClick(MenuItemClickEvent event) {
                         String viewPath = LinkManager.getResourceTabLink(resource.getId(),
-                            ResourceDetailView.Tab.OPERATIONS, ResourceDetailView.OperationsSubTab.SCHEDULES)
+                            ResourceDetailView.Tab.Operations.NAME, "Schedules")
                             + "/0/"
                             + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);
@@ -692,17 +692,52 @@ public class ResourceTreeView extends EnhancedVLayout {
         return subMenu;
     }
 
+    public void refreshResource(Resource resource, boolean reloadChildren) {
+        ResourceTreeNode resourceNode = null;
+
+        if (treeGrid == null) {
+            //might happen if someone calls this very soon after creation when the tree didn't have enough time to load.
+            //In that case we might as well ignore this refresh, because we'd get the fresh data in the tree anyway
+            return;
+        }
+
+        TreeNode[] nodes = treeGrid.getTree().getAllNodes();
+        for(TreeNode node : nodes) {
+            if (node instanceof ResourceTreeNode) {
+                if (((ResourceTreeNode) node).getResource().equals(resource)) {
+                    resourceNode = (ResourceTreeNode) node;
+                    break;
+                }
+            }
+        }
+
+        if (resourceNode == null) {
+            return;
+        }
+
+        resourceNode.updateResourceFrom(resource);
+
+        treeGrid.markForRedraw();
+
+        if (reloadChildren) {
+            contextMenuRefresh(treeGrid, resourceNode, false);
+        }
+    }
+
     /**
      * Update the tree node (and all of its siblings, as reload is done from the parent). Also, refresh
      * the detail view.
-     *  
+     *
      * @param treeGrid
      * @param node
+     * @param refreshDetailView
      */
-    static public void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node) {
-        // refresh the view. This won't refresh the tree since the resource hasn't changed, and
-        // we don't really want to refresh the whole tree anyway.
-        CoreGUI.refresh();
+    public static void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node, boolean refreshDetailView) {
+        if (refreshDetailView) {
+            // refresh the view. This won't refresh the tree since the resource hasn't changed, and
+            // we don't really want to refresh the whole tree anyway.
+            CoreGUI.refresh();
+        }
 
         // if this is the root just refresh from the top
         Tree tree = treeGrid.getTree();
@@ -719,6 +754,35 @@ public class ResourceTreeView extends EnhancedVLayout {
         }
 
         tree.reloadChildren(refreshNode);
+    }
+
+    private static void reloadChildrenStatefully(TreeGrid treeGrid, TreeNode node) {
+
+        Tree tree = treeGrid.getTree();
+
+        TreeNode[] descendants = tree.getDescendants(node);
+        List<String> openIds = new ArrayList<String>();
+        if (descendants != null) {
+            for(int i = 0; i < descendants.length; ++i) {
+                if (tree.isOpen(descendants[i])) {
+                    openIds.add(((EnhancedTreeNode) descendants[i]).getID());
+                }
+            }
+        }
+
+        tree.reloadChildren(node);
+
+        if (openIds.isEmpty()) {
+            return;
+        }
+
+        //now go and reopen the nodes that were open before the reload
+        for(String id : openIds) {
+            TreeNode openNode = tree.findById(id);
+            if (openNode != null) {
+                tree.openFolder(openNode);
+            }
+        }
     }
 
     private void setRootResource(Resource rootResource) {

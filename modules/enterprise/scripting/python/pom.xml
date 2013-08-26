@@ -42,6 +42,8 @@
                         <goal>jarjar</goal>
                      </goals>
                      <configuration>
+                        <!-- important, so that re-packaging happens even if previously done, i.e. during mvn install on an already built module -->
+                        <overwrite>true</overwrite>
                         <includes>
                            <include>org.python:jython-standalone</include>
                         </includes>
@@ -54,7 +56,6 @@
                   </execution>
                </executions>
             </plugin>
-            
             <plugin>
                <artifactId>maven-surefire-plugin</artifactId>
                <configuration>

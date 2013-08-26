@@ -269,7 +269,8 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
     }
     
     private StorageNodeConfigurationComposite getConfiguration() {
-        StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite();
+        StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite(
+            this.configuration.getStorageNode());
         configuration.setHeapSize(getJVMMemoryString(form.getField(FIELD_HEAP_MAX).getValue().toString()));
         configuration.setHeapNewSize(getJVMMemoryString(form.getField(FIELD_HEAP_NEW).getValue().toString()));
         configuration.setThreadStackSize(form.getValueAsString(FIELD_THREAD_STACK_SIZE));

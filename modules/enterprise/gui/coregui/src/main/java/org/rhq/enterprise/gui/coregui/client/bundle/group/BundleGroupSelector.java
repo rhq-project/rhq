@@ -98,4 +98,8 @@ public class BundleGroupSelector extends AbstractSelector<BundleGroup, BundleGro
             return result;
         }
     }
+
+    public boolean hasInitialSelection() {
+        return null != initialSelection && initialSelection.length > 0;
+    }
 }

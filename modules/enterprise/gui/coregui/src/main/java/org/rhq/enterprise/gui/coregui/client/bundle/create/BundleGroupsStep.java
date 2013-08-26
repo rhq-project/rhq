@@ -93,7 +93,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
             radioForm.setNumCols(1);
             radioForm.setColWidths(350);
 
-            RadioGroupItem radioGroupItem = new RadioGroupItem("RadioOptions");
+            final RadioGroupItem radioGroupItem = new RadioGroupItem("RadioOptions");
             radioGroupItem.setTitleOrientation(TitleOrientation.TOP);
             radioGroupItem.setTitle(MSG.view_bundle_createWizard_groupsStep_radioTitle());
             radioGroupItem.setRequired(true);
@@ -103,18 +103,15 @@ public class BundleGroupsStep extends AbstractWizardStep {
             valueMap.put("unassigned", MSG.view_bundle_createWizard_groupsStep_leaveUnassigned());
             valueMap.put("assign", MSG.view_bundle_createWizard_groupsStep_assign());
             radioGroupItem.setValueMap(valueMap);
-            radioGroupItem.setValue("assign");
+            radioGroupItem.setValue(map.isEmpty() ? "unassigned" : "assign");
 
             radioGroupItem.addChangedHandler(new ChangedHandler() {
                 public void onChanged(ChangedEvent event) {
-                    if ("unassigned".equals(event.getValue())) {
-                        selector.disable();
-                        return;
+                    if (map.isEmpty()) {
+                        radioGroupItem.setValue("unassigned");
 
                     } else {
-                        if (!map.isEmpty()) {
-                            selector.enable();
-                        }
+                        selector.setDisabled("unassigned".equals(event.getValue()));
                     }
 
                     canvas.markForRedraw();
@@ -126,7 +123,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
             canvas.addMember(radioForm);
 
             selector = getSelector(map, false);
-            selector.enable();
+            selector.setDisabled(map.isEmpty());
             canvas.addMember(selector);
 
         } else if (!map.isEmpty()) {
@@ -164,7 +161,7 @@ public class BundleGroupsStep extends AbstractWizardStep {
         final Map<BundleGroup, Boolean> map = composite.getBundleGroupMap();
         selector = getSelector(map, true);
 
-        if (0 == selector.getSelectedRecords().length) {
+        if (!selector.hasInitialSelection()) {
             selector.destroy();
 
             DynamicForm form = new DynamicForm();

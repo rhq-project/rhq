@@ -20,6 +20,12 @@
 
  <dependencies>
     <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-server-metrics</artifactId>
       <version>${project.version}</version>
@@ -40,12 +46,6 @@
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.driver.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>org.picketbox</groupId>
-      <artifactId>picketbox</artifactId>
-      <version>${picketbox-version}</version>
     </dependency>
 
     <dependency>

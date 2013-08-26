@@ -23,7 +23,6 @@ package org.rhq.server.metrics.migrator;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,6 +54,7 @@ import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 import org.hibernate.ejb.Ejb3Configuration;
 
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.server.metrics.migrator.DataMigrator.DatabaseType;
 import org.rhq.server.metrics.migrator.workers.AggregateDataMigrator;
 import org.rhq.server.metrics.migrator.workers.DeleteAllData;
@@ -358,12 +358,12 @@ public class DataMigratorRunner {
         configuration.put(sqlServerTypeOption, databaseType);
         configuration.put(sqlUserOption, serverProperties.getProperty("rhq.server.database.user-name"));
         String dbPasswordProperty = serverProperties.getProperty("rhq.server.database.password");
-        configuration.put(sqlPasswordOption, deobfuscatePassword(dbPasswordProperty));
+        configuration.put(sqlPasswordOption, PicketBoxObfuscator.decode(dbPasswordProperty));
         configuration.put(sqlConnectionUrlOption, serverProperties.getProperty("rhq.server.database.connection-url"));
 
         configuration.put(cassandraUserOption, serverProperties.getProperty("rhq.cassandra.username"));
         String cassandraPasswordProperty = serverProperties.getProperty("rhq.cassandra.password");
-        configuration.put(cassandraPasswordOption, deobfuscatePassword(cassandraPasswordProperty));
+        configuration.put(cassandraPasswordOption, PicketBoxObfuscator.decode(cassandraPasswordProperty));
 
         if (serverProperties.getProperty("rhq.cassandra.seeds") != null
             && !serverProperties.getProperty("rhq.cassandra.seeds").trim().isEmpty()) {
@@ -834,20 +834,6 @@ public class DataMigratorRunner {
             return Integer.parseInt(value.toString());
         } catch (Exception e) {
             return defaultValue;
-        }
-    }
-
-    private String deobfuscatePassword(String dbPassword) {
-        try {
-            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
-            Class<?> clazz = Class.forName(className);
-            Object object = clazz.newInstance();
-            Method method = clazz.getDeclaredMethod("decode", String.class);
-            method.setAccessible(true);
-            char[] result = (char[]) method.invoke(object, dbPassword);
-            return new String(result);
-        } catch (Exception e) {
-            throw new RuntimeException("de-obfuscating db password failed: ", e);
         }
     }
 

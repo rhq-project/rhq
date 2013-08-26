@@ -20,9 +20,9 @@
     </dependency>
 
     <dependency>
-      <groupId>org.picketbox</groupId>
-      <artifactId>picketbox</artifactId>
-      <version>${picketbox-version}</version>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
     </dependency>
   </dependencies>
 

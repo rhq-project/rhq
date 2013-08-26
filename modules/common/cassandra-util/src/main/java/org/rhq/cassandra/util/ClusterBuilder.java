@@ -25,11 +25,11 @@
 
 package org.rhq.cassandra.util;
 
-import java.lang.reflect.Method;
-
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
+
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
  * This class should generally be used for creating a {@link Cluster} instead of
@@ -71,7 +71,7 @@ public class ClusterBuilder {
      * @see Cluster.Builder#withCredentials(String, String)
      */
     public ClusterBuilder withCredentialsObfuscated(String username, String obfuscatedPassword) {
-        builder.withCredentials(username, ClusterBuilder.deobfuscatePassword(obfuscatedPassword));
+        builder.withCredentials(username, PicketBoxObfuscator.decode(obfuscatedPassword));
         return this;
     }
 
@@ -114,28 +114,4 @@ public class ClusterBuilder {
     private boolean isIBMJRE() {
         return System.getProperty("java.vm.vendor").startsWith("IBM");
     }
-
-    /**
-     * Use the internal JBossAS mechanism to de-obfuscate a password back to its
-     * clear text form. This is not true encryption.
-     *
-     * @param obfuscatedPassword the obfuscated password
-     * @return the clear-text password
-     */
-    public static String deobfuscatePassword(String obfuscatedPassword) {
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-        try {
-            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
-            Class<?> clazz = Class.forName(className);
-            Object object = clazz.newInstance();
-            Method method = clazz.getDeclaredMethod("decode", String.class);
-            method.setAccessible(true);
-            char[] result = (char[]) method.invoke(object, obfuscatedPassword);
-            return new String(result);
-        } catch (Exception e) {
-            throw new RuntimeException("de-obfuscating db password failed: ", e);
-        }
-    }
-
 }

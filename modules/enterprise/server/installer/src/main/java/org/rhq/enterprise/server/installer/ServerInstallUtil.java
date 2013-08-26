@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -899,55 +898,6 @@ public class ServerInstallUtil {
     public static Connection getDatabaseConnection(String connectionUrl, String userName, String password)
         throws SQLException {
         return DbUtil.getConnection(connectionUrl, userName, password);
-    }
-
-    /**
-     * Use the internal JBossAS mechanism to obfuscate a password. This is not true encryption.
-     *
-     * @param password the clear text of the password to obfuscate
-     * @return the obfuscated password
-     */
-    public static String obfuscatePassword(String password) {
-
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-
-        try {
-            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
-            Class<?> clazz = Class.forName(className);
-            Object object = clazz.newInstance();
-            Method method = clazz.getDeclaredMethod("encode", String.class);
-            method.setAccessible(true);
-            String result = method.invoke(object, password).toString();
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException("obfuscating db password failed: ", e);
-        }
-    }
-
-    /**
-     * Use the internal JBossAS mechanism to de-obfuscate a password back to its
-     * clear text form. This is not true encryption.
-     *
-     * @param obfuscatedPassword the obfuscated password
-     * @return the clear-text password
-     */
-    public static String deobfuscatePassword(String obfuscatedPassword) {
-
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-
-        try {
-            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
-            Class<?> clazz = Class.forName(className);
-            Object object = clazz.newInstance();
-            Method method = clazz.getDeclaredMethod("decode", String.class);
-            method.setAccessible(true);
-            char[] result = (char[]) method.invoke(object, obfuscatedPassword);
-            return new String(result);
-        } catch (Exception e) {
-            throw new RuntimeException("de-obfuscating db password failed: ", e);
-        }
     }
 
     /**

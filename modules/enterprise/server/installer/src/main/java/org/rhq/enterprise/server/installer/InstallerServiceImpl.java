@@ -43,6 +43,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseType;
 
@@ -73,7 +74,7 @@ public class InstallerServiceImpl implements InstallerService {
 
     @Override
     public String obfuscatePassword(String clearTextPassword) throws Exception {
-        String obfuscatedPassword = ServerInstallUtil.obfuscatePassword(clearTextPassword);
+        String obfuscatedPassword = PicketBoxObfuscator.encode(clearTextPassword);
         return obfuscatedPassword;
     }
 
@@ -83,7 +84,7 @@ public class InstallerServiceImpl implements InstallerService {
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
         String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-        String clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
+        String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
         ArrayList<ServerDetails> allServerDetails = getAllServerDetails(dbUrl, dbUsername, clearTextDbPassword);
         if (allServerDetails == null) {
             log.warn("Cannot get details on all servers");
@@ -130,7 +131,7 @@ public class InstallerServiceImpl implements InstallerService {
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
         final String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-        String clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
+        String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
         String dbErrorStr = testConnection(dbUrl, dbUsername, clearTextDbPassword);
         if (dbErrorStr != null) {
             throw new Exception(dbErrorStr);
@@ -426,10 +427,10 @@ public class InstallerServiceImpl implements InstallerService {
         String obfuscatedDbPassword;
         if (autoInstallMode) {
             obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-            clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
+            clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
         } else {
             clearTextDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-            obfuscatedDbPassword = ServerInstallUtil.obfuscatePassword(clearTextDbPassword);
+            obfuscatedDbPassword = PicketBoxObfuscator.encode(clearTextDbPassword);
             serverProperties.put(ServerProperties.PROP_DATABASE_PASSWORD, obfuscatedDbPassword);
         }
         final String testConnectionErrorMessage = testConnection(dbUrl, dbUsername, clearTextDbPassword);

@@ -315,7 +315,7 @@ public class StorageNodeComponentITest {
 
     private Availability getAvailability() {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-        return inventoryManager.getCurrentAvailability(storageNode);
+        return new Availability(storageNode, inventoryManager.getCurrentAvailability(storageNode, false).forResource(storageNode.getId()));
     }
 
     private void executeAvailabilityScan() {

@@ -189,7 +189,7 @@ public class LargeGroupPluginConfigurationTest extends LargeGroupTestBase {
         }
 
         @Override
-        public Availability getCurrentAvailability(Resource resource) {
+        public AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly) {
             return null;
         }
 

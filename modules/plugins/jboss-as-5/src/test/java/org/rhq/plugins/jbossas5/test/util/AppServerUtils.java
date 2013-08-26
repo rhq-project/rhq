@@ -33,6 +33,7 @@ import org.jboss.deployers.spi.management.deploy.DeploymentProgress;
 import org.jboss.deployers.spi.management.deploy.DeploymentStatus;
 import org.rhq.core.clientapi.agent.metadata.PluginMetadataManager;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
@@ -321,16 +322,16 @@ public class AppServerUtils {
         InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
         Resource asResource = getASResource();
         
-        boolean serverUp = inventoryManager.getCurrentAvailability(asResource).getAvailabilityType() == AvailabilityType.UP;
+        boolean serverUp = inventoryManager.getCurrentAvailability(asResource, false).forResource(asResource.getId()) == AvailabilityType.UP;
         while(!serverUp) {
             System.out.println("Waiting for the plugin to notice the server back up...");
             Thread.sleep(1000);
 
-            serverUp = inventoryManager.getCurrentAvailability(asResource).getAvailabilityType() == AvailabilityType.UP;
+            serverUp = inventoryManager.getCurrentAvailability(asResource, false).forResource(asResource.getId()) == AvailabilityType.UP;
         }
         
         //cool, the component reports the server up, but we need to wait a bit more
         //so that the server can finish up its start up procedures...
         Thread.sleep(3000);
-    }    
+    }
 }

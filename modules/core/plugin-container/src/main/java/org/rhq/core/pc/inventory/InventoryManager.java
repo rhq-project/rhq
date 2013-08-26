@@ -660,43 +660,30 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     @NotNull
-    // TODO (ips): Perhaps refactor this so that it shares code with AvailabilityExecutor.checkInventory().
-    public Availability getCurrentAvailability(Resource resource) {
-        AvailabilityType availType = AvailabilityType.UNKNOWN;
-        ResourceContainer resourceContainer = getResourceContainer(resource);
-        if (resourceContainer != null) {
-            if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                AvailabilityFacet resourceComponent;
-                Lock lock = resourceContainer.getReadFacetLock();
-                if (lock.tryLock()) {
-                    // We have acquired the lock.
-                    try {
-                        ResourceCategory resourceCategory = resource.getResourceType().getCategory();
-                        // Give the call to getAvailability() a bit more time if the Resource is a server.
-                        long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 10000 : 5000;
-                        // We already possess the lock, so tell the proxy not to do any locking of its own.
-                        resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-                            FacetLockType.NONE, componentTimeout, true, true, true);
-                        availType = resourceComponent.getAvailability();
-                    } catch (PluginContainerException e) {
-                        log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
-                    } catch (RuntimeException e) {
-                        log.error("Call to getAvailability() on ResourceComponent for " + resource + " failed.", e);
-                        availType = AvailabilityType.DOWN;
-                    } finally {
-                        lock.unlock();
-                    }
-                } else {
-                    // Some other thread possesses the lock - return the last-collected availability for the Resource if
-                    // there is one.
-                    if (resourceContainer.getAvailability() != null)
-                        return resourceContainer.getAvailability();
-                }
+    public AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly) {
+        try {
+            //make sure we have the full version of the resource
+            ResourceContainer container = getResourceContainer(resource.getId());
+            if (container  == null) {
+                //don't bother doing anything
+                return new AvailabilityReport(changesOnly, getAgent().getName());
             }
-        } else {
-            log.error("No ResourceContainer exists for " + resource + ".");
+            resource = container.getResource();
+
+            AvailabilityExecutor availExec = new CustomScanRootAvailabilityExecutor(this, resource, true);
+            if (changesOnly) {
+                availExec.sendChangesOnlyReportNextTime();
+            } else {
+                availExec.sendFullReportNextTime();
+            }
+
+            return availabilityThreadPoolExecutor.submit((Callable<AvailabilityReport>) availExec).get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Availability scan execution was interrupted", e);
+        } catch (ExecutionException e) {
+            // Should never happen, reports are always generated, even if they're just to report the error
+            throw new RuntimeException("Unexpected exception", e);
         }
-        return new Availability(resource, availType);
     }
 
     public void requestAvailabilityCheck(Resource resource) {

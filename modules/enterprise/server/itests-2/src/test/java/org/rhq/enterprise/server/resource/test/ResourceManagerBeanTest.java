@@ -48,6 +48,7 @@ import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
+import org.rhq.core.domain.discovery.AvailabilityReport;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
@@ -300,15 +301,19 @@ public class ResourceManagerBeanTest extends UpdatePluginMetadataTestBase {
     public void testLiveAvailability() throws Exception {
         agentServiceContainer.discoveryService = Mockito.mock(DiscoveryAgentService.class);
 
-        Mockito.when(agentServiceContainer.discoveryService.getCurrentAvailability(Mockito.any(Resource.class))).then(
-            new Answer<Availability>() {
+        Mockito.when(agentServiceContainer.discoveryService.getCurrentAvailability(Mockito.any(Resource.class), Mockito.anyBoolean())).then(
+            new Answer<AvailabilityReport>() {
                 int count = 0;
 
                 @Override
-                public Availability answer(InvocationOnMock invocation) throws Throwable {
+                public AvailabilityReport answer(InvocationOnMock invocation) throws Throwable {
                     Resource res = (Resource) invocation.getArguments()[0];
                     AvailabilityType avail = count++ == 0 ? AvailabilityType.DOWN : AvailabilityType.UP;
-                    return new Availability(res, avail);
+
+                    AvailabilityReport ret = new AvailabilityReport(AGENT_NAME);
+                    ret.addAvailability(new AvailabilityReport.Datum(res.getId(), avail, System.currentTimeMillis()));
+
+                    return ret;
                 }
             });
 

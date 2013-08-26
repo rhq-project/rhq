@@ -167,6 +167,22 @@ public class AvailabilityReport implements Serializable {
         this.serverSideReport = serverSideReport;
     }
 
+    /**
+     * Tries to find the availability for given resource in this report.
+     *
+     * @param resourceId the id of the resource to look for
+     * @return the availability type found in this report for given report on null if not found
+     */
+    public AvailabilityType forResource(int resourceId) {
+        for(Datum d : availabilities) {
+            if (d.getResourceId() == resourceId) {
+                return d.getAvailabilityType();
+            }
+        }
+
+        return null;
+    }
+
     @Override
     public String toString() {
         return toString(false);

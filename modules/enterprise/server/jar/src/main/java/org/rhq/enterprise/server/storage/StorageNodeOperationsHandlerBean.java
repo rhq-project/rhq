@@ -14,6 +14,7 @@ import javax.persistence.PersistenceContext;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.Hours;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
@@ -22,6 +23,7 @@ import org.rhq.core.domain.common.JobTrigger;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertySimple;
+import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.OperationHistory;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.bean.ResourceOperationSchedule;
@@ -239,7 +241,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         params.put(new PropertySimple(RUN_REPAIR_PROPERTY, runRepair));
         params.put(new PropertySimple(UPDATE_SEEDS_LIST, Boolean.TRUE));
 
-        scheduleOperation(subject, storageNode, params, "addNodeMaintenance");
+        scheduleOperation(subject, storageNode, params, "addNodeMaintenance",
+            Hours.EIGHT.toStandardSeconds().getSeconds());
     }
 
     @Override
@@ -295,7 +298,8 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         params.put(new PropertySimple(RUN_REPAIR_PROPERTY, runRepair));
         params.put(new PropertySimple(UPDATE_SEEDS_LIST, true));
 
-        scheduleOperation(subject, storageNode, params, "removeNodeMaintenance");
+        scheduleOperation(subject, storageNode, params, "removeNodeMaintenance",
+            Hours.EIGHT.toStandardSeconds().getSeconds());
     }
 
     @Override
@@ -572,11 +576,13 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         }
         StorageNode storageNode = storageNodeOperationsHandler.setMode(clusterNodes.get(0),
             StorageNode.OperationMode.MAINTENANCE);
-        scheduleOperation(subject, storageNode, new Configuration(), "repair");
+        scheduleOperation(subject, storageNode, new Configuration(), "repair",
+            Hours.SIX.toStandardSeconds().getSeconds());
     }
 
     private void runRepair(Subject subject, StorageNode storageNode) {
-        scheduleOperation(subject, storageNode, new Configuration(), "repair");
+        scheduleOperation(subject, storageNode, new Configuration(), "repair",
+            Hours.SIX.toStandardSeconds().getSeconds());
     }
 
     @Override
@@ -907,11 +913,17 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
 
     private void scheduleOperation(Subject subject, StorageNode storageNode, Configuration parameters,
         String operation) {
+        scheduleOperation(subject, storageNode, parameters, operation, 300);
+    }
+
+    private void scheduleOperation(Subject subject, StorageNode storageNode, Configuration parameters,
+        String operation, int timeout) {
         ResourceOperationSchedule schedule = new ResourceOperationSchedule();
         schedule.setResource(storageNode.getResource());
         schedule.setJobTrigger(JobTrigger.createNowTrigger());
         schedule.setSubject(subject);
         schedule.setOperationName(operation);
+        parameters.setSimpleValue(OperationDefinition.TIMEOUT_PARAM_NAME, Integer.toString(timeout));
         schedule.setParameters(parameters);
 
         operationManager.scheduleResourceOperation(subject, schedule);

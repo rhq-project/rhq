@@ -143,7 +143,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                 });
             }
         } else if (tabInfo.equals(settingsTabInfo)) {
-            ClusterConfigurationEditor editor = new ClusterConfigurationEditor(true);
+            ClusterConfigurationEditor editor = new ClusterConfigurationEditor(false);
             tabset.getTabByName(tabInfo.name.getName()).setPane(editor);
             tabset.selectTab(tabInfo.index);
             

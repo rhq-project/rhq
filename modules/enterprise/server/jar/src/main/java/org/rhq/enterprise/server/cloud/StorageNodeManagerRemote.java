@@ -151,7 +151,7 @@ public interface StorageNodeManagerRemote {
      * <p>The subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
      * 
      * @see                     <a href="https://docs.jboss.org/author/display/RHQ/Deploying+Storage+Nodes">https://docs.jboss.org/author/display/RHQ/Deploying+Storage+Nodes</a>
-     * @param sbubject          user that must have proper permissions
+     * @param subject          user that must have proper permissions
      * @param storageNode       storage node to be deployed to the cluster
      */
     void undeployStorageNode(Subject subject, StorageNode storageNode);

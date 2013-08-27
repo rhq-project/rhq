@@ -168,9 +168,9 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
                         + height + "px;\">");
         divAndSvgDefs.append(getSvgDefs());
         divAndSvgDefs.append("</svg>");
-        divAndSvgDefs.append(createMetricTooltip());
         divAndSvgDefs.append(createSingleValueTooltip());
         divAndSvgDefs.append(createNoDataTooltip());
+        divAndSvgDefs.append(createMetricTooltip());
         divAndSvgDefs.append("</div>");
 
         return divAndSvgDefs.toString();
@@ -180,7 +180,6 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
         StringBuilder tooltipDivs = new StringBuilder();
 
         tooltipDivs.append("<div id=\"metricGraphTooltip\" class=\"hidden\" >");
-        tooltipDivs.append("<div>");
 
         tooltipDivs.append("<div>");
         tooltipDivs.append("<span id=\"metricGraphTooltipTimeLabel\" ></span>");
@@ -220,7 +219,6 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
         tooltipDivs.append("<div/>");
 
 
-        tooltipDivs.append("</div>");
         tooltipDivs.append("</div>");   // end metricGraphTooltipDiv
         return tooltipDivs.toString();
     }
@@ -229,7 +227,6 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
         StringBuilder tooltipDivs = new StringBuilder();
 
         tooltipDivs.append("<div id=\"noDataTooltip\" class=\"hidden\" >");
-        tooltipDivs.append("<div>");
 
         tooltipDivs.append("<div>");
         tooltipDivs.append("<span id=\"noDataTooltipTimeLabel\" ></span>");
@@ -246,8 +243,7 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
 
         tooltipDivs.append("<div id=\"noDataLabel\" ></div>");
 
-        tooltipDivs.append("</div>");
-        tooltipDivs.append("</div>");   // end metricGraphTooltipDiv
+        tooltipDivs.append("</div>");   // end noDataTooltipDiv
         return tooltipDivs.toString();
     }
 
@@ -255,7 +251,6 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
         StringBuilder tooltipDivs = new StringBuilder();
 
         tooltipDivs.append("<div id=\"singleValueTooltip\" class=\"hidden\" >");
-        tooltipDivs.append("<div>");
 
         tooltipDivs.append("<div>");
         tooltipDivs.append("<span id=\"singleValueTooltipTimeLabel\" ></span>");
@@ -276,8 +271,7 @@ public class MetricD3Graph<T extends AbstractD3GraphListView> extends EnhancedVL
         tooltipDivs.append("<span id=\"singleValueTooltipValue\" ></span>");
         tooltipDivs.append("</div>");
 
-        tooltipDivs.append("</div>");
-        tooltipDivs.append("</div>");   // end metricGraphTooltipDiv
+        tooltipDivs.append("</div>");   // end singleValueTooltipDiv
         return tooltipDivs.toString();
     }
 

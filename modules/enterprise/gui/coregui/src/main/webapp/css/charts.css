@@ -104,7 +104,7 @@ rect.low {
     height: auto;
     padding: 5px;
     background-color: #000;
-    opacity: 0.55;
+    opacity: 0.8;
     -webkit-border-radius: 5px;
     -moz-border-radius: 5px;
     border-radius: 5px;
@@ -205,17 +205,6 @@ rect.low {
     font-size: 10px;
     color: #d3d3d6;
 }
-
-/*#noDataTooltip {*/
-    /*width: 40px;*/
-    /*font-weight: bold;*/
-    /*color: #d3d3d6;*/
-/*}*/
-
-/*#metricGraphTooltipMaxLabel {*/
-    /*color: #1794BC;*/
-/*}*/
-
 
 
 #singleValueTooltip {

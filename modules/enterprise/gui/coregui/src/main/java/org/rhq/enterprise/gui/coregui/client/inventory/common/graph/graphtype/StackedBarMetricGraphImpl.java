@@ -318,22 +318,13 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }
 
             function showFullMetricBarHover(d){
-                console.log("ShowFullMetricBarHover"+timeScale(+d.x));
+
                 var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
                         dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                         startDate = new Date(+d.x),
-                        hoverX,
                         metricGraphTooltipDiv =  $wnd.d3.select("#metricGraphTooltip");
 
-                // as we approach the right margin change the side of the bar that
-                // the hover is on from right to left
-                if(timeScale(+d.x) > 500){
-                    hoverX = timeScale(+d.x) - 200;
-                } else {
-                    hoverX = timeScale(+d.x) + 55;
-                }
-
-                metricGraphTooltipDiv.style("left", + hoverX + "px")
+                metricGraphTooltipDiv.style("left", + timeScale(+d.x) + 55 + "px")
                         .style("top",  + yScale(+d.y)+  "px");
 
                 metricGraphTooltipDiv.select("#metricGraphTooltipTimeLabel")
@@ -373,12 +364,12 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             }
             function showNoDataBarHover(d){
-                console.log("NoData Hover"+ d.x);
                 var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
                     dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
                     startDate = new Date(+d.x),
-                    noDataTooltipDiv =  $wnd.d3.select("#noDataTooltip")
-                        .style("left", + timeScale(+d.x)+10 + "px")
+                    noDataTooltipDiv =  $wnd.d3.select("#noDataTooltip");
+
+                noDataTooltipDiv.style("left", + timeScale(+d.x)+10 + "px")
                         .style("top",  + yScale(+d.y)+"px");
 
                 noDataTooltipDiv.select("#noDataTooltipTimeLabel")
@@ -444,13 +435,21 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             showNoDataBarHover(d);
                         }
                         else {
-                            showFullMetricBarHover(d);
+                            if(+d.high === +d.low){
+                                showSingleValueMetricBarHover(d);
+                            } else {
+                                showFullMetricBarHover(d);
+                            }
                         }
                     }).on("mouseout", function (d) {
                         if (d.down || d.unknown || d.nodata) {
                             $wnd.d3.select("#noDataTooltip").classed("hidden", true);
                         }else {
-                            $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
+                            if(+d.high === +d.low){
+                                $wnd.d3.select("#singleValueTooltip").classed("hidden", true);
+                            } else {
+                                $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
+                            }
                         }
                     });
 
@@ -483,7 +482,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("opacity", 0.9)
                         .on("mouseover",function (d) {
                             showFullMetricBarHover(d);
-//
                         }).on("mouseout", function (d) {
                             if (d.down || d.unknown || d.nodata) {
                                 $wnd.d3.select("#noDataTooltip").classed("hidden", true);
@@ -533,7 +531,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             startDate = new Date(+d.x),
                             singleValueGraphTooltipDiv =  $wnd.d3.select("#singleValueTooltip")
                                     .style("left", + timeScale(+d.x) +55 + "px")
-                                    .style("top",  +  +  "px");
+                                    .style("top",  +  yScale(+d.y)+  "px");
 
                     singleValueGraphTooltipDiv.select("#singleValueTooltipTimeLabel")
                             .text(chartContext.timeLabel);
@@ -751,52 +749,6 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
 
             }
-
-//            function formatHovers(chartContext, d) {
-//                var hoverString,
-//                        xValue = (typeof d.x === 'undefined') ? 0 : +d.x,
-//                        date = new Date(+xValue),
-//                        barDuration = d.barDuration,
-//                        timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
-//                        dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
-//                        highValue = d.high.toFixed(2),
-//                        lowValue = d.low.toFixed(2),
-//                        avgValue = d.y.toFixed(2);
-//
-//
-//                // our special condition to indicate no data because avg lines dont like discontinuous data
-//                if (d.y === 0 && d.high === 0 && d.low === 0) {
-//                    // no data
-//                    hoverString =
-//                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
-//                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-//                                    '<hr class="chartHoverDivider" ></hr>' +
-//                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">' + chartContext.noDataLabel + '</span></div>' +
-//                                    '</div>';
-//
-//
-//                } else if (d.y === d.high  && d.high === d.low ) {
-//                    // single point of data not a duration
-//                    hoverString =
-//                        '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
-//                            '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-//                                '<div class="chartHoverAlignRight"><span class="chartHoverDateLabel" >' + chartContext.singleValueLabel + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
-//                            '</div>';
-//                } else {
-//                    // regular bar hover for duration
-//                    hoverString =
-//                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span>' +
-//                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
-//                                    '<div class="chartHoverAlignLeft"><span class="chartHoverLabelSpan">' + chartContext.hoverBarLabel + ": " + barDuration + '</span></div>' +
-//                                    '<hr  class="chartHoverDivider"></hr>' +
-//                                    '<div class="chartHoverAlignRight"><span id="chartHoverPeakValue" >' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
-//                                    '<div class="chartHoverAlignRight"><span id="chartHoverAvgValue" >' + chartContext.avgChartTitle + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
-//                                    '<div class="chartHoverAlignRight"><span id="chartHoverLowValue" >' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>' +
-//                                    '</div>';
-//                }
-//                return hoverString;
-//
-//            }
 
             return {
                 // Public API

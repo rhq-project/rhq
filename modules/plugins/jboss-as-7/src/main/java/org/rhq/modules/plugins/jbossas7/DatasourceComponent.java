@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import static java.lang.Boolean.FALSE;
@@ -112,36 +131,32 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         // outer create resource did not cater for the xa properties, so lets add them now
         if (createResourceReport.getResourceType().getName().toLowerCase().contains("xa")) {
             PropertyList listPropertyWrapper = createResourceReport.getResourceConfiguration().getList("*2");
-            if (listPropertyWrapper != null) {
-                List<Property> listProperty = listPropertyWrapper.getList();
+            List<Property> listProperty = listPropertyWrapper.getList();
 
-                String baseAddress = resourceReport.getResourceKey();
+            String baseAddress = resourceReport.getResourceKey();
 
-                if (!listProperty.isEmpty()) {
-                    CompositeOperation cop = new CompositeOperation();
-                    for (Property p : listProperty) {
-                        PropertyMap map = (PropertyMap) p;
-                        String key = map.getSimpleValue("key", null);
-                        String value = map.getSimpleValue("value", null);
-                        if (key == null || value == null)
-                            continue;
+            CompositeOperation cop = new CompositeOperation();
+            for (Property p : listProperty) {
+                PropertyMap map = (PropertyMap) p;
+                String key = map.getSimpleValue("key", null);
+                String value = map.getSimpleValue("value", null);
+                if (key == null || value == null)
+                    continue;
 
-                        Address propertyAddress = new Address(baseAddress);
-                        propertyAddress.add("xa-datasource-properties", key);
-                        Operation op = new Operation("add", propertyAddress);
-                        op.addAdditionalProperty("value", value);
-                        cop.addStep(op);
+                Address propertyAddress = new Address(baseAddress);
+                propertyAddress.add("xa-datasource-properties", key);
+                Operation op = new Operation("add", propertyAddress);
+                op.addAdditionalProperty("value", value);
+                cop.addStep(op);
 
-                    }
+            }
 
-                    Result res = getASConnection().execute(cop);
-                    if (!res.isSuccess()) {
-                        resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
-                            + res.getFailureDescription());
-                        resourceReport.setStatus(CreateResourceStatus.FAILURE);
-                        return resourceReport;
-                    }
-                }
+            Result res = getASConnection().execute(cop);
+            if (!res.isSuccess()) {
+                resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
+                    + res.getFailureDescription());
+                resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
+                return resourceReport;
             }
         }
 
@@ -157,21 +172,21 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
             .setAttributeValue(enabledPropertyValue, new EnabledAttributeHelperCallbacks() {
                 @Override
                 public void onReadAttributeFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
                     resourceReport.setErrorMessage("Data source was added, "
                         + "but could not read its configuration after creation: " + opResult.getFailureDescription());
                 }
 
                 @Override
                 public void onEnableOperationFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
                     resourceReport.setErrorMessage("Datasource was added but not enabled: "
                         + opResult.getFailureDescription());
                 }
 
                 @Override
                 public void onDisableOperationFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
                     resourceReport.setErrorMessage("Datasource was added but not disabled: "
                         + opResult.getFailureDescription());
                 }

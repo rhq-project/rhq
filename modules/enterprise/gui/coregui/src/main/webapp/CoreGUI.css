@@ -376,6 +376,10 @@ a.menuBar, a.menuBar:link, a.menuBar:visited, a.menuBar:hover {
     color: #00AC3D; /* medium green */
 }
 
+.InlineError {
+    color: #EE4444; /* medium red */
+}
+
 .log-panel {
     z-index: 9999999 !important;
 }

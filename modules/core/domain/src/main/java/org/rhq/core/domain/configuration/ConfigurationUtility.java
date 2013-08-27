@@ -342,15 +342,14 @@ public class ConfigurationUtility {
         }
         int listSize = propertyList.getList().size();
         if (listMin == 0 && listMax < Integer.MAX_VALUE && listSize > listMax) {
-            errorMessages.add(String.format("The list property '%s' should contain %d row(s) at most",
-                propertyDefinitionList.getName(), listMax));
+            errorMessages.add("The list property '" + propertyDefinitionList.getName() + "' should contain " + listMax
+                + " row(s) at most");
         } else if (listMin > 0 && listMax == Integer.MAX_VALUE && listSize < listMin) {
-            errorMessages.add(String.format("The list property '%s' should contain at least %d row(s)",
-                propertyDefinitionList.getName(), listMin));
+            errorMessages.add("The list property '" + propertyDefinitionList.getName() + "' should contain at least "
+                + listMin + " row(s)");
         } else if (listSize < listMin || listSize > listMax) {
-            errorMessages.add(String.format(
-                "The list property '%s' should contain a minimum of %d and a maximum of %d row(s)",
-                propertyDefinitionList.getName(), listMin, listMax));
+            errorMessages.add("The list property '%s' should contain a minimum of " + listMin + " and a maximum of "
+                + listMax + " row(s)");
         }
     }
 }

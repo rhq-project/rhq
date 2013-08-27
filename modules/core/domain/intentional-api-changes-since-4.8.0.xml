@@ -25,4 +25,13 @@
             We are adding a method to explicitly set the start time.
         </justification>
     </difference>
+    <difference>
+        <className>org/rhq/core/domain/configuration/ConfigurationUtility</className>
+        <differenceType>7009</differenceType>
+        <method>ConfigurationUtility()</method>
+        <justification>
+          A utility class only marked abstract is protected from instantiation but not from derivation. Its constructor
+          should be private.
+        </justification>
+    </difference>
 </differences>

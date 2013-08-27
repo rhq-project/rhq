@@ -756,35 +756,6 @@ public class ResourceTreeView extends EnhancedVLayout {
         tree.reloadChildren(refreshNode);
     }
 
-    private static void reloadChildrenStatefully(TreeGrid treeGrid, TreeNode node) {
-
-        Tree tree = treeGrid.getTree();
-
-        TreeNode[] descendants = tree.getDescendants(node);
-        List<String> openIds = new ArrayList<String>();
-        if (descendants != null) {
-            for(int i = 0; i < descendants.length; ++i) {
-                if (tree.isOpen(descendants[i])) {
-                    openIds.add(((EnhancedTreeNode) descendants[i]).getID());
-                }
-            }
-        }
-
-        tree.reloadChildren(node);
-
-        if (openIds.isEmpty()) {
-            return;
-        }
-
-        //now go and reopen the nodes that were open before the reload
-        for(String id : openIds) {
-            TreeNode openNode = tree.findById(id);
-            if (openNode != null) {
-                tree.openFolder(openNode);
-            }
-        }
-    }
-
     private void setRootResource(Resource rootResource) {
         this.rootResource = rootResource;
     }

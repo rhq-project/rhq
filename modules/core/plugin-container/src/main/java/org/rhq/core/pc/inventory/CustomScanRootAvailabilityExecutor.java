@@ -33,24 +33,24 @@ import org.rhq.core.domain.resource.ResourceCategory;
 public class CustomScanRootAvailabilityExecutor extends AvailabilityExecutor {
 
     private final Resource scanRoot;
-    private final boolean ignoreScheduleForRoot;
+    private final boolean forceScanForRoot;
 
     /**
-     * @param inventoryManager      the inventory manager to use
-     * @param scanRoot              the root of the availability scan
-     * @param ignoreScheduleForRoot if true, the avail check for the root resource is always performed regardless of
-     *                              the availability schedule for it
+     * @param inventoryManager the inventory manager to use
+     * @param scanRoot         the root of the availability scan
+     * @param forceScanForRoot if true, the avail check for the root resource is always performed regardless of
+     *                         the availability schedule for it
      */
     public CustomScanRootAvailabilityExecutor(InventoryManager inventoryManager, Resource scanRoot,
-        boolean ignoreScheduleForRoot) {
+        boolean forceScanForRoot) {
         super(inventoryManager);
         this.scanRoot = scanRoot;
-        this.ignoreScheduleForRoot = ignoreScheduleForRoot;
+        this.forceScanForRoot = forceScanForRoot;
     }
 
     @Override
     protected void startScan(Resource ignored, AvailabilityReport availabilityReport, boolean changesOnly) {
-        if (ignoreScheduleForRoot) {
+        if (forceScanForRoot) {
             ResourceContainer resourceContainer = inventoryManager.getResourceContainer(scanRoot);
 
             //if we can't the resource container, let's just not bother with the scan at all

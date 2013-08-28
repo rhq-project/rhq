@@ -56,6 +56,7 @@ import com.smartgwt.client.widgets.form.fields.events.ChangedEvent;
 import com.smartgwt.client.widgets.form.fields.events.ChangedHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemClickHandler;
 import com.smartgwt.client.widgets.form.fields.events.FormItemIconClickEvent;
+import com.smartgwt.client.widgets.form.validator.IsIntegerValidator;
 import com.smartgwt.client.widgets.form.validator.RegExpValidator;
 import com.smartgwt.client.widgets.form.validator.Validator;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -137,8 +138,11 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
         recursive.setValue(groupDefinition.isRecursive());
         description.setValue(groupDefinition.getDescription());
         recalculationInterval.setValue(groupDefinition.getRecalculationInterval() / (60 * 1000));
+        Validator intervalValidator = new IsIntegerValidator();
+        intervalValidator.setErrorMessage(MSG.view_dynagroup_recalculationInterval_error());
+        recalculationInterval.setValidators(intervalValidator);
         expression.setValue(groupDefinition.getExpression());
-        
+
         Validator nameValidator = new RegExpValidator("^[^\\<\\$\\'\\{\\[]{1,100}$");
         nameValidator.setErrorMessage("Name must not contain following characters: < $ ' [ {");
         name.setValidators(nameValidator);
@@ -453,7 +457,7 @@ public class SingleGroupDefinitionView extends EnhancedVLayout implements Bookma
                 "resource.type.plugin = JBossAS", //
                 "resource.type.name = JBossAS Server"));
         items.put(TEMPLATE_PLATFORMS, //
-            buildTemplate("resource.type.category = PLATFORM", // 
+            buildTemplate("resource.type.category = PLATFORM", //
                 "groupby resource.name"));
         items.put(TEMPLATE_UNIQUE_RESOURCE_TYPES, //
             buildTemplate("groupby resource.type.plugin", //

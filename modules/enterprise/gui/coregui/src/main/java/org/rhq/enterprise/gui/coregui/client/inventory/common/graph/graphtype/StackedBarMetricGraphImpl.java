@@ -106,8 +106,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     svg;
 
             // adjust the min scale so blue low line is not in axis
-            function determineLowBound(min, peak) {
-                //var newLow = min - ((peak - min) * 0.1);
+            function determineLowBound(min) {
                 newLow = min;
                 if (newLow < 0) {
                     return 0;
@@ -170,7 +169,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     min = $wnd.d3.min(minFiltered.map(function (d) {
                             return d.low;
                     }));
-                    lowBound = determineLowBound(min, peak);
+                    lowBound = determineLowBound(min);
                     highBound = peak + ((peak - min) * 0.1);
                     oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
                         if (typeof d.baselineMax === 'undefined') {
@@ -325,7 +324,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         metricGraphTooltipDiv =  $wnd.d3.select("#metricGraphTooltip");
 
                 metricGraphTooltipDiv.style("left", + timeScale(+d.x) + 55 + "px")
-                        .style("top",  + yScale(+d.y)+  "px");
+                        .style("top",  "70px");
 
                 metricGraphTooltipDiv.select("#metricGraphTooltipTimeLabel")
                         .text(chartContext.timeLabel);
@@ -369,8 +368,8 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     startDate = new Date(+d.x),
                     noDataTooltipDiv =  $wnd.d3.select("#noDataTooltip");
 
-                noDataTooltipDiv.style("left", + timeScale(+d.x)+10 + "px")
-                        .style("top",  + yScale(+d.y)+"px");
+                noDataTooltipDiv.style("left", + timeScale(+d.x)+55 + "px")
+                        .style("top", "70px");
 
                 noDataTooltipDiv.select("#noDataTooltipTimeLabel")
                     .text(chartContext.timeLabel);

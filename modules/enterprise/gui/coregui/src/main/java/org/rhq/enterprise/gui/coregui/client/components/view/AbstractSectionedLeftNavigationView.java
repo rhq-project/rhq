@@ -202,6 +202,7 @@ public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayou
     }
 
     public void setContent(Canvas newContent) {
+        currentContent = newContent;
         if (newContent instanceof HasViewName) {
             EnhancedVLayout decoratedContent = decorateWithTitleBar(((HasViewName) newContent).getViewName(),
                 newContent);
@@ -210,7 +211,6 @@ public abstract class AbstractSectionedLeftNavigationView extends EnhancedHLayou
             contentCanvas.addChild(newContent);
         }
         contentCanvas.markForRedraw();
-        currentContent = newContent;
     }
 
     private void renderContentView(ViewPath viewPath) {

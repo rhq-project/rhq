@@ -43,7 +43,15 @@ public interface StorageNodeManagerLocal {
     String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
     String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
+    /**
+     * @return All storage nodes, including those that are not part of the cluster.
+     */
     List<StorageNode> getStorageNodes();
+
+    /**
+     * @return All storage nodes that are part of the cluster.
+     */
+    List<StorageNode> getClusterNodes();
     
     PageList<StorageNodeLoadComposite> getStorageNodeComposites();
 

@@ -486,6 +486,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
+    public List<StorageNode> getClusterNodes() {
+        return entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODES,
+            StorageNode.class).setParameter("operationModes", asList(StorageNode.OperationMode.NORMAL,
+            StorageNode.OperationMode.MAINTENANCE)).getResultList();
+    }
+
+    @Override
     public PageList<StorageNodeLoadComposite> getStorageNodeComposites() {
         List<StorageNode> nodes = getStorageNodes();
         PageList<StorageNodeLoadComposite> result = new PageList<StorageNodeLoadComposite>();
@@ -572,7 +579,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public void runClusterMaintenance(Subject subject) {
-        List<StorageNode> storageNodes = getStorageNodes();
+        List<StorageNode> storageNodes = getClusterNodes();
 
         for (StorageNode storageNode : storageNodes) {
             Resource test = storageNode.getResource();
@@ -597,13 +604,10 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             }
         }
 
-        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODES,
-            StorageNode.class).setParameter("operationModes", asList(StorageNode.OperationMode.NORMAL,
-            StorageNode.OperationMode.MAINTENANCE)).getResultList();
-        if (clusterNodes.size() == 1) {
+        if (storageNodes.size() == 1) {
             log.info("Skipping scheduled repair since this is a single-node cluster");
         } else {
-            storageNodeOperationsHandler.runRepair(subjectManager.getOverlord(), clusterNodes);
+            storageNodeOperationsHandler.runRepair(subjectManager.getOverlord(), storageNodes);
         }
     }
 

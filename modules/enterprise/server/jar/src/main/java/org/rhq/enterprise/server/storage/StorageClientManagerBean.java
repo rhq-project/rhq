@@ -36,6 +36,9 @@ import javax.ejb.Singleton;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.LoggingRetryPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -88,7 +91,21 @@ public class StorageClientManagerBean {
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
-        List<StorageNode> storageNodes = storageNodeManager.getStorageNodes();
+        List<StorageNode> storageNodes = new ArrayList<StorageNode>();
+        for (StorageNode storageNode : storageNodeManager.getStorageNodes()) {
+            // We only want clustered nodes here because we won't be able to connect to
+            // node that is not part of the cluster. The filtering here on the operation
+            // mode is somewhat convservative because we could also include ADD_MAINTENANCE
+            // and REMOVE_MAINTENANCE, but this errors on the side of being safe. Lastly,
+            // if a storage node does not have a resource, then that means it was was
+            // deployed prior to installing the server.
+            if (storageNode.getOperationMode() == StorageNode.OperationMode.NORMAL ||
+                storageNode.getOperationMode() == StorageNode.OperationMode.MAINTENANCE ||
+                storageNode.getResource() == null) {
+                storageNodes.add(storageNode);
+            }
+        }
+
         if (storageNodes.isEmpty()) {
             throw new IllegalStateException(
                 "There is no storage node metadata stored in the relational database. This may have happened as a "
@@ -99,7 +116,7 @@ public class StorageClientManagerBean {
         checkSchemaCompability(username, password, storageNodes);
 
 
-        Session wrappedSession = createSession(username, password, storageNodeManager.getStorageNodes());
+        Session wrappedSession = createSession(username, password, storageNodes);
         session = new StorageSession(wrappedSession);
 
         storageClusterMonitor = new StorageClusterMonitor();
@@ -205,6 +222,8 @@ public class StorageClientManagerBean {
             .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
             .withCredentialsObfuscated(username, password)
             .withPort(port)
+            .withLoadBalancingPolicy(new RoundRobinPolicy())
+            .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE))
             .withCompression(compression)
             .build();
 

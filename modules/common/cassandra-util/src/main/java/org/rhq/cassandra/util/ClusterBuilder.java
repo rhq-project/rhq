@@ -28,6 +28,8 @@ package org.rhq.cassandra.util;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
 
 import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
@@ -97,6 +99,22 @@ public class ClusterBuilder {
      */
     public ClusterBuilder withPort(int port) {
         builder.withPort(port);
+        return this;
+    }
+
+    /**
+     * @see Cluster.Builder#withLoadBalancingPolicy(com.datastax.driver.core.policies.LoadBalancingPolicy)
+     */
+    public ClusterBuilder withLoadBalancingPolicy(LoadBalancingPolicy policy) {
+        builder.withLoadBalancingPolicy(policy);
+        return this;
+    }
+
+    /**
+     * @see Cluster.Builder#withRetryPolicy(com.datastax.driver.core.policies.RetryPolicy)
+     */
+    public ClusterBuilder withRetryPolicy(RetryPolicy policy) {
+        builder.withRetryPolicy(policy);
         return this;
     }
 

@@ -200,7 +200,7 @@
   <difference>
     <className>org/rhq/enterprise/server/cloud/StorageNodeManagerRemote</className>
     <differenceType>7004</differenceType><!-- num argments changed -->
-    <method>void runClusterMaintenance(org.rhq.core.domain.auth.Subject)</method>
+    <method>void runClusterMaintenance()</method>
     <justification>
       Only user with MANAGE_SETTINGS permissions should be able to run cluster maintenance
     </justification>

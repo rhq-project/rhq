@@ -1618,6 +1618,16 @@
 
       </repository>
 
+      <!-- this is needed for swagger-annotations_2.9.1 in modules/enterprise/server/jar -->
+      <repository>       
+          <id>sonatype-snapshots</id>
+          <name>Sonatype Snapshots</name>
+          <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+          <snapshots>
+             <enabled>true</enabled>
+          </snapshots>
+      </repository>
+
   </repositories>
 
   <pluginRepositories>

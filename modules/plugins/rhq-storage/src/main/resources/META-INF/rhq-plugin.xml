@@ -27,8 +27,6 @@
                          description="The RMI URL with which to connect to the RHQ Storage Node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
       <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
                          description="The type used to establish the EMS connection to the RHQ Storage Node."/>
-      <c:simple-property name="username" default="rhqadmin" required="true" description="The login username"/>
-      <c:simple-property name="password" default="rhqadmin" required="true" type="password" description="The login password"/>
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
       <c:simple-property name="yamlConfiguration" displayName="YAML Configuration File" description="YAML Configuration File"/>
       <c:simple-property name="nativeTransportPort" default="9142" type="integer" readOnly="true"
@@ -38,12 +36,6 @@
       <c:simple-property name="jmxPort" description="The JMX port for the RHQ Storage Node" default="7299" type="integer" readOnly="true"/>
       <c:simple-property name="host" description="The host on which the RHQ Storage Node listens to CQL client connections" default="localhost"/>
       <c:simple-property name="clusterName" description="Cluster name" default="localhost"/>
-      <c:simple-property name="authenticator" required="true" default="org.apache.cassandra.auth.AllowAllAuthenticator" description="RHQ Storage Node client authenticator">
-        <c:property-options>
-          <c:option name="org.apache.cassandra.auth.AllowAllAuthenticator" value="org.apache.cassandra.auth.AllowAllAuthenticator"/>
-          <c:option name="org.apache.cassandra.auth.PasswordAuthenticator" value="org.apache.cassandra.auth.PasswordAuthenticator"/>
-        </c:property-options>
-      </c:simple-property>
       <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
     </plugin-configuration>
 

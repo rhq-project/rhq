@@ -25,17 +25,7 @@
 
 package org.rhq.plugins.cassandra;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-import static com.datastax.driver.core.querybuilder.QueryBuilder.set;
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.FAILURE;
-import static org.rhq.core.domain.configuration.ConfigurationUpdateStatus.SUCCESS;
-
 import java.io.File;
-
-import com.datastax.driver.core.Query;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -66,7 +56,6 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
             log.debug("Loading resource context for column family " + context.getResourceKey());
         }
 
-        config.put(new PropertySimple("gc_grace_seconds", this.getGCGraceSeconds()));
         config.put(this.getSnapshotsWithDetails());
 
         return config;
@@ -96,48 +85,8 @@ public class ColumnFamilyComponent extends ComplexConfigurationResourceComponent
             log.debug("Updating resource configuration for column family " + getResourceContext().getResourceKey());
         }
 
-        try {
-            Configuration updatedConfig = report.getConfiguration();
-            String gcGraceSeconds = updatedConfig.getSimpleValue("gc_grace_seconds", "864000");
-            setGCGraceSeconds(gcGraceSeconds);
-            report.setStatus(SUCCESS);
-        } catch (Exception e) {
-            String msg = "Failed to update resource configuration for column family "
-                + getResourceContext().getResourceKey();
-            if (log.isDebugEnabled()) {
-                log.debug(msg, e);
-            } else if (log.isWarnEnabled()) {
-                log.warn(msg);
-            }
-            report.setErrorMessageFromThrowable(e);
-            report.setStatus(FAILURE);
-        }
-
-        report.getConfiguration().remove("gc_grace_seconds");
         report.getConfiguration().remove("snapshots");
-
         super.updateResourceConfiguration(report);
-    }
-
-    private void setGCGraceSeconds(String gcGraceSeconds) {
-        Session session = this.getParentKeyspace().getCassandraSession();
-        Query q = QueryBuilder.update("system", "schema_columnfamilies").with(set("gc_grace_seconds", gcGraceSeconds))
-            .where(eq("columnfamily_name", this.getResourceContext().getResourceKey()))
-            .and(eq("keyspace_name", this.getParentKeyspace().getKeyspaceName()));
-        session.execute(q);
-    }
-
-    private Integer getGCGraceSeconds() {
-        Session session = this.getParentKeyspace().getCassandraSession();
-        Query q = QueryBuilder.select("gc_grace_seconds").from("system", "schema_columnfamilies")
-            .where(eq("columnfamily_name", this.getResourceContext().getResourceKey()))
-            .and(eq("keyspace_name", this.getParentKeyspace().getKeyspaceName()));
-        ResultSet resultSet = session.execute(q);
-        if (!resultSet.isExhausted()) {
-            return resultSet.one().getInt("gc_grace_seconds");
-        }
-
-        return null;
     }
 
     private PropertyList getSnapshotsWithDetails() {

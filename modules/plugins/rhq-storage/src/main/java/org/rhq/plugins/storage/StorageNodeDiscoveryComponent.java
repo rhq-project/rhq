@@ -64,6 +64,7 @@ public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryCompone
         return storageNodes;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     @Override
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext ruc) {
         ResourceUpgradeReport result = null;
@@ -117,15 +118,5 @@ public class StorageNodeDiscoveryComponent extends CassandraNodeDiscoveryCompone
         }
 
         return result;
-    }
-
-    @Override
-    protected String getDefaultUserName() {
-        return "rhqadmin";
-    }
-
-    @Override
-    protected String getDefaultPassword() {
-        return "rhqadmin";
     }
 }

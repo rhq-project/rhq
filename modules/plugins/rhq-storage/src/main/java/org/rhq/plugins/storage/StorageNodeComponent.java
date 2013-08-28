@@ -197,6 +197,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
        return Long.parseLong(StreamUtil.slurp(new FileReader(pidFile)));
     }
 
+    @SuppressWarnings("unchecked")
     private ProcessInfo findProcessInfo(long pid) {
         List<ProcessScanResult> scanResults = getResourceContext().getNativeProcessesForType();
 
@@ -326,6 +327,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         return updateKnownNodes(params);
     }
 
+    @SuppressWarnings("deprecation")
     private OperationResult updateKnownNodes(Configuration params) {
         OperationResult result = new OperationResult();
 
@@ -358,6 +360,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
     }
 
+    @SuppressWarnings("rawtypes")
     private OperationResult prepareForBootstrap(Configuration params) {
         log.info("Preparing " + this + " for bootstrap...");
 

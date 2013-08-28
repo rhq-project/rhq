@@ -41,10 +41,6 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Cluster.Builder;
-import com.datastax.driver.core.Session;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.OperatingSystem;
@@ -81,8 +77,6 @@ import org.rhq.plugins.jmx.JMXServerComponent;
 public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent<?>> implements OperationFacet {
     private static final Log log = LogFactory.getLog(CassandraNodeComponent.class);
 
-    private Cluster cluster;
-    private Session cassandraSession;
     private String host;
     private ProcessInfo processInfo;
 
@@ -92,60 +86,13 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         super.start(context);
 
         processInfo = context.getNativeProcess();
-
         host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
-        String clusterName = context.getPluginConfiguration().getSimpleValue("clusterName", "unknown");
-        String username = context.getPluginConfiguration().getSimpleValue("username", "cassandra");
-        String password = context.getPluginConfiguration().getSimpleValue("password", "cassandra");
-        String authenticatorClassName = context.getPluginConfiguration().getSimpleValue("authenticator",
-            "org.apache.cassandra.auth.AllowAllAuthenticator");
-
-        Integer nativePort = 9042;
-        try {
-            nativePort = Integer.parseInt(context.getPluginConfiguration()
-                .getSimpleValue("nativeTransportPort", "9042"));
-        } catch (Exception e) {
-            log.debug("Native transport port parsing failed...", e);
-        }
-
-
-        Cluster cluster = null;
-        try {
-            Builder clusterBuilder = Cluster
-                .builder()
-                .addContactPoints(new String[] { host })
-                .withoutMetrics()
-                .withPort(nativePort);
-
-            if (authenticatorClassName.endsWith("PasswordAuthenticator")) {
-                clusterBuilder = clusterBuilder.withCredentials(username, password);
-            }
-
-            cluster = clusterBuilder.build();
-
-            this.cassandraSession = cluster.connect(clusterName);
-        } catch (Exception e) {
-            log.error("Connecting to Cassandra " + host + ":" + nativePort
-                + " failed. Attempting to shutdown the cluster manager and all the connections.", e);
-
-            try {
-                if (cluster != null) {
-                    cluster.shutdown();
-                }
-            } catch (Exception shutdownException) {
-                log.error("Failed attempt to shutdown the cluster manager.", shutdownException);
-            }
-
-            throw e;
-        }
     };
 
     @Override
     public void stop() {
         processInfo = null;
-        log.info("Shutting down Cassandra client");
-        cassandraSession.getCluster().shutdown();
-        log.info("Shutdown is complete");
+        super.stop();
     }
 
     @Override
@@ -394,6 +341,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         return addresses;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     protected void updateSeedsList(List<String> seeds) throws IOException {
         List<String> addresses = null;
         try {
@@ -503,10 +451,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         } else {
             return "cassandra";
         }
-    }
-
-    public Session getCassandraSession() {
-        return this.cassandraSession;
     }
 
     public String getHost() {

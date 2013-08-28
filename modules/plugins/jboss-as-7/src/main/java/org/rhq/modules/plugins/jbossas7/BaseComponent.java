@@ -366,7 +366,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
             }
         }
         Operation op = new Remove(address);
-        Result res = getASConnection().execute(op);
+        Result res = getASConnection().execute(op, 120);
         if (!res.isSuccess()) {
             throw new IllegalArgumentException("Delete for [" + path + "] failed: " + res.getFailureDescription());
         }

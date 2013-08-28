@@ -408,20 +408,6 @@ public class ResourceTreeDatasource extends DataSource {
             return parentSubCategory;
         }
 
-        /**
-         * Copies the data relevant to tree node from the provided resource to the cached {@link #getResource() resource object}
-         * attached to this node.
-         *
-         * @param fresh a "fresh" copy of the resource from which this node should update its cached copy of the resource
-         */
-        public void updateResourceFrom(Resource fresh) {
-            if (fresh == null || !fresh.getUuid().equals(resource.getUuid())) {
-                return;
-            }
-
-            resource.setCurrentAvailability(fresh.getCurrentAvailability());
-        }
-
         public static String idOf(Resource resource) {
             return idOf(resource.getId());
         }

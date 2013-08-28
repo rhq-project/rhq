@@ -472,7 +472,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         refresh.addClickHandler(new ClickHandler() {
 
             public void onClick(MenuItemClickEvent event) {
-                contextMenuRefresh(treeGrid, node);
+                contextMenuRefresh(treeGrid, node, false);
             }
         });
         resourceContextMenu.addItem(refresh);
@@ -549,9 +549,7 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                     public void onClick(MenuItemClickEvent event) {
                         String viewPath = LinkManager.getResourceTabLink(resource.getId(),
-                            ResourceDetailView.Tab.Operations.NAME, "Schedules")
-                            + "/0/"
-                            + operationDefinition.getId();
+                            ResourceDetailView.Tab.Operations.NAME, "Schedules") + "/0/" + operationDefinition.getId();
                         CoreGUI.goToView(viewPath);
                     }
                 });
@@ -697,36 +695,22 @@ public class ResourceTreeView extends EnhancedVLayout {
         return subMenu;
     }
 
-    public void refreshResource(Resource resource, boolean reloadChildren) {
-        ResourceTreeNode resourceNode = null;
-
-        if (treeGrid == null) {
-            //might happen if someone calls this very soon after creation when the tree didn't have enough time to load.
-            //In that case we might as well ignore this refresh, because we'd get the fresh data in the tree anyway
+    public void refreshResource(Resource resource) {
+        // might happen if someone calls this very soon after creation when the tree didn't have enough time to load.
+        // In that case we might as well ignore this refresh, because we'd get the fresh data in the tree anyway
+        if (null == treeGrid || null == treeGrid.getTree()) {
             return;
         }
 
-        TreeNode[] nodes = treeGrid.getTree().getAllNodes();
-        for(TreeNode node : nodes) {
-            if (node instanceof ResourceTreeNode) {
-                if (((ResourceTreeNode) node).getResource().equals(resource)) {
-                    resourceNode = (ResourceTreeNode) node;
-                    break;
-                }
-            }
-        }
+        ResourceTreeNode resourceNode = (ResourceTreeNode) treeGrid.getTree().findById(
+            ResourceTreeNode.idOf(resource.getId()));
 
-        if (resourceNode == null) {
+        // no need to refresh a node that is not in the tree (not sure why that would be, it should actually be selected, I think)
+        if (null == resourceNode) {
             return;
         }
 
-        resourceNode.updateResourceFrom(resource);
-
-        treeGrid.markForRedraw();
-
-        if (reloadChildren) {
-            contextMenuRefresh(treeGrid, resourceNode);
-        }
+        contextMenuRefresh(treeGrid, resourceNode, true);
     }
 
     /**
@@ -735,9 +719,9 @@ public class ResourceTreeView extends EnhancedVLayout {
      *
      * @param treeGrid
      * @param node
-     * @param refreshDetailView
+     * @param treeOnly, if possible, don't refresh the entire view, limit refresh to the tree
      */
-    public void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node) {
+    public void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node, boolean treeOnly) {
         // There are two cases to handle here:
         // 1) The refresh node is an ancestor of the currently selected node. 
         //    - We must re-navigate to the selected node because otherwise it will be lost as part of the subtree
@@ -781,7 +765,9 @@ public class ResourceTreeView extends EnhancedVLayout {
 
         // refresh the view. This won't refresh the tree since the resource hasn't changed, and
         // we don't really want to refresh the whole tree anyway.
-        CoreGUI.refresh();
+        if (!treeOnly) {
+            CoreGUI.refresh();
+        }
 
         // if this is the root just refresh from the top
         Tree tree = treeGrid.getTree();

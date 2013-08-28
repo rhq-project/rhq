@@ -173,7 +173,7 @@ public class ResourceGroupContextMenu extends Menu {
 
                 public void onClick(MenuItemClickEvent event) {
                     // refresh the tree and detail
-                    ((ResourceTreeView) treeView).contextMenuRefresh(treeGrid, node);
+                    ((ResourceTreeView) treeView).contextMenuRefresh(treeGrid, node, false);
                 }
             });
             addItem(refresh);

@@ -59,9 +59,9 @@ import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.async.Command;
 import org.rhq.enterprise.gui.coregui.client.util.async.CountDownLatch;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * @author Greg Hinkle
@@ -245,7 +245,7 @@ public class ResourceTitleBar extends EnhancedVLayout {
                         }
 
                         if (currentAvail != result.getAvailabilityType()) {
-                            platformTree.refreshResource(resource, true);
+                            platformTree.refreshResource(resource);
                         }
                     }
                 });
@@ -436,9 +436,6 @@ public class ResourceTitleBar extends EnhancedVLayout {
         ResourceTitleBar.this.markForRedraw();
 
         availAndErrorRefresher.startRefreshCycle();
-
-        //make sure the tree is in sync with what we're showing in the detail
-        platformTree.refreshResource(resource, false);
     }
 
     @Override

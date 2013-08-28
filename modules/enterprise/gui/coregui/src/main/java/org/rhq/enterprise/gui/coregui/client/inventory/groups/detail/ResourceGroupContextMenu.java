@@ -34,6 +34,7 @@ import com.google.gwt.http.client.RequestException;
 import com.google.gwt.http.client.Response;
 import com.google.gwt.user.client.History;
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.menu.Menu;
 import com.smartgwt.client.widgets.menu.MenuItem;
 import com.smartgwt.client.widgets.menu.MenuItemSeparator;
@@ -83,7 +84,8 @@ public class ResourceGroupContextMenu extends Menu {
     private boolean isAutoCluster = false;
     private boolean isAutoGroup = false;
 
-    public void showContextMenu(final TreeGrid treeGrid, final TreeNode node, final ResourceGroup group) {
+    public void showContextMenu(final VLayout treeView, final TreeGrid treeGrid, final TreeNode node,
+        final ResourceGroup group) {
         // we need the group composite to access permissions for context menu authz, so get it now
         ResourceGroupCriteria criteria = new ResourceGroupCriteria();
         criteria.addFilterId(group.getId());
@@ -112,13 +114,14 @@ public class ResourceGroupContextMenu extends Menu {
                         CoreGUI.getErrorHandler().handleError(
                             MSG.view_group_detail_failLoadComp(String.valueOf(group.getId())));
                     } else {
-                        showContextMenu(treeGrid, node, result.get(0));
+                        showContextMenu(treeView, treeGrid, node, result.get(0));
                     }
                 }
             });
     }
 
-    public void showContextMenu(final TreeGrid treeGrid, final TreeNode node, ResourceGroupComposite groupComposite) {
+    public void showContextMenu(final VLayout treeView, final TreeGrid treeGrid, final TreeNode node,
+        ResourceGroupComposite groupComposite) {
         this.groupComposite = groupComposite;
         group = groupComposite.getResourceGroup();
 
@@ -132,7 +135,6 @@ public class ResourceGroupContextMenu extends Menu {
         isAutoCluster = (null != group.getClusterResourceGroup());
         isAutoGroup = (null != group.getSubject());
 
-
         ResourceTypeRepository.Cache.getInstance().getResourceTypes(
             groupMemberType.getId(),
             EnumSet.of(ResourceTypeRepository.MetadataType.operations, ResourceTypeRepository.MetadataType.children,
@@ -143,14 +145,14 @@ public class ResourceGroupContextMenu extends Menu {
                 public void onTypesLoaded(ResourceType type) {
 
                     groupMemberType = type;
-                    buildResourceGroupContextMenu(treeGrid, node, group, type);
+                    buildResourceGroupContextMenu(treeView, treeGrid, node, group, type);
                     showContextMenu();
                 }
             });
     }
 
-    private void buildResourceGroupContextMenu(final TreeGrid treeGrid, final TreeNode node, final ResourceGroup group,
-        final ResourceType resourceType) {
+    private void buildResourceGroupContextMenu(final VLayout treeView, final TreeGrid treeGrid, final TreeNode node,
+        final ResourceGroup group, final ResourceType resourceType) {
         // name
         setItems(new MenuItem(group.getName()));
 
@@ -159,7 +161,7 @@ public class ResourceGroupContextMenu extends Menu {
 
         // Mixed group refresh is not needed as there is only a single top node. Compat group
         // refresh makes sense after a group membership change but we already perform a CoreGUI refresh to
-        // reset the whole detail view after that user action. So, only suuport refresh for autogroup nodes
+        // reset the whole detail view after that user action. So, only support refresh for autogroup nodes
         // in the resource tree.
         if (node instanceof AutoGroupTreeNode) {
             // separator
@@ -171,7 +173,7 @@ public class ResourceGroupContextMenu extends Menu {
 
                 public void onClick(MenuItemClickEvent event) {
                     // refresh the tree and detail
-                    ResourceTreeView.contextMenuRefresh(treeGrid, node, true);
+                    ((ResourceTreeView) treeView).contextMenuRefresh(treeGrid, node);
                 }
             });
             addItem(refresh);
@@ -250,14 +252,13 @@ public class ResourceGroupContextMenu extends Menu {
         addItem(buildMetricsMenu(resourceType, group));
     }
 
-
     private MenuItem buildMetricsMenu(final ResourceType type, final ResourceGroup resourceGroup) {
         MenuItem measurements = new MenuItem(MSG.view_tree_common_contextMenu_measurements());
         final Menu measurementsSubMenu = new Menu();
 
         DashboardCriteria criteria = new DashboardCriteria();
         final EntityContext context = EntityContext.forGroup(resourceGroup);
-        if(!context.isAutoGroup()){
+        if (!context.isAutoGroup()) {
 
             GWTServiceLookup.getDashboardService().findDashboardsByCriteria(criteria,
                 new AsyncCallback<PageList<Dashboard>>() {
@@ -299,11 +300,12 @@ public class ResourceGroupContextMenu extends Menu {
                                                     .view_tree_common_contextMenu_groupGraph(),
                                                     ResourceGroupD3GraphPortlet.KEY, 250);
                                                 p.getConfiguration().put(
-                                                    new PropertySimple(ResourceGroupD3GraphPortlet.CFG_RESOURCE_GROUP_ID,
-                                                        group.getId()));
+                                                    new PropertySimple(
+                                                        ResourceGroupD3GraphPortlet.CFG_RESOURCE_GROUP_ID, group
+                                                            .getId()));
                                                 p.getConfiguration().put(
-                                                    new PropertySimple(ResourceGroupD3GraphPortlet.CFG_DEFINITION_ID, def
-                                                        .getId()));
+                                                    new PropertySimple(ResourceGroupD3GraphPortlet.CFG_DEFINITION_ID,
+                                                        def.getId()));
 
                                                 d.addPortlet(p);
 
@@ -368,7 +370,8 @@ public class ResourceGroupContextMenu extends Menu {
                                                     baseUrl += "&view=Default";
                                                     final String url = baseUrl;
                                                     //initiate HTTP request
-                                                    final RequestBuilder b = new RequestBuilder(RequestBuilder.GET, baseUrl);
+                                                    final RequestBuilder b = new RequestBuilder(RequestBuilder.GET,
+                                                        baseUrl);
 
                                                     try {
                                                         b.setCallback(new RequestCallback() {

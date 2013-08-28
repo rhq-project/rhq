@@ -121,8 +121,6 @@ public class ResourceTreeView extends EnhancedVLayout {
         loadingLabel.setHeight(20);
         loadingLabel.hide();
         addMember(loadingLabel);
-
-        // TODO (ips): Are we intentionally avoiding calling super.onInit() here? If so, why?
     }
 
     private void buildTree() {
@@ -205,7 +203,7 @@ public class ResourceTreeView extends EnhancedVLayout {
                             enable();
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), re);
                         }
-                    } else {
+                    } else if (null != selectedRecord) {
                         // TODO: probably clicked on a subcategory, do we need a message?
                         treeGrid.deselectRecord(selectedRecord);
                         if (null != selectedNodeId) {
@@ -250,27 +248,20 @@ public class ResourceTreeView extends EnhancedVLayout {
         treeGrid.addDataArrivedHandler(new DataArrivedHandler() {
 
             public void onDataArrived(DataArrivedEvent dataArrivedEvent) {
-                if (null == selectedNodeId) {
-                    return;
+                TreeNode parent = dataArrivedEvent.getParentNode();
+
+                // always expand the parent when new data arrives underneath, it means the user has expanded the node
+                if (parent instanceof EnhancedTreeNode) {
+                    treeGrid.getTree().openFolder(parent);
+                    treeGrid.markForRedraw();
                 }
 
-                // do not update the selection when expanding other tree node (BZ 816086)
-                TreeNode parent = dataArrivedEvent.getParentNode();
-                if (parent instanceof EnhancedTreeNode) {
-                    String parentId = ((EnhancedTreeNode) parent).getID();
-                    if (parentId.equals(selectedNodeId)) {
-                        updateSelection();
-                    } else {
-                        TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
-                        TreeNode selectedParentNode = treeGrid.getTree().getParent(selectedNode);
-                        while (null != selectedParentNode && !(selectedParentNode instanceof ResourceTreeNode)) {
-                            selectedParentNode = treeGrid.getTree().getParent(selectedParentNode);
-                        }
-                        if (null != selectedParentNode
-                            && parentId.equals(((ResourceTreeNode) selectedParentNode).getID())) {
-                            updateSelection();
-                        }
-                    }
+                // if for some reason expansion has caused our selection to be lost then make sure it is again properly selected
+                ListGridRecord selectedRecord = treeGrid.getSelectedRecord();
+                TreeNode selectedNode = null != selectedNodeId ? treeGrid.getTree().findById(selectedNodeId) : null;
+
+                if (null != selectedNode && !selectedNode.equals(selectedRecord)) {
+                    updateSelection();
                 }
             }
         });
@@ -322,6 +313,10 @@ public class ResourceTreeView extends EnhancedVLayout {
                                 // store a map entry from backingGroupId to AGTreeNode so we can easily
                                 // get back to this node given the id of the backing group (from the viewpath)
                                 autoGroupNodeMap.put(result.getId(), agNode);
+
+                                // now that we know that backing group id, hold onto it in the node in case we need it
+                                agNode.setResourceGroupId(result.getId());
+
                                 callback.onSuccess(result);
                             }
                         });
@@ -332,6 +327,9 @@ public class ResourceTreeView extends EnhancedVLayout {
                     // store a map entry from backingGroupId to AGTreeNode so we can easily
                     // get back to this node given the id of the backing group (from the viewpath)
                     autoGroupNodeMap.put(backingGroup.getId(), agNode);
+
+                    // now that we know that backing group id, hold onto it in the node in case we need it
+                    agNode.setResourceGroupId(backingGroup.getId());
 
                     // make sure the members are correct before rendering
                     resourceGroupService.setAssignedResources(backingGroup.getId(), childIds, false,
@@ -396,7 +394,7 @@ public class ResourceTreeView extends EnhancedVLayout {
             }
 
             public void onSuccess(ResourceGroup result) {
-                autoGroupContextMenu.showContextMenu(treeGrid, agNode, result);
+                autoGroupContextMenu.showContextMenu(ResourceTreeView.this, treeGrid, agNode, result);
             }
         });
     }
@@ -467,7 +465,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         refresh.addClickHandler(new ClickHandler() {
 
             public void onClick(MenuItemClickEvent event) {
-                contextMenuRefresh(treeGrid, node, true);
+                contextMenuRefresh(treeGrid, node);
             }
         });
         resourceContextMenu.addItem(refresh);
@@ -720,7 +718,7 @@ public class ResourceTreeView extends EnhancedVLayout {
         treeGrid.markForRedraw();
 
         if (reloadChildren) {
-            contextMenuRefresh(treeGrid, resourceNode, false);
+            contextMenuRefresh(treeGrid, resourceNode);
         }
     }
 
@@ -732,12 +730,51 @@ public class ResourceTreeView extends EnhancedVLayout {
      * @param node
      * @param refreshDetailView
      */
-    public static void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node, boolean refreshDetailView) {
-        if (refreshDetailView) {
-            // refresh the view. This won't refresh the tree since the resource hasn't changed, and
-            // we don't really want to refresh the whole tree anyway.
-            CoreGUI.refresh();
+    public void contextMenuRefresh(final TreeGrid treeGrid, TreeNode node) {
+        // There are two cases to handle here:
+        // 1) The refresh node is an ancestor of the currently selected node. 
+        //    - We must re-navigate to the selected node because otherwise it will be lost as part of the subtree
+        //      being refreshed.
+        // 2) The refresh node is not an ancestor of the current selected node (it is the node, is a descendant, or
+        //    is in a different subtree.
+        //    - In this case, reload the necessary portion of the tree, the selection should be maintained
+
+        // determine if the refresh node is an ancestor of the selected node.
+        boolean isAncestor = false;
+
+        ListGridRecord selectedRecord = treeGrid.getSelectedRecord();
+        if (null != selectedRecord) {
+            TreeNode ancestor = (TreeNode) selectedRecord;
+            while (null != (ancestor = treeGrid.getTree().getParent(ancestor))) {
+                if (node.equals(ancestor)) {
+                    isAncestor = true;
+                    break;
+                }
+            }
         }
+
+        // Case 1: An ancestor
+        if (isAncestor) {
+            // prune the existing subtree rooted at the refresh node, it will be rebuilt when we re-navigate to the
+            // selected node.
+            treeGrid.getTree().remove(node);
+
+            if (selectedRecord instanceof ResourceTreeNode) {
+                setSelectedResource(((ResourceTreeNode) selectedRecord).getResource().getId(), false);
+            } else if (selectedRecord instanceof AutoGroupTreeNode) {
+                Integer backingGroupId = ((AutoGroupTreeNode) selectedRecord).getResourceGroupId();
+                if (null != backingGroupId) {
+                    setSelectedAutoGroup(backingGroupId);
+                }
+            }
+            return;
+        }
+
+        // Case 2: Not an ancestor
+
+        // refresh the view. This won't refresh the tree since the resource hasn't changed, and
+        // we don't really want to refresh the whole tree anyway.
+        CoreGUI.refresh();
 
         // if this is the root just refresh from the top
         Tree tree = treeGrid.getTree();
@@ -770,12 +807,12 @@ public class ResourceTreeView extends EnhancedVLayout {
             updateSelection(isRefresh);
         } else {
             // This is for cases where we have to load the tree fresh including down to the currently visible node
-            loadTree(selectedResourceId, true, false, null);
+            loadTree(selectedResourceId, true, null);
         }
 
     }
 
-    private void loadTree(final int selectedResourceId, final boolean updateSelection, final boolean autogroup,
+    private void loadTree(final int selectedResourceId, final boolean updateSelection,
         final AsyncCallback<Void> callback) {
 
         if (updateSelection) {
@@ -861,11 +898,6 @@ public class ResourceTreeView extends EnhancedVLayout {
                         if (updateSelection) {
                             updateSelection();
                         }
-
-                    } else if (autogroup) {
-                        if (null != callback) {
-                            callback.onSuccess(null);
-                        }
                     } else {
                         ResourceTypeRepository.Cache.getInstance().loadResourceTypes(lineage,
                             EnumSet.of(ResourceTypeRepository.MetadataType.subCategory),
@@ -877,16 +909,21 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                                     loadingLabel.hide();
 
-                                    TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
-                                    if (selectedNode != null && updateSelection) {
-                                        updateSelection();
+                                    if (updateSelection) {
+                                        TreeNode selectedNode = treeGrid.getTree().findById(selectedNodeId);
+                                        if (selectedNode != null && updateSelection) {
+                                            updateSelection();
 
-                                    } else {
-                                        CoreGUI.getMessageCenter().notify(
-                                            new Message(MSG.view_tree_common_loadFailed_selection(),
-                                                Message.Severity.Warning));
+                                        } else {
+                                            CoreGUI.getMessageCenter().notify(
+                                                new Message(MSG.view_tree_common_loadFailed_selection(),
+                                                    Message.Severity.Warning));
+                                        }
                                     }
 
+                                    if (null != callback) {
+                                        callback.onSuccess(null);
+                                    }
                                 }
                             });
                     }
@@ -897,7 +934,8 @@ public class ResourceTreeView extends EnhancedVLayout {
     public void setSelectedAutoGroup(final Integer selectedAutoGroupId) {
 
         AutoGroupTreeNode selectedNode = autoGroupNodeMap.get(selectedAutoGroupId);
-        if (treeGrid != null && treeGrid.getTree() != null && selectedNode != null) {
+        if (treeGrid != null && treeGrid.getTree() != null && selectedNode != null
+            && null != treeGrid.getTree().findById(selectedNode.getID())) {
             // This is the case where the tree was previously loaded and we get fired to look at a different
             // node in the same tree and just have to switch the selection
 
@@ -922,33 +960,28 @@ public class ResourceTreeView extends EnhancedVLayout {
 
                 public void onSuccess(PageList<ResourceGroup> result) {
                     final ResourceGroup backingGroup = result.get(0);
-                    boolean updateSelection = selectedNodeId != null
-                        && selectedNodeId != ResourceTreeNode.idOf(selectedAutoGroupId);
 
                     // load the tree up to the autogroup's parent resource. Don't select the resource node
                     // to avoid an unnecessary navigation to the resource, we just need the tree in place so
                     // we can navigate to the autogroup node.
-                    loadTree(backingGroup.getAutoGroupParentResource().getId(), updateSelection, true,
-                        new AsyncCallback<Void>() {
+                    loadTree(backingGroup.getAutoGroupParentResource().getId(), false, new AsyncCallback<Void>() {
 
-                            public void onFailure(Throwable caught) {
-                                loadingLabel.hide();
-                                CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(),
-                                    caught);
-                            }
+                        public void onFailure(Throwable caught) {
+                            loadingLabel.hide();
+                            CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_children(), caught);
+                        }
 
-                            public void onSuccess(Void arg) {
-                                // get the node ID and use it to add a map entry, then call this again to finish up...
-                                selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(),
-                                    backingGroup.getResourceType());
-                                AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(
-                                    selectedNodeId);
-                                autoGroupNodeMap.put(backingGroup.getId(), agNode);
-                                updateSelection();
+                        public void onSuccess(Void arg) {
+                            // get the node ID and use it to add a map entry, then call this again to finish up...
+                            selectedNodeId = AutoGroupTreeNode.idOf(backingGroup.getAutoGroupParentResource(),
+                                backingGroup.getResourceType());
+                            AutoGroupTreeNode agNode = (AutoGroupTreeNode) treeGrid.getTree().findById(selectedNodeId);
+                            autoGroupNodeMap.put(backingGroup.getId(), agNode);
+                            updateSelection();
 
-                                loadingLabel.hide();
-                            }
-                        });
+                            loadingLabel.hide();
+                        }
+                    });
                 }
             });
         }

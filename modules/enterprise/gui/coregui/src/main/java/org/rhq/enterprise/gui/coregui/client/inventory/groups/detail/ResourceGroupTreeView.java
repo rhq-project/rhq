@@ -66,8 +66,8 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedUtility;
+import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 
 /**
  * This is the view that renders the left hand tree for groups.
@@ -191,7 +191,7 @@ public class ResourceGroupTreeView extends EnhancedVLayout implements Bookmarkab
 
                 // only show the context menu for cluster nodes and our top root node
                 if (contextNode.isCompatibleGroupTopNode() || contextNode.isAutoClusterNode()) {
-                    contextMenu.showContextMenu(treeGrid, contextNode);
+                    contextMenu.showContextMenu(ResourceGroupTreeView.this, treeGrid, contextNode);
                 }
             }
         });

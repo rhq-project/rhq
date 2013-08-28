@@ -529,7 +529,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 cop.addStep(step2);
             }
 
-            result = connection.execute(cop);
+            result = connection.execute(cop, 300);
             resourceKey = step1.getAddress().getPath();
 
         } else {
@@ -549,7 +549,7 @@ public class BaseComponent<T extends ResourceComponent<?>> implements AS7Compone
                 log.info("Deploy operation: " + cop);
             }
 
-            result = connection.execute(cop);
+            result = connection.execute(cop, 300);
         }
 
         if ((!result.isSuccess())) {

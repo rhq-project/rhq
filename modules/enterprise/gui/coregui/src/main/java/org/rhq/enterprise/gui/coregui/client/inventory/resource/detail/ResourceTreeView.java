@@ -79,6 +79,7 @@ import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGro
 import org.rhq.enterprise.gui.coregui.client.inventory.groups.detail.ResourceGroupDetailView;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.AutoGroupTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.ResourceTreeNode;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceTreeDatasource.SubCategoryTreeNode;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.factory.ResourceFactoryImportWizard;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
@@ -203,8 +204,14 @@ public class ResourceTreeView extends EnhancedVLayout {
                             enable();
                             CoreGUI.getErrorHandler().handleError(MSG.view_tree_common_loadFailed_selection(), re);
                         }
+                    } else if (selectedRecord instanceof SubCategoryTreeNode) {
+                        treeGrid.deselectRecord(selectedRecord);
+                        treeGrid.getTree().openFolder((TreeNode) selectedRecord);
+                        if (null != selectedNodeId) {
+                            treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));
+                        }
                     } else if (null != selectedRecord) {
-                        // TODO: probably clicked on a subcategory, do we need a message?
+                        // TODO: Should we thrown an exception, don't know what this is
                         treeGrid.deselectRecord(selectedRecord);
                         if (null != selectedNodeId) {
                             treeGrid.selectRecord(treeGrid.getTree().findById(selectedNodeId));

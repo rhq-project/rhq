@@ -142,7 +142,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      */
     public void refreshData() {
         Log.debug("MetricsView.redrawGraphs.");
-
         new Timer() {
 
             @Override
@@ -153,19 +152,6 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
 
     }
 
-    public void refreshOpenGridRows(){
-        ListGridRecord[] metricsRecords = metricsTableListGrid.getRecords();
-        for (int i = 0; i < metricsRecords.length; i++) {
-            ListGridRecord metricsRecord = metricsRecords[i];
-            if(null != metricsRecord){
-                int metricDefinitionId = metricsRecord
-                        .getAttributeAsInt(MetricsViewDataSource.FIELD_METRIC_DEF_ID);
-                if(expandedRows.contains(metricDefinitionId)){
-                    metricsTableListGrid.expandRecord(metricsRecord);
-                }
-            }
-        }
-    }
 
     public class MetricsTableListGrid extends ListGrid {
 
@@ -196,7 +182,14 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
                 public void onRecordCollapse(RecordCollapseEvent recordCollapseEvent) {
                     metricsTableView.expandedRows.remove(recordCollapseEvent.getRecord().getAttributeAsInt(
                         MetricsViewDataSource.FIELD_METRIC_DEF_ID));
-                    refreshData();
+                    refresh();
+                    new Timer() {
+
+                        @Override
+                        public void run() {
+                            BrowserUtility.graphSparkLines();
+                        }
+                    }.schedule(150);
                 }
             });
             addSortChangedHandler(new SortChangedHandler() {

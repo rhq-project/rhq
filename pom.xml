@@ -1619,7 +1619,7 @@
       </repository>
 
       <!-- this is needed for swagger-annotations_2.9.1 in modules/enterprise/server/jar -->
-      <repository>       
+      <repository>
           <id>sonatype-snapshots</id>
           <name>Sonatype Snapshots</name>
           <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
@@ -2412,6 +2412,11 @@
             <name>Rafael Chies</name>
             <timezone>-7</timezone>
             <url>http://blogdorafaelchies.wordpress.com/</url>
+        </contributor>
+        <contributor>
+            <name>Jérémie Lagarde</name>
+            <timezone>+1</timezone>
+            <url>http://printstacktrace.org/blog/</url>
         </contributor>
     </contributors>
 

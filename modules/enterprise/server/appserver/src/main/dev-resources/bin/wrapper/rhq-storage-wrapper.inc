@@ -4,11 +4,11 @@
 #
 
 # override and lower the initial memory profile
-wrapper.java.additional.20=-Xms128M
-wrapper.java.additional.21=-Xmx256M
+wrapper.java.additional.21=-Xms128M
+wrapper.java.additional.22=-Xmx256M
 
 # enable remote debugging
-#wrapper.java.additional.22=-agentlib:jdwp=transport=dt_socket,address=8788,server=y,suspend=n
+#wrapper.java.additional.23=-agentlib:jdwp=transport=dt_socket,address=8788,server=y,suspend=n
 
 # disable JVM startup timeout
 wrapper.startup.timeout=0

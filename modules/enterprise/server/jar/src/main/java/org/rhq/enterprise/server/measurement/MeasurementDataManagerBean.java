@@ -99,6 +99,8 @@ import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
 import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.RawDataInsertedCallback;
+import org.rhq.server.metrics.domain.AggregateNumericMetric;
+import org.rhq.server.metrics.domain.RawNumericMetric;
 
 /**
  * A manager for {@link MeasurementData}s.
@@ -155,10 +157,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     private MeasurementDefinitionManagerLocal measurementDefinitionManager;
 
     @EJB
-    private MetricsManagerLocal metricsManager;
-
-    @EJB
-    private StorageClientManagerBean storageClientManagerBean;
+    private StorageClientManagerBean storageClientManager;
 
     @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;
@@ -228,7 +227,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             return;
         }
 
-        MetricsServer metricsServer = storageClientManagerBean.getMetricsServer();
+        MetricsServer metricsServer = storageClientManager.getMetricsServer();
         metricsServer.addNumericData(data, new RawDataInsertedCallback() {
 
             private ReentrantLock lock = new ReentrantLock();
@@ -579,7 +578,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @Nullable
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
-        return metricsManager.findLatestValueForResource(scheduleId);
+        MetricsServer metricsServer = storageClientManager.getMetricsServer();
+        RawNumericMetric metric = metricsServer.findLatestValueForResource(scheduleId);
+        return new MeasurementDataNumeric(metric.getTimestamp(), scheduleId, metric.getValue());
     }
 
     @Asynchronous
@@ -595,6 +596,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         log.debug(callingMethod + ": " + stats.toString());
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
         MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
         if (schedule == null) {
@@ -614,9 +616,13 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
             throw new IllegalArgumentException("Start date " + startTime + " is not before " + endTime);
         }
 
-        return metricsManager.getSummaryAggregate(scheduleId, startTime, endTime);
+        MetricsServer metricsServer = storageClientManager.getMetricsServer();
+        AggregateNumericMetric summary = metricsServer.getSummaryAggregate(scheduleId, startTime, endTime);
+
+        return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MeasurementAggregate getAggregate(Subject subject, int groupId, int definitionId, long startTime,
         long endTime) {
 
@@ -642,7 +648,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(subject,
             criteria);
 
-        return metricsManager.getSummaryAggregate(map(schedules), startTime, endTime);
+        MetricsServer metricsServer = storageClientManager.getMetricsServer();
+        AggregateNumericMetric summary = metricsServer.getSummaryAggregate(map(schedules), startTime, endTime);
+
+        return new MeasurementAggregate(summary.getMin(), summary.getAvg(), summary.getMax());
     }
 
     /**
@@ -697,6 +706,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return result;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForCompatibleGroup(Subject subject, int groupId,
         int definitionId, long beginTime, long endTime, int numPoints) {
 
@@ -705,8 +715,10 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return ret;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForContext(Subject subject,
         EntityContext context, int definitionId, long beginTime, long endTime, int numDataPoints) {
+        MetricsServer metricsServer = storageClientManager.getMetricsServer();
 
         if (context.type == EntityContext.Type.Resource) {
             if (!authorizationManager.canViewResource(subject, context.resourceId)) {
@@ -719,8 +731,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
 
             List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
-            for (MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResource(schedule.getId(),
-                beginTime, endTime,numDataPoints)) {
+            for (MeasurementDataNumericHighLowComposite object : metricsServer.findDataForResource(schedule.getId(),
+                beginTime, endTime, numDataPoints)) {
                 tempList.add(object);
             }
             data.add(tempList);
@@ -742,8 +754,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
 
             List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
-            for (MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResourceGroup(
-                map(schedules), beginTime, endTime,numDataPoints)) {
+            for (MeasurementDataNumericHighLowComposite object : metricsServer.findDataForGroup(map(schedules),
+                beginTime, endTime,numDataPoints)) {
                 tempList.add(object);
             }
             data.add(tempList);
@@ -763,6 +775,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         return scheduleIds;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public List<List<MeasurementDataNumericHighLowComposite>> findDataForResource(Subject subject, int resourceId,
         int[] definitionIds, long beginTime, long endTime, int numDataPoints) {
 
@@ -771,6 +784,7 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 + "] does not have permission to view measurement data for resource[id=" + resourceId + "]");
         }
 
+        MetricsServer metricsServer = storageClientManager.getMetricsServer();
         List<List<MeasurementDataNumericHighLowComposite>> results =
             new ArrayList<List<MeasurementDataNumericHighLowComposite>>();
         for (int nextDefinitionId : definitionIds) {
@@ -778,7 +792,8 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
                 false);
 
             List<MeasurementDataNumericHighLowComposite> tempList = new ArrayList<MeasurementDataNumericHighLowComposite>();
-            for(MeasurementDataNumericHighLowComposite object : metricsManager.findDataForResource(schedule.getId(), beginTime, endTime,numDataPoints) ){
+            for(MeasurementDataNumericHighLowComposite object : metricsServer.findDataForResource(schedule.getId(),
+                beginTime, endTime,numDataPoints) ){
                 tempList.add(object);
             }
 

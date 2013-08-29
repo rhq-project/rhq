@@ -296,26 +296,32 @@ public class MetricsServer {
                 log.debug("Inserting " + dataSet.size() + " raw metrics");
             }
 
-        final long startTime = System.currentTimeMillis();
-        final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
+            final long startTime = System.currentTimeMillis();
+            final AtomicInteger remainingInserts = new AtomicInteger(dataSet.size());
 
-        for (final MeasurementDataNumeric data : dataSet) {
-            semaphore.acquire();
-            StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
-            Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
-                @Override
-                public void onSuccess(ResultSet rows) {
-                    updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
-                }
+            for (final MeasurementDataNumeric data : dataSet) {
+                semaphore.acquire();
+                StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
+                Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
+                    @Override
+                    public void onSuccess(ResultSet rows) {
+                        updateMetricsIndex(data, dataSet.size(), remainingInserts, startTime, callback);
+                    }
 
-                @Override
-                public void onFailure(Throwable throwable) {
-                    log.error("An error occurred while inserting raw data " + data, throwable);
-                    callback.onFailure(throwable);
-                    semaphore.release();
-                }
-            });
-        }
+                    @Override
+                    public void onFailure(Throwable throwable) {
+                        if (log.isDebugEnabled()) {
+                            log.error("An error occurred while inserting raw data " + data, throwable);
+                        } else {
+                            log.error(
+                                "An error occurred while inserting raw data " + data + ": " +
+                                    throwable.getClass().getName() + ": " + throwable.getMessage());
+                        }
+                        callback.onFailure(throwable);
+                        semaphore.release();
+                    }
+                });
+            }
         } catch (Exception e) {
             log.error("An error occurred while inserting raw numeric data ", e);
             throw new RuntimeException(e);

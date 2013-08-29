@@ -44,11 +44,12 @@ import org.rhq.enterprise.server.measurement.CallTimeDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementOOBManagerLocal;
-import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.system.SystemManagerLocal;
 import org.rhq.enterprise.server.util.LookupUtil;
 import org.rhq.enterprise.server.util.TimingVoodoo;
+import org.rhq.server.metrics.MetricsServer;
 import org.rhq.server.metrics.domain.AggregateNumericMetric;
 
 /**
@@ -88,7 +89,7 @@ public class DataPurgeJob extends AbstractStatefulJob {
         try {
             Properties systemConfig = LookupUtil.getSystemManager().getSystemConfiguration(
                 LookupUtil.getSubjectManager().getOverlord());
-            Iterable<AggregateNumericMetric> oneHourAggregates = compressMeasurementData(LookupUtil.getMetricsManager());
+            Iterable<AggregateNumericMetric> oneHourAggregates = compressMeasurementData();
             purgeEverything(systemConfig);
             performDatabaseMaintenance(LookupUtil.getSystemManager(), systemConfig);
             calculateAutoBaselines(LookupUtil.getMeasurementBaselineManager());
@@ -101,12 +102,14 @@ public class DataPurgeJob extends AbstractStatefulJob {
         }
     }
 
-    private Iterable<AggregateNumericMetric> compressMeasurementData(MetricsManagerLocal metricsManager) {
+    private Iterable<AggregateNumericMetric> compressMeasurementData() {
         long timeStart = System.currentTimeMillis();
         LOG.info("Measurement data compression starting at " + new Date(timeStart));
 
         try {
-            return metricsManager.calculateAggregates();
+            StorageClientManagerBean storageClientManager = LookupUtil.getStorageClientManager();
+            MetricsServer metricsServer = storageClientManager.getMetricsServer();
+            return metricsServer.calculateAggregates();
         } catch (Exception e) {
             LOG.error("Failed to compress measurement data. Cause: " + e, e);
             return Collections.emptyList();

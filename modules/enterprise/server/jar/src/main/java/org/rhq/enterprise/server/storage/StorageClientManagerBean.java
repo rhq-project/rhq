@@ -32,6 +32,8 @@ import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
@@ -176,22 +178,27 @@ public class StorageClientManagerBean {
         initialized = false;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MetricsDAO getMetricsDAO() {
         return metricsDAO;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MetricsServer getMetricsServer() {
         return metricsServer;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public StorageSession getSession() {
         return session;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MetricsConfiguration getMetricsConfiguration() {
         return metricsConfiguration;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean isClusterAvailable() {
         return storageClusterMonitor != null && storageClusterMonitor.isClusterAvailable();
     }

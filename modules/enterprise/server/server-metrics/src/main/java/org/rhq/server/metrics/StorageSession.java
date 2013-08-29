@@ -35,7 +35,8 @@ public class StorageSession implements Host.StateListener {
         try {
             return wrappedSession.execute(query);
         } catch (NoHostAvailableException e) {
-            return handleException(e);
+            fireClusterDownEvent(e);
+            throw e;
         }
     }
 
@@ -43,18 +44,19 @@ public class StorageSession implements Host.StateListener {
         try {
             return wrappedSession.execute(query);
         } catch (NoHostAvailableException e) {
-            return handleException(e);
+            fireClusterDownEvent(e);
+            throw e;
         }
     }
 
     public StorageResultSetFuture executeAsync(String query) {
         ResultSetFuture future = wrappedSession.executeAsync(query);
-        return new StorageResultSetFuture(future, listeners);
+        return new StorageResultSetFuture(future, this);
     }
 
     public StorageResultSetFuture executeAsync(Query query) {
         ResultSetFuture future = wrappedSession.executeAsync(query);
-        return new StorageResultSetFuture(future, listeners);
+        return new StorageResultSetFuture(future, this);
     }
 
     public PreparedStatement prepare(String query) {
@@ -101,10 +103,9 @@ public class StorageSession implements Host.StateListener {
         }
     }
 
-    private ResultSet handleException(NoHostAvailableException e) {
+    void fireClusterDownEvent(NoHostAvailableException e) {
         for (StorageStateListener listener : listeners) {
             listener.onStorageClusterDown(e);
         }
-        throw e;
     }
 }

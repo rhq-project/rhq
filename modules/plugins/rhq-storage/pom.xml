@@ -21,24 +21,33 @@
   </properties>
 
    <dependencies>
-        <dependency>
-          <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-jmx-plugin</artifactId>
-          <version>${project.version}</version>
-          <scope>provided</scope>
-        </dependency>
 
-        <dependency>
-          <groupId>${rhq.groupId}</groupId>
-          <artifactId>rhq-cassandra-plugin</artifactId>
-          <version>${project.version}</version>
-        </dependency>
+     <dependency>
+       <groupId>${rhq.groupId}</groupId>
+       <artifactId>rhq-cassandra-plugin</artifactId>
+       <version>${project.version}</version>
+     </dependency>
 
-        <dependency>
-          <groupId>mc4j</groupId>
-          <artifactId>org-mc4j-ems</artifactId>
-          <scope>provided</scope>
-        </dependency>
+     <dependency>
+       <groupId>${project.groupId}</groupId>
+       <artifactId>rhq-cassandra-schema</artifactId>
+       <version>${project.version}</version>
+     </dependency>
+
+     <dependency>
+       <groupId>${rhq.groupId}</groupId>
+       <artifactId>rhq-jmx-plugin</artifactId>
+       <version>${project.version}</version>
+       <scope>provided</scope>
+     </dependency>
+
+     <dependency>
+       <groupId>mc4j</groupId>
+       <artifactId>org-mc4j-ems</artifactId>
+       <scope>provided</scope>
+     </dependency>
+
+     <!-- Test dependencies -->
 
      <dependency>
        <groupId>${project.groupId}</groupId>
@@ -67,12 +76,12 @@
        </exclusions>
      </dependency>
 
-
      <dependency>
-       <groupId>${project.groupId}</groupId>
-       <artifactId>rhq-cassandra-schema</artifactId>
-       <version>${project.version}</version>
+       <groupId>org.picketbox</groupId>
+       <artifactId>picketbox</artifactId>
+       <scope>test</scope>
      </dependency>
+
    </dependencies>
 
    <build>

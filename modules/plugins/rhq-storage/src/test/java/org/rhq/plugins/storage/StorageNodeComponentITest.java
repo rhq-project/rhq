@@ -153,7 +153,7 @@ public class StorageNodeComponentITest {
         clusterInitService.waitForClusterToStart(new String[] { storageNode.getAddress() },
             new int[] { storageNode.getJmxPort() });
 
-        SchemaManager schemaManager = new SchemaManager("rhqadmin", "rhqadmin",
+        SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
             new String[] { storageNode.getAddress() }, storageNode.getCqlPort());
         schemaManager.install();
         schemaManager.updateTopology();

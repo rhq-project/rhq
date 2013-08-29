@@ -177,7 +177,6 @@
 
     <mockito-core.version>1.9.0</mockito-core.version>
     <el.version>1.0</el.version>
-    <picketbox-version>4.0.15.Final</picketbox-version>
 
     <!-- cassandra dependency versions -->
     <cassandra.version>1.2.4</cassandra.version>

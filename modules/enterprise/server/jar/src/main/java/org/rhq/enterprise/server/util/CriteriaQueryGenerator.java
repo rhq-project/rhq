@@ -407,6 +407,9 @@ public final class CriteriaQueryGenerator {
 
         results.append("SELECT ");
 
+        List<String> fetchFields = getFetchFields(criteria);
+        boolean useJoinFetch = projection == null && pc.isUnlimited() && !fetchFields.isEmpty();
+
         if (countQuery) {
             if (groupByClause == null) { // non-grouped method
                 // use count(*) instead of count(alias) due to https://bugzilla.redhat.com/show_bug.cgi?id=699842
@@ -418,6 +421,12 @@ public final class CriteriaQueryGenerator {
             }
         } else {
             if (projection == null) {
+                //we need to just return distinct results when using JOIN FETCH otherwise we might see duplicates
+                //in the result set and create discrepancy between the data query and the count query (which doesn't
+                //use the JOIN FETCH but only the WHERE clause).
+                if (useJoinFetch) {
+                    results.append("DISTINCT ");
+                }
                 results.append(alias).append(NL);
             } else {
                 results.append(projection).append(NL);
@@ -431,7 +440,7 @@ public final class CriteriaQueryGenerator {
              * don't fetch in the count query to avoid: "query specified join fetching,
              * but the owner of the fetched association was not present in the select list"
              */
-            for (String fetchField : getFetchFields(criteria)) {
+            for (String fetchField : fetchFields) {
                 if (isPersistentBag(fetchField)) {
                     addPersistentBag(fetchField);
                 } else {
@@ -445,7 +454,7 @@ public final class CriteriaQueryGenerator {
                          * "manually" in the CriteriaQueryRunner and by defining a default batch fetch size in the
                          * persistence.xml.
                          */
-                        if (pc.isUnlimited()) {
+                        if (useJoinFetch) {
                             results.append("LEFT JOIN FETCH ").append(alias).append('.').append(fetchField).append(NL);
                         } else {
                             addJoinFetch(fetchField);

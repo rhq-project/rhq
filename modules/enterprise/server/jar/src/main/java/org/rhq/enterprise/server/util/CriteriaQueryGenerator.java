@@ -660,7 +660,7 @@ public final class CriteriaQueryGenerator {
 
     public List<String> getFetchFields(Criteria criteria) {
         List<String> results = new ArrayList<String>();
-        for (Field fetchField : getFields(criteria, Criteria.Type.FETCH)) {
+        for (Field fetchField : CriteriaUtil.getFields(criteria, Criteria.Type.FETCH)) {
             Object fetchFieldValue;
             try {
                 fetchField.setAccessible(true);
@@ -681,35 +681,6 @@ public final class CriteriaQueryGenerator {
         return results;
     }
 
-    private static List<Field> getFields(Criteria criteria, Criteria.Type fieldType) {
-        String prefix = fieldType.name().toLowerCase();
-        List<Field> results = new ArrayList<Field>();
-
-        Class<?> currentLevelClass = criteria.getClass();
-        List<String> globalFields = fieldType.getGlobalFields();
-        boolean isCriteriaClass = false;
-
-        do {
-            isCriteriaClass = currentLevelClass.equals(Criteria.class);
-
-            for (Field field : currentLevelClass.getDeclaredFields()) {
-                field.setAccessible(true);
-                if (isCriteriaClass) {
-                    if (globalFields.contains(field.getName()))
-                        results.add(field);
-
-                } else if (field.getName().startsWith(prefix)) {
-                    results.add(field);
-                }
-            }
-
-            currentLevelClass = currentLevelClass.getSuperclass();
-
-        } while (!isCriteriaClass);
-
-        return results;
-    }
-
     public static String getCleansedFieldName(Field field, int leadingCharsToStrip) {
         String fieldNameFragment = field.getName().substring(leadingCharsToStrip);
         String fieldName = Character.toLowerCase(fieldNameFragment.charAt(0)) + fieldNameFragment.substring(1);
@@ -718,9 +689,10 @@ public final class CriteriaQueryGenerator {
 
     public Map<String, Object> getFilterFields(Criteria criteria) {
         Map<String, Object> results = new HashMap<String, Object>();
-        for (Field filterField : getFields(criteria, Criteria.Type.FILTER)) {
+        for (Field filterField : CriteriaUtil.getFields(criteria, Criteria.Type.FILTER)) {
             Object filterFieldValue;
             try {
+                filterField.setAccessible(true);
                 filterFieldValue = filterField.get(criteria);
             } catch (IllegalAccessException iae) {
                 throw new RuntimeException(iae);
@@ -1056,12 +1028,13 @@ public final class CriteriaQueryGenerator {
             }
 
             for (String fieldName : criteria.getOrderingFieldNames()) {
-                for (Field sortField : getFields(criteria, Criteria.Type.SORT)) {
+                for (Field sortField : CriteriaUtil.getFields(criteria, Criteria.Type.SORT)) {
                     if (sortField.getName().equals(fieldName) == false) {
                         continue;
                     }
                     Object sortFieldValue;
                     try {
+                        sortField.setAccessible(true);
                         sortFieldValue = sortField.get(criteria);
                     } catch (IllegalAccessException iae) {
                         throw new RuntimeException(iae);

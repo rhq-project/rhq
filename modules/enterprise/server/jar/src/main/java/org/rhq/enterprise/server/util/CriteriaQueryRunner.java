@@ -61,29 +61,87 @@ public class CriteriaQueryRunner<T> {
         this.automaticFetching = automaticFetching;
     }
 
+    private static final int MAX_ATTEMPTS = 10;
+    private static final float START_WAIT_TIME = 100;
+    private static final float MAX_WAIT_TIME = 1000;
+
+    //we increase the wait time in a geometric progression from START_WAIT_TIME to MAX_WAIT_TIME...
+    private static final float INCREASE_COEFF = (float) Math
+        .pow(MAX_WAIT_TIME / START_WAIT_TIME, 1d / (MAX_ATTEMPTS - 1));
+
+    private class CollectionAndCountFetch {
+        Collection<? extends T> collection;
+        int count;
+
+        void fetch(PageControl pageControl) {
+            collection = getCollection();
+            count = getCount();
+            int cnt = 0;
+            float waitTime = 100;
+
+            long time = System.currentTimeMillis();
+
+            while (!pageControl.isConsistentWith(collection, count) &&
+                ++cnt < MAX_ATTEMPTS) { //++cnt - we already made 1 attempt out of the loop
+
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Possible phantom read detected while running a criteria query. The collection size = " +
+                        collection.size() + ", count = " + count + ", pageControl = " + pageControl +
+                        ". Attempt number " + cnt + ". Will wait for " + ((int) waitTime) + "ms.", new Exception());
+                }
+
+                try {
+                    Thread.sleep((int) waitTime);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+
+                collection = getCollection();
+                count = getCount();
+
+                waitTime *= INCREASE_COEFF;
+            }
+
+            if (cnt == MAX_ATTEMPTS) {
+                time = System.currentTimeMillis() - time;
+                LOG.warn(
+                    "Could not get consistent results of the paged data and a total count for " +
+                        CriteriaUtil.toString(criteria) + ". After " + MAX_ATTEMPTS + " attempts, the collection size" +
+                        " is " + collection.size() + ", while the count query reports " + count + " for " +
+                        pageControl + ". The discrepancy has not cleared up in " + time + "ms so we're giving up, " +
+                        "returning inconsistent results. Note that is most possibly NOT an error. It is likely " +
+                        "caused by concurrent database activity that changes the contents of the database that the " +
+                        "criteria query is querying.", new Exception());
+            }
+        }
+    }
+
     public PageList<T> execute() {
         PageList<T> results;
         PageControl pageControl = CriteriaQueryGenerator.getPageControl(criteria);
 
         Restriction criteriaRestriction = criteria.getRestriction();
         if (criteriaRestriction == null) {
-            results = new PageList<T>(getCollection(), getCount(), pageControl);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("restriction=" + criteriaRestriction + ", resultSize=" + results.size() + ", resultCount="
-                    + results.getTotalSize());
-            }
+            CollectionAndCountFetch fetch = new CollectionAndCountFetch();
+            fetch.fetch(pageControl);
+            results = new PageList<T>(fetch.collection, fetch.count, pageControl);
+//            if (LOG.isDebugEnabled()) {
+//                LOG.debug("restriction=" + criteriaRestriction + ", resultSize=" + results.size() + ", resultCount="
+//                    + results.getTotalSize());
+//            }
 
         } else if (criteriaRestriction == Restriction.COUNT_ONLY) {
             results = new PageList<T>(getCount(), pageControl);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("restriction=" + criteriaRestriction + ", resultCount=" + results.getTotalSize());
-            }
+//            if (LOG.isDebugEnabled()) {
+//                LOG.debug("restriction=" + criteriaRestriction + ", resultCount=" + results.getTotalSize());
+//            }
 
         } else if (criteriaRestriction == Restriction.COLLECTION_ONLY) {
             results = new PageList<T>(getCollection(), pageControl);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("restriction=" + criteriaRestriction + ", resultSize=" + results.size());
-            }
+//            if (LOG.isDebugEnabled()) {
+//                LOG.debug("restriction=" + criteriaRestriction + ", resultSize=" + results.size());
+//            }
 
         } else {
             throw new IllegalArgumentException(this.getClass().getSimpleName()
@@ -153,8 +211,8 @@ public class CriteriaQueryRunner<T> {
             Hibernate.initialize(instance);
 
             if (instance instanceof Iterable) {
-                Iterator<?> it = ((Iterable<?>)instance).iterator();
-                while(it.hasNext()) it.next();
+                Iterator<?> it = ((Iterable<?>) instance).iterator();
+                while (it.hasNext()) it.next();
             }
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {

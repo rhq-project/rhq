@@ -8,8 +8,8 @@ wrapper.java.additional.23=-agentlib:jdwp=transport=dt_socket,address=8787,serve
 
 # enable jprofiler
 #set.PATH=%PATH%;<jprofiler-install-dir>\bin\windows
-#wrapper.java.additional.23=-agentlib:jprofilerti=port=8849
-#wrapper.java.additional.24=-Xbootclasspath/a:<jprofiler-install-dir>\bin\agent.jar
+#wrapper.java.additional.24=-agentlib:jprofilerti=port=8849
+#wrapper.java.additional.25=-Xbootclasspath/a:<jprofiler-install-dir>\bin\agent.jar
 
 # disable JVM startup timeout
 wrapper.startup.timeout=0

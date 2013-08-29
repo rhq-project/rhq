@@ -76,7 +76,7 @@ public class CassandraIntegrationTest {
 
         Cluster cluster = new ClusterBuilder()
             .addContactPoints("127.0.0.1", "127.0.0.2")
-            .withCredentials(RHQADMIN, RHQADMIN)
+            .withCredentialsObfuscated(RHQADMIN, RHQADMIN_PASSWORD)
             .build();
 
         cluster.register(new Host.StateListener() {

@@ -142,7 +142,7 @@ public class Install extends AbstractInstall {
                 if (!isStorageInstalled()) {
                     installStorageNode(getStorageBasedir(), commandLine);
                 } else if (isWindows()) {
-                    installWindowsService(getBinDir(), "rhq-storage", true);
+                    installWindowsService(getBinDir(), "rhq-storage", false, true);
                 }
 
                 if (!isServerInstalled()) {
@@ -150,7 +150,7 @@ public class Install extends AbstractInstall {
                     runRHQServerInstaller();
                     waitForRHQServerToInitialize();
                 } else if (isWindows()) {
-                    installWindowsService(getBinDir(), "rhq-server", true);
+                    installWindowsService(getBinDir(), "rhq-server", false, true);
                 }
 
                 if (!isAgentInstalled()) {
@@ -166,7 +166,7 @@ public class Install extends AbstractInstall {
                     }
                 } else if (isWindows()) {
                     boolean start = Boolean.parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
-                    installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", start);
+                    installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, start);
                 }
 
             } else {
@@ -175,7 +175,7 @@ public class Install extends AbstractInstall {
                         log.info("The RHQ storage node is already installed in " + new File(getBaseDir(), "storage"));
 
                         if (isWindows()) {
-                            installWindowsService(getBinDir(), "rhq-storage", true);
+                            installWindowsService(getBinDir(), "rhq-storage", false, true);
                         } else {
                             log.info("Skipping storage node installation.");
                         }
@@ -202,7 +202,7 @@ public class Install extends AbstractInstall {
                         log.warn("The RHQ server is already installed.");
 
                         if (isWindows()) {
-                            installWindowsService(getBinDir(), "rhq-server", true);
+                            installWindowsService(getBinDir(), "rhq-server", false, true);
                         } else {
                             log.info("Skipping server installation.");
                         }
@@ -222,7 +222,7 @@ public class Install extends AbstractInstall {
                         boolean start = Boolean
                             .parseBoolean(commandLine.getOptionValue(AGENT_AUTOSTART_OPTION, "true"));
                         if (isWindows()) {
-                            installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", start);
+                            installWindowsService(new File(getAgentBasedir(), "bin"), "rhq-agent-wrapper", false, start);
                         } else {
                             log.info("Skipping agent installation.");
                         }

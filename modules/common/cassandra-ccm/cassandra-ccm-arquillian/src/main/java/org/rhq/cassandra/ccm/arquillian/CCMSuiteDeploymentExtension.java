@@ -1,26 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.cassandra.ccm.arquillian;
@@ -125,7 +119,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                         File clusterDir = new File(basedir, "cassandra");
 
                         options.setUsername("rhqadmin");
-                        options.setPassword("rhqadmin");
+                        options.setPassword("1eeb2f255e832171df8592078de921bc");
                         options.setClusterDir(clusterDir.getAbsolutePath());
                         options.setHeapSize("256M");
                         options.setHeapNewSize("64M");
@@ -141,8 +135,8 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                         ccm.startCluster(false);
 
                         try {
-                            clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 20, 5, 1500);
-                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes, cqlPort);
+                            clusterInitService.waitForClusterToStart(nodes, jmxPorts, nodes.length, 2000, 20, 10);
+                            schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, cqlPort);
 
                         } catch (Exception e) {
                             if (null != ccm) {
@@ -159,7 +153,7 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                             cqlPort = Integer.parseInt(cqlPortString);
 
                             //jmxPorts = parseNodeJmxPorts(seed);
-                            schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes, cqlPort);
+                            schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc", nodes, cqlPort);
 
                         } catch (Exception e) {
                             throw new RuntimeException("External Cassandra initialization failed", e);

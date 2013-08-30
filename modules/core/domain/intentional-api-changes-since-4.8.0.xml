@@ -1,37 +1,58 @@
 <?xml version="1.0"?>
 <differences>
-    <difference>
-        <className>org/rhq/core/domain/cloud/StorageNode</className>
-        <differenceType>6003</differenceType><!-- Value of compile-time constant has changed -->
-        <field>QUERY_FIND_BY_ADDRESS</field>
-        <justification>
-            Changing StorageNode.QUERY_FIND_BY_ADDRESS. The constants for native queries shouldn't be part of the public API.
-        </justification>
-    </difference>
-    <difference>
-        <className>org/rhq/core/domain/cloud/Server</className>
-        <differenceType>7004</differenceType><!-- num argments changed -->
-        <method>void clearStatus()</method>
-        <justification>
-            This class is not exposed remotely. The previous method signature was doing a blind clear of the status.
-            The new method will clear only the specified status.
-        </justification>
-    </difference>
-    <difference>
-        <className>org/rhq/core/domain/operation/OperationHistory</className>
-        <differenceType>7012</differenceType><!-- method added -->
-        <method>void setStartedTime(long)</method>
-        <justification>
-            We are adding a method to explicitly set the start time.
-        </justification>
-    </difference>
-    <difference>
-        <className>org/rhq/core/domain/configuration/ConfigurationUtility</className>
-        <differenceType>7009</differenceType>
-        <method>ConfigurationUtility()</method>
-        <justification>
-          A utility class only marked abstract is protected from instantiation but not from derivation. Its constructor
-          should be private.
-        </justification>
-    </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNode</className>
+    <differenceType>6003</differenceType>
+    <!-- Value of compile-time constant has changed -->
+    <field>QUERY_FIND_BY_ADDRESS</field>
+    <justification>
+      Changing StorageNode.QUERY_FIND_BY_ADDRESS. The constants for native queries shouldn't be part of the public API.
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/Server</className>
+    <differenceType>7004</differenceType>
+    <!-- num argments changed -->
+    <method>void clearStatus()</method>
+    <justification>
+      This class is not exposed remotely. The previous method signature was doing a blind clear of the status.
+      The new method will clear only the specified status.
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/operation/OperationHistory</className>
+    <differenceType>7012</differenceType>
+    <!-- method added -->
+    <method>void setStartedTime(long)</method>
+    <justification>
+      We are adding a method to explicitly set the start time.
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/configuration/ConfigurationUtility</className>
+    <differenceType>7009</differenceType>
+    <method>ConfigurationUtility()</method>
+    <justification>
+      A utility class only marked abstract is protected from instantiation but not from derivation. Its constructor
+      should be private.
+    </justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNode</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>java.lang.String getJMXConnectionURL()</method>
+    <justification>No longer needed</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNode</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>void parseNodeInformation(java.lang.String)</method>
+    <justification>No longer needed</justification>
+  </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNode</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>void setJmxPort(int)</method>
+    <justification>No longer needed</justification>
+  </difference>
 </differences>

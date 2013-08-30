@@ -2228,6 +2228,20 @@
             </schema-directSQL>
           </schemaSpec>
 
+          <schemaSpec version="2.140">
+            <schema-directSQL>
+              <statement desc="Adding default storage cql port">
+                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                VALUES (61, 'STORAGE_CQL_PORT', null, null, true)
+              </statement>
+            </schema-directSQL>
+            <schema-directSQL>
+              <statement desc="Adding default storage gossip port">
+                INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                VALUES (62, 'STORAGE_GOSSIP_PORT', null, null, true)
+              </statement>
+            </schema-directSQL>
+          </schemaSpec>
         </dbupgrade>
     </target>
 </project>

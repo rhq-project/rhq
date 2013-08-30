@@ -918,7 +918,7 @@ public class ServerInstallUtil {
         Connection connection = null;
         Statement queryStatement = null;
         ResultSet resultSet = null;
-        PreparedStatement insertStatement = null;
+        PreparedStatement insertStorageNode = null;
 
         try {
             String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
@@ -941,21 +941,21 @@ public class ServerInstallUtil {
                 try {
                     LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
-                    insertStatement = connection.prepareStatement(
+                    insertStorageNode = connection.prepareStatement(
                             "INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime) " +
                             "VALUES (?, ?, ?, ?, ?, ?)"
                     );
 
                     int id = 1001;
                     for (StorageNode storageNode : storageNodes) {
-                        insertStatement.setInt(1, id);
-                        insertStatement.setString(2, storageNode.getAddress());
-                        insertStatement.setInt(3, storageNode.getCqlPort());
-                        insertStatement.setString(4, StorageNode.OperationMode.INSTALLED.toString());
-                        insertStatement.setLong(5, System.currentTimeMillis());
-                        insertStatement.setLong(6, System.currentTimeMillis());
+                        insertStorageNode.setInt(1, id);
+                        insertStorageNode.setString(2, storageNode.getAddress());
+                        insertStorageNode.setInt(3, storageNode.getCqlPort());
+                        insertStorageNode.setString(4, StorageNode.OperationMode.INSTALLED.toString());
+                        insertStorageNode.setLong(5, System.currentTimeMillis());
+                        insertStorageNode.setLong(6, System.currentTimeMillis());
 
-                        insertStatement.executeUpdate();
+                        insertStorageNode.executeUpdate();
                         id += 1;
                     }
 
@@ -974,7 +974,54 @@ public class ServerInstallUtil {
             if (db != null) {
                 db.closeResultSet(resultSet);
                 db.closeStatement(queryStatement);
-                db.closeStatement(insertStatement);
+                db.closeStatement(insertStorageNode);
+                db.closeConnection(connection);
+            }
+        }
+    }
+
+    public static void persistStorageClusterSettingsIfNecessary(HashMap<String, String> serverProperties,
+        String password) throws Exception {
+        DatabaseType db = null;
+        Connection connection = null;
+        PreparedStatement updateClusterSetting = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            connection.setAutoCommit(false);
+
+            updateClusterSetting = connection.prepareStatement(
+                "UPDATE rhq_system_config " +
+                    "SET property_value = ?, default_property_value = ? " +
+                    "WHERE property_key = ? AND property_value IS NULL AND default_property_value IS NULL");
+
+            updateClusterSetting.setString(1, serverProperties.get("rhq.storage.cql-port"));
+            updateClusterSetting.setString(2, serverProperties.get("rhq.storage.cql-port"));
+            updateClusterSetting.setString(3, "STORAGE_CQL_PORT");
+            updateClusterSetting.executeUpdate();
+
+            updateClusterSetting.setString(1, serverProperties.get("rhq.storage.gossip-port"));
+            updateClusterSetting.setString(2, serverProperties.get("rhq.storage.gossip-port"));
+            updateClusterSetting.setString(3, "STORAGE_GOSSIP_PORT");
+            updateClusterSetting.executeUpdate();
+
+            connection.commit();
+        } catch (SQLException e) {
+            LOG.error("Failed to initialize storage cluster settings. Transaction will be rolled back.", e);
+            connection.rollback();
+            throw e;
+        } finally {
+            if (db != null) {
+                db.closeStatement(updateClusterSetting);
                 db.closeConnection(connection);
             }
         }

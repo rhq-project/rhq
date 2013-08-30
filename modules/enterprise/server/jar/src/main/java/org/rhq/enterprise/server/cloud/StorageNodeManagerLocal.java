@@ -26,6 +26,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
@@ -179,7 +180,7 @@ public interface StorageNodeManagerLocal {
 
     Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject, StorageNode node, long beginTime, long endTime, int numPoints);
 
-    StorageNode createStorageNode(Resource resource);
+    StorageNode createStorageNode(Resource resource, StorageClusterSettings clusterSettings);
 
     void deployStorageNode(Subject subject, StorageNode storageNode);
 

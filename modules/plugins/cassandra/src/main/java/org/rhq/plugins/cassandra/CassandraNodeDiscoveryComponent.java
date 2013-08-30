@@ -51,8 +51,6 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
     protected static final String HOST_PROPERTY = "host";
     protected static final String CLUSTER_NAME_PROPERTY = "clusterName";
-    protected static final String NATIVE_TRANSPORT_PORT_PROPERTY = "nativeTransportPort";
-    protected static final String STORAGE_PORT_PROPERTY = "storagePort";
     protected static final String JMX_PORT_PROPERTY = "jmxPort";
     protected static final String AUTHENTICATOR_PROPERTY = "authenticator";
     protected static final String YAML_PROPERTY = "yamlConfiguration";
@@ -156,9 +154,6 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                 pluginConfig.put(new PropertySimple(YAML_PROPERTY, yamlConfigurationFile.getAbsolutePath()));
                 pluginConfig.put(new PropertySimple(CLUSTER_NAME_PROPERTY, yamlEditor.getClusterName()));
                 pluginConfig.put(new PropertySimple(HOST_PROPERTY, yamlEditor.getListenAddress()));
-                pluginConfig.put(new PropertySimple(NATIVE_TRANSPORT_PORT_PROPERTY,
-                    yamlEditor.getNativeTransportPort()));
-                pluginConfig.put(new PropertySimple(STORAGE_PORT_PROPERTY, yamlEditor.getStoragePort()));
                 pluginConfig.put(new PropertySimple(AUTHENTICATOR_PROPERTY, yamlEditor.getAuthenticator()));
             }
         }

@@ -694,7 +694,8 @@ rhq.storage.nodes=
 # Both properties are required.
 #
 rhq.storage.cql-port=${rhq.cassandra.native-transport-port}
-rhq.storage.gossip-port=${rhq.cassandra.storage-port}
+rhq.storage.gossip-port=${rhq.cassandra.storage.port}
+}
 
 # If enabled data sent to and from storage nodes will be compressed using
 # snappy (https://code.google.com/p/snappy) compression. Note that this is an

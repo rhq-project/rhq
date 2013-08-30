@@ -142,6 +142,12 @@
         <data ID="60" PROPERTY_KEY="STORAGE_AUTOMATIC_DEPLOYMENT"
               PROPERTY_VALUE="true" DEFAULT_PROPERTY_VALUE="true"
               FREAD_ONLY="TRUE"/>
+
+      <!-- STORAGE_CQL_PORT and STORAGE_GOSSIP_PORT will get updated by the installer -->
+      <data ID="61" PROPERTY_KEY="STORAGE_CQL_PORT" FREAD_ONLY="TRUE"/>
+
+      <data ID="62" PROPERTY_KEY="STORAGE_GOSSIP_PORT" FREAD_ONLY="TRUE"/>
+
     </table>
 
 </dbsetup>

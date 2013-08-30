@@ -182,15 +182,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 }
                 storageNode.setResource(resource);
                 storageNode.setOperationMode(OperationMode.NORMAL);
-                initClusterSettingsIfNecessary(pluginConfig);
             } else {
-                storageNode = createStorageNode(resource);
+                StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
+                    subjectManager.getOverlord());
+                storageNode = createStorageNode(resource, clusterSettings);
 
                 if (log.isInfoEnabled()) {
                     log.info("Scheduling cluster maintenance to deploy " + storageNode + " into the storage cluster...");
                 }
-                StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(
-                    subjectManager.getOverlord());
                 if (clusterSettings.getAutomaticDeployment()) {
                     log.info("Deploying " + storageNode);
                     deployStorageNode(subjectManager.getOverlord(), storageNode);
@@ -205,39 +204,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
     }
 
-    private void initClusterSettingsIfNecessary(Configuration pluginConfig) {
-        // TODO Need to handle non-repeatable reads here (probably a post 4.9 task)
-        //
-        // If a user deploys two storage nodes prior to installing the RHQ server, then we
-        // could end up in this method concurrently for both storage nodes. The settings
-        // would be committed for each node with the second commit winning. The problem is
-        // that is the cluster settings differ for the two nodes, it will be silently
-        // ignored. This scenario will happen infrequently so it should be sufficient to
-        // resolve it with optimistic locking. The second writer should fail with an
-        // OptimisticLockException.
-
-        log.info("Initializing storage cluster settings");
-
-        StorageClusterSettings clusterSettings = storageClusterSettingsManager.getClusterSettings(subjectManager
-            .getOverlord());
-        if (clusterSettings != null) {
-            log.info("Cluster settings have already been set. Skipping initialization.");
-            return;
-        }
-        clusterSettings = new StorageClusterSettings();
-        clusterSettings.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
-        clusterSettings.setGossipPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_GOSSIP_PORT_PROPERTY)));
-        storageClusterSettingsManager.setClusterSettings(subjectManager.getOverlord(), clusterSettings);
-    }
-
     @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public StorageNode createStorageNode(Resource resource) {
+    public StorageNode createStorageNode(Resource resource, StorageClusterSettings clusterSettings) {
         Configuration pluginConfig = resource.getPluginConfiguration();
 
         StorageNode storageNode = new StorageNode();
         storageNode.setAddress(pluginConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY));
-        storageNode.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
+        storageNode.setCqlPort(clusterSettings.getCqlPort());
         storageNode.setResource(resource);
         storageNode.setOperationMode(OperationMode.INSTALLED);
 

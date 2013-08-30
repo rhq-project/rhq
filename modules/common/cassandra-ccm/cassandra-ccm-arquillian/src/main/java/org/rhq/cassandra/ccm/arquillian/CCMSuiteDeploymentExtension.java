@@ -152,10 +152,13 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                         }
                     } else {
                         try {
-                            String seed = System.getProperty("rhq.cassandra.seeds", "127.0.0.1|7299|9042");
-                            nodes = parseNodeAddresses(seed);
-                            cqlPort = parseNodeCqlPort(seed);
-                            jmxPorts = parseNodeJmxPorts(seed);
+                            String nodesString = System.getProperty("rhq.storage.nodes", "127.0.0.1");
+                            nodes = nodesString.split(",");
+
+                            String cqlPortString = System.getProperty("rhq.storage.cql-port", "9042");
+                            cqlPort = Integer.parseInt(cqlPortString);
+
+                            //jmxPorts = parseNodeJmxPorts(seed);
                             schemaManager = new SchemaManager("rhqadmin", "rhqadmin", nodes, cqlPort);
 
                         } catch (Exception e) {
@@ -268,58 +271,5 @@ public class CCMSuiteDeploymentExtension implements LoadableExtension {
                 throw new RuntimeException("Could not load defined deploymentClass: " + className, e);
             }
         }
-
-        private String[] parseNodeAddresses(String s) {
-            String[] unparsedNodes = s.split(",");
-
-            String[] nodes = new String[unparsedNodes.length];
-
-            for (int index = 0; index < 0; index++) {
-                String[] params = unparsedNodes[index].split("\\|");
-                if (params.length != 3) {
-                    throw new IllegalArgumentException(
-                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + s + "]");
-                }
-
-                nodes[index] = params[0];
-            }
-
-            return nodes;
-        }
-
-        private int[] parseNodeJmxPorts(String s) {
-            String[] unparsedNodes = s.split(",");
-
-            int[] jmxPorts = new int[unparsedNodes.length];
-
-            for (int index = 0; index < 0; index++) {
-                String[] params = unparsedNodes[index].split("\\|");
-                if (params.length != 3) {
-                    throw new IllegalArgumentException(
-                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + s + "]");
-                }
-
-                jmxPorts[index] = Integer.parseInt(params[1]);
-            }
-
-            return jmxPorts;
-        }
-
-        private int parseNodeCqlPort(String s) {
-            String[] unparsedNodes = s.split(",");
-
-            for (String unparsedNode : unparsedNodes) {
-                String[] params = unparsedNode.split("\\|");
-                if (params.length != 3) {
-                    throw new IllegalArgumentException(
-                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + s + "]");
-                }
-
-                return Integer.parseInt(params[2]);
-            }
-
-            throw new IllegalArgumentException("Seed property is not valid [" + s + "]");
-        }
-
     }
 }

@@ -154,7 +154,7 @@ public class Upgrade extends AbstractInstall {
             // if the agent already exists in the default location, it may be there from a prior install.
             if (isStorageInstalled() || isServerInstalled()) {
                 log.warn("RHQ is already installed so upgrade can not be performed.");
-                return;
+                //return;
             }
 
             // Stop the agent, if running.
@@ -430,6 +430,42 @@ public class Upgrade extends AbstractInstall {
         if (httpsPort != null) {
             oldServerProps.remove("rhq.server.startup.web.https.port");
             oldServerProps.setProperty("rhq.server.socket.binding.port.https", httpsPort);
+        }
+
+        //Migrate storage node properties
+        String storageUsername = oldServerProps.getProperty("rhq.cassandra.username");
+        if (storageUsername != null) {
+            oldServerProps.remove("rhq.cassandra.username");
+            oldServerProps.setProperty("rhq.storage.username", storageUsername);
+        }
+
+        String storagePassword = oldServerProps.getProperty("rhq.cassandra.password");
+        if (storagePassword != null) {
+            oldServerProps.remove("rhq.cassandra.password");
+            oldServerProps.setProperty("rhq.storage.password", storagePassword);
+        }
+
+        String storageSeeds = oldServerProps.getProperty("rhq.cassandra.seeds");
+        if (storageSeeds != null) {
+            StringBuffer storageNodes = new StringBuffer();
+            String cqlPort = "";
+
+            String[] unparsedNodes = storageSeeds.split(",");
+            for (int index = 0; index < unparsedNodes.length; index++) {
+                String[] params = unparsedNodes[index].split("\\|");
+                if (params.length == 3) {
+                    storageNodes.append(params[0]);
+                    if (index < unparsedNodes.length - 1) {
+                        storageNodes.append(",");
+                    }
+
+                    cqlPort = params[2];
+                }
+            }
+
+            oldServerProps.remove("rhq.cassandra.seeds");
+            oldServerProps.setProperty("rhq.storage.nodes", storageNodes.toString());
+            oldServerProps.setProperty("rhq.storage.cql-port", cqlPort);
         }
 
         // copy the old key/truststore files from the old location to the new server configuration directory

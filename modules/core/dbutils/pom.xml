@@ -17,7 +17,7 @@
     <description>Database schema setup, upgrade and other utilities</description>
 
     <properties>
-        <db.schema.version>2.138</db.schema.version>
+        <db.schema.version>2.139</db.schema.version>
         <rhq.ds.type-mapping>${rhq.test.ds.type-mapping}</rhq.ds.type-mapping>
         <rhq.ds.server-name>${rhq.test.ds.server-name}</rhq.ds.server-name>
         <rhq.ds.db-name>${rhq.test.ds.db-name}</rhq.ds.db-name>
@@ -274,11 +274,13 @@
                                           if (project.getProperty('dbsetup-upgrade') || project.getProperty('dbreset') || project.getProperty('dbsetup')) {
                                             if (project.getProperty('storage-schema')) {
                                                 self.log('PERFORMING STORAGE NODE SETUP TO LATEST SCHEMA')
-                                                username = project.getProperty('rhq.cassandra.username') ?: "rhqadmin"
-                                                password = project.getProperty('rhq.cassandra.password') ?: "rhqadmin"
-                                                seeds = project.getProperty('rhq.cassandra.seeds') ?: "127.0.0.1|7299|9142"
+                                                username = project.getProperty('rhq.storage.username') ?: "rhqadmin"
+                                                password = project.getProperty('rhq.storage.password') ?: "rhqadmin"
 
-                                                schemaManager = new SchemaManager(username, password, seeds)
+                                                nodes = project.getProperty('rhq.strorage.nodes') ?: "127.0.0.1"
+                                                cqlPort = project.getProperty('rhq.storage.cql-port') ?: "9142"
+
+                                                schemaManager = new SchemaManager(username, password, nodes.split(","), cqlPort)
 
                                                 if (project.getProperty('dbreset') == 'true') {
                                                   self.log('Dropping schema')

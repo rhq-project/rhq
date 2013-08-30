@@ -47,9 +47,9 @@ import org.rhq.enterprise.server.cloud.instance.ServerManagerLocal;
  * This startup singleton EJB is here to work around bug AS7-5530 and to
  * schedule the real StartupBean's work in a delayed fashion (this is to allow
  * AS7 to complete its deployment work before we do our work).
- * 
+ *
  * See https://issues.jboss.org/browse/AS7-5530
- * 
+ *
  * This version is a replacement for the original code (identical) code that uses the StrippedDownStartupBean instead
  * of the fullblown original.
  */
@@ -100,10 +100,12 @@ public class StrippedDownStartupBeanPreparation {
     }
 
     private void createStorageNodes() {
-        String[] seedsInfo = System.getProperty("rhq.cassandra.seeds").split(",");
-        for (String seedInfo : seedsInfo) {
+        String[] nodes = System.getProperty("rhq.storage.nodes").split(",");
+        String cqlPort = System.getProperty("rhq.storage.cql-port");
+        for (String node : nodes) {
             StorageNode storageNode = new StorageNode();
-            storageNode.parseNodeInformation(seedInfo);
+            storageNode.setAddress(node);
+            storageNode.setCqlPort(Integer.parseInt(cqlPort));
             storageNode.setOperationMode(StorageNode.OperationMode.NORMAL);
             entityManager.persist(storageNode);
         }
@@ -120,9 +122,10 @@ public class StrippedDownStartupBeanPreparation {
             // caused some arquillian deployment exception.
             //
             // jsanda
-            System.setProperty("rhq.cassandra.username", props.getProperty("rhq.cassandra.username"));
-            System.setProperty("rhq.cassandra.password", props.getProperty("rhq.cassandra.password"));
-            System.setProperty("rhq.cassandra.seeds", props.getProperty("rhq.cassandra.seeds"));
+            System.setProperty("rhq.storage.username", props.getProperty("rhq.storage.username"));
+            System.setProperty("rhq.storage.password", props.getProperty("rhq.storage.password"));
+            System.setProperty("rhq.storage.nodes", props.getProperty("rhq.storage.nodes"));
+            System.setProperty("rhq.storage.cql-port", props.getProperty("rhq.storage.cql-port"));
         } catch (IOException e) {
             throw new RuntimeException(("Failed to load cassandra-test.properties"));
         }

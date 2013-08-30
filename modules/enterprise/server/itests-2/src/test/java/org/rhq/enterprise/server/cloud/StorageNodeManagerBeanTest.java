@@ -25,12 +25,7 @@
 
 package org.rhq.enterprise.server.cloud;
 
-import static org.rhq.enterprise.server.cloud.StorageNodeManagerBean.STORAGE_NODE_GROUP_NAME;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,19 +33,16 @@ import javax.ejb.EJB;
 import javax.persistence.Query;
 import javax.transaction.Transaction;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.definition.ConfigurationDefinition;
 import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.configuration.definition.PropertySimpleType;
-import org.rhq.core.domain.criteria.ResourceGroupCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceCategory;
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -96,7 +88,6 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
                     StorageNode node = new StorageNode();
                     node.setAddress(address);
                     node.setOperationMode(StorageNode.OperationMode.NORMAL);
-                    node.setJmxPort(7299 + i);
                     node.setCqlPort(9142 + i);
                     if (i == 0) {
                         firstOne = node;

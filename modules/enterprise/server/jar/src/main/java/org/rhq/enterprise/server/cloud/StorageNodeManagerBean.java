@@ -152,7 +152,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     @EJB
     private StorageNodeManagerLocal storageNodeManger;
-    
+
     @EJB
     private StorageClientManagerBean storageClientManager;
 
@@ -238,7 +238,6 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         StorageNode storageNode = new StorageNode();
         storageNode.setAddress(pluginConfig.getSimpleValue(RHQ_STORAGE_ADDRESS_PROPERTY));
         storageNode.setCqlPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_CQL_PORT_PROPERTY)));
-        storageNode.setJmxPort(Integer.parseInt(pluginConfig.getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
         storageNode.setResource(resource);
         storageNode.setOperationMode(OperationMode.INSTALLED);
 
@@ -719,11 +718,14 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             Resource storageNodeResource = storageNode.getResource();
             Configuration storageNodeConfiguration = configurationManager.getResourceConfiguration(subject,
                 storageNodeResource.getId());
+            Configuration storageNodePluginConfiguration = configurationManager.getPluginConfiguration(subject,
+                storageNodeResource.getId());
 
             configuration.setHeapSize(storageNodeConfiguration.getSimpleValue("maxHeapSize"));
             configuration.setHeapNewSize(storageNodeConfiguration.getSimpleValue("heapNewSize"));
             configuration.setThreadStackSize(storageNodeConfiguration.getSimpleValue("threadStackSize"));
-            configuration.setJmxPort(storageNode.getJmxPort());
+            configuration.setJmxPort(Integer.parseInt(storageNodePluginConfiguration
+                .getSimpleValue(RHQ_STORAGE_JMX_PORT_PROPERTY)));
         }
 
         return configuration;
@@ -763,12 +765,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                     parameters);
 
                 if (result) {
-                    //2. Update the JMX port
-                    //this is a fast operation compared to the restart
-                    storageNode.setJmxPort(storageNodeConfiguration.getJmxPort());
-                    entityManager.merge(storageNode);
-
-                    //3. Update the plugin configuration to talk with the new server
+                    //2. Update the plugin configuration to talk with the new server
                     Configuration storageNodePluginConfig = configurationManager.getPluginConfiguration(subject,
                         storageNodeResource.getId());
 
@@ -855,7 +852,7 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
         return result;
     }
-    
+
     private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,
         Configuration parameters) {
 

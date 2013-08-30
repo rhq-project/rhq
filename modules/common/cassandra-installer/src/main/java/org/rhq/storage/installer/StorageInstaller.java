@@ -400,8 +400,8 @@ public class StorageInstaller {
 
                 PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
                 log.info("Updating rhq-server.properties...");
-                serverPropertiesUpdater.update("rhq.cassandra.seeds",
-                    getSeedsProperty(hostname, jmxPort, nativeTransportPort));
+                serverPropertiesUpdater.update("rhq.storage.nodes", hostname);
+                serverPropertiesUpdater.update("rhq.storage.cql-port", nativeTransportPort + "");
             }
 
             boolean startNode = Boolean.parseBoolean(cmdLine.getOptionValue("start", "true"));
@@ -520,10 +520,6 @@ public class StorageInstaller {
         }
 
         return new PropertiesFileUpdate(file.getAbsolutePath());
-    }
-
-    private String getSeedsProperty(String hostname, int jmxPort, int nativeTransportPort) {
-        return hostname + "|" + jmxPort + "|" + nativeTransportPort;
     }
 
     private String startNode(DeploymentOptions deploymentOptions) throws Exception {

@@ -147,11 +147,12 @@ public class StorageNodeComponentITest {
         assertEquals(results.getExitCode(), (Integer) 0, "Cassandra failed to start: " + results.getCapturedOutput());
 
         StorageNode storageNode = new StorageNode();
-        storageNode.parseNodeInformation("127.0.0.1|7399|9142");
+        storageNode.setAddress("127.0.0.1");
+        int jmxPort = 7399;
+        storageNode.setCqlPort(9142);
 
         ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(new String[] { storageNode.getAddress() },
-            new int[] { storageNode.getJmxPort() });
+        clusterInitService.waitForClusterToStart(new String[] { storageNode.getAddress() }, new int[] { jmxPort });
 
         SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
             new String[] { storageNode.getAddress() }, storageNode.getCqlPort());

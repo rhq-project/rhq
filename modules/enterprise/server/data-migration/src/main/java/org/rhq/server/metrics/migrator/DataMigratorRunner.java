@@ -349,6 +349,7 @@ public class DataMigratorRunner {
         serverProperties.load(stream);
         stream.close();
 
+        //SQL options
         String dbType = serverProperties.getProperty("rhq.server.database.type-mapping");
         DatabaseType databaseType = DatabaseType.Postgres;
         if (dbType != null && dbType.toLowerCase().contains("oracle")) {
@@ -361,28 +362,20 @@ public class DataMigratorRunner {
         configuration.put(sqlPasswordOption, PicketBoxObfuscator.decode(dbPasswordProperty));
         configuration.put(sqlConnectionUrlOption, serverProperties.getProperty("rhq.server.database.connection-url"));
 
-        configuration.put(cassandraUserOption, serverProperties.getProperty("rhq.cassandra.username"));
-        String cassandraPasswordProperty = serverProperties.getProperty("rhq.cassandra.password");
+        //Storage Node options
+        configuration.put(cassandraUserOption, serverProperties.getProperty("rhq.storage.username"));
+        String cassandraPasswordProperty = serverProperties.getProperty("rhq.storage.password");
         configuration.put(cassandraPasswordOption, PicketBoxObfuscator.decode(cassandraPasswordProperty));
 
-        if (serverProperties.getProperty("rhq.cassandra.seeds") != null
-            && !serverProperties.getProperty("rhq.cassandra.seeds").trim().isEmpty()) {
+        if (serverProperties.getProperty("rhq.storage.nodes") != null
+            && !serverProperties.getProperty("rhq.storage.nodes").trim().isEmpty()) {
+            String[] storageNodes = serverProperties.getProperty("rhq.storage.nodes").split(",");
+            configuration.put(cassandraHostsOption, storageNodes);
+        }
 
-            String[] unparsedSeeds =serverProperties.getProperty("rhq.cassandra.seeds").split(",");
-            String[] seedHosts = new String[unparsedSeeds.length];
-            Integer cassandraPort = null;
-            for (int index = 0; index < unparsedSeeds.length; index++) {
-                String[] params = unparsedSeeds[index].split("\\|");
-                if (params.length != 3) {
-                    throw new IllegalArgumentException(
-                        "Expected string of the form, hostname|jmxPort|nativeTransportPort: [" + unparsedSeeds[index] + "]");
-                }
-
-                seedHosts[index] = params[0];
-                cassandraPort = tryParseInteger(params[2], DEFAULT_CASSANDRA_PORT);
-            }
-
-            configuration.put(cassandraHostsOption, seedHosts);
+        if (serverProperties.getProperty("rhq.storage.cql-port") != null
+            && !serverProperties.getProperty("rhq.storage.cql-port").trim().isEmpty()) {
+            Integer cassandraPort = Integer.parseInt(serverProperties.getProperty("rhq.storage.cql-port"));
             configuration.put(cassandraPortOption, cassandraPort);
         }
     }

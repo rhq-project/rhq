@@ -449,7 +449,6 @@
   <table name="RHQ_STORAGE_NODE">
     <column name="ID" default="sequence-only" initial="10001" primarykey="true" required="true" type="INTEGER" />
     <column name="ADDRESS" required="true" size="255" type="VARCHAR2" />
-    <column name="JMX_PORT" required="true" type="INTEGER" />
     <column name="CQL_PORT" required="true" type="INTEGER" />
     <column name="OPERATION_MODE" required="true" size="32" type="VARCHAR2" />
     <column name="CTIME" required="true" type="LONG" />
@@ -464,5 +463,5 @@
       <field ref="ADDRESS" />
     </index>
   </table>
-  
+
 </dbsetup>

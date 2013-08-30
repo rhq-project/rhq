@@ -672,23 +672,29 @@ rhq.sync.endpoint-address=false
 # Cassandra cluster configuration settings
 #############################################
 # The username RHQ will use to authenticate against Cassandra.
-rhq.cassandra.username=${rhq.cassandra.username}
+rhq.storage.username=${rhq.storage.username}
 
 # The password RHQ will use to authenticate against Cassandra.
-rhq.cassandra.password=${rhq.cassandra.password}
+rhq.storage.password=${rhq.storage.password}
 
-# A comma-delimited list of seed nodes. Each Cassandra node uses this list as
+# A comma-delimited list of storage nodes. Each Cassandra node uses this list as
 # contact points to find other nodes in the cluster and learn the ring
 # topology. The RHQ server(s) use this list to connect to the cluster;
 # therefore, this property MUST BE SET in order for RHQ to talk to Cassandra.
-# Each entry in the list consists of three fields that are pipe-delimited. The
-# of an entry is as follows,
+# The of an entry is as follows,
 #
-#    hostname|jmxPort|nativeTransportPort|
+#    hostname1,hostname2
 #
 # Note that this is actually an installer setting. Changing the value after
 # installation will have no effect.
-rhq.cassandra.seeds=
+rhq.storage.nodes=
+
+# The list of ports used by storages nodes to communiticate with each other
+# and used by the RHQ server(s) to communicate with the cluster.
+# Both properties are required.
+#
+rhq.storage.cql-port=${rhq.cassandra.native-transport-port}
+rhq.storage.gossip-port=${rhq.cassandra.native-transport-port}
 
 # If enabled data sent to and from storage nodes will be compressed using
 # snappy (https://code.google.com/p/snappy) compression. Note that this is an

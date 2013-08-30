@@ -2220,6 +2220,14 @@
             </schema-directSQL>
           </schemaSpec>
 
+          <schemaSpec version="2.139">
+            <schema-directSQL>
+                <statement desc="Drop JMX port column from Storage Node table">
+                   ALTER TABLE RHQ_STORAGE_NODE DROP COLUMN JMX_PORT
+                </statement>
+            </schema-directSQL>
+          </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

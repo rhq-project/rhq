@@ -65,8 +65,8 @@ public class StorageClientManagerBean {
 
     private final Log log = LogFactory.getLog(StorageClientManagerBean.class);
 
-    private static final String USERNAME_PROP = "rhq.cassandra.username";
-    private static final String PASSWORD_PROP = "rhq.cassandra.password";
+    private static final String USERNAME_PROP = "rhq.storage.username";
+    private static final String PASSWORD_PROP = "rhq.storage.password";
     private static final String RHQ_KEYSPACE = "rhq";
 
     @EJB

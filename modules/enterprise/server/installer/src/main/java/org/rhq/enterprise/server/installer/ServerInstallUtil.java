@@ -902,7 +902,7 @@ public class ServerInstallUtil {
 
     /**
      * Persists the storage nodes to the database only if no storage node entities already exist. This method is used
-     * to persist storage nodes created from the rhq.cassandra.seeds server configuration property. The only time those
+     * to persist storage nodes created from the rhq.storage.nodes server configuration property. The only time those
      * seed nodes should be created is during an initial server installation. After the initial installation storage
      * nodes should be created using <code>rhqctl install</code>. This ensures that any necessary cluster maintenance
      * tasks will be performed.
@@ -939,23 +939,21 @@ public class ServerInstallUtil {
                 connection.setAutoCommit(false);
 
                 try {
-                    LOG.info("Persisting to database new storage nodes for values specified in server configuration " +
-                        "property [rhq.cassandra.seeds]");
+                    LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
                     insertStatement = connection.prepareStatement(
-                        "INSERT INTO rhq_storage_node (id, address, jmx_port, cql_port, operation_mode, ctime, mtime) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?)"
+                            "INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime) " +
+                            "VALUES (?, ?, ?, ?, ?, ?)"
                     );
 
                     int id = 1001;
                     for (StorageNode storageNode : storageNodes) {
                         insertStatement.setInt(1, id);
                         insertStatement.setString(2, storageNode.getAddress());
-                        insertStatement.setInt(3, storageNode.getJmxPort());
-                        insertStatement.setInt(4, storageNode.getCqlPort());
-                        insertStatement.setString(5, StorageNode.OperationMode.INSTALLED.toString());
+                        insertStatement.setInt(3, storageNode.getCqlPort());
+                        insertStatement.setString(4, StorageNode.OperationMode.INSTALLED.toString());
+                        insertStatement.setLong(5, System.currentTimeMillis());
                         insertStatement.setLong(6, System.currentTimeMillis());
-                        insertStatement.setLong(7, System.currentTimeMillis());
 
                         insertStatement.executeUpdate();
                         id += 1;
@@ -964,13 +962,12 @@ public class ServerInstallUtil {
                     connection.commit();
                 } catch (SQLException e) {
                     LOG.error("Failed to persist to database the storage nodes specified by server configuration " +
-                        "property [rhq.cassandra.seeds]. Transaction will be rolled back.", e);
+                        "property [rhq.storage.nodes]. Transaction will be rolled back.", e);
                     connection.rollback();
                     throw e;
                 }
             } else {
-                LOG.info("Storage nodes already exist in database. Server configuration property " +
-                    "[rhq.cassandra.seeds] will be ignored.");
+                LOG.info("Storage nodes already exist in database. Server configuration property [rhq.storage.nodes] will be ignored.");
             }
 
         } finally {

@@ -1158,12 +1158,14 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private List<StorageNode> parseNodeInformation(HashMap<String, String> serverProps) {
-        String[] nodes = serverProps.get("rhq.cassandra.seeds").split(",");
+        String[] nodes = serverProps.get("rhq.storage.nodes").split(",");
+        String cqlPort = serverProps.get("rhq.storage.cql-port");
 
         List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
         for (String node : nodes) {
             StorageNode storageNode = new StorageNode();
-            storageNode.parseNodeInformation(node);
+            storageNode.setAddress(node);
+            storageNode.setCqlPort(Integer.parseInt(cqlPort));
             parsedNodes.add(storageNode);
         }
 
@@ -1171,8 +1173,8 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private SchemaManager createStorageNodeSchemaManager(HashMap<String, String> serverProps) {
-        String username = serverProps.get("rhq.cassandra.username");
-        String password = serverProps.get("rhq.cassandra.password");
+        String username = serverProps.get("rhq.storage.username");
+        String password = serverProps.get("rhq.storage.password");
 
         List<StorageNode> storageNodes = this.parseNodeInformation(serverProps);
         String[] nodes = new String[storageNodes.size()];

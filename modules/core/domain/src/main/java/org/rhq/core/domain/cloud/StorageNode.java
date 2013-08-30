@@ -174,10 +174,6 @@ public class StorageNode implements Serializable {
         this.address = address;
     }
 
-    public int getJmxPort() {
-        return 7299;
-    }
-
     public int getCqlPort() {
         return cqlPort;
     }

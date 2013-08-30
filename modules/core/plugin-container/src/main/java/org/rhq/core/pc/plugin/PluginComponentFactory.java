@@ -43,6 +43,7 @@ import org.rhq.core.pc.inventory.ResourceContainer;
 import org.rhq.core.pluginapi.inventory.ClassLoaderFacet;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryCallback;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 
 /**
@@ -223,6 +224,29 @@ public class PluginComponentFactory implements ContainerService {
         } catch (Throwable t) {
             throw new PluginContainerException("Failed to obtain classloader for resource: " + resource, t);
         }
+    }
+
+    /**
+     * This will create a new {@link ResourceDiscoveryCallback} instance that can be used to process
+     * details of newly discovered resources.
+     *
+     * @return a new discovery callback loaded in the proper classloader
+     * @throws PluginContainerException if failed to create the discovery callback instance
+     */
+    public ResourceDiscoveryCallback getDiscoveryCallback(String pluginName, String callbackClassName)
+        throws PluginContainerException {
+
+        // same classloader as plugin discovery component would use - with null parent, its just the plugin classloader
+        ClassLoader classLoader = getDiscoveryComponentClassLoader(null, pluginName);
+
+        ResourceDiscoveryCallback callback = (ResourceDiscoveryCallback) instantiateClass(classLoader,
+            callbackClassName);
+
+        if (log.isDebugEnabled()) {
+            log.debug("Created discovery callback [" + callbackClassName + "] for plugin [" + pluginName + ']');
+        }
+
+        return callback;
     }
 
     private List<URL> askDiscoveryComponentForAdditionalClasspathUrls(Resource resource,

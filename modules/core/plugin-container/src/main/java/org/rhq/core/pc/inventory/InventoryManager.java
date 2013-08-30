@@ -117,6 +117,7 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryCallback;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
@@ -337,20 +338,58 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         long timeout = getDiscoveryComponentTimeout(context.getResourceType());
 
+        Set<DiscoveredResourceDetails> results;
+
         try {
             ResourceDiscoveryComponent proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
                 context.getResourceType(), component, timeout, parentResourceContainer);
-            Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
-            return results;
+            results = proxy.discoverResources(context);
         } catch (TimeoutException te) {
             log.warn("Discovery for Resources of [" + context.getResourceType() + "] has been running for more than "
                 + timeout + " milliseconds. This may be a plugin bug.", te);
-            return null;
+            results = null;
         } catch (BlacklistedException be) {
             // Discovery did not run, because the ResourceType was blacklisted during a prior discovery scan.
             log.debug(ThrowableUtil.getAllMessages(be));
-            return null;
+            results = null;
         }
+
+        if (results == null || results.isEmpty()) {
+            return results;
+        }
+
+        // funnel the results through any discovery callbacks that are defined on the discovered resource type
+        Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager().getDiscoveryCallbacks(context.getResourceType());
+        if (callbacks == null || callbacks.isEmpty()) {
+            return results; // no callbacks defined, return the discovered details as-is
+        }
+
+        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+        int callbackCount = 0;
+        PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
+        for (Map.Entry<String, List<String>> entry : callbacks.entrySet()) {
+            String pluginName = entry.getKey();
+            List<String> callbackClassNames = entry.getValue();
+            for (String className : callbackClassNames) {
+                ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName, className);
+                try {
+                    Thread.currentThread().setContextClassLoader(callback.getClass().getClassLoader());
+                    // notice we call inline, in our calling thread - no time outs or anything; hopefully the plugin plays nice
+                    callback.discoveredResources(results);
+                    callbackCount++;
+                    if (log.isDebugEnabled()) {
+                        log.debug("Discovery callback [{" + pluginName + "}" + className + "] done. #invocations=" + callbackCount);
+                    }
+                } catch (Throwable t) {
+                    log.error("Discovery callback [{" + pluginName + "}" + className + "] failed with exception: "
+                        + ThrowableUtil.getAllMessages(t), t);
+                } finally {
+                    Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                }
+            }
+        }
+
+        return results;
     }
 
     /**

@@ -23,6 +23,7 @@
 package org.rhq.core.clientapi.agent.metadata.test;
 
 import java.net.URL;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -175,6 +176,27 @@ public class MetadataManagerTest {
         assert testD.getBundleType() != null : "missing the bundle for 'Injection D To Server A'";
         assert testD.getBundleType().getName().equals("test-bundle-name");
         assert testD.getBundleType().getResourceType().equals(testD);
+    }
+
+    @Test(dependsOnMethods = "loadPluginDescriptorTest3")
+    public void testDiscoveryCallbackDefinitions() {
+        ResourceType serverAType = this.metadataManager.getType("Server A", "Test1");
+        ResourceType serverBType = this.metadataManager.getType("Extension Server B", "Test2");
+        assert serverAType != null : "Where's Server A?";
+        assert serverBType != null : "Where's Extension Server B?";
+
+        Map<String, List<String>> serverACallbacks = this.metadataManager.getDiscoveryCallbacks(serverAType);
+        assert serverACallbacks.size() == 1 : serverACallbacks;
+        assert serverACallbacks.get("Test3").size() == 2 : serverACallbacks;
+        assert serverACallbacks.get("Test3").get(0).equals("org.rhq.plugins.test3.DiscoveryCallback1") : serverACallbacks;
+        assert serverACallbacks.get("Test3").get(1).equals("org.rhq.plugins.test3.DiscoveryCallbackAnother1") : serverACallbacks;
+
+        Map<String, List<String>> serverBCallbacks = this.metadataManager.getDiscoveryCallbacks(serverBType);
+        assert serverBCallbacks.size() == 2 : serverBCallbacks;
+        assert serverBCallbacks.get("Test3").size() == 1 : serverBCallbacks;
+        assert serverBCallbacks.get("Test2").size() == 1 : serverBCallbacks;
+        assert serverBCallbacks.get("Test3").get(0).equals("org.rhq.plugins.test3.DiscoveryCallback2") : serverBCallbacks;
+        assert serverBCallbacks.get("Test2").get(0).equals("org.rhq.plugins.test2.DiscoveryCallbackTest2") : serverBCallbacks;
     }
 
     private ResourceType getResourceType(ResourceType typeToGet) {

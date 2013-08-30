@@ -57,6 +57,18 @@
                </xs:complexType>
             </xs:element>
 
+            <xs:element ref="rhq:discovery-callbacks"  minOccurs="0" maxOccurs="1">
+               <xs:annotation>
+                  <xs:documentation>
+                     Defines the types and discovery classes whose discovered resources must be
+                     funneled through this plugin's discovery classback classes.
+                  </xs:documentation>
+                  <xs:appinfo>
+                     <jaxb:property name="discoveryCallbacks" />
+                  </xs:appinfo>
+               </xs:annotation>
+            </xs:element>
+
             <xs:element ref="rhq:platform" minOccurs="0" maxOccurs="unbounded">
                <xs:annotation>
                   <xs:documentation>
@@ -1153,5 +1165,39 @@
          </xs:annotation>
       </xs:attribute>
    </xs:attributeGroup>
+
+   <xs:element name="discovery-callbacks" type="rhq:DiscoveryCallbacksType">
+      <xs:annotation>
+         <xs:documentation>A set of discovery callbacks this plugin defines to help with resource discovery.</xs:documentation>
+      </xs:annotation>
+   </xs:element>
+
+   <xs:complexType name="DiscoveryCallbacksType">
+      <xs:sequence>
+         <xs:element name="type-callback" type="rhq:DiscoveryTypeCallbackType" maxOccurs="unbounded" minOccurs="1">
+            <xs:annotation>
+               <xs:documentation>A discovery callback to help with discovery for a specific resource type.</xs:documentation>
+            </xs:annotation>
+         </xs:element>
+      </xs:sequence>
+   </xs:complexType>
+
+   <xs:complexType name="DiscoveryTypeCallbackType">
+       <xs:attribute name="type" type="xs:string" use="required">
+          <xs:annotation>
+             <xs:documentation>When a discovery component detects this resource type, the discovered details will be processed by the discovery callback.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+       <xs:attribute name="plugin" type="xs:string" use="required">
+          <xs:annotation>
+             <xs:documentation>The plugin that defines the named resource type. Must be either this plugin or one of its dependencies.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+       <xs:attribute name="callbackClass" type="rhq:classNameType" use="required">
+          <xs:annotation>
+             <xs:documentation>The class name of this discovery callback implementation.</xs:documentation>
+          </xs:annotation>
+       </xs:attribute>
+   </xs:complexType>
 
 </xs:schema>

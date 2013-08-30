@@ -82,6 +82,11 @@ public class PluginMetadataManager {
     private Set<ResourceType> ignoredResourceTypes = null;
     private Object disabledIgnoredTypesLock = new Object(); // used when accessing disabled and ignored collections
 
+    // these define the discovery callbacks per resource type. The key is the resource type whose discovered details
+    // need to be funneled through callbacks. The value is a map whose key is plugin names and whose values are
+    // discovery callback implementation classes defined in the plugins.
+    private Map<ResourceType, Map<String, List<String>>> discoveryCallbacks = new HashMap<ResourceType, Map<String, List<String>>>();
+
     public PluginMetadataManager() {
     }
 
@@ -203,6 +208,18 @@ public class PluginMetadataManager {
                 findDisabledResourceTypesInAllPlugins();
             }
 
+            // squirrel away all the discovery callbacks
+            Map<ResourceType, List<String>> discoveryCallbacksMap = parser.getDiscoveryCallbackClasses();
+            if (discoveryCallbacksMap != null) {
+                for (Map.Entry<ResourceType, List<String>> entry : discoveryCallbacksMap.entrySet()) {
+                    ResourceType resourceType = entry.getKey();
+                    for (String className : entry.getValue()) {
+                        addDiscoveryCallbackClassName(resourceType, pluginDescriptor.getName(), className);
+                    }
+                }
+            }
+
+            // return the top root types from the descriptor
             Set<ResourceType> rootTypes = parser.getRootResourceTypes();
             return rootTypes;
 
@@ -489,6 +506,39 @@ public class PluginMetadataManager {
             }
             this.disabledResourceTypes = (!disabledTypes.isEmpty()) ? disabledTypes : null;
         }
+        return;
+    }
+
+    /**
+     * Given a resource type, this will return any discovery callbacks that are required to be invoked
+     * when that resource type is being discovered.
+     * @param resourceType the type whose discovery callbacks should be returned
+     * @return the collection of callbacks, grouped by the plugins that defined them (may be null)
+     */
+    public Map<String, List<String>> getDiscoveryCallbacks(ResourceType resourceType) {
+        synchronized (discoveryCallbacks) {
+            Map<String, List<String>> map = discoveryCallbacks.get(resourceType);
+            return map;
+        }
+    }
+
+    private void addDiscoveryCallbackClassName(ResourceType resourceType, String pluginName, String className) {
+        synchronized (discoveryCallbacks) {
+            Map<String, List<String>> map = discoveryCallbacks.get(resourceType);
+            if (map == null) {
+                map = new HashMap<String, List<String>>(1);
+                discoveryCallbacks.put(resourceType, map);
+            }
+
+            List<String> callbackListForPlugin = map.get(pluginName);
+            if (callbackListForPlugin == null) {
+                callbackListForPlugin = new ArrayList<String>(1);
+                map.put(pluginName, callbackListForPlugin);
+            }
+
+            callbackListForPlugin.add(className);
+        }
+
         return;
     }
 }

@@ -51,13 +51,94 @@ import static org.testng.Assert.assertTrue;
 public class PluginMetadataParserTest {
 
     @Test
+    void discoveryCallback() throws Exception {
+        PluginDescriptor pluginDescriptor = toPluginDescriptor("" + //
+            "<plugin name='TestServer' displayName='Test Server' package='org.rhq.plugins.test'" + //
+            "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
+            "    xmlns='urn:xmlns:rhq-plugin'>" + //
+            "  <discovery-callbacks>" + //
+            "     <type-callback type='testServerType' plugin='TestServer' callbackClass='TestCallback' />" + //
+            "  </discovery-callbacks>" + //
+            "  <server name='testServerType'" + //
+            "          class='org.rhq.plugins.test.TestServer'" + // 
+            "          discovery='org.rhq.plugins.test.TestServerDiscoveryComponent'/>" + //
+            "</plugin>");
+
+        Map<String, PluginMetadataParser> parsersByPlugin = new HashMap<String, PluginMetadataParser>(0);
+        PluginMetadataParser parser = new PluginMetadataParser(pluginDescriptor, parsersByPlugin);
+
+        Map<ResourceType, List<String>> map = parser.getDiscoveryCallbackClasses();
+        assertEquals(map.size(), 1, "Should have one discovery callback: " + map);
+        ResourceType rt = new ResourceType("testServerType", "TestServer", null, null);
+        assertEquals(map.get(rt).get(0), "org.rhq.plugins.test.TestCallback", "incorrect classname in map: " + map);
+
+        // in a second plugin, define a discovery callback that points back to a type in the first plugin
+        PluginDescriptor pluginDescriptor2 = toPluginDescriptor("" + //
+                "<plugin name='TestServer2' displayName='Test Server' package='org.rhq.plugins.test2'" + //
+                "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
+                "    xmlns='urn:xmlns:rhq-plugin'>" + //
+                "  <discovery-callbacks>" + //
+                "     <type-callback type='testServerType' plugin='TestServer' callbackClass='TestCallback2' />" + //
+                "  </discovery-callbacks>" + //
+                "  <server name='testServerType2'" + //
+                "          class='org.rhq.plugins.test2.TestServer2'" + //
+                "          discovery='org.rhq.plugins.test2.TestServerDiscoveryComponent2'/>" + //
+                "</plugin>");
+
+        parsersByPlugin.put("TestServer", parser);
+        PluginMetadataParser parser2 = new PluginMetadataParser(pluginDescriptor2, parsersByPlugin);
+        map = parser2.getDiscoveryCallbackClasses();
+        assertEquals(map.size(), 1, "Should have one discovery callback: " + map);
+        rt = new ResourceType("testServerType", "TestServer", null, null);
+        assertEquals(map.get(rt).get(0), "org.rhq.plugins.test2.TestCallback2", "incorrect classname in map: " + map);
+
+        // define multiple callbacks to multiple plugins
+        PluginDescriptor pluginDescriptor3 = toPluginDescriptor("" + //
+                "<plugin name='TestServer3' displayName='Test Server' package='org.rhq.plugins.test3'" + //
+                "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
+                "    xmlns='urn:xmlns:rhq-plugin'>" + //
+                "  <discovery-callbacks>" + //
+                "     <type-callback type='testServerType' plugin='TestServer' callbackClass='TestCallback31' />" + //
+                "     <type-callback type='testServerType2' plugin='TestServer2' callbackClass='TestCallback32' />" + //
+                "     <type-callback type='testServerType3' plugin='TestServer3' callbackClass='TestCallback33' />" + //
+                "     <type-callback type='testServerType3' plugin='TestServer3' callbackClass='TestCallback34' />" + //
+                "  </discovery-callbacks>" + //
+                "  <server name='testServerType3'" + //
+                "          class='org.rhq.plugins.test3.TestServer3'" + //
+                "          discovery='org.rhq.plugins.test3.TestServerDiscoveryComponent3'/>" + //
+                "</plugin>");
+
+        parsersByPlugin.put("TestServer2", parser2);
+        PluginMetadataParser parser3 = new PluginMetadataParser(pluginDescriptor3, parsersByPlugin);
+        map = parser3.getDiscoveryCallbackClasses();
+        assertEquals(map.size(), 3, "Should have three keys in discovery callbacks map: " + map);
+
+        rt = new ResourceType("testServerType", "TestServer", null, null);
+        List<String> list = map.get(rt);
+        assertEquals(list.size(), 1);
+        assertEquals(list.get(0), "org.rhq.plugins.test3.TestCallback31", "incorrect classname in map: " + map);
+
+        rt = new ResourceType("testServerType2", "TestServer2", null, null);
+        list = map.get(rt);
+        assertEquals(list.size(), 1);
+        assertEquals(list.get(0), "org.rhq.plugins.test3.TestCallback32", "incorrect classname in map: " + map);
+
+        rt = new ResourceType("testServerType3", "TestServer3", null, null);
+        list = map.get(rt);
+        assertEquals(list.size(), 2);
+        assertEquals(list.get(0), "org.rhq.plugins.test3.TestCallback33", "incorrect classname in map: " + map);
+        assertEquals(list.get(1), "org.rhq.plugins.test3.TestCallback34", "incorrect classname in map: " + map);
+
+    }
+
+    @Test
     void allTypesShouldHaveOneElementForDescriptorWithOnlyOneResourceType() throws Exception {
         PluginDescriptor pluginDescriptor = toPluginDescriptor("" + //
             "<plugin name='TestServer' displayName='Test Server' package='org.rhq.plugins.test'" + //
             "    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'" + //
             "    xmlns='urn:xmlns:rhq-plugin'>" + //
             "  <server name='testServer'" + //
-            "          class='org.rhq.plugins.test.TestServer'" + // 
+            "          class='org.rhq.plugins.test.TestServer'" + //
             "          discovery='org.rhq.plugins.test.TestServerDiscoveryComponent'/>" + //
             "</plugin>");
 

@@ -188,9 +188,8 @@ public class StorageInstallerTest {
             fail("Failed to verify that " + serverPropsFile + " was updated", e);
         }
 
-        String seeds = properties.getProperty("rhq.cassandra.seeds");
-
-        assertEquals(seeds, "127.0.0.1|7299|9142");
+        assertEquals(properties.getProperty("rhq.storage.nodes"), "127.0.0.1");
+        assertEquals(properties.getProperty("rhq.storage.cql-port"), "9142");
     }
 
     private String sha256(File file) {

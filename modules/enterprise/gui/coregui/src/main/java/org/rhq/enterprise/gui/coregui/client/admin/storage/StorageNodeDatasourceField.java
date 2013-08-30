@@ -31,8 +31,6 @@ public enum StorageNodeDatasourceField {
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
     
     FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_server_endpointAddress()),
-
-    FIELD_JMX_PORT("jmxPort", "JMX Port"),
     
     FIELD_ALERTS("alerts", "Alerts"),
     

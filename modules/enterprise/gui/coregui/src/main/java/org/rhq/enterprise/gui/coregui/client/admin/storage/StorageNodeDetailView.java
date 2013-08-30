@@ -24,7 +24,6 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
@@ -97,6 +96,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private StaticTextItem alertsItem;
     private HTMLFlow header;
     private boolean alerts = false;
+    private StaticTextItem jmxPortItem;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
@@ -177,6 +177,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
                     @Override
                     public void onSuccess(StorageNodeConfigurationComposite result) {
+                        jmxPortItem.setValue(result.getJmxPort());
                         prepareResourceConfigEditor(result);
                     }
                 });
@@ -305,7 +306,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
         cqlPortItem.setValue(storageNode.getCqlPort());
 
-        final StaticTextItem jmxPortItem = new StaticTextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
+        jmxPortItem = new StaticTextItem("jmxPort", "JMX Port");
         jmxPortItem.setValue(storageNode.getJmxPort());
 
         //        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",

@@ -27,7 +27,6 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ERROR_MESSAGE;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_FAILED_OPERATION;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ID;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MEMORY;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
@@ -250,7 +249,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         if (node != null) {
             record.setAttribute(FIELD_ID.propertyName(), node.getId());
             record.setAttribute(FIELD_ADDRESS.propertyName(), node.getAddress());
-            record.setAttribute(FIELD_JMX_PORT.propertyName(), node.getJmxPort());
             record.setAttribute(FIELD_CQL_PORT.propertyName(), node.getCqlPort());
             record.setAttribute(FIELD_OPERATION_MODE.propertyName(), node.getOperationMode());
             record.setAttribute(FIELD_STATUS.propertyName(), node.getStatus());

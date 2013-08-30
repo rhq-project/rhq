@@ -393,7 +393,7 @@ public final class LookupUtil {
     public static StorageClientManagerBean getStorageClientManager() {
         try {
             return (StorageClientManagerBean) new InitialContext().lookup(
-                "java:global/rhq/rhq-enterprise-server-ejb3/" + StorageClientManagerBean.class.getSimpleName());
+                "java:global/rhq/rhq-server/" + StorageClientManagerBean.class.getSimpleName());
         } catch (NamingException e) {
             String msg = "Unable to access " + StorageClientManagerBean.class + " due to JNDI error. You may " +
                 "need to restart the server so that the storage client subsystem can be reinitialized.";

@@ -26,7 +26,6 @@
 package org.rhq.server.control.command;
 
 import java.io.File;
-import java.io.FileReader;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -34,8 +33,6 @@ import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.ExecuteException;
 import org.apache.commons.exec.Executor;
 import org.apache.commons.exec.PumpStreamHandler;
-
-import org.rhq.core.util.stream.StreamUtil;
 import org.rhq.server.control.ControlCommand;
 import org.rhq.server.control.RHQControlException;
 
@@ -128,12 +125,8 @@ public class Status extends ControlCommand {
                 log.debug("Failed to check storage service status", e);
             }
         } else {
-
-            File storageBinDir = new File(getStorageBasedir(), "bin");
-            File pidFile = new File(storageBinDir, "cassandra.pid");
-            if (pidFile.exists()) {
-                String pid = StreamUtil.slurp(new FileReader(pidFile));
-                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (pid " + String.format("%-7s", pid) + ") IS running");
+            if(isStorageRunning()) {
+                System.out.println(String.format("%-30s", "RHQ Storage Node") + " (pid " + String.format("%-7s", getStoragePid()) + ") IS running");
             } else {
                 System.out.println(String.format("%-30s", "RHQ Storage Node") + " (no pid file) IS NOT running");
             }

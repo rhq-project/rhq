@@ -214,6 +214,11 @@ class VersionManager extends AbstractManager {
             //1. Reinstated Cassandra superuser
             execute(updateFolder.getUpdateFiles().get(0), properties);
             log.info("Cassandra user reverted to default configuration.");
+        } catch (AuthenticationException e) {
+            //if the initial auth failed then let later code to attempt to use
+            //the generic user cassandra user to do the cleanup
+            log.debug("Cannot establish connection with the RHQ specific user. "
+                + "Will continue the drop procedure with the Cassandra admin user.");
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {

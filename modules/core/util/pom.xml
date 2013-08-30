@@ -17,7 +17,7 @@
   <properties>
      <rhq.internal>false</rhq.internal>
   </properties>
-  
+
   <dependencies>
 
     <!-- Used by the (deprecated) legacy XML parser, which is used to parse RHQ license files. -->
@@ -43,6 +43,12 @@
          <groupId>commons-io</groupId>
          <artifactId>commons-io</artifactId>
          <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.picketbox</groupId>
+      <artifactId>picketbox</artifactId>
+      <version>${picketbox.version}</version>
     </dependency>
 
   </dependencies>

@@ -33,6 +33,8 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PatternLayout;
 
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
+
 /**
  * @author John Sanda
  */
@@ -168,7 +170,8 @@ public class SchemaManager {
             int cqlPort = Integer.parseInt(args[3]);
             String[] hosts = Arrays.copyOfRange(args, 4, args.length);
 
-            SchemaManager schemaManager = new SchemaManager(username, password, hosts, cqlPort);
+            SchemaManager schemaManager = new SchemaManager(username, PicketBoxObfuscator.encode(password), hosts,
+                cqlPort);
 
             if ("install".equalsIgnoreCase(command)) {
                 schemaManager.install();

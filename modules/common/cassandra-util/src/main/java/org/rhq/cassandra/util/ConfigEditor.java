@@ -32,14 +32,23 @@ public class ConfigEditor {
     }
 
     public void load() {
+        FileInputStream inputStream = null;
         try {
             DumperOptions options = new DumperOptions();
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             yaml = new Yaml(options);
-            config = (Map) yaml.load(new FileInputStream(configFile));
+            inputStream = new FileInputStream(configFile);
+            config = (Map) yaml.load(inputStream);
             createBackup();
         } catch (FileNotFoundException e) {
             throw new ConfigEditorException("Failed to load " + configFile, e);
+        } finally {
+            if (inputStream != null) {
+                try {
+                    inputStream.close();
+                } catch (IOException e) {
+                }
+            }
         }
     }
 

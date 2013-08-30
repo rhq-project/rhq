@@ -60,11 +60,11 @@ import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.output.NullOutputStream;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.yaml.snakeyaml.Yaml;
 
 import org.rhq.cassandra.Deployer;
 import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
+import org.rhq.cassandra.util.ConfigEditor;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.StringUtil;
 import org.rhq.core.util.exception.ThrowableUtil;
@@ -107,7 +107,7 @@ public class StorageInstaller {
 
     private int defaultNativeTransportPort = 9142;
 
-    private int storagePort = 7100;
+    private int defaultStoragePort = 7100;
 
     private int sslStoragePort = 7101;
 
@@ -151,7 +151,7 @@ public class StorageInstaller {
         nativeTransportPortOption.setArgName("PORT");
 
         Option storagePortOption = new Option(null, "storage-port", true, "The port on which to listen for requests "
-            + " from other nodes. Defaults to " + storagePort);
+            + " from other nodes. Defaults to " + defaultStoragePort);
         storagePortOption.setArgName("PORT");
 
         Option sslStoragePortOption = new Option(null, "ssl-storage-port", true, "The port on which to listen for "
@@ -218,6 +218,8 @@ public class StorageInstaller {
 
             String hostname;
             int jmxPort;
+            int nativeTransportPort;
+            int storagePort;
             File logFile = new File(logDir, "rhq-storage.log");
 
             if (cmdLine.hasOption("upgrade")) {
@@ -283,15 +285,13 @@ public class StorageInstaller {
                     replaceFile(internodeAuthConfFile, new File(newConfDir, internodeAuthConfFile.getName()));
                 }
 
-                log.info("Finished installing RHQ Storage Node.");
-
-                log.info("Updating rhq-server.properties...");
                 File yamlFile = new File(newConfDir, "cassandra.yaml");
+                ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+                yamlEditor.load();
 
-                Yaml yaml = new Yaml();
-                Map<String, Object> config = (Map<String, Object>) yaml.load(new FileInputStream(yamlFile));
-
-                hostname = (String) config.get("listen_address");
+                hostname = yamlEditor.getListenAddress();
+                nativeTransportPort = yamlEditor.getNativeTransportPort();
+                storagePort = yamlEditor.getStoragePort();
             } else {
                 if (cmdLine.hasOption("dir")) {
                     File basedir = new File(cmdLine.getOptionValue("dir"));
@@ -342,7 +342,8 @@ public class StorageInstaller {
                 }
 
                 jmxPort = getPort(cmdLine, "jmx-port", defaultJmxPort);
-                int nativeTransportPort = getPort(cmdLine, "client-port", defaultNativeTransportPort);
+                nativeTransportPort = getPort(cmdLine, "client-port", defaultNativeTransportPort);
+                storagePort = getPort(cmdLine, "storage-port", defaultStoragePort);
 
                 deploymentOptions.setCommitLogDir(commitLogDir);
                 deploymentOptions.setDataDir(dataDir);
@@ -352,7 +353,7 @@ public class StorageInstaller {
                 deploymentOptions.setRpcPort(rpcPort);
                 deploymentOptions.setJmxPort(jmxPort);
                 deploymentOptions.setNativeTransportPort(nativeTransportPort);
-                deploymentOptions.setStoragePort(getPort(cmdLine, "storage-port", storagePort));
+                deploymentOptions.setStoragePort(storagePort);
                 deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
 
                 // The out of box default for native_transport_max_threads is 128. We default
@@ -395,14 +396,16 @@ public class StorageInstaller {
                 Set<InetAddress> addresses = new HashSet<InetAddress>();
                 addresses.add(InetAddress.getByName(hostname));
                 deployer.updateStorageAuthConf(addresses);
-
-                log.info("Finished installing RHQ Storage Node.");
-
-                PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
-                log.info("Updating rhq-server.properties...");
-                serverPropertiesUpdater.update("rhq.storage.nodes", hostname);
-                serverPropertiesUpdater.update("rhq.storage.cql-port", nativeTransportPort + "");
             }
+
+            PropertiesFileUpdate serverPropertiesUpdater = getServerProperties();
+            log.info("Updating rhq-server.properties...");
+            Properties properties = new Properties();
+            properties.setProperty("rhq.storage.nodes", hostname);
+            properties.setProperty("rhq.storage.cql-port", Integer.toString(nativeTransportPort));
+            properties.setProperty("rhq.storage.gossip-port", Integer.toString(storagePort));
+
+            serverPropertiesUpdater.update(properties);
 
             boolean startNode = Boolean.parseBoolean(cmdLine.getOptionValue("start", "true"));
             if (startNode) {

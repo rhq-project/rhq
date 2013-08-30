@@ -55,4 +55,10 @@
     <method>void setJmxPort(int)</method>
     <justification>No longer needed</justification>
   </difference>
+  <difference>
+    <className>org/rhq/core/domain/cloud/StorageNode</className>
+    <differenceType>7002</differenceType> <!-- method removed -->
+    <method>int getJmxPort()</method>
+    <justification>No longer needed</justification>
+  </difference>
 </differences>

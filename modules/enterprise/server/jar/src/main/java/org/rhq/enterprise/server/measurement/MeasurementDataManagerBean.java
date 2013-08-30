@@ -88,6 +88,7 @@ import org.rhq.enterprise.server.agentclient.AgentClient;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheManagerLocal;
 import org.rhq.enterprise.server.alert.engine.AlertConditionCacheStats;
+import org.rhq.enterprise.server.auth.SubjectManagerLocal;
 import org.rhq.enterprise.server.authz.AuthorizationManagerLocal;
 import org.rhq.enterprise.server.authz.PermissionException;
 import org.rhq.enterprise.server.storage.StorageClientManagerBean;
@@ -161,6 +162,9 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
 
     @EJB
     private MeasurementScheduleManagerLocal measurementScheduleManager;
+
+    @EJB
+    private SubjectManagerLocal subjectManager;
 
     // doing a bulk delete in here, need to be in its own tx
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
@@ -596,12 +600,19 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
         log.debug(callingMethod + ": " + stats.toString());
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MeasurementAggregate getAggregate(Subject subject, int scheduleId, long startTime, long endTime) {
-        MeasurementSchedule schedule = entityManager.find(MeasurementSchedule.class, scheduleId);
-        if (schedule == null) {
+        MeasurementScheduleCriteria criteria = new MeasurementScheduleCriteria();
+        criteria.addFilterId(scheduleId);
+        criteria.fetchResource(true);
+
+        PageList<MeasurementSchedule> schedules = measurementScheduleManager.findSchedulesByCriteria(
+            subjectManager.getOverlord(), criteria);
+        if (schedules.isEmpty()) {
             throw new MeasurementException("Could not fine MeasurementSchedule with the id[" + scheduleId + "]");
         }
+        MeasurementSchedule schedule = schedules.get(0);
 
         if (authorizationManager.canViewResource(subject, schedule.getResource().getId()) == false) {
             throw new PermissionException("User[" + subject.getName()

@@ -128,9 +128,9 @@ public interface StorageNodeManagerLocal {
      * have alert definitions. This can be used by the resource criteria queries to find
      * all alerts triggered for storage nodes resources.
      *
-     * @return resource ids
+     * @return map with resource (with defined alert) id as a key and storage node id as a value
      */
-    Integer[] findResourcesWithAlertDefinitions();
+    Map<Integer, Integer> findResourcesWithAlertDefinitions();
 
     /**
      * Find ids for all resources and sub-resources, of the specified storage node, that

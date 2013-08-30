@@ -276,6 +276,10 @@ public class LinkManager {
 
         return link;
     }
+    
+    public static String getStorageNodeLink(int storageNodeId) {
+        return "#Administration/Topology/StorageNodes/" + storageNodeId;
+    }
 
     public static String getAutodiscoveryQueueLink() {
         if (GWT) {

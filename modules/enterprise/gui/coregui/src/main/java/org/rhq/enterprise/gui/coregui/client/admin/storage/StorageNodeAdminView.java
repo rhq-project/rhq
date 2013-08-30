@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.EnumSet;
+import java.util.Map;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -27,7 +28,6 @@ import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
 import org.rhq.core.domain.resource.ResourceType;
-import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
@@ -66,7 +66,7 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
     private TabInfo backupTabInfo = new TabInfo(3, new ViewName("Backup"));
     private StorageNodeTableView table;
 
-    private int[] resIds;
+    private Map<Integer, Integer> resIdsToStorageNodeIdsMap;
 
     public StorageNodeAdminView() {
         super();
@@ -115,11 +115,11 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
         } else if (tabInfo.equals(backupTabInfo)) {
             tabset.getTabByName(tabInfo.name.getName()).setPane(new Label("in progress.."));
         } else if (tabInfo.equals(alertsTabInfo)) {
-            if (resIds != null) {
+            if (resIdsToStorageNodeIdsMap != null) {
                 tabset.getTabByName(tabInfo.name.getName()).setPane(
-                    new StorageNodeAlertHistoryView("storageNodesAlerts", resIds));
+                    new StorageNodeAlertHistoryView("storageNodesAlerts", resIdsToStorageNodeIdsMap));
             } else {
-                GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new AsyncCallback<Integer[]>() {
+                GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new AsyncCallback<Map<Integer, Integer>>() {
                     @Override
                     public void onFailure(Throwable caught) {
                         Message message = new Message("Unable to render storage node alert view: "
@@ -128,15 +128,15 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                     }
 
                     @Override
-                    public void onSuccess(Integer[] result) {
-                        if (result == null || result.length == 0) {
+                    public void onSuccess(Map<Integer, Integer> result) {
+                        if (result == null || result.size() == 0) {
                             onFailure(new Exception(
                                 "Unfortunately, there are no associated resources for the available storage nodes. " +
                                 "Check if the agents are running on the machines where the storage nodes are deployed."));
                         } else {
-                            resIds = ArrayUtils.unwrapArray(result);
+                            resIdsToStorageNodeIdsMap = result;
                             tabset.getTabByName(tabInfo.name.getName()).setPane(
-                                new StorageNodeAlertHistoryView("storageNodesAlerts", resIds));
+                                new StorageNodeAlertHistoryView("storageNodesAlerts", resIdsToStorageNodeIdsMap));
                             tabset.selectTab(tabInfo.index);
                         }
                     }
@@ -174,19 +174,6 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
 //                    }
 //                });
         }
-    }
-    
-    private void loadResourceType(int resourceTypeId) {
-        ResourceTypeRepository.Cache.getInstance().getResourceTypes(
-            resourceTypeId,
-            EnumSet.of(ResourceTypeRepository.MetadataType.content, ResourceTypeRepository.MetadataType.operations,
-                ResourceTypeRepository.MetadataType.measurements, ResourceTypeRepository.MetadataType.events,
-                ResourceTypeRepository.MetadataType.resourceConfigurationDefinition),
-            new ResourceTypeRepository.TypeLoadedCallback() {
-                public void onTypesLoaded(ResourceType type) {
-
-                }
-            });
     }
     
     private void scheduleUnacknowledgedAlertsPollingJob(final NamedTab alerts) {

@@ -19,6 +19,9 @@
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Record;
@@ -36,6 +39,7 @@ import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
 import org.rhq.core.domain.util.PageList;
+import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
@@ -48,50 +52,35 @@ import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 
 /**
+ * The view for accessing alerts on storage node resource and its children.
+ * 
  * @author Jirka Kremser
- *
  */
 public class StorageNodeAlertHistoryView extends AlertHistoryView {
     private boolean isGouped = true;
     private final HTMLFlow header;
     private final int storageNodeId;
+    private final boolean allStorageNodes;
+    private Map<Integer, Integer> resourceIdToStorageNodeIdMap;
+    private Map<Integer, String> storageNodeIdToAddressMap;
     
-    public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds) {
-        this(tableTitle, resourceIds, null, -1);
+    public StorageNodeAlertHistoryView(String tableTitle, Map<Integer, Integer> resourceIdToStorageNodeIdMap) {
+        this(tableTitle, ArrayUtils.unwrapArray(resourceIdToStorageNodeIdMap.keySet().toArray(new Integer[]{})), null, -1);
+        this.resourceIdToStorageNodeIdMap = resourceIdToStorageNodeIdMap;
     }
     
     public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds, HTMLFlow header, int storageNodeId) {
         super(tableTitle, resourceIds);
         this.header = header;
-        this.storageNodeId = storageNodeId;
+        this.storageNodeId = -1;
+        this.allStorageNodes = storageNodeId == -1;
+        storageNodeIdToAddressMap = new HashMap<Integer, String>();
     }
     
     @Override
     protected void onInit() {
         super.onInit();
-        if (header != null && storageNodeId != -1) {
-            StorageNodeCriteria criteria = new StorageNodeCriteria();
-            criteria.addFilterId(storageNodeId);
-            GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria,
-                new AsyncCallback<PageList<StorageNode>>() {
-                    public void onSuccess(final PageList<StorageNode> storageNodes) {
-                        if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
-                            CoreGUI.getErrorHandler().handleError(
-                                MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)));
-                        }
-                        final StorageNode node = storageNodes.get(0);
-                        header
-                            .setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
-                                + node.getAddress() + ")</div>");
-                    }
-
-                    public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError(
-                            MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
-                                + caught.getMessage(), caught);
-                    }
-                });
-        }
+        fetchAddresses();
     }
         
     @Override
@@ -107,19 +96,20 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                         || AncestryUtil.RESOURCE_ANCESTRY.equals(field.getName())) {
                         continue;
                     } if (AlertCriteria.SORT_FIELD_CTIME.equals(field.getName())) {
-                        field.setWidth(240);
-                        field.setShowGridSummary(true);  
-                        field.setShowGroupSummary(true);
-                        field.setSummaryFunction(new SummaryFunction() {  
-                            public Object getSummaryValue(Record[] records, ListGridField field) {
-                                if (records != null && records.length > 0 && records[0] != null) {
-                                    Integer resourceId = records[0].getAttributeAsInt(AncestryUtil.RESOURCE_ID);
-                                    Integer defId = records[0].getAttributeAsInt("definitionId");
-                                    String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
-                                    return LinkManager.getHref(url, "Link to Definition");
-                                } else return "";
-                            }  
-                        });
+//                        field.setShowGridSummary(true);  
+//                        field.setShowGroupSummary(true);
+//                        field.setSummaryFunction(new SummaryFunction() {  
+//                            public Object getSummaryValue(Record[] records, ListGridField field) {
+//                                if (records != null && records.length > 0 && records[0] != null) {
+//                                    http://localhost:7080/coregui/#Administration/Configuration/AlertDefTemplates/10190/10002
+//                                        
+//                                    Integer resourceId = records[0].getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+//                                    Integer defId = records[0].getAttributeAsInt("definitionId");
+//                                    String url = LinkManager.getSubsystemAlertDefinitionLink(resourceId, defId);
+//                                    return LinkManager.getHref(url, "Link to Definition");
+//                                } else return "";
+//                            }  
+//                        });
                         field.setCellFormatter(new CellFormatter() {
                             public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
                                 if (listGridRecord.getAttribute("groupValue") != null) {
@@ -180,6 +170,24 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                 ListGridField descriptionField = new ListGridField("description", MSG.common_title_description());
                 descriptionField.setCanSortClientOnly(true);
                 newFields.add(descriptionField);
+                
+                if (allStorageNodes) { // all storage nodes
+                    ListGridField storageNodeLinkField = new ListGridField("storageNodeLink", "Storage Node");
+                    storageNodeLinkField.setCellFormatter(new CellFormatter() {
+                        public String format(Object o, ListGridRecord listGridRecord, int i, int i1) {
+                            if (listGridRecord.getAttribute("groupValue") != null) {
+                                return (String) o;
+                            }
+                            Integer resourceId = listGridRecord.getAttributeAsInt(AncestryUtil.RESOURCE_ID);
+                            int storageNodeId = resourceIdToStorageNodeIdMap.get(resourceId);
+                            String url = LinkManager.getStorageNodeLink(storageNodeId);
+                            return LinkManager.getHref(url, storageNodeIdToAddressMap.get(storageNodeId));
+
+                        }
+                    });
+                    storageNodeLinkField.setWidth(90);
+                    newFields.add(2, storageNodeLinkField);
+                }
                 return newFields;
             }
         };
@@ -215,6 +223,49 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
     @Override
     public void showDetails(ListGridRecord record) {
         CoreGUI.goToView(getDetailUrlFromRecord(record));
+    }
+    
+    private void fetchAddresses() {
+        if (header != null && !allStorageNodes) {
+            StorageNodeCriteria criteria = new StorageNodeCriteria();
+            criteria.addFilterId(storageNodeId);
+            GWTServiceLookup.getStorageService().findStorageNodesByCriteria(criteria,
+                new AsyncCallback<PageList<StorageNode>>() {
+                    public void onSuccess(final PageList<StorageNode> storageNodes) {
+                        if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
+                            CoreGUI.getErrorHandler().handleError(
+                                MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)));
+                        }
+                        final StorageNode node = storageNodes.get(0);
+                        header
+                            .setContents("<div style='text-align: center; font-weight: bold; font-size: medium;'> Storage Node ("
+                                + node.getAddress() + ")</div>");
+                    }
+
+                    public void onFailure(Throwable caught) {
+                        CoreGUI.getErrorHandler().handleError(
+                            MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                                + caught.getMessage(), caught);
+                    }
+                });
+        } else { // fetch the addresses of all storage nodes
+            GWTServiceLookup.getStorageService().getStorageNodes(new AsyncCallback<List<StorageNode>>() {
+                public void onSuccess(final List<StorageNode> storageNodes) {
+                    if (storageNodes != null && !storageNodes.isEmpty()) {
+                        for (StorageNode node : storageNodes) {
+                            storageNodeIdToAddressMap.put(node.getId(), node.getAddress());
+                        }
+                    }
+                }
+
+                public void onFailure(Throwable caught) {
+                    CoreGUI.getErrorHandler().handleError(
+                        MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)) + " "
+                            + caught.getMessage(), caught);
+                }
+            });
+            
+        }
     }
     
     private String getDetailUrlFromRecord(ListGridRecord record) {

@@ -27,7 +27,6 @@ import java.util.Map;
 
 import com.google.gwt.user.client.rpc.RemoteService;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
@@ -76,7 +75,9 @@ public interface StorageGWTService extends RemoteService {
     
     PageList<StorageNodeLoadComposite> getStorageNodeComposites() throws RuntimeException;
     
-    Integer[] findResourcesWithAlertDefinitions() throws RuntimeException;
+    List<StorageNode> getStorageNodes() throws RuntimeException;
+    
+    Map<Integer, Integer> findResourcesWithAlertDefinitions() throws RuntimeException;
     
     Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) throws RuntimeException;
     

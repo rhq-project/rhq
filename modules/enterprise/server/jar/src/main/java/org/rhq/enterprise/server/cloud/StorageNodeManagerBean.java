@@ -670,12 +670,21 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
     }
 
     @Override
-    public Integer[] findResourcesWithAlertDefinitions() {
-        return this.findResourcesWithAlertDefinitions(null);
+    public Map<Integer, Integer> findResourcesWithAlertDefinitions() {
+        return this.findResourcesWithAlertsToStorageNodeMap(null);
     }
 
     @Override
     public Integer[] findResourcesWithAlertDefinitions(StorageNode storageNode) {
+        Map<Integer, Integer> result = findResourcesWithAlertsToStorageNodeMap(storageNode);
+        if (result != null) {
+            Set<Integer> resourceIds = result.keySet();
+            return resourceIds.toArray(new Integer[resourceIds.size()]);
+        }
+        return new Integer[0];
+    }
+    
+    private Map<Integer, Integer> findResourcesWithAlertsToStorageNodeMap(StorageNode storageNode) {
         List<StorageNode> initialStorageNodes = getStorageNodes();
         if (storageNode == null) {
             initialStorageNodes = getStorageNodes();
@@ -684,29 +693,30 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
                 StorageNode.class, storageNode.getId()) : storageNode);
         }
 
+        Map<Integer, Integer> resourceIdsToStorageNodeMap = new HashMap<Integer, Integer>();
         Queue<Resource> unvisitedResources = new LinkedList<Resource>();
+        
+        // we are assuming here that the set of resources is disjunktive across different storage nodes 
         for (StorageNode initialStorageNode : initialStorageNodes) {
             if (initialStorageNode.getResource() != null) {
                 unvisitedResources.add(initialStorageNode.getResource());
-            }
-        }
+                while (!unvisitedResources.isEmpty()) {
+                    Resource resource = unvisitedResources.poll();
+                    if (resource.getAlertDefinitions() != null) {
+                        resourceIdsToStorageNodeMap.put(resource.getId(), initialStorageNode.getId());
+                    }
 
-        List<Integer> resourceIdsWithAlertDefinitions = new ArrayList<Integer>();
-        while (!unvisitedResources.isEmpty()) {
-            Resource resource = unvisitedResources.poll();
-            if (resource.getAlertDefinitions() != null) {
-                resourceIdsWithAlertDefinitions.add(resource.getId());
-            }
-
-            Set<Resource> childResources = resource.getChildResources();
-            if (childResources != null) {
-                for (Resource child : childResources) {
-                    unvisitedResources.add(child);
+                    Set<Resource> childResources = resource.getChildResources();
+                    if (childResources != null) {
+                        for (Resource child : childResources) {
+                            unvisitedResources.add(child);
+                        }
+                    }
                 }
             }
         }
 
-        return resourceIdsWithAlertDefinitions.toArray(new Integer[resourceIdsWithAlertDefinitions.size()]);
+        return resourceIdsToStorageNodeMap;
     }
 
     @Override

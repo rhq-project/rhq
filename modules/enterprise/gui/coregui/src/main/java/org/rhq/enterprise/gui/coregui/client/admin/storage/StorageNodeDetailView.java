@@ -307,7 +307,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         cqlPortItem.setValue(storageNode.getCqlPort());
 
         jmxPortItem = new StaticTextItem("jmxPort", "JMX Port");
-        jmxPortItem.setValue(storageNode.getJmxPort());
 
         //        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",
         //            MSG.view_adminTopology_storageNode_jmxConnectionUrl());

@@ -817,6 +817,10 @@
       </resource-configuration>
 '>
 
+    <!ENTITY queueLengthResourceConfig '
+    <c:simple-property name="queue-length:expr" required="false" type="integer" readOnly="false" displayName="Queue Length" description="The queue length. Required only for Bounded and Blocking Bounded Thread Pools."/>
+'>
+
     <!ENTITY flagModuleResourceConfig '
 	<resource-configuration>
             <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
@@ -3093,6 +3097,7 @@
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
+          &queueLengthResourceConfig;
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
           <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
@@ -5938,6 +5943,7 @@
           </c:map-property>
           <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
           <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
+          &queueLengthResourceConfig;
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
           <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
@@ -10871,6 +10877,7 @@
         </c:map-property>
         <c:simple-property name="max-threads:expr" required="true" type="string" readOnly="false" displayName="Max Threads" description="The maximum thread pool size."/>
         <c:simple-property name="name" required="false" type="string" readOnly="true" description="The name of the thread pool."/>
+        &queueLengthResourceConfig;
         <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
         <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">

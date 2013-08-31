@@ -821,6 +821,37 @@
     <c:simple-property name="queue-length:expr" required="false" type="integer" readOnly="false" displayName="Queue Length" description="The queue length. Required only for Bounded and Blocking Bounded Thread Pools."/>
 '>
 
+    <!ENTITY threadPoolTemplateResourceConfig '
+        <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
+          <c:property-options>
+            <c:option value="blocking-bounded-queue-thread-pool"/>
+            <c:option value="blocking-queueless-thread-pool"/>
+            <c:option value="bounded-queue-thread-pool"/>
+            <c:option value="queueless-thread-pool"/>
+            <c:option value="unbounded-queue-thread-pool"/>
+            <c:option value="scheduled-thread-pool"/>
+          </c:property-options>
+        </c:simple-property>    
+        <c:template name="Blocking Queueless Thread Pool" description="Blocking Queueless Thread Pool">
+          <c:simple-property name="__type" readOnly="true" default="blocking-queueless-thread-pool"/>
+        </c:template>
+        <c:template name="Blocking Bounded Queue Thread Pool" description="Blocking Bounded Queue Thread Pool">
+          <c:simple-property name="__type" readOnly="true" default="blocking-bounded-queue-thread-pool"/>
+        </c:template>
+        <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
+          <c:simple-property name="__type" readOnly="true" default="bounded-queue-thread-pool"/>
+        </c:template>
+        <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
+          <c:simple-property name="__type" readOnly="true" default="queueless-thread-pool"/>
+        </c:template>
+        <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
+          <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool"/>
+        </c:template>
+        <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
+          <c:simple-property name="__type" readOnly="true" default="unbounded-queue-thread-pool"/>
+        </c:template>        
+'>
+
     <!ENTITY flagModuleResourceConfig '
 	<resource-configuration>
             <c:simple-property name="code" required="true" type="string" readOnly="false" description="Class name of the module to be instantiated."/>
@@ -3080,7 +3111,7 @@
                createDeletePolicy="neither">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
+          <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|blocking-bounded-queue-thread-pool|blocking-queueless-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
         </plugin-configuration>
 
         <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
@@ -3100,26 +3131,7 @@
           &queueLengthResourceConfig;
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
-          <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
-            <c:property-options>
-              <c:option value="bounded-queue-thread-pool"/>
-              <c:option value="queueless-thread-pool"/>
-              <c:option value="unbounded-queue-thread-pool"/>
-              <c:option value="scheduled-thread-pool"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="bounded-queue-thread-pool"/>
-          </c:template>
-          <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="queueless-thread-pool"/>
-          </c:template>
-          <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool"/>
-          </c:template>
-          <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="unbounded-queue-thread-pool"/>
-          </c:template>
+          &threadPoolTemplateResourceConfig;
         </resource-configuration>
       </service>
     </service>
@@ -5933,7 +5945,7 @@
                createDeletePolicy="both">
 
         <plugin-configuration>
-          <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
+          <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|blocking-bounded-queue-thread-pool|blocking-queueless-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
         </plugin-configuration>
 
         <resource-configuration>
@@ -5946,26 +5958,7 @@
           &queueLengthResourceConfig;
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
-          <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
-            <c:property-options>
-              <c:option value="bounded-queue-thread-pool"/>
-              <c:option value="queueless-thread-pool"/>
-              <c:option value="unbounded-queue-thread-pool"/>
-              <c:option value="scheduled-thread-pool"/>
-            </c:property-options>
-          </c:simple-property>
-          <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="bounded-queue-thread-pool"/>
-          </c:template>
-          <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="queueless-thread-pool"/>
-          </c:template>
-          <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool"/>
-          </c:template>
-          <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
-            <c:simple-property name="__type" readOnly="true" default="unbounded-queue-thread-pool"/>
-          </c:template>
+          &threadPoolTemplateResourceConfig;
         </resource-configuration>
       </service>
     </service>
@@ -10860,7 +10853,7 @@
              createDeletePolicy="both">
 
       <plugin-configuration>
-        <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
+        <c:simple-property name="path" readOnly="true" default="bounded-queue-thread-pool|blocking-bounded-queue-thread-pool|blocking-queueless-thread-pool|queueless-thread-pool|scheduled-thread-pool|unbounded-queue-thread-pool"/>
       </plugin-configuration>
 
       <metric property="active-count" description="The approximate number of threads that are actively executing tasks."/>
@@ -10880,26 +10873,7 @@
         &queueLengthResourceConfig;
         <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
-        <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
-          <c:property-options>
-            <c:option value="bounded-queue-thread-pool"/>
-            <c:option value="queueless-thread-pool"/>
-            <c:option value="unbounded-queue-thread-pool"/>
-            <c:option value="scheduled-thread-pool"/>
-          </c:property-options>
-        </c:simple-property>
-        <c:template name="Bounded Queue Thread Pool" description="Bounded Queue Thread Pool">
-          <c:simple-property name="__type" readOnly="true" default="bounded-queue-thread-pool"/>
-        </c:template>
-        <c:template name="Queueless Thread Pool" description="Queueless Thread Pool">
-          <c:simple-property name="__type" readOnly="true" default="queueless-thread-pool"/>
-        </c:template>
-        <c:template name="Scheduled Thread Pool" description="Scheduled Thread Pool">
-          <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool"/>
-        </c:template>
-        <c:template name="Unbounded Queue Thread Pool" description="Unbounded Queue Thread Pool">
-          <c:simple-property name="__type" readOnly="true" default="unbounded-queue-thread-pool"/>
-        </c:template>
+        &threadPoolTemplateResourceConfig;
       </resource-configuration>
     </service>
 

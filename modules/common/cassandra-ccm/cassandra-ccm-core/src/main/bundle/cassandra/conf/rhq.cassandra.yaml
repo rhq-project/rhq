@@ -1,4 +1,4 @@
-# Cassandra storage config YAML 
+# Cassandra storage config YAML
 
 # NOTE:
 #   See http://wiki.apache.org/cassandra/StorageConfiguration for
@@ -42,7 +42,11 @@ hinted_handoff_enabled: true
 # generated.  After it has been dead this long, new hints for it will not be
 # created until it has been seen alive and gone down again.
 max_hint_window_in_ms: 10800000 # 3 hours
-# throttle in KB's per second, per delivery thread
+# Maximum throttle in KBs per second, per delivery thread.  This will be
+# reduced proportionally to the number of nodes in the cluster.  (If there
+# are two nodes in the cluster, each delivery thread will use the maximum
+# rate; if there are three, each will throttle to half of the maximum,
+# since we expect two nodes to be delivering hints simultaneously.)
 hinted_handoff_throttle_in_kb: 1024
 # Number of threads with which to deliver hints;
 # Consider increasing this number when you have multi-dc deployments, since
@@ -102,7 +106,9 @@ permissions_validity_in_ms: 2000
 # partitioners and token selection.
 partitioner: org.apache.cassandra.dht.Murmur3Partitioner
 
-# directories where Cassandra should store data on disk.
+# Directories where Cassandra should store data on disk.  Cassandra
+# will spread data evenly across them, subject to the granularity of
+# the configured compaction strategy.
 data_file_directories:
     - ${rhq.cassandra.data.dir}
 
@@ -111,7 +117,7 @@ commitlog_directory: ${rhq.cassandra.commitlog.dir}
 
 # policy for data disk failures:
 # stop: shut down gossip and Thrift, leaving the node effectively dead, but
-#       still inspectable via JMX.
+#       can still be inspected via JMX.
 # best_effort: stop using the failed disk and respond to requests based on
 #              remaining available sstables.  This means you WILL see obsolete
 #              data at CL.ONE!
@@ -123,8 +129,8 @@ disk_failure_policy: stop
 # Each key cache hit saves 1 seek and each row cache hit saves 2 seeks at the
 # minimum, sometimes more. The key cache is fairly tiny for the amount of
 # time it saves, so it's worthwhile to use it at large numbers.
-# The row cache saves even more time, but must store the whole values of
-# its rows, so it is extremely space-intensive. It's best to only use the
+# The row cache saves even more time, but must contain the entire row,
+# so it is extremely space-intensive. It's best to only use the
 # row cache if you have hot rows or static rows.
 #
 # NOTE: if you reduce the size, you may not get you hottest keys loaded on startup.
@@ -177,6 +183,8 @@ row_cache_save_period: 0
 # significantly less memory than "live" rows in the JVM, so you can cache
 # more rows in a given memory footprint.  And storing the cache off-heap
 # means you can use smaller heap sizes, reducing the impact of GC pauses.
+# Note however that when a row is requested from the row cache, it must be
+# deserialized into the heap for use.
 #
 # It is also valid to specify the fully-qualified class name to a class
 # that implements org.apache.cassandra.cache.IRowCacheProvider.
@@ -293,7 +301,7 @@ memtable_flush_queue_size: 4
 # Whether to, when doing sequential writing, fsync() at intervals in
 # order to force the operating system to flush the dirty
 # buffers. Enable this to avoid sudden dirty buffer flushing from
-# impacting read latencies. Almost always a good idea on SSD:s; not
+# impacting read latencies. Almost always a good idea on SSDs; not
 # necessarily on platters.
 trickle_fsync: false
 trickle_fsync_interval_in_kb: 10240
@@ -308,9 +316,9 @@ ssl_storage_port: ${rhq.cassandra.ssl.storage.port}
 # Address to bind to and tell other Cassandra nodes to connect to. You
 # _must_ change this if you want multiple nodes to be able to
 # communicate!
-# 
+#
 # Leaving it blank leaves it up to InetAddress.getLocalHost(). This
-# will always do the Right Thing *if* the node is properly configured
+# will always do the Right Thing _if_ the node is properly configured
 # (hostname, name resolution, etc), and the Right Thing is to use the
 # address associated with the hostname (it might not be).
 #
@@ -333,22 +341,27 @@ internode_authenticator: org.rhq.cassandra.auth.RhqInternodeAuthenticator
 start_native_transport: true
 # port for the CQL native transport to listen for clients on
 native_transport_port: ${rhq.cassandra.native_transport_port}
+# NOTE: native_transport_min_threads is now deprecated and ignored (but kept
+# in the 1.2.x series for compatibility sake).
 # The minimum and maximum threads for handling requests when the native
-# transport is used. The meaning is those is similar to the one of
-# rpc_min_threads and rpc_max_threads, though the default differ slightly and
-# are the ones below:
+# transport is used. They are similar to rpc_min_threads and rpc_max_threads,
+# though the defaults differ slightly.
 # native_transport_min_threads: 16
-native_transport_max_threads: ${rhq.cassandra.native_transport_max_threads}
-
+# native_transport_max_threads: 128
 
 # Whether to start the thrift rpc server.
 start_rpc: ${rhq.cassandra.start_rpc}
-# The address to bind the Thrift RPC service to -- clients connect
-# here. Unlike ListenAddress above, you *can* specify 0.0.0.0 here if
-# you want Thrift to listen on all interfaces.
+
+# The address to bind the Thrift RPC service and native transport
+# server -- clients connect here.
 # 
 # Leaving this blank has the same effect it does for ListenAddress,
 # (i.e. it will be based on the configured hostname of the node).
+#
+# Note that unlike ListenAddress above, it is allowed to specify 0.0.0.0
+# here if you want to listen on all interfaces but is not best practice
+# as it is known to confuse the node auto-discovery features of some
+# client drivers.
 rpc_address: ${rpc.address}
 # port for Thrift to listen for clients on
 rpc_port: ${rhq.cassandra.rpc_port}
@@ -359,7 +372,7 @@ rpc_keepalive: true
 # Cassandra provides three out-of-the-box options for the RPC Server:
 #
 # sync  -> One thread per thrift connection. For a very large number of clients, memory
-#          will be your limiting factor. On a 64 bit JVM, 128KB is the minimum stack size
+#          will be your limiting factor. On a 64 bit JVM, 180KB is the minimum stack size
 #          per thread, and that will correspond to your use of virtual memory (but physical memory
 #          may be limited depending on use of stack space).
 #
@@ -381,7 +394,7 @@ rpc_server_type: sync
 # RPC thread pool dictates how many concurrent requests are possible (but if you are using the sync
 # RPC server, it also dictates the number of clients that can be connected at all).
 #
-# The default is unlimited and thus provide no protection against clients overwhelming the server. You are
+# The default is unlimited and thus provides no protection against clients overwhelming the server. You are
 # encouraged to set a maximum that makes sense for you in production, but do keep in mind that
 # rpc_max_threads represents the maximum number of client requests this server may execute concurrently.
 #
@@ -404,16 +417,12 @@ rpc_server_type: sync
 # internode_send_buff_size_in_bytes:
 # internode_recv_buff_size_in_bytes:
 
-# Frame size for thrift (maximum field length).
+# Frame size for thrift (maximum message length).
 thrift_framed_transport_size_in_mb: 15
-
-# The max length of a thrift message, including all fields and
-# internal thrift overhead.
-thrift_max_message_length_in_mb: 16
 
 # Set to true to have Cassandra create a hard link to each sstable
 # flushed or streamed locally in a backups/ subdirectory of the
-# Keyspace data.  Removing these links is the operator's
+# keyspace data.  Removing these links is the operator's
 # responsibility.
 incremental_backups: false
 
@@ -550,9 +559,9 @@ cross_node_timeout: false
 #    deployment conventions (as it did Facebook's), this is best used
 #    as an example of writing a custom Snitch class.
 #  - Ec2Snitch:
-#    Appropriate for EC2 deployments in a single Region.  Loads Region
+#    Appropriate for EC2 deployments in a single Region. Loads Region
 #    and Availability Zone information from the EC2 API. The Region is
-#    treated as the Datacenter, and the Availability Zone as the rack.
+#    treated as the datacenter, and the Availability Zone as the rack.
 #    Only private IPs are used, so this will not work across multiple
 #    Regions.
 #  - Ec2MultiRegionSnitch:

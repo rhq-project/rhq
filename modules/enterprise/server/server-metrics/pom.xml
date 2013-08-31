@@ -61,6 +61,7 @@
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.driver.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>

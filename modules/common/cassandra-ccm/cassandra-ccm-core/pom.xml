@@ -36,11 +36,6 @@
       </exclusions>
     </dependency>
     <dependency>
-      <groupId>com.datastax.cassandra</groupId>
-      <artifactId>cassandra-driver-core</artifactId>
-      <version>${cassandra.driver.version}</version>
-    </dependency>
-    <dependency>
       <groupId>net.java.dev.jna</groupId>
       <artifactId>jna</artifactId>
       <version>${cassandra.jna.version}</version>
@@ -156,7 +151,7 @@
                 <property name="cassandra.distro.zip"
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
                 <delete file="${cassandra.dir}/lib/lz4-1.1.0.jar"/>
-                <delete file="${cassandra.dir}/lib/snappy-java-1.0.4.1.jar"/>
+                <delete file="${cassandra.dir}/lib/snappy-java-1.0.5.jar"/>
                 <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"
                       todir="${cassandra.dir}/lib"/>
                 <copy file="${settings.localRepository}/org/rhq/rhq-cassandra-auth/${project.version}/rhq-cassandra-auth-${project.version}.jar"

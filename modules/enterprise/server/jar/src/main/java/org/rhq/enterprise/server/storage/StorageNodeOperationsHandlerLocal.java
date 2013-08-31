@@ -42,6 +42,8 @@ public interface StorageNodeOperationsHandlerLocal {
 
     void performAddNodeMaintenance(Subject subject, StorageNode storageNode);
 
+    void performAddMaintenance(Subject subject, StorageNode storageNode);
+
     void uninstall(Subject subject, StorageNode storageNode);
 
     void detachFromResource(StorageNode storageNode);
@@ -51,6 +53,8 @@ public interface StorageNodeOperationsHandlerLocal {
     void performRemoveNodeMaintenanceIfNecessary(InetAddress storageNodeAddress);
 
     void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode);
+
+    void performRemoveMaintenance(Subject subject, StorageNode storageNode);
 
     void runRepair(Subject subject, List<StorageNode> clusterNodes);
 

@@ -126,9 +126,18 @@ public class StrippedDownStartupBeanPreparation {
             System.setProperty("rhq.storage.password", props.getProperty("rhq.storage.password"));
             System.setProperty("rhq.storage.nodes", props.getProperty("rhq.storage.nodes"));
             System.setProperty("rhq.storage.cql-port", props.getProperty("rhq.storage.cql-port"));
+            System.setProperty("rhq.storage.gossip-port", props.getProperty("rhq.storage.gossip-port"));
         } catch (IOException e) {
             throw new RuntimeException(("Failed to load cassandra-test.properties"));
         }
+
+        String cqlPort = System.getProperty("rhq.storage.cql-port");
+        String gossipPort = System.getProperty("rhq.storage.gossip-port");
+
+        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + cqlPort +
+            "', default_property_value = '" + cqlPort + "' where property_key = 'STORAGE_CQL_PORT'").executeUpdate();
+        entityManager.createNativeQuery("update rhq_system_config set property_value = '" + gossipPort +
+            "', default_property_value = '" + gossipPort + "' where property_key = 'STORAGE_GOSSIP_PORT'").executeUpdate();
     }
 
     @Timeout

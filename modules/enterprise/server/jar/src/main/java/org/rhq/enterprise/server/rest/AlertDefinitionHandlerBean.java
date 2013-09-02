@@ -1100,13 +1100,18 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             adr.setDampeningUnit(dampening.getPeriodUnits().name());
         }
 
+        List<Link> links = adr.getLinks();
         if (def.getResource()!=null) {
-            adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.RESOURCE_ALERT_DEF,def.getResource().getId(),adr.getId()));
+            links.add(createUILink(uriInfo, UILinkTemplate.RESOURCE_ALERT_DEF, def.getResource().getId(), adr.getId()));
+            links.add(getLinkToResource(def.getResource(), uriInfo, "resource"));
         } else if (def.getGroup() != null) {
-            adr.getLinks().add(
+            links.add(
                 createUILink(uriInfo, UILinkTemplate.GROUP_ALERT_DEF, def.getGroup().getId(), adr.getId()));
+            links.add(getLinkToGroup(def.getGroup(), uriInfo, "group"));
         } else {
-            adr.getLinks().add(createUILink(uriInfo,UILinkTemplate.TEMPLATE_ALERT_DEF,def.getResourceType().getId(),adr.getId()));
+            links.add(
+                createUILink(uriInfo, UILinkTemplate.TEMPLATE_ALERT_DEF, def.getResourceType().getId(), adr.getId()));
+            links.add(getLinkToResourceType(def.getResourceType(),uriInfo,"resourceType"));
         }
 
         return adr;

@@ -292,10 +292,7 @@ public class AbstractRestBean {
         Link link = new Link("operationDefinitions", uri.toString());
         rwt.addLink(link);
 
-        uriBuilder = uriInfo.getBaseUriBuilder();
-        uriBuilder.path("/resource/{id}");
-        uri = uriBuilder.build(res.getId());
-        link = new Link("self", uri.toString());
+        link = getLinkToResource(res, uriInfo, "self");
         rwt.addLink(link);
         uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/resource/{id}/schedules");
@@ -327,6 +324,37 @@ public class AbstractRestBean {
         rwt.addLink(createUILink(uriInfo,UILinkTemplate.RESOURCE,res.getId()));
 
         return rwt;
+    }
+
+    protected Link getLinkToResource(Resource res, UriInfo uriInfo, String rel) {
+        UriBuilder uriBuilder;URI uri;
+        Link link;
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/resource/{id}");
+        uri = uriBuilder.build(res.getId());
+        link = new Link(rel, uri.toString());
+        return link;
+    }
+
+    protected Link getLinkToResourceType(ResourceType type, UriInfo uriInfo, String rel) {
+        UriBuilder uriBuilder;URI uri;
+        Link link;
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/resource/type/{id}");
+        uri = uriBuilder.build(type.getId());
+        link = new Link(rel, uri.toString());
+        return link;
+    }
+
+    protected Link getLinkToGroup(ResourceGroup group, UriInfo uriInfo, String rel) {
+        UriBuilder uriBuilder;
+        URI uri;
+        Link link;
+        uriBuilder = uriInfo.getBaseUriBuilder();
+        uriBuilder.path("/group/{id}");
+        uri = uriBuilder.build(group.getId());
+        link = new Link(rel, uri.toString());
+        return link;
     }
 
     protected Resource fetchResource(int resourceId) {
@@ -479,6 +507,7 @@ public class AbstractRestBean {
         URI uri = uriBuilder.build(group.getId());
         Link link = new Link("edit",uri.toASCIIString());
         gr.getLinks().add(link);
+        gr.getLinks().add(getLinkToGroup(group,uriInfo, "self"));
 
         uriBuilder = uriInfo.getBaseUriBuilder();
         uriBuilder.path("/group/{id}/metricDefinitions");

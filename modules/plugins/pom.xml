@@ -211,6 +211,7 @@
            <module>perftest</module>
            <module>script2</module>
            <module>snmptrapd</module>
+           <module>sonarqube</module>
            <module>twitter</module>
            <module>virt</module>
            <module>kickstart</module>

@@ -43,6 +43,8 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -183,7 +185,21 @@ public class ResourceSearchView extends Table {
                     }
                 }) {
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                    if (containsStorageNodeOrItsResource(selection)) {
+                        // ask again if we are going to remove platform, storage node or its child
+                        SC.confirm(MSG.view_inventory_resources_uninventoryStorageConfirm(),
+                            new BooleanCallback() {
+                            public void execute(Boolean test) {
+                                if (test) uninventoryItems(selection);
+                            }
+                        });
+                    } else {
+                        uninventoryItems(selection);
+                    }
+                }
+
+                private void uninventoryItems(ListGridRecord[] selection) {
                     int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
@@ -200,6 +216,17 @@ public class ResourceSearchView extends Table {
                             onActionSuccess();
                         }
                     });
+                }
+
+                private boolean containsStorageNodeOrItsResource(ListGridRecord[] selection) {
+                    for (ListGridRecord record : selection) {
+                        if (record.getAttribute(AncestryUtil.RESOURCE_ANCESTRY) == null
+                            || "RHQStorage".equals(record.getAttribute(PLUGIN.propertyName()))) {
+                         // is a platform, storage node or child resource of storage node
+                            return true;
+                        }
+                    }
+                    return false;
                 }
             });
 

@@ -101,6 +101,11 @@
             <artifactId>rhq-cassandra-auth</artifactId>
             <version>${project.version}</version>
           </dependency>
+          <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty</artifactId>
+            <version>3.6.6.Final</version>
+          </dependency>
         </dependencies>
         <executions>
           <execution>
@@ -150,6 +155,10 @@
                 <property name="cassandra.distro.filename" value="cassandra.zip"/>
                 <property name="cassandra.distro.zip"
                           value="${project.build.outputDirectory}/${cassandra.distro.filename}"/>
+                <!-- see https://issues.apache.org/jira/browse/CASSANDRA-5955 -->
+                <delete file="${cassandra.dir}/lib/netty-3.5.9.Final.jar"/>
+                <copy file="${settings.localRepository}/io/netty/netty/3.6.6.Final/netty-3.6.6.Final.jar"
+                      todir="${cassandra.dir}/lib"/>
                 <delete file="${cassandra.dir}/lib/lz4-1.1.0.jar"/>
                 <delete file="${cassandra.dir}/lib/snappy-java-1.0.5.jar"/>
                 <copy file="${settings.localRepository}/org/xerial/snappy/snappy-java/${cassandra.snappy.version}/snappy-java-${cassandra.snappy.version}.jar"

@@ -19,6 +19,9 @@
 
 package org.rhq.plugins.netservices;
 
+import static org.rhq.plugins.netservices.util.StringUtil.EMPTY_STRING;
+import static org.rhq.plugins.netservices.util.StringUtil.isBlank;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Set;
@@ -36,7 +39,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.util.StringUtil;
 
 /**
  * Monitoring of IP addresses
@@ -68,8 +70,8 @@ public class PingNetServiceComponent implements ResourceComponent, MeasurementFa
 
     static InetAddress createComponentConfiguration(Configuration pluginConfig)
         throws InvalidPluginConfigurationException {
-        String addressString = pluginConfig.getSimpleValue(ConfigKeys.ADDRESS, StringUtil.EMPTY_STRING);
-        if (StringUtil.isBlank(addressString)) {
+        String addressString = pluginConfig.getSimpleValue(ConfigKeys.ADDRESS, EMPTY_STRING);
+        if (isBlank(addressString)) {
             throw new InvalidPluginConfigurationException("Address is not defined");
         }
         try {

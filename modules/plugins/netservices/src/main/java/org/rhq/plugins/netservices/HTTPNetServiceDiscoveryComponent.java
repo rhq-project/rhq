@@ -19,6 +19,8 @@
 
 package org.rhq.plugins.netservices;
 
+import static org.rhq.plugins.netservices.HTTPNetServiceComponentConfiguration.createComponentConfiguration;
+
 import java.util.Collections;
 import java.util.Set;
 
@@ -45,8 +47,7 @@ public class HTTPNetServiceDiscoveryComponent implements ResourceDiscoveryCompon
     public DiscoveredResourceDetails discoverResource(Configuration config,
         ResourceDiscoveryContext resourceDiscoveryContext) throws InvalidPluginConfigurationException {
         // Get the component configuration. This call will also make configuration checks
-        HTTPNetServiceComponentConfiguration componentConfiguration = HTTPNetServiceComponent
-            .createComponentConfiguration(config);
+        HTTPNetServiceComponentConfiguration componentConfiguration = createComponentConfiguration(config);
         String endPointUrl = componentConfiguration.getEndPointUrl().toExternalForm();
         DiscoveredResourceDetails details = new DiscoveredResourceDetails(resourceDiscoveryContext.getResourceType(),
             endPointUrl, endPointUrl, null, null, config, null);

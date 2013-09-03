@@ -34,6 +34,24 @@
                                description="Set this to true if response code should determine availability. Codes in the 200-299 range are considered success." />
             <c:simple-property name="validateResponsePattern" required="false"
                                description="If not empty, availability will depend on http response having content matching this (Java style) regular expression."/>
+            <c:group name="proxySettings" displayName="Proxy Settings" hiddenByDefault="true">
+              <c:simple-property name="proxyMode" displayName="Proxy Mode" default="NONE" required="false">
+                <c:description>Proxy Mode describes the proxy connection mode (default is 'None').
+                'System Properties' mode will make the plugin look for the standard JVM System Properties for proxy connection.
+                In 'Manual' mode the 'Proxy Host' and 'Proxy Port' parameters must be set.</c:description>
+                <c:property-options>
+                  <c:option value="NONE" name="None"/>
+                  <c:option value="SYS_PROPS" name="System Properties"/>
+                  <c:option value="MANUAL" name="Manual"/>
+                </c:property-options>
+              </c:simple-property>
+              <c:simple-property name="proxyHost" displayName="Proxy Host" required="false">
+                <c:description>Proxy Host is required in 'Manual' Proxy Mode.</c:description>
+              </c:simple-property>
+              <c:simple-property name="proxyPort" displayName="Proxy Port" type="integer" required="false">
+                <c:description>Proxy Port is required in 'Manual' Proxy Mode.</c:description>
+              </c:simple-property>
+            </c:group>
         </plugin-configuration>
 
         <metric property="connectTime" units="milliseconds" displayType="summary"

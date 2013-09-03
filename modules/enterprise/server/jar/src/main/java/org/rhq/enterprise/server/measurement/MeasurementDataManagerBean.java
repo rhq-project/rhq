@@ -26,6 +26,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -584,7 +585,11 @@ public class MeasurementDataManagerBean implements MeasurementDataManagerLocal, 
     public MeasurementDataNumeric getCurrentNumericForSchedule(int scheduleId) {
         MetricsServer metricsServer = storageClientManager.getMetricsServer();
         RawNumericMetric metric = metricsServer.findLatestValueForResource(scheduleId);
-        return new MeasurementDataNumeric(metric.getTimestamp(), scheduleId, metric.getValue());
+        if(null != metric) {
+            return new MeasurementDataNumeric(metric.getTimestamp(), scheduleId, metric.getValue());
+        }else {
+            return new MeasurementDataNumeric(System.currentTimeMillis(), scheduleId, Double.NaN);
+        }
     }
 
     @Asynchronous

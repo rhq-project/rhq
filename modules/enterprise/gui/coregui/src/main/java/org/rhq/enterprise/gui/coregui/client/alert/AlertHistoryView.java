@@ -130,7 +130,7 @@ public class AlertHistoryView extends TableSection<AlertDataSource> implements H
 
         this.context = new EntityContext();
         this.context.type = EntityContext.Type.SubsystemView;
-        this.hasWriteAccess = false;
+        this.hasWriteAccess = true;
 
         setDataSource(new AlertDataSource(context));
     }

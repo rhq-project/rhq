@@ -20,6 +20,7 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -29,12 +30,14 @@ import com.smartgwt.client.types.GroupStartOpen;
 import com.smartgwt.client.types.ImageStyle;
 import com.smartgwt.client.widgets.HTMLFlow;
 import com.smartgwt.client.widgets.Img;
+import com.smartgwt.client.widgets.form.fields.SpacerItem;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
 import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
 
+import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
@@ -45,6 +48,8 @@ import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
+import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
+import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
@@ -82,6 +87,19 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
         super.onInit();
         fetchAddresses();
     }
+    
+    @Override
+    protected void configureTableFilters() {
+        startDateFilter = new DateFilterItem(DateFilterItem.START_DATE_FILTER, MSG.filter_from_date());
+        endDateFilter = new DateFilterItem(DateFilterItem.END_DATE_FILTER, MSG.filter_to_date());
+
+        SpacerItem spacerItem = new SpacerItem();
+        spacerItem.setColSpan(2);
+
+        if (isShowFilterForm()) {
+            setFilterFormItems(startDateFilter, spacerItem, endDateFilter);
+        }
+    }
         
     @Override
     public AlertDataSource getDataSource() {
@@ -96,9 +114,9 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                         || AncestryUtil.RESOURCE_ANCESTRY.equals(field.getName())) {
                         continue;
                     } if (AlertCriteria.SORT_FIELD_CTIME.equals(field.getName())) {
-//                        field.setShowGridSummary(true);  
+//                        field.setShowGridSummary(true);
 //                        field.setShowGroupSummary(true);
-//                        field.setSummaryFunction(new SummaryFunction() {  
+//                        field.setSummaryFunction(new SummaryFunction() {
 //                            public Object getSummaryValue(Record[] records, ListGridField field) {
 //                                if (records != null && records.length > 0 && records[0] != null) {
 //                                    http://localhost:7080/coregui/#Administration/Configuration/AlertDefTemplates/10190/10002

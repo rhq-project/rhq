@@ -285,8 +285,9 @@ public class OperationManagerBean implements OperationManagerLocal, OperationMan
 
         // Create an IN_PROGRESS item
         ResourceOperationHistory history;
-                history = new ResourceOperationHistory(uniqueJobId, jobGroupName, subject.getName(), opDef, parameters,
-                    schedule.getResource(), null);
+        history = new ResourceOperationHistory(uniqueJobId, jobGroupName, subject.getName(), opDef,
+        // we need a copy to avoid constraint violations upon delete
+            parameters == null ? null : parameters.deepCopy(false), schedule.getResource(), null);
 
         updateOperationHistory(subject,history);
 

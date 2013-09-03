@@ -54,7 +54,6 @@ import org.rhq.cassandra.DeploymentOptions;
 import org.rhq.cassandra.DeploymentOptionsFactory;
 import org.rhq.cassandra.schema.SchemaManager;
 import org.rhq.core.clientapi.server.discovery.InventoryReport;
-import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -88,12 +87,15 @@ public class StorageNodeComponentITest {
 
     private Resource storageNode;
 
+    private InetAddress node1Address;
+    private InetAddress node2Address;
+
     @BeforeSuite
     public void deployStorageNodeAndPluginContainer() throws Exception {
         basedir = new File("target", "rhq-storage");
-
+        node1Address = InetAddress.getByName("127.0.0.1");
+        node2Address = InetAddress.getByName("127.0.0.2");
         deployStorageNode();
-
         initPluginContainer();
     }
 
@@ -111,6 +113,7 @@ public class StorageNodeComponentITest {
         deploymentOptions.setSavedCachesDir(new File(basedir, "saved_caches").getAbsolutePath());
         deploymentOptions.setCommitLogDir(new File(basedir, "logs").getAbsolutePath());
         deploymentOptions.setLoggingLevel("DEBUG");
+        deploymentOptions.setStoragePort(7200);
         deploymentOptions.setNativeTransportPort(9142);
         deploymentOptions.setJmxPort(7399);
         deploymentOptions.setHeapSize("256M");
@@ -118,15 +121,58 @@ public class StorageNodeComponentITest {
 
         deploymentOptions.load();
 
+//        Deployer deployer = new Deployer();
+//        deployer.setDeploymentOptions(deploymentOptions);
+//
+//        deployer.unzipDistro();
+//        deployer.applyConfigChanges();
+//        deployer.updateFilePerms();
+//        deployer.updateStorageAuthConf(Sets.newHashSet(node1Address, node2Address));
+//
+//        File confDir = new File(basedir, "conf");
+//        File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+//        PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(cassandraJvmPropsFile.getAbsolutePath());
+//        Properties properties = propertiesUpdater.loadExistingProperties();
+//
+//        String jvmOpts = properties.getProperty("JVM_OPTS");
+//        jvmOpts = jvmOpts.substring(0, jvmOpts.lastIndexOf("\""));
+//        jvmOpts = jvmOpts + " -Dcassandra.ring_delay_ms=100\"";
+//        properties.setProperty("JVM_OPTS", jvmOpts);
+//
+//        propertiesUpdater.update(properties);
+//
+//        File binDir = new File(basedir, "bin");
+//        SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
+//
+//        ProcessExecution processExecution = getProcessExecution(binDir);
+//        ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
+//
+//        assertEquals(results.getExitCode(), (Integer) 0, "Cassandra failed to start: " + results.getCapturedOutput());
+        doDeployment(deploymentOptions);
+
+        String[] addresses = new String[] {"127.0.0.1"};
+        int[] jmxPorts = new int[] {7399};
+
+        ClusterInitService clusterInitService = new ClusterInitService();
+        clusterInitService.waitForClusterToStart(addresses, jmxPorts);
+
+        SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
+            addresses, 9142);
+        schemaManager.install();
+        schemaManager.updateTopology();
+    }
+
+    private void doDeployment(DeploymentOptions deploymentOptions) throws Exception {
         Deployer deployer = new Deployer();
         deployer.setDeploymentOptions(deploymentOptions);
 
         deployer.unzipDistro();
         deployer.applyConfigChanges();
         deployer.updateFilePerms();
-        deployer.updateStorageAuthConf(Sets.newHashSet(InetAddress.getByName(address)));
+        deployer.updateStorageAuthConf(Sets.newHashSet(InetAddress.getByName("127.0.0.1"),
+            InetAddress.getByName("127.0.0.2")));
 
-        File confDir = new File(basedir, "conf");
+        File confDir = new File(deploymentOptions.getBasedir(), "conf");
         File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
         PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(cassandraJvmPropsFile.getAbsolutePath());
         Properties properties = propertiesUpdater.loadExistingProperties();
@@ -138,26 +184,13 @@ public class StorageNodeComponentITest {
 
         propertiesUpdater.update(properties);
 
-        File binDir = new File(basedir, "bin");
+        File binDir = new File(deploymentOptions.getBasedir(), "bin");
         SystemInfo systemInfo = SystemInfoFactory.createSystemInfo();
 
         ProcessExecution processExecution = getProcessExecution(binDir);
         ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
 
         assertEquals(results.getExitCode(), (Integer) 0, "Cassandra failed to start: " + results.getCapturedOutput());
-
-        StorageNode storageNode = new StorageNode();
-        storageNode.setAddress("127.0.0.1");
-        int jmxPort = 7399;
-        storageNode.setCqlPort(9142);
-
-        ClusterInitService clusterInitService = new ClusterInitService();
-        clusterInitService.waitForClusterToStart(new String[] { storageNode.getAddress() }, new int[] { jmxPort });
-
-        SchemaManager schemaManager = new SchemaManager("rhqadmin", "1eeb2f255e832171df8592078de921bc",
-            new String[] { storageNode.getAddress() }, storageNode.getCqlPort());
-        schemaManager.install();
-        schemaManager.updateTopology();
     }
 
     private ProcessExecution getProcessExecution(File binDir) {
@@ -190,10 +223,10 @@ public class StorageNodeComponentITest {
     @AfterSuite
     public void ShutdownPluginContainerAndStorageNode() throws Exception {
         PluginContainer.getInstance().shutdown();
-        shutdownStorageNodeIfNecessary();
+        shutdownStorageNodeIfNecessary(basedir);
     }
 
-    private void shutdownStorageNodeIfNecessary() throws Exception {
+    private void shutdownStorageNodeIfNecessary(File basedir) throws Exception {
         File binDir = new File(basedir, "bin");
         File pidFile = new File(binDir, "cassandra.pid");
 
@@ -212,9 +245,9 @@ public class StorageNodeComponentITest {
             // could be empty if the storage node is already in inventory from
             // a prior discovery scan.
             Resource platform = inventoryManager.getPlatform();
-            storageNode = findCassandraNode(platform.getChildResources());
+            storageNode = findCassandraNode(platform.getChildResources(), "127.0.0.1");
         } else {
-            storageNode = findCassandraNode(inventoryReport.getAddedRoots());
+            storageNode = findCassandraNode(inventoryReport.getAddedRoots(), "127.0.0.1");
         }
 
         assertNotNull(storageNode, "Failed to discover Storage Node instance");
@@ -263,37 +296,81 @@ public class StorageNodeComponentITest {
 
     @Test(dependsOnMethods = "restartStorageNode")
     public void prepareForBootstrap() throws Exception {
-        Configuration params = Configuration.builder().addSimple("cqlPort", 9242).addSimple("gossipPort", 7200)
-            .openList("addresses", "address").addSimples("127.0.0.1", "127.0.0.2")
-            .closeList().build();
+        File node2Basedir = new File(basedir.getParentFile(), "rhq-storage-2");
 
-        OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
-        OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+        try {
+            DeploymentOptions deploymentOptions = new DeploymentOptionsFactory().newDeploymentOptions();
+            deploymentOptions.setSeeds("127.0.0.1");
+            deploymentOptions.setListenAddress("127.0.0.2");
+            deploymentOptions.setRpcAddress("127.0.0.2");
+            deploymentOptions.setBasedir(node2Basedir.getAbsolutePath());
+            deploymentOptions.setCommitLogDir(new File(node2Basedir, "commit_log").getAbsolutePath());
+            deploymentOptions.setDataDir(new File(node2Basedir, "data").getAbsolutePath());
+            deploymentOptions.setSavedCachesDir(new File(node2Basedir, "saved_caches").getAbsolutePath());
+            deploymentOptions.setCommitLogDir(new File(node2Basedir, "logs").getAbsolutePath());
+            deploymentOptions.setLoggingLevel("DEBUG");
+            deploymentOptions.setStoragePort(7200);
+            deploymentOptions.setNativeTransportPort(9142);
+            deploymentOptions.setJmxPort(7400);
+            deploymentOptions.setHeapSize("256M");
+            deploymentOptions.setHeapNewSize("64M");
+            deploymentOptions.load();
 
-        long timeout = 1000 * 60;
-        OperationContextImpl operationContext = new OperationContextImpl(storageNode.getId());
-        OperationServicesResult result = operationsService.invokeOperation(operationContext, "prepareForBootstrap",
-            params, timeout);
+            doDeployment(deploymentOptions);
+            ClusterInitService clusterInitService = new ClusterInitService();
+            clusterInitService.waitForClusterToStart(new String [] {"127.0.0.2"}, new int[] {7400});
 
-        log.info("Waiting for node to boostrap...");
-        // When a node goes through bootstrap, StorageService sleeps for RING_DELAY ms
-        // while it determines the ranges of the token ring it will own. RING_DELAY defaults
-        // to 30 seconds by default but we are overriding it to be 100 ms.
-        Thread.sleep(3000);
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            InventoryReport inventoryReport = inventoryManager.executeServerScanImmediately();
+            Resource newStorageNode = null;
 
-        assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The operation failed: " +
-            result.getErrorStackTrace());
+            if (inventoryReport.getAddedRoots().isEmpty()) {
+                // could be empty if the storage node is already in inventory from
+                // a prior discovery scan.
+                Resource platform = inventoryManager.getPlatform();
+                newStorageNode = findCassandraNode(platform.getChildResources(), "127.0.0.2");
+            } else {
+                newStorageNode = findCassandraNode(inventoryReport.getAddedRoots(), "127.0.0.2");
+            }
 
-        assertNodeIsUp("Expected " + storageNode + " to be up after the prepareForBootstrap operation completes.");
+            assertNotNull(newStorageNode, "Failed to discover Storage Node instance at 127.0.0.2");
+            assertNodeIsUp("Expected " + newStorageNode + " to be UP after discovery");
 
-        assertThatInternodeAuthConfFileMatches("127.0.0.1", "127.0.0.2");
 
-        File confDir = new File(basedir, "conf");
-        File cassandraYamlFile = new File(confDir, "cassandra.yaml");
-        Config config = loadConfig(cassandraYamlFile);
+            Configuration params = Configuration.builder().addSimple("cqlPort", 9142).addSimple("gossipPort", 7200)
+                .openList("addresses", "address").addSimples("127.0.0.1", "127.0.0.2")
+                .closeList().build();
 
-        assertEquals(config.seed_provider.parameters.get("seeds"), "127.0.0.2", "Failed to update seeds " +
-            "property in " + cassandraYamlFile);
+            OperationManager operationManager = PluginContainer.getInstance().getOperationManager();
+            OperationServicesAdapter operationsService = new OperationServicesAdapter(operationManager);
+
+            long timeout = 1000 * 60;
+            OperationContextImpl operationContext = new OperationContextImpl(newStorageNode.getId());
+            OperationServicesResult result = operationsService.invokeOperation(operationContext, "prepareForBootstrap",
+                params, timeout);
+
+            log.info("Waiting for node to boostrap...");
+            // When a node goes through bootstrap, StorageService sleeps for RING_DELAY ms
+            // while it determines the ranges of the token ring it will own. RING_DELAY defaults
+            // to 30 seconds by default but we are overriding it to be 100 ms.
+            Thread.sleep(3000);
+
+            assertEquals(result.getResultCode(), OperationServicesResultCode.SUCCESS, "The operation failed: " +
+                result.getErrorStackTrace());
+
+            assertNodeIsUp("Expected " + newStorageNode + " to be up after the prepareForBootstrap operation completes.");
+
+            assertThatInternodeAuthConfFileMatches("127.0.0.1", "127.0.0.2");
+
+            File confDir = new File(basedir, "conf");
+            File cassandraYamlFile = new File(confDir, "cassandra.yaml");
+            Config config = loadConfig(cassandraYamlFile);
+
+            assertEquals(config.seed_provider.parameters.get("seeds"), "127.0.0.1", "Failed to update seeds " +
+                "property in " + cassandraYamlFile);
+        } finally {
+            shutdownStorageNodeIfNecessary(node2Basedir);
+        }
     }
 
     private void assertNodeIsUp(String msg) {
@@ -324,9 +401,10 @@ public class StorageNodeComponentITest {
         inventoryManager.executeAvailabilityScanImmediately(false, true);
     }
 
-    private Resource findCassandraNode(Set<Resource> resources) {
+    private Resource findCassandraNode(Set<Resource> resources, String address) {
         for (Resource resource : resources) {
-            if (isCassandraNode(resource.getResourceType())) {
+            if (isCassandraNode(resource.getResourceType()) &&
+                resource.getResourceKey().equals("RHQ Storage Node(" + address + ")")) {
                 return resource;
             }
         }

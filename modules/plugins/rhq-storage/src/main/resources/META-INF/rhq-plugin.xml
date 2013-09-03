@@ -54,9 +54,13 @@
       </results>
     </operation>
 
-    <operation name="decommission" description="Take the storage node out of service"/>
+    <operation name="decommission" description="Take the storage node out of service. This operation is NOT intended for
+      direct usage. It is part of the undeployment process. Please see the storage node (un)deployment documentation for
+      more information."/>
 
-    <operation name="uninstall" description="Removes all of the storage node files from disk"/>
+    <operation name="uninstall" description="Removes all of the storage node files from disk. This operation is NOT
+      intended for direct usage. It is part of the undeployment process. Please see the storage node (un)deployment
+      documentation for more information."/>
 
     <operation name="repair" description="Runs anti-entropy repair on the primary range of rhq and system_auth keyspaces">
       <results>
@@ -70,7 +74,8 @@
       </results>
     </operation>
 
-    <operation name="addNodeMaintenance">
+    <operation name="addNodeMaintenance" description="This operation is NOT intended for direct usage. It is part of the
+      deployment process. Please see the storage node deployment documentation for more information.">
       <parameters>
         <c:simple-property name="runRepair" type="boolean" default="true"/>
         <c:simple-property name="updateSeedsList" type="boolean" default="true"/>
@@ -89,7 +94,8 @@
       </results>
     </operation>
 
-    <operation name="removeNodeMaintenance">
+    <operation name="removeNodeMaintenance" description="This operation is NOT intended for direct usage. It is part of
+      the undeployment process. Please see the storage node (un)deployment documentation for more information.">
       <parameters>
         <c:simple-property name="runRepair" type="boolean" default="true"/>
         <c:simple-property name="updateSeedsList" type="boolean" default="true"/>
@@ -108,7 +114,8 @@
       </results>
     </operation>
 
-    <operation name="announce">
+    <operation name="announce" description="This operation is NOT intended for direct usage. It is part of the
+      deployment process. Please see the storage node deployment documentation for more information.">
       <parameters>
         <c:list-property name="addresses">
           <c:simple-property name="address"/>
@@ -119,7 +126,8 @@
       </results>
     </operation>
 
-    <operation name="unannounce">
+    <operation name="unannounce" description="This operation is NOT intended for direct usage. It is part of
+      the undeployment process. Please see the storage node (un)deployment documentation for more information.">
       <parameters>
         <c:list-property name="addresses">
           <c:simple-property name="address"/>
@@ -130,7 +138,8 @@
       </results>
     </operation>
 
-    <operation name="prepareForBootstrap">
+    <operation name="prepareForBootstrap" description="This operation is NOT intended for direct usage. It is part of the
+      deployment process. Please see the storage node deployment documentation for more information.">
       <parameters>
         <c:simple-property name="cqlPort" type="integer" displayName="CQL Port"/>
         <c:simple-property name="gossipPort" type="integer"/>

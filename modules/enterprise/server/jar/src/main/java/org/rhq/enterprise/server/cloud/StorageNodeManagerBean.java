@@ -85,6 +85,7 @@ import org.rhq.enterprise.server.configuration.ConfigurationManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementDataManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.resource.ResourceManagerLocal;
+import org.rhq.enterprise.server.resource.ResourceNotFoundException;
 import org.rhq.enterprise.server.resource.ResourceTypeManagerLocal;
 import org.rhq.enterprise.server.rest.reporting.MeasurementConverter;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
@@ -317,15 +318,21 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (!storageClientManager.isClusterAvailable()) {
             return new StorageNodeLoadComposite(node, beginTime, endTime);
         }
-        int resourceId = getResourceIdFromStorageNode(node);
+        int storageNodeResourceId;
+        try {
+            storageNodeResourceId = getResourceIdFromStorageNode(node);
+        } catch (ResourceNotFoundException e) {
+            log.warn(e.getMessage());
+            return new StorageNodeLoadComposite(node, beginTime, endTime);
+        }
         Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
-        for (Object[] tupple : getStorageServiceScheduleIds(resourceId)) {
+        for (Object[] tupple : getStorageServiceScheduleIds(storageNodeResourceId)) {
             String definitionName = (String) tupple[0];
             Integer scheduleId = (Integer) tupple[2];
             scheduleIdsMap.put(definitionName, scheduleId);
         }
-        for (Object[] tupple : getMemorySubsystemScheduleIds(resourceId)) {
+        for (Object[] tupple : getMemorySubsystemScheduleIds(storageNodeResourceId)) {
             String definitionName = (String) tupple[0];
             Integer scheduleId = (Integer) tupple[2];
             scheduleIdsMap.put(definitionName, scheduleId);
@@ -539,10 +546,16 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
     private int getResourceIdFromStorageNode(StorageNode storageNode) {
         int resourceId;
+        int storageNodeId = storageNode.getId();
         if (storageNode.getResource() == null) {
             storageNode = entityManager.find(StorageNode.class, storageNode.getId());
+            if (storageNode == null) { // no storage node with the specified id
+                throw new ResourceNotFoundException("There is no storage node with id [" + storageNodeId
+                    + "] stored in the database.");
+            }
             if (storageNode.getResource() == null) { // no associated resource
-                throw new IllegalStateException("This storage node [" + storageNode.getId() + "] has no associated resource.");
+                throw new IllegalStateException("This storage node [" + storageNode.getId()
+                    + "] has no associated resource.");
             }
         }
         resourceId = storageNode.getResource().getId();
@@ -793,7 +806,13 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         if (!storageClientManager.isClusterAvailable()) {
             return Collections.<String, List<MeasurementDataNumericHighLowComposite>>emptyMap();
         }
-        int storageNodeResourceId = getResourceIdFromStorageNode(node);
+        int storageNodeResourceId;
+        try {
+            storageNodeResourceId = getResourceIdFromStorageNode(node);
+        } catch (ResourceNotFoundException e) {
+            log.warn(e.getMessage());
+            return Collections.<String, List<MeasurementDataNumericHighLowComposite>>emptyMap();
+        }
         Map<String, List<MeasurementDataNumericHighLowComposite>> result = new LinkedHashMap<String, List<MeasurementDataNumericHighLowComposite>>();
 
         List<Object[]> tupples = getStorageServiceScheduleIds(storageNodeResourceId);

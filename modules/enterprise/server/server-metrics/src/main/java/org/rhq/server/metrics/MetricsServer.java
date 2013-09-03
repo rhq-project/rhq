@@ -25,6 +25,7 @@
 
 package org.rhq.server.metrics;
 
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,8 +35,10 @@ import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
+import com.datastax.driver.core.exceptions.NoHostAvailableException;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 
@@ -57,7 +60,7 @@ import org.rhq.server.metrics.domain.RawNumericMetric;
 /**
  * @author John Sanda
  */
-public class MetricsServer {
+public class MetricsServer implements StorageStateListener {
 
     private final Log log = LogFactory.getLog(MetricsServer.class);
 
@@ -72,6 +75,16 @@ public class MetricsServer {
     private boolean pastAggregationMissed;
 
     private Long mostRecentRawDataPriorToStartup;
+
+    private StorageSession session;
+
+    private ConsistencyLevel writeCL;
+
+    private ConsistencyLevel readCL = ConsistencyLevel.QUORUM;
+
+    public void setSession(StorageSession session) {
+        this.session = session;
+    }
 
     public void setDAO(MetricsDAO dao) {
         this.dao = dao;
@@ -137,8 +150,35 @@ public class MetricsServer {
     public void shutdown() {
     }
 
+    @Override
+    public void onStorageNodeUp(InetAddress address) {
+        setWriteCL();
+    }
+
+    @Override
+    public void onStorageNodeDown(InetAddress address) {
+    }
+
+    @Override
+    public void onStorageNodeRemoved(InetAddress address) {
+        setWriteCL();
+    }
+
+    @Override
+    public void onStorageClusterDown(NoHostAvailableException e) {
+    }
+
+    private void setWriteCL() {
+        int numNodes = session.getCluster().getMetadata().getAllHosts().size();
+        if (numNodes >= 4) {
+            writeCL = ConsistencyLevel.TWO;
+        } else {
+            writeCL = ConsistencyLevel.ONE;
+        }
+    }
+
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
-        return dao.findLatestRawMetric(scheduleId);
+        return dao.findLatestRawMetric(scheduleId, readCL);
     }
 
     public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
@@ -146,17 +186,17 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
+            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime, readCL);
             return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
         }
 
         Iterable<AggregateNumericMetric> metrics = null;
         if (dateTimeService.isIn1HourDataRange(begin)) {
-            metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
+            metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime, readCL);
         } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-            metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
+            metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime, readCL);
         } else if (dateTimeService.isIn24HourDataRnage(begin)) {
-            metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime);
+            metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime, readCL);
         } else {
             throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
         }
@@ -169,17 +209,17 @@ public class MetricsServer {
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
-            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
+            Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime, readCL);
             return createRawComposites(metrics, beginTime, endTime, numberOfBuckets);
         }
 
         Iterable<AggregateNumericMetric> metrics = null;
         if (dateTimeService.isIn1HourDataRange(begin)) {
-            metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
+            metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime, readCL);
         } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-            metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
+            metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime, readCL);
         } else if (dateTimeService.isIn24HourDataRnage(begin)) {
-            metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
+            metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime, readCL);
         } else {
             throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
         }
@@ -197,17 +237,17 @@ public class MetricsServer {
             DateTime begin = new DateTime(beginTime);
 
             if (dateTimeService.isInRawDataRange(begin)) {
-                Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime);
+                Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleId, beginTime, endTime, readCL);
                 return calculateAggregatedRaw(metrics, beginTime);
             }
 
             Iterable<AggregateNumericMetric> metrics = null;
             if (dateTimeService.isIn1HourDataRange(begin)) {
-                metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime);
+                metrics = dao.findOneHourMetrics(scheduleId, beginTime, endTime, readCL);
             } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-                metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime);
+                metrics = dao.findSixHourMetrics(scheduleId, beginTime, endTime, readCL);
             } else if (dateTimeService.isIn24HourDataRnage(begin)) {
-                metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime);
+                metrics = dao.findTwentyFourHourMetrics(scheduleId, beginTime, endTime, readCL);
             } else {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
             }
@@ -231,17 +271,17 @@ public class MetricsServer {
             DateTime begin = new DateTime(beginTime);
 
             if (dateTimeService.isInRawDataRange(new DateTime(beginTime))) {
-                Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime);
+                Iterable<RawNumericMetric> metrics = dao.findRawMetrics(scheduleIds, beginTime, endTime, readCL);
                 return calculateAggregatedRaw(metrics, beginTime);
             }
 
             Iterable<AggregateNumericMetric> metrics = null;
             if (dateTimeService.isIn1HourDataRange(begin)) {
-                metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime);
+                metrics = dao.findOneHourMetrics(scheduleIds, beginTime, endTime, readCL);
             } else if (dateTimeService.isIn6HourDataRnage(begin)) {
-                metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime);
+                metrics = dao.findSixHourMetrics(scheduleIds, beginTime, endTime, readCL);
             } else if (dateTimeService.isIn24HourDataRnage(begin)) {
-                metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime);
+                metrics = dao.findTwentyFourHourMetrics(scheduleIds, beginTime, endTime, readCL);
             } else {
                 throw new IllegalArgumentException("beginTime[" + beginTime + "] is outside the accepted range.");
             }
@@ -301,7 +341,7 @@ public class MetricsServer {
 
             for (final MeasurementDataNumeric data : dataSet) {
                 semaphore.acquire();
-                StorageResultSetFuture resultSetFuture = dao.insertRawData(data);
+                StorageResultSetFuture resultSetFuture = dao.insertRawData(data, writeCL);
                 Futures.addCallback(resultSetFuture, new FutureCallback<ResultSet>() {
                     @Override
                     public void onSuccess(ResultSet rows) {
@@ -448,16 +488,19 @@ public class MetricsServer {
                 DateTime endTime = startTime.plusMinutes(60);
 
                 Iterable<RawNumericMetric> rawMetrics = dao.findRawMetrics(indexEntry.getScheduleId(),
-                    startTime.getMillis(), endTime.getMillis());
+                    startTime.getMillis(), endTime.getMillis(), ConsistencyLevel.ONE);
                 AggregateNumericMetric aggregatedRaw = calculateAggregatedRaw(rawMetrics, startTime.getMillis());
                 aggregatedRaw.setScheduleId(indexEntry.getScheduleId());
                 oneHourMetrics.add(aggregatedRaw);
             }
 
             for (AggregateNumericMetric metric : oneHourMetrics) {
-                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                    writeCL);
+                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                    writeCL);
+                dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                    writeCL);
             }
             return oneHourMetrics;
         } finally {
@@ -528,15 +571,15 @@ public class MetricsServer {
                 switch (fromTable) {
                     case ONE_HOUR:
                         metrics = dao.findOneHourMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
-                            endTime.getMillis());
+                            endTime.getMillis(), ConsistencyLevel.ONE);
                         break;
                     case SIX_HOUR:
                         metrics = dao.findSixHourMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
-                            endTime.getMillis());
+                            endTime.getMillis(), ConsistencyLevel.ONE);
                         break;
                     default:  // 24 hour
                         metrics = dao.findTwentyFourHourMetrics(indexEntry.getScheduleId(), startTime.getMillis(),
-                            endTime.getMillis());
+                            endTime.getMillis(), ConsistencyLevel.ONE);
                         break;
                 }
                 AggregateNumericMetric aggregatedMetric = calculateAggregate(metrics, startTime.getMillis());
@@ -565,28 +608,34 @@ public class MetricsServer {
 
     private void insertOneHourAggregates(List<AggregateNumericMetric> metrics) {
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                writeCL);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                writeCL);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                writeCL);
         }
     }
 
     private void insertSixHourAggregates(List<AggregateNumericMetric> metrics) {
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                writeCL);
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                writeCL);
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                writeCL);
         }
     }
 
     private void insertTwentyFourHourAggregates(List<AggregateNumericMetric> metrics) {
         for (AggregateNumericMetric metric : metrics) {
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
+                metric.getMin(), writeCL);
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
+                metric.getMax(), writeCL);
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
+                metric.getAvg(), writeCL);
         }
     }
 
@@ -613,6 +662,19 @@ public class MetricsServer {
         // We let the caller handle setting the schedule id because in some cases we do
         // not care about it.
         return new AggregateNumericMetric(0, mean.getArithmeticMean(), min, max, timestamp);
+    }
+
+    private ConsistencyLevel getConsistencyLevelForRead() {
+        switch (session.getCluster().getMetadata().getAllHosts().size()) {
+            case 1:
+                return ConsistencyLevel.ONE;
+            case 2:
+            case 3:
+                return ConsistencyLevel.TWO;
+            default:  // cluster size >= 4
+                return ConsistencyLevel.LOCAL_QUORUM;
+
+        }
     }
 
 }

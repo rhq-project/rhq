@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -143,31 +144,39 @@ public class MetricsDAO {
         log.info("Finished initializing prepared statements in " + (endTime - startTime) + " ms");
     }
 
-    public StorageResultSetFuture insertRawData(MeasurementDataNumeric data) {
+    public StorageResultSetFuture insertRawData(MeasurementDataNumeric data, ConsistencyLevel cl) {
         BoundStatement statement = insertRawData.bind(data.getScheduleId(), new Date(data.getTimestamp()),
             data.getValue());
+        statement.setConsistencyLevel(cl);
         return storageSession.executeAsync(statement);
     }
 
-    public ResultSet insertOneHourData(int scheduleId, long timestamp, AggregateType type, double value) {
+    public ResultSet insertOneHourData(int scheduleId, long timestamp, AggregateType type, double value,
+        ConsistencyLevel cl) {
         BoundStatement statement = insertOneHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        statement.setConsistencyLevel(cl);
         return storageSession.execute(statement);
     }
 
-    public ResultSet insertSixHourData(int scheduleId, long timestamp, AggregateType type, double value) {
+    public ResultSet insertSixHourData(int scheduleId, long timestamp, AggregateType type, double value,
+        ConsistencyLevel cl) {
         BoundStatement statement = insertSixHourData.bind(scheduleId, new Date(timestamp), type.ordinal(), value);
+        statement.setConsistencyLevel(cl);
         return storageSession.execute(statement);
     }
 
-    public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value) {
+    public ResultSet insertTwentyFourHourData(int scheduleId, long timestamp, AggregateType type, double value,
+        ConsistencyLevel cl) {
         BoundStatement statement = insertTwentyFourHourData.bind(scheduleId, new Date(timestamp), type.ordinal(),
             value);
+        statement.setConsistencyLevel(cl);
         return storageSession.execute(statement);
     }
 
-    public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime) {
+    public Iterable<RawNumericMetric> findRawMetrics(int scheduleId, long startTime, long endTime, ConsistencyLevel cl) {
         try {
             BoundStatement boundStatement = rawMetricsQuery.bind(scheduleId, new Date(startTime), new Date(endTime));
+            boundStatement.setConsistencyLevel(cl);
             return new SimplePagedResult<RawNumericMetric>(boundStatement, new RawNumericMetricMapper(false),
                 storageSession);
         } catch (NoHostAvailableException e) {
@@ -180,33 +189,44 @@ public class MetricsDAO {
         return storageSession.executeAsync(boundStatement);
     }
 
-    public RawNumericMetric findLatestRawMetric(int scheduleId) {
+    public RawNumericMetric findLatestRawMetric(int scheduleId, ConsistencyLevel cl) {
         RawNumericMetricMapper mapper = new RawNumericMetricMapper(false);
         BoundStatement boundStatement = findLatestRawMetric.bind(scheduleId);
+        boundStatement.setConsistencyLevel(cl);
         ResultSet resultSet = storageSession.execute(boundStatement);
 
         return mapper.mapOne(resultSet);
     }
 
-    public Iterable<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, long startTime, long endTime) {
+    public Iterable<RawNumericMetric> findRawMetrics(List<Integer> scheduleIds, long startTime, long endTime,
+        ConsistencyLevel cl) {
         return new ListPagedResult<RawNumericMetric>(findRawMetrics, scheduleIds, startTime, endTime,
-            new RawNumericMetricMapper(), storageSession);
+            new RawNumericMetricMapper(), storageSession, cl);
     }
 
-    public Iterable<AggregateNumericMetric> findOneHourMetrics(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+    public Iterable<AggregateNumericMetric> findOneHourMetrics(int scheduleId, long startTime, long endTime,
+        ConsistencyLevel cl) {
+        BoundStatement statement = findOneHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        statement.setConsistencyLevel(cl);
         return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
             storageSession);
     }
 
-    public Iterable<AggregateNumericMetric> findSixHourMetrics(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+    public Iterable<AggregateNumericMetric> findSixHourMetrics(int scheduleId, long startTime, long endTime,
+        ConsistencyLevel cl) {
+        BoundStatement statement = findSixHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        statement.setConsistencyLevel(cl);
         return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
             storageSession);
     }
 
-    public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(int scheduleId, long startTime, long endTime) {
-        BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime), new Date(endTime));
+    public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(int scheduleId, long startTime, long endTime,
+        ConsistencyLevel cl) {
+        BoundStatement statement = findTwentyFourHourMetricsByDateRange.bind(scheduleId, new Date(startTime),
+            new Date(endTime));
+        statement.setConsistencyLevel(cl);
         return new SimplePagedResult<AggregateNumericMetric>(statement, new AggregateNumericMetricMapper(),
             storageSession);
     }
@@ -220,21 +240,21 @@ public class MetricsDAO {
     }
 
     public Iterable<AggregateNumericMetric> findOneHourMetrics(List<Integer> scheduleIds, long startTime,
-        long endTime) {
+        long endTime, ConsistencyLevel cl) {
         return new ListPagedResult<AggregateNumericMetric>(findOneHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), storageSession);
+            new AggregateNumericMetricMapper(), storageSession, cl);
     }
 
     public Iterable<AggregateNumericMetric> findSixHourMetrics(List<Integer> scheduleIds, long startTime,
-        long endTime) {
-        return new ListPagedResult<AggregateNumericMetric>(findSixHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), storageSession);
+        long endTime, ConsistencyLevel cl) {
+        return new ListPagedResult<AggregateNumericMetric>(findSixHourMetricsByDateRange, scheduleIds, startTime,
+            endTime, new AggregateNumericMetricMapper(), storageSession, cl);
     }
 
     public Iterable<AggregateNumericMetric> findTwentyFourHourMetrics(List<Integer> scheduleIds, long startTime,
-        long endTime) {
-        return new ListPagedResult<AggregateNumericMetric>(findTwentyFourHourMetricsByDateRange, scheduleIds, startTime, endTime,
-            new AggregateNumericMetricMapper(), storageSession);
+        long endTime, ConsistencyLevel cl) {
+        return new ListPagedResult<AggregateNumericMetric>(findTwentyFourHourMetricsByDateRange, scheduleIds, startTime,
+            endTime, new AggregateNumericMetricMapper(), storageSession, cl);
     }
 
     public Iterable<MetricsIndexEntry> findMetricsIndexEntries(final MetricsTable table, long timestamp) {

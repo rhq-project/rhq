@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 
@@ -100,12 +101,13 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         WaitForWrite waitForResults = new WaitForWrite(1);
 
-        StorageResultSetFuture resultSetFuture = dao.insertRawData(expected);
+        StorageResultSetFuture resultSetFuture = dao.insertRawData(expected, ConsistencyLevel.ONE);
         Futures.addCallback(resultSetFuture, waitForResults);
         waitForResults.await("Failed to insert raw data");
 
         List<RawNumericMetric> actualMetrics = Lists.newArrayList(dao.findRawMetrics(scheduleId,
-            threeMinutesAgo.minusSeconds(1).getMillis(), threeMinutesAgo.plusSeconds(1).getMillis()));
+            threeMinutesAgo.minusSeconds(1).getMillis(), threeMinutesAgo.plusSeconds(1).getMillis(),
+            ConsistencyLevel.ONE));
 
         assertEquals(actualMetrics.size(), 1, "Expected to get back one raw metric");
         assertEquals(actualMetrics.get(0), new RawNumericMetric(scheduleId, expected.getTimestamp(),
@@ -130,12 +132,12 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
-            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw, ConsistencyLevel.ONE);
             Futures.addCallback(resultSetFuture, waitForWrite);
         }
         waitForWrite.await("Failed to insert raw data");
 
-        RawNumericMetric actual = dao.findLatestRawMetric(scheduleId);
+        RawNumericMetric actual = dao.findLatestRawMetric(scheduleId, ConsistencyLevel.ONE);
         RawNumericMetric expected = new RawNumericMetric(scheduleId, oneMinuteAgo.getMillis(), 2.6);
 
         assertEquals(actual, expected, "Failed to find latest raw metric");
@@ -159,7 +161,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
-            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw, ConsistencyLevel.ONE);
             Futures.addCallback(resultSetFuture, waitForWrite);
         }
         waitForWrite.await("Failed to insert raw data");
@@ -199,13 +201,13 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         WaitForWrite waitForWrite = new WaitForWrite(data.size());
 
         for (MeasurementDataNumeric raw : data) {
-            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw);
+            StorageResultSetFuture resultSetFuture = dao.insertRawData(raw, ConsistencyLevel.ONE);
             Futures.addCallback(resultSetFuture, waitForWrite);
         }
         waitForWrite.await("Failed to insert raw data");
 
         List<RawNumericMetric> actualMetrics = Lists.newArrayList(dao.findRawMetrics(asList(scheduleId1, scheduleId2),
-            currentHour.getMillis(), currentHour.plusHours(1).getMillis()));
+            currentHour.getMillis(), currentHour.plusHours(1).getMillis(), ConsistencyLevel.ONE));
         List<RawNumericMetric> expectedMetrics = asList(
             new RawNumericMetric(scheduleId1, threeMinutesAgo.getMillis(), 1.1),
             new RawNumericMetric(scheduleId1, twoMinutesAgo.getMillis(), 2.1),
@@ -229,9 +231,12 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         );
 
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         List<AggregateNumericMetric> expected = asList(
@@ -265,13 +270,16 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         );
 
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         List<AggregateNumericMetric> actual = Lists.newArrayList(dao.findOneHourMetrics(asList(schedule1, schedule2),
-            hour0().plusHours(1).getMillis(), hour0().plusHours(2).getMillis()));
+            hour0().plusHours(1).getMillis(), hour0().plusHours(2).getMillis(), ConsistencyLevel.ONE));
         List<AggregateNumericMetric> expected = asList(
             new AggregateNumericMetric(schedule1, 2.1, 2.1, 2.1, hour0().plusHours(1).getMillis()),
             new AggregateNumericMetric(schedule2, 2.2, 2.2, 2.2, hour0().plusHours(1).getMillis())
@@ -295,9 +303,12 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         );
 
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         DateTime startTime = hour0.plusHours(1);
@@ -308,7 +319,7 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         );
 
         List<AggregateNumericMetric> actual = Lists.newArrayList(dao.findOneHourMetrics(scheduledId,
-            startTime.getMillis(), endTime.getMillis()));
+            startTime.getMillis(), endTime.getMillis(), ConsistencyLevel.ONE));
 
         assertEquals(actual, expected, "Failed to find one hour metrics for date range");
     }
@@ -391,9 +402,12 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
 
         metrics = this.generateRandomAggregatedMetrics(scheduleId, numberOfAggregatedMetrics, startTime);
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
         double expectedMinSum = 0;
         double expectedMaxSum = 0;
@@ -410,9 +424,12 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         metrics = this.generateRandomAggregatedMetrics(alternateScheduleId, alternateNumberOfAggregatedMetrics,
             startTime);
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         List<AggregateSimpleNumericMetric> retrievedItems = Lists.newArrayList(dao.findAggregatedSimpleOneHourMetric(
@@ -450,25 +467,34 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         List<AggregateNumericMetric> firstHourMetrics = this.generateRandomAggregatedMetrics(scheduleId, 234,
             startTime);
         for (AggregateNumericMetric metric : firstHourMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         List<AggregateNumericMetric> secondHourMetrics = this.generateRandomAggregatedMetrics(scheduleId, 234,
             startTime + HOUR);
         for (AggregateNumericMetric metric : secondHourMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         List<AggregateNumericMetric> alternateScheduleIdMetrics = this.generateRandomAggregatedMetrics(
             alternateScheduleId, 159, startTime);
         for (AggregateNumericMetric metric : alternateScheduleIdMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         //verify data can be retrieved
@@ -481,11 +507,11 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         assertEquals(actualCombined, combinedList, "Failed to find one hour metrics");
 
         List<AggregateNumericMetric> actualFirstHour = Lists.newArrayList(dao.findOneHourMetrics(scheduleId,
-            startTime, startTime + HOUR - 1));
+            startTime, startTime + HOUR - 1, ConsistencyLevel.ONE));
         assertEquals(actualFirstHour, firstHourMetrics, "Failed to find one hour metrics");
 
         List<AggregateNumericMetric> actualSecondHour = Lists.newArrayList(dao.findOneHourMetrics(scheduleId,
-            startTime + HOUR, endTime));
+            startTime + HOUR, endTime, ConsistencyLevel.ONE));
         assertEquals(actualSecondHour, secondHourMetrics, "Failed to find one hour metrics");
 
         List<AggregateNumericMetric> actualAlternateScheduleIdMetrics = Lists.newArrayList(findAggregateMetrics(
@@ -532,17 +558,23 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         //insert data
         List<AggregateNumericMetric> metrics = this.generateRandomAggregatedMetrics(scheduleId, 2, startTime);
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         List<AggregateNumericMetric> alternateMetrics = this.generateRandomAggregatedMetrics(alternateScheduleId,
             3, startTime);
         for (AggregateNumericMetric metric : alternateMetrics) {
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertOneHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         //verify data can be retrieve
@@ -565,17 +597,23 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         //insert data
         List<AggregateNumericMetric> metrics = this.generateRandomAggregatedMetrics(scheduleId, 2, startTime);
         for (AggregateNumericMetric metric : metrics) {
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         List<AggregateNumericMetric> alternateMetrics = this.generateRandomAggregatedMetrics(alternateScheduleId,
             3, startTime);
         for (AggregateNumericMetric metric : alternateMetrics) {
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax());
-            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg());
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN, metric.getMin(),
+                ConsistencyLevel.ONE);
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX, metric.getMax(),
+                ConsistencyLevel.ONE);
+            dao.insertSixHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG, metric.getAvg(),
+                ConsistencyLevel.ONE);
         }
 
         //verify data can be retrieve
@@ -599,22 +637,22 @@ public class MetricsDAOTest extends CassandraIntegrationTest {
         List<AggregateNumericMetric> metrics = this.generateRandomAggregatedMetrics(scheduleId, 2, startTime);
         for (AggregateNumericMetric metric : metrics) {
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
+                metric.getMin(), ConsistencyLevel.ONE);
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
+                metric.getMax(), ConsistencyLevel.ONE);
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
+                metric.getAvg(), ConsistencyLevel.ONE);
         }
 
         List<AggregateNumericMetric> alternateMetrics = this.generateRandomAggregatedMetrics(alternateScheduleId,
             3, startTime);
         for (AggregateNumericMetric metric : alternateMetrics) {
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MIN,
-                metric.getMin());
+                metric.getMin(), ConsistencyLevel.ONE);
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.MAX,
-                metric.getMax());
+                metric.getMax(), ConsistencyLevel.ONE);
             dao.insertTwentyFourHourData(metric.getScheduleId(), metric.getTimestamp(), AggregateType.AVG,
-                metric.getAvg());
+                metric.getAvg(), ConsistencyLevel.ONE);
         }
 
         //verify data can be retrieve

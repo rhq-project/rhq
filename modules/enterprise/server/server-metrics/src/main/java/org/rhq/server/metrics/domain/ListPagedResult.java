@@ -31,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.datastax.driver.core.BoundStatement;
+import com.datastax.driver.core.ConsistencyLevel;
 import com.datastax.driver.core.PreparedStatement;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
@@ -55,15 +56,17 @@ public class ListPagedResult<T> implements Iterable<T> {
     private final StorageSession session;
 
     private final PreparedStatement preparedStatement;
+    private ConsistencyLevel consistencyLevel;
 
     public ListPagedResult(PreparedStatement preparedStatement, List<Integer> scheduleIds, long startTime, long endTime,
-        ResultSetMapper<T> mapper, StorageSession session) {
+        ResultSetMapper<T> mapper, StorageSession session, ConsistencyLevel consistencyLevel) {
         this.preparedStatement = preparedStatement;
         this.scheduleIds = new LinkedList<Integer>(scheduleIds);
         this.startTime = startTime;
         this.endTime = endTime;
         this.mapper = mapper;
         this.session = session;
+        this.consistencyLevel = consistencyLevel;
     }
 
     /**
@@ -74,6 +77,7 @@ public class ListPagedResult<T> implements Iterable<T> {
             while ((existingResultSet == null || existingResultSet.isExhausted()) && ids.size() != 0) {
                 BoundStatement boundStatement = this.preparedStatement.bind(ids.remove(0), new Date(startTime),
                     new Date(endTime));
+                boundStatement.setConsistencyLevel(consistencyLevel);
                 return session.execute(boundStatement);
             }
         } catch (NoHostAvailableException e) {

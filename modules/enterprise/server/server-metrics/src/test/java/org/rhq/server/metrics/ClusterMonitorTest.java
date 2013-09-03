@@ -68,7 +68,7 @@ public class ClusterMonitorTest {
 //                    session.execute("select * from rhq.raw_metrics");
 //                    log.info("query succeeded");
                     StorageResultSetFuture future = dao.insertRawData
-                        (new MeasurementDataNumeric(System.currentTimeMillis(), 123, 1.1));
+                        (new MeasurementDataNumeric(System.currentTimeMillis(), 123, 1.1), ConsistencyLevel.ONE);
 
                     Futures.addCallback(future, new FutureCallback<ResultSet>() {
                         @Override

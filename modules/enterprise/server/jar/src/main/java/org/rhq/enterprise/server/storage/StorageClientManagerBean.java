@@ -38,7 +38,7 @@ import javax.ejb.TransactionAttributeType;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
-import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.DowngradingConsistencyRetryPolicy;
 import com.datastax.driver.core.policies.LoggingRetryPolicy;
 import com.datastax.driver.core.policies.RoundRobinPolicy;
 
@@ -230,7 +230,7 @@ public class StorageClientManagerBean {
             .withCredentialsObfuscated(username, password)
             .withPort(port)
             .withLoadBalancingPolicy(new RoundRobinPolicy())
-            .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE))
+            .withRetryPolicy(new LoggingRetryPolicy(DowngradingConsistencyRetryPolicy.INSTANCE))
             .withCompression(compression)
             .build();
 
@@ -242,6 +242,7 @@ public class StorageClientManagerBean {
             log.debug("Initializing " + MetricsServer.class.getName());
         }
         metricsServer = new MetricsServer();
+        metricsServer.setSession(session);
         metricsServer.setDAO(metricsDAO);
         metricsServer.setConfiguration(metricsConfiguration);
 

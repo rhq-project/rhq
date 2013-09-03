@@ -58,6 +58,7 @@ import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import com.datastax.driver.core.ConsistencyLevel;
 import com.wordnik.swagger.annotations.Api;
 import com.wordnik.swagger.annotations.ApiError;
 import com.wordnik.swagger.annotations.ApiErrors;
@@ -899,7 +900,8 @@ public class MetricHandlerBean  extends AbstractRestBean  {
         @Override
         public void write(OutputStream outputStream) throws IOException, WebApplicationException {
             MetricsDAO metricsDAO = sessionManager.getMetricsDAO();
-            Iterable<RawNumericMetric> resultSet = metricsDAO.findRawMetrics(scheduleId, startTime, endTime);
+            Iterable<RawNumericMetric> resultSet = metricsDAO.findRawMetrics(scheduleId, startTime, endTime,
+                ConsistencyLevel.ONE);
 
             PrintWriter pw = new PrintWriter(outputStream);
 

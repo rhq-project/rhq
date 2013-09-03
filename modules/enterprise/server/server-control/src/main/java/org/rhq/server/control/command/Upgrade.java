@@ -441,8 +441,11 @@ public class Upgrade extends AbstractInstall {
 
         String storagePassword = oldServerProps.getProperty("rhq.cassandra.password");
         if (storagePassword != null) {
+            // In RHQ 4.8 the Cassandra username/password had to be rhqadmin/rhqadmin; so,
+            // we can safely set rhq.storage.password to the obfuscated version freeing the
+            // user of performing the additional step of generated the obfuscated password.
             oldServerProps.remove("rhq.cassandra.password");
-            oldServerProps.setProperty("rhq.storage.password", storagePassword);
+            oldServerProps.setProperty("rhq.storage.password", "1eeb2f255e832171df8592078de921bc");
         }
 
         String storageSeeds = oldServerProps.getProperty("rhq.cassandra.seeds");

@@ -22,8 +22,6 @@
  */
 package org.rhq.core.pluginapi.inventory;
 
-import java.util.Set;
-
 /**
  * When another discovery component discovers resources, the discovered details can be funneled through
  * implementations of this callback interface, thus allowing callbacks to tweek details of discovered resources.
@@ -31,13 +29,34 @@ import java.util.Set;
  * resource type. This is mainly used when writing plugins that cooperate with each other.
  */
 public interface ResourceDiscoveryCallback {
+
+    enum DiscoveryCallbackResults {
+        /**
+         * If the callback left the discovered details as-is, it should return this enum value.
+         * The callback should only return this value if it did not alter any details data; if it did,
+         * it should return PROCESSED instead.
+         */
+        UNPROCESSED,
+        /**
+         * If the callback recognized the discovered resource, it should return this enum value
+         * to let the plugin container know that the details were processed by this callback and
+         * were possibly altered from their original state. If more than one callback returned
+         * this enum for the same discovered resource details, the discovery for that resource will
+         * be aborted and it will not go into inventory. Multiple plugin callbacks cannot claim
+         * ownership of the same resource details and return this enum value.
+         */
+        PROCESSED
+    }
+
     /**
-     * When a set of resource details have been discovered, those details are passed to the callback via this method.
+     * When a resource has been discovered, its discovered resource details are passed to the callback via this method.
      * The callback can tweek those details as it sees fit or it can simply leave the details as-is and simply return.
      *
-     * @param discoveredDetails a set of resource details that were discovered and can be altered by the callback
-     *
+     * @param discoveredDetails resource details that were discovered and can be altered by the callback
+     * @return PROCESSED if the callback has identified the discovered resource and possibly altered the details.
+     *         Otherwise, return UNPROCESSED to let the plugin container know that this callback doesn't recognize
+     *         the details and they were left as-is. A null return value will be equivalent to UNPROCESSED.
      * @throws Exception
      */
-    void discoveredResources(Set<DiscoveredResourceDetails> discoveredDetails) throws Exception;
+    DiscoveryCallbackResults discoveredResources(DiscoveredResourceDetails discoveredDetails) throws Exception;
 }

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="DiscoveryCallbackAbortPlugin"
+        package="org.rhq.core.pc.inventory.discoverycallback"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <discovery-callbacks>
+        <type-callback plugin="DiscoveryCallbackAbortPlugin" type="TestServerToBeAborted" callbackClass="DiscoveryCallbackAbortCallback1"/>
+        <type-callback plugin="DiscoveryCallbackAbortPlugin" type="TestServerToBeAborted" callbackClass="DiscoveryCallbackAbortCallback2"/>
+    </discovery-callbacks>
+
+    <server name="TestServerToBeAborted"
+            discovery="DiscoveryCallbackAbortDiscoveryComponent"
+            class="org.rhq.core.pc.inventory.testplugin.TestResourceComponent">
+    </server>
+</plugin>

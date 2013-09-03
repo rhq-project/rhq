@@ -28,6 +28,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -358,33 +359,63 @@ public class InventoryManager extends AgentService implements ContainerService, 
             return results;
         }
 
-        // funnel the results through any discovery callbacks that are defined on the discovered resource type
+        // find the discovery callbacks defined, if there are none, just return the results as-is
         Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager().getDiscoveryCallbacks(context.getResourceType());
         if (callbacks == null || callbacks.isEmpty()) {
-            return results; // no callbacks defined, return the discovered details as-is
+            return results;
         }
 
-        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
-        int callbackCount = 0;
+        // funnel the results through the discovery callbacks that are defined on the discovered resource type
+        // we do them one discovered resource details as a time, giving each callback the opportunity to handle each
+        ResourceDiscoveryCallback.DiscoveryCallbackResults callbackResults;
         PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
-        for (Map.Entry<String, List<String>> entry : callbacks.entrySet()) {
-            String pluginName = entry.getKey();
-            List<String> callbackClassNames = entry.getValue();
-            for (String className : callbackClassNames) {
-                ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName, className);
-                try {
-                    Thread.currentThread().setContextClassLoader(callback.getClass().getClassLoader());
-                    // notice we call inline, in our calling thread - no time outs or anything; hopefully the plugin plays nice
-                    callback.discoveredResources(results);
-                    callbackCount++;
-                    if (log.isDebugEnabled()) {
-                        log.debug("Discovery callback [{" + pluginName + "}" + className + "] done. #invocations=" + callbackCount);
+        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+
+        for (Iterator<DiscoveredResourceDetails> detailsIterator = results.iterator(); detailsIterator.hasNext(); ) {
+            DiscoveredResourceDetails details = detailsIterator.next();
+            int callbackCount = 0;
+            boolean stopProcessing = false; // if true, a callback told us he found a details that he modified and we should stop
+            boolean abortDiscovery = false; // if true, multiple callbacks claimed ownership which isn't allowed - its discovery will be aborted
+            for (Map.Entry<String, List<String>> entry : callbacks.entrySet()) {
+                String pluginName = entry.getKey();
+                List<String> callbackClassNames = entry.getValue();
+                for (String className : callbackClassNames) {
+                    ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName, className);
+                    try {
+                        Thread.currentThread().setContextClassLoader(callback.getClass().getClassLoader());
+                        callbackResults= callback.discoveredResources(details);// inline in our calling thread - no time outs or anything; hopefully the plugin plays nice
+                        callbackCount++;
+                        if (log.isDebugEnabled()) {
+                            log.debug("Discovery callback [{" + pluginName + "}" + className + "] returned ["
+                                    + callbackResults + "] #invocations=" + callbackCount);
+                        }
+                        if (callbackResults == ResourceDiscoveryCallback.DiscoveryCallbackResults.PROCESSED) {
+                            if (stopProcessing) {
+                                abortDiscovery = true;
+                                log.warn("Another discovery callback [{" + pluginName + "}" + className
+                                    + "] processed details [" + details
+                                    + "]. This is not allowed. Discovery will be aborted for that resource");
+                            } else {
+                                stopProcessing = true;
+                            }
+                        }
+                        // note that we keep going, even if we set stopProcessing is true - this is because we
+                        // want to keep calling callbacks and check if they, too, think they can identify the details. If
+                        // they can, something is wrong and we want to abort since more than one callback should not be
+                        // claiming ownership of the same details. We could, in the future, not do this check and just
+                        // stop calling callbacks the first time a callback tells us it processed details
+                    } catch (Throwable t) {
+                        log.error("Discovery callback [{" + pluginName + "}" + className + "] failed", t);
+                    } finally {
+                        Thread.currentThread().setContextClassLoader(originalContextClassLoader);
                     }
-                } catch (Throwable t) {
-                    log.error("Discovery callback [{" + pluginName + "}" + className + "] failed with exception: "
-                        + ThrowableUtil.getAllMessages(t), t);
-                } finally {
-                    Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                } // for each callback
+            } // for each plugin
+
+            if (abortDiscovery) {
+                // provide a backdoor escape hatch - you can avoid aborting by setting this sysprop to true
+                if (Boolean.getBoolean("rhq.agent.discovery-callbacks.never-abort") == false) {
+                    detailsIterator.remove(); // we do not want to process this details
                 }
             }
         }
@@ -1426,7 +1457,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * the container's resource is guaranteed to be up to date.
      *
      * @param parentResource
-     * @param parentContainer
+     * @param container
      * @return the children, empty if parentContainer is null or there are no children. not null.
      * @return the children, may be empty, not null.
      */

@@ -167,6 +167,13 @@ public class MetricsViewDataSource extends RPCDataSource<MetricDisplaySummary, C
         if (sb.toString().endsWith(",")) {
             sb.setLength(sb.length() - 1);
         }
+        // handle the case where we have just installed the server so not much history
+        // and our date range is set such that only one value returns which the
+        // sparkline graph will not plot anything, so we need at least 2 values
+        if(!sb.toString().contains(",")){
+            // append another value just so we have 2 values and it will graph
+            return "0,"+sb.toString();
+        }
 
         return sb.toString();
     }

@@ -90,7 +90,7 @@ public class AvailabilitySummaryPieGraphType implements GraphMarker{
      * The magic JSNI to draw the charts with d3.
      */
     public native void drawJsniChart() /*-{
-        console.log("Draw Availability Summary Pie Chart");
+        //console.log("Draw Availability Summary Pie Chart");
         var global = this;
 
         var availPieGraph = (function () {
@@ -158,7 +158,7 @@ public class AvailabilitySummaryPieGraphType implements GraphMarker{
         })();
 
         availPieGraph.drawGraph();
-        console.log("done with avail summary pie graph drawing");
+        //console.log("done with avail summary pie graph drawing");
 
     }-*/;
 

@@ -42,7 +42,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
      */
     @Override
     public native void drawJsniChart() /*-{
-        console.log("Draw Stacked Bar jsni chart");
+        //console.log("Draw Stacked Bar jsni chart");
         var global = this,
 
         // create a chartContext object (from rhq.js) with the data required to render to a chart
@@ -121,7 +121,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }
 
             function useSmallCharts() {
-                console.log("getChartWidth: "+ getChartWidth());
+                //console.log("getChartWidth: "+ getChartWidth());
                 return  getChartWidth() <= smallChartThresholdInPixels;
             }
 
@@ -131,14 +131,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                     // if window is too small server up small chart
                     if (useSmallCharts()) {
-                        console.log("Using Small Charts Profile for width: "+getChartWidth());
+                        //console.log("Using Small Charts Profile for width: "+getChartWidth());
                         width = 250;
                         xTicks = 3;
                         xTickSubDivide = 2;
                         chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length);
                     }
                     else {
-                        console.log("Using Large Charts Profile, width: "+ width);
+                        //console.log("Using Large Charts Profile, width: "+ width);
                         //  we use the width already defined above
                         xTicks = 8;
                         xTickSubDivide = 5;
@@ -755,7 +755,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
-                        console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
+                        //console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
 
                         determineScale();
                         createHeader(chartContext.chartTitle);
@@ -768,7 +768,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         createXandYAxes();
                         createAvgLines();
                         if (oobMax > 0) {
-                            console.log("OOB Data Exists!");
+                            //console.log("OOB Data Exists!");
                             createOOBLines();
                         }
                     }

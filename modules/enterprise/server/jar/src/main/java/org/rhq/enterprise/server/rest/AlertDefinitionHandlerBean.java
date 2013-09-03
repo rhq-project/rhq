@@ -77,7 +77,9 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
 import org.rhq.core.domain.criteria.AlertDefinitionCriteria;
 import org.rhq.core.domain.measurement.DataType;
 import org.rhq.core.domain.measurement.MeasurementDefinition;
+import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.group.GroupCategory;
 import org.rhq.core.domain.resource.group.ResourceGroup;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
@@ -222,6 +224,7 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     @ApiErrors({
         @ApiError(code = 406, reason = "There was not exactly one of 'resourceId','groupId' or 'resourceTypeId' given"),
         @ApiError(code = 406, reason = "The passed condition failed validation"),
+        @ApiError(code = 406, reason = "The passed group was a mixed group, that can not have alert definitions"),
         @ApiError(code = 404, reason = "A non existing alert notification sender was requested."),
         @ApiError(code = 404, reason = "A referenced alert to recover does not exist")
     })
@@ -250,18 +253,29 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         alertDefinition.setConditionExpression(BooleanExpression.valueOf(adr.getConditionMode().toUpperCase()));
         alertDefinition.setRecoveryId(adr.getRecoveryId());
 
+        Resource resource = null;
+        if (resourceId!= null) {
+            resource = fetchResource(resourceId);
+        }
+
+        ResourceType resourceType=null;
         if (groupId!=null) {
             ResourceGroup group = resourceGroupMgr.getResourceGroup(caller,groupId);
             alertDefinition.setGroup(group);
+            if (group.getGroupCategory()== GroupCategory.MIXED) {
+                throw new BadArgumentException("Group with id " + +groupId + " is a mixed group");
+            }
+            resourceType = group.getResourceType(); // TODO this may be null -> check 1st resource
         }
+
         if (resourceTypeId!=null) {
-            ResourceType type = resourceTypeMgr.getResourceTypeById(caller,resourceTypeId);
-            alertDefinition.setResourceType(type);
+            resourceType = resourceTypeMgr.getResourceTypeById(caller,resourceTypeId);
+            alertDefinition.setResourceType(resourceType);
         }
 
         Set<AlertCondition> conditions = new HashSet<AlertCondition>(adr.getConditions().size());
         for (AlertConditionRest acr : adr.getConditions()) {
-            AlertCondition condition = conditionRestToCondition(acr);
+            AlertCondition condition = conditionRestToCondition(acr, resource, resourceType);
             conditions.add(condition);
         }
         alertDefinition.setConditions(conditions);
@@ -514,7 +528,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
         if (definition==null)
             throw new StuffNotFoundException("AlertDefinition with id " + definitionId);
 
-        AlertCondition condition = conditionRestToCondition(conditionRest);
+        Resource resource = definition.getResource();
+        ResourceType resourceType = definition.getResourceType();
+        AlertCondition condition = conditionRestToCondition(conditionRest, resource, resourceType);
 
         definition.addCondition(condition);
 
@@ -573,8 +589,9 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
             }
         }
 
-
-        AlertCondition restCondition = conditionRestToCondition(conditionRest);
+        Resource resource = definition.getResource();
+        ResourceType resourceType = definition.getResourceType();
+        AlertCondition restCondition = conditionRestToCondition(conditionRest, resource, resourceType);
 
         condition.setOption(conditionRest.getOption());
         condition.setComparator(conditionRest.getComparator());
@@ -612,11 +629,16 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
     /**
      * Convert a passed condition from the REST side into the internal domain
      * representation. The largest part of this method is validation of the input
+     *
+     *
      * @param conditionRest Object to convert
+     * @param resource Optional {@link org.rhq.core.domain.resource.Resource} to check against if not null
+     * @param resourceType Optional {@link ResourceType} to validate against if not null
      * @return Converted domain object
      * @throws BadArgumentException If validation fails
      */
-    private AlertCondition conditionRestToCondition(AlertConditionRest conditionRest) {
+    private AlertCondition conditionRestToCondition(AlertConditionRest conditionRest, Resource resource,
+                                                    ResourceType resourceType) {
         AlertCondition condition = new AlertCondition();
 
         try {
@@ -629,6 +651,31 @@ public class AlertDefinitionHandlerBean extends AbstractRestBean {
 
         int measurementDefinition = conditionRest.getMeasurementDefinition();
         MeasurementDefinition md;
+        if (measurementDefinition!=0) {
+            md = entityManager.find(MeasurementDefinition.class, measurementDefinition);
+            if (md==null) {
+                throw new StuffNotFoundException("measurementDefinition with id " + measurementDefinition);
+            }
+
+            // Validate that the definition belongs to the resource, if passed
+            if (resource!=null) {
+                ResourceType type = resource.getResourceType();
+                Set<MeasurementDefinition> definitions = type.getMetricDefinitions();
+                if (!definitions.contains(md)) {
+                    throw new BadArgumentException("MeasurementDefinition does not apply to resource");
+                }
+            }
+
+            // Validate that the definition belongs to the passed resource type
+            if (resourceType!=null) {
+                Set<MeasurementDefinition> definitions = resourceType.getMetricDefinitions();
+                if (!definitions.contains(md)) {
+                    throw new BadArgumentException("MeasurementDefinition does not apply to resource type");
+                }
+            }
+        }
+
+
         String optionValue = conditionRest.getOption();
 
         String conditionName = conditionRest.getName();

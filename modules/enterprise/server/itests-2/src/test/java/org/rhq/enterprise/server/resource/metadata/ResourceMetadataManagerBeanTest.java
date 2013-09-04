@@ -1,6 +1,28 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.enterprise.server.resource.metadata;
 
+import static java.lang.System.nanoTime;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -409,19 +431,14 @@ public class ResourceMetadataManagerBeanTest extends MetadataBeanTest {
         ResourceTypeCriteria criteria = new ResourceTypeCriteria();
         criteria.addFilterName("ServiceE4");
         criteria.addFilterPluginName("RemoveTypesPlugin");
-        List<ResourceType> resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(),
-            criteria);
-        if ((resourceTypes != null) && (resourceTypes.size() > 0)) {
-            //spinder 1-31-13: sleep for 30s to see if type removal has then completed
-            //it's possible this could fail on smaller boxes. Not sure how to test this otherwise as
-            //after fix to break resource deletion into chunks[BZ 905632] this should work.
-            //tsegismo 4-12-13: sleep for 60s as some master builds already failed on Jenkins reporting:
-            // "Resource type 'serviceE4' not fully removed"
-            Thread.sleep(1000 * 60);
-            resourceTypes = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria);
-            assertEquals("Resource type '" + resourceTypes.get(0).getName() + "' not fully removed", 0,
-                resourceTypes.size());
-        }
+
+        long start = nanoTime();
+        boolean allTypesRemoved = false;
+        do {
+            Thread.sleep(SECONDS.toMillis(5));
+            allTypesRemoved = resourceTypeMgr.findResourceTypesByCriteria(subjectMgr.getOverlord(), criteria).size() == 0;
+        } while (!allTypesRemoved && (nanoTime() - start) < MINUTES.toNanos(10));
+        assertTrue("Resource type 'ServiceE4' not fully removed", allTypesRemoved);
     }
 
     @Test(dependsOnMethods = { "upgradePluginWithTypesRemoved" }, groups = { "plugin.resource.metadata.test",

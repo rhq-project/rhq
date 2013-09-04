@@ -942,8 +942,8 @@ public class ServerInstallUtil {
                     LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
                     insertStorageNode = connection.prepareStatement(
-                            "INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime) " +
-                            "VALUES (?, ?, ?, ?, ?, ?)"
+                            "INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime, maintenance_pending) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     int id = 1001;
@@ -954,6 +954,7 @@ public class ServerInstallUtil {
                         insertStorageNode.setString(4, StorageNode.OperationMode.INSTALLED.toString());
                         insertStorageNode.setLong(5, System.currentTimeMillis());
                         insertStorageNode.setLong(6, System.currentTimeMillis());
+                        insertStorageNode.setBoolean(7, false);
 
                         insertStorageNode.executeUpdate();
                         id += 1;

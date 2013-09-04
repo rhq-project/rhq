@@ -36,6 +36,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
 
@@ -77,6 +78,7 @@ import org.rhq.core.domain.resource.Resource;
 import org.rhq.core.domain.util.PageControl;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.PageOrdering;
+import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.alert.AlertManagerLocal;
 import org.rhq.enterprise.server.auth.SubjectManagerLocal;
@@ -327,12 +329,12 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         Map<String, Integer> scheduleIdsMap = new HashMap<String, Integer>();
 
-        for (Object[] tupple : getStorageServiceScheduleIds(storageNodeResourceId)) {
+        for (Object[] tupple : getChildrenScheduleIds(storageNodeResourceId)) {
             String definitionName = (String) tupple[0];
             Integer scheduleId = (Integer) tupple[2];
             scheduleIdsMap.put(definitionName, scheduleId);
         }
-        for (Object[] tupple : getMemorySubsystemScheduleIds(storageNodeResourceId)) {
+        for (Object[] tupple : getGrandchildrenScheduleIds(storageNodeResourceId)) {
             String definitionName = (String) tupple[0];
             Integer scheduleId = (Integer) tupple[2];
             scheduleIdsMap.put(definitionName, scheduleId);
@@ -379,19 +381,20 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
 
                 updateAggregateTotal(totalDiskUsedAggregate, loadAggregateWithUnits.getAggregate());
             }
-            //            if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
-            //                updateAggregateTotal(totalDiskUsedAggregate,
-            //                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            //            }
-            //            if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
-            //                updateAggregateTotal(totalDiskUsedAggregate,
-            //                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            //            }
-            //            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
-            //                updateAggregateTotal(totalDiskUsedAggregate,
-            //                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
-            //            }
+            if ((scheduleId = scheduleIdsMap.get(METRIC_KEY_CACHE_SIZE)) != null) {
+                updateAggregateTotal(totalDiskUsedAggregate,
+                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
 
+            }
+            if ((scheduleId = scheduleIdsMap.get(METRIC_ROW_CACHE_SIZE)) != null) {
+                updateAggregateTotal(totalDiskUsedAggregate,
+                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            }
+
+            if ((scheduleId = scheduleIdsMap.get(METRIC_TOTAL_COMMIT_LOG_SIZE)) != null) {
+                updateAggregateTotal(totalDiskUsedAggregate,
+                    measurementManager.getAggregate(subject, scheduleId, beginTime, endTime));
+            }
             if (totalDiskUsedAggregate.getMax() > 0) {
                 StorageNodeLoadComposite.MeasurementAggregateWithUnits totalDiskUsedAggregateWithUnits = new StorageNodeLoadComposite.MeasurementAggregateWithUnits(
                     totalDiskUsedAggregate, MeasurementUnits.BYTES);
@@ -421,19 +424,19 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         return result;
     }
 
-    private List<Object[]> getStorageServiceScheduleIds(int storageNodeResourceId) {
+    private List<Object[]> getChildrenScheduleIds(int storageNodeResourceId) {
         // get the schedule ids for Storage Service resource
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_PARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES, Object[].class);
         query.setParameter("parrentId", storageNodeResourceId).setParameter(
             "metricNames",
-            Arrays.asList(METRIC_TOKENS, METRIC_OWNERSHIP,
-                METRIC_LOAD/*, METRIC_KEY_CACHE_SIZE, METRIC_ROW_CACHE_SIZE, METRIC_TOTAL_COMMIT_LOG_SIZE*/,
-                METRIC_DATA_DISK_USED_PERCENTAGE, METRIC_TOTAL_DISK_USED_PERCENTAGE, METRIC_FREE_DISK_TO_DATA_RATIO));
+            Arrays.asList(METRIC_TOKENS, METRIC_OWNERSHIP, METRIC_LOAD, METRIC_KEY_CACHE_SIZE, METRIC_ROW_CACHE_SIZE,
+                METRIC_TOTAL_COMMIT_LOG_SIZE, METRIC_DATA_DISK_USED_PERCENTAGE, METRIC_TOTAL_DISK_USED_PERCENTAGE,
+                METRIC_FREE_DISK_TO_DATA_RATIO));
         return query.getResultList();
     }
 
-    private List<Object[]> getMemorySubsystemScheduleIds(int storageNodeResourceId) {
+    private List<Object[]> getGrandchildrenScheduleIds(int storageNodeResourceId) {
         // get the schedule ids for Memory Subsystem resource
         TypedQuery<Object[]> query = entityManager.<Object[]> createNamedQuery(
             StorageNode.QUERY_FIND_SCHEDULE_IDS_BY_GRANDPARENT_RESOURCE_ID_AND_MEASUREMENT_DEFINITION_NAMES,
@@ -815,30 +818,36 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
         }
         Map<String, List<MeasurementDataNumericHighLowComposite>> result = new LinkedHashMap<String, List<MeasurementDataNumericHighLowComposite>>();
 
-        List<Object[]> tupples = getStorageServiceScheduleIds(storageNodeResourceId);
+        List<Object[]> tupples = getChildrenScheduleIds(storageNodeResourceId);
         List<String> defNames = new ArrayList<String>();
-        int[] definitionIds = new int[tupples.size()];
-        int resId = -1;
-        int index = 0;
+        Map<Integer, List<Integer>> resourceWithDefinitionIds = new HashMap<Integer, List<Integer>>();
         for (Object[] tupple : tupples) {
             String defName = (String) tupple[0];
             int definitionId = (Integer) tupple[1];
-            resId = (Integer) tupple[3];
+            int resId = (Integer) tupple[3];
             defNames.add(defName);
-            definitionIds[index++] = definitionId;
+            if (resourceWithDefinitionIds.get(resId) == null) {
+                resourceWithDefinitionIds.put(resId, new ArrayList<Integer>(tupples.size()));
+            }
+            resourceWithDefinitionIds.get(resId).add(definitionId);
         }
-        List<List<MeasurementDataNumericHighLowComposite>> storageServiceData = measurementManager.findDataForResource(
-            subject, resId, definitionIds, beginTime, endTime, numPoints);
-        for (int i = 0; i < storageServiceData.size(); i++) {
-            List<MeasurementDataNumericHighLowComposite> oneRecord = storageServiceData.get(i);
-            result.put(defNames.get(i), oneRecord);
+        
+        int defNameIndex = 0;
+        for (Entry<Integer, List<Integer>> entry : resourceWithDefinitionIds.entrySet()) {
+            List<List<MeasurementDataNumericHighLowComposite>> storageServiceData = measurementManager.findDataForResource(
+                subject, entry.getKey(), ArrayUtils.unwrapCollection(entry.getValue()), beginTime, endTime, numPoints);    
+            for (int i = 0; i < storageServiceData.size(); i++) {
+                List<MeasurementDataNumericHighLowComposite> oneRecord = storageServiceData.get(i);
+                result.put(defNames.get(defNameIndex++), filterNans(oneRecord));
+            }
         }
-
-        tupples = getMemorySubsystemScheduleIds(storageNodeResourceId);
+        
+        tupples = getGrandchildrenScheduleIds(storageNodeResourceId);
         defNames = new ArrayList<String>();
+        int[] definitionIds = new int[tupples.size()];
         definitionIds = new int[tupples.size()];
-        resId = -1;
-        index = 0;
+        int resId = -1;
+        int index = 0;
         for (Object[] tupple : tupples) {
             String defName = (String) tupple[0];
             int definitionId = (Integer) tupple[1];
@@ -850,10 +859,22 @@ public class StorageNodeManagerBean implements StorageNodeManagerLocal, StorageN
             .findDataForResource(subject, resId, definitionIds, beginTime, endTime, numPoints);
         for (int i = 0; i < memorySubsystemData.size(); i++) {
             List<MeasurementDataNumericHighLowComposite> oneRecord = memorySubsystemData.get(i);
-            result.put(defNames.get(i), oneRecord);
+            result.put(defNames.get(i), filterNans(oneRecord));
         }
 
         return result;
+    }
+    
+    private List<MeasurementDataNumericHighLowComposite> filterNans(List<MeasurementDataNumericHighLowComposite> data) {
+        // NaNs are not useful for sparkline graphs, lets filter them and reduce the traffic over the wire
+        if (data == null || data.isEmpty()) return Collections.<MeasurementDataNumericHighLowComposite>emptyList();
+        List<MeasurementDataNumericHighLowComposite> filteredData = new ArrayList<MeasurementDataNumericHighLowComposite>(data.size());
+        for (MeasurementDataNumericHighLowComposite number : data) {
+            if (!Double.isNaN(number.getValue())) {
+                filteredData.add(number);
+            }
+        }
+        return filteredData;
     }
 
     private boolean runOperationAndWaitForResult(Subject subject, Resource storageNodeResource, String operationToRun,

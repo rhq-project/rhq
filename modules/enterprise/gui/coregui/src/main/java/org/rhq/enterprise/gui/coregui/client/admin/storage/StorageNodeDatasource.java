@@ -309,10 +309,15 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
     }
 
     public static class StorageNodeLoadCompositeDatasource extends RPCDataSource<StorageNodeLoadComposite, StorageNodeCriteria> {
-        public static final String HEAP_PERCENTAGE_KEY = "heapPercentage";
-        public static final String DATA_DISK_SPACE_PERCENTAGE_KEY = "dataDiskSpacePercentage";
-        public static final String TOTAL_DISK_SPACE_PERCENTAGE_KEY = "totalDiskSpacePercentage";
-        public static final String FREE_DISK_TO_DATA_SIZE_RATIO_KEY = "freeDiskToDataSizeRatio";
+        public static final String KEY_HEAP_USED = "{HeapMemoryUsage.used}";
+        public static final String KEY_HEAP_PERCENTAGE = "Calculated.HeapUsagePercentage";
+        public static final String KEY_DATA_DISK_SPACE_PERCENTAGE = "Calculated.DataDiskUsedPercentage";
+        public static final String KEY_TOTAL_DISK_SPACE_PERCENTAGE = "Calculated.TotalDiskUsedPercentage";
+        public static final String KEY_FREE_DISK_TO_DATA_SIZE_RATIO = "Calculated.FreeDiskToDataSizeRatio";
+        public static final String KEY_TOTAL_DISK = "Load"; // todo: calculation for sparkline graphs
+        public static final String KEY_OWNERSHIP = "Ownership";
+        public static final String KEY_TOKENS = "Tokens";
+        
         
         private int id;
 
@@ -408,19 +413,19 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 
             // heap related metrics
 //            recordsList.add(makeListGridRecord(loadComposite.getHeapCommitted(), "Heap Maximum", "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.", "heapMax"));
-            recordsList.add(makeListGridRecord(loadComposite.getHeapUsed(), "Heap Used", "Amount of memory actually used by the RHQ storage node", "heapUsed"));
-            recordsList.add(makeListGridRecord(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", HEAP_PERCENTAGE_KEY));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapUsed(), "Heap Used", "Amount of memory actually used by the RHQ storage node", KEY_HEAP_USED));
+            recordsList.add(makeListGridRecord(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", KEY_HEAP_PERCENTAGE));
   
             // disk related metrics
-            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsed(), "Disk Space Used by Storage Node", "Total space used on disk by all data files, commit logs, and saved caches.", "totaldisk"));
-            recordsList.add(makeListGridRecord(loadComposite.getTotalDiskUsedPercentage(),"Total Disk Space Percent Used", "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", TOTAL_DISK_SPACE_PERCENTAGE_KEY));
-            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsedPercentage(), "Data Disk Space Percent Used","Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", DATA_DISK_SPACE_PERCENTAGE_KEY));
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsed(), "Disk Space Used by Storage Node", "Total space used on disk by all data files, commit logs, and saved caches.", KEY_TOTAL_DISK));
+            recordsList.add(makeListGridRecord(loadComposite.getTotalDiskUsedPercentage(),"Total Disk Space Percent Used", "Percentage of total disk space used (system and Storage Node) on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", KEY_TOTAL_DISK_SPACE_PERCENTAGE));
+            recordsList.add(makeListGridRecord(loadComposite.getDataDiskUsedPercentage(), "Data Disk Space Percent Used","Percentage of disk space used by data files on the partitions that contain the data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.", KEY_DATA_DISK_SPACE_PERCENTAGE));
             
             if (loadComposite.getFreeDiskToDataSizeRatio() != null){
                 MeasurementAggregate aggregate = loadComposite.getFreeDiskToDataSizeRatio();
                 NumberFormat nf = NumberFormat.getFormat("0.0");
                 ListGridRecord record = new ListGridRecord();
-                record.setAttribute("id", FREE_DISK_TO_DATA_SIZE_RATIO_KEY);
+                record.setAttribute("id", KEY_FREE_DISK_TO_DATA_SIZE_RATIO);
                 record.setAttribute("name", "Free Disk To Data Size Ratio");
                 record.setAttribute("hover", "Ratio of (Free Disk)/(Data File Size). A value below 1 is not recommended since a compaction or repair process could double the amount of disk space used by data files. If multiple data locations are specified then the aggregate accross all the partitions that contain data files is reported.");
                 record.setAttribute("min", nf.format(aggregate.getMin()));
@@ -432,10 +437,10 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 //            recordsList.add(makeListGridRecord(loadComposite.getLoad(), "Load", "Data stored on the node", "load"));
 
             // other metrics
-            recordsList.add(makeListGridRecord(loadComposite.getActuallyOwns(), "Ownership", "Refers to the percentage of keys that a node owns.", "ownership"));
+            recordsList.add(makeListGridRecord(loadComposite.getActuallyOwns(), "Ownership", "Refers to the percentage of keys that a node owns.", KEY_OWNERSHIP));
             if (loadComposite.getTokens() != null) {
                 ListGridRecord tokens = new ListGridRecord();
-                tokens.setAttribute("id", "tokens");
+                tokens.setAttribute("id", KEY_TOKENS);
                 tokens.setAttribute("name", "Number of Tokens");
                 tokens.setAttribute("hover", "Number of partitions of the ring that a node owns.");
                 tokens.setAttribute("min", loadComposite.getTokens().getMin());

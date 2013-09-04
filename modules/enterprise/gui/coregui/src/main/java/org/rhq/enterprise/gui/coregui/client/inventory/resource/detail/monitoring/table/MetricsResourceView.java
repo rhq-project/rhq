@@ -33,6 +33,7 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
@@ -56,6 +57,8 @@ public class MetricsResourceView extends AbstractD3GraphListView {
     private Img expandCollapseArrow;
     private final MetricsTableView metricsTableView;
     private final ResourceMetricAvailabilityView availabilityDetails;
+    private Timer refreshTimer;
+
 
     public MetricsResourceView(Resource resource) {
         super();
@@ -65,6 +68,7 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         this.resource = resource;
         metricsTableView = new MetricsTableView(resource, this);
         availabilityDetails = new ResourceMetricAvailabilityView(resource);
+        startRefreshCycle();
 
     }
 
@@ -164,6 +168,11 @@ public class MetricsResourceView extends AbstractD3GraphListView {
                     }.schedule(150);
                 }
             });
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
 }

@@ -138,11 +138,18 @@ public class MetricsServer {
     }
 
     public RawNumericMetric findLatestValueForResource(int scheduleId) {
+        log.debug("Querying for most recent raw metrics for [scheduleId: " + scheduleId + "]");
         return dao.findLatestRawMetric(scheduleId);
     }
 
     public Iterable<MeasurementDataNumericHighLowComposite> findDataForResource(int scheduleId, long beginTime,
         long endTime, int numberOfBuckets) {
+
+        if (log.isDebugEnabled()) {
+            log.debug("Querying for metric data using parameters [scheduleId: " + scheduleId + ", beginTime: " +
+                beginTime + ", endTime: " + endTime + ", numberOfBuckets: " + numberOfBuckets + "]");
+        }
+
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {
@@ -166,6 +173,11 @@ public class MetricsServer {
 
     public List<MeasurementDataNumericHighLowComposite> findDataForGroup(List<Integer> scheduleIds, long beginTime,
         long endTime, int numberOfBuckets) {
+        if (log.isDebugEnabled()) {
+            log.debug("Querying for metric data using parameters [scheduleIds: " + scheduleIds + ", beingTime: " +
+                beginTime + ", endTime: " + endTime + ", numberOfBuckets: " + numberOfBuckets + "]");
+        }
+
         DateTime begin = new DateTime(beginTime);
 
         if (dateTimeService.isInRawDataRange(begin)) {

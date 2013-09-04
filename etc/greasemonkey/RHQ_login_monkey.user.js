@@ -1,18 +1,27 @@
 // ==UserScript==
 // @name        RHQ login monkey
 // @namespace   org.rhq.enterprise.gui.coregui
-// @description Types in the credentials
+// @description Types in the credentials when pressing ALT+C on the login page. This script works also for Chrome/Chromium with the extension called Tampermonkey.
 // @include     *:7080/coregui/*
 // @include     *:7080/coregui/#LogOut
 // @grant       none
-// @version     1
+// @author      Jiri Kremser <jkremser@redhat.com>
+// @version     1.1
 // ==/UserScript==
 
-//GM_registerMenuCommand("Fill the credentials", function(e) {
-//  fillTheCredentials();
-//}, "c", "alt", "c" );
+function fillTheCredentials() {
+  document.getElementsByName("user")[0].value="rhqadmin";
+  document.getElementsByName("password")[0].value="rhqadmin";
+  //document.forms[0].submit() doesn't work, SmartGWT uses internal logic
+  document.getElementsByName("password")[0].focus();
+}
 
+// register the function and the hot key
+GM_registerMenuCommand("Fill the credentials", function(e) {
+  fillTheCredentials();
+}, "c", "alt", "c" );
 
+// fallback solution, because the function above doesn't work in all browsers
 (function(){
 document.addEventListener('keydown', function(e) {
   // pressed alt+c
@@ -20,12 +29,4 @@ document.addEventListener('keydown', function(e) {
     fillTheCredentials();
   }
 }, false);
-})();
-
-
-function fillTheCredentials() {
-  document.getElementsByName("user")[0].value="rhqadmin"
-  document.getElementsByName("password")[0].value="rhqadmin"
-  //document.forms[0].submit() don't work, SmartGWT uses internal logic
-  document.getElementsByName("password")[0].focus()
-}
+}());

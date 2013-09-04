@@ -852,6 +852,12 @@
     <c:simple-property name="queue-length:expr" required="false" type="integer" readOnly="false" displayName="Queue Length" description="The queue length. Required only for Bounded and Blocking Bounded Thread Pools."/>
 '>
 
+    <!ENTITY sharedThreadPoolResourceConfig '
+     <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
+     <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+     <c:simple-property name="handoff-executor:expr" displayName="Handoff Executor" required="false" type="string" readOnly="false" description="An executor to delegate tasks to in the event that a task cannot be accepted. If not specified, tasks that cannot be accepted will be silently discarded."/>
+'>
+
     <!ENTITY threadPoolTemplateResourceConfig '
         <c:simple-property name="__type" readOnly="true" default="scheduled-thread-pool" displayName="Thread Pool Type" description="Thread pool type">
           <c:property-options>
@@ -3209,6 +3215,7 @@
           &queueLengthResourceConfig;
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
+          &sharedThreadPoolResourceConfig;
           &threadPoolTemplateResourceConfig;
         </resource-configuration>
       </service>
@@ -5598,8 +5605,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
-            <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+            &sharedThreadPoolResourceConfig;
             <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
               <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
@@ -5622,8 +5628,7 @@
           </plugin-configuration>
 
           <resource-configuration>
-            <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
-            <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+            &sharedThreadPoolResourceConfig;
             <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
               <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
               <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
@@ -6036,6 +6041,7 @@
           &queueLengthResourceConfig;
           <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
+          &sharedThreadPoolResourceConfig;
           &threadPoolTemplateResourceConfig;
         </resource-configuration>
       </service>
@@ -10372,8 +10378,7 @@
         <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
-          <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
-          <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+          &sharedThreadPoolResourceConfig;
           <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
             <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
@@ -10400,8 +10405,7 @@
         <metric property="rejected-count" description="The number of tasks that have been passed to the handoff-executor (if one is specified) or discarded."/>
 
         <resource-configuration>
-          <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
-          <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
+          &sharedThreadPoolResourceConfig;
           <c:map-property name="keepalive-time" displayName="Keepalive Time" description="Used to specify the amount of time that pool threads should be kept running when idle; if not specified, threads will run until the executor is shut down.">
             <c:simple-property name="time" type="long" readOnly="false" description="The time"/>
             <c:simple-property name="unit" type="string" readOnly="false" description="The time unit"/>
@@ -10968,6 +10972,7 @@
         &queueLengthResourceConfig;
         <c:simple-property name="thread-factory" required="false" type="string" readOnly="false" description="Specifies the name of a specific thread factory to use to create worker threads. If not defined an appropriate default thread factory will be used."/>
 
+		&sharedThreadPoolResourceConfig;
         &threadPoolTemplateResourceConfig;
       </resource-configuration>
     </service>

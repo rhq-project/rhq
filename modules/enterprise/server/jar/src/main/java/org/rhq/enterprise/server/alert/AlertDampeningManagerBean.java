@@ -33,8 +33,8 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.alert.AlertDampening;
 import org.rhq.core.domain.alert.AlertDampeningEvent;
-import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.core.domain.alert.AlertDampeningEvent.Type;
+import org.rhq.core.domain.alert.AlertDefinition;
 import org.rhq.enterprise.server.RHQConstants;
 
 /**
@@ -51,6 +51,7 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    @Override
     public AlertDampeningEvent getLatestEventByAlertDefinitionId(int alertDefinitionId) {
         Query latestEventQuery = entityManager
             .createNamedQuery(AlertDampeningEvent.QUERY_FIND_LATEST_BY_ALERT_DEFINITION_ID);
@@ -83,8 +84,10 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
 
         // if we have enough, it'll be exactly equal to the number need (thanks to setMaxResults)
         boolean shouldFire = (oldestEvents.size() == eventCountThreshold);
-        log.debug("Need " + eventCountThreshold + " events " + "for the last " + lastSeconds + " seconds" + ", "
-            + "found " + oldestEvents.size());
+        if (log.isDebugEnabled()) {
+            log.debug("Need " + eventCountThreshold + " events " + "for the last " + lastSeconds + " seconds" + ", "
+                + "found " + oldestEvents.size());
+        }
 
         if (shouldFire) {
             for (AlertDampeningEvent event : oldestEvents) {
@@ -97,23 +100,26 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
         return shouldFire;
     }
 
-    public void processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType) {
+    @Override
+    public boolean processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType) {
+        /*
+         * some dampening event occurred, handle it accordingly.  if it was positive, check whether this
+         * AlertDefinition can fire an alert according to its dampening category rules.  currently, these is no
+         * supported dampening event that can fire as the result of a partial condition set match.
+         */
+        boolean fire = false;
+
         try {
             // get the alert definition in preparation for lots of processing on it
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
 
-            /*
-             * some dampening event occurred, handle it accordingly.  if it was positive, check whether this
-             * AlertDefinition can fire an alert according to its dampening category rules.  currently, these is no
-             * supported dampening event that can fire as the result of a partial condition set match.
-             */
-            boolean fire = false;
-
             AlertDampening alertDampening = alertDefinition.getAlertDampening();
             AlertDampening.Category category = alertDampening.getCategory();
 
-            log.debug("Alert condition processing for " + alertDefinition);
-            log.debug("Dampening rules are: " + alertDampening);
+            if (log.isDebugEnabled()) {
+                log.debug("Alert condition processing for " + alertDefinition);
+                log.debug("Dampening rules are: " + alertDampening);
+            }
 
             if (category == AlertDampening.Category.NONE) {
                 if ((eventType == AlertDampeningEvent.Type.POSITIVE)
@@ -172,9 +178,12 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
                 log.debug("Dampening rules were not satisfied");
             }
         } catch (Exception e) {
+            fire = false;
             log.error("Error operating on the passed dampening eventType of " + eventType + " "
                 + "for the alert definition with id of " + alertDefinitionId, e);
         }
+
+        return fire;
     }
 
     private boolean shouldFireConsecutiveCountAlert(int alertDefinitionId, long count) {
@@ -195,8 +204,10 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
             }
         }
 
-        log.debug("Need " + countNeeded + " events " + "for the last " + period + " events" + ", " + "found "
-            + positiveFires);
+        if (log.isDebugEnabled()) {
+            log.debug("Need " + countNeeded + " events " + "for the last " + period + " events" + ", " + "found "
+                + positiveFires);
+        }
 
         if (positiveFires >= countNeeded) {
             for (AlertDampeningEvent event : events) {
@@ -226,7 +237,7 @@ public class AlertDampeningManagerBean implements AlertDampeningManagerLocal {
 
         int deletedCount = query.executeUpdate();
 
-        if (deletedCount > 0) {
+        if (deletedCount > 0 && log.isDebugEnabled()) {
             log.debug("Deleted " + deletedCount + " stale AlertDampeningEvent" + ((deletedCount == 1) ? "" : "s")
                 + " for AlertDefinition[id=" + alertDefinitionId + "]");
         }

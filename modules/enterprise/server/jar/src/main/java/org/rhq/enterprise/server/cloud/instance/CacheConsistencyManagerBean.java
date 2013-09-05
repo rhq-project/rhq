@@ -61,6 +61,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     @EJB
     CacheConsistencyManagerLocal cacheConsistencyManager;
 
+    @Override
     public void scheduleServerCacheReloader() {
         /* each time the webapp is reloaded, it would create 
          * duplicate events if we don't cancel the existing ones
@@ -78,6 +79,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
         timerService.createIntervalTimer(30000L, 30000L, new TimerConfig(null, false));
     }
 
+    @Override
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
         try {
@@ -87,6 +89,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void reloadServerCacheIfNeeded() {
         // try reload the global cache separate from the agent caches for purposes of isolated failures

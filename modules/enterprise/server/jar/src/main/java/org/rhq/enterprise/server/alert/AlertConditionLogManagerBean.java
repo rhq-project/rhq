@@ -58,6 +58,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
     private EntityManager entityManager;
 
+    @Override
     public AlertConditionLog getUnmatchedLogByAlertConditionId(int alertConditionId) {
         Query query = entityManager.createNamedQuery(AlertConditionLog.QUERY_FIND_UNMATCHED_LOG_BY_ALERT_CONDITION_ID);
         query.setParameter("alertConditionId", alertConditionId);
@@ -65,6 +66,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         return (AlertConditionLog) query.getSingleResult();
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<AlertConditionLog> getUnmatchedLogsByAlertDefinitionId(int alertDefinitionId) {
         Query unmatchedLogsQuery = entityManager
@@ -76,6 +78,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         return unmatchedConditionLogs;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void updateUnmatchedLogByAlertConditionId(int alertConditionId, long ctime, String value) {
         /*
@@ -95,7 +98,9 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
                  */
                 alertConditionLog.setCtime(ctime);
                 alertConditionLog.setValue(value);
-                log.debug("Updating unmatched alert condition log: " + alertConditionLog);
+                if (log.isDebugEnabled()) {
+                    log.debug("Updating unmatched alert condition log: " + alertConditionLog);
+                }
 
                 entityManager.merge(alertConditionLog); // update values, for
                 entityManager.flush();
@@ -107,7 +112,9 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
                 AlertConditionLog conditionLog = new AlertConditionLog(condition, ctime);
                 conditionLog.setValue(value);
 
-                log.debug("Inserting unmatched alert condition log: " + conditionLog);
+                if (log.isDebugEnabled()) {
+                    log.debug("Inserting unmatched alert condition log: " + conditionLog);
+                }
 
                 entityManager.persist(conditionLog);
                 entityManager.flush();
@@ -135,11 +142,14 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         }
     }
 
+    @Override
     public void removeUnmatchedLogByAlertConditionId(int alertConditionId) {
         try {
             AlertConditionLog alertConditionLog = this.getUnmatchedLogByAlertConditionId(alertConditionId);
 
-            log.debug("Removing unmatched alert condition log: " + alertConditionLog);
+            if (log.isDebugEnabled()) {
+                log.debug("Removing unmatched alert condition log: " + alertConditionLog);
+            }
 
             entityManager.remove(alertConditionLog);
         } catch (NoResultException nre) {
@@ -158,21 +168,27 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         }
     }
 
-    public void checkForCompletedAlertConditionSet(int alertConditionId) {
+    @Override
+    public boolean checkForCompletedAlertConditionSet(int alertConditionId) {
         Integer alertDefinitionId = alertConditionManager
             .getAlertDefinitionByConditionIdInNewTransaction(alertConditionId);
 
         // ok, so figure out whether all of the conditions have been met
         boolean conditionSetResult = evaluateConditionSet(alertDefinitionId);
 
-        log.debug("Alert definition with conditionId=" + alertConditionId + " evaluated to " + conditionSetResult);
+        if (log.isDebugEnabled()) {
+            log.debug("Alert definition with conditionId=" + alertConditionId + " evaluated to " + conditionSetResult);
+        }
+
         /*
          * The AlertDampeningEvents keep a running log of when all conditions have become true, as well as when they
          * become untrue (if they were most recently known to be true)
          */
         AlertDampeningEvent latestEvent = alertDampeningManager.getLatestEventByAlertDefinitionId(alertDefinitionId);
         AlertDampeningEvent.Type type = getNextEventType(latestEvent, conditionSetResult);
-        log.debug("Latest event was " + latestEvent + ", " + "next AlertDampeningEvent.Type is " + type);
+        if (log.isDebugEnabled()) {
+            log.debug("Latest event was " + latestEvent + ", " + "next AlertDampeningEvent.Type is " + type);
+        }
 
         /*
          * Finally, operate on the new type event
@@ -186,11 +202,15 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
             AlertDampeningEvent alertDampeningEvent = new AlertDampeningEvent(flyWeightDefinition, type);
             entityManager.persist(alertDampeningEvent);
 
-            log.debug("Need to process AlertDampeningEvent.Type of " + type + " " + "for AlertDefinition[ id="
-                + alertDefinitionId + " ]");
+            if (log.isDebugEnabled()) {
+                log.debug("Need to process AlertDampeningEvent.Type of " + type + " " + "for AlertDefinition[ id="
+                    + alertDefinitionId + " ]");
+            }
 
-            alertDampeningManager.processEventType(alertDefinitionId, type);
+            return alertDampeningManager.processEventType(alertDefinitionId, type);
         }
+
+        return false;
     }
 
     private AlertDampeningEvent.Type getNextEventType(AlertDampeningEvent lastEvent, boolean conditionSetResult) {
@@ -285,6 +305,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public BooleanExpression getConditionExpression(int alertDefinitionId) {
         Query query = entityManager.createQuery("" //
@@ -296,6 +317,7 @@ public class AlertConditionLogManagerBean implements AlertConditionLogManagerLoc
         return expression;
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public int getConditionCount(int alertDefinitionId) {
         Query query = entityManager.createQuery("" //

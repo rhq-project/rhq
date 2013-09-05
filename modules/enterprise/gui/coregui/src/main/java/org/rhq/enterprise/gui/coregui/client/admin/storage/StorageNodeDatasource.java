@@ -118,7 +118,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         fields.add(idField);
 
         fields.add(FIELD_ADDRESS.getListGridField("*"));
-        fields.add(FIELD_ALERTS.getListGridField("120"));
+        fields.add(FIELD_ALERTS.getListGridField("165"));
 
         ListGridField field = FIELD_MEMORY.getListGridField("120");
         field.setShowHover(true);
@@ -141,11 +141,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             }
         });
         fields.add(field);
-        
-//        fields.add(FIELD_JMX_PORT.getListGridField("90"));
-//        ListGridField cqlField = FIELD_CQL_PORT.getListGridField("90");
-//        cqlField.setHidden(true);
-//        fields.add(cqlField);
         
         field = FIELD_STATUS.getListGridField("90");
         field.setCellFormatter(new CellFormatter() {
@@ -204,7 +199,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                 }
 
                 public void onFailure(Throwable t) {
-                    CoreGUI.getErrorHandler().handleError("td(i18n) Unable to fetch storage nodes.", t);
+                    CoreGUI.getErrorHandler().handleError("Unable to fetch storage nodes.", t);
                     response.setStatus(DSResponse.STATUS_FAILURE);
                     processResponse(request.getRequestId(), response);
                 }
@@ -256,7 +251,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             if (node.getFailedOperation() != null && node.getFailedOperation().getResource() != null) {
                 ResourceOperationHistory operationHistory = node.getFailedOperation();
                 String value = LinkManager.getSubsystemResourceOperationHistoryLink(operationHistory.getResource().getId(), operationHistory.getId());
-//                String value = "#Resource/" + operationHistory.getResource().getId() + "/Operations/History/" + operationHistory.getId());
                 record.setAttribute(FIELD_FAILED_OPERATION.propertyName(), value);
             }
             record.setAttribute(FIELD_CTIME.propertyName(), node.getCtime());
@@ -269,8 +263,8 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         }
         int value = from.getUnackAlerts();
         record.setAttribute(FIELD_ALERTS.propertyName(),
-            node.getResource() != null ? StorageNodeAdminView.getAlertsString("New Alerts", node.getId(), value)
-                : "New Alerts (0)");
+            node.getResource() != null ? StorageNodeAdminView.getAlertsString("Unacknowledged Alerts", node.getId(), value)
+                : "Unacknowledged Alerts (0)");
         String memory = null;
         if (from.getHeapPercentageUsed() != null && from.getHeapPercentageUsed().getAggregate().getAvg() != null)
             memory = MeasurementConverterClient.format(from.getHeapPercentageUsed().getAggregate().getAvg(), from
@@ -388,7 +382,7 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
 
                     @Override
                     public void onFailure(Throwable caught) {
-                        CoreGUI.getErrorHandler().handleError("td(i18n) Unable to fetch storage node load details.", caught);
+                        CoreGUI.getErrorHandler().handleError("Unable to fetch storage node load details.", caught);
                         response.setStatus(DSResponse.STATUS_FAILURE);
                         StorageNodeLoadCompositeDatasource.this.processResponse(request.getRequestId(), response);
                     }
@@ -412,7 +406,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
             };
 
             // heap related metrics
-//            recordsList.add(makeListGridRecord(loadComposite.getHeapCommitted(), "Heap Maximum", "The limit the RHQ storage node was started with. This corresponds with the -Xmx JVM option.", "heapMax"));
             recordsList.add(makeListGridRecord(loadComposite.getHeapUsed(), "Heap Used", "Amount of memory actually used by the RHQ storage node", KEY_HEAP_USED));
             recordsList.add(makeListGridRecord(loadComposite.getHeapPercentageUsed(), "Heap Percent Used", "This value is calculated by dividing Heap Used by Heap Maximum.", KEY_HEAP_PERCENTAGE));
   
@@ -434,7 +427,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
                 record.setAttribute("max", nf.format(aggregate.getMax()));
                 recordsList.add(record);
             }
-//            recordsList.add(makeListGridRecord(loadComposite.getLoad(), "Load", "Data stored on the node", "load"));
 
             // other metrics
             recordsList.add(makeListGridRecord(loadComposite.getActuallyOwns(), "Ownership", "Refers to the percentage of keys that a node owns.", KEY_OWNERSHIP));
@@ -479,7 +471,6 @@ public class StorageNodeDatasource extends RPCDataSource<StorageNodeLoadComposit
         @Override
         protected StorageNodeCriteria getFetchCriteria(DSRequest request) {
             return new StorageNodeCriteria();
-//            throw new UnsupportedOperationException("StorageNodeDatasource.StorageNodeLoadCompositeDatasource.getFetchCriteria()");
         }
 
         @Override

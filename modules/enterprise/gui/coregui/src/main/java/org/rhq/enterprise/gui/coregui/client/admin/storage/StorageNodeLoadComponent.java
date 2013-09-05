@@ -24,7 +24,6 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Autofit;
@@ -139,7 +138,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             String metricName = records[i].getAttributeAsString("id");
             boolean someChartedData = false;
             List<MeasurementDataNumericHighLowComposite> data = sparkLineData.get(metricName);
-            //locate last and minimum values.
+            // locate last and minimum values.
             double lastValue = -1;
             double minValue = Double.MAX_VALUE;
             if (data != null) {
@@ -152,10 +151,10 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                     }
                 }
             }
-            //if graph content returned
+            // if graph content returned
             someChartedData = lastValue != -1;
             
-            //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
+            // collapse the data into comma delimited list for consumption by third party javascript library (jquery.sparkline)
             StringBuilder commaDelimitedList = new StringBuilder();
             for (MeasurementDataNumericHighLowComposite d : data) {
                 if ((!Double.isNaN(d.getValue()))

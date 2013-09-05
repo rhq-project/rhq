@@ -18,7 +18,6 @@
  */
 package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
-import java.util.EnumSet;
 import java.util.Map;
 
 import com.google.gwt.user.client.Timer;
@@ -27,44 +26,46 @@ import com.smartgwt.client.widgets.Label;
 import com.smartgwt.client.widgets.tab.events.TabSelectedEvent;
 import com.smartgwt.client.widgets.tab.events.TabSelectedHandler;
 
-import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTab;
 import org.rhq.enterprise.gui.coregui.client.components.tab.NamedTabSet;
 import org.rhq.enterprise.gui.coregui.client.components.view.ViewName;
+import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
+import org.rhq.enterprise.gui.coregui.client.inventory.AutoRefresh;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * The main view for managing storage nodes.
  *
  * @author Jirka Kremser
  */
-public class StorageNodeAdminView extends EnhancedVLayout implements BookmarkableView {
+public class StorageNodeAdminView extends EnhancedVLayout implements BookmarkableView, AutoRefresh {
 
     public static final ViewName VIEW_ID = new ViewName("StorageNodes", MSG.view_adminTopology_storageNodes(),
         IconEnum.STORAGE_NODE);
 
     public static final String VIEW_PATH = AdministrationView.VIEW_ID + "/"
         + AdministrationView.SECTION_TOPOLOGY_VIEW_ID + "/" + VIEW_ID;
-    
-//    private static final String GROUP_NAME = "RHQ Storage Nodes";
-    
+        
     private final NamedTabSet tabset;
     private TabInfo tableTabInfo = new TabInfo(0, new ViewName("Nodes"));
     private TabInfo settingsTabInfo = new TabInfo(1, new ViewName("Settings", "Cluster Settings"));
     private TabInfo alertsTabInfo = new TabInfo(2, new ViewName("Alerts", "Cluster Alerts"));
     private TabInfo backupTabInfo = new TabInfo(3, new ViewName("Backup"));
     private StorageNodeTableView table;
+    private final NamedTab alerts;
+    
+    private Timer refresher;
+    private volatile boolean isRefreshing;
 
     private Map<Integer, Integer> resIdsToStorageNodeIdsMap;
 
@@ -88,13 +89,12 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
             }
         });
 
-        final NamedTab alerts = new NamedTab(alertsTabInfo.name);
+        alerts = new NamedTab(alertsTabInfo.name);
         alerts.addTabSelectedHandler(new TabSelectedHandler() {
             public void onTabSelected(TabSelectedEvent event) {
                 CoreGUI.goToView(VIEW_PATH + "/" + alertsTabInfo.name);
             }
         });
-        scheduleUnacknowledgedAlertsPollingJob(alerts); 
         
         final NamedTab backup = new NamedTab(backupTabInfo.name);
         backup.addTabSelectedHandler(new TabSelectedHandler() {
@@ -119,81 +119,38 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                 tabset.getTabByName(tabInfo.name.getName()).setPane(
                     new StorageNodeAlertHistoryView("storageNodesAlerts", resIdsToStorageNodeIdsMap));
             } else {
-                GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(new AsyncCallback<Map<Integer, Integer>>() {
-                    @Override
-                    public void onFailure(Throwable caught) {
-                        Message message = new Message("Unable to render storage node alert view: "
-                            + caught.getMessage(), Message.Severity.Warning);
-                        CoreGUI.goToView(StorageNodeTableView.VIEW_PATH, message);
-                    }
-
-                    @Override
-                    public void onSuccess(Map<Integer, Integer> result) {
-                        if (result == null || result.size() == 0) {
-                            onFailure(new Exception(
-                                "Unfortunately, there are no associated resources for the available storage nodes. " +
-                                "Check if the agents are running on the machines where the storage nodes are deployed."));
-                        } else {
-                            resIdsToStorageNodeIdsMap = result;
-                            tabset.getTabByName(tabInfo.name.getName()).setPane(
-                                new StorageNodeAlertHistoryView("storageNodesAlerts", resIdsToStorageNodeIdsMap));
-                            tabset.selectTab(tabInfo.index);
+                GWTServiceLookup.getStorageService().findResourcesWithAlertDefinitions(
+                    new AsyncCallback<Map<Integer, Integer>>() {
+                        @Override
+                        public void onFailure(Throwable caught) {
+                            if (UserSessionManager.isLoggedOut()) {
+                                stopRefreshing();
+                            } else {
+                                CoreGUI.getErrorHandler().handleError(
+                                    "Unable to render storage node alert view: " + caught.getMessage(), caught);
+                            }
                         }
-                    }
-                });
+
+                        @Override
+                        public void onSuccess(Map<Integer, Integer> result) {
+                            if (result == null || result.size() == 0) {
+                                onFailure(new Exception(
+                                    "Unfortunately, there are no associated resources for the available storage nodes. "
+                                        + "Check if the agents are running on the machines where the storage nodes are deployed."));
+                            } else {
+                                resIdsToStorageNodeIdsMap = result;
+                                tabset.getTabByName(tabInfo.name.getName()).setPane(
+                                    new StorageNodeAlertHistoryView("storageNodesAlerts", resIdsToStorageNodeIdsMap));
+                                tabset.selectTab(tabInfo.index);
+                            }
+                        }
+                    });
             }
         } else if (tabInfo.equals(settingsTabInfo)) {
             ClusterConfigurationEditor editor = new ClusterConfigurationEditor(false);
             tabset.getTabByName(tabInfo.name.getName()).setPane(editor);
             tabset.selectTab(tabInfo.index);
-            
-            // we don't group configuration editor anymore
-//            ResourceGroupCriteria criteria = new ResourceGroupCriteria();
-//            criteria.addFilterName(GROUP_NAME);
-//            criteria.setStrict(true);
-//            GWTServiceLookup.getResourceGroupService().findResourceGroupCompositesByCriteria(criteria,
-//                new AsyncCallback<PageList<ResourceGroupComposite>>() {
-//                    @Override
-//                    public void onFailure(Throwable caught) {
-//                        Message message = new Message(MSG.view_group_detail_failLoadComp(String.valueOf(GROUP_NAME)),
-//                            Message.Severity.Warning);
-//                        CoreGUI.goToView(VIEW_ID.getName(), message);
-//                    }
-//
-//                    @Override
-//                    public void onSuccess(PageList<ResourceGroupComposite> result) {
-//                        if (result.isEmpty()) {
-//                            onFailure(new Exception("Group with name [" + GROUP_NAME + "] does not exist."));
-//                        } else {
-//                            ResourceGroupComposite groupComposite = result.get(0);
-//                            loadResourceType(groupComposite.getResourceGroup().getResourceType().getId());
-//                            tabset.getTabByName(tabInfo.name.getName()).setPane(
-//                                new GroupResourceConfigurationEditView(groupComposite));
-//                            tabset.selectTab(tabInfo.index);
-//                        }
-//                    }
-//                });
         }
-    }
-    
-    private void scheduleUnacknowledgedAlertsPollingJob(final NamedTab alerts) {
-        new Timer() {
-            public void run() {
-                GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCount(new AsyncCallback<Integer>() {
-                    @Override
-                        public void onSuccess(Integer result) {
-                            Log.info("Running the job fetching the number of ALL unack alerts...");
-                            alerts.setTitle(StorageNodeAdminView.getAlertsString(alerts.getTitle(), result));
-                            schedule(15 * 1000);
-                        }
-
-                        @Override
-                        public void onFailure(Throwable caught) {
-                        schedule(60 * 1000);
-                    }
-                });
-            }
-        }.run();
     }
     
     public static String getAlertsString(String prefix, int numOfUnackAlerts) {
@@ -258,5 +215,60 @@ public class StorageNodeAdminView extends EnhancedVLayout implements Bookmarkabl
                 table.renderView(viewPath);
             }
         }
+    }
+    
+    private void refreshNotAcknowledgedStorageNodeAlertsCount() {
+        isRefreshing = true;
+        GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCount(new AsyncCallback<Integer>() {
+            @Override
+                public void onSuccess(Integer result) {
+                    Log.info("Running the task for fetching the number of ALL unack alerts...");
+                    alerts.setTitle(StorageNodeAdminView.getAlertsString(alerts.getTitle(), result));
+                    isRefreshing = false;
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    if (UserSessionManager.isLoggedOut()) {
+                        stopRefreshing();
+                    }
+                    Log.error("Unable to fetch the unack alerts: " + caught.getMessage());
+                    isRefreshing = false;
+            }
+        });
+    }
+
+    @Override
+    public void startRefreshCycle() {
+        Log.info("Scheduling the repetitive task for fetching the number of ALL unack alerts...");
+        refresher = AutoRefreshUtil.startRefreshCycle(this, this, refresher, 15000);
+    }
+
+    @Override
+    public boolean isRefreshing() {
+        return isRefreshing;
+    }
+
+    @Override
+    public void refresh() {
+        refreshNotAcknowledgedStorageNodeAlertsCount();
+    }
+    
+    @Override
+    protected void onDraw() {
+        super.onDraw();
+        startRefreshCycle();
+    }
+    
+    @Override
+    protected void onDestroy() {
+        stopRefreshing();
+        super.onDestroy();
+    }
+    
+    private void stopRefreshing() {
+        Log.info("Unscheduling the repetitive task for fetching the number of ALL unack alerts...");
+        AutoRefreshUtil.onDestroy(refresher);
+        isRefreshing = false;
     }
 }

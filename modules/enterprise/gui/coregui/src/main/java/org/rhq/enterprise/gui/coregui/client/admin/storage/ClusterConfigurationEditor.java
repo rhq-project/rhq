@@ -74,8 +74,8 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         GWTServiceLookup.getStorageService().retrieveClusterSettings(new AsyncCallback<StorageClusterSettings>() {
             @Override
             public void onFailure(Throwable caught) {
-                Message message = new Message(MSG.view_configurationHistoryDetails_error_loadFailure(),
-                    Message.Severity.Warning);
+                CoreGUI.getErrorHandler().handleError(
+                    "Unable to load common storage cluster configuration: " + caught.getMessage(), caught);
             }
 
             @Override
@@ -176,17 +176,10 @@ public class ClusterConfigurationEditor extends EnhancedVLayout implements Refre
         oddRow = true;
 
         List<FormItem> items = buildHeaderItems();
-        //          IntegerRangeValidator positiveInteger = new IntegerRangeValidator();
-        //        positiveInteger.setMin(1);
-        //        positiveInteger.setMax(Integer.MAX_VALUE);
         IsIntegerValidator validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_CQL_PORT, "CQL Port", String.valueOf(settings.getCqlPort()),
             "The port on which the Storage Nodes listens for CQL client connections.", validator));
 
-        //        IntegerRangeValidator portValidator = new IntegerRangeValidator();
-        //        portValidator.setMin(1);
-        //        portValidator.setMax(65535); // (1 << 16) - 1
-        validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_GOSSIP_PORT, "Gossip Port",
             String.valueOf(settings.getGossipPort()),
             "The port used for internode communication in the storage cluster.", validator));

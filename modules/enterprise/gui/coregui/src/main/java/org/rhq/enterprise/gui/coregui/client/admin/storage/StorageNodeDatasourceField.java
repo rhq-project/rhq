@@ -23,6 +23,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
 /**
+ * Fields for {@link StorageNodeDatasource} class.
+ * 
  * @author Jirka Kremser
  *
  */

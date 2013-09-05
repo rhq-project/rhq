@@ -149,7 +149,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                 int intVal = Integer.parseInt(value.substring(0, value.toLowerCase().indexOf(megs ? "m" : "g")));
                 valueItem.setValue(intVal, units);
             } catch (StringIndexOutOfBoundsException e) {
-                //nothing
+                // do nothing
             }
         }
         return valueItem;
@@ -202,16 +202,10 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                 "Heap New Size",
                 configuration.getHeapNewSize(),
                 "The size of the new generation portion of the heap. This value will be used with the -Xmn JVM option. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
-//        IntegerRangeValidator positiveInteger = new IntegerRangeValidator();
-//        positiveInteger.setMin(1);
-//        positiveInteger.setMax(Integer.MAX_VALUE);
+        
         IsIntegerValidator validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_THREAD_STACK_SIZE, "Thread Stack Size", configuration.getThreadStackSize(),
             "The thread stack size. This memory is allocated to each thread off heap. The value should be an integer that will be interpreted in kilobytes.", validator));
-        
-//        IntegerRangeValidator portValidator = new IntegerRangeValidator();
-//        portValidator.setMin(1);
-//        portValidator.setMax(65535); // (1 << 16) - 1
         validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_JMX_PORT, "JMX Port", String.valueOf(configuration.getJmxPort()),
             "The JMX port for the RHQ Storage Node", validator));

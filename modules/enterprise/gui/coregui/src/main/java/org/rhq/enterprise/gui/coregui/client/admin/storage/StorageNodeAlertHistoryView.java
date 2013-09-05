@@ -20,7 +20,6 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +36,6 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 import com.smartgwt.client.widgets.grid.SummaryFunction;
 
-import org.rhq.core.domain.alert.AlertPriority;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.criteria.AlertCriteria;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
@@ -49,12 +47,12 @@ import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertDataSource;
 import org.rhq.enterprise.gui.coregui.client.alert.AlertHistoryView;
 import org.rhq.enterprise.gui.coregui.client.components.form.DateFilterItem;
-import org.rhq.enterprise.gui.coregui.client.components.form.EnumSelectItem;
 import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.AncestryUtil;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * The view for accessing alerts on storage node resource and its children.
@@ -251,8 +249,10 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
                 new AsyncCallback<PageList<StorageNode>>() {
                     public void onSuccess(final PageList<StorageNode> storageNodes) {
                         if (storageNodes == null || storageNodes.isEmpty() || storageNodes.size() != 1) {
-                            CoreGUI.getErrorHandler().handleError(
-                                MSG.view_adminTopology_message_fetchServerFail(String.valueOf(storageNodeId)));
+                            Message msg = new Message(MSG.view_adminTopology_message_fetchServerFail(String
+                                .valueOf(storageNodeId)), Message.Severity.Error);
+                            CoreGUI.goToView(StorageNodeTableView.VIEW_PATH, msg);
+                            return;
                         }
                         final StorageNode node = storageNodes.get(0);
                         header

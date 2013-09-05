@@ -527,6 +527,7 @@ public class ResourceDetailView extends
             public Canvas createView() {
                 if(null == metricsResourceView || resource.getId() != lastSelectedResourceId){
                     metricsResourceView = new MetricsResourceView(resource);
+                    addViewRenderedListener(metricsResourceView);
                 }
                 return  metricsResourceView;
             }

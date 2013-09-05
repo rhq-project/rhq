@@ -36,6 +36,7 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.graphtype.AvailabilityOverUnderGraphType;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.avail.AvailabilityD3GraphView;
 import org.rhq.enterprise.gui.coregui.client.util.BrowserUtility;
@@ -48,7 +49,7 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
  *
  * @author Mike Thompson
  */
-public class MetricsResourceView extends AbstractD3GraphListView {
+public class MetricsResourceView extends AbstractD3GraphListView implements AbstractTwoLevelTabSetView.ViewRenderedListener{
 
     private static final String COLLAPSED_TOOLTIP = MSG.chart_metrics_collapse_tooltip();
     private static final String EXPANDED_TOOLTIP = MSG.chart_metrics_expand_tooltip();
@@ -175,4 +176,10 @@ public class MetricsResourceView extends AbstractD3GraphListView {
         refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
+    @Override
+    public void onViewRendered() {
+
+        // refresh the graphs on subtab nav because we are a cached view not new
+        refreshGraphs();
+    }
 }

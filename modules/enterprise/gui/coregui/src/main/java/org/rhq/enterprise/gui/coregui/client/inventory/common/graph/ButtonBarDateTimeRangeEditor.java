@@ -55,8 +55,8 @@ import org.rhq.enterprise.gui.coregui.client.util.preferences.MeasurementUserPre
  */
 public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
-    static final String TIMERANGE = "graphtimerange";
-    static final int BUTTON_WIDTH = 28;
+    private static final String TIMERANGE = "graphtimerange";
+    private static final int BUTTON_WIDTH = 28;
 
     private MeasurementUserPreferences measurementUserPreferences;
     private Refreshable d3GraphListView;
@@ -77,7 +77,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         prefs = measurementUserPreferences.getMetricRangePreferences();
         Log.debug("ButtonBarDateTimeRangeEditor initialized with start Date: " + new Date(prefs.begin) + " end Date: "
             + new Date(prefs.end));
-        //createButtons();
 
     }
 
@@ -172,18 +171,11 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     public void updateDateTimeRangeDisplay(Date startDate, Date endDate) {
         String rangeString = fmt.format(startDate) + " - " + fmt.format(endDate);
-        dateRangeLabel.setContents(rangeString);
-        //setTimeRangeDuration(startDate.getTime(), endDate.getTime());
+        if(null != dateRangeLabel){
+            dateRangeLabel.setContents(rangeString);
+        }
     }
 
-  //  public native String setTimeRangeDuration(double startDate, double endDate) /*-{
-
-        //var formattedDateRange = startDate.format(chartContext.buttonBarDateTimeFormat) + '  -  ' + endDate.format(chartContext.buttonBarDateTimeFormat);
-        //var timeRange = endDate.from(startDate,true);
-        //$wnd.jQuery('.graphDateTimeRangeLabel').text(formattedDateRange+' ('+timeRange+')');
-        //$wnd.jQuery('.graphDateTimeRangeLabel').text('Mike you are so cool');
-
-   // }-*/;
 
 
     /**

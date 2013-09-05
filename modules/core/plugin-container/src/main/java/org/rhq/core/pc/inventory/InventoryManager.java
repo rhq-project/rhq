@@ -376,6 +376,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
             int callbackCount = 0;
             boolean stopProcessing = false; // if true, a callback told us he found a details that he modified and we should stop
             boolean abortDiscovery = false; // if true, multiple callbacks claimed ownership which isn't allowed - its discovery will be aborted
+            boolean vetoDiscovery = false; // if true, a callback veto'ed the resource - it should not be discovered at all
             for (Map.Entry<String, List<String>> entry : callbacks.entrySet()) {
                 String pluginName = entry.getKey();
                 List<String> callbackClassNames = entry.getValue();
@@ -389,14 +390,28 @@ public class InventoryManager extends AgentService implements ContainerService, 
                             log.debug("Discovery callback [{" + pluginName + "}" + className + "] returned ["
                                     + callbackResults + "] #invocations=" + callbackCount);
                         }
-                        if (callbackResults == ResourceDiscoveryCallback.DiscoveryCallbackResults.PROCESSED) {
-                            if (stopProcessing) {
-                                abortDiscovery = true;
-                                log.warn("Another discovery callback [{" + pluginName + "}" + className
-                                    + "] processed details [" + details
-                                    + "]. This is not allowed. Discovery will be aborted for that resource");
-                            } else {
-                                stopProcessing = true;
+                        switch (callbackResults) {
+                            case PROCESSED: {
+                                if (stopProcessing) {
+                                    abortDiscovery = true;
+                                    log.warn("Another discovery callback [{" + pluginName + "}" + className
+                                            + "] processed details [" + details
+                                            + "]. This is not allowed. Discovery will be aborted for that resource");
+                                } else {
+                                    stopProcessing = true;
+                                }
+                                break;
+                            }
+                            case VETO: {
+                                vetoDiscovery = true;
+                                log.warn("Discovery callback [{" + pluginName + "}" + className
+                                        + "] vetoed resource [" + details
+                                        + "]. Discovery will be skipped for that resource and it will not be inventoried.");
+                                break;
+                            }
+                            default: {
+                                // callback left the details unprocessed, nothing to do.
+                                break;
                             }
                         }
                         // note that we keep going, even if we set stopProcessing is true - this is because we
@@ -417,6 +432,10 @@ public class InventoryManager extends AgentService implements ContainerService, 
                 if (Boolean.getBoolean("rhq.agent.discovery-callbacks.never-abort") == false) {
                     detailsIterator.remove(); // we do not want to process this details
                 }
+            }
+
+            if (vetoDiscovery) {
+                detailsIterator.remove();
             }
         }
 

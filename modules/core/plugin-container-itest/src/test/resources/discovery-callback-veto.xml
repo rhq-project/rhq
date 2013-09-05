@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="DiscoveryCallbackVetoPlugin"
+        package="org.rhq.core.pc.inventory.discoverycallback"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <discovery-callbacks>
+        <type-callback plugin="DiscoveryCallbackVetoPlugin" type="TestServerToBeVetoed" callbackClass="DiscoveryCallbackVetoCallbackOK"/>
+        <type-callback plugin="DiscoveryCallbackVetoPlugin" type="TestServerToBeVetoed" callbackClass="DiscoveryCallbackVetoCallbackVETO"/>
+    </discovery-callbacks>
+
+    <server name="TestServerToBeVetoed"
+            discovery="DiscoveryCallbackAbortDiscoveryComponent"
+            class="org.rhq.core.pc.inventory.testplugin.TestResourceComponent">
+    </server>
+</plugin>

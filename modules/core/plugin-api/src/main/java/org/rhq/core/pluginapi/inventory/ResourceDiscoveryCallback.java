@@ -45,7 +45,12 @@ public interface ResourceDiscoveryCallback {
          * be aborted and it will not go into inventory. Multiple plugin callbacks cannot claim
          * ownership of the same resource details and return this enum value.
          */
-        PROCESSED
+        PROCESSED,
+        /**
+         * If the callback determines that the discovered resource is invalid or for some reason should
+         * not go into inventory, it can veto its discovery via this enum value.
+         */
+        VETO
     }
 
     /**
@@ -54,6 +59,8 @@ public interface ResourceDiscoveryCallback {
      *
      * @param discoveredDetails resource details that were discovered and can be altered by the callback
      * @return PROCESSED if the callback has identified the discovered resource and possibly altered the details.
+     *         VETO if the callback determines that the resource should not go into inventory and these details
+     *         should be skipped by the plugin container.
      *         Otherwise, return UNPROCESSED to let the plugin container know that this callback doesn't recognize
      *         the details and they were left as-is. A null return value will be equivalent to UNPROCESSED.
      * @throws Exception

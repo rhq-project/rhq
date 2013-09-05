@@ -174,7 +174,7 @@ public class QueryUtilityTest {
 
         QueryUtility.PagedDataFetchSettings unusedSettings = new QueryUtility.PagedDataFetchSettings();
 
-        assertTrue(time > unusedSettings.getMinimumTotalWaitTime(),
+        assertTrue(time >= unusedSettings.getMinimumTotalWaitTime(),
             "The fetch should have spent more time trying. Was " + time + "ms, but should have been at least " +
                 unusedSettings.getMinimumTotalWaitTime() + "ms");
 

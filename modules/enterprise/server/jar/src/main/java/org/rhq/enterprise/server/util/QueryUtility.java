@@ -314,7 +314,7 @@ public class QueryUtility {
             }
 
             try {
-                Thread.sleep((int) waitTime);
+                Thread.sleep((int) Math.ceil(waitTime));
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 break;

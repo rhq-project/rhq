@@ -92,7 +92,7 @@ public class DiscoveryCallbackVetoTest extends Arquillian {
     }
 
     @RunDiscovery
-    @Test(enabled = false, groups = "pc.itest.discoverycallbacks.veto", priority = 30) // setting the group is important! otherwise, other tests will fail
+    @Test(groups = "pc.itest.discoverycallbacks.veto", priority = 5) // these attribs are important; otherwise, this test will fail
     public void testDiscoveryCallbacks() throws Exception {
         // make sure our inventory is as we expect it to be
         validatePluginContainerInventory();

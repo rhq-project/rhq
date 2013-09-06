@@ -31,10 +31,13 @@ import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.sql.DataSource;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.core.db.DatabaseType;
+import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.measurement.MeasurementAggregate;
@@ -62,6 +65,7 @@ import org.rhq.server.metrics.MetricsBaselineCalculator;
  * @author Joseph Marques
  */
 @Stateless
+@javax.annotation.Resource(name = "RHQ_DS", mappedName = RHQConstants.DATASOURCE_JNDI_NAME)
 public class MeasurementBaselineManagerBean implements MeasurementBaselineManagerLocal,
     MeasurementBaselineManagerRemote {
     @PersistenceContext(unitName = RHQConstants.PERSISTENCE_UNIT_NAME)
@@ -88,6 +92,9 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
 
     @EJB
     private StorageClientManagerBean sessionManager;
+
+    @javax.annotation.Resource(name = "RHQ_DS")
+    private DataSource rhqDs;
 
     private final Log log = LogFactory.getLog(MeasurementBaselineManagerBean.class);
 
@@ -226,12 +233,19 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
     @SuppressWarnings("unchecked")
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public List<Integer> getSchedulesWithoutBaselines() {
-        final String sql =
-            "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d ON s.definition = d.id " +
-            "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE s.enabled = true AND b.schedule_id IS NULL AND d.numeric_type = 0";
-        Query query = this.entityManager.createNativeQuery(sql);
+        try {
+            DatabaseType databaseType = DatabaseTypeFactory.getDatabaseType(rhqDs.getConnection());
+            final String sql =
+                "SELECT s.id FROM rhq_measurement_sched s INNER JOIN rhq_measurement_def d ON s.definition = d.id " +
+                "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE s.enabled = " +
+                    databaseType.getBooleanValue(true) + " AND b.schedule_id IS NULL AND d.numeric_type = 0";
+            Query query = this.entityManager.createNativeQuery(sql);
 
-        return query.getResultList();
+            return query.getResultList();
+        } catch (Exception e) {
+            throw new RuntimeException("An unexpected error occurred while trying to retrieve schedules without baselines",
+                e);
+        }
     }
 
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)

@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,13 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.apache;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.io.File;
 import java.io.IOException;
@@ -104,12 +107,12 @@ import org.rhq.rhqtransform.AugeasRHQComponent;
 public class ApacheServerComponent implements AugeasRHQComponent, ResourceComponent<PlatformComponent>,
     MeasurementFacet, OperationFacet, ConfigurationFacet, CreateChildResourceFacet {
 
+    private static final Log LOG = LogFactory.getLog(ApacheServerComponent.class);
+
     public static final String CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE =
         "Configuration and child resource creation/deletion support for Apache is optional. "
             + "If you switched it on by enabling Augeas support in the connection settings of the Apache server resource and still get this message, "
             + "it means that either your Apache version is not supported (only Apache 2.x is supported) or Augeas is not available on your platform.";
-
-    private final Log log = LogFactory.getLog(this.getClass());
 
     public static final String PLUGIN_CONFIG_PROP_SERVER_ROOT = "serverRoot";
     public static final String PLUGIN_CONFIG_PROP_EXECUTABLE_PATH = "executablePath";
@@ -174,8 +177,10 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
      */
     private ApacheServerOperationsDelegate operationsDelegate;
 
+    private AvailabilityType lastKnownAvailability;
+
     public void start(ResourceContext<PlatformComponent> resourceContext) throws Exception {
-        log.info("Initializing Resource component for Apache Server [" + resourceContext.getResourceKey() + "]...");
+        LOG.info("Initializing Resource component for Apache Server [" + resourceContext.getResourceKey() + "]...");
 
         this.resourceContext = resourceContext;
         this.eventContext = resourceContext.getEventContext();
@@ -186,13 +191,13 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
             SNMPSession snmpSession = getSNMPSession();
             if (!snmpSession.ping()) {
-                log.warn("Failed to connect to SNMP agent at "
-                    + snmpSession
-                    + "\n"
-                    + ". Make sure\n1) the managed Apache server has been instrumented with the JON SNMP module,\n"
-                    + "2) the Apache server is running, and\n"
-                    + "3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.\n"
-                    + "The agent will not be able to record metrics from apache httpd without SNMP");
+                LOG.warn("Failed to connect to SNMP agent at "
+                        + snmpSession
+                        + "\n"
+                        + ". Make sure\n1) the managed Apache server has been instrumented with the JON SNMP module,\n"
+                        + "2) the Apache server is running, and\n"
+                        + "3) the SNMP agent host, port, and community are set correctly in this resource's connection properties.\n"
+                        + "The agent will not be able to record metrics from apache httpd without SNMP");
             } else {
                 configured = true;
             }
@@ -203,10 +208,10 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                 try {
                     this.url = new URL(url);
                     if (this.url.getPort() == 0) {
-                        log.error("The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
-                            + "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way "
-                            + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
-                            + "the \"main\" Apache server in httpd.conf.");
+                        LOG.error("The 'url' connection property is invalid - 0 is not a valid port; please change the value to the "
+                                + "port the \"main\" Apache server is listening on. NOTE: If the 'url' property was set this way "
+                                + "after autodiscovery, you most likely did not include the port in the ServerName directive for "
+                                + "the \"main\" Apache server in httpd.conf.");
                     } else {
                         configured = true;
                     }
@@ -248,9 +253,9 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                     String moduleName = map.getSimpleValue(PLUGIN_CONFIG_MODULE_NAME, null);
 
                     if (sourceFile == null || moduleName == null) {
-                        log.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
-                            + "). Check your module mappings in the plugin configuration for the server: "
-                            + resourceContext.getResourceKey());
+                        LOG.info("A corrupted module name mapping found (" + sourceFile + " = " + moduleName
+                                + "). Check your module mappings in the plugin configuration for the server: "
+                                + resourceContext.getResourceKey());
                         continue;
                     }
 
@@ -265,6 +270,8 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             }
             throw e;
         }
+
+        this.lastKnownAvailability = UP;
     }
 
     public void stop() {
@@ -273,43 +280,66 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
         if (this.snmpClient != null) {
             this.snmpClient.close();
         }
-        return;
+        this.lastKnownAvailability = null;
     }
 
     public AvailabilityType getAvailability() {
+        lastKnownAvailability = getAvailabilityInternal();
+        return lastKnownAvailability;
+    }
+
+    private AvailabilityType getAvailabilityInternal() {
         // TODO: If URL is not set, rather than falling back to pinging the SNMP agent,
         //       try to find a pid file under the server root, and then check if the
         //       process is running.
         boolean available;
         try {
             if (this.url != null) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Trying to ping the server for availability: " + this.url);
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Trying to ping the server for availability: " + this.url);
                 }
                 long t1 = System.currentTimeMillis();
                 int timeout = PluginUtility.getAvailabilityFacetTimeout();
-                available = WWWUtils.isAvailable(this.url, timeout);
+                AvailabilityResult availabilityResult = WWWUtils.checkAvailability(this.url, timeout);
+                if (availabilityResult.getAvailabilityType() == UP) {
+                    available = true;
+                } else {
+                    available = false;
+                    if (lastKnownAvailability == UP) {
+                        switch (availabilityResult.getErrorType()) {
+                        case CANNOT_CONNECT:
+                            LOG.warn("Could not connect to Apache server " + resourceContext.getResourceDetails()
+                                + ", availability will be reported as " + DOWN.name());
+                            break;
+                        case CONNECTION_TIMEOUT:
+                            LOG.warn("Connection to Apache server " + resourceContext.getResourceDetails()
+                                + " timed out, availability will be reported as " + DOWN.name());
+                            break;
+                        default:
+                        }
+                    }
+                }
                 availPingTime = System.currentTimeMillis() - t1;
             } else {
-                if (log.isDebugEnabled()) {
-                    log.debug("Trying to ping the server for availability through SNMP "
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Trying to ping the server for availability through SNMP "
                         + getSNMPAddressString(resourceContext.getPluginConfiguration()));
                 }
                 available = getSNMPSession().ping();
                 availPingTime = -1;
             }
         } catch (Exception e) {
-            if (log.isDebugEnabled()) {
-                log.debug("Exception while checking availability.", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Exception while checking availability.", e);
             }
             available = false;
         }
 
-        if (log.isDebugEnabled()) {
-            log.debug("Availability determined: " + (available ? AvailabilityType.UP : AvailabilityType.DOWN));
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Availability determined: " + (available ? UP : DOWN));
         }
 
-        return (available) ? AvailabilityType.UP : AvailabilityType.DOWN;
+        return (available) ? UP : DOWN;
     }
 
     public void getValues(MeasurementReport report, Set<MeasurementScheduleRequest> schedules) throws Exception {
@@ -336,18 +366,20 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                     String mibName = metricName;
                     List<SNMPValue> snmpValues = snmpSession.getColumn(mibName);
                     if (snmpValues.isEmpty()) {
-                        log.error("No values found for MIB name [" + mibName + "].");
+                        LOG.error("No values found for MIB name [" + mibName + "].");
                         continue;
                     }
 
                     SNMPValue snmpValue = snmpValues.get(0);
                     boolean valueIsTimestamp = isValueTimestamp(mibName);
 
-                    log.debug("Collected SNMP metric [" + mibName + "], value = " + snmpValue);
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Collected SNMP metric [" + mibName + "], value = " + snmpValue);
+                    }
 
                     addSnmpMetricValueToReport(report, schedule, snmpValue, valueIsTimestamp);
                 } catch (SNMPException e) {
-                    log.error("An error occurred while attempting to collect an SNMP metric.", e);
+                    LOG.error("An error occurred while attempting to collect an SNMP metric.", e);
                 }
             }
         }
@@ -359,7 +391,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
 
     @Nullable
     public OperationResult invokeOperation(@NotNull String name, @NotNull Configuration params) throws Exception {
-        log.info("Invoking operation [" + name + "] on server [" + this.resourceContext.getResourceKey() + "]...");
+        LOG.info("Invoking operation [" + name + "] on server [" + this.resourceContext.getResourceKey() + "]...");
         return this.operationsDelegate.invokeOperation(name, params);
     }
 
@@ -377,7 +409,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             ApacheAugeasMapping mapping = new ApacheAugeasMapping(tree);
             return mapping.updateConfiguration(tree.getRootNode(), resourceConfigDef);
         } catch (Exception e) {
-            log.error("Failed to load Apache configuration.", e);
+            LOG.error("Failed to load Apache configuration.", e);
             throw e;
         } finally {
             comp.close();
@@ -404,22 +436,22 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             mapping.updateAugeas(tree.getRootNode(), report.getConfiguration(), resourceConfigDef);
             tree.save();
 
-            log.info("Apache configuration was updated");
+            LOG.info("Apache configuration was updated");
             report.setStatus(ConfigurationUpdateStatus.SUCCESS);
 
             finishConfigurationUpdate(report);
         } catch (Exception e) {
             if (tree != null) {
-                log.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
+                LOG.error("Augeas failed to save configuration " + tree.summarizeAugeasError());
                 e = new AugeasException("Failed to save configuration: " + tree.summarizeAugeasError() + " ", e);
             } else
-                log.error("Augeas failed to save configuration", e);
+                LOG.error("Augeas failed to save configuration", e);
             report.setStatus(ConfigurationUpdateStatus.FAILURE);
             report.setErrorMessageFromThrowable(e);
             if (!originalConfig.equals(report.getConfiguration())) {
-                log.error("Configuration has changed");
+                LOG.error("Configuration has changed");
             } else {
-                log.error("Configuratio has not changed");
+                LOG.error("Configuratio has not changed");
             }
         } finally {
             comp.close();
@@ -561,7 +593,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                         try {
                             vhostFileFile.createNewFile();
                         } catch (IOException e) {
-                            log.error("Failed to create a new vhost file: " + vhostFile, e);
+                            LOG.error("Failed to create a new vhost file: " + vhostFile, e);
                         }
 
                         comp.close();
@@ -746,7 +778,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
                         serverRoot = directives.get(0).getValues().get(0);
 
             } catch (Exception e) {
-                log.error("Could not load configuration parser.", e);
+                LOG.error("Could not load configuration parser.", e);
             }
             if (serverRoot != null) {
                 for (String path : CONTROL_SCRIPT_PATHS) {
@@ -1032,7 +1064,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             try {
                 ag = new Augeas();
             } catch (Exception e) {
-                log.error("Augeas is enabled in configuration but was not found on the system.", e);
+                LOG.error("Augeas is enabled in configuration but was not found on the system.", e);
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             } finally {
                 if (ag != null) {
@@ -1046,7 +1078,7 @@ public class ApacheServerComponent implements AugeasRHQComponent, ResourceCompon
             String version = getVersion();
 
             if (!version.startsWith("2.")) {
-                log.error(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
+                LOG.error(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
                 throw new RuntimeException(CONFIGURATION_NOT_SUPPORTED_ERROR_MESSAGE);
             }
             return true;

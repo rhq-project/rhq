@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2012 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.plugins.www.util;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+import static org.rhq.plugins.apache.AvailabilityResult.availabilityIsDown;
+import static org.rhq.plugins.apache.AvailabilityResult.availabilityIsUp;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,6 +43,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.stream.StreamUtil;
+import org.rhq.plugins.apache.AvailabilityResult;
+import org.rhq.plugins.apache.AvailabilityResult.ErrorType;
 
 /**
  * Helper class that contains methods that send HTTP requests and evaluate results.
@@ -60,34 +66,58 @@ public class WWWUtils {
      * @param timeout timeout, in milliseconds
      *
      * @return true if connecting to the URL succeeds, or false otherwise
+     *
+     * @deprecated as of RHQ 4.10. Use {@link #checkAvailability(java.net.URL, int)} instead.
      */
+    @Deprecated
     public static boolean isAvailable(URL httpURL, int timeout) {
+        return checkAvailability(httpURL, timeout).getAvailabilityType() == UP;
+    }
+
+    /**
+     * Checks availability of the <code>httpURL</code>.
+     * 
+     * Will first try with HEAD request and fallback to GET.
+     *
+     * @param httpURL a http or https URL to check
+     * @param timeout timeout, in milliseconds
+     * @return an {@link AvailabilityResult}
+     */
+    public static AvailabilityResult checkAvailability(URL httpURL, int timeout) {
+
         if (timeout < 0) {
             throw new IllegalArgumentException("Timeout cannot be negative.");
         }
 
         if (timeout == 0) {
-            LOG.debug("Pinging [" + httpURL + "] with no timeout...");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Pinging [" + httpURL + "] with no timeout...");
+            }
         } else {
-            LOG.debug("Pinging [" + httpURL + "] with timeout of " + timeout + " milliseconds...");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Pinging [" + httpURL + "] with timeout of " + timeout + " milliseconds...");
+            }
         }
 
         HttpURLConnection connection;
         try {
             connection = (HttpURLConnection) httpURL.openConnection();
         } catch (IOException e) {
-            LOG.error("Failed to open URLConnection for [" + httpURL + "].", e);
-            return false;
+            String errorMessage = "Failed to open URLConnection for [" + httpURL + "].";
+            LOG.error(errorMessage, e);
+            return availabilityIsDown(errorMessage, e);
         }
 
         try {
             connection.setRequestMethod("HEAD");
-        } catch (ProtocolException e) {
+        } catch (ProtocolException ignore) {
             try {
                 connection.setRequestMethod("GET");
-            } catch (ProtocolException e1) {
-                LOG.error("Failed to set request method to HEAD or GET on URLConnection for [" + httpURL + "].", e1);
-                return false;
+            } catch (ProtocolException e) {
+                String errorMessage = "Failed to set request method to HEAD or GET on URLConnection for [" + httpURL
+                    + "].";
+                LOG.error(errorMessage, e);
+                return availabilityIsDown(errorMessage, e);
             }
         }
 
@@ -100,79 +130,106 @@ public class WWWUtils {
 
         // First just connect to the HTTP server.
         long connectStartTime = System.currentTimeMillis();
-        LOG.debug("Connecting to [" + httpURL + "]...");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Connecting to [" + httpURL + "]...");
+        }
         try {
             connection.connect();
         } catch (IOException e) {
+            String errorMessage;
+            ErrorType errorType = ErrorType.UNKNOWN;
             if (e instanceof ConnectException) {
                 // This most likely just means the server is down.
-                LOG.debug("Failed to connect to [" + httpURL + "].");
+                errorMessage = "Failed to connect to [" + httpURL + "].";
+                errorType = ErrorType.CANNOT_CONNECT;
             } else if (e instanceof SocketTimeoutException) {
                 // This probably means the server is up but not properly accepting connection requests.
                 long connectDuration = System.currentTimeMillis() - connectStartTime;
-                LOG.debug("Attempt to connect to [" + httpURL + "] timed out after " + connectDuration
-                        + " milliseconds.");
+                errorMessage = "Attempt to connect to [" + httpURL + "] timed out after " + connectDuration
+                    + " milliseconds.";
+                errorType = ErrorType.CONNECTION_TIMEOUT;
             } else {
-                // Log all other IOExceptions as warnings, since they may likely provide useful details to users.
-                logWarnWithStackTraceOnlyIfDebugEnabled("An error occurred while attempting to connect to [" + httpURL
-                        + "].", e);
+                errorMessage = "An error occurred while attempting to connect to [" + httpURL + "].";
             }
-            return false;
+            if (LOG.isDebugEnabled()) {
+                LOG.warn(errorMessage, e);
+            }
+            return availabilityIsDown(errorType, errorMessage, e);
         }
         int connectDuration = (int) (System.currentTimeMillis() - connectStartTime);
-        LOG.debug("Connected to [" + httpURL + "] in " + connectDuration + " milliseconds.");
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Connected to [" + httpURL + "] in " + connectDuration + " milliseconds.");
+        }
 
         if ((timeout > 0) && (connectDuration >= timeout)) {
-            LOG.debug("Attempt to ping [" + httpURL + "] timed out after " + connectDuration + " milliseconds.");
-            return false;
+            String errorMessage = "Attempt to ping [" + httpURL + "] timed out after " + connectDuration
+                + " milliseconds.";
+            if (LOG.isDebugEnabled()) {
+                LOG.warn(errorMessage);
+            }
+            return availabilityIsDown(ErrorType.CONNECTION_TIMEOUT, errorMessage);
         }
 
         try {
             int readTimeout = (timeout > 0) ? (timeout - connectDuration) : 0;
             connection.setReadTimeout(readTimeout);
             if (connection.getReadTimeout() != readTimeout) {
-                LOG.debug("Failed to set read timeout on URLConnection for [" + httpURL
-                        + "] - this most likely means we're running in a non-standard JRE.");
+                if (LOG.isDebugEnabled()) {
+                    LOG.warn("Failed to set read timeout on URLConnection for [" + httpURL
+                            + "] - this most likely means we're running in a non-standard JRE.");
+                }
             }
 
             // Now actually send the request and read the response.
             long readStartTime = System.currentTimeMillis();
-            LOG.debug("Sending " + connection.getRequestMethod() + " request to [" + httpURL + "]...");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Sending " + connection.getRequestMethod() + " request to [" + httpURL + "]...");
+            }
             try {
                 // Calling getResponseCode() will cause the request to be sent.
                 int responseCode = connection.getResponseCode();
-                if (responseCode == -1) {
-                    LOG.warn("Ping request to [" + httpURL + "] returned an invalid response: "
+                if (LOG.isDebugEnabled()) {
+                    if (responseCode == -1) {
+                        LOG.warn("Ping request to [" + httpURL + "] returned an invalid response: "
                             + getResponseBody(connection));
-                } else if (responseCode >= 500) {
-                    LOG.warn("Ping request to [" + httpURL + "] returned a response with server error " + responseCode
-                            + " (" + connection.getResponseMessage() + "): " + getResponseBody(connection));
-                } else if (responseCode >= 400) {
-                    LOG.warn("Ping request to [" + httpURL + "] returned a response with client error " + responseCode
-                            + " (" + connection.getResponseMessage() + ").");
+                    } else if (responseCode >= 500) {
+                        LOG.warn("Ping request to [" + httpURL + "] returned a response with server error "
+                            + responseCode + " (" + connection.getResponseMessage() + "): "
+                            + getResponseBody(connection));
+                    } else if (responseCode >= 400) {
+                        LOG.warn("Ping request to [" + httpURL + "] returned a response with client error "
+                            + responseCode + " (" + connection.getResponseMessage() + ").");
+                    }
                 }
             } catch (IOException e) {
+                String errorMessage;
+                ErrorType errorType = ErrorType.UNKNOWN;
                 if (e instanceof SocketTimeoutException) {
                     long readDuration = System.currentTimeMillis() - readStartTime;
-                    LOG.debug("Attempt to read response from " + connection.getRequestMethod()
-                            + " request to [" + httpURL + "] timed out after " + readDuration
-                            + " milliseconds.");
+                    errorMessage = "Attempt to read response from " + connection.getRequestMethod() + " request to ["
+                        + httpURL + "] timed out after " + readDuration + " milliseconds.";
+                    errorType = ErrorType.CONNECTION_TIMEOUT;
                 } else {
-                    logWarnWithStackTraceOnlyIfDebugEnabled("An error occurred while attempting to read response from "
-                            + connection.getRequestMethod() + " to [" + httpURL + "].", e);
+                    errorMessage = "An error occurred while attempting to read response from "
+                        + connection.getRequestMethod() + " to [" + httpURL + "].";
                 }
-                return false;
+                if (LOG.isDebugEnabled()) {
+                    LOG.warn(errorMessage, e);
+                }
+                return availabilityIsDown(errorType, errorMessage, e);
             }
             long readDuration = System.currentTimeMillis() - readStartTime;
-            LOG.debug("Read response from " + connection.getRequestMethod() + " request to [" + httpURL
-                    + "] in " + readDuration + " milliseconds.");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Read response from " + connection.getRequestMethod() + " request to [" + httpURL + "] in "
+                    + readDuration + " milliseconds.");
+            }
         } finally {
             // We don't care about keeping the connection around. We're only going to be pinging each server once every
             // minute.
             connection.disconnect();
         }
 
-        return true;
+        return availabilityIsUp();
     }
 
     /**

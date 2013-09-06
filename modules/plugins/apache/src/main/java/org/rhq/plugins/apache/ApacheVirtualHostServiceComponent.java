@@ -16,7 +16,11 @@
  * along with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
 package org.rhq.plugins.apache;
+
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -91,14 +95,16 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
     /** Multiply by 1/1000 to convert logged response times, which are in microseconds, to milliseconds. */
     private static final double RESPONSE_TIME_LOG_TIME_MULTIPLIER = 0.001;
 
+    public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
+
     private ResourceContext<ApacheServerComponent> resourceContext;
     private URL url;
     private ResponseTimeLogParser logParser;
 
     private ConfigurationTimestamp lastConfigurationTimeStamp = new ConfigurationTimestamp();
     private int snmpWwwServiceIndex = -1;
-
-    public static final String RESOURCE_TYPE_NAME = "Apache Virtual Host";
+    
+    private AvailabilityType lastKnownAvailability;
 
     public void start(ResourceContext<ApacheServerComponent> resourceContext) throws Exception {
         this.resourceContext = resourceContext;
@@ -127,35 +133,60 @@ public class ApacheVirtualHostServiceComponent implements ResourceComponent<Apac
             this.logParser.setExcludes(responseTimeConfig.getExcludes());
             this.logParser.setTransforms(responseTimeConfig.getTransforms());
         }
+        this.lastKnownAvailability = UP;
     }
 
     public void stop() {
         this.resourceContext = null;
         this.url = null;
+        this.lastKnownAvailability = null;
     }
 
     public AvailabilityType getAvailability() {
+        lastKnownAvailability = getAvailabilityInternal();
+        return lastKnownAvailability;
+    }
+
+    private AvailabilityType getAvailabilityInternal() {
         if (url != null) {
             int timeout = PluginUtility.getAvailabilityFacetTimeout();
-            return WWWUtils.isAvailable(url, timeout) ? AvailabilityType.UP : AvailabilityType.DOWN;
+            AvailabilityResult availabilityResult = WWWUtils.checkAvailability(this.url, timeout);
+            if (availabilityResult.getAvailabilityType() == UP) {
+                return UP;
+            } else {
+                if (lastKnownAvailability == UP) {
+                    switch (availabilityResult.getErrorType()) {
+                    case CANNOT_CONNECT:
+                        LOG.warn("Could not connect to Virtual Host " + resourceContext.getResourceDetails()
+                            + ", availability will be reported as " + DOWN.name());
+                        break;
+                    case CONNECTION_TIMEOUT:
+                        LOG.warn("Connection to Virtual Host " + resourceContext.getResourceDetails()
+                            + " timed out, availability will be reported as " + DOWN.name());
+                        break;
+                    default:
+                    }
+                }
+                return DOWN;
+            }
         } else {
             try {
                 //we don't need the SNMP connection to figure out the index on which the SNMP
                 //module would report this vhost. So first, let's check if that index is valid
                 //(i.e. check that the vhost is actually still present in the apache configuration)                                
                 if (getWwwServiceIndex() < 1) {
-                    return AvailabilityType.DOWN;
+                    return DOWN;
                 }
 
                 //ok, so the vhost is present. Now let's just ping the SNMP module to see
                 //if it is reachable and base our availability on that...
                 SNMPSession snmpSession = resourceContext.getParentResourceComponent().getSNMPSession();
 
-                return snmpSession.ping() ? AvailabilityType.UP : AvailabilityType.DOWN;
+                return snmpSession.ping() ? UP : DOWN;
             } catch (Exception e) {
                 LOG.debug("Determining the availability of the vhost [" + resourceContext.getResourceKey()
                     + "] using SNMP failed.", e);
-                return AvailabilityType.DOWN;
+                return DOWN;
             }
         }
     }

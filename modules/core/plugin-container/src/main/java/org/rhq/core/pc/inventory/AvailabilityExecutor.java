@@ -18,6 +18,10 @@
  */
 package org.rhq.core.pc.inventory;
 
+import static org.rhq.core.domain.measurement.AvailabilityType.DOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UNKNOWN;
+import static org.rhq.core.domain.measurement.AvailabilityType.UP;
+
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -175,8 +179,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         Resource parent = scanRoot.getParentResource();
         while (parent != null) {
             Availability parentAvail = inventoryManager.getAvailabilityIfKnown(parent);
-            if (parentAvail != null && parentAvail.getAvailabilityType() == AvailabilityType.DOWN) {
-                parentAvailabilityType = AvailabilityType.DOWN;
+            if (parentAvail != null && parentAvail.getAvailabilityType() == DOWN) {
+                parentAvailabilityType = DOWN;
                 break;
             }
 
@@ -186,7 +190,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         //we've gone up past the platform but didn't encounter a single down resource, hence the parent avail type
         //is to be considered UP (because it either truly is UP or is UNKNOWN as of now)
         if (parentAvailabilityType == null) {
-            parentAvailabilityType = AvailabilityType.UP;
+            parentAvailabilityType = UP;
         }
 
         try {
@@ -302,13 +306,13 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
         // find out what the avail was the last time we checked it. this may be null
         Availability previous = this.inventoryManager.getAvailabilityIfKnown(resource);
-        AvailabilityType current = (null == previous) ? AvailabilityType.UNKNOWN : previous.getAvailabilityType();
+        AvailabilityType current = (null == previous) ? UNKNOWN : previous.getAvailabilityType();
 
         // If the resource's parent is DOWN, the rules are that the resource and all of the parent's other
         // descendants, must also be DOWN. So, there's no need to even ask the resource component
         // for its current availability - its current avail is set to the parent avail type and that's that.
         // Otherwise, checkAvail as needed. 
-        if (deferToParent || (AvailabilityType.DOWN == parentAvailType)) {
+        if (deferToParent || (DOWN == parentAvailType)) {
             current = parentAvailType;
             ++scan.numDeferToParent;
 
@@ -324,7 +328,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
             }
 
             if (checkAvail) {
-                current = AvailabilityType.UNKNOWN;
+                current = UNKNOWN;
                 try {
                     ++scan.numGetAvailabilityCalls;
 
@@ -345,25 +349,27 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK,
                         t.getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
                     this.inventoryManager.sendResourceErrorToServer(resourceError);
-                    if (LOG.isDebugEnabled()) {
-                        if (t instanceof TimeoutException) {
-                            // no need to log the stack trace for timeouts...
-                            LOG.debug("Failed to collect availability on " + resource + " (call timed out)");
-                        } else {
-                            LOG.debug("Failed to collect availability on " + resource, t);
-                        }
+                    if (t instanceof TimeoutException) {
+                        // no need to log the stack trace for timeouts...
+                        LOG.warn("Availability collection timed out on " + resource
+                            + ", availability will be reported as " + DOWN.name());
+                        current = DOWN;
+                    } else {
+                        LOG.warn("Availability collection failed with exception on " + resource
+                            + ", availability will be reported as " + DOWN.name(), t);
+                        current = DOWN;
                     }
                 }
                 // Assume DOWN if for some reason the avail check failed 
-                if (AvailabilityType.UNKNOWN == current) {
-                    current = AvailabilityType.DOWN;
+                if (UNKNOWN == current) {
+                    current = DOWN;
                 }
             }
         }
 
         // Add the availability to the report if it changed from its previous state or if this is a full report.
         // Update the resource container only if the avail has changed.
-        boolean availChanged = (null != current && AvailabilityType.UNKNOWN != current && (null == previous || current != previous
+        boolean availChanged = (null != current && UNKNOWN != current && (null == previous || current != previous
             .getAvailabilityType()));
 
         if (availChanged || scan.isFull) {
@@ -377,7 +383,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 // if the resource avail changed to UP then we must perform avail checks for all
                 // children, to ensure their avails are up to date. Note that if it changed to NOT UP
                 // then the children will just get the parent avail type and there is no avail check anyway.
-                if (!isForced && (AvailabilityType.UP == current)) {
+                if (!isForced && (UP == current)) {
                     isForced = true;
                 }
             } else {
@@ -400,15 +406,15 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         AvailabilityType availType = component.getAvailability();
         switch (availType) {
         case UP:
-            return AvailabilityType.UP;
+            return UP;
         case DOWN:
-            return AvailabilityType.DOWN;
+            return DOWN;
         default:
             if (LOG.isDebugEnabled()) {
                 LOG.debug("ResourceComponent " + component + " getAvailability() returned " + availType
                     + ". This is invalid and is being replaced with DOWN.");
             }
-            return AvailabilityType.DOWN;
+            return DOWN;
         }
     }
 

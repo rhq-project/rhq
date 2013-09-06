@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,14 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.operation;
+
+import static java.lang.System.nanoTime;
+import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.concurrent.TimeUnit.SECONDS;
 
 import java.util.Arrays;
 import java.util.Calendar;
@@ -603,13 +607,17 @@ public class OperationManagerBeanTest extends AbstractEJB3Test {
         assert schedule.getParameters() != null;
         assert schedule.getGroup().getId() == newGroup.getId();
 
-        Thread.sleep(4000L); // wait for it to finish, should be fast
-
+        long start = nanoTime();
+        boolean testOpComplete;
         PageList<GroupOperationHistory> results;
-        results = operationManager.findCompletedGroupOperationHistories(overlord(), newGroup.getId(),
-            PageControl.getUnlimitedInstance());
-        assert results != null;
-        assert results.size() == 1;
+        do {
+            Thread.sleep(SECONDS.toMillis(5));
+            results = operationManager.findCompletedGroupOperationHistories(overlord(), newGroup.getId(),
+                    PageControl.getUnlimitedInstance());
+            testOpComplete = results != null && results.size() == 1;
+        } while (!testOpComplete && (nanoTime() - start) < MINUTES.toNanos(2));
+
+        assert testOpComplete;
         GroupOperationHistory history = results.get(0);
         assert history.getId() > 0 : history;
         assert history.getJobId() != null : history;

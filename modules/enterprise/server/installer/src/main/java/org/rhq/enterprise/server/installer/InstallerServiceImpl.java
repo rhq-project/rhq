@@ -262,9 +262,11 @@ public class InstallerServiceImpl implements InstallerService {
 
         String appServerConfigDir = getAppServerConfigDir();
 
-        // create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
-        // connect to the RHQ Server.
-        ServerInstallUtil.createDefaultManagementUser(serverDetails, appServerConfigDir);
+        // create an rhqadmin management user so when discovered, the AS7 plugin can immediately
+        // connect to the RHQ Server. Note that if the installer sets rhq.server.management.user to
+        // anything other than our recommended default, the connection properties will need to be updated
+        // before the plugin can connect, because the default creds in the plugin will be wrong.
+        ServerInstallUtil.createDefaultManagementUser(serverProperties, serverDetails, appServerConfigDir);
 
         // perform stuff that has to get done via the JBossAS management client
         ModelControllerClient mcc = null;
@@ -631,6 +633,11 @@ public class InstallerServiceImpl implements InstallerService {
                     } else {
                         dataErrors.append("[" + name + "] must be a number : [" + newValue + "]\n");
                     }
+                }
+            } else if (ServerProperties.STRING_PROPERTIES.contains(name)) {
+                final String newValue = entry.getValue();
+                if (ServerInstallUtil.isEmpty(newValue)) {
+                    dataErrors.append("[" + name + "] must be set to a valid string value\n");
                 }
             }
         }

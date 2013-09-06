@@ -167,6 +167,7 @@ public class ServerInstallUtil {
     private static final String RHQ_CACHE_CONTAINER = "rhq";
     private static final String RHQ_CACHE = "rhqCache";
     private static final String RHQ_MGMT_USER = "rhqadmin";
+    private static final String RHQ_MGMT_USER_PASSWORD = "rhq.server.management.password";
 
     /**
      * Configure the logging subsystem.
@@ -318,16 +319,15 @@ public class ServerInstallUtil {
      */
     public static void createUserSecurityDomain(ModelControllerClient mcc) throws Exception {
 
-        Map<String,String> options = new HashMap<String, String>(2);
+        Map<String, String> options = new HashMap<String, String>(2);
         options.put("hashAlgorithm", "MD5");
         options.put("hashEncoding", "base64");
 
-        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(JDBC_LOGIN_MODULE_NAME,
-            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
-
+        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(
+            JDBC_LOGIN_MODULE_NAME, AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
 
         SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,loginModuleRequest);
+        client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN, loginModuleRequest);
 
     }
 
@@ -338,19 +338,16 @@ public class ServerInstallUtil {
      */
     public static void createRestSecurityDomain(ModelControllerClient mcc) throws Exception {
 
-        Map<String,String> options = new HashMap<String, String>(2);
+        Map<String, String> options = new HashMap<String, String>(2);
         options.put("delegateTo", RHQ_USER_SECURITY_DOMAIN);
         options.put("roles", "rest-user");
 
-        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(DELEGATIG_LOGIN_MODULE_NAME,
-            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
-
+        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(
+            DELEGATIG_LOGIN_MODULE_NAME, AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
 
         SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN,loginModuleRequest);
+        client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN, loginModuleRequest);
     }
-
-
 
     /**
      * Creates the JMS Queues required for Drift and Alerting.
@@ -420,7 +417,6 @@ public class ServerInstallUtil {
 
         return;
     }
-
 
     /**
      * Creates the Infinispan caches for RHQ.
@@ -1061,7 +1057,6 @@ public class ServerInstallUtil {
         }
     }
 
-
     private static void updateOrInsertServer(DatabaseType db, Connection conn, ServerDetails serverDetails) {
         PreparedStatement stm = null;
         ResultSet rs = null;
@@ -1561,15 +1556,26 @@ public class ServerInstallUtil {
     }
 
     /**
-     * Create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
-     * connect to the RHQ Server.
+     * Create an rhqadmin management user so when discovered, the AS7 plugin can use it to connect
+     * to the RHQ Server.  The password is set in rhq-server.properties.  Because the plugin can't guess
+     * the password, if not set to the default then the AS7 plugin will fail to connect, and the
+     * RHQ Server resource connection properties will need to be updated after discovery and import.  
      *
+     * @param serverProperties the server properties
      * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the mgmt-users.properties file lives
      */
-    public static void createDefaultManagementUser(ServerDetails serverDetails, String configDirStr) {
+    public static void createDefaultManagementUser(HashMap<String, String> serverProperties,
+        ServerDetails serverDetails, String configDirStr) {
         File confDir = new File(configDirStr);
         File mgmtUsers = new File(confDir, "mgmt-users.properties");
+        String password = serverProperties.get(RHQ_MGMT_USER_PASSWORD);
+
+        if (ServerInstallUtil.isEmpty(password)) {
+            LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : "
+                + RHQ_MGMT_USER_PASSWORD + " is not set in rhq-server.properties.");
+            return;
+        }
 
         // Add the default admin user, or if for some reason this file does not exist, just log the issue
         if (mgmtUsers.exists()) {
@@ -1588,7 +1594,7 @@ public class ServerInstallUtil {
 
             try {
                 fos = new FileOutputStream(mgmtUsers, true);
-                fos.write(("\n" + RHQ_MGMT_USER + "=35c160c1f841a889d4cda53f0bfc94b6\n").getBytes());
+                fos.write(("\n" + RHQ_MGMT_USER + "=" + password + "\n").getBytes());
 
             } catch (Exception e) {
                 LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : ", e);
@@ -1623,8 +1629,7 @@ public class ServerInstallUtil {
                 // If the binding is required, we re-throw a possible exception. Otherwise just log
                 if (binding.required) {
                     throw e;
-                }
-                else {
+                } else {
                     LOG.info(String.format("Setting socket binding port for [%s] resulted in [%s] - this is harmless ",
                         binding.name, e.getMessage())); // TODO log at debug level only?
                 }

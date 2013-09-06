@@ -114,6 +114,8 @@ public class ServerProperties {
     public static final String PROP_OPERATION_TIMEOUT = "rhq.server.operation-timeout";
     public static final String PROP_LOG_LEVEL = "rhq.server.log-level";
 
+    public static final String PROP_MGMT_USER_PASSWORD = "rhq.server.management.password";
+
     // this list contains all the properties that are to have boolean values (true | false)
     public static final Set<String> BOOLEAN_PROPERTIES;
     static {
@@ -143,6 +145,14 @@ public class ServerProperties {
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_WEBCONNS);
         INTEGER_PROPERTIES.add(PROP_AGENT_MULTICAST_DETECTOR_PORT);
+    }
+
+    // this list contains all the properties that are to have non-empty string values
+    public static final Set<String> STRING_PROPERTIES;
+    static {
+        STRING_PROPERTIES = new HashSet<String>();
+        STRING_PROPERTIES.add(PROP_JBOSS_BIND_ADDRESS);
+        STRING_PROPERTIES.add(PROP_MGMT_USER_PASSWORD);
     }
 
     public static final Set<String> CLIENT_AUTH_MODES;

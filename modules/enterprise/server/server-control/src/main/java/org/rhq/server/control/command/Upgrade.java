@@ -406,6 +406,7 @@ public class Upgrade extends AbstractInstall {
         oldServerProps.remove("rhq.server.plugin-deployer-threads");
         oldServerProps.remove("rhq.server.database.xa-datasource-class");
         oldServerProps.remove("rhq.server.database.driver-class");
+        oldServerProps.remove("java.rmi.server.hostname");
 
         // do not set the keystore/truststore algorithms if they are the defaults to allow for runtime defaults to take effect
         String[] algPropNames = new String[] { "rhq.communications.connector.security.truststore.algorithm", //
@@ -478,6 +479,13 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.communications.connector.security.truststore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
+
+        // In 4.8 the AS management user was always rhqadmin/obfuscated(rhqadmin); so, if not already in the
+        // old properties, insert the new property with the obfuscated value.
+        String managementPassword = oldServerProps.getProperty("rhq.server.management.password");
+        if (null == managementPassword) {
+            oldServerProps.setProperty("rhq.server.management.password", "35c160c1f841a889d4cda53f0bfc94b6");
+        }
 
         // now merge the old settings in with the default properties from the new server install
         String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
@@ -610,8 +618,7 @@ public class Upgrade extends AbstractInstall {
 
     private File getFileDownload(String directory, final String fileMatch) {
         File downloadDir = new File(getBaseDir(),
-            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/"
-                + directory);
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/" + directory);
         return downloadDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {

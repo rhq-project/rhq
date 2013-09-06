@@ -21,6 +21,10 @@
 
     <property name="default.rhq.server.drift.binary.content" value="false"/>
 
+	<property name="default.jboss.bind.address" value=""/>
+
+	<property name="default.rhq.server.management.password" value=""/>
+
     <target name="set-predeploy-prop">
         <condition property="predeploy" value="true">
             <or>
@@ -44,6 +48,9 @@
         <property name="rhq.server.quartz.selectWithLockSQL"   value="${rhq.dev.quartz.selectWithLockSQL}" />
         <property name="rhq.server.quartz.lockHandlerClass"    value="${rhq.dev.quartz.lockHandlerClass}" />
         <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
+        <!-- these two are only set explicitly in dev envs, prod envs must set these manually for security -->
+        <property name="jboss.bind.address"                    value="0.0.0.0"/>
+        <property name="rhq.server.management.password"        value="35c160c1f841a889d4cda53f0bfc94b6"/>
     </target>
 
     <target name="set-default-server-props" unless="predeploy">
@@ -60,6 +67,9 @@
         <property name="rhq.server.quartz.selectWithLockSQL"   value="${default.rhq.server.quartz.selectWithLockSQL}" />
         <property name="rhq.server.quartz.lockHandlerClass"    value="${default.rhq.server.quartz.lockHandlerClass}" />
         <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
+        <!-- these two are only set by default in dev envs, prod envs must set these manually for security -->
+        <property name="jboss.bind.address"                    value="${default.jboss.bind.address}"/>
+        <property name="rhq.server.management.password"        value="${default.rhq.server.management.password}"/>
     </target>
 
     <target name="initialize" depends="set-predeploy-prop, set-dev-server-props, set-default-server-props">
@@ -427,6 +437,10 @@
 #############################################################################
 # Database Settings
 # -----------------
+# INSTALLATION ACTION REQUIRED!
+#   All properties must be explicitly set for the desired database vendor:
+#   
+#
 # These should point to the database that your RHQ Server will use as
 # its backend RDBMS storage.
 # If you are using Oracle, comment out the Postgres settings and
@@ -461,6 +475,9 @@ rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 #############################################################################
 # Server Settings
 # ---------------
+# INSTALLATION ACTION REQUIRED! The following property must be explicitly set:
+#   rhq.server.management.password
+#
 # These are miscellaneous settings that the server will use to customize itself
 # to the environment in which it is running. These are settings you usually
 # want to change or at least be aware of.
@@ -474,6 +491,16 @@ rhq.server.quartz.driverDelegateClass=${rhq.server.quartz.driverDelegateClass}
 # as the server being upgraded.
 rhq.server.high-availability.name=
 
+# The installer will create a default EAP management user named 'rhqadmin'.
+# The password is obfuscated and specified here. If set to the commented
+# value the RHQ Agent will be able to monitor the RHQ Server resource
+# automatically. If set to a different value the same password value will
+# need to be supplied in the connection properties for the RHQ Server
+# resource. See the installation documentation for more information on how
+# to generate an obfuscated password value.
+# rhq.server.management.password=35c160c1f841a889d4cda53f0bfc94b6
+rhq.server.management.password=${rhq.server.management.password}
+
 # Email settings used to connect to an SMTP server to send alert emails.
 rhq.server.email.smtp-host=localhost
 rhq.server.email.smtp-port=25
@@ -482,6 +509,9 @@ rhq.server.email.from-address=rhqadmin@localhost
 #############################################################################
 # Host and Port Bindings
 # ----------------------
+# INSTALLATION ACTION REQUIRED! The following property must be explicitly set:
+#   jboss.bind.address
+#
 # These define the ports the RHQ Server will bind to. Most of the time
 # you can leave these alone. You can change these default values to
 # conform to your own environment's requirements, such as the IP address
@@ -492,7 +522,12 @@ rhq.server.email.from-address=rhqadmin@localhost
 # "rhq.autoinstall.public-endpoint-address" as well.
 #############################################################################
 
-jboss.bind.address=0.0.0.0
+# The bind address for the RHQ server (jboss server).  To bind the server on
+# all network interfaces set to 0.0.0.0, otherwise a specific IP address.
+# jboss.bind.address=0.0.0.0
+jboss.bind.address=${jboss.bind.address}
+
+# By default only local management connections 
 jboss.bind.address.management=127.0.0.1
 
 jboss.socket.binding.port-offset=0
@@ -513,14 +548,11 @@ rhq.server.socket.binding.port.remoting=3447
 rhq.server.socket.binding.port.txn-recovery-environment=3712
 rhq.server.socket.binding.port.txn-status-manager=3713
 
-# If the jboss.bind.address property is set to anything besides 0.0.0.0,
-# uncomment the java.rmi.server.hostname property below and set it to the same
-# value - setting it to ${jboss.bind.address} will *not* work.
-#java.rmi.server.hostname=0.0.0.0
-
 #############################################################################
 # Installer Settings
 # ------------------
+# INSTALLATION ACTION REQUIRED! Review the default settings:
+#
 # These enable the installer when starting for the first time.
 # To do so, first ensure all values in this properties file are appropriately
 # set for your environment. Once you are sure all values are as you want them,

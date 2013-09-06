@@ -39,6 +39,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.TokenReplacingProperties;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * <p>
@@ -244,7 +245,7 @@ public class DeploymentOptions {
      */
     public void setClusterDir(String dir) {
         if (clusterDir == null) {
-            clusterDir = dir;
+            clusterDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -261,7 +262,7 @@ public class DeploymentOptions {
      */
     public void setBasedir(String dir) {
         if (basedir == null) {
-            basedir = dir;
+            basedir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -492,7 +493,7 @@ public class DeploymentOptions {
      */
     public void setDataDir(String dir) {
         if (dataDir == null) {
-            dataDir = dir;
+            dataDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -509,7 +510,7 @@ public class DeploymentOptions {
      */
     public void setCommitLogDir(String dir) {
         if (commitLogDir == null) {
-            commitLogDir = dir;
+            commitLogDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -526,7 +527,7 @@ public class DeploymentOptions {
      */
     public void setSavedCachesDir(String dir) {
         if (savedCachesDir == null) {
-            savedCachesDir = dir;
+            savedCachesDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -543,7 +544,7 @@ public class DeploymentOptions {
      */
     public void setLogFileName(String name) {
         if (logFileName == null) {
-            logFileName = name;
+            logFileName = FileUtil.useForwardSlash(name);
         }
     }
 

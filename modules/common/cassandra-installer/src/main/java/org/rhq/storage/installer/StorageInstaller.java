@@ -240,6 +240,7 @@ public class StorageInstaller {
                 }
 
                 deploymentOptions.setBasedir(storageBasedir.getAbsolutePath());
+                deploymentOptions.setLogFileName(logFile.getPath());
 
                 Deployer deployer = new Deployer();
                 deployer.setDeploymentOptions(deploymentOptions);
@@ -247,51 +248,61 @@ public class StorageInstaller {
                 deployer.unzipDistro();
                 deployer.updateFilePerms();
 
-                // For upgrades we will copy the existing cassandra.yaml,
-                // log4j-server.properties, and cassandra-jvm.properties from the existing
-                // storage node installation. Going forward though we need to add support
-                // for merging in the existing cassandra.yaml with the new one.
+                // For upgrades we will copy the existing cassandra.yaml, log4j-server.properties, and 
+                // cassandra-jvm.properties from the existing storage node installation.
                 File oldConfDir = new File(existingStorageDir, "conf");
                 File newConfDir = new File(storageBasedir, "conf");
 
-                File cassandraEnvFile = new File(oldConfDir, "cassandra-env.sh");
-
                 String cassandraYaml = "cassandra.yaml";
                 String cassandraJvmProps = "cassandra-jvm.properties";
-                File cassandraJvmPropsFile = new File(newConfDir, cassandraJvmProps);
                 String log4j = "log4j-server.properties";
-                File internodeAuthConfFile = new File(oldConfDir, "rhq-storage-auth.conf");
+                String internodeAuthConfFile = "rhq-storage-auth.conf";
 
-                replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
-                replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
+                File oldCassandraEnvFile = new File(oldConfDir, "cassandra-env.sh");
+                File oldInternodeAuthConfFile = new File(oldConfDir, internodeAuthConfFile);
+                File oldYamlFile = new File(oldConfDir, cassandraYaml);
+                File oldLog4jFile = new File(oldConfDir, log4j);
+                File newCassandraJvmPropsFile = new File(newConfDir, cassandraJvmProps);
+                File newInternodeAuthConfFile = new File(newConfDir, internodeAuthConfFile);
+                File newYamlFile = new File(newConfDir, cassandraYaml);
+                File newLog4jFile = new File(newConfDir, log4j);
 
-                if (cassandraEnvFile.exists()) {
+                // copy the old yaml file
+                replaceFile(oldYamlFile, newYamlFile);
+
+                // copy the old log4j file
+                // - update the logfile location
+                replaceFile(oldLog4jFile, newLog4jFile);
+                PropertiesFileUpdate log4jUpdate = new PropertiesFileUpdate(newLog4jFile.getPath());
+                log4jUpdate.update("log4j.appender.R.File", deploymentOptions.getLogFileName());
+
+                if (oldCassandraEnvFile.exists()) {
                     // Then this is an RHQ 4.8 install
-                    jmxPort = parseJmxPortFromCassandrEnv(cassandraEnvFile);
+                    jmxPort = parseJmxPortFromCassandrEnv(oldCassandraEnvFile);
                     Properties jvmProps = new Properties();
-                    jvmProps.load(new FileInputStream(cassandraJvmPropsFile));
+                    jvmProps.load(new FileInputStream(newCassandraJvmPropsFile));
                     PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(
-                        cassandraJvmPropsFile.getAbsolutePath());
+                        newCassandraJvmPropsFile.getAbsolutePath());
                     jvmProps.setProperty("jmx_port", Integer.toString(jmxPort));
 
                     propertiesUpdater.update(jvmProps);
 
                 } else {
-                    jmxPort = parseJmxPort(cassandraJvmPropsFile);
-                    replaceFile(new File(oldConfDir, cassandraJvmProps), cassandraJvmPropsFile);
+                    jmxPort = parseJmxPort(newCassandraJvmPropsFile);
+                    replaceFile(new File(oldConfDir, cassandraJvmProps), newCassandraJvmPropsFile);
                 }
 
-                if (internodeAuthConfFile.exists()) {
-                    replaceFile(internodeAuthConfFile, new File(newConfDir, internodeAuthConfFile.getName()));
+                if (oldInternodeAuthConfFile.exists()) {
+                    replaceFile(oldInternodeAuthConfFile, oldInternodeAuthConfFile);
                 }
 
-                File yamlFile = new File(newConfDir, "cassandra.yaml");
-                ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+                ConfigEditor yamlEditor = new ConfigEditor(newYamlFile);
                 yamlEditor.load();
 
                 hostname = yamlEditor.getListenAddress();
                 nativeTransportPort = yamlEditor.getNativeTransportPort();
                 storagePort = yamlEditor.getStoragePort();
+
             } else {
                 if (cmdLine.hasOption("dir")) {
                     File basedir = new File(cmdLine.getOptionValue("dir"));
@@ -308,8 +319,7 @@ public class StorageInstaller {
 
                 // TODO add support for getting updated seeds list
                 // Rather than have the user specify the seeds for each node, the installer can
-                // obtain the list either from the RHQ server or directly from querying the
-                // database.
+                // obtain the list either from the RHQ server or directly from querying the database.
                 String seeds = cmdLine.getOptionValue("seeds", hostname);
                 deploymentOptions.setSeeds(seeds);
 

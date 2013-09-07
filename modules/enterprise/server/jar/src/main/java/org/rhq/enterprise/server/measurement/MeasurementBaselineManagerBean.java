@@ -240,8 +240,12 @@ public class MeasurementBaselineManagerBean implements MeasurementBaselineManage
                 "LEFT JOIN rhq_measurement_bline b ON s.id = b.schedule_id WHERE s.enabled = " +
                     databaseType.getBooleanValue(true) + " AND b.schedule_id IS NULL AND d.numeric_type = 0";
             Query query = this.entityManager.createNativeQuery(sql);
-
-            return query.getResultList();
+            List results = query.getResultList();
+            List<Integer> scheduleIds = new ArrayList<Integer>();
+            for (Object object : results) {
+                scheduleIds.add(databaseType.getInteger(object));
+            }
+            return scheduleIds;
         } catch (Exception e) {
             throw new RuntimeException("An unexpected error occurred while trying to retrieve schedules without baselines",
                 e);

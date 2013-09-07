@@ -97,12 +97,28 @@ public class ConfigEditor {
         return (String) config.get("listen_address");
     }
 
+    public void setListenAddress(String address) {
+        config.put("listen_address", address);
+    }
+
+    public String getRpcAddress() {
+        return (String) config.get("rpc_address");
+    }
+
+    public void setRpcAddress(String address) {
+        config.put("rpc_address", address);
+    }
+
     public String getAuthenticator() {
         return (String) config.get("authenticator");
     }
 
     public String getCommitLogDirectory() {
         return (String) config.get("commitlog_directory");
+    }
+
+    public void setCommitLogDirectory(String dir) {
+        config.put("commitlog_directory", dir);
     }
 
     public List<String> getDataFileDirectories() {
@@ -115,6 +131,10 @@ public class ConfigEditor {
 
     public String getSavedCachesDirectory() {
         return (String) config.get("saved_caches_directory");
+    }
+
+    public void setSavedCachesDirectory(String dir) {
+        config.put("saved_caches_directory", dir);
     }
 
     public void setSeeds(String... seeds) {
@@ -148,6 +168,14 @@ public class ConfigEditor {
 
     public void setStoragePort(Integer port) {
         config.put("storage_port", port);
+    }
+
+    public String getInternodeAuthenticator() {
+        return (String) config.get("internode_authenticator");
+    }
+
+    public void setInternodeAuthenticator(String clazz) {
+        config.put("internode_authenticator", clazz);
     }
 
     public static void copyFile(File inFile, File outFile) throws FileNotFoundException, IOException {

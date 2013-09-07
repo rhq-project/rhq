@@ -22,6 +22,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import org.rhq.cassandra.CassandraClusterManager;
+import org.rhq.cassandra.util.ConfigEditor;
 import org.rhq.core.util.MessageDigestGenerator;
 import org.rhq.core.util.file.FileUtil;
 import org.rhq.core.util.stream.StreamUtil;
@@ -152,11 +153,10 @@ public class StorageInstallerTest {
         assertTrue(confDir.exists(), "Expected to find conf directory at " + confDir);
 
         File newCassandraYamlFile = new File(confDir, "cassandra.yaml");
-        assertEquals(sha256(oldCassandraYamlFile), sha256(newCassandraYamlFile), newCassandraYamlFile +
-            " does not match the original version");
+        assertTrue(newCassandraYamlFile.exists(), newCassandraYamlFile + " does not exist");
 
         File newLog4JFile = new File(confDir, "log4j-server.properties");
-        assertEquals(sha256(oldLog4JFile), sha256(newLog4JFile), newLog4JFile + " does not match the original version");
+        assertTrue(newLog4JFile.exists(), newLog4JFile + " does not exist");
 
         assertFalse(new File(confDir, "cassandra-env.sh").exists(), "cassandra-env.sh should not be used after RHQ 4.8.0");
 
@@ -168,6 +168,32 @@ public class StorageInstallerTest {
         // src/test/resources/rhq48/storage/conf/cassandra-env.sh
         assertEquals(properties.getProperty("jmx_port"), "7399", "Failed to update the JMX port in " +
             cassandraJvmPropsFile);
+
+        File yamlFile = new File(confDir, "cassandra.yaml");
+        ConfigEditor newYamlEditor = new ConfigEditor(yamlFile);
+        newYamlEditor.load();
+
+        ConfigEditor oldYamlEditor = new ConfigEditor(oldCassandraYamlFile);
+        oldYamlEditor.load();
+
+        assertEquals(newYamlEditor.getInternodeAuthenticator(), "org.rhq.cassandra.auth.RhqInternodeAuthenticator",
+            "Failed to set the internode_authenticator property in " + yamlFile);
+        assertEquals(newYamlEditor.getAuthenticator(), oldYamlEditor.getAuthenticator(), "The authenticator property " +
+            "is wrong");
+        assertEquals(newYamlEditor.getCommitLogDirectory(), oldYamlEditor.getCommitLogDirectory(),
+            "The commit_log property is wrong");
+        assertEquals(newYamlEditor.getDataFileDirectories(), oldYamlEditor.getDataFileDirectories(),
+            "The data_files property is wrong");
+        assertEquals(newYamlEditor.getListenAddress(), oldYamlEditor.getListenAddress(),
+            "The listen_address property is wrong");
+        assertEquals(newYamlEditor.getNativeTransportPort(), oldYamlEditor.getNativeTransportPort(),
+            "The native_transport_port property is wrong");
+        assertEquals(newYamlEditor.getRpcAddress(), oldYamlEditor.getRpcAddress(),
+            "The rpc_address property is wrong");
+        assertEquals(newYamlEditor.getSavedCachesDirectory(), oldYamlEditor.getSavedCachesDirectory(),
+            "The saved_caches_directory property is wrong");
+        assertEquals(newYamlEditor.getStoragePort(), oldYamlEditor.getStoragePort(),
+            "The storage_port property is wrong");
     }
 
     private void assertNodeIsRunning() {

@@ -25,33 +25,40 @@
 
 package org.rhq.storage.installer;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author John Sanda
  */
 public class StorageInstallerException extends Exception {
 
-    private List<String> errors = new ArrayList<String>();
+    private int errorCode;
 
     public StorageInstallerException() {
+        super();
     }
 
     public StorageInstallerException(String message) {
         super(message);
     }
 
+    public StorageInstallerException(String message, int errorCode) {
+        this(message);
+        this.errorCode = errorCode;
+    }
+
     public StorageInstallerException(String message, Throwable cause) {
         super(message, cause);
     }
 
-    public StorageInstallerException(String msg, List<String> errors) {
-        super(msg);
-        this.errors = errors;
+    public StorageInstallerException(String message, Throwable cause, int errorCode) {
+        this(message, cause);
+        this.errorCode = errorCode;
     }
 
-    public List<String> getErrors() {
-        return errors;
+    public StorageInstallerException(Throwable cause) {
+        super(cause);
+    }
+
+    public int getErrorCode() {
+        return errorCode;
     }
 }

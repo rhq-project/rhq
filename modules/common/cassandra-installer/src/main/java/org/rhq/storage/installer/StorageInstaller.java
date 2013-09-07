@@ -218,188 +218,13 @@ public class StorageInstaller {
             printUsage();
             return STATUS_SHOW_USAGE;
         } else {
-//            DeploymentOptionsFactory factory = new DeploymentOptionsFactory();
-//            DeploymentOptions deploymentOptions = factory.newDeploymentOptions();
-//
-//            File logFile = new File(logDir, "rhq-storage.log");
-
             InstallerInfo installerInfo = null;
 
             try {
                 if (cmdLine.hasOption("upgrade")) {
                     installerInfo = upgrade(new File(cmdLine.getOptionValue("upgrade", "")));
-    //                File existingStorageDir = null;
-    //                File upgradeFromDir = new File(cmdLine.getOptionValue("upgrade", ""));
-
-    //                if (!upgradeFromDir.isDirectory()) {
-    //                    log.error("The value passed to the upgrade option is not a directory. The value must be a valid "
-    //                        + "path that points to the base directory of an existing RHQ server installation.");
-    //                    return STATUS_INVALID_UPGRADE;
-    //                }
-    //                existingStorageDir = new File(upgradeFromDir, "rhq-storage");
-    //                if (!(existingStorageDir.exists() && existingStorageDir.isDirectory())) {
-    //                    log.error(existingStorageDir + " does not appear to be an existing RHQ storage node installtion. "
-    //                        + "Check the value that was passed to the upgrade option and make sure it specifies the base "
-    //                        + "directory of an existing RHQ server installation.");
-    //                    return STATUS_INVALID_UPGRADE;
-    //                }
-    //
-    //                deploymentOptions.setBasedir(storageBasedir.getAbsolutePath());
-    //
-    //                Deployer deployer = new Deployer();
-    //                deployer.setDeploymentOptions(deploymentOptions);
-    //                storageBasedir.mkdirs();
-    //                deployer.unzipDistro();
-    //                deployer.updateFilePerms();
-    //
-    //                File oldConfDir = new File(existingStorageDir, "conf");
-    //                File newConfDir = new File(storageBasedir, "conf");
-    //
-    //                File cassandraEnvFile = new File(oldConfDir, "cassandra-env.sh");
-    //
-    //                String cassandraYaml = "cassandra.yaml";
-    //                String cassandraJvmProps = "cassandra-jvm.properties";
-    //                File cassandraJvmPropsFile = new File(newConfDir, cassandraJvmProps);
-    //                String log4j = "log4j-server.properties";
-    //                File internodeAuthConfFile = new File(oldConfDir, "rhq-storage-auth.conf");
-    //
-    ////                replaceFile(new File(oldConfDir, cassandraYaml), new File(newConfDir, cassandraYaml));
-    //                replaceFile(new File(oldConfDir, log4j), new File(newConfDir, log4j));
-    //
-    //                if (cassandraEnvFile.exists()) {
-    //                    // Then this is an RHQ 4.8 install
-    //                    jmxPort = parseJmxPortFromCassandrEnv(cassandraEnvFile);
-    //                    Properties jvmProps = new Properties();
-    //                    jvmProps.load(new FileInputStream(cassandraJvmPropsFile));
-    //                    PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(
-    //                        cassandraJvmPropsFile.getAbsolutePath());
-    //                    jvmProps.setProperty("jmx_port", Integer.toString(jmxPort));
-    //
-    //                    propertiesUpdater.update(jvmProps);
-    //
-    //                } else {
-    //                    jmxPort = parseJmxPort(cassandraJvmPropsFile);
-    //                    replaceFile(new File(oldConfDir, cassandraJvmProps), cassandraJvmPropsFile);
-    //                }
-    //
-    //                if (internodeAuthConfFile.exists()) {
-    //                    replaceFile(internodeAuthConfFile, new File(newConfDir, internodeAuthConfFile.getName()));
-    //                }
-    //
-    //                File yamlFile = new File(newConfDir, "cassandra.yaml");
-    //                ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
-    //                yamlEditor.load();
-    //
-    //                hostname = yamlEditor.getListenAddress();
-    //                nativeTransportPort = yamlEditor.getNativeTransportPort();
-    //                storagePort = yamlEditor.getStoragePort();
-    //                commitlogDir = yamlEditor.getCommitLogDirectory();
-    //                dataDirs = yamlEditor.getDataFileDirectories();
-    //                savedCachesDir = yamlEditor.getSavedCachesDirectory();
                 } else {
                     installerInfo = install(cmdLine);
-    //                if (cmdLine.hasOption("dir")) {
-    //                    File basedir = new File(cmdLine.getOptionValue("dir"));
-    //                    deploymentOptions.setBasedir(basedir.getAbsolutePath());
-    //                }
-    //
-    //                if (cmdLine.hasOption("n")) {
-    //                    hostname = InetAddress.getByName(cmdLine.getOptionValue("n")).getHostAddress();
-    //                } else {
-    //                    hostname = InetAddress.getLocalHost().getHostAddress();
-    //                }
-    //                deploymentOptions.setListenAddress(hostname);
-    //                deploymentOptions.setRpcAddress(hostname);
-    //
-    //                String seeds = cmdLine.getOptionValue("seeds", hostname);
-    //                deploymentOptions.setSeeds(seeds);
-    //
-    //                commitlogDir = cmdLine.getOptionValue("commitlog", defaultCommitLogDir);
-    //                dataDirs = new ArrayList<String>();
-    //                dataDirs.add(cmdLine.getOptionValue("data", defaultDataDir));
-    //                savedCachesDir = cmdLine.getOptionValue("saved-caches", defaultSavedCachesDir);
-    //
-    //                File commitLogDirFile = new File(commitlogDir);
-    //                File dataDirFile = new File(dataDirs.get(0));
-    //                File savedCachesDirFile = new File(savedCachesDir);
-    //
-    //                boolean verifyDataDirsEmpty = Boolean.valueOf(cmdLine.getOptionValue(VERIFY_DATA_DIRS_EMPTY, "true"));
-    //                if (verifyDataDirsEmpty) {
-    //                    // validate the three data directories are empty - if they are not, we are probably stepping on
-    //                    // another storage node
-    //                    if (!isDirectoryEmpty(commitLogDirFile)) {
-    //                        log.error("Commitlog directory is not empty. It should not exist for a new Storage Node ["
-    //                            + commitLogDirFile.getAbsolutePath() + "]");
-    //                        return STATUS_DATA_DIR_NOT_EMPTY;
-    //                    }
-    //                    if (!isDirectoryEmpty(dataDirFile)) {
-    //                        log.error("Data directory is not empty. It should not exist for a new Storage Node ["
-    //                            + dataDirFile.getAbsolutePath() + "]");
-    //                        return STATUS_DATA_DIR_NOT_EMPTY;
-    //                    }
-    //                    if (!isDirectoryEmpty(savedCachesDirFile)) {
-    //                        log.error("Saved caches directory is not empty. It should not exist for a new Storage Node ["
-    //                            + savedCachesDirFile.getAbsolutePath() + "]");
-    //                        return STATUS_DATA_DIR_NOT_EMPTY;
-    //                    }
-    //                }
-    //
-    //                jmxPort = getPort(cmdLine, "jmx-port", defaultJmxPort);
-    //                nativeTransportPort = getPort(cmdLine, "client-port", defaultNativeTransportPort);
-    //                storagePort = getPort(cmdLine, "storage-port", defaultStoragePort);
-    //
-    //                deploymentOptions.setCommitLogDir(commitlogDir);
-    //                // TODO add support for specifying multiple dirs
-    //                deploymentOptions.setDataDir(dataDirs.get(0));
-    //                deploymentOptions.setSavedCachesDir(savedCachesDir);
-    //                deploymentOptions.setLogFileName(logFile.getPath());
-    //                deploymentOptions.setLoggingLevel("INFO");
-    //                deploymentOptions.setRpcPort(rpcPort);
-    //                deploymentOptions.setJmxPort(jmxPort);
-    //                deploymentOptions.setNativeTransportPort(nativeTransportPort);
-    //                deploymentOptions.setStoragePort(storagePort);
-    //                deploymentOptions.setSslStoragePort(getPort(cmdLine, "ssl-storage-port", sslStoragePort));
-    //
-    //                // The out of box default for native_transport_max_threads is 128. We default
-    //                // to 64 for dev/test environments so we need to update it here.
-    //                deploymentOptions.setNativeTransportMaxThreads(128);
-    //
-    //                // TODO set defaults for read/write/range timeouts
-    //
-    //                deploymentOptions.setHeapSize(cmdLine.getOptionValue("heap-size", defaultHeapSize));
-    //                deploymentOptions.setHeapNewSize(cmdLine.getOptionValue("heap-new-size", defaultHeapNewSize));
-    //
-    //                if (cmdLine.hasOption("stack-size")) {
-    //                    deploymentOptions.setStackSize(cmdLine.getOptionValue("stack-size"));
-    //                }
-    //
-    //                deploymentOptions.load();
-    //
-    //                List<String> errors = new ArrayList<String>();
-    //                checkPerms(options.getOption("saved-caches"), savedCachesDir, errors);
-    //                checkPerms(options.getOption("commitlog"), commitlogDir, errors);
-    //                checkPerms(options.getOption("data"), dataDirs.get(0), errors);
-    //
-    //                if (!errors.isEmpty()) {
-    //                    log.error("Problems have been detected with one or more of the directories in which the storage "
-    //                        + "node will need to store data");
-    //                    for (String error : errors) {
-    //                        log.error(error);
-    //                    }
-    //                    log.error("The storage installer will now exit due to previous errors.");
-    //                    return STATUS_INVALID_FILE_PERMISSIONS;
-    //                }
-    //
-    //                Deployer deployer = new Deployer();
-    //                deployer.setDeploymentOptions(deploymentOptions);
-    //                storageBasedir.mkdirs();
-    //                deployer.unzipDistro();
-    //                deployer.applyConfigChanges();
-    //                deployer.updateFilePerms();
-    //
-    //                Set<InetAddress> addresses = new HashSet<InetAddress>();
-    //                addresses.add(InetAddress.getByName(hostname));
-    //                deployer.updateStorageAuthConf(addresses);
                 }
             } catch (StorageInstallerException e) {
                 log.error("The storage installer will exit due to previous errors", e);
@@ -646,7 +471,7 @@ public class StorageInstaller {
             File cassandraJvmPropsFile = new File(newConfDir, "cassandra-jvm.properties");
 
             installerInfo.basedir = storageBasedir;
-            installerInfo.logFile = new File(newConfDir, "log4j-server.properties");
+            installerInfo.logFile = new File(logDir, "rhq-storage.log");
 
             deploymentOptions.setBasedir(storageBasedir.getAbsolutePath());
             deploymentOptions.setLogFileName(installerInfo.logFile.getPath());

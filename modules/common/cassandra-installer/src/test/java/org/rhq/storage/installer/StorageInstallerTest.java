@@ -158,7 +158,16 @@ public class StorageInstallerTest {
         File newLog4JFile = new File(confDir, "log4j-server.properties");
         assertTrue(newLog4JFile.exists(), newLog4JFile + " does not exist");
 
-        assertFalse(new File(confDir, "cassandra-env.sh").exists(), "cassandra-env.sh should not be used after RHQ 4.8.0");
+        File logsDir = new File(serverDir, "logs");
+        File logFile = new File(logsDir, "rhq-storage.log");
+
+        Properties log4jProps = new Properties();
+        log4jProps.load(new FileInputStream(newLog4JFile));
+        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), logFile.getAbsolutePath(),
+            "The log file is wrong");
+
+        assertFalse(new File(confDir, "cassandra-env.sh").exists(),
+            "cassandra-env.sh should not be used after RHQ 4.8.0");
 
         File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
         Properties properties = new Properties();

@@ -721,7 +721,7 @@ rhq.storage.password=${rhq.storage.password}
 # installation will have no effect.
 rhq.storage.nodes=
 
-# The list of ports used by storages nodes to communiticate with each other
+# The ports used by storage nodes to communicate with each other
 # and used by the RHQ server(s) to communicate with the cluster.
 # Both properties are required.
 #

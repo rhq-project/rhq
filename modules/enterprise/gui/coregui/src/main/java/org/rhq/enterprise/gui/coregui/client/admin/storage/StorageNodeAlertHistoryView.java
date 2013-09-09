@@ -75,7 +75,7 @@ public class StorageNodeAlertHistoryView extends AlertHistoryView {
     public StorageNodeAlertHistoryView(String tableTitle, int[] resourceIds, HTMLFlow header, int storageNodeId) {
         super(tableTitle, resourceIds);
         this.header = header;
-        this.storageNodeId = -1;
+        this.storageNodeId = storageNodeId;
         this.allStorageNodes = storageNodeId == -1;
         storageNodeIdToAddressMap = new HashMap<Integer, String>();
     }

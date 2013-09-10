@@ -90,10 +90,6 @@ public class DataMigratorRunner {
         .create();
     private final Option cassandraPortOption = OptionBuilder.withLongOpt("cassandra-port").hasArg()
         .withType(Integer.class).withDescription("Cassandra native binary protocol port (default: 9142)").create();
-    private final Option cassandraCompressionOption = OptionBuilder.withLongOpt("cassandra-compression")
-        .hasOptionalArg().withType(Boolean.class)
-        .withDescription("Enable compression for communication with Cassandra (default: true)")
-        .create();
 
     //SQL
     private final Option sqlUserOption = OptionBuilder.withLongOpt("sql-user").hasArg().withType(String.class)
@@ -232,7 +228,6 @@ public class DataMigratorRunner {
         options.addOption(cassandraPasswordOption);
         options.addOption(cassandraHostsOption);
         options.addOption(cassandraPortOption);
-        options.addOption(cassandraCompressionOption);
 
         options.addOption(sqlUserOption);
         options.addOption(sqlPasswordOption);
@@ -316,7 +311,6 @@ public class DataMigratorRunner {
         configuration.put(cassandraPasswordOption, "rhqadmin");
         configuration.put(cassandraHostsOption, new String[] { InetAddress.getLocalHost().getHostAddress() });
         configuration.put(cassandraPortOption, DEFAULT_CASSANDRA_PORT);
-        configuration.put(cassandraCompressionOption, true);
 
         //default SQL configuration
         configuration.put(sqlUserOption, "rhqadmin");
@@ -465,11 +459,6 @@ public class DataMigratorRunner {
             Integer cassandraPort = tryParseInteger(commandLine.getOptionValue(cassandraPortOption.getLongOpt()),
                 DEFAULT_CASSANDRA_PORT);
             configuration.put(cassandraPortOption, cassandraPort);
-        }
-
-        if (commandLine.hasOption(cassandraCompressionOption.getLongOpt())) {
-            boolean value = tryParseBoolean(commandLine.getOptionValue(cassandraCompressionOption.getLongOpt()), true);
-            configuration.put(cassandraCompressionOption, value);
         }
     }
 
@@ -666,16 +655,11 @@ public class DataMigratorRunner {
      * @throws Exception
      */
     private Session createCassandraSession() throws Exception {
-        Compression selectedCompression = Compression.NONE;
-        if ((Boolean) configuration.get(cassandraCompressionOption)) {
-            selectedCompression = Compression.SNAPPY;
-        }
-
         Cluster cluster = Cluster
             .builder()
             .addContactPoints((String[]) configuration.get(cassandraHostsOption))
             .withPort((Integer) configuration.get(cassandraPortOption))
-            .withCompression(selectedCompression)
+            .withCompression(Compression.NONE)
             .withoutMetrics()
             .withCredentials((String) configuration.get(cassandraUserOption),
                 (String) configuration.get(cassandraPasswordOption))

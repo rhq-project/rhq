@@ -86,18 +86,34 @@ public class StorageNodeOperationsHandlerBean implements StorageNodeOperationsHa
         if (log.isInfoEnabled()) {
             log.info("Announcing " + storageNode + " to storage node cluster.");
         }
-        List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
-            StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
-        List<StorageNode> allNodes = new ArrayList<StorageNode>(clusterNodes);
-        allNodes.add(storageNode);
+        try {
+            storageNode.setOperationMode(StorageNode.OperationMode.ANNOUNCE);
+            List<StorageNode> clusterNodes = entityManager.createNamedQuery(StorageNode.QUERY_FIND_ALL_BY_MODE,
+                StorageNode.class).setParameter("operationMode", StorageNode.OperationMode.NORMAL).getResultList();
+            List<StorageNode> allNodes = new ArrayList<StorageNode>(clusterNodes);
+            allNodes.add(storageNode);
 
-        for (StorageNode clusterNode : clusterNodes) {
-            clusterNode.setMaintenancePending(true);
+            for (StorageNode clusterNode : clusterNodes) {
+                clusterNode.setMaintenancePending(true);
+            }
+
+            announceStorageNode(subject, storageNode, clusterNodes.get(0), createPropertyListOfAddresses("addresses",
+                allNodes));
+        } catch (IndexOutOfBoundsException e) {
+            String msg = "Aborting storage node deployment due to unexpected error while announcing storage node at " +
+                storageNode.getAddress();
+            log.error(msg, e);
+            log.error("If this error occurred with a storage node that was deployed prior to installing the server, " +
+                "then this may indicate that the rhq.storage.nodes property in rhq-server.properties was not set " +
+                "correctly. All nodes deployed prior to server installation should be listed in the " +
+                "rhq.storage.nodes property. Please review the deployment documentation for additional details.");
+            logError(StorageNode.OperationMode.ANNOUNCE, msg, e);
+        } catch (Exception e) {
+            String msg = "Aborting storage node deployment due to unexpected error while announcing storage node at " +
+                storageNode.getAddress();
+            log.error(msg, e);
+            logError(StorageNode.OperationMode.ANNOUNCE, msg, e);
         }
-
-        announceStorageNode(subject, storageNode, clusterNodes.get(0), createPropertyListOfAddresses("addresses",
-            allNodes));
-
     }
 
     private void announceStorageNode(Subject subject, StorageNode newStorageNode, StorageNode clusterNode,

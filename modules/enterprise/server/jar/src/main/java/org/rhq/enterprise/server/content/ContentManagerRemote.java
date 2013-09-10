@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,8 +13,8 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.server.content;
 
@@ -63,7 +63,11 @@ public interface ContentManagerRemote {
     /**
      * Creates a new package version in the system. If the parent package (identified by the packageName parameter) does
      * not exist, it will be created. If a package version exists with the specified version ID, a new one will not be
-     * created and the existing package version instance will be returned.
+     * created and the existing package version instance will be returned.<br>
+     * <br>
+     * <strong>Use this method with caution:</strong> passing a content file as a byte array is memory hungry. Consider
+     * calling {@link #createPackageVersionWithDisplayVersion(org.rhq.core.domain.auth.Subject, String, int, String, String, Integer, String)}
+     * instead.
      *
      * @param subject        The logged in subject
      * @param packageName    parent package name; uniquely identifies the package under which this version goes
@@ -227,4 +231,42 @@ public interface ContentManagerRemote {
      * @return the package bytes
      */
     byte[] getPackageBytes(Subject subject, int resourceId, int installedPackageId);
+
+    /**
+     * Creates a temporary file for fragmented content upload.
+     *
+     * @return a temporary file handle
+     */
+    String createTemporaryContentHandle();
+
+    /**
+     * Saves the fragment in the temporary file denoted by <code>temporaryContentHandle</code>.
+     *
+     * The <code>fragment</code> bytes will be copied starting from the <code>off</code> index up to the minimum of
+     * <code>off+len</code> and <code>fragment.length</code>.
+     *
+     * @param temporaryContentHandle temporary file handle
+     * @param fragment fragment bytes
+     */
+    void uploadContentFragment(String temporaryContentHandle, byte[] fragment, int off, int len);
+
+    /**
+     * Creates a new package version in the system with content denoted by the <code>temporaryContentHandle</code>.
+     *
+     * Use this method instead of {@link #createPackageVersionWithDisplayVersion(org.rhq.core.domain.auth.Subject, String, int, String, String, Integer, byte[])}
+     * to avoid passing content files as byte array paramaters.<br>
+     * <br>
+     * Sample code:<br>
+     * <pre>
+     * String temporaryContentHandle = contentManager.createTemporaryContentHandle();
+     * while (... more bytes to send) {
+     *     contentManager.uploadContentFragment(temporaryContentHandle, ...);
+     * }
+     * PackageVersion pv = contentManager.createPackageVersionWithDisplayVersion(..., temporaryContentHandle);
+     * </pre>
+     *
+     * @see ContentManagerRemote#createPackageVersionWithDisplayVersion(org.rhq.core.domain.auth.Subject, String, int, String, String, Integer, byte[])
+     */
+    PackageVersion createPackageVersionWithDisplayVersion(Subject subject, String packageName, int packageTypeId,
+        String version, String displayVersion, Integer architectureId, String temporaryContentHandle);
 }

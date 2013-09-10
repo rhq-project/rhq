@@ -19,8 +19,10 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.common.graph;
 
 import java.util.Date;
+import java.util.HashMap;
 
 import com.google.gwt.i18n.client.DateTimeFormat;
+import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.FormErrorOrientation;
 import com.smartgwt.client.types.SelectionType;
 import com.smartgwt.client.types.VerticalAlignment;
@@ -36,11 +38,19 @@ import com.smartgwt.client.widgets.form.fields.DateItem;
 import com.smartgwt.client.widgets.form.fields.RowSpacerItem;
 import com.smartgwt.client.widgets.form.fields.TimeItem;
 import com.smartgwt.client.widgets.layout.HLayout;
+import com.smartgwt.client.widgets.menu.IMenuButton;
+import com.smartgwt.client.widgets.menu.Menu;
+import com.smartgwt.client.widgets.menu.MenuItem;
+import com.smartgwt.client.widgets.menu.events.MenuItemClickEvent;
 import com.smartgwt.client.widgets.toolbar.ToolStrip;
 
+import org.rhq.core.domain.auth.Subject;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.Messages;
+import org.rhq.enterprise.gui.coregui.client.UserSessionManager;
 import org.rhq.enterprise.gui.coregui.client.components.measurement.AbstractMeasurementRangeEditor;
+import org.rhq.enterprise.gui.coregui.client.components.measurement.RefreshIntervalMenu;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
 import org.rhq.enterprise.gui.coregui.client.util.message.Message;
@@ -60,12 +70,12 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
 
     private MeasurementUserPreferences measurementUserPreferences;
     private Refreshable d3GraphListView;
-    private static final Messages MSG = CoreGUI.getMessages();
     private Label dateRangeLabel;
     private static final DateTimeFormat fmt = DateTimeFormat.getFormat(MSG.common_buttonbar_datetime_format());
     private DateTimeButtonBarClickHandler dateTimeButtonBarClickHandler;
     private AbstractMeasurementRangeEditor.MetricRangePreferences prefs;
     final private ButtonBarDateTimeRangeEditor self;
+    private RefreshIntervalMenu refreshIntervalMenu;
 
     public ButtonBarDateTimeRangeEditor(MeasurementUserPreferences measurementUserPrefs,
         Refreshable d3GraphListView) {
@@ -122,9 +132,12 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
         toolStrip.addMember(dateRangeLabel);
 
         toolStrip.addSpacer(20);
+        refreshIntervalMenu = new RefreshIntervalMenu();
+        toolStrip.addMember(refreshIntervalMenu);
 
         addMember(toolStrip);
     }
+
 
     public void redrawGraphs() {
         d3GraphListView.refreshData();

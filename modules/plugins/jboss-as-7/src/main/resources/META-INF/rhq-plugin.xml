@@ -855,7 +855,7 @@
     <!ENTITY sharedThreadPoolResourceConfig '
      <c:simple-property name="allow-core-timeout" required="false" type="boolean" readOnly="false" defaultValue="false" displayName="Allow Core Timeout" description="Whether core threads may time out. The default value is false."/>
      <c:simple-property name="core-threads:expr" required="false" type="integer" readOnly="false" displayName="Core Threads" description="The core thread pool size which is smaller than the maximum pool size. If undefined, the core thread pool size is the same as the maximum thread pool size."/>
-     <c:simple-property name="handoff-executor:expr" displayName="Handoff Executor" required="false" type="string" readOnly="false" description="An executor to delegate tasks to in the event that a task cannot be accepted. If not specified, tasks that cannot be accepted will be silently discarded."/>
+     <c:simple-property name="handoff-executor" displayName="Handoff Executor" required="false" type="string" readOnly="false" description="An executor to delegate tasks to in the event that a task cannot be accepted. If not specified, tasks that cannot be accepted will be silently discarded."/>
 '>
 
     <!ENTITY threadPoolTemplateResourceConfig '

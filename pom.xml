@@ -942,6 +942,13 @@
          <artifactId>snakeyaml</artifactId>
          <version>${cassandra.snakeyaml.version}</version>
       </dependency>
+
+      <!-- BZ 987652 : explicitly set jboss-ejb-client version as used by EAP 6.1.1.GA -->
+      <dependency>
+         <groupId>org.jboss</groupId>
+         <artifactId>jboss-ejb-client</artifactId>
+         <version>${jboss.ejb.client.version}</version>
+      </dependency>
   </dependencies>
 
   </dependencyManagement>

@@ -199,7 +199,7 @@ public class AlertTemplateManagerBean implements AlertTemplateManagerLocal {
                     false);
             } catch (Throwable t) {
                 throw new AlertDefinitionCreationException("Failed to create child AlertDefinition for Resource[id="
-                    + resourceId + "] with template " + template.toSimpleString());
+                    + resourceId + "] with template " + template.toSimpleString(), t);
             }
         }
     }

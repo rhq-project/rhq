@@ -24,6 +24,7 @@ import java.util.LinkedHashMap;
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.DSRequest;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.form.DynamicForm;
 import com.smartgwt.client.widgets.form.fields.SelectItem;
 import com.smartgwt.client.widgets.form.fields.TextItem;
@@ -46,13 +47,19 @@ import org.rhq.enterprise.gui.coregui.client.util.RPCDataSource;
 public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
 
     private BundleGWTServiceAsync bundleService = GWTServiceLookup.getBundleService();
+    private boolean canAssign;
+    private boolean canUnassign;
 
     public BundleSelector() {
         super();
     }
 
-    public BundleSelector(ListGridRecord[] initiallyAssigned, boolean isReadOnly) {
-        super(isReadOnly);
+    public BundleSelector(ListGridRecord[] initiallyAssigned, boolean canAssign, boolean canUnassign) {
+        super(!(canAssign || canUnassign));
+
+        this.canAssign = canAssign;
+        this.canUnassign = canUnassign;
+
         setAssigned(initiallyAssigned);
     }
 
@@ -111,4 +118,63 @@ public class BundleSelector extends AbstractSelector<Bundle, BundleCriteria> {
             return result;
         }
     }
+
+    // override to make sure the user doesn't unassign bundles from the group if he has no perms to do so
+    @Override
+    public void removeSelectedRows() {
+        if (canUnassign || null == this.initialSelection) {
+            super.removeSelectedRows();
+            return;
+        }
+
+        // only allow if removing rows not in the initial selection
+        String selectorKey = getSelectorKey();
+        for (ListGridRecord r : this.initialSelection) {
+            String initialKey = r.getAttribute(selectorKey);
+            boolean found = false;
+            for (ListGridRecord selectedAssignedRecord : this.assignedGrid.getSelectedRecords()) {
+                if (initialKey.equals(selectedAssignedRecord.getAttribute(selectorKey))) {
+                    found = true;
+                    break;
+                }
+            }
+            if (found) {
+                SC.warn(MSG.view_bundleGroup_unassignFailPerm());
+                return;
+            }
+        }
+
+        super.removeSelectedRows();
+    }
+
+    // override to make sure the user doesn't assign bundles to the group if he has no perms to do so
+    @Override
+    public void addSelectedRows() {
+        if (canAssign) {
+            super.addSelectedRows();
+            return;
+        }
+
+        // only allow if assigning rows in the initial selection
+        String selectorKey = getSelectorKey();
+        for (ListGridRecord r : this.availableGrid.getSelectedRecords()) {
+            String selectedAvailableKey = r.getAttribute(selectorKey);
+            boolean found = false;
+            if (null != this.initialSelection) {
+                for (ListGridRecord initialRecord : this.initialSelection) {
+                    if (selectedAvailableKey.equals(initialRecord.getAttribute(selectorKey))) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            if (!found) {
+                SC.warn(MSG.view_bundleGroup_assignFailPerm());
+                return;
+            }
+        }
+
+        super.addSelectedRows();
+    }
+
 }

@@ -220,6 +220,21 @@ public class AuthorizationManagerBean implements AuthorizationManagerLocal {
 
     @Override
     @SuppressWarnings("unchecked")
+    public Set<Permission> getBundleGroupPermissions(Subject subject, int bundleGroupId) {
+        Query query = entityManager.createNamedQuery(Subject.QUERY_GET_PERMISSIONS_BY_BUNDLE_GROUP_ID);
+        query.setParameter("subject", subject);
+        query.setParameter("bundleGroupId", bundleGroupId);
+        List<Permission> intermediate = query.getResultList();
+        Set<Permission> results = new HashSet<Permission>();
+        for (Permission permission : intermediate) {
+            results.add(permission);
+        }
+
+        return results;
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
     public boolean hasBundlePermission(Subject subject, Permission permission, Collection<Integer> bundleIds) {
         if (isSystemSuperuser(subject)) {
             return true;

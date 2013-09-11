@@ -36,6 +36,8 @@ import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.ImageManager;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoadedListener;
+import org.rhq.enterprise.gui.coregui.client.PermissionsLoader;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.bundle.BundleSelector;
 import org.rhq.enterprise.gui.coregui.client.components.form.AbstractRecordEditor;
@@ -54,6 +56,10 @@ public class BundleGroupEditView extends AbstractRecordEditor<BundleGroupsDataSo
     private Tab bundlesTab;
     private BundleSelector bundleSelector;
     private Set<Permission> globalPermissions;
+    private int permissionCheckBundleGroupId = 0;
+    private boolean canManage;
+    private boolean canAssign;
+    private boolean canUnassign;
 
     public BundleGroupEditView(Set<Permission> globalPermissions, int bundleGroupId) {
         super(new BundleGroupsDataSource(), bundleGroupId, MSG.common_title_bundleGroups(), HEADER_ICON);
@@ -62,10 +68,46 @@ public class BundleGroupEditView extends AbstractRecordEditor<BundleGroupsDataSo
     }
 
     @Override
-    public void renderView(ViewPath viewPath) {
+    public void renderView(final ViewPath viewPath) {
+        final int bundleGroupId = Integer.parseInt(viewPath.getCurrent().getPath());
+
+        // if we have already determined permissions for this bundle, just proceed
+        if (permissionCheckBundleGroupId == bundleGroupId) {
+            authorizedRenderView(bundleGroupId, viewPath);
+            return;
+        }
+
+        // check necessary global permissions
+        canManage = globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS);
+        canAssign = canManage;
+        canUnassign = canManage;
+
+        // If the user has global perms to manage bundle groups then proceed, otherwise, we
+        // need to see what bundle group level perms he has.
+        if (canManage) {
+            authorizedRenderView(bundleGroupId, viewPath);
+
+        } else {
+            new PermissionsLoader().loadBundleGroupPermissions(bundleGroupId, new PermissionsLoadedListener() {
+                @Override
+                public void onPermissionsLoaded(Set<Permission> bundleGroupPermissions) {
+                    canAssign = bundleGroupPermissions.contains(Permission.CREATE_BUNDLES_IN_GROUP)
+                        || bundleGroupPermissions.contains(Permission.ASSIGN_BUNDLES_TO_GROUP);
+                    canUnassign = bundleGroupPermissions.contains(Permission.DELETE_BUNDLES_FROM_GROUP)
+                        || bundleGroupPermissions.contains(Permission.UNASSIGN_BUNDLES_FROM_GROUP);
+
+                    authorizedRenderView(bundleGroupId, viewPath);
+                }
+            });
+        }
+    }
+
+    private void authorizedRenderView(final int bundleGroupId, final ViewPath viewPath) {
+        permissionCheckBundleGroupId = bundleGroupId;
+
         super.renderView(viewPath);
 
-        init(!globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS));
+        init(!(canManage || canAssign || canUnassign));
     }
 
     @Override
@@ -97,6 +139,11 @@ public class BundleGroupEditView extends AbstractRecordEditor<BundleGroupsDataSo
         return contentPane;
     }
 
+    @Override
+    protected boolean isFormReadOnly() {
+        return !canManage;
+    }
+
     private Tab buildBundlesTab(TabSet tabSet) {
         Tab tab = new Tab(MSG.common_title_bundles(), ImageManager.getBundleIcon());
         // NOTE: We will set the tab content to the bundle selector later, once the Bundle Group has been fetched.
@@ -118,8 +165,7 @@ public class BundleGroupEditView extends AbstractRecordEditor<BundleGroupsDataSo
         Record[] bundleRecords = record.getAttributeAsRecordArray(BundleGroupsDataSource.FIELD_BUNDLES);
         ListGridRecord[] bundleListGridRecords = toListGridRecordArray(bundleRecords);
 
-        this.bundleSelector = new BundleSelector(bundleListGridRecords,
-            !globalPermissions.contains(Permission.MANAGE_BUNDLE_GROUPS));
+        this.bundleSelector = new BundleSelector(bundleListGridRecords, canAssign, canUnassign);
         this.bundleSelector.addAssignedItemsChangedHandler(new AssignedItemsChangedHandler() {
             public void onSelectionChanged(AssignedItemsChangedEvent event) {
                 BundleGroupEditView.this.onItemChanged();

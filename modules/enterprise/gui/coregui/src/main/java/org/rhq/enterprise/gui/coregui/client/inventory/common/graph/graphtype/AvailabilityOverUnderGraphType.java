@@ -24,7 +24,6 @@ import java.util.List;
 import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.measurement.MeasurementUnits;
 import org.rhq.core.domain.resource.group.composite.ResourceGroupAvailability;
-import org.rhq.core.domain.resource.group.composite.ResourceGroupComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.Messages;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.graph.AvailabilityGraphType;
@@ -67,7 +66,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
             // loop through the avail intervals
             for (Availability availability : availabilityList) {
                 sb.append("{ \"availType\":\"" + availability.getAvailabilityType() + "\", ");
-                sb.append(" \"availTypeMessage\":\"" + availability.getAvailabilityType() + "\", ");
+                sb.append(" \"availTypeMessage\":\"" + getAvailabilityTypeMessage(availability) + "\", ");
                 sb.append(" \"availStart\":" + availability.getStartTime() + ", ");
                 // last record will be null
                 long endTime = availability.getEndTime() != null ? availability.getEndTime() : (new Date()).getTime();
@@ -84,13 +83,8 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
         } else if (null != groupAvailabilityList) {
             // loop through the group avail down intervals
             for (ResourceGroupAvailability groupAvailability : groupAvailabilityList) {
-                // allows substitution for situations like WARN=MIXED for easier terminology
-                String availabilityTypeMessage = (groupAvailability.getGroupAvailabilityType()
-                    .equals(ResourceGroupComposite.GroupAvailabilityType.WARN)) ? MSG
-                    .chart_hover_availability_type_warn() : groupAvailability.getGroupAvailabilityType().name();
-
                 sb.append("{ \"availType\":\"" + groupAvailability.getGroupAvailabilityType() + "\", ");
-                sb.append(" \"availTypeMessage\":\"" + availabilityTypeMessage + "\", ");
+                sb.append(" \"availTypeMessage\":\"" + getGroupAvailabilityTypeMessage(groupAvailability) + "\", ");
                 sb.append(" \"availStart\":" + groupAvailability.getStartTime() + ", ");
                 // last record will be null
                 long endTime = groupAvailability.getEndTime() != null ? groupAvailability.getEndTime() : (new Date())
@@ -109,6 +103,37 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
         sb.append("]");
         Log.debug(sb.toString());
         return sb.toString();
+    }
+
+    private String getAvailabilityTypeMessage(Availability availability) {
+        switch (availability.getAvailabilityType()) {
+        case UP:
+            return MSG.common_status_avail_up();
+        case DOWN:
+            return MSG.common_status_avail_down();
+        case DISABLED:
+            return MSG.common_status_avail_disabled();
+        case UNKNOWN:
+        default:
+            return MSG.common_status_avail_unknown();
+        }
+    }
+
+    private String getGroupAvailabilityTypeMessage(ResourceGroupAvailability groupAvailability) {
+        switch (groupAvailability.getGroupAvailabilityType()) {
+        case UP:
+            return MSG.common_status_avail_up();
+        case DISABLED:
+            return MSG.common_status_avail_disabled();
+        case EMPTY:
+            return MSG.common_status_avail_group_empty();
+        case WARN:
+            // replace with MIXED for better presentation
+            return MSG.common_status_avail_group_mixed();
+        case DOWN:
+        default:
+            return MSG.common_status_avail_down();
+        }
     }
 
     /**
@@ -365,7 +390,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
     }
 
     public String getChartHoverAvailabilityLabel() {
-        return MSG.chart_hover_availability_label();
+        return MSG.common_title_availability();
     }
 
     public String getChartHoverStartLabel() {
@@ -373,15 +398,15 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
     }
 
     public String getAvailChartDownLabel() {
-        return MSG.avail_chart_down_label();
+        return MSG.common_status_avail_down();
     }
 
     public String getAvailChartUpLabel() {
-        return MSG.avail_chart_up_label();
+        return MSG.common_status_avail_up();
     }
 
     public String getAvailChartTitleLabel() {
-        return MSG.avail_chart_title_label();
+        return MSG.common_title_availability();
     }
 
     public String getChartHoverBarLabel() {

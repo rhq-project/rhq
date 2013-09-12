@@ -3,6 +3,8 @@
 # chkconfig: 2345 93 25
 # description: Starts and stops the JBoss ON agent
 #
+# This file is not packaged as part of standard RHQ. It is available for optional EC2 AMI packaging.
+#
 # processname: java
 # pidfile: /var/run/rhq-agent.pid
 

@@ -903,6 +903,22 @@
         </resource-configuration>
 '>
 
+    <!ENTITY ejb3BeanStats '
+    <metric property="peak-concurrent-invocations" category="performance" dataType="measurement" displayType="summary"
+            measurementType="dynamic" description="Peak concurrent invocations."
+            displayName="Peak concurrent invocations"/>
+    <metric property="invocations" category="performance" dataType="measurement" displayType="summary"
+            measurementType="trendsup" description="Number of invocations processed." displayName="Invocations"/>
+    <metric property="wait-time" category="performance" dataType="measurement" displayType="summary"
+            measurementType="dynamic" description="Time spent waiting to obtain an instance." displayName="Wait Time"
+            units="milliseconds"/>
+    <metric property="execution-time" category="performance" dataType="measurement" displayType="summary"
+            measurementType="trendsup" description="Time spent within a bean method" displayName="Execution Time"
+            units="milliseconds"/>
+    <metric property="__calltime:execution-time" category="performance" dataType="calltime" displayType="summary"
+            description="The execution times of individual methods on a bean" displayName="Method Execution Time"
+            units="milliseconds" destinationType="Method Name"/>
+'>
     ]>
 <plugin name="&pluginName;"
         displayName="JBoss Application Server 7.x"
@@ -971,7 +987,6 @@
         <c:simple-property name="operationResult"/>
       </results>
     </operation>
-
 
     <metric property="_internal:mgmtRequests" category="performance" dataType="measurement" defaultInterval="120000"
             displayType="summary" measurementType="trendsup" description="Number of requests sent to the controller"
@@ -2969,6 +2984,7 @@
         <c:simple-property name="default-slsb-instance-pool" required="false" type="string" readOnly="true" description="Name of the default stateless bean instance pool, which will be applicable to all stateless EJBs, unless overridden at the deployment or bean level"/>
         <c:simple-property name="default-stateful-bean-access-timeout:expr" displayName="Default Stateful Bean Access Timeout" required="false" type="string" readOnly="true" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
         <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="true" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
+        <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="true" defaultValue="false" description="If set to true, enable the collection of invocation statistics."/>
       </resource-configuration>
 
       <service name="EJB3 Thread Pool (Managed Server)"
@@ -5803,6 +5819,7 @@
         <c:simple-property name="default-slsb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default stateless bean instance pool, which will be applicable to all stateless EJBs, unless overridden at the deployment or bean level"/>
         <c:simple-property name="default-stateful-bean-access-timeout:expr" displayName="Default Stateful Bean Access Timeout" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
         <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="false" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
+        <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="If set to true, enable the collection of invocation statistics."/>
       </resource-configuration>
 
       <service name="EJB3 Thread Pool (Profile)"
@@ -9798,7 +9815,7 @@
     </plugin-configuration>
 
     <service name="Message Driven Bean Runtime"
-             class="BaseComponent"
+             class="Ejb3BeanRuntimeComponent"
              discovery="SubsystemDiscovery"
              description="Bean component included in the deployment.">
 
@@ -9811,6 +9828,7 @@
       <metric property="pool-current-size" description="The current size of the pool."/>
       <metric property="pool-max-size" description="The maximum size of the pool."/>
       <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+      &ejb3BeanStats;
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
@@ -9843,13 +9861,15 @@
     </service>
 
     <service name="Singleton Bean Runtime"
-             class="BaseComponent"
+             class="Ejb3BeanRuntimeComponent"
              discovery="SubsystemDiscovery"
              description="Singleton bean component included in the deployment.">
 
       <plugin-configuration>
         <c:simple-property name="path" default="singleton-bean" readOnly="true"/>
       </plugin-configuration>
+
+      &ejb3BeanStats;
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
@@ -9882,7 +9902,7 @@
     </service>
 
     <service name="Stateless Session Bean Runtime"
-             class="BaseComponent"
+             class="Ejb3BeanRuntimeComponent"
              discovery="SubsystemDiscovery"
              description="Stateless session bean component included in the deployment.">
 
@@ -9895,6 +9915,7 @@
       <metric property="pool-current-size" description="The current size of the pool."/>
       <metric property="pool-max-size" description="The maximum size of the pool."/>
       <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+      &ejb3BeanStats;
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
@@ -9927,7 +9948,7 @@
     </service>
 
     <service name="Entity Bean Runtime"
-             class="BaseComponent"
+             class="Ejb3BeanRuntimeComponent"
              discovery="SubsystemDiscovery"
              description="Entity bean component included in the deployment.">
 
@@ -9940,6 +9961,7 @@
       <metric property="pool-current-size" description="The current size of the pool."/>
       <metric property="pool-max-size" description="The maximum size of the pool."/>
       <metric property="pool-remove-count" description="The number of bean instances that have been removed."/>
+      &ejb3BeanStats;
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
@@ -9952,13 +9974,15 @@
     </service>
 
     <service name="Stateful Session Bean Runtime"
-             class="BaseComponent"
+             class="Ejb3BeanRuntimeComponent"
              discovery="SubsystemDiscovery"
              description="Stateful session bean component included in the deployment.">
 
       <plugin-configuration>
         <c:simple-property name="path" default="stateful-session-bean" readOnly="true"/>
       </plugin-configuration>
+
+      &ejb3BeanStats;
 
       <resource-configuration>
         <c:simple-property name="component-class-name" required="false" type="string" readOnly="true" description="The component&apos;s class name."/>
@@ -11005,6 +11029,7 @@
       <c:simple-property name="default-slsb-instance-pool" required="false" type="string" readOnly="false" description="Name of the default stateless bean instance pool, which will be applicable to all stateless EJBs, unless overridden at the deployment or bean level"/>
       <c:simple-property name="default-stateful-bean-access-timeout:expr" displayName="Default Stateful Bean Access Timeout" required="false" type="string" readOnly="false" defaultValue="5000" description="The default access timeout for stateful beans. The default value is 5000."/>
       <c:simple-property name="in-vm-remote-interface-invocation-pass-by-value" required="false" type="boolean" readOnly="false" defaultValue="true" description="If set to false, the parameters to invocations on remote interface of an EJB, will be passed by reference. Else, the parameters will be passed by value. The default value is true."/>
+      <c:simple-property name="enable-statistics" required="false" type="boolean" readOnly="false" defaultValue="false" description="If set to true, enable the collection of invocation statistics."/>
     </resource-configuration>
 
     <service name="EJB3 Thread Pool"

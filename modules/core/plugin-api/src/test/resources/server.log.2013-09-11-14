@@ -1,0 +1,2 @@
+19:14:23,717 INFO  [org.rhq.enterprise.server.storage.StorageClusterMonitor] (http-/0.0.0.0:7080-2) Storage node at 127.0.0.2 is down
+19:14:30,283 INFO  [org.rhq.enterprise.server.storage.StorageClusterMonitor] (Scheduled Tasks-0) Storage node at 127.0.0.2 is up

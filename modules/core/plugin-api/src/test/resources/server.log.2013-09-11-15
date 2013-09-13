@@ -1,0 +1,54 @@
+20:15:52,304 INFO  [org.apache.coyote.http11] (MSC service thread 1-5) JBWEB003075: Coyote HTTP/1.1 pausing on: http-/0.0.0.0:7080
+20:15:52,309 INFO  [org.apache.coyote.http11] (MSC service thread 1-5) JBWEB003077: Coyote HTTP/1.1 stopping on : http-/0.0.0.0:7080
+20:15:52,328 INFO  [org.apache.coyote.http11] (MSC service thread 1-8) JBWEB003075: Coyote HTTP/1.1 pausing on: http-/0.0.0.0:7443
+20:15:52,330 INFO  [org.apache.coyote.http11] (MSC service thread 1-8) JBWEB003077: Coyote HTTP/1.1 stopping on : http-/0.0.0.0:7443
+20:15:52,388 INFO  [org.jboss.web] (ServerService Thread Pool -- 100) JBAS018224: Unregister web context: /coregui
+20:15:52,404 INFO  [org.jboss.jaxr] (MSC service thread 1-15) JBAS014002: UnBinding JAXR ConnectionFactory: java:jboss/jaxr/ConnectionFactory
+20:15:52,416 INFO  [org.jboss.as.messaging] (ServerService Thread Pool -- 95) JBAS011605: Unbound messaging object to jndi name java:/ConnectionFactory
+20:15:52,423 INFO  [org.rhq.helpers.rtfilter.filter.RtFilter] (ServerService Thread Pool -- 100) -- Filter destroy: 3326 requests processed (hashCode=1244460022).
+20:15:52,427 INFO  [org.rhq.enterprise.server.core.ShutdownListener] (ServerService Thread Pool -- 100) Shutdown listener has been told we are shutting down - starting to clean up now...
+20:15:52,428 INFO  [org.rhq.enterprise.server.core.ShutdownListener] (ServerService Thread Pool -- 100) Shutting down the scheduler gracefully - currently running jobs will be allowed to finish...
+20:15:52,429 INFO  [org.quartz.core.QuartzScheduler] (ServerService Thread Pool -- 100) Scheduler RHQScheduler_$_localhost1378934014799 shutting down.
+20:15:52,429 INFO  [org.quartz.core.QuartzScheduler] (ServerService Thread Pool -- 100) Scheduler RHQScheduler_$_localhost1378934014799 paused.
+20:15:52,434 INFO  [org.quartz.core.QuartzScheduler] (ServerService Thread Pool -- 100) Scheduler RHQScheduler_$_localhost1378934014799 shutdown complete.
+20:15:52,434 INFO  [org.rhq.enterprise.server.core.ShutdownListener] (ServerService Thread Pool -- 100) The scheduler has been shutdown and all jobs are done.
+20:15:52,463 INFO  [org.rhq.enterprise.server.core.ShutdownListener] (ServerService Thread Pool -- 100) Shutdown listener completed its shutdown tasks. It is safe to shutdown now.
+20:15:52,497 INFO  [org.jboss.web] (ServerService Thread Pool -- 106) JBAS018224: Unregister web context: /jboss-remoting-servlet-invoker
+20:15:52,501 INFO  [org.jboss.web] (ServerService Thread Pool -- 106) JBAS018224: Unregister web context: /rest-examples
+20:15:52,503 INFO  [org.jboss.web] (ServerService Thread Pool -- 107) JBAS018224: Unregister web context: /rest
+20:15:52,504 INFO  [org.rhq.helpers.rtfilter.filter.RtFilter] (ServerService Thread Pool -- 107) -- Filter destroy: 0 requests processed (hashCode=669970386).
+20:15:52,507 INFO  [org.jboss.web] (ServerService Thread Pool -- 107) JBAS018224: Unregister web context: /content
+20:15:52,519 INFO  [org.jboss.web] (ServerService Thread Pool -- 107) JBAS018224: Unregister web context: 
+20:15:52,520 INFO  [org.rhq.helpers.rtfilter.filter.RtFilter] (ServerService Thread Pool -- 107) -- Filter destroy: 1 requests processed (hashCode=487624251).
+20:15:52,564 INFO  [org.rhq.enterprise.server.plugin.pc.ServerPluginService] (ServerService Thread Pool -- 104) The server plugin service is now stopping - the master plugin container will be shutdown now
+20:15:52,573 INFO  [org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer] (ServerService Thread Pool -- 104) Master PC shutdown server plugin container for plugin type [Drift Plugin]
+20:15:52,579 INFO  [org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer] (ServerService Thread Pool -- 104) Master PC shutdown server plugin container for plugin type [Bundle Plugin]
+20:15:52,580 INFO  [org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer] (ServerService Thread Pool -- 104) Master PC shutdown server plugin container for plugin type [Content Plugin]
+20:15:52,587 INFO  [org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer] (ServerService Thread Pool -- 104) Master PC shutdown server plugin container for plugin type [Alert Plugin]
+20:15:52,587 INFO  [org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer] (ServerService Thread Pool -- 104) Master PC shutdown server plugin container for plugin type [Package Type Plugin]
+20:15:52,588 INFO  [org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer] (ServerService Thread Pool -- 104) Master PC shutdown server plugin container for plugin type [Generic Plugin]
+20:15:52,588 INFO  [org.quartz.core.QuartzScheduler] (ServerService Thread Pool -- 104) Scheduler RHQServerPluginsJobs_$_NON_CLUSTERED shutting down.
+20:15:52,588 INFO  [org.quartz.core.QuartzScheduler] (ServerService Thread Pool -- 104) Scheduler RHQServerPluginsJobs_$_NON_CLUSTERED paused.
+20:15:52,589 INFO  [org.quartz.core.QuartzScheduler] (ServerService Thread Pool -- 104) Scheduler RHQServerPluginsJobs_$_NON_CLUSTERED shutdown complete.
+20:15:52,589 INFO  [org.rhq.enterprise.server.plugin.pc.MasterServerPluginContainer] (ServerService Thread Pool -- 104) Master server plugin container has been shutdown
+20:15:52,681 INFO  [org.jboss.as.connector.deployment] (MSC service thread 1-8) JBAS010410: Unbound JCA ConnectionFactory [java:/JmsXA]
+20:15:52,685 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-1) JBAS010409: Unbound data source [java:jboss/datasources/NoTxRHQDS]
+20:15:52,697 INFO  [org.jboss.as.messaging] (ServerService Thread Pool -- 99) JBAS011605: Unbound messaging object to jndi name java:/queue/DriftChangesetQueue
+20:15:52,728 INFO  [org.jboss.as.jpa] (ServerService Thread Pool -- 97) JBAS011403: Stopping Persistence Unit Service 'rhq.ear/rhq-core-domain-ejb3.jar#rhqpu'
+20:15:52,729 INFO  [org.hornetq.ra] (MSC service thread 1-15) HQ151005: HornetQ resource adaptor stopped
+20:15:52,729 INFO  [org.jboss.as.connector.subsystems.datasources] (MSC service thread 1-12) JBAS010409: Unbound data source [java:jboss/datasources/RHQDS]
+20:15:52,731 WARN  [org.jboss.jca.core.connectionmanager.pool.strategy.PoolBySubject] (MSC service thread 1-10) IJ000615: Destroying active connection in pool: RHQDS (org.jboss.jca.adapters.jdbc.xa.XAManagedConnection@206a2106)
+20:15:52,731 WARN  [org.jboss.jca.core.connectionmanager.pool.strategy.PoolBySubject] (MSC service thread 1-10) IJ000615: Destroying active connection in pool: RHQDS (org.jboss.jca.adapters.jdbc.xa.XAManagedConnection@1673b247)
+20:15:52,731 WARN  [org.jboss.jca.core.connectionmanager.pool.strategy.PoolBySubject] (MSC service thread 1-10) IJ000615: Destroying active connection in pool: RHQDS (org.jboss.jca.adapters.jdbc.xa.XAManagedConnection@464c51a5)
+20:15:52,746 WARN  [org.hornetq.core.client] (Thread-350) HQ212107: Connection failure has been detected: HQ119035: The connection was disconnected because of server shutdown [code=DISCONNECTED]
+20:15:52,752 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-9) JBAS015877: Stopped deployment null (runtime-name: rhq-rest-examples.war) in 431ms
+20:15:52,752 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-13) JBAS015877: Stopped deployment null (runtime-name: rhq-core-domain-ejb3.jar) in 432ms
+20:15:52,752 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-12) JBAS015877: Stopped deployment null (runtime-name: rhq-remoting.war) in 431ms
+20:15:52,752 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-1) JBAS015877: Stopped deployment null (runtime-name: rhq-server.jar) in 431ms
+20:15:52,755 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-4) JBAS015877: Stopped deployment null (runtime-name: rhq-rest.war) in 434ms
+20:15:52,759 INFO  [org.hornetq.core.server] (MSC service thread 1-11) HQ221004: HornetQ Server version 2.3.0.CR1 (buzzzzz!, 122) [7b9c132d-1b01-11e3-8c6c-4baf25c6b718] stopped
+20:15:52,761 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-10) JBAS015877: Stopped deployment null (runtime-name: coregui.war) in 440ms
+20:15:52,768 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-8) JBAS015877: Stopped deployment null (runtime-name: rhq-content_http.war) in 448ms
+20:15:52,778 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-3) JBAS015877: Stopped deployment null (runtime-name: rhq-portal.war) in 457ms
+20:15:52,828 INFO  [org.jboss.as.server.deployment] (MSC service thread 1-3) JBAS015877: Stopped deployment rhq.ear (runtime-name: rhq.ear) in 514ms
+20:15:52,831 INFO  [org.jboss.as] (MSC service thread 1-13) JBAS015950: JBoss EAP 6.1.0.Alpha1 (AS 7.2.0.Alpha1-redhat-4) stopped in 358ms

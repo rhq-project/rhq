@@ -58,11 +58,11 @@ public class Log4JLogEntryProcessor extends MultiLineLogEntryProcessor {
     //each processing its log file in a separate thread, we'd get formatting errors
     //where there weren't any...
     private static final String ISO8601_DATE_PATTERN = "yyyy-MM-dd kk:mm:ss,SSS";
-    private final DateFormat iso8601DateFormat = new SimpleDateFormat(ISO8601_DATE_PATTERN);
+    private static final DateFormat iso8601DateFormat = new SimpleDateFormat(ISO8601_DATE_PATTERN);
     private static final String ABSOLUTE_DATE_PATTERN = "kk:mm:ss,SSS";
-    private final DateFormat absoluteDateFormat = new SimpleDateFormat(ABSOLUTE_DATE_PATTERN);
+    private static final DateFormat absoluteDateFormat = new SimpleDateFormat(ABSOLUTE_DATE_PATTERN);
     private static final String DATE_DATE_PATTERN = "dd MMM yyyy kk:mm:ss,SSS";
-    private final DateFormat dateDateFormat = new SimpleDateFormat(DATE_DATE_PATTERN);
+    private static final DateFormat dateDateFormat = new SimpleDateFormat(DATE_DATE_PATTERN);
 
     private static final Map<Priority, EventSeverity> PRIORITY_TO_SEVERITY_MAP = new LinkedHashMap<Priority, EventSeverity>();
 

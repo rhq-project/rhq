@@ -32,6 +32,7 @@ import org.rhq.core.domain.resource.InventoryStatus;
 import org.rhq.enterprise.server.alert.AlertConditionManagerLocal;
 import org.rhq.enterprise.server.alert.CachedConditionManagerLocal;
 import org.rhq.enterprise.server.alert.engine.jms.model.AbstractAlertConditionMessage;
+import org.rhq.enterprise.server.cloud.instance.CacheConsistencyManagerLocal;
 import org.rhq.enterprise.server.util.concurrent.AlertSerializer;
 
 /**
@@ -52,7 +53,10 @@ public class AlertConditionConsumerBean implements MessageListener {
     private AlertConditionManagerLocal alertConditionManager;
     @EJB
     private CachedConditionManagerLocal cachedConditionManager;
+    @EJB
+    private CacheConsistencyManagerLocal cacheConsistencyManager;
 
+    @Override
     public void onMessage(Message message) {
         AbstractAlertConditionMessage conditionMessage = null;
 
@@ -66,14 +70,17 @@ public class AlertConditionConsumerBean implements MessageListener {
 
         Integer definitionId = null;
         try {
-            if (log.isDebugEnabled())
+            if (log.isDebugEnabled()) {
                 log.debug("Received message: " + conditionMessage);
+            }
 
             int alertConditionId = conditionMessage.getAlertConditionId();
             InventoryStatus status = alertConditionManager.getResourceStatusByConditionId(alertConditionId);
             if (status != InventoryStatus.COMMITTED) {
-                log.debug("Resource for AlertCondition[id=" + alertConditionId
-                    + "] is no longer COMMITTED, status was '" + status + "'; this message will be discarded");
+                if (log.isDebugEnabled()) {
+                    log.debug("Resource for AlertCondition[id=" + alertConditionId
+                        + "] is no longer COMMITTED, status was '" + status + "'; this message will be discarded");
+                }
                 return;
             }
 
@@ -90,7 +97,25 @@ public class AlertConditionConsumerBean implements MessageListener {
              * must be executed in a new, nested transaction so that by it
              * completes and unlocks, the next thread will see all of its results
              */
-            cachedConditionManager.processCachedConditionMessage(conditionMessage, definitionId);
+            boolean firedAlert = cachedConditionManager.processCachedConditionMessage(conditionMessage, definitionId);
+
+            /*
+             * In general it's not required to reload the caches directly. Changes made via the AlertDefinitionManager
+             * will update the cache indirectly via the status fields on the server (for the global cache) and
+             * owning agent (for the agent cache) and the periodic job that checks it.  But, for recovery alert
+             * handling (see BZ 1003132) the delay of up to 30s is unacceptably long and can cause recovery to be
+             * missed.  There may be non-recovery issues like this as well. So, when any alert is fired, for the server
+             * in question, perform an immediate cache reload check. This ensures the recovery semantics are quickly
+             * put in place, minimizing the window of vulnerability.  Note that other HA nodes will be updated via the
+             * scheduled check, which should be fine, as that is mainly to handle an agent failover use case.
+             * 
+             * Note that we must do this *after* the alert firing transaction completes.
+             */
+            if (firedAlert) {
+                log.debug("Checking for cache reload due to alert firing");
+                cacheConsistencyManager.reloadServerCacheIfNeeded();
+            }
+
         } catch (Throwable t) {
             log.error("Error handling " + conditionMessage + " - " + t.toString());
         } finally {

@@ -39,7 +39,11 @@ public interface AlertConditionLogManagerLocal {
 
     void removeUnmatchedLogByAlertConditionId(int alertConditionId);
 
-    void checkForCompletedAlertConditionSet(int alertConditionId);
+    /**
+     * @param alertConditionId
+     * @return true if an alert was fired, false otherwise
+     */
+    boolean checkForCompletedAlertConditionSet(int alertConditionId);
 
     /**
      * Used for internal processing, exposed here so the tiniest amount of data can be gotten in a new transaction

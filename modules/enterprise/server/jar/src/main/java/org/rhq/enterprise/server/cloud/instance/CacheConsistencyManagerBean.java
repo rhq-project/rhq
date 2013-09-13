@@ -63,6 +63,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
     private final String TIMER_DATA = "CacheConsistencyManagerBean.reloadServerCacheIfNeeded";
 
     @SuppressWarnings("unchecked")
+    @Override
     public void scheduleServerCacheReloader() {
         /* each time the webapp is reloaded, it would create 
          * duplicate events if we don't cancel the existing ones
@@ -81,6 +82,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
         timerService.createTimer(30000, TIMER_DATA);
     }
 
+    @Override
     @Timeout
     public void handleHeartbeatTimer(Timer timer) {
         try {
@@ -99,6 +101,7 @@ public class CacheConsistencyManagerBean implements CacheConsistencyManagerLocal
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public void reloadServerCacheIfNeeded() {
         // try reload the global cache separate from the agent caches for purposes of isolated failures

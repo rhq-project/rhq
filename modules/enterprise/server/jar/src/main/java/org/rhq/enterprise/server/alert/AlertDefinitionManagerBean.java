@@ -60,8 +60,8 @@ import org.rhq.enterprise.server.cloud.StatusManagerLocal;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSender;
 import org.rhq.enterprise.server.plugin.pc.alert.AlertSenderPluginManager;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator;
-import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 import org.rhq.enterprise.server.util.CriteriaQueryGenerator.AuthorizationTokenType;
+import org.rhq.enterprise.server.util.CriteriaQueryRunner;
 
 /**
  * @author Joseph Marques
@@ -120,6 +120,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<AlertDefinition> findAlertDefinitions(Subject subject, int resourceId, PageControl pageControl) {
         pageControl.initDefaultOrderingField("ctime", PageOrdering.DESC);
@@ -137,6 +138,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return new PageList<AlertDefinition>(list, (int) totalCount, pageControl);
     }
 
+    @Override
     public AlertDefinition getAlertDefinitionById(Subject subject, int alertDefinitionId) {
         AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefinitionId);
         if (alertDefinition == null) {
@@ -168,6 +170,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return alertDefinition;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<IntegerOptionItem> findAlertDefinitionOptionItemsForResource(Subject subject, int resourceId) {
         PageControl pageControl = PageControl.getUnlimitedInstance();
@@ -182,6 +185,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return results;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<IntegerOptionItem> findAlertDefinitionOptionItemsForGroup(Subject subject, int groupId) {
         PageControl pageControl = PageControl.getUnlimitedInstance();
@@ -300,6 +304,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
+    @Override
     public int removeAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel = false;
@@ -308,7 +313,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
 
             // TODO GH: Can be more efficient
-            if (checkPermission(subject, alertDefinition)) {
+            if (alertDefinition != null && checkPermission(subject, alertDefinition)) {
                 alertDefinition.setDeleted(true);
                 modifiedCount++;
 
@@ -327,6 +332,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return modifiedCount;
     }
 
+    @Override
     public int enableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel = false;
@@ -353,6 +359,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return modifiedCount;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean isEnabled(Integer definitionId) {
         Query enabledQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_ENABLED);
@@ -361,6 +368,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return (resultIds.size() == 1);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean isTemplate(Integer definitionId) {
         Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_TEMPLATE);
@@ -369,6 +377,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return (resultIds.size() == 1);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean isGroupAlertDefinition(Integer definitionId) {
         Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_GROUP_ALERT_DEFINITION);
@@ -377,6 +386,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return (resultIds.size() == 1);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public boolean isResourceAlertDefinition(Integer definitionId) {
         Query query = entityManager.createNamedQuery(AlertDefinition.QUERY_IS_RESOURCE_ALERT_DEFINITION);
@@ -385,6 +395,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return (resultIds.size() == 1);
     }
 
+    @Override
     public int disableAlertDefinitions(Subject subject, int[] alertDefinitionIds) {
         int modifiedCount = 0;
         boolean isResourceLevel;
@@ -411,6 +422,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return modifiedCount;
     }
 
+    @Override
     public void copyAlertDefinitions(Subject subject, Integer[] alertDefinitionIds) {
         for (int alertDefId : alertDefinitionIds) {
             AlertDefinition alertDefinition = entityManager.find(AlertDefinition.class, alertDefId);
@@ -435,6 +447,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public List<AlertDefinition> findAllRecoveryDefinitionsById(Subject subject, Integer alertDefinitionId) {
         if (authorizationManager.isOverlord(subject) == false) {
@@ -502,10 +515,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
              * if you were JUST_DISABLED or STILL_ENABLED, you are coming from the ENABLED state, which means you need
              * to be removed from the cache as the first half of this update
              */
-            LOG.debug("Updating AlertConditionCacheManager with AlertDefinition[ id=" + oldAlertDefinition.getId()
-                + " ]...DELETING");
-            for (AlertCondition nextCondition : oldAlertDefinition.getConditions()) {
-                LOG.debug("OldAlertCondition[ id=" + nextCondition.getId() + " ]");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Updating AlertConditionCacheManager with AlertDefinition[ id=" + oldAlertDefinition.getId()
+                    + " ]...DELETING");
+                for (AlertCondition nextCondition : oldAlertDefinition.getConditions()) {
+                    LOG.debug("OldAlertCondition[ id=" + nextCondition.getId() + " ]");
+                }
             }
             notifyAlertConditionCacheManager(subject, "updateAlertDefinition", oldAlertDefinition,
                 AlertDefinitionEvent.DELETED);
@@ -561,10 +576,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
             }
 
             if (addToCache) {
-                LOG.debug("Updating AlertConditionCacheManager with AlertDefinition[ id=" + newAlertDefinition.getId()
-                    + " ]...CREATING");
-                for (AlertCondition nextCondition : newAlertDefinition.getConditions()) {
-                    LOG.debug("NewAlertCondition[ id=" + nextCondition.getId() + " ]");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Updating AlertConditionCacheManager with AlertDefinition[ id="
+                        + newAlertDefinition.getId() + " ]...CREATING");
+                    for (AlertCondition nextCondition : newAlertDefinition.getConditions()) {
+                        LOG.debug("NewAlertCondition[ id=" + nextCondition.getId() + " ]");
+                    }
                 }
                 notifyAlertConditionCacheManager(subject, "updateAlertDefinition", newAlertDefinition,
                     AlertDefinitionEvent.CREATED);
@@ -656,6 +673,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void purgeInternals(int alertDefinitionId) {
         try {
@@ -687,6 +705,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public int purgeUnusedAlertDefinitions() {
         Query purgeQuery = entityManager.createNamedQuery(AlertDefinition.QUERY_FIND_UNUSED_DEFINITION_IDS);
@@ -706,10 +725,12 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return removed;
     }
 
+    @Override
     public AlertDefinition getAlertDefinition(Subject subject, int alertDefinitionId) {
         return getAlertDefinitionById(subject, alertDefinitionId);
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public PageList<AlertDefinition> findAlertDefinitionsByCriteria(Subject subject, AlertDefinitionCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
@@ -728,6 +749,7 @@ public class AlertDefinitionManagerBean implements AlertDefinitionManagerLocal, 
         return queryRunner.execute();
     }
 
+    @Override
     public String[] getAlertNotificationConfigurationPreview(Subject sessionSubject, AlertNotification[] notifications) {
         if (notifications == null || notifications.length == 0) {
             return new String[0];

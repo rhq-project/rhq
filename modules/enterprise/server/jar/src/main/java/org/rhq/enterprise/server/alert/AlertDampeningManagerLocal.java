@@ -37,6 +37,10 @@ public interface AlertDampeningManagerLocal {
      * However, in at least one instance, this can not be known immediately. Thus, in this case, the method will start a
      * timer to keep track of when it should fire an alert in the future. Subsequent calls to this method will either
      * update or delete the timer as appropriate to satisfy the business semantics of the supported dampening rules.
+     * 
+     * @param alertDefinitionId
+     * @param eventType
+     * @return true if dampening rules were satisfied and an alert was fired, false otherwise. 
      */
-    public void processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType);
+    public boolean processEventType(int alertDefinitionId, AlertDampeningEvent.Type eventType);
 }

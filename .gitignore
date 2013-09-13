@@ -5,6 +5,7 @@ logs/
 antlr-generated/
 gwt-tmp/
 dev-container/
+rhq-data/
 dev-agent/
 dev-cli/
 modules/enterprise/gui/portal-war/build/classes/

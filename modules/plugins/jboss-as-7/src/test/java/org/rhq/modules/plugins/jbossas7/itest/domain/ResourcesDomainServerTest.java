@@ -96,9 +96,23 @@ public class ResourcesDomainServerTest extends AbstractJBossAS7PluginTest {
         ignoredResources.add("Pooled Connection Factory (Managed Server)");
         ignoredResources.add("Connection Factory (Managed Server)");
 
+        ignoredResources.add("DataSource (Profile)");
+        ignoredResources.add("DataSource (Managed)");
+
+        ignoredResources.add("Cluster Connection (Profile)");
+
         ignoredResources.add("Memory Pool");
         ignoredResources.add("Periodic Rotating File Handler");
         ignoredResources.add("Console Handler");
+
+        // Datasources need a complex workflow, cannot be tested like this
+
+        ignoredResources.add("DataSource (Profile)");
+        ignoredResources.add("DataSource (Managed)");
+
+        // Cannot apply configuration blindly
+
+        ignoredResources.add("Cluster Connection (Profile)");
 
         Resource platform = this.pluginContainer.getInventoryManager().getPlatform();
         Resource server = getResourceByTypeAndKey(platform, DomainServerComponentTest.RESOURCE_TYPE,

@@ -11,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
+import java.net.InetAddress;
 import java.util.Properties;
 
 import org.apache.commons.cli.CommandLine;
@@ -70,6 +71,73 @@ public class StorageInstallerTest {
             CassandraClusterManager ccm = new CassandraClusterManager();
             ccm.killNode(storageDir);
         }
+    }
+
+    @Test
+    public void performDefaultInstall() throws Exception {
+        CommandLineParser parser = new PosixParser();
+        CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {});
+
+        int status = installer.run(cmdLine);
+
+        String address = InetAddress.getLocalHost().getHostAddress();
+
+        assertEquals(status, 0, "Expected to get back a status code of 0 for a successful default install");
+        assertNodeIsRunning();
+        assertRhqServerPropsUpdated(address);
+
+        File binDir = new File(storageDir, "bin");
+        assertTrue(binDir.exists(), "Expected to find bin directory at " + binDir);
+
+        File confDir = new File(storageDir, "conf");
+        assertTrue(confDir.exists(), "Expected to find conf directory at " + confDir);
+
+        File libDir = new File(storageDir, "lib");
+        assertTrue(libDir.exists(), "Expected to find lib directory at " + libDir);
+
+        File baseDataDir = new File(basedir, "rhq-data");
+
+        File commitLogDir = new File(baseDataDir, "commit_log");
+        assertTrue(commitLogDir.exists(), "Expected to find commit_log directory at " + commitLogDir);
+
+        File dataDir = new File(baseDataDir, "data");
+        assertTrue(dataDir.exists(), "Expected to find data directory at " + dataDir);
+
+        File savedCachesDir = new File(baseDataDir, "saved_caches");
+        assertTrue(savedCachesDir.exists(), "Expected to find saved_caches directory at " + savedCachesDir);
+
+        File log4jFile = new File(confDir, "log4j-server.properties");
+        assertTrue(log4jFile.exists(), log4jFile + " does not exist");
+
+        File logsDir = new File(serverDir, "logs");
+        File logFile = new File(logsDir, "rhq-storage.log");
+
+        Properties log4jProps = new Properties();
+        log4jProps.load(new FileInputStream(log4jFile));
+        assertEquals(log4jProps.getProperty("log4j.appender.R.File"), logFile.getAbsolutePath(),
+            "The log file is wrong");
+
+        File yamlFile = new File(confDir, "cassandra.yaml");
+        ConfigEditor yamlEditor = new ConfigEditor(yamlFile);
+        yamlEditor.load();
+
+        assertEquals(yamlEditor.getInternodeAuthenticator(), "org.rhq.cassandra.auth.RhqInternodeAuthenticator",
+            "Failed to set the internode_authenticator property in " + yamlFile);
+        assertEquals(yamlEditor.getAuthenticator(), "org.apache.cassandra.auth.PasswordAuthenticator",
+            "The authenticator property is wrong");
+        assertEquals(yamlEditor.getListenAddress(), address, "The listen_address property is wrong");
+        assertEquals(yamlEditor.getNativeTransportPort(), (Integer) 9142,  "The native_transport_port property is wrong");
+        assertEquals(yamlEditor.getRpcAddress(), address, "The rpc_address property is wrong");
+        assertEquals(yamlEditor.getStoragePort(), (Integer) 7100, "The storage_port property is wrong");
+
+        File cassandraJvmPropsFile = new File(confDir, "cassandra-jvm.properties");
+        Properties properties = new Properties();
+        properties.load(new FileInputStream(cassandraJvmPropsFile));
+
+        assertEquals(properties.getProperty("jmx_port"), "7299", "The jmx_port property is wrong");
+        assertEquals(properties.getProperty("heap_min"), "-Xms512M", "The heap_min property is wrong");
+        assertEquals(properties.getProperty("heap_max"), "-Xmx512M", "The heap_max property is wrong");
+        assertEquals(properties.getProperty("heap_new"), "-Xmn128M", "The heap_new property is wrong");
     }
 
     @Test
@@ -214,6 +282,10 @@ public class StorageInstallerTest {
     }
 
     private void assertRhqServerPropsUpdated() {
+        assertRhqServerPropsUpdated("127.0.0.1");
+    }
+
+    private void assertRhqServerPropsUpdated(String address) {
         File serverPropsFile = new File(serverDir, "rhq-server.properties");
         Properties properties = new Properties();
 

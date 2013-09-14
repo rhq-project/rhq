@@ -118,14 +118,6 @@ public class StorageInstaller {
 
     private File logDir;
 
-    private String dirPrefix = (isWindows()) ? "" : "/var/lib";
-
-    private String defaultCommitLogDir = dirPrefix + "/rhq/storage/commitlog";
-
-    private String defaultDataDir = dirPrefix + "/rhq/storage/data";
-
-    private String defaultSavedCachesDir = dirPrefix + "/rhq/storage/saved_caches";
-
     private String defaultHeapSize = "512M";
 
     private String defaultHeapNewSize = "128M";
@@ -173,15 +165,15 @@ public class StorageInstaller {
         checkStatus.setArgName("true|false");
 
         Option commitLogOption = new Option(null, "commitlog", true, "The directory where the storage node keeps "
-            + "commit log files. Defaults to " + defaultCommitLogDir + ".");
+            + "commit log files. Defaults to " + getDefaultCommitLogDir() + ".");
         commitLogOption.setArgName("DIR");
 
         Option dataDirOption = new Option(null, "data", true, "The directory where the storage node keeps data files. "
-            + "Defaults to " + defaultDataDir + ".");
+            + "Defaults to " + getDefaultDataDir() + ".");
         dataDirOption.setArgName("DIR");
 
         Option savedCachesDirOption = new Option(null, "saved-caches", true, "The directory where the storage node "
-            + "keeps saved cache files. Defaults to " + defaultSavedCachesDir + ".");
+            + "keeps saved cache files. Defaults to " + getDefaultSavedCachesDir() + ".");
         savedCachesDirOption.setArgName("DIR");
 
         Option basedirOption = new Option(null, "dir", true, "The directory where the storage node will be installed "
@@ -321,6 +313,9 @@ public class StorageInstaller {
         if (cmdLine.hasOption("dir")) {
             installerInfo.basedir = new File(cmdLine.getOptionValue("dir"));
             deploymentOptions.setBasedir(installerInfo.basedir.getAbsolutePath());
+        } else {
+            installerInfo.basedir = new File(serverBasedir, "rhq-storage");
+            deploymentOptions.setBasedir(installerInfo.basedir.getAbsolutePath());
         }
 
         try {
@@ -335,9 +330,9 @@ public class StorageInstaller {
             String seeds = cmdLine.getOptionValue("seeds", installerInfo.hostname);
             deploymentOptions.setSeeds(seeds);
 
-            String commitlogDir = cmdLine.getOptionValue("commitlog", defaultCommitLogDir);
-            String dataDir = cmdLine.getOptionValue("data", defaultDataDir);
-            String savedCachesDir = cmdLine.getOptionValue("saved-caches", defaultSavedCachesDir);
+            String commitlogDir = cmdLine.getOptionValue("commitlog", getDefaultCommitLogDir().getAbsolutePath());
+            String dataDir = cmdLine.getOptionValue("data", getDefaultDataDir().getAbsolutePath());
+            String savedCachesDir = cmdLine.getOptionValue("saved-caches", getDefaultSavedCachesDir().getAbsolutePath());
 
             File commitLogDirFile = new File(commitlogDir);
             File dataDirFile = new File(dataDir);
@@ -822,6 +817,29 @@ public class StorageInstaller {
                 throw new RuntimeException("Failed to parse JMX port due to IO error: " + e.getMessage());
             }
         }
+    }
+
+    /**
+     * @return The parent directory of the server
+     */
+    private File getInstallationDir() {
+        return serverBasedir.getParentFile();
+    }
+
+    private File getDefaultBaseDataDir() {
+        return new File(getInstallationDir(), "rhq-data");
+    }
+
+    private File getDefaultCommitLogDir() {
+        return new File(getDefaultBaseDataDir(), "commit_log");
+    }
+
+    private File getDefaultDataDir() {
+        return new File(getDefaultBaseDataDir(), "data");
+    }
+
+    private File getDefaultSavedCachesDir() {
+        return new File(getDefaultBaseDataDir(), "saved_caches");
     }
 
     public void printUsage() {

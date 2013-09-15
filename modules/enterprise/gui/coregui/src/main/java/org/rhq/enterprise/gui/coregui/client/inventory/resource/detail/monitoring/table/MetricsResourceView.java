@@ -33,7 +33,6 @@ import org.rhq.core.domain.measurement.Availability;
 import org.rhq.core.domain.resource.Resource;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.IconEnum;
-import org.rhq.enterprise.gui.coregui.client.dashboard.AutoRefreshUtil;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.AbstractD3GraphListView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.AbstractTwoLevelTabSetView;
@@ -49,17 +48,14 @@ import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
  *
  * @author Mike Thompson
  */
-public class MetricsResourceView extends AbstractD3GraphListView implements AbstractTwoLevelTabSetView.ViewRenderedListener{
+public class MetricsResourceView extends AbstractD3GraphListView implements
+    AbstractTwoLevelTabSetView.ViewRenderedListener {
 
     private static final String COLLAPSED_TOOLTIP = MSG.chart_metrics_collapse_tooltip();
     private static final String EXPANDED_TOOLTIP = MSG.chart_metrics_expand_tooltip();
 
     private final Resource resource;
-    private Img expandCollapseArrow;
-    private final MetricsTableView metricsTableView;
-    private final ResourceMetricAvailabilityView availabilityDetails;
-    private Timer refreshTimer;
-
+    private EnhancedHLayout expandCollapseHLayout;
 
     public MetricsResourceView(Resource resource) {
         super();
@@ -67,43 +63,24 @@ public class MetricsResourceView extends AbstractD3GraphListView implements Abst
         setWidth100();
         setHeight100();
         this.resource = resource;
-        metricsTableView = new MetricsTableView(resource, this);
-        availabilityDetails = new ResourceMetricAvailabilityView(resource);
-        startRefreshCycle();
-
-    }
-
-
-    public void refreshData() {
-        this.onDraw();
-    }
-
-    public void refreshGraphs(){
-        new Timer() {
-            @Override
-            public void run() {
-                availabilityGraph.drawJsniChart();
-                BrowserUtility.graphSparkLines();
-            }
-        }.schedule(150);
     }
 
     @Override
-    protected void onDraw() {
-        super.onDraw();
-        Log.debug("MetricResourceView.onDraw() for: " + resource.getName() + " id: " + resource.getId());
-        destroyMembers();
+    public void onInit() {
+        super.onInit();
 
+        final ResourceMetricAvailabilityView availabilityDetails = new ResourceMetricAvailabilityView(resource);
+        availabilityDetails.hide();
 
-        addMember(buttonBarDateTimeRangeEditor);
+        final MetricsTableView metricsTableView = new MetricsTableView(resource, this);
+        metricsTableView.setHeight100();
 
         availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
-                new AvailabilityOverUnderGraphType(resource.getId()));
+            new AvailabilityOverUnderGraphType(resource.getId()));
 
-        EnhancedHLayout expandCollapseHLayout = new EnhancedHLayout();
-
+        expandCollapseHLayout = new EnhancedHLayout();
         //add expand/collapse icon
-        expandCollapseArrow = new Img(IconEnum.COLLAPSED_ICON.getIcon16x16Path(), 16, 16);
+        final Img expandCollapseArrow = new Img(IconEnum.COLLAPSED_ICON.getIcon16x16Path(), 16, 16);
         expandCollapseArrow.setTooltip(COLLAPSED_TOOLTIP);
         expandCollapseArrow.setLayoutAlign(VerticalAlignment.BOTTOM);
         expandCollapseArrow.addClickHandler(new ClickHandler() {
@@ -125,25 +102,45 @@ public class MetricsResourceView extends AbstractD3GraphListView implements Abst
                 refreshGraphs();
             }
         });
-
-
         expandCollapseHLayout.addMember(expandCollapseArrow);
         expandCollapseHLayout.addMember(availabilityGraph);
+
+        addMember(buttonBarDateTimeRangeEditor);
         addMember(expandCollapseHLayout);
-
-        availabilityDetails.hide();
         addMember(availabilityDetails);
-
-        metricsTableView.setHeight100();
         addMember(metricsTableView);
 
+        queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
+            buttonBarDateTimeRangeEditor.getEndTime(), null);
+    }
+
+    public void refreshData() {
+        Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
+
+        expandCollapseHLayout.removeMember(availabilityGraph);
+        availabilityGraph.destroy();
+
+        availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
+            new AvailabilityOverUnderGraphType(resource.getId()));
+
+        expandCollapseHLayout.addMember(availabilityGraph);
 
         queryAvailability(EntityContext.forResource(resource.getId()), buttonBarDateTimeRangeEditor.getStartTime(),
-                buttonBarDateTimeRangeEditor.getEndTime(), null);
+            buttonBarDateTimeRangeEditor.getEndTime(), null);
+    }
+
+    public void refreshGraphs() {
+        new Timer() {
+            @Override
+            public void run() {
+                availabilityGraph.drawJsniChart();
+                BrowserUtility.graphSparkLines();
+            }
+        }.schedule(150);
     }
 
     @Override
-    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed ) {
+    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
 
         final long timerStart = System.currentTimeMillis();
 
@@ -169,11 +166,6 @@ public class MetricsResourceView extends AbstractD3GraphListView implements Abst
                     }.schedule(150);
                 }
             });
-    }
-
-    @Override
-    public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     @Override

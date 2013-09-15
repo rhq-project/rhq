@@ -19,6 +19,8 @@
 package org.rhq.enterprise.gui.coregui.client.util.preferences;
 
 /**
+ * Immutable.
+ * 
  * @author Greg Hinkle
  */
 public class UserPreferenceChangeEvent {
@@ -26,11 +28,17 @@ public class UserPreferenceChangeEvent {
     String name;
     String newValue;
     String oldValue;
+    boolean allowRefresh;
 
     public UserPreferenceChangeEvent(String name, String newValue, String oldValue) {
+        this(name, newValue, oldValue, true);
+    }
+
+    public UserPreferenceChangeEvent(String name, String newValue, String oldValue, boolean allowRefresh) {
         this.name = name;
         this.newValue = newValue;
         this.oldValue = oldValue;
+        this.allowRefresh = allowRefresh;
     }
 
     public String getName() {
@@ -44,4 +52,9 @@ public class UserPreferenceChangeEvent {
     public String getOldValue() {
         return oldValue;
     }
+
+    public boolean isAllowRefresh() {
+        return allowRefresh;
+    }
+
 }

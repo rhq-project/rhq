@@ -25,7 +25,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-import java.lang.reflect.Method;
 import java.net.InetAddress;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -168,6 +167,7 @@ public class ServerInstallUtil {
     private static final String RHQ_CACHE_CONTAINER = "rhq";
     private static final String RHQ_CACHE = "rhqCache";
     private static final String RHQ_MGMT_USER = "rhqadmin";
+    private static final String RHQ_MGMT_USER_PASSWORD = "rhq.server.management.password";
 
     /**
      * Configure the logging subsystem.
@@ -319,16 +319,15 @@ public class ServerInstallUtil {
      */
     public static void createUserSecurityDomain(ModelControllerClient mcc) throws Exception {
 
-        Map<String,String> options = new HashMap<String, String>(2);
+        Map<String, String> options = new HashMap<String, String>(2);
         options.put("hashAlgorithm", "MD5");
         options.put("hashEncoding", "base64");
 
-        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(JDBC_LOGIN_MODULE_NAME,
-            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
-
+        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(
+            JDBC_LOGIN_MODULE_NAME, AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
 
         SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN,loginModuleRequest);
+        client.createNewSecurityDomain(RHQ_USER_SECURITY_DOMAIN, loginModuleRequest);
 
     }
 
@@ -339,19 +338,16 @@ public class ServerInstallUtil {
      */
     public static void createRestSecurityDomain(ModelControllerClient mcc) throws Exception {
 
-        Map<String,String> options = new HashMap<String, String>(2);
+        Map<String, String> options = new HashMap<String, String>(2);
         options.put("delegateTo", RHQ_USER_SECURITY_DOMAIN);
         options.put("roles", "rest-user");
 
-        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(DELEGATIG_LOGIN_MODULE_NAME,
-            AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
-
+        SecurityDomainJBossASClient.LoginModuleRequest loginModuleRequest = new SecurityDomainJBossASClient.LoginModuleRequest(
+            DELEGATIG_LOGIN_MODULE_NAME, AppConfigurationEntry.LoginModuleControlFlag.SUFFICIENT, options);
 
         SecurityDomainJBossASClient client = new SecurityDomainJBossASClient(mcc);
-        client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN,loginModuleRequest);
+        client.createNewSecurityDomain(RHQ_REST_SECURITY_DOMAIN, loginModuleRequest);
     }
-
-
 
     /**
      * Creates the JMS Queues required for Drift and Alerting.
@@ -421,7 +417,6 @@ public class ServerInstallUtil {
 
         return;
     }
-
 
     /**
      * Creates the Infinispan caches for RHQ.
@@ -902,57 +897,8 @@ public class ServerInstallUtil {
     }
 
     /**
-     * Use the internal JBossAS mechanism to obfuscate a password. This is not true encryption.
-     *
-     * @param password the clear text of the password to obfuscate
-     * @return the obfuscated password
-     */
-    public static String obfuscatePassword(String password) {
-
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-
-        try {
-            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
-            Class<?> clazz = Class.forName(className);
-            Object object = clazz.newInstance();
-            Method method = clazz.getDeclaredMethod("encode", String.class);
-            method.setAccessible(true);
-            String result = method.invoke(object, password).toString();
-            return result;
-        } catch (Exception e) {
-            throw new RuntimeException("obfuscating db password failed: ", e);
-        }
-    }
-
-    /**
-     * Use the internal JBossAS mechanism to de-obfuscate a password back to its
-     * clear text form. This is not true encryption.
-     *
-     * @param obfuscatedPassword the obfuscated password
-     * @return the clear-text password
-     */
-    public static String deobfuscatePassword(String obfuscatedPassword) {
-
-        // We need to do some mumbo jumbo, as the interesting method is private
-        // in SecureIdentityLoginModule
-
-        try {
-            String className = "org.picketbox.datasource.security.SecureIdentityLoginModule";
-            Class<?> clazz = Class.forName(className);
-            Object object = clazz.newInstance();
-            Method method = clazz.getDeclaredMethod("decode", String.class);
-            method.setAccessible(true);
-            char[] result = (char[]) method.invoke(object, obfuscatedPassword);
-            return new String(result);
-        } catch (Exception e) {
-            throw new RuntimeException("de-obfuscating db password failed: ", e);
-        }
-    }
-
-    /**
      * Persists the storage nodes to the database only if no storage node entities already exist. This method is used
-     * to persist storage nodes created from the rhq.cassandra.seeds server configuration property. The only time those
+     * to persist storage nodes created from the rhq.storage.nodes server configuration property. The only time those
      * seed nodes should be created is during an initial server installation. After the initial installation storage
      * nodes should be created using <code>rhqctl install</code>. This ensures that any necessary cluster maintenance
      * tasks will be performed.
@@ -968,7 +914,7 @@ public class ServerInstallUtil {
         Connection connection = null;
         Statement queryStatement = null;
         ResultSet resultSet = null;
-        PreparedStatement insertStatement = null;
+        PreparedStatement insertStorageNode = null;
 
         try {
             String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
@@ -989,45 +935,90 @@ public class ServerInstallUtil {
                 connection.setAutoCommit(false);
 
                 try {
-                    LOG.info("Persisting to database new storage nodes for values specified in server configuration " +
-                        "property [rhq.cassandra.seeds]");
+                    LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
-                    insertStatement = connection.prepareStatement(
-                        "INSERT INTO rhq_storage_node (id, address, jmx_port, cql_port, operation_mode, ctime, mtime) " +
+                    insertStorageNode = connection.prepareStatement(
+                            "INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime, maintenance_pending) " +
                             "VALUES (?, ?, ?, ?, ?, ?, ?)"
                     );
 
                     int id = 1001;
                     for (StorageNode storageNode : storageNodes) {
-                        insertStatement.setInt(1, id);
-                        insertStatement.setString(2, storageNode.getAddress());
-                        insertStatement.setInt(3, storageNode.getJmxPort());
-                        insertStatement.setInt(4, storageNode.getCqlPort());
-                        insertStatement.setString(5, StorageNode.OperationMode.INSTALLED.toString());
-                        insertStatement.setLong(6, System.currentTimeMillis());
-                        insertStatement.setLong(7, System.currentTimeMillis());
+                        insertStorageNode.setInt(1, id);
+                        insertStorageNode.setString(2, storageNode.getAddress());
+                        insertStorageNode.setInt(3, storageNode.getCqlPort());
+                        insertStorageNode.setString(4, StorageNode.OperationMode.INSTALLED.toString());
+                        insertStorageNode.setLong(5, System.currentTimeMillis());
+                        insertStorageNode.setLong(6, System.currentTimeMillis());
+                        insertStorageNode.setBoolean(7, false);
 
-                        insertStatement.executeUpdate();
+                        insertStorageNode.executeUpdate();
                         id += 1;
                     }
 
                     connection.commit();
                 } catch (SQLException e) {
                     LOG.error("Failed to persist to database the storage nodes specified by server configuration " +
-                        "property [rhq.cassandra.seeds]. Transaction will be rolled back.", e);
+                        "property [rhq.storage.nodes]. Transaction will be rolled back.", e);
                     connection.rollback();
                     throw e;
                 }
             } else {
-                LOG.info("Storage nodes already exist in database. Server configuration property " +
-                    "[rhq.cassandra.seeds] will be ignored.");
+                LOG.info("Storage nodes already exist in database. Server configuration property [rhq.storage.nodes] will be ignored.");
             }
 
         } finally {
             if (db != null) {
                 db.closeResultSet(resultSet);
                 db.closeStatement(queryStatement);
-                db.closeStatement(insertStatement);
+                db.closeStatement(insertStorageNode);
+                db.closeConnection(connection);
+            }
+        }
+    }
+
+    public static void persistStorageClusterSettingsIfNecessary(HashMap<String, String> serverProperties,
+        String password) throws Exception {
+        DatabaseType db = null;
+        Connection connection = null;
+        PreparedStatement updateClusterSetting = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            connection.setAutoCommit(false);
+
+            updateClusterSetting = connection.prepareStatement(
+                "UPDATE rhq_system_config " +
+                    "SET property_value = ?, default_property_value = ? " +
+                    "WHERE property_key = ? AND property_value IS NULL AND default_property_value IS NULL");
+
+            updateClusterSetting.setString(1, serverProperties.get("rhq.storage.cql-port"));
+            updateClusterSetting.setString(2, serverProperties.get("rhq.storage.cql-port"));
+            updateClusterSetting.setString(3, "STORAGE_CQL_PORT");
+            updateClusterSetting.executeUpdate();
+
+            updateClusterSetting.setString(1, serverProperties.get("rhq.storage.gossip-port"));
+            updateClusterSetting.setString(2, serverProperties.get("rhq.storage.gossip-port"));
+            updateClusterSetting.setString(3, "STORAGE_GOSSIP_PORT");
+            updateClusterSetting.executeUpdate();
+
+            connection.commit();
+        } catch (SQLException e) {
+            LOG.error("Failed to initialize storage cluster settings. Transaction will be rolled back.", e);
+            connection.rollback();
+            throw e;
+        } finally {
+            if (db != null) {
+                db.closeStatement(updateClusterSetting);
                 db.closeConnection(connection);
             }
         }
@@ -1065,7 +1056,6 @@ public class ServerInstallUtil {
             }
         }
     }
-
 
     private static void updateOrInsertServer(DatabaseType db, Connection conn, ServerDetails serverDetails) {
         PreparedStatement stm = null;
@@ -1566,15 +1556,26 @@ public class ServerInstallUtil {
     }
 
     /**
-     * Create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
-     * connect to the RHQ Server.
+     * Create an rhqadmin management user so when discovered, the AS7 plugin can use it to connect
+     * to the RHQ Server.  The password is set in rhq-server.properties.  Because the plugin can't guess
+     * the password, if not set to the default then the AS7 plugin will fail to connect, and the
+     * RHQ Server resource connection properties will need to be updated after discovery and import.  
      *
+     * @param serverProperties the server properties
      * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the mgmt-users.properties file lives
      */
-    public static void createDefaultManagementUser(ServerDetails serverDetails, String configDirStr) {
+    public static void createDefaultManagementUser(HashMap<String, String> serverProperties,
+        ServerDetails serverDetails, String configDirStr) {
         File confDir = new File(configDirStr);
         File mgmtUsers = new File(confDir, "mgmt-users.properties");
+        String password = serverProperties.get(RHQ_MGMT_USER_PASSWORD);
+
+        if (ServerInstallUtil.isEmpty(password)) {
+            LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : "
+                + RHQ_MGMT_USER_PASSWORD + " is not set in rhq-server.properties.");
+            return;
+        }
 
         // Add the default admin user, or if for some reason this file does not exist, just log the issue
         if (mgmtUsers.exists()) {
@@ -1593,7 +1594,7 @@ public class ServerInstallUtil {
 
             try {
                 fos = new FileOutputStream(mgmtUsers, true);
-                fos.write(("\n" + RHQ_MGMT_USER + "=35c160c1f841a889d4cda53f0bfc94b6\n").getBytes());
+                fos.write(("\n" + RHQ_MGMT_USER + "=" + password + "\n").getBytes());
 
             } catch (Exception e) {
                 LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : ", e);
@@ -1628,8 +1629,7 @@ public class ServerInstallUtil {
                 // If the binding is required, we re-throw a possible exception. Otherwise just log
                 if (binding.required) {
                     throw e;
-                }
-                else {
+                } else {
                     LOG.info(String.format("Setting socket binding port for [%s] resulted in [%s] - this is harmless ",
                         binding.name, e.getMessage())); // TODO log at debug level only?
                 }

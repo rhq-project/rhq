@@ -1,25 +1,21 @@
  /*
-  * RHQ Management Platform
-  * Copyright (C) 2005-2008 Red Hat, Inc.
-  * All rights reserved.
-  *
-  * This program is free software; you can redistribute it and/or modify
-  * it under the terms of the GNU General Public License, version 2, as
-  * published by the Free Software Foundation, and/or the GNU Lesser
-  * General Public License, version 2.1, also as published by the Free
-  * Software Foundation.
-  *
-  * This program is distributed in the hope that it will be useful,
-  * but WITHOUT ANY WARRANTY; without even the implied warranty of
-  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-  * GNU General Public License and the GNU Lesser General Public License
-  * for more details.
-  *
-  * You should have received a copy of the GNU General Public License
-  * and the GNU Lesser General Public License along with this program;
-  * if not, write to the Free Software Foundation, Inc.,
-  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-  */
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
 package org.rhq.core.pc.inventory;
 
  import java.util.concurrent.Callable;
@@ -38,6 +34,8 @@ import org.rhq.core.pluginapi.inventory.CreateChildResourceFacet;
 import org.rhq.core.pluginapi.inventory.CreateResourceReport;
 import org.rhq.core.util.exception.ThrowableUtil;
 
+ import static java.util.concurrent.TimeUnit.SECONDS;
+
  /**
  * Runnable implementation to process Resource create requests.
  *
@@ -45,9 +43,12 @@ import org.rhq.core.util.exception.ThrowableUtil;
  */
 public class CreateResourceRunner implements Callable, Runnable {
 
-    // Attributes  --------------------------------------------
+     private static final Log LOG = LogFactory.getLog(CreateResourceRunner.class);
 
-    private final Log log = LogFactory.getLog(CreateResourceRunner.class);
+     private static final int SERVICE_SCAN_MAX_RETRY = 10;
+     private static final long SERVICE_SCAN_RETRY_PAUSE = SECONDS.toMillis(30);
+
+     // Attributes  --------------------------------------------
 
     /**
      * Handle to the manager that will do most of the logic.
@@ -98,7 +99,7 @@ public class CreateResourceRunner implements Callable, Runnable {
         try {
             call();
         } catch (Exception e) {
-            log.error("Error while chaining run to call", e);
+            LOG.error("Error while chaining run to call", e);
         }
     }
 
@@ -106,7 +107,7 @@ public class CreateResourceRunner implements Callable, Runnable {
 
     @Override
     public Object call() throws Exception {
-        log.info("Creating resource through report: " + report);
+        LOG.info("Creating resource through report: " + report);
 
         String resourceName = null;
         String resourceKey = null;
@@ -128,31 +129,31 @@ public class CreateResourceRunner implements Callable, Runnable {
             // Validate the status returned from the plugin
             CreateResourceStatus reportedStatus = report.getStatus();
             if ((reportedStatus == null) || (reportedStatus == CreateResourceStatus.IN_PROGRESS)) {
-                log.warn("Plugin did not indicate the result of the request: " + requestId);
+                LOG.warn("Plugin did not indicate the result of the request: " + requestId);
                 errorMessage = "Plugin did not indicate the result of the resource creation attempt.";
                 status = CreateResourceStatus.FAILURE;
             }
 
             // Ensure a resource key was returned from the plugin if the plugin reports the create was successful
             if ((isSuccessStatus(reportedStatus)) && (resourceKey == null)) {
-                log.warn("Plugin did not indicate the resource key for this request: " + requestId);
+                LOG.warn("Plugin did not indicate the resource key for this request: " + requestId);
                 errorMessage = "Plugin did not indicate a resource key for this request.";
                 status = CreateResourceStatus.FAILURE;
             }
 
             // RHQ-666 - The plugin should provide a resource name if the create was successful
             if ((isSuccessStatus(reportedStatus)) && (resourceName == null)) {
-                log.warn("Plugin did not indicate a resource name for the request: " + requestId);
+                LOG.warn("Plugin did not indicate a resource name for the request: " + requestId);
                 errorMessage = "Plugin did not indicate a resource name for this request.";
                 status = CreateResourceStatus.FAILURE;
             }
 
             Throwable throwable = report.getException();
             if (throwable != null) {
-                if (log.isDebugEnabled())
-                    log.debug("Throwable was found in creation report for request [" + requestId + "].", throwable);
+                if (LOG.isDebugEnabled())
+                    LOG.debug("Throwable was found in creation report for request [" + requestId + "].", throwable);
                 else
-                    log.warn("Throwable was found in creation report for request [" + requestId + "]: " + throwable
+                    LOG.warn("Throwable was found in creation report for request [" + requestId + "]: " + throwable
                            + " - Enable DEBUG logging to see the stack trace.");
                 status = CreateResourceStatus.FAILURE;
                 String messages = ThrowableUtil.getAllMessages(throwable);
@@ -165,10 +166,10 @@ public class CreateResourceRunner implements Callable, Runnable {
                 "may want to run a discovery scan to see if the deployment did complete successfully. Also consider " +
                 "using a higher time out value for future deployments.";
 
-            if (log.isDebugEnabled()) {
-                log.debug("Failed to create resource for " + report + ". " + errorMessage, e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Failed to create resource for " + report + ". " + errorMessage, e);
             } else {
-                log.info("Failed to create resource for " + report + ". " + errorMessage, e);
+                LOG.info("Failed to create resource for " + report + ". " + errorMessage, e);
             }
 
             errorMessage += "\n\nRoot Cause:\n" + e.getMessage();
@@ -181,36 +182,52 @@ public class CreateResourceRunner implements Callable, Runnable {
         CreateResourceResponse response =
             new CreateResourceResponse(requestId, resourceName, resourceKey, status, errorMessage, configuration);
 
-        log.info("Sending create response to server: " + response);
+        LOG.info("Sending create response to server: " + response);
         ResourceFactoryServerService serverService = resourceFactoryManager.getServerService();
         if (serverService != null) {
             try {
                 serverService.completeCreateResource(response);
             } catch (Throwable throwable) {
-                log.error("Error received while attempting to complete report for request: " + requestId, throwable);
+                LOG.error("Error received while attempting to complete report for request: " + requestId, throwable);
             }
         }
 
         // Trigger a service scan on the parent resource to have the newly created resource discovered if the plugin
         // said the create was successful
         if (isSuccessStatus(status) && runRuntimeScan) {
-            log.debug("Scheduling service scan to discover newly created [" + report.getResourceType()
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Scheduling service scan to discover newly created [" + report.getResourceType()
                     + "] managed resource with key [" + report.getResourceKey() + "]...");
-            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
-            try {
-                // This will block until the service scan completes.
-                InventoryReport inventoryReport = inventoryManager.performServiceScan(parentResourceId);
-            } catch (Exception e) {
-                log.error("Failed to run service scan to discover newly created [" + report.getResourceType()
-                        + "] managed resource with key [" + report.getResourceKey() + "].", e);
             }
-
-            Resource discoveredResource = getDiscoveredResource();
-            if (discoveredResource != null) {
-                log.info("Discovered " + discoveredResource + ", for a new managed resource created via RHQ.");
-            } else {
-                log.error("Failed to discover Resource for newly created [" + report.getResourceType()
+            InventoryManager inventoryManager = PluginContainer.getInstance().getInventoryManager();
+            Resource discoveredResource = null;
+            for (int retry = 1; discoveredResource == null && retry <= SERVICE_SCAN_MAX_RETRY; retry++) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Service scan retry [" + retry + "] for parentResourceId [" + parentResourceId + "]");
+                }
+                if (retry > 1 && retry < SERVICE_SCAN_MAX_RETRY) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Pausing for [" + SERVICE_SCAN_RETRY_PAUSE
+                            + "] ms before retrying service scan for parentResourceId [" + parentResourceId + "]");
+                    }
+                    Thread.sleep(SERVICE_SCAN_RETRY_PAUSE);
+                }
+                try {
+                    // This will block until the service scan completes.
+                    inventoryManager.performServiceScan(parentResourceId);
+                } catch (Exception e) {
+                    LOG.error("Failed to run service scan to discover newly created [" + report.getResourceType()
+                        + "] managed resource with key [" + report.getResourceKey() + "].", e);
+                }
+                discoveredResource = getDiscoveredResource();
+                if (discoveredResource != null) {
+                    if (LOG.isDebugEnabled()) {
+                        LOG.debug("Discovered " + discoveredResource + ", for a new managed resource created via RHQ.");
+                    }
+                } else {
+                    LOG.warn("Failed to discover Resource for newly created [" + report.getResourceType()
                         + "] managed resource with key [" + report.getResourceKey() + "].");
+                }
             }
         }
 

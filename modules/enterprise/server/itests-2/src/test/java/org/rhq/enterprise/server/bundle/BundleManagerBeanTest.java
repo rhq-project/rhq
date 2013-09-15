@@ -793,7 +793,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     public void testAddBundleFilesToDifferentBundles() throws Exception {
         // create a bundle type to use for both bundles.
         BundleType bt = createBundleType("one");
-        Bundle b1 = createBundle(overlord, "one", bt, 0);
+        Bundle b1 = createBundle(overlord, "one", bt, null);
         assertNotNull(b1);
         BundleVersion bv1 = createBundleVersion(b1.getName(), "1.0", b1);
         assertNotNull(bv1);
@@ -801,7 +801,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
             null, "Bundle #1 File # 1".getBytes());
 
         // create a second bundle but create file of the same name as above
-        Bundle b2 = createBundle(overlord, "two", bt, 0);
+        Bundle b2 = createBundle(overlord, "two", bt, null);
         assertNotNull(b2);
         BundleVersion bv2 = createBundleVersion(b2.getName(), "1.0", b2);
         assertNotNull(bv2);
@@ -1281,7 +1281,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         final BundleType type = createBundleType(name);
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
-            "description", type.getId(), 0, fullName, fullName + "-desc", "3.0", recipe);
+            "description", type.getId(), null, fullName, fullName + "-desc", "3.0", recipe);
         assertNotNull(bundleVerison);
 
         // find the previously created bundle
@@ -1311,7 +1311,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
         final String recipe = "deploy -f " + TEST_PREFIX + ".zip -d @@ test.path @@";
         final BundleVersion bundleVerison = bundleManager.createBundleAndBundleVersion(overlord, fullName,
-            "description", bundle.getBundleType().getId(), 0, fullName, fullName + "-desc", "3.0", recipe);
+            "description", bundle.getBundleType().getId(), null, fullName, fullName + "-desc", "3.0", recipe);
 
         // find the newly created bundle
         BundleCriteria c = new BundleCriteria();
@@ -1330,9 +1330,12 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         subject = createSession(subject); // start a session so we can use this subject in SLSB calls 
 
+        BundleGroup bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("test");
+
         // deny bundle group create
         try {
-            bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+            bundleManager.createBundleGroup(subject, bundleGroup);
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1340,7 +1343,7 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // allow bundle group create
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
 
         // deny bundle group delete
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
@@ -1413,11 +1416,16 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // deny global perm bundle assign
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "test");
+
+        bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("test");
+
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         try {
-            bundleManager.assignBundlesToBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+            bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup.getId() },
+                new int[] { bundle.getId() });
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1425,19 +1433,23 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // allow bundle assign via global manage_bundle_groups 
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        bundleManager.assignBundlesToBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+        bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup.getId() },
+            new int[] { bundle.getId() });
 
         // allow bundle unassign via global manage_bundle_groups 
-        bundleManager.unassignBundlesFromBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+        bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup.getId() },
+            new int[] { bundle.getId() });
 
         // allow bundle assign via global create
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
         addRolePermissions(role, Permission.CREATE_BUNDLES);
-        bundleManager.assignBundlesToBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+        bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup.getId() },
+            new int[] { bundle.getId() });
 
         // deny bundle unassign via global create
         try {
-            bundleManager.unassignBundlesFromBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+            bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup.getId() },
+                new int[] { bundle.getId() });
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1445,13 +1457,15 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // allow bundle unassign via global delete 
         addRolePermissions(role, Permission.DELETE_BUNDLES);
-        bundleManager.unassignBundlesFromBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+        bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup.getId() },
+            new int[] { bundle.getId() });
         removeRolePermissions(role, Permission.DELETE_BUNDLES);
 
         // deny bundle assign with global create but no view
         removeRolePermissions(role, Permission.VIEW_BUNDLES);
         try {
-            bundleManager.assignBundlesToBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+            bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup.getId() },
+                new int[] { bundle.getId() });
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1459,7 +1473,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // go back and again assign via global create and view
         addRolePermissions(role, Permission.VIEW_BUNDLES);
-        bundleManager.assignBundlesToBundleGroup(subject, bundleGroup.getId(), new int[] { bundle.getId() });
+        bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup.getId() },
+            new int[] { bundle.getId() });
 
         // deny assigned, unassociated-bundle-group bundle view
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
@@ -1538,7 +1553,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup1 = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME + "_1", "bg-1");
+        BundleGroup bundleGroup1 = new BundleGroup(TEST_BUNDLE_GROUP_NAME + "_1");
+        bundleGroup1.setDescription("bg-1");
+        bundleGroup1 = bundleManager.createBundleGroup(subject, bundleGroup1);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg1 to the role, but no perms
@@ -1578,7 +1595,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create second bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup2 = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME + "_2", "bg-2");
+        BundleGroup bundleGroup2 = new BundleGroup(TEST_BUNDLE_GROUP_NAME + "_2");
+        bundleGroup2.setDescription("bg-2");
+        bundleGroup2 = bundleManager.createBundleGroup(subject, bundleGroup2);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // deny bundle create in bg2 (not associated with role)
@@ -1591,7 +1610,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // deny bundle assign to bg2 (not associated with role)
         try {
-            bundleManager.assignBundlesToBundleGroup(subject, bundleGroup2.getId(), new int[] { bundle.getId() });
+            bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup2.getId() },
+                new int[] { bundle.getId() });
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1603,7 +1623,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         // deny bundle assign to bg2 (no perm)
         removeRolePermissions(role2, Permission.CREATE_BUNDLES_IN_GROUP);
         try {
-            bundleManager.assignBundlesToBundleGroup(subject, bundleGroup2.getId(), new int[] { bundle.getId() });
+            bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup2.getId() },
+                new int[] { bundle.getId() });
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1611,7 +1632,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // allow bundle assign to bg2
         addRolePermissions(role2, Permission.ASSIGN_BUNDLES_TO_GROUP);
-        bundleManager.assignBundlesToBundleGroup(subject, bundleGroup2.getId(), new int[] { bundle.getId() });
+        bundleManager.assignBundlesToBundleGroups(subject, new int[] { bundleGroup2.getId() },
+            new int[] { bundle.getId() });
 
         // should fetch the single bundle even though it is in two groups
         BundleCriteria bundleCriteria = new BundleCriteria();
@@ -1630,7 +1652,8 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // deny unassign
         try {
-            bundleManager.unassignBundlesFromBundleGroup(subject, bundleGroup2.getId(), new int[] { bundle.getId() });
+            bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup2.getId() },
+                new int[] { bundle.getId() });
             fail("Should have thrown PermissionException");
         } catch (PermissionException e) {
             // expected
@@ -1639,8 +1662,10 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
         // allow unassigns
         addRolePermissions(role, Permission.UNASSIGN_BUNDLES_FROM_GROUP);
         addRolePermissions(role2, Permission.UNASSIGN_BUNDLES_FROM_GROUP);
-        bundleManager.unassignBundlesFromBundleGroup(subject, bundleGroup1.getId(), new int[] { bundle.getId() });
-        bundleManager.unassignBundlesFromBundleGroup(subject, bundleGroup2.getId(), new int[] { bundle.getId() });
+        bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup1.getId() },
+            new int[] { bundle.getId() });
+        bundleManager.unassignBundlesFromBundleGroups(subject, new int[] { bundleGroup2.getId() },
+            new int[] { bundle.getId() });
 
         // should not find the now unassigned bundle
         bundles = bundleManager.findBundlesByCriteria(subject, bundleCriteria);
@@ -1676,7 +1701,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup1 = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME + "_1", "bg-1");
+        BundleGroup bundleGroup1 = new BundleGroup(TEST_BUNDLE_GROUP_NAME + "_1");
+        bundleGroup1.setDescription("bg-1");
+        bundleGroup1 = bundleManager.createBundleGroup(subject, bundleGroup1);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg1 to the role with group create
@@ -1719,7 +1746,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "bg");
+        BundleGroup bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("bg");
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg to the role with group create
@@ -1810,7 +1839,9 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
 
         // create bundle group
         addRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
-        BundleGroup bundleGroup = bundleManager.createBundleGroup(subject, TEST_BUNDLE_GROUP_NAME, "bg");
+        BundleGroup bundleGroup = new BundleGroup(TEST_BUNDLE_GROUP_NAME);
+        bundleGroup.setDescription("bg");
+        bundleGroup = bundleManager.createBundleGroup(subject, bundleGroup);
         removeRolePermissions(role, Permission.MANAGE_BUNDLE_GROUPS);
 
         // add bg to the role with group create
@@ -2064,17 +2095,21 @@ public class BundleManagerBeanTest extends AbstractEJB3Test {
     }
 
     private Bundle createBundle(Subject subject, String name) throws Exception {
-        return createBundle(subject, name, 0);
+        return createBundle(subject, name, null);
     }
 
     private Bundle createBundle(Subject subject, String name, int bundleGroupId) throws Exception {
-        BundleType bt = createBundleType(name);
-        return createBundle(subject, name, bt, bundleGroupId);
+        return createBundle(subject, name, new int[] { bundleGroupId });
     }
 
-    private Bundle createBundle(Subject subject, String name, BundleType bt, int bundleGroupId) throws Exception {
+    private Bundle createBundle(Subject subject, String name, int[] bundleGroupIds) throws Exception {
+        BundleType bt = createBundleType(name);
+        return createBundle(subject, name, bt, bundleGroupIds);
+    }
+
+    private Bundle createBundle(Subject subject, String name, BundleType bt, int[] bundleGroupIds) throws Exception {
         final String fullName = TEST_PREFIX + "-bundle-" + name;
-        Bundle b = bundleManager.createBundle(subject, fullName, fullName + "-desc", bt.getId(), bundleGroupId);
+        Bundle b = bundleManager.createBundle(subject, fullName, fullName + "-desc", bt.getId(), bundleGroupIds);
 
         assert b.getId() > 0;
         assert b.getName().endsWith(fullName);

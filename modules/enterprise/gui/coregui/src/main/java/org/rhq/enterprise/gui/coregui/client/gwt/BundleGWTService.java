@@ -32,6 +32,7 @@ import org.rhq.core.domain.bundle.BundleResourceDeployment;
 import org.rhq.core.domain.bundle.BundleType;
 import org.rhq.core.domain.bundle.BundleVersion;
 import org.rhq.core.domain.bundle.ResourceTypeBundleConfiguration;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.bundle.composite.BundleWithLatestVersionComposite;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.criteria.BundleCriteria;
@@ -47,7 +48,12 @@ public interface BundleGWTService extends RemoteService {
 
     ResourceTypeBundleConfiguration getResourceTypeBundleConfiguration(int compatGroupId) throws RuntimeException;
 
-    BundleVersion createBundleVersionViaURL(String url, String username, String password) throws RuntimeException;
+    BundleVersion createOrStoreBundleVersionViaURL(String url, String username, String password)
+        throws RuntimeException;
+
+    BundleVersion createInitialBundleVersionViaRecipe(int[] bundleGroupIds, String recipe) throws RuntimeException;
+
+    BundleVersion createInitialBundleVersionViaToken(int[] bundleGroupIds, String token) throws RuntimeException;
 
     BundleVersion createBundleVersionViaRecipe(String recipe) throws RuntimeException;
 
@@ -102,4 +108,16 @@ public interface BundleGWTService extends RemoteService {
         boolean isCleanDeployment) throws RuntimeException;
 
     void purgeBundleDestination(int bundleDestinationId) throws RuntimeException;
+
+    BundleGroup createBundleGroup(BundleGroup bundleGroup) throws RuntimeException;
+
+    void deleteBundleGroups(int[] bundleGroupIds) throws RuntimeException;
+
+    BundleGroup updateBundleGroup(BundleGroup bundleGroup) throws RuntimeException;
+
+    BundleGroupAssignmentComposite getAssignableBundleGroups(int bundleId) throws RuntimeException;
+
+    void assignBundlesToBundleGroups(int[] bundleGroupIds, int[] bundleIds) throws RuntimeException;
+
+    void unassignBundlesFromBundleGroups(int[] bundleGroupIds, int[] bundleIds) throws RuntimeException;
 }

@@ -1067,17 +1067,6 @@ public class Table<DS extends RPCDataSource> extends EnhancedHLayout implements 
             this.extraWidgetsAtTop.add(widget);
     }
 
-    public void setHeaderIcon(String headerIcon) {
-        if (this.headerIcons.size() > 0) {
-            this.headerIcons.clear();
-        }
-        addHeaderIcon(headerIcon);
-    }
-
-    public void addHeaderIcon(String headerIcon) {
-        this.headerIcons.add(headerIcon);
-    }
-
     /**
      * By default, all table actions have buttons that are enabled or
      * disabled based on if and how many rows are selected. There are

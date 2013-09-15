@@ -477,8 +477,13 @@ public class StandaloneContainer {
 
         for (Resource res : resources) {
             if (id == 0 || (res.getId() == id)) {
-                Availability availability = inventoryManager.getCurrentAvailability(res);
-                System.out.println(res.getName() + "( " + res.getId() + " ):" + availability.getAvailabilityType());
+                AvailabilityReport availabilityReport = inventoryManager.getCurrentAvailability(res, false);
+                for(AvailabilityReport.Datum datum : availabilityReport.getResourceAvailability()) {
+                    if (datum.getResourceId() == res.getId()) {
+                        System.out.println(res.getName() + "( " + res.getId() + " ):" + datum.getAvailabilityType());
+                        break;
+                    }
+                }
             }
         }
     }

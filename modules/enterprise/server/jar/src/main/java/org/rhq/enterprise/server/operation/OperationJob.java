@@ -19,6 +19,7 @@
 package org.rhq.enterprise.server.operation;
 
 import java.util.Date;
+import java.util.List;
 
 import org.apache.commons.logging.LogFactory;
 import org.quartz.Job;
@@ -26,7 +27,9 @@ import org.quartz.JobDetail;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceOperationHistoryCriteria;
 import org.rhq.core.domain.operation.GroupOperationHistory;
+import org.rhq.core.domain.operation.JobId;
 import org.rhq.core.domain.operation.OperationDefinition;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.operation.ScheduleJobId;
@@ -121,5 +124,24 @@ public abstract class OperationJob implements Job {
         history.setId(persisted.getId()); // we need this - this enables the server to successfully update the group history later
 
         return persisted;
+    }
+
+    protected ResourceOperationHistory findOperationHistory(String name, String group,
+                                                            OperationManagerLocal operationManager,
+                                                            ResourceOperationSchedule schedule) {
+
+        JobId jobId = new JobId(name,group);
+
+        ResourceOperationHistoryCriteria criteria = new ResourceOperationHistoryCriteria();
+        criteria.addFilterJobId(jobId);
+
+        ResourceOperationHistory history ;
+        List<ResourceOperationHistory> list = operationManager.findResourceOperationHistoriesByCriteria(schedule.getSubject(),criteria);
+        if (list==null || list.isEmpty()) {
+            return null;
+        }
+
+        history = list.get(0);
+        return history;
     }
 }

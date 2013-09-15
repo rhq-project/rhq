@@ -1,6 +1,6 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2011 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,10 +13,12 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.enterprise.gui.coregui.client.components.configuration;
+
+import static com.smartgwt.client.types.Overflow.VISIBLE;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -126,11 +128,11 @@ import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
-import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedHLayout;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedIButton;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedToolStrip;
 import org.rhq.enterprise.gui.coregui.client.util.enhanced.EnhancedVLayout;
+import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 
 /**
  * A SmartGWT widget for editing an RHQ {@link Configuration} that conforms to a {@link ConfigurationDefinition}.
@@ -176,6 +178,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
 
     private FormItem blurValueItem;
     private CheckboxItem blurUnsetItem;
+
+    private HashMap<PropertyDefinitionList, ListGrid> listOfMapsGrids = new HashMap<PropertyDefinitionList, ListGrid>();
 
     public static enum ConfigType {
         plugin, resource
@@ -267,11 +271,32 @@ public class ConfigurationEditor extends EnhancedVLayout {
     }
 
     public boolean validate() {
-        return (this.topLevelPropertiesValuesManager.validate());
+        return this.topLevelPropertiesValuesManager.validate() && listOfMapsGridsAreValid();
+    }
+
+    private boolean listOfMapsGridsAreValid() {
+        for (Map.Entry<PropertyDefinitionList, ListGrid> entry : listOfMapsGrids.entrySet()) {
+            PropertyDefinitionList propertyDefinitionList = entry.getKey();
+            int listMin = propertyDefinitionList.getMin();
+            int listMax = propertyDefinitionList.getMax();
+            ListGridRecord[] gridRecords = entry.getValue().getRecords();
+            if (!isListGridRecordCountValid(gridRecords, listMin, listMax)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isListGridRecordCountValid(ListGridRecord[] gridRecords, int min, int max) {
+        int gridRecordCount = gridRecords == null ? 0 : gridRecords.length;
+        if (gridRecordCount < min || gridRecordCount > max) {
+            return false;
+        }
+        return true;
     }
 
     public boolean isValid() {
-        return (!this.topLevelPropertiesValuesManager.hasErrors());
+        return !this.topLevelPropertiesValuesManager.hasErrors() && listOfMapsGridsAreValid();
     }
 
     public void addPropertyValueChangeListener(PropertyValueChangeListener propertyValueChangeListener) {
@@ -472,11 +497,21 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 PropertyDefinition propertyDefinition = this.configurationDefinition.get(propertyName);
                 this.invalidPropertyNameToDisplayNameMap.put(propertyName, propertyDefinition.getDisplayName());
             }
-            if (!this.invalidPropertyNameToDisplayNameMap.isEmpty()) {
-                PropertyValueChangeEvent event = new PropertyValueChangeEvent(null, null, true,
-                    this.invalidPropertyNameToDisplayNameMap);
-                firePropertyChangedEvent(event);
+        }
+        for (Map.Entry<PropertyDefinitionList, ListGrid> entry : listOfMapsGrids.entrySet()) {
+            PropertyDefinitionList propertyDefinitionList = entry.getKey();
+            int listMin = propertyDefinitionList.getMin();
+            int listMax = propertyDefinitionList.getMax();
+            ListGridRecord[] gridRecords = entry.getValue().getRecords();
+            if (!isListGridRecordCountValid(gridRecords, listMin, listMax)) {
+                this.invalidPropertyNameToDisplayNameMap.put(propertyDefinitionList.getName(),
+                    propertyDefinitionList.getDisplayName());
             }
+        }
+        if (!this.invalidPropertyNameToDisplayNameMap.isEmpty()) {
+            PropertyValueChangeEvent event = new PropertyValueChangeEvent(null, null, true,
+                    this.invalidPropertyNameToDisplayNameMap);
+            firePropertyChangedEvent(event);
         }
     }
 
@@ -933,13 +968,18 @@ public class ConfigurationEditor extends EnhancedVLayout {
         final PropertyDefinitionList propertyDefinitionList, final PropertyList propertyList) {
         Log.debug("Building list-of-maps grid for " + propertyList + "...");
 
+        final int listMin = propertyDefinitionList.getMin();
+        final int listMax = propertyDefinitionList.getMax();
+        final Canvas errorPanel = buildListOfMapsGridErrorPanel(listMin, listMax);
+
         final ListGrid summaryTable = new ListGrid();
+        listOfMapsGrids.put(propertyDefinitionList, summaryTable);
         summaryTable.setAlternateRecordStyles(true);
         summaryTable.setShowAllRecords(true);
         // [BZ 822173 - Table layout problem on configuration page.] 
         // setBodyOverflow(Overflow.VISIBLE) && setAutoFitFieldWidths(true) issue
-        summaryTable.setBodyOverflow(Overflow.VISIBLE);
-        summaryTable.setOverflow(Overflow.VISIBLE);
+        summaryTable.setBodyOverflow(VISIBLE);
+        summaryTable.setOverflow(VISIBLE);
         summaryTable.setWidth100();
         summaryTable.setAutoFitFieldWidths(true);
         summaryTable.setAutoFitWidthApproach(AutoFitWidthApproach.BOTH);
@@ -981,8 +1021,8 @@ public class ConfigurationEditor extends EnhancedVLayout {
                 PropertyMapListGridRecord record = (PropertyMapListGridRecord) recordClickEvent.getRecord();
                 PropertyMap memberPropertyMap = (PropertyMap) record.getPropertyMap();
                 Log.debug("Editing property map: " + memberPropertyMap);
-                displayMapEditor(summaryTable, record, propertyDefinitionList, propertyList,
-                    memberPropertyDefinitionMap, memberPropertyMap, mapReadOnly);
+                displayMapEditor(summaryTable, errorPanel, record, propertyDefinitionList, propertyList,
+                        memberPropertyDefinitionMap, memberPropertyMap, mapReadOnly);
             }
         });
         fieldsList.add(editField);
@@ -1005,16 +1045,20 @@ public class ConfigurationEditor extends EnhancedVLayout {
                     SC.confirm(MSG.view_configEdit_confirm_2(), new BooleanCallback() {
                         public void execute(Boolean confirmed) {
                             if (confirmed) {
-                                if (summaryTable.getRecordList().getLength() <= propertyDefinitionList.getMin()) {
-                                    SC.say(MSG.view_configEdit_minBoundsExceeded(String.valueOf(propertyDefinitionList
-                                        .getMin())));
+                                if (summaryTable.getRecordList().getLength() <= listMin) {
+                                    SC.say(MSG.view_configEdit_minBoundsExceeded(String.valueOf(listMin)));
                                 } else {
                                     PropertyMapListGridRecord recordToBeDeleted = (PropertyMapListGridRecord) recordClickEvent
                                         .getRecord();
                                     propertyList.getList().remove(recordToBeDeleted.getIndex());
                                     ListGridRecord[] rows = buildSummaryRecords(propertyList, propertyDefinitions);
+                                    boolean listGridRecordCountValid = isListGridRecordCountValid(rows, listMin, listMax);
+                                    if (errorPanel.isVisible() && listGridRecordCountValid) {
+                                        errorPanel.setVisible(false);
+                                    }
                                     summaryTable.setData(rows);
-                                    firePropertyChangedEvent(propertyList, propertyDefinitionList, true);
+                                    firePropertyChangedEvent(propertyList, propertyDefinitionList,
+                                        listGridRecordCountValid);
                                 }
                             }
                         }
@@ -1041,20 +1085,58 @@ public class ConfigurationEditor extends EnhancedVLayout {
             addRowButton.setIcon(Window.getImgURL(ImageManager.getAddIcon()));
             addRowButton.addClickHandler(new com.smartgwt.client.widgets.events.ClickHandler() {
                 public void onClick(ClickEvent clickEvent) {
-                    displayMapEditor(summaryTable, null, propertyDefinitionList, propertyList,
-                        memberPropertyDefinitionMap, null, mapReadOnly);
+                    if (propertyList.getList().size() >= listMax) {
+                        SC.say(MSG.view_configEdit_maxBoundsExceeded(String.valueOf(propertyDefinitionList.getMax())));
+                        return;
+                    }
+                    displayMapEditor(summaryTable, errorPanel, null, propertyDefinitionList, propertyList,
+                            memberPropertyDefinitionMap, null, mapReadOnly);
                 }
             });
             toolStrip.addMember(addRowButton);
         }
 
-        summaryTableHolder.setMembers(summaryTable, toolStrip);
+        if (isListGridRecordCountValid(summaryTable.getRecords(), listMin, listMax)) {
+            errorPanel.setVisible(false);
+        } else {
+            errorPanel.setVisible(true);
+        }
+        summaryTableHolder.setMembers(summaryTable, toolStrip, errorPanel);
 
         CanvasItem canvasItem = buildComplexPropertyField(summaryTableHolder);
         canvasItem.setColSpan(3);
         canvasItem.setEndRow(true);
 
         return canvasItem;
+    }
+
+    private Canvas buildListOfMapsGridErrorPanel(int listMin, int listMax) {
+        Label errorLabel = buildListOfMapsGridErrorLabelForBounds(listMin, listMax);
+        final HTMLFlow errorPanel = new HTMLFlow();
+        errorPanel.setWidth100();
+        errorPanel.addChild(errorLabel);
+        return errorPanel;
+    }
+
+    private Label buildListOfMapsGridErrorLabelForBounds(int listMin, int listMax) {
+        Label errorLabel;
+        if (listMin == 0 && listMax == Integer.MAX_VALUE) {
+            errorLabel = new Label("---");
+        } else if (listMin == 0 && listMax < Integer.MAX_VALUE) {
+            errorLabel = new Label(MSG.view_configEdit_invalidListSizeMax(String.valueOf(listMax)));
+        } else if (listMin > 0 && listMax == Integer.MAX_VALUE) {
+            errorLabel = new Label(MSG.view_configEdit_invalidListSizeMin(String.valueOf(listMin)));
+        } else {
+            errorLabel = new Label(MSG.view_configEdit_invalidListSizeMinMax(String.valueOf(listMin),
+                String.valueOf(listMax)));
+        }
+        errorLabel.setWidth100();
+        errorLabel.setPadding(5);
+        errorLabel.setHeight(5);
+        errorLabel.setOverflow(VISIBLE);
+        errorLabel.addStyleName("InlineError");
+        errorLabel.setIcon("[SKIN]/actions/exclamation.png");
+        return errorLabel;
     }
 
     private ListGridField createListGridField(PropertyDefinition summaryPropDef) {
@@ -1686,9 +1768,10 @@ public class ConfigurationEditor extends EnhancedVLayout {
         return validators;
     }
 
-    private void displayMapEditor(final ListGrid summaryTable, final PropertyMapListGridRecord existingRecord,
-        final PropertyDefinitionList propertyDefinitionList, final PropertyList propertyList,
-        PropertyDefinitionMap memberMapDefinition, final PropertyMap memberMap, final boolean mapReadOnly) {
+    private void displayMapEditor(final ListGrid summaryTable, final Canvas errorPanel,
+                                  final PropertyMapListGridRecord existingRecord, final PropertyDefinitionList propertyDefinitionList,
+                                  final PropertyList propertyList, PropertyDefinitionMap memberMapDefinition, final PropertyMap memberMap,
+                                  final boolean mapReadOnly) {
 
         final List<PropertyDefinition> memberDefinitions = new ArrayList<PropertyDefinition>(
             memberMapDefinition.getOrderedPropertyDefinitions());
@@ -1736,7 +1819,13 @@ public class ConfigurationEditor extends EnhancedVLayout {
                         existingRecord.refresh();
                         summaryTable.updateData(existingRecord);
                     }
-                    firePropertyChangedEvent(propertyList, propertyDefinitionList, true);
+                    boolean listGridRecordCountValid = isListGridRecordCountValid(summaryTable.getRecords(), propertyDefinitionList.getMin(),
+                            propertyDefinitionList.getMax());
+                    if (errorPanel.isVisible()
+                            && listGridRecordCountValid) {
+                        errorPanel.setVisible(false);
+                    }
+                    firePropertyChangedEvent(propertyList, propertyDefinitionList, listGridRecordCountValid);
                     summaryTable.redraw();
                 }
 

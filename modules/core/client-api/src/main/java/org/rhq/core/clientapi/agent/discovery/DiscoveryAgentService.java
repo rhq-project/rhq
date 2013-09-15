@@ -109,20 +109,33 @@ public interface DiscoveryAgentService {
     AvailabilityReport executeAvailabilityScanImmediately(boolean changedOnlyReport);
 
     /**
-     * Returns the current availability for the specified Resource if no other thread currently possesses a write lock
-     * on that Resource's ResourceComponent, or otherwise, returns the last-collected availablity for the Resource. If
-     * the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the returned
-     * Availability will be set to <code>UNKNOWN</code>).
+     * Returns the current availability for the specified resource.
+     * <p/>
+     * This call returns an availability report (rather just a simple availability of a single resource)
+     * because it also scans for the changes in availability in the child resources. Notice that the returned report may
+     * contain no results if {@code changesOnly} is set to true. If it is false, the report will always contain
+     * the availability of the supplied resource but can also additionally contain the availabilities of some of its
+     * child resources, if they were eligible for availability collection at the time of calling this method.
+     * <p/>
+     * Also note that the availability types of the resources in the report may have any of the following values from
+     * the {@link AvailabilityType} enum - it may happen that the availability of the resource is
+     * {@link AvailabilityType#UNKNOWN} if the resource component is not started.
+     * <p/>
+     * <b>IMPORTANT:</b> The report is NOT sent up to the server as a consequence of calling this method (unlike for
+     * example in the case of {@link #executeAvailabilityScanImmediately(boolean)}). The caller itself is responsible to
+     * correctly handle the report within the server.
      *
-     * @param  resource a Resource
-     *
-     * @return the current availability for the specified Resource if no other thread currently possesses a write lock
-     *         on that Resource's ResourceComponent, or otherwise, the last-collected availablity for the Resource; if
-     *         the availability is not known, "unknown" will be returned (that is, the {@link AvailabilityType} in the
-     *         returned Availablity will be set to <code>UNKNOWN</code>).
+     * @param resource the resource to return the availability of.
+     * @param changesOnly if true, only changes in availability will be reported, if false the report will contain
+     *                    the availabilities of all resources eligible for collection at the time of the call regardless
+     *                    of whether their availability changed or not.
+     * @return an availability report containing at least the availability of the supplied resource + possibly avails
+     *         of some of the child resources that were eligible for avail collection at the time. The rest of the
+     *         children are scheduled for availability collection in the next collector run (which happens
+     *         approximately 30 seconds after this call).
      */
     @NotNull
-    Availability getCurrentAvailability(Resource resource);
+    AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly);
 
     /**
      * This call will request that the agent produce a full availability report on its next availability scan.

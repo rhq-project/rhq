@@ -51,12 +51,8 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
 
     protected static final String HOST_PROPERTY = "host";
     protected static final String CLUSTER_NAME_PROPERTY = "clusterName";
-    protected static final String NATIVE_TRANSPORT_PORT_PROPERTY = "nativeTransportPort";
-    protected static final String STORAGE_PORT_PROPERTY = "storagePort";
     protected static final String JMX_PORT_PROPERTY = "jmxPort";
     protected static final String AUTHENTICATOR_PROPERTY = "authenticator";
-    protected static final String USERNAME_PROPERTY = "username";
-    protected static final String PASSWORD_PROPERTY = "password";
     protected static final String YAML_PROPERTY = "yamlConfiguration";
     protected static final String BASEDIR_PROPERTY = "baseDir";
 
@@ -103,7 +99,7 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         return true;
     }
 
-    @SuppressWarnings({ "unchecked", "deprecation" })
+    @SuppressWarnings({ "deprecation" })
     private DiscoveredResourceDetails getDetails(ResourceDiscoveryContext<?> context,
         ProcessScanResult processScanResult) {
 
@@ -158,9 +154,6 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
                 pluginConfig.put(new PropertySimple(YAML_PROPERTY, yamlConfigurationFile.getAbsolutePath()));
                 pluginConfig.put(new PropertySimple(CLUSTER_NAME_PROPERTY, yamlEditor.getClusterName()));
                 pluginConfig.put(new PropertySimple(HOST_PROPERTY, yamlEditor.getListenAddress()));
-                pluginConfig.put(new PropertySimple(NATIVE_TRANSPORT_PORT_PROPERTY,
-                    yamlEditor.getNativeTransportPort()));
-                pluginConfig.put(new PropertySimple(STORAGE_PORT_PROPERTY, yamlEditor.getStoragePort()));
                 pluginConfig.put(new PropertySimple(AUTHENTICATOR_PROPERTY, yamlEditor.getAuthenticator()));
             }
         }
@@ -181,26 +174,15 @@ public class CassandraNodeDiscoveryComponent extends JMXDiscoveryComponent {
         String path = processInfo.getExecutable().getCwd();
         pluginConfig.put(new PropertySimple(BASEDIR_PROPERTY, new File(path).getParentFile().getAbsolutePath()));
 
-        pluginConfig.put(new PropertySimple(USERNAME_PROPERTY, getDefaultUserName()));
-        pluginConfig.put(new PropertySimple(PASSWORD_PROPERTY, getDefaultPassword()));
-
         return new DiscoveredResourceDetails(context.getResourceType(), resourceKey, resourceName, null, null,
             pluginConfig, processInfo);
     }
 
+    @SuppressWarnings("rawtypes")
     @Override
     public ResourceUpgradeReport upgrade(ResourceUpgradeContext inventoriedResource) {
-
         // don't use super's impl because the resource key is not a JvmResourceKey
         return null;
-    }
-
-    protected String getDefaultUserName() {
-        return "cassandra";
-    }
-
-    protected String getDefaultPassword() {
-        return "cassandra";
     }
 
 }

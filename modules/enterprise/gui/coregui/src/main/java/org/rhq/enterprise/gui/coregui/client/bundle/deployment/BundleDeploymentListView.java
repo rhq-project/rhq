@@ -39,6 +39,7 @@ import com.smartgwt.client.widgets.grid.events.RecordClickHandler;
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.ErrorMessageWindow;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.EscapedHtmlCellFormatter;
@@ -51,13 +52,12 @@ import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
  */
 public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> {
 
-    private final boolean canManageBundles;
+    private final boolean canDeploy;
 
-    public BundleDeploymentListView(Criteria criteria, boolean canManageBundles) {
-        super(MSG.view_bundle_bundleDeployments(), criteria);
-        this.canManageBundles = canManageBundles;
+    public BundleDeploymentListView(Criteria criteria, boolean canDeploy) {
+        super(MSG.view_bundle_bundleDeployments(), criteria, IconEnum.BUNDLE_DEPLOYMENT.getIcon24x24Path());
+        this.canDeploy = canDeploy;
         setDataSource(new BundleDeploymentDataSource());
-        setHeaderIcon("subsystems/bundle/BundleDeployment_24.png");
     }
 
     @Override
@@ -85,7 +85,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
         deployTimeField.setType(ListGridFieldType.DATE);
 
         // only users that are authorized can see deployments
-        if (canManageBundles) {
+        if (canDeploy) {
             nameField.setCellFormatter(new CellFormatter() {
                 public String format(Object value, ListGridRecord record, int i, int i1) {
                     return "<a href=\""
@@ -141,7 +141,7 @@ public class BundleDeploymentListView extends Table<BundleDeploymentDataSource> 
 
         setListGridFields(idField, nameField, descriptionField, bundleVersionField, deployTimeField, statusField);
 
-        if (canManageBundles) {
+        if (canDeploy) {
             setListGridDoubleClickHandler(new DoubleClickHandler() {
                 @Override
                 public void onDoubleClick(DoubleClickEvent event) {

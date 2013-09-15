@@ -118,7 +118,7 @@ public class PartitionEventTableView extends TableSection<PartitionEventDatasour
 
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
-            if (field.getName() == PartitionEventDatasourceField.FIELD_EVENT_TYPE.propertyName()) {
+            if (PartitionEventDatasourceField.FIELD_EVENT_TYPE.propertyName().equals(field.getName())) {
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {

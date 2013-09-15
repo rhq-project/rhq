@@ -20,6 +20,10 @@
 
 package org.rhq.plugins.netservices.itest;
 
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.METHOD;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.URL;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.VALIDATE_RESPONSE_CODE;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.VALIDATE_RESPONSE_PATTERN;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -53,8 +57,6 @@ import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.plugins.netservices.HTTPNetServiceComponent;
-import org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys;
-import org.rhq.plugins.netservices.HTTPNetServiceComponent.HttpMethod;
 
 /**
  * @author Thomas Segismont
@@ -111,10 +113,10 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
     @Test(dependsOnMethods = "testPluginLoad")
     public void testManualAdd() throws Exception {
         Configuration configuration = new Configuration();
-        configuration.setSimpleValue(ConfigKeys.URL, "http://" + HTTP_HOST + ":" + httpPort + "/pipo/molo");
-        configuration.setSimpleValue(ConfigKeys.METHOD, HttpMethod.GET.name());
-        configuration.setSimpleValue(ConfigKeys.VALIDATE_RESPONSE_CODE, "true");
-        configuration.setSimpleValue(ConfigKeys.VALIDATE_RESPONSE_PATTERN, "success");
+        configuration.setSimpleValue(URL, "http://" + HTTP_HOST + ":" + httpPort + "/pipo/molo");
+        configuration.setSimpleValue(METHOD, "GET");
+        configuration.setSimpleValue(VALIDATE_RESPONSE_CODE, "true");
+        configuration.setSimpleValue(VALIDATE_RESPONSE_PATTERN, "success");
         MergeResourceResponse response = getInventoryManager().manuallyAddResource(
             getPluginManager().getMetadataManager().getType(SERVICE_NAME, PLUGIN_NAME), getPlatform().getId(),
             configuration, -1);
@@ -139,7 +141,6 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
         metrics.add(new MeasurementScheduleRequest(scheduleId++, "connectTime", 1000, true, DataType.MEASUREMENT));
         metrics.add(new MeasurementScheduleRequest(scheduleId++, "readTime", 1000, true, DataType.MEASUREMENT));
         metrics.add(new MeasurementScheduleRequest(scheduleId++, "contentLength", 1000, true, DataType.MEASUREMENT));
-        metrics.add(new MeasurementScheduleRequest(scheduleId++, "contentAge", 1000, true, DataType.MEASUREMENT));
         httpNetServiceComponent.getValues(report, metrics);
         Map<String, Object> datas = new HashMap<String, Object>();
         for (MeasurementData data : report.getNumericData()) {
@@ -150,8 +151,6 @@ public class HTTPNetServiceComponentTest extends NetServiceComponentTest {
         value = getMetric(datas, "readTime");
         assertTrue(value > SERVLET_SLEEP);
         value = getMetric(datas, "contentLength");
-        assertTrue(value > 0);
-        value = getMetric(datas, "contentAge");
         assertTrue(value > 0);
     }
 

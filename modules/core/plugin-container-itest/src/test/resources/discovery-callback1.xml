@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<plugin name="DiscoveryCallbackPluginOne"
+        package="org.rhq.core.pc.inventory.testplugin"
+        version="1.0"
+        xmlns="urn:xmlns:rhq-plugin"
+        xmlns:c="urn:xmlns:rhq-configuration">
+
+    <discovery-callbacks>
+        <type-callback plugin="DiscoveryCallbackPluginOne" type="TestServerOne" callbackClass="org.rhq.core.pc.inventory.discoverycallback.PluginOneCallback"/>
+    </discovery-callbacks>
+
+    <server name="TestServerOne"
+           discovery="TestResourceDiscoveryComponent"
+           class="TestResourceComponent">
+      <plugin-configuration>
+          <c:simple-property name="TestServerOne.prop1"/>
+          <c:simple-property name="TestServerOne.prop2"/>
+      </plugin-configuration>
+   </server>
+</plugin>

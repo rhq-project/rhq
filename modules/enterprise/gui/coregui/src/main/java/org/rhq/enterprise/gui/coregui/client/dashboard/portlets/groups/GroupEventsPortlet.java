@@ -290,7 +290,7 @@ public class GroupEventsPortlet extends EnhancedVLayout implements CustomSetting
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     @Override

@@ -342,10 +342,27 @@ public abstract class OperationHistory implements Serializable {
     }
 
     /**
+     * This method MUST be called when the corresponding operation is triggered, but before the request is sent down to
+     * the agent.  The started time is used in the calculation of {@link #getDuration()}, which is in turn used by the
+     * business layer to reason whether an operation has timed out.  If this method is never called, and if there are
+     * any issues executing the corresponding operation, this history element will never time out and will forever stay
+     * in the {@link OperationRequestStatus#INPROGRESS} state.
+     *
+     * @throws IllegalArgumentException if an attempt is made to start this object more than once
+     * @see #getCreatedTime()
+     * @since RHQ 4.9
+     */
+    public void setStartedTime(long startedTime) {
+        if (this.startedTime != 0) {
+            throw new IllegalArgumentException("Can only start an operation once");
+        }
+        this.startedTime = startedTime;
+    }
+
+    /**
      * The time when corresponding operation was started.  If the corresponding operation has not yet been started,
      * this method will return 0.
-     *
-     * @return started time, in epoch millis
+     *     * @return started time, in epoch millis
      */
     public long getStartedTime() {
         return this.startedTime;

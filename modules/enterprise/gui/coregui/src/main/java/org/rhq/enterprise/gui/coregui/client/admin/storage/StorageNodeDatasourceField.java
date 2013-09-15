@@ -23,6 +23,8 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 
 /**
+ * Fields for {@link StorageNodeDatasource} class.
+ * 
  * @author Jirka Kremser
  *
  */
@@ -31,16 +33,16 @@ public enum StorageNodeDatasourceField {
     FIELD_ID("id", CoreGUI.getMessages().common_title_id()),
     
     FIELD_ADDRESS("address", CoreGUI.getMessages().view_adminTopology_server_endpointAddress()),
-
-    FIELD_JMX_PORT("jmxPort", "JMX Port"),
     
     FIELD_ALERTS("alerts", "Alerts"),
     
     FIELD_CQL_PORT("cqlPort", "CQL Port"),
 
-    FIELD_OPERATION_MODE("operationMode", CoreGUI.getMessages().view_adminTopology_server_mode()),
+    FIELD_OPERATION_MODE("operationMode", "Operation Mode"),
     
-    FIELD_STATUS("status", "Status"),
+    FIELD_STATUS("status", "Cluster Status"),
+    
+    FIELD_AVAILABILITY("availability", CoreGUI.getMessages().common_title_availability()),
     
     FIELD_MEMORY("memory", "Memory"),
     
@@ -89,27 +91,13 @@ public enum StorageNodeDatasourceField {
         return field;
     }
     
-    public enum StorageNodeLoadCompositeDatasourceField {
-        
-        
-    
-
-//        private MeasurementAggregateWithUnits heapCommitted;
-//        private MeasurementAggregateWithUnits heapUsed;
-//        private MeasurementAggregateWithUnits heapPercentageUsed;
-//        private MeasurementAggregateWithUnits load;
-//        private MeasurementAggregate tokens; 
-//        private MeasurementAggregateWithUnits actuallyOwns;
-        
-        
+    public enum StorageNodeLoadCompositeDatasourceField { 
         FIELD_PARENT_ID("parentId", "parentId"),
         FIELD_NAME("name", CoreGUI.getMessages().common_title_metric()),
         FIELD_MIN("min", CoreGUI.getMessages().view_resource_monitor_table_min()),
         FIELD_AVG("avg", CoreGUI.getMessages().view_resource_monitor_table_avg()),
         FIELD_MAX("max", CoreGUI.getMessages().view_resource_monitor_table_max());
 
-
-        
         /**
          * Corresponds to a property name of StorageNodeLoadComposite (e.g. min).
          */

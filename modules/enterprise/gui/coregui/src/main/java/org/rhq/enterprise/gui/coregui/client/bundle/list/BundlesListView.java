@@ -19,10 +19,13 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.list;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.data.Criteria;
+import com.smartgwt.client.data.Record;
 import com.smartgwt.client.types.Alignment;
 import com.smartgwt.client.types.ListGridFieldType;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
@@ -42,7 +45,9 @@ import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.create.BundleCreateWizard;
 import org.rhq.enterprise.gui.coregui.client.bundle.deploy.BundleDeployWizard;
-import org.rhq.enterprise.gui.coregui.client.components.table.AbstractTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.BundleAuthorizedTableAction;
+import org.rhq.enterprise.gui.coregui.client.components.table.RecordExtractor;
+import org.rhq.enterprise.gui.coregui.client.components.table.RoleAuthorizedTableAction;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TableActionEnablement;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -61,7 +66,7 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
  */
 public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
 
-    private final Set<Permission> permissions;
+    private final Set<Permission> globalPermissions;
 
     /**
      * Creates a new list view.
@@ -73,9 +78,8 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
     }
 
     public BundlesListView(Criteria criteria, Set<Permission> perms) {
-        super(MSG.view_bundle_bundles(), criteria, IconEnum.BUNDLE.getIcon24x24Path());
-        this.permissions = perms;
-        setHeaderIcon(IconEnum.BUNDLE.getIcon24x24Path());
+        super(MSG.common_title_bundles(), criteria, IconEnum.BUNDLE.getIcon24x24Path());
+        this.globalPermissions = perms;
         setDataSource(new BundlesWithLatestVersionDataSource());
     }
 
@@ -130,61 +134,72 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
         });
 
         // only show the buttons if we were given a set of permissions - passing in null is a way to say you only want the list, no actions 
-        if (this.permissions != null) {
+        if (this.globalPermissions != null) {
+            boolean hasGlobalDelete = globalPermissions.contains(Permission.DELETE_BUNDLES);
 
-            boolean hasAuth = permissions.contains(Permission.MANAGE_BUNDLE);
+            addTableAction(MSG.common_button_new(), null, new RoleAuthorizedTableAction(BundlesListView.this,
+                Permission.CREATE_BUNDLES, Permission.CREATE_BUNDLES_IN_GROUP) {
 
-            addTableAction(MSG.common_button_new(), null, new AbstractTableAction(
-                (hasAuth) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
-                    new BundleCreateWizard().startWizard();
+                    new BundleCreateWizard(globalPermissions).startWizard();
                     // we can refresh the table buttons immediately since the wizard is a dialog, the
                     // user can't access enabled buttons anyway.
                     BundlesListView.this.refreshTableInfo();
                 }
             });
 
-            addTableAction(MSG.common_button_delete(), MSG.view_bundle_list_deleteConfirm(), new AbstractTableAction(
-                (hasAuth) ? TableActionEnablement.ANY : TableActionEnablement.NEVER) {
-                public void executeAction(ListGridRecord[] selections, Object actionValue) {
-                    if (selections == null || selections.length == 0) {
-                        return;
-                    }
+            addTableAction(MSG.common_button_delete(), MSG.view_bundle_list_deleteConfirm(),
+                new BundleAuthorizedTableAction(BundlesListView.this, TableActionEnablement.ANY,
+                    (hasGlobalDelete ? null : Permission.DELETE_BUNDLES_FROM_GROUP), new RecordExtractor<Integer>() {
+                        public Collection<Integer> extract(Record[] records) {
+                            List<Integer> result = new ArrayList<Integer>(records.length);
+                            for (Record record : records) {
+                                result.add(record.getAttributeAsInt("id"));
+                            }
+                            return result;
+                        }
+                    }) {
 
-                    BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
-                    final ArrayList<String> doomedNames = new ArrayList<String>(selections.length);
-                    int[] doomedIds = new int[selections.length];
-                    int i = 0;
-                    for (ListGridRecord selection : selections) {
-                        BundleWithLatestVersionComposite object = ds.copyValues(selection);
-                        doomedNames.add(object.getBundleName());
-                        doomedIds[i++] = object.getBundleId();
-                    }
-
-                    BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
-                    bundleManager.deleteBundles(doomedIds, new AsyncCallback<Void>() {
-                        public void onFailure(Throwable caught) {
-                            String names = doomedNames.toString();
-                            String error = ErrorHandler.getAllMessages(caught);
-                            Message m = new Message(MSG.view_bundle_list_deletesFailure(), names + "<br/>\n" + error,
-                                Severity.Error);
-                            CoreGUI.getMessageCenter().notify(m);
+                    public void executeAction(ListGridRecord[] selections, Object actionValue) {
+                        if (selections == null || selections.length == 0) {
+                            return;
                         }
 
-                        public void onSuccess(Void result) {
-                            Message m = new Message(MSG.view_bundle_list_deletesSuccessful(), doomedNames.toString(),
-                                Severity.Info);
-                            CoreGUI.getMessageCenter().notify(m);
-                            CoreGUI.refresh();
+                        BundlesWithLatestVersionDataSource ds = (BundlesWithLatestVersionDataSource) getDataSource();
+                        final ArrayList<String> doomedNames = new ArrayList<String>(selections.length);
+                        int[] doomedIds = new int[selections.length];
+                        int i = 0;
+                        for (ListGridRecord selection : selections) {
+                            BundleWithLatestVersionComposite object = ds.copyValues(selection);
+                            doomedNames.add(object.getBundleName());
+                            doomedIds[i++] = object.getBundleId();
                         }
-                    });
-                }
-            });
+
+                        BundleGWTServiceAsync bundleManager = GWTServiceLookup.getBundleService();
+                        bundleManager.deleteBundles(doomedIds, new AsyncCallback<Void>() {
+                            public void onFailure(Throwable caught) {
+                                String names = doomedNames.toString();
+                                String error = ErrorHandler.getAllMessages(caught);
+                                Message m = new Message(MSG.view_bundle_list_deletesFailure(), names + "<br/>\n"
+                                    + error, Severity.Error);
+                                CoreGUI.getMessageCenter().notify(m);
+                            }
+
+                            public void onSuccess(Void result) {
+                                Message m = new Message(MSG.view_bundle_list_deletesSuccessful(), doomedNames
+                                    .toString(), Severity.Info);
+                                CoreGUI.getMessageCenter().notify(m);
+                                CoreGUI.refresh();
+                            }
+                        });
+                    }
+                });
 
             // can change this back to SINGLE selection when we feel like it. currently allowing the wizard to
             // select the bundle.
-            addTableAction(MSG.view_bundle_deploy(), null, new AbstractTableAction(
-                (hasAuth) ? TableActionEnablement.ALWAYS : TableActionEnablement.NEVER) {
+            addTableAction(MSG.view_bundle_deploy(), null, new RoleAuthorizedTableAction(BundlesListView.this,
+                Permission.DEPLOY_BUNDLES, Permission.DEPLOY_BUNDLES_TO_GROUP) {
+
                 public void executeAction(ListGridRecord[] selection, Object actionValue) {
                     if (selection.length == 0) {
                         new BundleDeployWizard().startWizard();
@@ -221,6 +236,5 @@ public class BundlesListView extends Table<BundlesWithLatestVersionDataSource> {
                 }
             });
         }
-
     }
 }

@@ -146,8 +146,6 @@ import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerLocal;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerBean;
 import org.rhq.enterprise.server.measurement.MeasurementViewManagerLocal;
-import org.rhq.enterprise.server.measurement.MetricsManagerBean;
-import org.rhq.enterprise.server.measurement.MetricsManagerLocal;
 import org.rhq.enterprise.server.operation.OperationManagerBean;
 import org.rhq.enterprise.server.operation.OperationManagerLocal;
 import org.rhq.enterprise.server.plugin.ServerPluginsBean;
@@ -188,6 +186,7 @@ import org.rhq.enterprise.server.scheduler.SchedulerBean;
 import org.rhq.enterprise.server.scheduler.SchedulerLocal;
 import org.rhq.enterprise.server.search.SavedSearchManagerBean;
 import org.rhq.enterprise.server.search.SavedSearchManagerLocal;
+import org.rhq.enterprise.server.storage.StorageClientManagerBean;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerBean;
 import org.rhq.enterprise.server.storage.StorageClusterSettingsManagerLocal;
 import org.rhq.enterprise.server.storage.StorageNodeOperationsHandlerBean;
@@ -391,8 +390,15 @@ public final class LookupUtil {
         return lookupLocal(GroupDefinitionExpressionBuilderManagerBean.class);
     }
 
-    public static MetricsManagerLocal getMetricsManager() {
-        return lookupLocal(MetricsManagerBean.class);
+    public static StorageClientManagerBean getStorageClientManager() {
+        try {
+            return (StorageClientManagerBean) new InitialContext().lookup(
+                "java:global/rhq/rhq-server/" + StorageClientManagerBean.class.getSimpleName());
+        } catch (NamingException e) {
+            String msg = "Unable to access " + StorageClientManagerBean.class + " due to JNDI error. You may " +
+                "need to restart the server so that the storage client subsystem can be reinitialized.";
+            throw new RuntimeException(msg, e);
+        }
     }
 
     public static MeasurementDefinitionManagerLocal getMeasurementDefinitionManager() {

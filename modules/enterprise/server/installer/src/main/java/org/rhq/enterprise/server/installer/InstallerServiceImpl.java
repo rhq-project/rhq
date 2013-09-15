@@ -43,6 +43,7 @@ import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.util.PropertiesFileUpdate;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.ExistingSchemaOption;
 import org.rhq.enterprise.server.installer.ServerInstallUtil.SupportedDatabaseType;
 
@@ -73,7 +74,7 @@ public class InstallerServiceImpl implements InstallerService {
 
     @Override
     public String obfuscatePassword(String clearTextPassword) throws Exception {
-        String obfuscatedPassword = ServerInstallUtil.obfuscatePassword(clearTextPassword);
+        String obfuscatedPassword = PicketBoxObfuscator.encode(clearTextPassword);
         return obfuscatedPassword;
     }
 
@@ -83,7 +84,7 @@ public class InstallerServiceImpl implements InstallerService {
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
         String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-        String clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
+        String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
         ArrayList<ServerDetails> allServerDetails = getAllServerDetails(dbUrl, dbUsername, clearTextDbPassword);
         if (allServerDetails == null) {
             log.warn("Cannot get details on all servers");
@@ -130,7 +131,7 @@ public class InstallerServiceImpl implements InstallerService {
         final String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
         final String dbUsername = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
         final String obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-        String clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
+        String clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
         String dbErrorStr = testConnection(dbUrl, dbUsername, clearTextDbPassword);
         if (dbErrorStr != null) {
             throw new Exception(dbErrorStr);
@@ -261,9 +262,11 @@ public class InstallerServiceImpl implements InstallerService {
 
         String appServerConfigDir = getAppServerConfigDir();
 
-        // create an rhqadmin/rhqadmin management user so when discovered, the AS7 plugin can immediately
-        // connect to the RHQ Server.
-        ServerInstallUtil.createDefaultManagementUser(serverDetails, appServerConfigDir);
+        // create an rhqadmin management user so when discovered, the AS7 plugin can immediately
+        // connect to the RHQ Server. Note that if the installer sets rhq.server.management.user to
+        // anything other than our recommended default, the connection properties will need to be updated
+        // before the plugin can connect, because the default creds in the plugin will be wrong.
+        ServerInstallUtil.createDefaultManagementUser(serverProperties, serverDetails, appServerConfigDir);
 
         // perform stuff that has to get done via the JBossAS management client
         ModelControllerClient mcc = null;
@@ -426,10 +429,10 @@ public class InstallerServiceImpl implements InstallerService {
         String obfuscatedDbPassword;
         if (autoInstallMode) {
             obfuscatedDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-            clearTextDbPassword = ServerInstallUtil.deobfuscatePassword(obfuscatedDbPassword);
+            clearTextDbPassword = PicketBoxObfuscator.decode(obfuscatedDbPassword);
         } else {
             clearTextDbPassword = serverProperties.get(ServerProperties.PROP_DATABASE_PASSWORD);
-            obfuscatedDbPassword = ServerInstallUtil.obfuscatePassword(clearTextDbPassword);
+            obfuscatedDbPassword = PicketBoxObfuscator.encode(clearTextDbPassword);
             serverProperties.put(ServerProperties.PROP_DATABASE_PASSWORD, obfuscatedDbPassword);
         }
         final String testConnectionErrorMessage = testConnection(dbUrl, dbUsername, clearTextDbPassword);
@@ -501,9 +504,9 @@ public class InstallerServiceImpl implements InstallerService {
 
         // ensure the server info is up to date and stored in the DB
         ServerInstallUtil.storeServerDetails(serverProperties, clearTextDbPassword, serverDetails);
-
         ServerInstallUtil.persistStorageNodesIfNecessary(serverProperties, clearTextDbPassword,
             parseNodeInformation(serverProperties));
+        ServerInstallUtil.persistStorageClusterSettingsIfNecessary(serverProperties, clearTextDbPassword);
     }
 
     @Override
@@ -630,6 +633,11 @@ public class InstallerServiceImpl implements InstallerService {
                     } else {
                         dataErrors.append("[" + name + "] must be a number : [" + newValue + "]\n");
                     }
+                }
+            } else if (ServerProperties.STRING_PROPERTIES.contains(name)) {
+                final String newValue = entry.getValue();
+                if (ServerInstallUtil.isEmpty(newValue)) {
+                    dataErrors.append("[" + name + "] must be set to a valid string value\n");
                 }
             }
         }
@@ -1157,12 +1165,14 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private List<StorageNode> parseNodeInformation(HashMap<String, String> serverProps) {
-        String[] nodes = serverProps.get("rhq.cassandra.seeds").split(",");
+        String[] nodes = serverProps.get("rhq.storage.nodes").split(",");
+        String cqlPort = serverProps.get("rhq.storage.cql-port");
 
         List<StorageNode> parsedNodes = new ArrayList<StorageNode>();
         for (String node : nodes) {
             StorageNode storageNode = new StorageNode();
-            storageNode.parseNodeInformation(node);
+            storageNode.setAddress(node);
+            storageNode.setCqlPort(Integer.parseInt(cqlPort));
             parsedNodes.add(storageNode);
         }
 
@@ -1170,8 +1180,8 @@ public class InstallerServiceImpl implements InstallerService {
     }
 
     private SchemaManager createStorageNodeSchemaManager(HashMap<String, String> serverProps) {
-        String username = serverProps.get("rhq.cassandra.username");
-        String password = serverProps.get("rhq.cassandra.password");
+        String username = serverProps.get("rhq.storage.username");
+        String password = serverProps.get("rhq.storage.password");
 
         List<StorageNode> storageNodes = this.parseNodeInformation(serverProps);
         String[] nodes = new String[storageNodes.size()];

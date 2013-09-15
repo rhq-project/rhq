@@ -1,26 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.cassandra;
@@ -123,7 +117,6 @@ public final class ClusterInitService {
      *                 before returning.
      * @param retries The number of times to retry connecting. A runtime exception will be
      *                thrown when the number of failed connections exceeds this value.
-     * @param hosts The cluster nodes to which a connection should be made
      */
     public void waitForClusterToStart(String[] storageNodes, int jmxPorts[], int numHosts, int retries) {
         waitForClusterToStart(storageNodes, jmxPorts, numHosts, 250, retries, 1);
@@ -147,7 +140,6 @@ public final class ClusterInitService {
      * @param retries The number of times to retry connecting. A runtime exception will be
      *                thrown when the number of failed connections exceeds this value.
      * @param initialWait The amount of seconds before first try.
-     * @param hosts The cluster nodes to which a connection should be made
      */
     public void waitForClusterToStart(String[] storageNodes, int jmxPorts[], int numHosts, long delay,
         int retries, int initialWait) {

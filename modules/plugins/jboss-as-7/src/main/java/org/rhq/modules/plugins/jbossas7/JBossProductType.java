@@ -35,9 +35,9 @@ public enum JBossProductType {
     ISPN("ISPN", "Infinispan Server", "Infinispan Server", "ISPN"),
     JDG("JDG", "JBoss JDG 6", "JBoss Data Grid 6", "Data Grid"),
     EPP("EPP", "JBoss EAP 6", "JBoss Enterprise Portal Platform 6", "Portal Platform"),
-    JPP("JPP", "JBoss EAP 6", "JBoss Portal Platform 6", "Portal Platform"),
+    JPP("JPP", "JBoss JPP 6", "JBoss Portal Platform 6", "Portal Platform"),
 //    EWP("EWP", "JBoss EWP 6", "JBoss Enterprise Web Platform 6", "EWP"),
-    SOA("SOA-P", "JBoss SOA-P 6", "JBoss Enterprise SOA Platform (ESB)", "SOAP"),
+    SOA("SOA-P", "JBoss SOA-P 6", "Red Hat JBoss Fuse Service Works", "SOAP"),
     WILDFLY8("WildFly","WildFly 8" ,"WildFly Application Server 8" , "WildFly");
 
     public final String SHORT_NAME;
@@ -132,7 +132,7 @@ public enum JBossProductType {
                 productType = JBossProductType.EPP;
             } else if (slot.equals("jpp")) {//new EPP->JPP plugin
                 productType = JBossProductType.JPP;
-            } else if (slot.equals("soa-p")) {
+            } else if (slot.equals("soa")) {
                 productType = JBossProductType.SOA;
             } else {
                 throw new RuntimeException("Unknown product type: " + slot);
@@ -161,8 +161,6 @@ public enum JBossProductType {
              productType = JBossProductType.EPP;
         } else if (homeDirName.contains("-jpp-")) {
             productType = JBossProductType.JPP;
-        } else if (homeDirName.contains("soa-p-")) {
-             productType = JBossProductType.SOA;
         } else {
              throw new RuntimeException("Failed to determine product type for JBoss product installed at [" + homeDir + "].");
         }

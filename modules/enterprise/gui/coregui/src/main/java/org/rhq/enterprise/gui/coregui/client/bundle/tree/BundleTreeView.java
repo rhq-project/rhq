@@ -25,6 +25,7 @@ package org.rhq.enterprise.gui.coregui.client.bundle.tree;
 import com.google.gwt.core.client.GWT;
 import com.google.gwt.core.client.RunAsyncCallback;
 import com.smartgwt.client.types.SelectionStyle;
+import com.smartgwt.client.types.SortDirection;
 import com.smartgwt.client.widgets.grid.events.DataArrivedEvent;
 import com.smartgwt.client.widgets.grid.events.DataArrivedHandler;
 import com.smartgwt.client.widgets.tree.Tree;
@@ -39,6 +40,7 @@ import org.rhq.enterprise.gui.coregui.client.ViewPath;
 
 /**
  * @author Greg Hinkle
+ * @author John Mazzitelli
  */
 public class BundleTreeView extends TreeGrid {
 
@@ -46,26 +48,43 @@ public class BundleTreeView extends TreeGrid {
     // If so, hold it here and retry after the datasource pulls the data.
     private ViewPath pendingPath = null;
 
-    public BundleTreeView(boolean canManageBundles) {
+    private Integer currentlySelectedBundleGroupId;
+
+    public BundleTreeView() {
         super();
         setWidth100();
         setHeight100();
         setLeaveScrollbarGap(false);
-        // fetch the top bundle nodes at the inital onDraw()
+        // fetch the top bundle group nodes at the inital onDraw()
         setAutoFetchData(true);
         setAnimateFolders(false);
         setSelectionType(SelectionStyle.SINGLE);
         setShowRollOver(false);
-        setSortField("name");
+        setSortField(BundleTreeDataSource.FIELD_SORT_VALUE);
+        setSortDirection(SortDirection.ASCENDING);
         setShowHeader(false);
 
-        setDataSource(new BundleTreeDataSource(canManageBundles));
+        setDataSource(new BundleTreeDataSource());
 
         addNodeClickHandler(new NodeClickHandler() {
             public void onNodeClick(NodeClickEvent event) {
                 TreeNode node = event.getNode();
                 String path = node.getAttribute("id").replaceAll("_", "/");
-                CoreGUI.goToView("Bundles/Bundle/" + path);
+
+                // the node ID is the path the form <bundleGroupId>_<the rest of the node ID>
+                String[] splitPath = path.split("/", 2);
+
+                try {
+                    currentlySelectedBundleGroupId = Integer.parseInt(splitPath[0]);
+                } catch (NumberFormatException e) {
+                    CoreGUI.getErrorHandler().handleError("Cannot determine the selected bundle group: " + path);
+                }
+
+                if (splitPath.length == 1) {
+                    CoreGUI.goToView("Bundles/BundleGroup/" + currentlySelectedBundleGroupId);
+                } else {
+                    CoreGUI.goToView("Bundles/Bundle/" + splitPath[1]);
+                }
             }
         });
     }
@@ -92,8 +111,11 @@ public class BundleTreeView extends TreeGrid {
         if (viewPath.viewsLeft() > 0) {
             String key = "";
             for (ViewId view : viewPath.getViewPath().subList(2, viewPath.getViewPath().size())) {
-                if (key.length() > 0)
+                if (key.length() > 0) {
                     key += "_";
+                } else {
+                    key = String.valueOf(currentlySelectedBundleGroupId) + '_'; // all keys start with the parent group ID
+                }
 
                 key += view.getPath();
 
@@ -143,8 +165,6 @@ public class BundleTreeView extends TreeGrid {
             });
         } else {
             deselectAllRecords();
-            if (getTotalRows() > 0)
-                selectRecord(0);
         }
     }
 

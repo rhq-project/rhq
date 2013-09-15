@@ -49,6 +49,12 @@ public class CriteriaQueryRunner<T> {
     private EntityManager entityManager;
     private boolean automaticFetching;
 
+    private static final QueryUtility.PagedDataFetchSettings DATA_FETCH_SETTINGS;
+    static {
+        DATA_FETCH_SETTINGS = new QueryUtility.PagedDataFetchSettings();
+        DATA_FETCH_SETTINGS.setThrowOnMaxAttempts(true);
+    }
+
     public CriteriaQueryRunner(Criteria criteria, CriteriaQueryGenerator queryGenerator, EntityManager entityManager) {
         this(criteria, queryGenerator, entityManager, true);
     }
@@ -61,13 +67,30 @@ public class CriteriaQueryRunner<T> {
         this.automaticFetching = automaticFetching;
     }
 
+    @SuppressWarnings("unchecked")
     public PageList<T> execute() {
         PageList<T> results;
         PageControl pageControl = CriteriaQueryGenerator.getPageControl(criteria);
 
         Restriction criteriaRestriction = criteria.getRestriction();
         if (criteriaRestriction == null) {
-            results = new PageList<T>(getCollection(), getCount(), pageControl);
+            try {
+                results = QueryUtility.fetchPagedDataAndCount(queryGenerator.getQuery(entityManager),
+                    queryGenerator.getCountQuery(entityManager), pageControl, DATA_FETCH_SETTINGS);
+            } catch (PhantomReadMaxAttemptsExceededException e) {
+                LOG.warn(
+                    "Could not get consistent results of the paged data and a total count for " +
+                        CriteriaUtil.toString(criteria) + ". After " + e.getNumberOfAttempts() + " attempts, the collection size" +
+                        " is " + e.getList().size() + ", while the count query reports " + e.getList().getTotalSize() + " for " +
+                        pageControl + ". The discrepancy has not cleared up in " + e.getMillisecondsSpentTrying() + "ms so we're giving up, " +
+                        "returning inconsistent results. Note that is most possibly NOT an error. It is likely " +
+                        "caused by concurrent database activity that changes the contents of the database that the " +
+                        "criteria query is querying.", new Exception());
+
+                results = (PageList<T>) e.getList();
+            }
+
+            finalizeCollection(results);
             if (LOG.isDebugEnabled()) {
                 LOG.debug("restriction=" + criteriaRestriction + ", resultSize=" + results.size() + ", resultCount="
                     + results.getTotalSize());
@@ -99,25 +122,29 @@ public class CriteriaQueryRunner<T> {
         Query query = queryGenerator.getQuery(entityManager);
         List<T> results = query.getResultList();
 
-        /* 
+        finalizeCollection(results);
+
+        return results;
+    }
+
+    private void finalizeCollection(List<?> results) {
+        /*
          * suppression of auto-fetch useful in cases where alterProject(String) was called on the generator, which
          * changed the return type of the result set from List<T> to something else.  in that case, the caller to
          * this method must, as necessary, perform the fetch manually.
          */
         if (automaticFetching) {
             if (!queryGenerator.getPersistentBagFields().isEmpty()) {
-                for (T entity : results) {
+                for (Object entity : results) {
                     initPersistentBags(entity);
                 }
             }
             if (!queryGenerator.getJoinFetchFields().isEmpty()) {
-                for (T entity : results) {
+                for (Object entity : results) {
                     initJoinFetchFields(entity);
                 }
             }
         }
-
-        return results;
     }
 
     private int getCount() {
@@ -153,8 +180,8 @@ public class CriteriaQueryRunner<T> {
             Hibernate.initialize(instance);
 
             if (instance instanceof Iterable) {
-                Iterator<?> it = ((Iterable<?>)instance).iterator();
-                while(it.hasNext()) it.next();
+                Iterator<?> it = ((Iterable<?>) instance).iterator();
+                while (it.hasNext()) it.next();
             }
         } catch (Exception e) {
             if (LOG.isDebugEnabled()) {

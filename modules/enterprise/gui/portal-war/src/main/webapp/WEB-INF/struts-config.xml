@@ -207,8 +207,6 @@
       <form-bean name="MetricsControlForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.MetricsControlForm"/>
 
-      <form-bean name="ViewChartForm"
-                 type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewChartForm"/>
 
       <form-bean name="PerformanceForm"
                  type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.PerformanceForm"/>
@@ -863,8 +861,6 @@
          <forward name="adhocGroup" path="/resource/group/Inventory.do?mode=view"/>
       </action>
 
-      <action path="/resource/hub/MiniChart"
-              type="org.rhq.enterprise.gui.legacy.action.resource.hub.ResourceDesignatedMetricsAction"/>
 
       <action path="/resource/hub/ResourceHubPortal"
               name="ResourceHubForm"
@@ -2973,32 +2969,6 @@
       </action>
 
 
-      <action path="/resource/common/monitor/visibility/ViewChartFormPrepare"
-              name="ViewChartForm"
-              scope="request"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewChartFormPrepareAction">
-        <set-property property="workflow" value="visibility/ViewChart"/>
-        <set-property property="title" value="Chart"/>
-      </action>
-
-      <action path="/resource/common/monitor/visibility/ViewChart"
-              name="ViewChartForm"
-              scope="request"
-              input="/resource/common/monitor/Visibility.do"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewChartAction">
-        <set-property property="workflow" value="visibility/ViewChart"/>
-        <!-- path is ignored ... uses returnPath -->
-        <forward name="success" path="/" redirect="true"/>
-        <forward name="redraw" path="/resource/common/monitor/Visibility.do"/>
-        <forward name="failure" path="/resource/common/monitor/Visibility.do"/>
-        <forward name="reset" path="/resource/common/monitor/Visibility.do"/>
-      </action>
-
-      <action path="/resource/common/monitor/visibility/ViewDesignatedChart"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ViewDesignatedChartAction">
-        <forward name="redraw" path="/resource/common/monitor/Visibility.do"
-                 redirect="true"/>
-      </action>
 
       <action path="/resource/common/monitor/visibility/CurrentHealth"
               name="IndicatorViewsForm"
@@ -3081,15 +3051,6 @@
               type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.ProblemMetricsDisplayAction">
       </action>
 
-      <action path="/resource/common/monitor/visibility/IndicatorCharts"
-              name="IndicatorViewsForm"
-              scope="request"
-              parameter="action"
-              type="org.rhq.enterprise.gui.legacy.action.resource.common.monitor.visibility.IndicatorChartsAction">
-         <forward name="success" path="/resource/common/monitor/visibility/DashCharts.jsp"/>
-         <forward name="failure" path="/Dashboard.do" redirect="true"/>
-         <forward name="currentHealth" path="/resource/common/monitor/Visibility.do?mode=currentHealth"/>
-      </action>
 
       <action path="/resource/common/monitor/visibility/AllIndicators"
               name="IndicatorViewsForm"

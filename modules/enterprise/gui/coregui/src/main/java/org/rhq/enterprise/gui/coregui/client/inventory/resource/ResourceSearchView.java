@@ -43,6 +43,8 @@ import com.smartgwt.client.data.Criteria;
 import com.smartgwt.client.data.Record;
 import com.smartgwt.client.data.SortSpecifier;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.events.DoubleClickEvent;
 import com.smartgwt.client.widgets.events.DoubleClickHandler;
 import com.smartgwt.client.widgets.grid.CellFormatter;
@@ -101,58 +103,58 @@ public class ResourceSearchView extends Table {
      * A list of all Resources in the system.
      */
     public ResourceSearchView() {
-        this(null, null, null, null, false);
+        this(null, null, null, null, false, null);
     }
 
     /**
      * A Resource list filtered by a given criteria.
      */
     public ResourceSearchView(Criteria criteria) {
-        this(criteria, null, null, null, false);
+        this(criteria, null, null, null, false, null);
     }
 
     /**
      * A Resource list filtered by a given criteria and optionally exportable
      */
     public ResourceSearchView(Criteria criteria, boolean exportable) {
-        this(criteria, null, null, null, exportable);
+        this(criteria, null, null, null, exportable, null);
     }
 
     /**
      * A Resource list filtered by a given criteria with the given title.
      *
-     * @param headerIcons 24x24 icon(s) to be displayed in the header
+     * @param headerIcon
      */
-    public ResourceSearchView(Criteria criteria, String title, String... headerIcons) {
-        this(criteria, title, null, null, false, headerIcons);
+    public ResourceSearchView(Criteria criteria, String title, String headerIcon) {
+        this(criteria, title, null, null, false, headerIcon);
     }
 
     /**
      * A Resource list filtered by a given criteria with the given title.
      *
-     * @param headerIcons 24x24 icon(s) to be displayed in the header
+     * @param headerIcon
      */
     public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields,
-        String... headerIcons) {
+        String headerIcon) {
 
-        this(criteria, title, sortSpecifier, excludeFields, false, headerIcons);
+        this(criteria, title, sortSpecifier, excludeFields, false, headerIcon);
     }
 
     /**
      * A Resource list filtered by a given criteria with the given title and optionally exportable.
      *
-     * @param headerIcons 24x24 icon(s) to be displayed in the header
+     * @param headerIcon
      */
     public ResourceSearchView(Criteria criteria, String title, SortSpecifier[] sortSpecifier, String[] excludeFields,
-        boolean exportable, String... headerIcons) {
+        boolean exportable, String headerIcon) {
 
         super((null == title) ? DEFAULT_TITLE : title, criteria, (null == sortSpecifier) ? DEFAULT_SORT_SPECIFIER
             : sortSpecifier, excludeFields);
 
         this.exportable = exportable;
 
-        for (String headerIcon : headerIcons) {
-            addHeaderIcon(headerIcon);
+        if (headerIcon != null) {
+            setTitleIcon(headerIcon);
         }
 
         final RPCDataSource<Resource, ResourceCriteria> datasource = getDataSourceInstance();
@@ -183,7 +185,21 @@ public class ResourceSearchView extends Table {
                     }
                 }) {
 
-                public void executeAction(ListGridRecord[] selection, Object actionValue) {
+                public void executeAction(final ListGridRecord[] selection, Object actionValue) {
+                    if (containsStorageNodeOrItsResource(selection)) {
+                        // ask again if we are going to remove platform, storage node or its child
+                        SC.confirm(MSG.view_inventory_resources_uninventoryStorageConfirm(),
+                            new BooleanCallback() {
+                            public void execute(Boolean test) {
+                                if (test) uninventoryItems(selection);
+                            }
+                        });
+                    } else {
+                        uninventoryItems(selection);
+                    }
+                }
+
+                private void uninventoryItems(ListGridRecord[] selection) {
                     int[] resourceIds = TableUtility.getIds(selection);
                     ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
 
@@ -200,6 +216,17 @@ public class ResourceSearchView extends Table {
                             onActionSuccess();
                         }
                     });
+                }
+
+                private boolean containsStorageNodeOrItsResource(ListGridRecord[] selection) {
+                    for (ListGridRecord record : selection) {
+                        if (record.getAttribute(AncestryUtil.RESOURCE_ANCESTRY) == null
+                            || "RHQStorage".equals(record.getAttribute(PLUGIN.propertyName()))) {
+                         // is a platform, storage node or child resource of storage node
+                            return true;
+                        }
+                    }
+                    return false;
                 }
             });
 

@@ -20,6 +20,7 @@
 
 package org.rhq.plugins.netservices.itest;
 
+import static org.rhq.plugins.netservices.util.StringUtil.isNotBlank;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertTrue;
@@ -46,7 +47,6 @@ import org.rhq.core.domain.measurement.MeasurementData;
 import org.rhq.core.domain.measurement.MeasurementReport;
 import org.rhq.core.domain.measurement.MeasurementScheduleRequest;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
-import org.rhq.core.util.StringUtil;
 import org.rhq.plugins.netservices.PortNetServiceComponent;
 import org.rhq.plugins.netservices.PortNetServiceComponent.ConfigKeys;
 
@@ -152,7 +152,7 @@ public class PortNetServiceComponentTest extends NetServiceComponentTest {
             datas.put(data.getName(), data.getValue());
         }
         assertEquals(getTrait(datas, "ipAddress"), LOOPBACK_ADDRESS.getHostAddress());
-        assertTrue(StringUtil.isNotBlank(getTrait(datas, "hostName")));
+        assertTrue(isNotBlank(getTrait(datas, "hostName")));
         assertTrue(getMetric(datas, "connectTime") >= 0);
     }
 

@@ -19,10 +19,13 @@
 package org.rhq.enterprise.gui.coregui.client.bundle.create;
 
 import java.util.HashMap;
+import java.util.Set;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 
+import org.rhq.core.domain.bundle.BundleGroup;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
 import org.rhq.enterprise.gui.coregui.client.components.wizard.AbstractWizard;
 import org.rhq.enterprise.gui.coregui.client.gwt.BundleGWTServiceAsync;
@@ -32,10 +35,14 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message.Severity;
 
 public abstract class AbstractBundleCreateWizard extends AbstractWizard {
 
-    // the things we buildNodes up in the wizard
+    // the things we build up in the wizard
     private String recipe;
     private BundleVersion bundleVersion;
+    private String createInitialBundleVersionToken;
+    private String createInitialBundleVersionRecipe;
     private HashMap<String, Boolean> allBundleFilesStatus; // bundle file names with their upload status (true=they were uploaded)
+    private BundleGroupAssignmentComposite bundleGroupAssignmentComposite;
+    private Set<BundleGroup> initialBundleGroups;
 
     public String getRecipe() {
         return recipe;
@@ -64,10 +71,46 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
         this.allBundleFilesStatus = allBundleFilesStatus;
     }
 
+    public String getCreateInitialBundleVersionToken() {
+        return createInitialBundleVersionToken;
+    }
+
+    public void setCreateInitialBundleVersionToken(String createInitialBundleVersionToken) {
+        this.createInitialBundleVersionToken = createInitialBundleVersionToken;
+    }
+
+    public String getCreateInitialBundleVersionRecipe() {
+        return createInitialBundleVersionRecipe;
+    }
+
+    public void setCreateInitialBundleVersionRecipe(String createInitialBundleVersionRecipe) {
+        this.createInitialBundleVersionRecipe = createInitialBundleVersionRecipe;
+    }
+
+    public boolean isInitialVersion() {
+        return ((null != createInitialBundleVersionToken) || (null != createInitialBundleVersionRecipe));
+    }
+
+    public BundleGroupAssignmentComposite getBundleGroupAssignmentComposite() {
+        return bundleGroupAssignmentComposite;
+    }
+
+    public void setBundleGroupAssignmentComposite(BundleGroupAssignmentComposite bundleGroupAssignmentComposite) {
+        this.bundleGroupAssignmentComposite = bundleGroupAssignmentComposite;
+    }
+
+    public Set<BundleGroup> getInitialBundleGroups() {
+        return initialBundleGroups;
+    }
+
+    public void setInitialBundleGroups(Set<BundleGroup> initialBundleGroups) {
+        this.initialBundleGroups = initialBundleGroups;
+    }
+
     public void cancel() {
         final BundleVersion bv = getBundleVersion();
         if (bv != null) {
-            // the user must have created it already after verification step, delete it
+            // the user must have created it already after verification step, delete it, if possible
             BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
             bundleServer.deleteBundleVersion(bv.getId(), true, new AsyncCallback<Void>() {
                 public void onSuccess(Void result) {
@@ -77,8 +120,12 @@ public abstract class AbstractBundleCreateWizard extends AbstractWizard {
                 }
 
                 public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(
-                        MSG.view_bundle_createWizard_cancelFailure(bv.getName(), bv.getVersion()), caught);
+                    String msg = MSG.view_bundle_createWizard_cancelFailure(bv.getName(), bv.getVersion());
+                    // provide a more specific message if the cancel failed due to the user not having delete permission
+                    if (caught.getMessage().contains("PermissionException")) {
+                        msg = MSG.view_bundle_createWizard_cancelFailurePerm(bv.getName(), bv.getVersion());
+                    }
+                    CoreGUI.getErrorHandler().handleError(msg, caught);
                 }
             });
         }

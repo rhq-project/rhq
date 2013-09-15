@@ -498,7 +498,7 @@ public class GroupMetricsPortlet extends EnhancedVLayout implements CustomSettin
 
     @Override
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
 
         //call out to 3rd party javascript lib
         BrowserUtility.graphSparkLines();

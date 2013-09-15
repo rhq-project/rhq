@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
@@ -112,9 +111,19 @@ public class StorageGWTServiceImpl extends AbstractGWTServiceImpl implements Sto
     }
     
     @Override
-    public Integer[] findResourcesWithAlertDefinitions() throws RuntimeException {
+    public List<StorageNode> getStorageNodes() throws RuntimeException {
         try {
-            return storageNodeManager.findResourcesWithAlertDefinitions();
+            return SerialUtility.prepare(storageNodeManager.getStorageNodes(),
+                "StorageGWTServiceImpl.getStorageNodes");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }    }
+    
+    @Override
+    public Map<Integer, Integer> findResourcesWithAlertDefinitions() throws RuntimeException {
+        try {
+            return SerialUtility.prepare(storageNodeManager.findResourcesWithAlertDefinitions(),
+                "StorageGWTServiceImpl.findResourcesWithAlertDefinitions");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }

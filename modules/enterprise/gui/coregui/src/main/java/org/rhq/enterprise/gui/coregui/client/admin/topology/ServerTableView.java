@@ -117,7 +117,7 @@ public class ServerTableView extends
         }
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
-            if (field.getName() == FIELD_NAME) {
+            if (FIELD_NAME.equals(field.getName())) {
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -130,7 +130,7 @@ public class ServerTableView extends
 
                     }
                 });
-            } else if (field.getName() == FIELD_AFFINITY_GROUP.propertyName()) {
+            } else if (FIELD_AFFINITY_GROUP.propertyName().equals(field.getName())) {
                 // adding the cell formatter for affinity group field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override

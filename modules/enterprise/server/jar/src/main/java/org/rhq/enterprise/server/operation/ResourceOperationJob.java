@@ -24,6 +24,7 @@ import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
+import org.quartz.SimpleTrigger;
 
 import org.rhq.core.domain.auth.Subject;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
@@ -74,6 +75,13 @@ public class ResourceOperationJob extends OperationJob {
 
         try {
             JobDetail jobDetail = context.getJobDetail();
+            int triggerTimes = 1;
+            if (context.getTrigger() instanceof SimpleTrigger) {
+                SimpleTrigger trigger = (SimpleTrigger) context.getTrigger();
+                triggerTimes = trigger.getTimesTriggered();
+            } else {
+                // Cron Trigger
+            }
             OperationManagerLocal operationManager = LookupUtil.getOperationManager();
 
             updateOperationScheduleEntity(jobDetail, context.getNextFireTime(), operationManager);
@@ -86,16 +94,24 @@ public class ResourceOperationJob extends OperationJob {
             loggedInSubject = getUserWithSession(schedule.getSubject(), false);
             schedule.setSubject(loggedInSubject);
 
-            // for the security check, can the user who scheduled the operation in the first 
+            // for the security check, can the user who scheduled the operation in the first
             // place still have the authority to execute it against the resource in question
             operationManager.getResourceOperationSchedule(schedule.getSubject(), jobDetail);
 
-            ResourceOperationHistory resourceHistory = createOperationHistory(jobDetail.getName(),
-                jobDetail.getGroup(), schedule, null, operationManager);
+            ResourceOperationHistory resourceHistory = null;
+            if (triggerTimes==1) { // On 1st fire use the already provided history.
+                resourceHistory = findOperationHistory(jobDetail.getName(),jobDetail.getGroup(),operationManager, schedule);
+                if (resourceHistory.getStartedTime()>0) {
+                    resourceHistory=null;
+                }
+            }
+            if (resourceHistory==null) {
+                resourceHistory = createOperationHistory(jobDetail.getName(),
+                    jobDetail.getGroup(), schedule, null, operationManager);
+            }
 
             invokeOperationOnResource(schedule, resourceHistory, operationManager);
-        } catch (Exception e) {
-            if (e instanceof CancelJobException) {
+        } catch (Exception e) {            if (e instanceof CancelJobException) {
                 // if a cancel job exception was thrown we do not need to do anything else.
                 // we can just rethrow the exception.
                 throw (CancelJobException) e;

@@ -163,9 +163,47 @@ public class StorageNodeConfigurationComposite implements Serializable {
         return validHeap && validJMXPort;
     }
 
-    /* (non-Javadoc)
-     * @see java.lang.Object#toString()
-     */
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((heapNewSize == null) ? 0 : heapNewSize.hashCode());
+        result = prime * result + ((heapSize == null) ? 0 : heapSize.hashCode());
+        result = prime * result + jmxPort;
+        result = prime * result + ((threadStackSize == null) ? 0 : threadStackSize.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        StorageNodeConfigurationComposite other = (StorageNodeConfigurationComposite) obj;
+        if (heapNewSize == null) {
+            if (other.heapNewSize != null)
+                return false;
+        } else if (!heapNewSize.equals(other.heapNewSize))
+            return false;
+        if (heapSize == null) {
+            if (other.heapSize != null)
+                return false;
+        } else if (!heapSize.equals(other.heapSize))
+            return false;
+        if (jmxPort != other.jmxPort)
+            return false;
+        if (threadStackSize == null) {
+            if (other.threadStackSize != null)
+                return false;
+        } else if (!threadStackSize.equals(other.threadStackSize))
+            return false;
+        return true;
+    }
+
+    @Override
     public String toString() {
         StringBuilder builder = new StringBuilder();
         builder.append("storageNode.addresss=").append(storageNode == null ? "unknown" : storageNode.getAddress())

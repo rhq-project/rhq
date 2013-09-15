@@ -74,7 +74,7 @@ public class PermissionsEditor extends EnhancedVStack {
         this.roleEditView = roleEditView;
         this.isReadOnly = isReadOnly;
         // Default permission set
-        this.selectedPermissions = EnumSet.of(Permission.VIEW_RESOURCE);
+        this.selectedPermissions = EnumSet.of(Permission.VIEW_RESOURCE, Permission.VIEW_BUNDLES_IN_GROUP);
 
         setWidth("95%");
         setHeight100();
@@ -362,9 +362,9 @@ public class PermissionsEditor extends EnhancedVStack {
             MSG.view_adminRoles_permissions_permDesc_deleteBundlesFromGroup());
         records.add(record);
 
-        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_viewBundlesInGroup(),
-            "subsystems/bundle/BundleGroup", Permission.VIEW_BUNDLES_IN_GROUP,
-            MSG.view_adminRoles_permissions_permDesc_viewBundlesInGroup());
+        record = createPermissionRecord(MSG.view_adminRoles_permissions_perm_deployBundlesToGroup(),
+            "subsystems/bundle/BundleGroup", Permission.DEPLOY_BUNDLES_TO_GROUP,
+            MSG.view_adminRoles_permissions_permDesc_deployBundlesToGroup());
         records.add(record);
 
         grid.setData(records.toArray(new ListGridRecord[records.size()]));

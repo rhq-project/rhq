@@ -24,7 +24,6 @@ import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDat
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import com.google.gwt.user.client.Timer;
 import com.smartgwt.client.types.Autofit;
@@ -64,9 +63,9 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
             @Override
             protected String getCellCSSText(ListGridRecord record, int rowNum, int colNum) {
                 if ("avg".equals(getFieldName(colNum)) 
-                    && (StorageNodeLoadCompositeDatasource.HEAP_PERCENTAGE_KEY.equals(record.getAttribute("id")) ||
-                        StorageNodeLoadCompositeDatasource.DATA_DISK_SPACE_PERCENTAGE_KEY.equals(record.getAttribute("id")) ||
-                        StorageNodeLoadCompositeDatasource.TOTAL_DISK_SPACE_PERCENTAGE_KEY.equals(record.getAttribute("id")))) {
+                    && (StorageNodeLoadCompositeDatasource.KEY_HEAP_PERCENTAGE.equals(record.getAttribute("id")) ||
+                        StorageNodeLoadCompositeDatasource.KEY_DATA_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")) ||
+                        StorageNodeLoadCompositeDatasource.KEY_TOTAL_DISK_SPACE_PERCENTAGE.equals(record.getAttribute("id")))) {
                     if (record.getAttributeAsFloat("avgFloat") > .85) {
                         return DONT_MISS_ME_COLOR;
                     } else if (record.getAttributeAsFloat("avgFloat") > .7) {
@@ -75,7 +74,7 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
                         return OK_COLOR;
                     }
                 } else if ("max".equals(getFieldName(colNum))
-                    && StorageNodeLoadCompositeDatasource.FREE_DISK_TO_DATA_SIZE_RATIO_KEY.equals(record
+                    && StorageNodeLoadCompositeDatasource.KEY_FREE_DISK_TO_DATA_SIZE_RATIO.equals(record
                         .getAttribute("id"))) {
                     if (record.getAttributeAsFloat("avgFloat") < .7) {
                         return DONT_MISS_ME_COLOR;
@@ -135,41 +134,47 @@ public class StorageNodeLoadComponent extends EnhancedVLayout {
 
     private void showSparkLineGraphs() {
         ListGridRecord[] records = loadGrid.getRecords();
-        int i = 0;
-        for (Entry<String, List<MeasurementDataNumericHighLowComposite>> entry : sparkLineData.entrySet()) {
+        for (int i = 0; i < records.length; i++) {
+            String metricName = records[i].getAttributeAsString("id");
             boolean someChartedData = false;
-            List<MeasurementDataNumericHighLowComposite> data = entry.getValue();
-            //locate last and minimum values.
+            List<MeasurementDataNumericHighLowComposite> data = sparkLineData.get(metricName);
+            // locate last and minimum values.
             double lastValue = -1;
-            double minValue = Double.MAX_VALUE;//
-            for (MeasurementDataNumericHighLowComposite d : data) {
-                if ((!Double.isNaN(d.getValue()))
-                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
-                    if (d.getValue() < minValue) {
-                        minValue = d.getValue();
+            double minValue = Double.MAX_VALUE;
+            if (data != null) {
+                for (MeasurementDataNumericHighLowComposite d : data) {
+                    if ((!Double.isNaN(d.getValue())) && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                        if (d.getValue() < minValue) {
+                            minValue = d.getValue();
+                        }
+                        lastValue = d.getValue();
                     }
-                    lastValue = d.getValue();
                 }
             }
-            
-            //collapse the data into comma delimited list for consumption by third party javascript library(jquery.sparkline)
-            String commaDelimitedList = "";
-            for (MeasurementDataNumericHighLowComposite d : data) {
-                if ((!Double.isNaN(d.getValue()))
-                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
-                    commaDelimitedList += d.getValue() + ",";
-                }
-            }
-            
-            //if graph content returned
+            // if graph content returned
             someChartedData = lastValue != -1;
             
-            if (someChartedData && records.length > i) {
-                String contents = "<span id='sparkline_" + entry.getKey() + "' class='dynamicsparkline' width='70' "
-                    + "values='" + commaDelimitedList + "'>...</span>";
+            // collapse the data into comma delimited list for consumption by third party javascript library (jquery.sparkline)
+            StringBuilder commaDelimitedList = new StringBuilder();
+            for (MeasurementDataNumericHighLowComposite d : data) {
+                if ((!Double.isNaN(d.getValue()))
+                    && (!String.valueOf(d.getValue()).contains("NaN"))) {
+                    commaDelimitedList.append(d.getValue()).append(",");
+                }
+            }
+            if (commaDelimitedList.length() > 0) {
+                commaDelimitedList = commaDelimitedList.deleteCharAt(commaDelimitedList.length() - 1);
+            }
+            if (!commaDelimitedList.toString().contains(",")) {
+             // prepend another value just so we have 2 values and it will graph
+                commaDelimitedList.insert(0, "0,");
+            }
+            
+            if (someChartedData) {
+                String contents = "<span id='sparkline_" + metricName + "' class='dynamicsparkline' width='70' "
+                    + "values='" + commaDelimitedList.toString() + "'>...</span>";
                 records[i].setAttribute("sparkline", contents);
             }
-            i++;
         }
         loadGrid.setData(records);
         new Timer() {

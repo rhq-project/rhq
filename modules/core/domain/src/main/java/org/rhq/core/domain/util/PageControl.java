@@ -23,6 +23,7 @@
 package org.rhq.core.domain.util;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
@@ -304,6 +305,70 @@ public class PageControl implements Serializable, Cloneable {
 
     public boolean isUnlimited() {
         return getPageNumber() == 0 && getPageSize() == SIZE_UNLIMITED;
+    }
+
+    /**
+     * Checks whether this page control object is consistent with the supplied collection and totalSize values.
+     * The results (collection and totalSize) are consistent iff:
+     * <ul>
+     *     <li>This page control "points" past the totalSize and the collection is empty,</li>
+     *     <li>or if this is an unlimited page control, the collection size is equal to
+     *     <code>totalSize - {@link #getStartRow()}</code>,</li>
+     *     <li>or if this control object points to the last page of the results then the size of the collection is equal
+     *     to the remainder of <code>totalSize / {@link #getPageSize()}</code>,</li>
+     *     <li>otherwise the collection size is equal to the {@link #getPageSize() page size}</li>
+     * </ul>
+     * <p/>
+     * The primary reason why a page control would be inconsistent with the found results is the phenomenon called
+     * "phantom read" which can happen if there was a database change between performing a query to get the collection
+     * (which represents the paged subset limited by this page control object) and performing the count query
+     * to get the total number of results (without paging applied). This is an unfortunate consequence of using the
+     * {@code READ_COMMITTED} transaction isolation level for our database connection, which is needed for it being
+     * reasonably performant.
+     *
+     * @param collection the collection of results
+     * @param totalSize the total size of results
+     * @return true if this page control object is consistent with the results or not
+     */
+    public boolean isConsistentWith(Collection<?> collection, int totalSize) {
+        int minTotalSize = getStartRow();
+        int pageSize = isUnlimited() ? Integer.MAX_VALUE : getPageSize();
+
+        if (totalSize < minTotalSize) {
+            // user reading past the available number of results. this is "normal" condition caused either
+            // by carelessness of the user or by a drastically changed number of rows since the request for the
+            // "previous" page.
+            return collection.isEmpty();
+        }
+
+        int sizeDiff = totalSize - minTotalSize;
+
+        // there can be 2 cases here:
+        // 1) the total number of rows is large enough to fill the current page.
+        // 2) we're showing the last page of the results and thus the number of results should be equal to the
+        //    number of results expected on that last page.
+        int expectedCollectionSize = Math.min(sizeDiff, pageSize);
+
+        return collection.size() == expectedCollectionSize;
+    }
+
+    /**
+     * If you can a {@link PageList} that is inconsistent with this page control object, it is recommended you try
+     * calling the method you obtained the page list from again. Maybe the database have "settled down" from the
+     * activity that caused that inconsistency.
+     * <p/>
+     * This is a convenience function that is equivalent to calling:
+     * <p>
+     * <code>isConsistentWith(pageList, pageList.getTotalSize())</code>
+     * </p>
+     *
+     * @see #isConsistentWith(java.util.Collection, int)
+     *
+     * @param pageList the page list to check the consistency with this page control
+     * @return true if the page list is consistent, false otherwise.
+     */
+    public boolean isConsistentWith(PageList<?> pageList) {
+        return isConsistentWith(pageList, pageList.getTotalSize());
     }
 
     // TODO (ips, 10/12/11): Incorporate firstRecord field into equals() and hashCode().

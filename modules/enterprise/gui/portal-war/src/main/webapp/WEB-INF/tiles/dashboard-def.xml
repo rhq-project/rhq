@@ -22,14 +22,7 @@
               <put name="portletName"      value=".dashContent.searchResources" />
   </definition>
      
-  <definition name=".dashContent.savedCharts"
-              controllerUrl="/dashboard/ViewSavedQueries.do"
-              path="/portlet/savedQueries/View.jsp">              
-              <put name="adminUrl"        value="/dashboard/Admin.do?mode=savedQueries" />
-              <put name="portletName"      value=".dashContent.savedCharts" />
-              <put name="showRefresh"      value="true" />
-  </definition>
-  
+
   <definition name=".dashContent.admin.savedQueries"
               controllerUrl="/dashboard/EditSavedQueries.do"                             
               path="/portlet/savedQueries/Properties.jsp">

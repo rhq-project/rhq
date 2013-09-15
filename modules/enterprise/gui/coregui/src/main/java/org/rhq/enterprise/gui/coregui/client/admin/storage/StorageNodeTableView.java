@@ -20,7 +20,9 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.*;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_RESOURCE_ID;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,7 +46,9 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 import org.rhq.core.domain.authz.Permission;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
+import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.admin.AdministrationView;
 import org.rhq.enterprise.gui.coregui.client.components.table.AuthorizedTableAction;
@@ -85,7 +89,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
     @Override
     protected void doOnDraw() {
         super.doOnDraw();
-        // commenting out this call, because it caused UI to freeze
         //        scheduleUnacknowledgedAlertsPollingJob(getListGrid());
     }
 
@@ -93,6 +96,20 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
     protected void configureTable() {
         super.configureTable();
         List<ListGridField> fields = getDataSource().getListGridFields();
+
+        // this needs to be added here instead of the DS because of the Canvas.imgHTML method
+        for (ListGridField field : fields) {
+            if (FIELD_AVAILABILITY.propertyName().equals(field.getName())) {
+                field.setCellFormatter(new CellFormatter() {
+                    public String format(Object value, ListGridRecord listGridRecord, int i, int i1) {
+                        return imgHTML(ImageManager
+                            .getAvailabilityIconFromAvailType(value == null ? AvailabilityType.UNKNOWN
+                                : (AvailabilityType) value));
+                    }
+                });
+            }
+        }
+        
         ListGrid listGrid = getListGrid();
         listGrid.setAutoSaveEdits(false);
         listGrid.setFields(fields.toArray(new ListGridField[fields.size()]));
@@ -147,7 +164,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 final ListGridRecord[] records = listGrid.getRecords();
                 List<Integer> storageNodeIds = new ArrayList<Integer>(records.length);
                 for (ListGridRecord record : records) {
-                    // todo: get the resource ids and create a method on SLSB that accepts resource ids to make it faster
                     storageNodeIds.add(record.getAttributeAsInt(FIELD_ID));
                 }
                 GWTServiceLookup.getStorageService().findNotAcknowledgedStorageNodeAlertsCounts(storageNodeIds,
@@ -158,7 +174,7 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                                 int value = result.get(i);
                                 int storageNodeId = records[i].getAttributeAsInt("id");
                                 records[i].setAttribute(FIELD_ALERTS.propertyName(),
-                                    StorageNodeAdminView.getAlertsString("New Alerts", storageNodeId, value));
+                                    StorageNodeAdminView.getAlertsString("Unacknowledged Alerts", storageNodeId, value));
                                 listGrid.setData(records);
                             }
                             schedule(15 * 1000);
@@ -167,8 +183,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                         @Override
                         public void onFailure(Throwable caught) {
                             schedule(60 * 1000);
-                            // todo:
-                            SC.say("fooo");
                         }
                     });
             }
@@ -191,8 +205,6 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
             }
         };
         listGrid.setCanExpandRecords(true);
-        //        listGrid.setAutoFetchData(true);
-
         return listGrid;
     }
 
@@ -302,13 +314,13 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
                 ParametrizedMessage question = new ParametrizedMessage() {
                     @Override
                     public String getMessage(String... param) {
-                        return "Are you sure, you want to run operation " + param[0] + "?";
+                        return "Are you sure, you want to run operation " + param[0] + "? On the selected nodes: " + param[1];
                     }
                 };
                 ParametrizedMessage success = new ParametrizedMessage() {
                     @Override
                     public String getMessage(String... param) {
-                        return "Operation" + param[0] + " was successfully scheduled for storage nodes " + param[1];
+                        return "Operation " + param[0] + " was successfully scheduled for storage nodes " + param[1];
                     }
                 };
                 ParametrizedMessage failure = new ParametrizedMessage() {
@@ -334,7 +346,9 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         final ParametrizedMessage success, final ParametrizedMessage failure, final StorageNodeOperation operationType) {
         final String operationName = (String) actionValue;
         final List<String> selectedAddresses = getSelectedAddresses(selections);
-        SC.ask(question.getMessage(selectedAddresses.toString()), new BooleanCallback() {
+        String areYouSureQuestion = operationType == StorageNodeOperation.OTHER ? question.getMessage(operationName,
+            selectedAddresses.toString()) : question.getMessage(selectedAddresses.toString());
+        SC.ask(areYouSureQuestion, new BooleanCallback() {
             public void execute(Boolean confirmed) {
                 if (confirmed) {
                     final CountDownLatch latch = CountDownLatch.create(selections.length, new Command() {
@@ -464,8 +478,19 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         for (ListGridRecord storageNodeRecord : selection) {
             if ("NORMAL".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
                 || "JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                ) {
                 return false;
+            }
+        }
+        List<ListGridRecord> selectionList = Arrays.asList(selection);
+        ListGridRecord[] allRecords = getListGrid().getRecords();
+        for (ListGridRecord storageNodeRecord : allRecords) {
+            if (!selectionList.contains(storageNodeRecord)) {
+                if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                    return false;
+                }
             }
         }
         return true;
@@ -477,11 +502,28 @@ public class StorageNodeTableView extends TableSection<StorageNodeDatasource> {
         }
         for (ListGridRecord storageNodeRecord : selection) {
             if ("JOINING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
-                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                || "LEAVING".equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                ) {
                 return false;
             }
         }
-        return true;
+        List<ListGridRecord> selectionList = Arrays.asList(selection);
+        ListGridRecord[] allRecords = getListGrid().getRecords();
+        int nodesInNormalCouner = 0;
+        for (ListGridRecord storageNodeRecord : allRecords) {
+            if (!selectionList.contains(storageNodeRecord)) {
+                if (StorageNode.Status.JOINING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                    || StorageNode.Status.LEAVING.toString().equals(storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))) {
+                    return false;
+                }
+            }
+            if (StorageNode.Status.NORMAL.toString().equals(
+                storageNodeRecord.getAttributeAsString(FIELD_STATUS.propertyName()))
+                && AvailabilityType.UP.equals(storageNodeRecord.getAttributeAsObject(FIELD_AVAILABILITY.propertyName()))) {
+                nodesInNormalCouner++;
+            }
+        }
+        return nodesInNormalCouner > 1;
     }
 
     @Override

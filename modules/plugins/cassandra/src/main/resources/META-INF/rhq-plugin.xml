@@ -38,20 +38,12 @@
                          description="The RMI URL with which to connect to the Cassandra node (e.g. service:jmx:rmi:///jndi/rmi://localhost:7199/jmxrmi)."/>
       <c:simple-property name="type" readOnly="true" default="org.mc4j.ems.connection.support.metadata.J2SE5ConnectionTypeDescriptor"
                          description="The type used to establish the EMS connection to the Cassandra node."/>
-      <c:simple-property name="username" default="cassandra" required="true" description="The login username"/>
-      <c:simple-property name="password" default="cassandra" required="true" type="password" description="The login password"/>
       <c:simple-property name="baseDir" displayName="Base Directory" description="The base directory from which the Cassandra Daemon was launched." required="false"/>
       <c:simple-property name="yamlConfiguration" displayName="YAML Configuration File" description="YAML Configuration File"/>
       <c:simple-property name="nativeTransportPort" description="The port on which Cassandra listens for CQL client connections." default="9042" type="integer"/>
       <c:simple-property name="jmxPort" description="The JMX port for Cassandra" default="7199" type="integer"/>
       <c:simple-property name="host" description="The host on which cassandra listens to CQL client connections" default="localhost"/>
       <c:simple-property name="clusterName" description="Cluster name" default="localhost"/>
-      <c:simple-property name="authenticator" required="true" default="org.apache.cassandra.auth.AllowAllAuthenticator" description="Cassandra client authenticator">
-        <c:property-options>
-          <c:option name="org.apache.cassandra.auth.AllowAllAuthenticator" value="org.apache.cassandra.auth.AllowAllAuthenticator"/>
-          <c:option name="org.apache.cassandra.auth.PasswordAuthenticator" value="org.apache.cassandra.auth.PasswordAuthenticator"/>
-        </c:property-options>
-      </c:simple-property>
       <c:simple-property name="commandLine" required="false" type="string" description="the command line of the JVM at the time it was discovered - only used by JVMs with type Local; if the command line of the JVM changes, this property's value will need to be updated accordingly in order for RHQ to connect to the JVM"/>
     </plugin-configuration>
 
@@ -693,14 +685,6 @@
 
       <resource-configuration>
         <c:simple-property name="name" type="string" description="The keyspace name" readOnly="true"/>
-        <c:simple-property name="strategyClass" type="string" readOnly="true"/>
-        <c:simple-property name="durableWrites" type="boolean" readOnly="true"/>
-        <c:list-property name="strategyOptions" readOnly="true">
-          <c:map-property name="strategyOptionsMap">
-            <c:simple-property name="strategyOptionName" type="string" readOnly="true"/>
-            <c:simple-property name="strategyOptionValue" type="string" readOnly="true"/>
-          </c:map-property>
-        </c:list-property>
         <c:list-property name="keyspaceFileLocations" readOnly="true" description="List of data file locations">
           <c:simple-property name="directory" type="string" readOnly="true"/>
         </c:list-property>
@@ -790,10 +774,6 @@
         <metric property="WriteCount" displayName="Write Count" measurementType="trendsup" displayType="summary" description="Number of write operations since execution start"/>
 
         <resource-configuration>
-          <c:simple-property name="gc_grace_seconds" displayName="gc_grace_seconds" required="false" default="864000" type="integer"
-                             description="Specifies the time to wait before garbage collecting tombstones (deletion markers). The value, specified in seconds,
-                              defaults to 10 days and allows for a large amount of time for consistency to be achived prior to deletion. In a single node cluster
-                              this can be reduced to zero."/>
           <c:simple-property name="CompactionStrategyClass" type="string" required="true" description="Compaction strategy class name."/>
           <c:simple-property name="CompressionParameters" type="string" readOnly="true" description="Compression parameters"/>
           <c:simple-property name="MinimumCompactionThreshold" type="integer" required="true" description="Minimum number of sstables in queue before compaction kicks off."/>

@@ -63,7 +63,7 @@ public class ResourceTopView extends EnhancedHLayout implements BookmarkableView
 
     private void setToDetailView() {
 
-        this.detailView = new ResourceDetailView();
+        this.detailView = new ResourceDetailView(treeView);
         this.detailView.addViewRenderedListener(new ResourceDetailView.ViewRenderedListener() {
 
             public void onViewRendered() {

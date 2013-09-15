@@ -47,6 +47,17 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
     public PageList() {
     }
 
+    /**
+     * Using this constructor one obtains a {@code PageList} instance that contains no data but it has an associated
+     * page control.
+     * <p/>
+     * Such constructor can be used if you don't know or care about the total number of results in the list and
+     * want to add the members of the list at some later point in time.
+     * <p/>
+     * <b>Note:</b> This constructor sets up the {@code PageList} to be {@link #isUnbounded() unbounded}.
+     *
+     * @param pageControl the page control to associate with the {@code PageList}
+     */
     public PageList(PageControl pageControl) {
         super();
         this.isUnbounded = true;
@@ -54,8 +65,15 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
     }
 
     /**
-     * Used to represent the cardinality of a result set without when the data is not needed 
-     * 
+     * Used to represent the cardinality of a result set when the data is not needed.
+     * <p/>
+     * In another words you can use this constructor to setup the {@code PageList} such that it correctly declares
+     * the {@link #getTotalSize() total size}, is NOT {@link #isUnbounded() unbounded} and has an associated page
+     * control, but actually contains no data (the data can be added later on of course).
+     *
+     * @param totalSize the total number of records of which this instance contains a subset of
+     * @param pageControl defines what subset of data is contained in this instance
+     *
      * @see Criteria.Restriction#COUNT_ONLY
      */
     public PageList(int totalSize, PageControl pageControl) {
@@ -65,8 +83,15 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
     }
 
     /**
-     * Used to represent a result set when the cardinality of the data is not needed 
-     * 
+     * Used to represent a result set when the cardinality of the data is not needed.
+     * <p/>
+     * In another words you can use this constructor to setup a {@code PageList} which IS {@link #isUnbounded()
+     * unbounded} and has an associated page control.
+     *
+     * @param collection the data contained in this instance - a shallow copy of the collection will be inserted into
+     *                   this instance
+     * @param pageControl defines what subset of the total number of items is present in this instance
+     *
      * @see Criteria.Restriction#COLLECTION_ONLY
      */
     public PageList(Collection<? extends E> collection, PageControl pageControl) {
@@ -75,18 +100,28 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         this.pageControl = pageControl;
     }
 
+    /**
+     * This constructor creates a fully configured {@code PageList} that contains the page control, the subset of the
+     * records that conforms to that page control, as well as the information about the total number of records.
+     * <p/>
+     * Note that it is perfectly legal for the collection to be empty, even though the {@code totalSize} is &gt; 0.
+     * This can be caused by a couple of things:
+     * <ul>
+     *     <li>the page control used to obtain this page list points "past" the total size,</li>
+     *     <li>there has been a drastic change in the database between obtaining the previous "page" and the next
+     *     page using the same page control resulting essentially in the previous case,</li>
+     *     <li>there has been a concurrent DB activity while obtaining the data and totalSize of the list, resulting
+     *     in the two being based on different DB state. There is an attempt to mitigate this condition in the while
+     *     performing the criteria queries but due to the nature of the READ_COMMITTED transaction isolation level,
+     *     this cannot be completely prevented.</li>
+     * </ul>
+     * @param collection the subset of the records as described by the {@code pageControl}
+     * @param totalSize the total number of records, the {@code collection} is subset of
+     * @param pageControl the page control object describing the subset
+     */
     public PageList(Collection<? extends E> collection, int totalSize, PageControl pageControl) {
         super(collection);
         this.totalSize = totalSize;
-        if (collection.size() == 0 && totalSize > 0) {
-            /* 
-             * this can be seen attempting to navigate to a non-existent page of the result set (e.g. page 10 in a
-             * collection of 3 items).  The mechanism controlling pagination at the user level should be notified of
-             * this, so it can decide how to gracefully handle this condition.
-             */
-            throw new IllegalArgumentException("PageList was passed an empty collection but 'totalSize' was "
-                + totalSize + ", " + pageControl);
-        }
         this.isUnbounded = false;
         this.pageControl = pageControl;
     }
@@ -110,8 +145,8 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
 
     /**
      * Returns the total size of the "master list" that this page is a subset of.
-     *
-     * @return Value of property listSize.
+     * <p/>
+     * <b>Note:</b> This method merely returns the size of this list if it is {@link #isUnbounded() unbounded}.
      */
     public int getTotalSize() {
         return Math.max(this.size(), this.totalSize);
@@ -127,12 +162,28 @@ public class PageList<E> extends ArrayList<E> implements Serializable {
         this.totalSize = totalSize;
     }
 
+    /**
+     * @return whether the total size of the list is known or not
+     */
     public boolean isUnbounded() {
         return this.isUnbounded;
     }
 
     public void setUnbounded(boolean isUnbounded) {
         this.isUnbounded = isUnbounded;
+        if (isUnbounded) {
+            //reset this to 0, so that #getTotalSize() behaves consistently
+            totalSize = 0;
+        }
+    }
+
+    /**
+     * @see {@link PageControl#isConsistentWith(PageList)}
+     *
+     * @return true if this page list is consistent with its page control
+     */
+    public boolean isConsistent() {
+        return pageControl == null || pageControl.isConsistentWith(this);
     }
 
     @Override

@@ -1,3 +1,22 @@
+/*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
 package org.rhq.modules.plugins.jbossas7;
 
 import static java.lang.Boolean.FALSE;
@@ -14,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
+import org.rhq.core.domain.configuration.ConfigurationUtility;
 import org.rhq.core.domain.configuration.Property;
 import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
@@ -92,6 +112,16 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
 
     @Override
     public CreateResourceReport createResource(CreateResourceReport createResourceReport) {
+
+        List<String> validationErrors = ConfigurationUtility.validateConfiguration(createResourceReport
+            .getResourceConfiguration(), createResourceReport.getResourceType().getResourceConfigurationDefinition());
+
+        if (!validationErrors.isEmpty()) {
+            createResourceReport.setErrorMessage(validationErrors.toString());
+            createResourceReport.setStatus(CreateResourceStatus.FAILURE);
+            return createResourceReport;
+        }
+
         final CreateResourceReport resourceReport = super.createResource(createResourceReport);
 
         // No success -> no point in continuing
@@ -105,30 +135,28 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
 
             String baseAddress = resourceReport.getResourceKey();
 
-            if (!listProperty.isEmpty()) {
-                CompositeOperation cop = new CompositeOperation();
-                for (Property p : listProperty) {
-                    PropertyMap map = (PropertyMap) p;
-                    String key = map.getSimpleValue("key", null);
-                    String value = map.getSimpleValue("value", null);
-                    if (key == null || value == null)
-                        continue;
+            CompositeOperation cop = new CompositeOperation();
+            for (Property p : listProperty) {
+                PropertyMap map = (PropertyMap) p;
+                String key = map.getSimpleValue("key", null);
+                String value = map.getSimpleValue("value", null);
+                if (key == null || value == null)
+                    continue;
 
-                    Address propertyAddress = new Address(baseAddress);
-                    propertyAddress.add("xa-datasource-properties", key);
-                    Operation op = new Operation("add", propertyAddress);
-                    op.addAdditionalProperty("value", value);
-                    cop.addStep(op);
+                Address propertyAddress = new Address(baseAddress);
+                propertyAddress.add("xa-datasource-properties", key);
+                Operation op = new Operation("add", propertyAddress);
+                op.addAdditionalProperty("value", value);
+                cop.addStep(op);
 
-                }
+            }
 
-                Result res = getASConnection().execute(cop);
-                if (!res.isSuccess()) {
-                    resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
-                        + res.getFailureDescription());
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
-                    return resourceReport;
-                }
+            Result res = getASConnection().execute(cop);
+            if (!res.isSuccess()) {
+                resourceReport.setErrorMessage("Datasource was added, but setting xa-properties failed: "
+                    + res.getFailureDescription());
+                resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
+                return resourceReport;
             }
         }
 
@@ -136,32 +164,29 @@ public class DatasourceComponent extends BaseComponent<BaseComponent<?>> impleme
         // See https://bugzilla.redhat.com/show_bug.cgi?id=854773
 
         // What did the user say in the datasource creation form?
-        Boolean configValue = createResourceReport.getResourceConfiguration().getSimple(ENABLED_ATTRIBUTE)
-            .getBooleanValue();
-        if (configValue == null) {
-            // Let's assume the user wants the datasource enabled if he/she said nothing
-            configValue = TRUE;
-        }
+        PropertySimple enabledProperty = createResourceReport.getResourceConfiguration().getSimple(ENABLED_ATTRIBUTE);
+        // Let's assume the user wants the datasource enabled if he/she said nothing
+        Boolean enabledPropertyValue = enabledProperty == null ? TRUE : enabledProperty.getBooleanValue();
 
         EnabledAttributeHelper.on(new Address(resourceReport.getResourceKey())).with(getASConnection())
-            .setAttributeValue(configValue, new EnabledAttributeHelperCallbacks() {
+            .setAttributeValue(enabledPropertyValue, new EnabledAttributeHelperCallbacks() {
                 @Override
                 public void onReadAttributeFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
                     resourceReport.setErrorMessage("Data source was added, "
                         + "but could not read its configuration after creation: " + opResult.getFailureDescription());
                 }
 
                 @Override
                 public void onEnableOperationFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
                     resourceReport.setErrorMessage("Datasource was added but not enabled: "
                         + opResult.getFailureDescription());
                 }
 
                 @Override
                 public void onDisableOperationFailure(Result opResult) {
-                    resourceReport.setStatus(CreateResourceStatus.FAILURE);
+                    resourceReport.setStatus(CreateResourceStatus.INVALID_ARTIFACT);
                     resourceReport.setErrorMessage("Datasource was added but not disabled: "
                         + opResult.getFailureDescription());
                 }

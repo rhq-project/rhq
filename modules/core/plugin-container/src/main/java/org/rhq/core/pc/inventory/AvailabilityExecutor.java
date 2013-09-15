@@ -19,6 +19,7 @@
 package org.rhq.core.pc.inventory;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Date;
@@ -45,6 +46,7 @@ import org.rhq.core.pc.inventory.ResourceContainer.ResourceComponentState;
 import org.rhq.core.pc.util.FacetLockType;
 import org.rhq.core.pluginapi.availability.AvailabilityFacet;
 import org.rhq.core.util.exception.ThrowableUtil;
+import org.rhq.core.util.stream.StreamUtil;
 
 /**
  * Runs a periodic scan for resource availability.
@@ -54,16 +56,18 @@ import org.rhq.core.util.exception.ThrowableUtil;
  * @author Ian Springer
  */
 public class AvailabilityExecutor implements Runnable, Callable<AvailabilityReport> {
-    // the get-availability-timeout will rarely, if ever, want to be overridden. It will default to be 5 seconds
-    // and that's what it probably should always be. However, there may be a rare instance where someone wants
-    // to give this availability executor a bit more time to wait for the resource's availability response
-    // and is willing to live with the possible consequences (that being, delayed avail reports and possibly
-    // false-down alerts getting triggered). Rather than changing this timeout, people should be using
-    // the asynchronous-availability-check capabilities that are exposed to the plugins. Because we do not
-    // want to encourage people from changing this, we do not expose this "backdoor" system property as a
-    // standard plugin configuration setting/agent preference - if someone wants to do this, they must
-    // explicitly pass in -D to the JVM running the plugin container.
-    static final int GET_AVAILABILITY_TIMEOUT;
+    /**
+     * The get-availability-timeout will rarely, if ever, want to be overridden. It will default to be 5 seconds
+     * and that's what it probably should always be. However, there may be a rare instance where someone wants
+     * to give this availability executor a bit more time to wait for the resource's availability response
+     * and is willing to live with the possible consequences (that being, delayed avail reports and possibly
+     * false-down alerts getting triggered). Rather than changing this timeout, people should be using
+     * the asynchronous-availability-check capabilities that are exposed to the plugins. Because we do not
+     * want to encourage people from changing this, we do not expose this "backdoor" system property as a
+     * standard plugin configuration setting/agent preference - if someone wants to do this, they must
+     * explicitly pass in -D to the JVM running the plugin container.
+     */
+    public static final int GET_AVAILABILITY_TIMEOUT;
     private static final Random RANDOM = new Random();
     static {
         int timeout;
@@ -75,11 +79,20 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         GET_AVAILABILITY_TIMEOUT = timeout;
     }
 
-    private final Log log = LogFactory.getLog(AvailabilityExecutor.class);
+    private static final Log LOG = LogFactory.getLog(AvailabilityExecutor.class);
 
-    private InventoryManager inventoryManager;
+    protected final InventoryManager inventoryManager;
     private AtomicBoolean sendChangesOnlyReport;
+
+    // NOTE: this is probably useless. The concurrency of the availability checks is mainly guarded by the size of the
+    // availabilityThreadPoolExecutor in InventoryManager. While this lock object would prevent multiple avail checks
+    // from running concurrently even if the size of the above executor was more than 1 (which it isn't), the problem
+    // we'd then face would be that we use multiple instances of AvailabilityExecutor in InventoryManager:
+    // availabilityExecutor field but also local instances in executeAvailabilityScanImmediately() and
+    // getCurrentAvailability(). This means that the only thing preventing from the multiple availability checks
+    // happening concurrently is the size of the thread pool and this object serves little purpose in that regard.
     private final Object lock = new Object();
+
     private int scanHistorySize = 1;
     private LinkedList<Scan> scanHistory = new LinkedList<Scan>();
 
@@ -95,7 +108,7 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 inventoryManager.handleReport(report);
             }
         } catch (Exception e) {
-            log.warn("Availability report collection failed", e);
+            LOG.warn("Availability report collection failed", e);
         }
     }
 
@@ -132,56 +145,88 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                 sendChangesOnlyReportNextTime();
             }
 
-            long start = System.currentTimeMillis();
-            Scan scan = new Scan(start, !changesOnly);
-
-            // TODO back to debug
-            log.info("Scan Starting: " + new Date(start));
-            if (log.isDebugEnabled()) {
-                //log.debug("Scan Starting: " + new Date(start));
-            }
-
-            try {
-                checkInventory(inventoryManager.getPlatform(), availabilityReport, AvailabilityType.UP, false, scan);
-            } catch (RuntimeException e) {
-                if (Thread.interrupted()) {
-                    if (log.isDebugEnabled()) {
-                        log.debug("Exception occurred during availability check, but this thread has been interrupted, "
-                            + "so most likely the plugin container is shutting down: " + e);
-                    }
-                    return availabilityReport;
-                }
-            }
-
-            scan.setEndTime(System.currentTimeMillis());
-
-            // TODO back to debug
-            log.info("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
-            // Is this too much logging?
-            if (log.isDebugEnabled()) {
-                //log.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
-            }
-
-            addScanHistory(scan);
-
-            if (log.isDebugEnabled()) {
-                long end = System.currentTimeMillis();
-                ObjectOutputStream oos = null;
-                try {
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
-                    oos = new ObjectOutputStream(baos);
-                    oos.writeObject(availabilityReport);
-                    log.debug("Built availability report for [" + availabilityReport.getResourceAvailability().size()
-                        + "] resources with a size of [" + baos.size() + "] bytes in [" + (end - start) + "]ms");
-                } finally {
-                    if (null != oos) {
-                        oos.close();
-                    }
-                }
-            }
+            startScan(inventoryManager.getPlatform(), availabilityReport, changesOnly);
         }
 
         return availabilityReport;
+    }
+
+    /**
+     * This is an entry point for the recursive availability scan. I.e. usually this method is called with the platform
+     * resource so that the avail scan is executed for the whole platform.
+     *
+     * @param scanRoot the resource to root the availability scan at
+     * @param availabilityReport the availability report to fill
+     * @param changesOnly whether to only report changes or produce a full report
+     */
+    protected void startScan(Resource scanRoot, AvailabilityReport availabilityReport, boolean changesOnly) {
+        long start = System.currentTimeMillis();
+        Scan scan = new Scan(start, !changesOnly);
+
+        // TODO back to debug
+        LOG.info("Scan Starting: " + new Date(start));
+        if (LOG.isDebugEnabled()) {
+            //log.debug("Scan Starting: " + new Date(start));
+        }
+
+        AvailabilityType parentAvailabilityType = null;
+
+        //determine the parent availability
+        Resource parent = scanRoot.getParentResource();
+        while (parent != null) {
+            Availability parentAvail = inventoryManager.getAvailabilityIfKnown(parent);
+            if (parentAvail != null && parentAvail.getAvailabilityType() == AvailabilityType.DOWN) {
+                parentAvailabilityType = AvailabilityType.DOWN;
+                break;
+            }
+
+            parent = parent.getParentResource();
+        }
+
+        //we've gone up past the platform but didn't encounter a single down resource, hence the parent avail type
+        //is to be considered UP (because it either truly is UP or is UNKNOWN as of now)
+        if (parentAvailabilityType == null) {
+            parentAvailabilityType = AvailabilityType.UP;
+        }
+
+        try {
+            checkInventory(scanRoot, availabilityReport, parentAvailabilityType, false, scan);
+        } catch (RuntimeException e) {
+            if (Thread.interrupted()) {
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Exception occurred during availability check, but this thread has been interrupted, "
+                        + "so most likely the plugin container is shutting down: " + e);
+                }
+                return;
+            }
+        }
+
+        scan.setEndTime(System.currentTimeMillis());
+
+        // TODO back to debug
+        LOG.info("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
+        // Is this too much logging?
+        if (LOG.isDebugEnabled()) {
+            //log.debug("Scan Ended   : " + new Date(scan.getEndTime()) + " : " + scan.toString());
+        }
+
+        addScanHistory(scan);
+
+        if (LOG.isDebugEnabled()) {
+            long end = System.currentTimeMillis();
+            ObjectOutputStream oos = null;
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream(10000);
+                oos = new ObjectOutputStream(baos);
+                oos.writeObject(availabilityReport);
+                LOG.debug("Built availability report for [" + availabilityReport.getResourceAvailability().size()
+                    + "] resources with a size of [" + baos.size() + "] bytes in [" + (end - start) + "]ms");
+            } catch (IOException e) {
+                LOG.debug("Failed to log the availability report details.", e);
+            } finally {
+                StreamUtil.safeClose(oos);
+            }
+        }
     }
 
     protected void checkInventory(Resource resource, AvailabilityReport availabilityReport,
@@ -206,8 +251,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
 
         } catch (PluginContainerException e) {
             // TODO (ips): Why aren't we logging this as an error?
-            if (log.isDebugEnabled()) {
-                log.debug("Could not create resource component proxy for " + resource + ".", e);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Could not create resource component proxy for " + resource + ".", e);
             }
             return;
         }
@@ -300,12 +345,12 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
                     ResourceError resourceError = new ResourceError(resource, ResourceErrorType.AVAILABILITY_CHECK,
                         t.getLocalizedMessage(), ThrowableUtil.getStackAsString(t), System.currentTimeMillis());
                     this.inventoryManager.sendResourceErrorToServer(resourceError);
-                    if (log.isDebugEnabled()) {
+                    if (LOG.isDebugEnabled()) {
                         if (t instanceof TimeoutException) {
                             // no need to log the stack trace for timeouts...
-                            log.debug("Failed to collect availability on " + resource + " (call timed out)");
+                            LOG.debug("Failed to collect availability on " + resource + " (call timed out)");
                         } else {
-                            log.debug("Failed to collect availability on " + resource, t);
+                            LOG.debug("Failed to collect availability on " + resource, t);
                         }
                     }
                 }
@@ -359,8 +404,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
         case DOWN:
             return AvailabilityType.DOWN;
         default:
-            if (log.isDebugEnabled()) {
-                log.debug("ResourceComponent " + component + " getAvailability() returned " + availType
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("ResourceComponent " + component + " getAvailability() returned " + availType
                     + ". This is invalid and is being replaced with DOWN.");
             }
             return AvailabilityType.DOWN;
@@ -374,8 +419,8 @@ public class AvailabilityExecutor implements Runnable, Callable<AvailabilityRepo
     public void sendFullReportNextTime() {
         this.sendChangesOnlyReport.set(false);
 
-        if (log.isTraceEnabled()) {
-            log.trace("\nFull report requested by: " + getSmallStackTrace(new Throwable()));
+        if (LOG.isTraceEnabled()) {
+            LOG.trace("\nFull report requested by: " + getSmallStackTrace(new Throwable()));
         }
     }
 

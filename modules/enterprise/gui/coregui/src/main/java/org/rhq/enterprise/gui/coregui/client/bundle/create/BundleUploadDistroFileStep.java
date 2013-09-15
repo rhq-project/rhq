@@ -37,7 +37,9 @@ import com.smartgwt.client.widgets.form.fields.TextItem;
 import com.smartgwt.client.widgets.form.fields.events.ClickEvent;
 import com.smartgwt.client.widgets.form.fields.events.ClickHandler;
 
+import org.rhq.core.domain.bundle.BundleNotFoundException;
 import org.rhq.core.domain.bundle.BundleVersion;
+import org.rhq.core.domain.bundle.composite.BundleGroupAssignmentComposite;
 import org.rhq.core.domain.criteria.BundleVersionCriteria;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
@@ -264,56 +266,107 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
         }
 
         BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService(10 * 60 * 1000); // if upload takes more than 10m, you have other things to worry about
-        bundleServer.createBundleVersionViaURL(urlString, urlUserName, urlPassword, new AsyncCallback<BundleVersion>() {
-            @Override
-            public void onSuccess(BundleVersion result) {
-                CoreGUI.getMessageCenter().notify(
-                    new Message(MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
-                        Message.Severity.Info));
-                wizard.setBundleVersion(result);
-                setButtonsDisableMode(false);
+        bundleServer.createOrStoreBundleVersionViaURL(urlString, urlUserName, urlPassword,
+            new AsyncCallback<BundleVersion>() {
+                @Override
+                public void onSuccess(BundleVersion result) {
+                    CoreGUI.getMessageCenter().notify(
+                        new Message(
+                            MSG.view_bundle_createWizard_createSuccessful(result.getName(), result.getVersion()),
+                            Message.Severity.Info));
+                    wizard.setBundleVersion(result);
+                    setButtonsDisableMode(false);
+                    incrementStep(); // go to the next step
+                }
+
+                @Override
+                public void onFailure(Throwable caught) {
+                    // This signals that the bundle does not yet exist
+                    if (caught instanceof BundleNotFoundException) {
+                        handleBundleNotFoundException((BundleNotFoundException) caught);
+
+                    } else {
+                        // Escape it, since it contains the URL, which the user entered.
+                        String message = StringUtility.escapeHtml(caught.getMessage());
+                        wizard.getView().showMessage(message);
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
+                        wizard.setBundleVersion(null);
+                        setButtonsDisableMode(false);
+                    }
+                }
+            });
+    }
+
+    private void handleBundleNotFoundException(BundleNotFoundException e) {
+        String token = e.getMessage();
+        if (null == token || token.isEmpty()) {
+            wizard.getView().showMessage("BundleNotFound: Unexpected failure creating bundle version.");
+            CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), e);
+            wizard.setBundleVersion(null);
+            setButtonsDisableMode(false);
+        }
+
+        wizard.setCreateInitialBundleVersionToken(token);
+        setButtonsDisableMode(false);
+        incrementStep(); // go to the next step
+    }
+
+    private void incrementStep() {
+        // before moving to the next step, get the assignable/assigned bundle groups for this new bundle version  
+        boolean isInitialVersion = this.wizard.getBundleVersion() == null
+            || this.wizard.getBundleVersion().getVersionOrder() == 0;
+        int bundleId = isInitialVersion ? 0 : this.wizard.getBundleVersion().getBundle().getId();
+
+        BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+        bundleServer.getAssignableBundleGroups(bundleId, new AsyncCallback<BundleGroupAssignmentComposite>() {
+
+            public void onSuccess(BundleGroupAssignmentComposite result) {
+                wizard.setBundleGroupAssignmentComposite(result);
                 wizard.getView().incrementStep(); // go to the next step
             }
 
-            @Override
             public void onFailure(Throwable caught) {
-                // Escape it, since it contains the URL, which the user entered.
-                String message = StringUtility.escapeHtml(caught.getMessage());
-                wizard.getView().showMessage(message);
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
-                wizard.setBundleVersion(null);
                 setButtonsDisableMode(false);
+                String message = MSG.view_bundle_createWizard_groupsStep_failedGetAssignable();
+                wizard.getView().showMessage(message);
+                CoreGUI.getErrorHandler().handleError(message, caught);
             }
         });
     }
 
     private void processUpload() {
         if (Boolean.TRUE.equals(uploadDistroForm.getUploadResult())) {
-            int bvId = uploadDistroForm.getBundleVersionId();
-            BundleVersionCriteria criteria = new BundleVersionCriteria();
-            criteria.addFilterId(bvId);
-            criteria.fetchBundle(true);
-            BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
-            bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
-                @Override
-                public void onSuccess(PageList<BundleVersion> result) {
-                    BundleVersion bv = result.get(0);
-                    CoreGUI.getMessageCenter().notify(
-                        new Message(MSG.view_bundle_createWizard_createSuccessful(bv.getName(), bv.getVersion()),
-                            Message.Severity.Info));
-                    wizard.setBundleVersion(bv);
-                    setButtonsDisableMode(false);
-                    wizard.getView().incrementStep(); // go to the next step
-                }
+            if (null != uploadDistroForm.getCreateInitialBundleVersionToken()) {
+                handleBundleNotFoundException(new BundleNotFoundException(
+                    uploadDistroForm.getCreateInitialBundleVersionToken()));
 
-                @Override
-                public void onFailure(Throwable caught) {
-                    wizard.getView().showMessage(caught.getMessage());
-                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
-                    wizard.setBundleVersion(null);
-                    setButtonsDisableMode(false);
-                }
-            });
+            } else {
+                int bvId = uploadDistroForm.getBundleVersionId();
+                BundleVersionCriteria criteria = new BundleVersionCriteria();
+                criteria.addFilterId(bvId);
+                criteria.fetchBundle(true);
+                BundleGWTServiceAsync bundleServer = GWTServiceLookup.getBundleService();
+                bundleServer.findBundleVersionsByCriteria(criteria, new AsyncCallback<PageList<BundleVersion>>() {
+                    @Override
+                    public void onSuccess(PageList<BundleVersion> result) {
+                        BundleVersion bv = result.get(0);
+                        CoreGUI.getMessageCenter().notify(
+                            new Message(MSG.view_bundle_createWizard_createSuccessful(bv.getName(), bv.getVersion()),
+                                Message.Severity.Info));
+                        wizard.setBundleVersion(bv);
+                        setButtonsDisableMode(false);
+                        incrementStep(); // go to the next step
+                    }
+
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        wizard.getView().showMessage(caught.getMessage());
+                        CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
+                        wizard.setBundleVersion(null);
+                        setButtonsDisableMode(false);
+                    }
+                });
+            }
         } else {
             String errorMessage = uploadDistroForm.getUploadError();
             handleUploadError(errorMessage, true);
@@ -342,16 +395,28 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
                         Message.Severity.Info));
                 wizard.setBundleVersion(result);
                 setButtonsDisableMode(false);
-                wizard.getView().incrementStep(); // go to the next step
+                incrementStep(); // go to the next step
             }
 
             @Override
             public void onFailure(Throwable caught) {
-                wizard.getView().showMessage(caught.getMessage());
-                CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
-                wizard.setBundleVersion(null);
-                wizard.setRecipe("");
-                setButtonsDisableMode(false);
+                boolean handled = false;
+                String message = caught.getMessage();
+
+                if (message.contains("PermissionException") && message.contains("initial")) {
+                    handled = true;
+                    wizard.setCreateInitialBundleVersionRecipe(wizard.getRecipe());
+                    setButtonsDisableMode(false);
+                    incrementStep(); // go to the next step
+                }
+
+                if (!handled) {
+                    wizard.getView().showMessage(caught.getMessage());
+                    CoreGUI.getErrorHandler().handleError(MSG.view_bundle_createWizard_createFailure(), caught);
+                    wizard.setBundleVersion(null);
+                    wizard.setRecipe("");
+                    setButtonsDisableMode(false);
+                }
             }
         });
     }
@@ -385,6 +450,5 @@ public class BundleUploadDistroFileStep extends AbstractWizardStep {
             radioGroup.destroyComponents();
             super.destroy();
         }
-
     }
 }

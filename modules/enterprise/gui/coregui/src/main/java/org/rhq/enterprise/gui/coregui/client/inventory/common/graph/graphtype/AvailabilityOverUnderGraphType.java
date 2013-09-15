@@ -115,7 +115,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
      * The magic JSNI to draw the charts with d3.
      */
     public native void drawJsniChart() /*-{
-        console.log("Draw Enhanced Availability chart");
+        //console.log("Draw Enhanced Availability chart");
 
         var global = this,
         // tidy up all of our interactions with java (via JSNI) thru AvailChartContext class
@@ -221,7 +221,6 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                             }
                             else {
                                 // should not ever happen, but...
-                                console.log("AvailabilityType not valid.");
                                 return "#000"; //black
                             }
                         },
@@ -256,8 +255,10 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
                                     dateFormatter = $wnd.d3.time.format(availChartContext.chartHoverDateFormat),
                                     availStart = new Date(+d.availStart),
                                     xPosition = parseFloat($wnd.d3.select(this).attr("x")),
+                                    xWidth = parseFloat($wnd.d3.select(this).attr("width")),
+                                    xMidPoint = xPosition + (xWidth/2),
                                     availTooltipDiv =  $wnd.d3.select("#availTooltip")
-                                    .style("left", xPosition + "px")
+                                    .style("left", + xMidPoint + "px")
                                     .style("top",  "0px");
 
                             availTooltipDiv.select("#availTooltipLabel")
@@ -346,7 +347,7 @@ public class AvailabilityOverUnderGraphType implements AvailabilityGraphType {
 
         if (typeof availChartContext.data !== 'undefined' && availChartContext.data.length > 0) {
             availabilityGraph.draw(availChartContext);
-            console.log("Availability Chart Drawn");
+            //console.log("Availability Chart Drawn");
         }
 
     }-*/;

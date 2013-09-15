@@ -26,6 +26,7 @@ import javax.ejb.Local;
 
 import org.rhq.core.domain.alert.Alert;
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.core.domain.cloud.StorageClusterSettings;
 import org.rhq.core.domain.cloud.StorageNode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.cloud.StorageNodeLoadComposite;
@@ -43,7 +44,15 @@ public interface StorageNodeManagerLocal {
     String STORAGE_NODE_RESOURCE_TYPE_NAME = "RHQ Storage Node";
     String STORAGE_NODE_PLUGIN_NAME = "RHQStorage";
 
+    /**
+     * @return All storage nodes, including those that are not part of the cluster.
+     */
     List<StorageNode> getStorageNodes();
+
+    /**
+     * @return All storage nodes that are part of the cluster.
+     */
+    List<StorageNode> getClusterNodes();
     
     PageList<StorageNodeLoadComposite> getStorageNodeComposites();
 
@@ -120,9 +129,9 @@ public interface StorageNodeManagerLocal {
      * have alert definitions. This can be used by the resource criteria queries to find
      * all alerts triggered for storage nodes resources.
      *
-     * @return resource ids
+     * @return map with resource (with defined alert) id as a key and storage node id as a value
      */
-    Integer[] findResourcesWithAlertDefinitions();
+    Map<Integer, Integer> findResourcesWithAlertDefinitions();
 
     /**
      * Find ids for all resources and sub-resources, of the specified storage node, that
@@ -160,14 +169,18 @@ public interface StorageNodeManagerLocal {
      * <strong>NOTE:</strong> Repair is one of the most resource-intensive operations that a storage node performs. Make
      * sure you know what you are doing if you invoke this method outside of the regularly scheduled maintenance window.
      * </p>
+     * 
+     * <p>the subject needs to have <code>MANAGE_SETTINGS</code> permissions.</p>
+     *
+     * @param subject   user that must have proper permissions
      */
-    void runReadRepair();
+    void runClusterMaintenance(Subject subject);
 
     void scheduleOperationInNewTransaction(Subject subject, ResourceOperationSchedule schedule);
 
     Map<String, List<MeasurementDataNumericHighLowComposite>> findStorageNodeLoadDataForLast(Subject subject, StorageNode node, long beginTime, long endTime, int numPoints);
 
-    StorageNode createStorageNode(Resource resource);
+    StorageNode createStorageNode(Resource resource, StorageClusterSettings clusterSettings);
 
     void deployStorageNode(Subject subject, StorageNode storageNode);
 

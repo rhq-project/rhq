@@ -27,6 +27,8 @@ import java.util.List;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
 import com.smartgwt.client.types.SortDirection;
+import com.smartgwt.client.util.BooleanCallback;
+import com.smartgwt.client.util.SC;
 import com.smartgwt.client.widgets.Canvas;
 import com.smartgwt.client.widgets.grid.CellFormatter;
 import com.smartgwt.client.widgets.grid.ListGrid;
@@ -88,7 +90,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
         for (ListGridField field : fields) {
             // adding the cell formatter for name field (clickable link)
-            if (field.getName() == FIELD_NAME) {
+            if (FIELD_NAME.equals(field.getName())) {
                 field.setCellFormatter(new CellFormatter() {
                     @Override
                     public String format(Object value, ListGridRecord record, int rowNum, int colNum) {
@@ -101,7 +103,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
 
                     }
                 });
-            } else if (field.getName() == FIELD_SERVER.propertyName()) {
+            } else if (FIELD_SERVER.propertyName().equals(field.getName())) {
                 // adding the cell formatter for server field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override
@@ -115,7 +117,7 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                         return LinkManager.getHref(detailsUrl, formattedValue);
                     }
                 });
-            } else if (field.getName() == FIELD_AFFINITY_GROUP.propertyName()) {
+            } else if (FIELD_AFFINITY_GROUP.propertyName().equals(field.getName())) {
                 // adding the cell formatter for affinity group field (clickable link)
                 field.setCellFormatter(new CellFormatter() {
                     @Override
@@ -150,30 +152,37 @@ public class AgentTableView extends TableSection<AgentDatasource> implements Has
                     if (selections == null || selections.length == 0) {
                         return; // do nothing since nothing is selected (we really shouldn't get here)
                     }
+                    // ask again it may contain a storage node
+                    SC.confirm(MSG.view_inventory_resources_uninventoryStorageConfirm(), new BooleanCallback() {
+                        public void execute(Boolean test) {
+                            if (test) {
+                                final ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
+                                final Agent[] agents = new Agent[selections.length];
+                                int i = 0;
+                                for (ListGridRecord selection : selections) {
+                                    final int agentId = selection.getAttributeAsInt(FIELD_ID);
+                                    final String agentName = selection.getAttribute(FIELD_NAME);
+                                    final Agent agent = new Agent();
+                                    agent.setId(agentId);
+                                    agent.setName(agentName);
+                                    agents[i++] = agent;
+                                }
 
-                    final ResourceGWTServiceAsync resourceManager = GWTServiceLookup.getResourceService();
-                    final Agent[] agents = new Agent[selections.length];
-                    int i = 0;
-                    for (ListGridRecord selection : selections) {
-                        final int agentId = selection.getAttributeAsInt(FIELD_ID);
-                        final String agentName = selection.getAttribute(FIELD_NAME);
-                        final Agent agent = new Agent();
-                        agent.setId(agentId);
-                        agent.setName(agentName);
-                        agents[i++] = agent;
-                    }
+                                resourceManager.uninventoryAllResourcesByAgent(agents, new AsyncCallback<Void>() {
+                                    public void onSuccess(Void result) {
+                                        CoreGUI.getMessageCenter().notify(
+                                            new Message(MSG.view_adminTopology_agent_delete_submitted(Integer
+                                                .toString(agents.length))));
+                                        refresh();
+                                    }
 
-                    resourceManager.uninventoryAllResourcesByAgent(agents, new AsyncCallback<Void>() {
-                        public void onSuccess(Void result) {
-                            CoreGUI.getMessageCenter().notify(
-                                new Message(MSG.view_adminTopology_agent_delete_submitted(Integer
-                                    .toString(agents.length))));
-                            refresh();
-                        }
-
-                        public void onFailure(Throwable caught) {
-                            CoreGUI.getErrorHandler().handleError(MSG.view_adminTopology_agent_delete_error(), caught);
-                            refresh();
+                                    public void onFailure(Throwable caught) {
+                                        CoreGUI.getErrorHandler().handleError(
+                                            MSG.view_adminTopology_agent_delete_error(), caught);
+                                        refresh();
+                                    }
+                                });
+                            }
                         }
                     });
                 }

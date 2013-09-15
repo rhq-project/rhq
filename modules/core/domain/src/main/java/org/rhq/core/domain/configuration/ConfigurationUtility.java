@@ -1,24 +1,20 @@
 /*
  * RHQ Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License, version 2, as
- * published by the Free Software Foundation, and/or the GNU Lesser
- * General Public License, version 2.1, also as published by the Free
- * Software Foundation.
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- * GNU General Public License and the GNU Lesser General Public License
- * for more details.
+ * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * and the GNU Lesser General Public License along with this program;
- * if not, write to the Free Software Foundation, Inc.,
- * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 package org.rhq.core.domain.configuration;
 
@@ -38,7 +34,11 @@ import org.rhq.core.domain.configuration.definition.PropertyDefinitionSimple;
  *
  * @author Ian Springer
  */
-public abstract class ConfigurationUtility {
+public class ConfigurationUtility {
+
+    private ConfigurationUtility() {
+        // Utility class
+    }
 
     /**
      * This will populate the given configuration definition with a default template.
@@ -305,6 +305,7 @@ public abstract class ConfigurationUtility {
                 if (listMemberPropertyDefinition instanceof PropertyDefinitionMap) {
                     PropertyDefinitionMap propertyDefinitionMap = (PropertyDefinitionMap) listMemberPropertyDefinition;
                     PropertyList propertyList = parentPropertyMap.getList(propertyDefinition.getName());
+                    validatePropertyListSize(propertyList, propertyDefinitionList, errorMessages);
                     for (Property property : propertyList.getList()) {
                         PropertyMap propertyMap = (PropertyMap) property;
                         validatePropertyMap(propertyMap, propertyDefinitionMap, errorMessages);
@@ -329,6 +330,26 @@ public abstract class ConfigurationUtility {
         Map<String, PropertyDefinition> childPropertyDefinitions = propertyDefinitionMap.getMap();
         for (PropertyDefinition childPropertyDefinition : childPropertyDefinitions.values()) {
             validateProperty(childPropertyDefinition, propertyMap, errorMessages);
+        }
+    }
+
+    private static void validatePropertyListSize(PropertyList propertyList,
+        PropertyDefinitionList propertyDefinitionList, List<String> errorMessages) {
+        int listMin = propertyDefinitionList.getMin();
+        int listMax = propertyDefinitionList.getMax();
+        if (listMin == 0 && listMax == Integer.MAX_VALUE) {
+            return;
+        }
+        int listSize = propertyList.getList().size();
+        if (listMin == 0 && listMax < Integer.MAX_VALUE && listSize > listMax) {
+            errorMessages.add("The list property '" + propertyDefinitionList.getName() + "' should contain " + listMax
+                + " row(s) at most");
+        } else if (listMin > 0 && listMax == Integer.MAX_VALUE && listSize < listMin) {
+            errorMessages.add("The list property '" + propertyDefinitionList.getName() + "' should contain at least "
+                + listMin + " row(s)");
+        } else if (listSize < listMin || listSize > listMax) {
+            errorMessages.add("The list property '%s' should contain a minimum of " + listMin + " and a maximum of "
+                + listMax + " row(s)");
         }
     }
 }

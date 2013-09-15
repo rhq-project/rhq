@@ -88,7 +88,6 @@ public class StorageNodeManagerBeanTest extends AbstractEJB3Test {
                     StorageNode node = new StorageNode();
                     node.setAddress(address);
                     node.setOperationMode(StorageNode.OperationMode.NORMAL);
-                    node.setJmxPort(7299 + i);
                     node.setCqlPort(9142 + i);
                     if (i == 0) {
                         firstOne = node;

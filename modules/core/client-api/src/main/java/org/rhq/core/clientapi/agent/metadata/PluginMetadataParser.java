@@ -37,6 +37,8 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.core.clientapi.descriptor.plugin.Bundle;
 import org.rhq.core.clientapi.descriptor.plugin.BundleTargetDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.ContentDescriptor;
+import org.rhq.core.clientapi.descriptor.plugin.DiscoveryCallbacksType;
+import org.rhq.core.clientapi.descriptor.plugin.DiscoveryTypeCallbackType;
 import org.rhq.core.clientapi.descriptor.plugin.DriftDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.EventDescriptor;
 import org.rhq.core.clientapi.descriptor.plugin.MetricDescriptor;
@@ -83,9 +85,10 @@ public class PluginMetadataParser {
 
     private Set<ResourceType> rootResourceTypes = new LinkedHashSet<ResourceType>();
 
-    // TODO: this isn't the most elegant... should we put these in the domain objects? or perhaps build another place for them to live?
     private Map<ResourceType, String> discoveryClasses = new HashMap<ResourceType, String>();
     private Map<ResourceType, String> componentClasses = new HashMap<ResourceType, String>();
+
+    private Map<ResourceType, List<String>> discoveryCallbackClasses = null;
 
     // a map keyed on plugin name that contains the parsers for all other known plugin descriptors
     // this map is managed by this parser's PluginMetadataManager and is how the manager shares information
@@ -120,6 +123,20 @@ public class PluginMetadataParser {
         return this.rootResourceTypes;
     }
 
+    /**
+     * This returns all resource types that this plugin defines discovery callbacks for.
+     * When the resource types' discovery is run, the details will be funneled through the discovery
+     * callbacks to give this plugin a chance to alter the discovered details.
+     * Note that it is very possible that the resource type keys are types that are NOT defined
+     * by the plugin associated with this parser. The resource types will be defined either in
+     * this plugin or one of its dependencies.
+     *
+     * @return map of all types that have one or more discovery callbacks defined. May be null.
+     */
+    public Map<ResourceType, List<String>> getDiscoveryCallbackClasses() {
+        return discoveryCallbackClasses;
+    }
+
     public void parseDescriptor() throws InvalidPluginDescriptorException {
         ResourceType type;
 
@@ -145,6 +162,65 @@ public class PluginMetadataParser {
             if (type != null) {
                 rootResourceTypes.add(type);
             }
+        }
+
+        // find any declared discovery callbacks now - do this at the end in
+        // case we are defining callbacks on types in our own plugin
+        parseDiscoveryCallbacks();
+
+        return;
+    }
+
+    private void parseDiscoveryCallbacks() throws InvalidPluginDescriptorException {
+        DiscoveryCallbacksType jaxbCallbacks = pluginDescriptor.getDiscoveryCallbacks();
+        if (jaxbCallbacks == null) {
+            return;
+        }
+
+        List<DiscoveryTypeCallbackType> jaxbCallbacksList = jaxbCallbacks.getTypeCallback();
+        if (jaxbCallbacksList == null || jaxbCallbacksList.isEmpty()) {
+            return;
+        }
+
+        for (DiscoveryTypeCallbackType jaxbCallback : jaxbCallbacksList) {
+            String plugin = jaxbCallback.getPlugin();
+            String type = jaxbCallback.getType();
+            String callbackClass = jaxbCallback.getCallbackClass();
+
+            LOG.debug("Plugin [" + pluginDescriptor.getName() + "] defined a discovery class [" + callbackClass
+                + "] to listen for discovery details for type [{" + plugin + "}" + type + "].");
+
+            if (callbackClass == null || callbackClass.length() == 0) {
+                // this should never happen - the XML parser should have failed to even get this far
+                throw new InvalidPluginDescriptorException("Missing discovery class in plugin ["
+                        + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type);
+            }
+
+            if (plugin == null || plugin.length() == 0 || type == null || type.length() == 0) {
+                // this should never happen - the XML parser should have failed to even get this far
+                throw new InvalidPluginDescriptorException("Both plugin and type must be defined for discovery callbacks in plugin ["
+                    + pluginDescriptor.getName() + "] -> {" + plugin + "}" + type + ":" + callbackClass);
+            }
+
+            ResourceType resourceType = getResourceTypeFromPlugin(type, plugin);
+            if (resourceType == null) {
+                LOG.warn("There is no type named [" + type + "] from a plugin named [" + plugin
+                        + "]. This is probably because that plugin is missing. The discovery callback will be ignored");
+                continue;
+            }
+
+            if (discoveryCallbackClasses == null) {
+                discoveryCallbackClasses = new HashMap<ResourceType, List<String>>();
+            }
+
+            List<String> callbacksList = discoveryCallbackClasses.get(resourceType);
+            if (callbacksList == null) {
+                callbacksList = new ArrayList<String>(1);
+                discoveryCallbackClasses.put(resourceType, callbacksList);
+            }
+
+            String fqcn = getFullyQualifiedComponentClassName(pluginDescriptor.getPackage(), callbackClass);
+            callbacksList.add(fqcn);
         }
 
         return;

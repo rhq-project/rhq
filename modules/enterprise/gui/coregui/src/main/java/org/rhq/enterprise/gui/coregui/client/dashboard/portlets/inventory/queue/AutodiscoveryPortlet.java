@@ -204,7 +204,7 @@ public class AutodiscoveryPortlet extends ResourceAutodiscoveryView implements C
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     @Override

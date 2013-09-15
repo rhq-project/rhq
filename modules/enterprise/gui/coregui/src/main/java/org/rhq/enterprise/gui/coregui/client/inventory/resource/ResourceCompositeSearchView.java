@@ -72,16 +72,16 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
     private boolean canCreate;
 
     public ResourceCompositeSearchView(ResourceComposite parentResourceComposite, Criteria criteria, String title,
-        SortSpecifier[] sortSpecifier, String[] excludeFields, String... headerIcons) {
-        super(criteria, title, sortSpecifier, excludeFields, headerIcons);
+        SortSpecifier[] sortSpecifier, String[] excludeFields, String headerIcon) {
+        super(criteria, title, sortSpecifier, excludeFields, headerIcon);
         this.parentResourceComposite = parentResourceComposite;
         this.canCreate = this.parentResourceComposite.getResourcePermission().isCreateChildResources();
         setInitialCriteriaFixed(true);
     }
 
     public ResourceCompositeSearchView(ResourceComposite parentResourceComposite, Criteria criteria, String title,
-        String... headerIcons) {
-        this(parentResourceComposite, criteria, title, null, null, headerIcons);
+        String headerIcon) {
+        this(parentResourceComposite, criteria, title, null, null, headerIcon);
     }
 
     @Override
@@ -381,7 +381,7 @@ public class ResourceCompositeSearchView extends ResourceSearchView {
 
     public static ResourceCompositeSearchView getChildrenOf(ResourceComposite parentResourceComposite) {
         return new ResourceCompositeSearchView(parentResourceComposite, new Criteria("parentId",
-            String.valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources());
+            String.valueOf(parentResourceComposite.getResource().getId())), MSG.view_tabs_common_child_resources(), null);
     }
 
     @Override

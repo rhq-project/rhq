@@ -129,11 +129,13 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      *
      * @return an alert
      */
+    @Override
     public Alert createAlert(Alert alert) {
         entityManager.persist(alert);
         return alert;
     }
 
+    @Override
     public int deleteAlerts(Subject user, int[] alertIds) {
         if (alertIds == null || alertIds.length == 0) {
             return 0;
@@ -171,6 +173,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * @param alertIds PKs of the alerts to acknowledge
      * @return number of alerts acknowledged
      */
+    @Override
     public int acknowledgeAlerts(Subject subject, int[] alertIds) {
         if (alertIds == null || alertIds.length == 0) {
             return 0;
@@ -193,6 +196,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return modified;
     }
 
+    @Override
     @RequiredPermission(Permission.MANAGE_SETTINGS)
     public int deleteAlertsByContext(Subject subject, EntityContext context) {
         Query deleteConditionLogsQuery = null;
@@ -261,6 +265,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return affectedRows;
     }
 
+    @Override
     public int acknowledgeAlertsByContext(Subject subject, EntityContext context) {
         Query query = null;
         if (context.type == EntityContext.Type.Resource) {
@@ -378,6 +383,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
     /**
      * Remove alerts for the specified range of time.
      */
+    @Override
     // gonna use bulk delete, make sure we are in new tx to not screw up caller's hibernate session
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     @TransactionTimeout(6 * 60 * 60)
@@ -390,7 +396,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         query.setParameter("end", endTime);
         int conditionsDeleted = query.executeUpdate();
         long end = System.currentTimeMillis();
-        log.debug("Deleted [" + conditionsDeleted + "] alert condition logs in [" + (end - start) + "]ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Deleted [" + conditionsDeleted + "] alert condition logs in [" + (end - start) + "]ms");
+        }
         totalTime += (end - start);
 
         start = System.currentTimeMillis();
@@ -399,7 +407,9 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         query.setParameter("end", endTime);
         int deletedNotifications = query.executeUpdate();
         end = System.currentTimeMillis();
-        log.debug("Deleted [" + deletedNotifications + "] alert notifications in [" + (end - start) + "]ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Deleted [" + deletedNotifications + "] alert notifications in [" + (end - start) + "]ms");
+        }
         totalTime += (end - start);
 
         start = System.currentTimeMillis();
@@ -408,19 +418,24 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         query.setParameter("end", endTime);
         int deletedAlerts = query.executeUpdate();
         end = System.currentTimeMillis();
-        log.debug("Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Deleted [" + deletedAlerts + "] alerts in [" + (end - start) + "]ms");
+        }
         totalTime += (end - start);
 
         MeasurementMonitor.getMBean().incrementPurgeTime(totalTime);
         MeasurementMonitor.getMBean().setPurgedAlerts(deletedAlerts);
         MeasurementMonitor.getMBean().setPurgedAlertConditions(conditionsDeleted);
         MeasurementMonitor.getMBean().setPurgedAlertNotifications(deletedNotifications);
-        log.debug("Deleted [" + (deletedAlerts + conditionsDeleted + deletedNotifications) + "] "
-            + "alert audit records in [" + (totalTime) + "]ms");
+        if (log.isDebugEnabled()) {
+            log.debug("Deleted [" + (deletedAlerts + conditionsDeleted + deletedNotifications) + "] "
+                + "alert audit records in [" + (totalTime) + "]ms");
+        }
 
         return deletedAlerts;
     }
 
+    @Override
     public int getAlertCountByMeasurementDefinitionId(Integer measurementDefinitionId, long begin, long end) {
         Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEASUREMENT_DEFINITION_ID);
         query.setParameter("measurementDefinitionId", measurementDefinitionId);
@@ -430,6 +445,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return (int) count;
     }
 
+    @Override
     public int getAlertCountByMeasurementDefinitionAndResources(int measurementDefinitionId, int[] resourceIds,
         long beginDate, long endDate) {
         Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCES);
@@ -441,6 +457,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return (int) count;
     }
 
+    @Override
     public int getAlertCountByMeasurementDefinitionAndResourceGroup(int measurementDefinitionId, int groupId,
         long beginDate, long endDate) {
         Query query = PersistenceUtility.createCountQuery(entityManager,
@@ -453,6 +470,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return (int) count;
     }
 
+    @Override
     public int getAlertCountByMeasurementDefinitionAndAutoGroup(int measurementDefinitionId, int resourceParentId,
         int resourceTypeId, long beginDate, long endDate) {
         Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_AUTOGROUP);
@@ -465,6 +483,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return (int) count;
     }
 
+    @Override
     public int getAlertCountByMeasurementDefinitionAndResource(int measurementDefinitionId, int resourceId,
         long beginDate, long endDate) {
         Query query = PersistenceUtility.createCountQuery(entityManager, Alert.QUERY_FIND_BY_MEAS_DEF_ID_AND_RESOURCE);
@@ -476,6 +495,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return (int) count;
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Map<Integer, Integer> getAlertCountForSchedules(long begin, long end, List<Integer> scheduleIds) {
         if ((scheduleIds == null) || (scheduleIds.size() == 0) || (end < begin)) {
@@ -542,6 +562,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         }
     }
 
+    @Override
     public void fireAlert(int alertDefinitionId) {
         if (log.isDebugEnabled()) {
             log.debug("Firing an alert for alertDefinition with id=" + alertDefinitionId + "...");
@@ -592,6 +613,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * returns a list of email addresses, those will be collected and sent at the end.
      * @param alert the fired alert
      */
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
     public void sendAlertNotifications(Alert alert) {
         /*
@@ -612,7 +634,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
 
                     String senderName = alertNotification.getSenderName();
                     if (alertSenderPluginManager == null) {
-                        notificationLog = new AlertNotificationLog(alert,senderName, ResultState.FAILURE,
+                        notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE,
                             "Notification was not sent as alert sender plugins are not yet initialized ");
                     } else if (senderName == null) {
                         notificationLog = new AlertNotificationLog(alert, senderName, ResultState.FAILURE, "Sender '"
@@ -658,6 +680,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * Return the plugin manager that is managing alert sender plugins
      * @return The alert sender plugin manager
      */
+    @Override
     public AlertSenderPluginManager getAlertPluginManager() {
         MasterServerPluginContainer container = LookupUtil.getServerPluginService().getMasterPluginContainer();
         if (container == null) {
@@ -674,6 +697,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return manager;
     }
 
+    @Override
     public Collection<String> sendAlertNotificationEmails(Alert alert, Collection<String> emailAddresses) {
         if (log.isDebugEnabled()) {
             log.debug("Sending alert notifications for " + alert.toSimpleString() + "...");
@@ -720,6 +744,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * @param shortVersion if true the messages printed are abbreviated to save space
      * @return human readable condition log
      */
+    @Override
     public String prettyPrintAlertConditions(Alert alert, boolean shortVersion) {
         return prettyPrintAlertConditions(alert.getConditionLogs(), shortVersion);
     }
@@ -1147,6 +1172,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return str.toString();
     }
 
+    @Override
     public String prettyPrintAlertURL(Alert alert) {
         StringBuilder builder = new StringBuilder();
 
@@ -1222,6 +1248,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
      * @param alert alert to check
      * @return true if the definition got disabled
      */
+    @Override
     public boolean willDefinitionBeDisabled(Alert alert) {
         entityManager.refresh(alert);
         AlertDefinition firedDefinition = alert.getAlertDefinition();
@@ -1240,6 +1267,7 @@ public class AlertManagerBean implements AlertManagerLocal, AlertManagerRemote {
         return false; // Default is not to disable the definition
     }
 
+    @Override
     public PageList<Alert> findAlertsByCriteria(Subject subject, AlertCriteria criteria) {
         CriteriaQueryGenerator generator = new CriteriaQueryGenerator(subject, criteria);
         if (!authorizationManager.isInventoryManager(subject)) {

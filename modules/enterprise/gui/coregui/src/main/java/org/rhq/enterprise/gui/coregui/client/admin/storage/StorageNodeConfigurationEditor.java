@@ -74,8 +74,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         this.configuration = configuration; 
     }
 
-    private void save() {
-        updateConfiguration();
+    private void save(final StorageNodeConfigurationComposite configuration) {
         GWTServiceLookup.getStorageService().updateConfiguration(configuration, new AsyncCallback<Void>() {
             public void onSuccess(Void result) {
                 Message msg = new Message("Storage node settings were successfully updated.", Message.Severity.Info);
@@ -150,7 +149,7 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                 int intVal = Integer.parseInt(value.substring(0, value.toLowerCase().indexOf(megs ? "m" : "g")));
                 valueItem.setValue(intVal, units);
             } catch (StringIndexOutOfBoundsException e) {
-                //nothing
+                // do nothing
             }
         }
         return valueItem;
@@ -203,16 +202,10 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                 "Heap New Size",
                 configuration.getHeapNewSize(),
                 "The size of the new generation portion of the heap. This value will be used with the -Xmn JVM option. The value should be an integer with a suffix of M or G to indicate megabytes or gigabytes."));
-//        IntegerRangeValidator positiveInteger = new IntegerRangeValidator();
-//        positiveInteger.setMin(1);
-//        positiveInteger.setMax(Integer.MAX_VALUE);
+        
         IsIntegerValidator validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_THREAD_STACK_SIZE, "Thread Stack Size", configuration.getThreadStackSize(),
             "The thread stack size. This memory is allocated to each thread off heap. The value should be an integer that will be interpreted in kilobytes.", validator));
-        
-//        IntegerRangeValidator portValidator = new IntegerRangeValidator();
-//        portValidator.setMin(1);
-//        portValidator.setMax(65535); // (1 << 16) - 1
         validator = new IsIntegerValidator();
         items.addAll(buildOneFormRowWithValidator(FIELD_JMX_PORT, "JMX Port", String.valueOf(configuration.getJmxPort()),
             "The JMX port for the RHQ Storage Node", validator));
@@ -242,16 +235,21 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
                         form.setErrors(errors, true);
                         return;
                     }
-                    SC.ask(
-                        "Changing the storage node configuration requires restart of storage node. Do you want to continue?",
-                        new BooleanCallback() {
-                            @Override
-                            public void execute(Boolean value) {
-                                if (value) {
-                                    save();
+                    final StorageNodeConfigurationComposite configuration = getConfiguration();
+                    if (StorageNodeConfigurationEditor.this.configuration.equals(configuration)) {
+                        SC.say("Info", "There were no changes done.");
+                    } else {
+                        SC.ask(
+                            "Changing the storage node configuration requires restart of storage node. Do you want to continue?",
+                            new BooleanCallback() {
+                                @Override
+                                public void execute(Boolean value) {
+                                    if (value) {
+                                        save(configuration);
+                                    }
                                 }
-                            }
-                        });
+                            });
+                    }
                 }
             }
         });
@@ -264,7 +262,9 @@ public class StorageNodeConfigurationEditor extends EnhancedVLayout implements R
         return toolStrip;
     }
     
-    private StorageNodeConfigurationComposite updateConfiguration() {
+    private StorageNodeConfigurationComposite getConfiguration() {
+        StorageNodeConfigurationComposite configuration = new StorageNodeConfigurationComposite(
+            this.configuration.getStorageNode());
         configuration.setHeapSize(getJVMMemoryString(form.getField(FIELD_HEAP_MAX).getValue().toString()));
         configuration.setHeapNewSize(getJVMMemoryString(form.getField(FIELD_HEAP_NEW).getValue().toString()));
         configuration.setThreadStackSize(form.getValueAsString(FIELD_THREAD_STACK_SIZE));

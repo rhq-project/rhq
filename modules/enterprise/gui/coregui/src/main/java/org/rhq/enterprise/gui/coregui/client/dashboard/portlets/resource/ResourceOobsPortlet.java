@@ -29,10 +29,14 @@ import com.smartgwt.client.widgets.layout.VLayout;
 
 import org.rhq.core.domain.common.EntityContext;
 import org.rhq.core.domain.configuration.Configuration;
+import org.rhq.core.domain.criteria.ResourceCriteria;
 import org.rhq.core.domain.dashboard.DashboardPortlet;
+import org.rhq.core.domain.measurement.MeasurementDefinition;
 import org.rhq.core.domain.measurement.composite.MeasurementOOBComposite;
+import org.rhq.core.domain.resource.Resource;
+import org.rhq.core.domain.resource.ResourceType;
+import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
-import org.rhq.enterprise.gui.coregui.client.components.FullHTMLPane;
 import org.rhq.enterprise.gui.coregui.client.dashboard.Portlet;
 import org.rhq.enterprise.gui.coregui.client.dashboard.PortletViewFactory;
 import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.PortletConfigurationEditorComponent.Constant;
@@ -40,8 +44,15 @@ import org.rhq.enterprise.gui.coregui.client.dashboard.portlets.groups.GroupOobs
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView;
 import org.rhq.enterprise.gui.coregui.client.inventory.common.detail.summary.AbstractActivityView.ChartViewWindow;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.D3GraphListView;
+import org.rhq.enterprise.gui.coregui.client.inventory.resource.type.ResourceTypeRepository;
 import org.rhq.enterprise.gui.coregui.client.util.GwtRelativeDurationConverter;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
+
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.Set;
 
 /**This portlet allows the end user to customize the OOB display
  *
@@ -84,64 +95,128 @@ public class ResourceOobsPortlet extends GroupOobsPortlet {
         final int resourceId = this.resourceId;
 
         //result count
-        String resultCount = portletConfig.getSimpleValue(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT);
-        if (resultCount.trim().isEmpty()) {
-            resultCount = Constant.RESULT_COUNT_DEFAULT;
-        }
+        final String resultCount;
+        String resultCountRaw = portletConfig.getSimpleValue(Constant.RESULT_COUNT, Constant.RESULT_COUNT_DEFAULT);
+        resultCount = (resultCountRaw.trim().isEmpty()) ? Constant.RESULT_COUNT_DEFAULT :  resultCountRaw;
 
-        GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId,
-            Integer.valueOf(resultCount), new AsyncCallback<PageList<MeasurementOOBComposite>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    Log.debug("Error retrieving out of bound metrics for resource [" + resourceId + "]:"
-                        + caught.getMessage());
-                    currentlyLoading = false;
-                }
+        ResourceCriteria criteria = new ResourceCriteria();
+        criteria.addFilterId(resourceId);
+        criteria.fetchResourceType(true);
 
-                @Override
-                public void onSuccess(PageList<MeasurementOOBComposite> result) {
-                    VLayout column = new VLayout();
-                    column.setHeight(10);
-                    if (!result.isEmpty()) {
-                        for (MeasurementOOBComposite oob : result) {
-                            DynamicForm row = new DynamicForm();
-                            row.setNumCols(2);
+        //locate the resource
+        GWTServiceLookup.getResourceService().findResourceCompositesByCriteria(criteria,
+                new AsyncCallback<PageList<ResourceComposite>>() {
+                    @Override
+                    public void onFailure(Throwable caught) {
+                        Log.debug("Error retrieving resource resource composite for resource [" + resourceId + "]:"
+                                + caught.getMessage());
+                    }
 
-                            final String title = oob.getScheduleName();
-                            final String destination = "/resource/common/monitor/Visibility.do?m="
-                                + oob.getDefinitionId() + "&id=" + resourceId + "&mode=chartSingleMetricSingleResource";
-                            LinkItem link = AbstractActivityView.newLinkItem(title, destination);
-                            link.addClickHandler(new ClickHandler() {
+                    @Override
+                    public void onSuccess(PageList<ResourceComposite> results) {
+                        if (!results.isEmpty()) {
+                            final ResourceComposite resourceComposite = results.get(0);
+
+                            final Resource resource = resourceComposite.getResource();
+                            final ResourceType resourceType = resource.getResourceType();
+
+                            ResourceTypeRepository.Cache.getInstance().getResourceTypes(
+                                    resourceType.getId(),
+                                    EnumSet.of(ResourceTypeRepository.MetadataType.measurements),
+                                    new ResourceTypeRepository.TypeLoadedCallback() {
+                                        public void onTypesLoaded(ResourceType type) {
+                                            resource.setResourceType(type);
+                                            //metric definitions
+                                            final Set<MeasurementDefinition> definitions = type.getMetricDefinitions();
+
+                                            //build id mapping for measurementDefinition instances Ex. Free Memory -> MeasurementDefinition[100071]
+                                            HashMap<String, MeasurementDefinition> measurementDefMapTemp = new HashMap<String, MeasurementDefinition>();
+                                            for (MeasurementDefinition definition : definitions) {
+                                                if(null != definition){
+                                                    measurementDefMapTemp.put(definition.getDisplayName(), definition);
+                                                }
+                                            }
+                                            final HashMap<String, MeasurementDefinition> measurementDefMap = new HashMap<String, MeasurementDefinition>(measurementDefMapTemp);
+                                            //bundle definition ids for asynch call.
+                                            int[] definitionArrayIds = new int[definitions.size()];
+                                            final String[] displayOrder = new String[definitions.size()];
+                                            measurementDefMap.keySet().toArray(displayOrder);
+                                            //sort the charting data ex. Free Memory, Free Swap Space,..System Load
+                                            Arrays.sort(displayOrder);
+
+                                            //organize definitionArrayIds for ordered request on server.
+                                            int index = 0;
+                                            for (String definitionToDisplay : displayOrder) {
+                                                definitionArrayIds[index++] = measurementDefMap.get(definitionToDisplay)
+                                                        .getId();
+                                            }
+
+
+                            GWTServiceLookup.getMeasurementDataService().getHighestNOOBsForResource(resourceId,
+                                    Integer.valueOf(resultCount), new AsyncCallback<PageList<MeasurementOOBComposite>>() {
                                 @Override
-                                public void onClick(ClickEvent event) {
-                                    ChartViewWindow window = new ChartViewWindow(title);
-                                    //generate and include iframed content
-                                    FullHTMLPane iframe = new FullHTMLPane(destination);
-                                    window.addItem(iframe);
-                                    window.show();
+                                public void onFailure(Throwable caught) {
+                                    Log.debug("Error retrieving out of bound metrics for resource [" + resourceId + "]:"
+                                            + caught.getMessage());
+                                    currentlyLoading = false;
+                                }
+
+                                @Override
+                                public void onSuccess(PageList<MeasurementOOBComposite> result) {
+                                    VLayout column = new VLayout();
+                                    column.setHeight(10);
+                                    if (!result.isEmpty()) {
+                                        for (final MeasurementOOBComposite oob : result) {
+                                            DynamicForm row = new DynamicForm();
+                                            row.setNumCols(2);
+
+                                            final String title = oob.getScheduleName();
+
+                                            LinkItem link = new LinkItem();
+                                            link.setLinkTitle(title);
+                                            link.setTitle(title);
+                                            link.setShowTitle(false);
+                                            link.addClickHandler(new ClickHandler() {
+                                                @Override
+                                                public void onClick(ClickEvent event) {
+                                                    ChartViewWindow window = new ChartViewWindow(title);
+                                                    D3GraphListView graphView = D3GraphListView
+                                                            .createSingleGraph(resourceComposite.getResource(),
+                                                                    oob.getDefinitionId(), true);
+
+                                                    window.addItem(graphView);
+                                                    window.show();
+                                                }
+                                            });
+
+                                            StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
+                                                    .format(oob.getTimestamp()));
+
+                                            row.setItems(link, time);
+                                            column.addMember(row);
+                                        }
+                                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
+                                    } else {
+                                        DynamicForm row = AbstractActivityView
+                                                .createEmptyDisplayRow(AbstractActivityView.RECENT_OOB_NONE);
+                                        column.addMember(row);
+                                    }
+                                    recentOobContent.setContents("");
+                                    for (Canvas child : recentOobContent.getChildren()) {
+                                        child.destroy();
+                                    }
+                                    recentOobContent.addChild(column);
+                                    currentlyLoading = false;
+                                    recentOobContent.markForRedraw();
                                 }
                             });
-
-                            StaticTextItem time = AbstractActivityView.newTextItem(GwtRelativeDurationConverter
-                                .format(oob.getTimestamp()));
-
-                            row.setItems(link, time);
-                            column.addMember(row);
                         }
-                        //insert see more link spinder(2/24/11): no page that displays all oobs... See More not possible.
-                    } else {
-                        DynamicForm row = AbstractActivityView
-                            .createEmptyDisplayRow(AbstractActivityView.RECENT_OOB_NONE);
-                        column.addMember(row);
+                    });
+                        }
                     }
-                    recentOobContent.setContents("");
-                    for (Canvas child : recentOobContent.getChildren()) {
-                        child.destroy();
-                    }
-                    recentOobContent.addChild(column);
-                    currentlyLoading = false;
-                    recentOobContent.markForRedraw();
-                }
-            });
+                });
+
+
+
     }
 }

@@ -39,6 +39,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.rhq.core.util.TokenReplacingProperties;
+import org.rhq.core.util.file.FileUtil;
 
 /**
  * <p>
@@ -134,6 +135,9 @@ public class DeploymentOptions {
     }
 
     private void init(Properties properties) {
+        setUsername(loadProperty("rhq.storage.username", properties));
+        setPassword(loadProperty("rhq.storage.password", properties));
+
         setClusterDir(loadProperty("rhq.cassandra.cluster.dir", properties));
         setNumNodes(Integer.parseInt(loadProperty("rhq.cassandra.cluster.num-nodes", properties)));
         setEmbedded(Boolean.valueOf(loadProperty("rhq.cassandra.cluster.is-embedded", properties)));
@@ -144,8 +148,6 @@ public class DeploymentOptions {
         setRpcPort(Integer.valueOf(loadProperty("rhq.cassandra.rpc-port", properties)));
         setNativeTransportMaxThreads(Integer.valueOf(loadProperty("rhq.cassandra.native-transport-max-threads",
             properties)));
-        setUsername(loadProperty("rhq.cassandra.username", properties));
-        setPassword(loadProperty("rhq.cassandra.password", properties));
         setAuthenticator(loadProperty("rhq.cassandra.authenticator", properties));
         setAuthorizer(loadProperty("rhq.cassandra.authorizer", properties));
         setDataDir(loadProperty("rhq.cassandra.data.dir", properties));
@@ -158,6 +160,7 @@ public class DeploymentOptions {
         setJmxPort(Integer.valueOf(loadProperty("rhq.cassandra.jmx.port", properties)));
         setStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.storage.port", properties)));
         setSslStoragePort(Integer.valueOf(loadProperty("rhq.cassandra.ssl.storage.port", properties)));
+
         setSeeds(loadProperty("rhq.cassandra.seeds", properties));
         setBasedir(loadProperty("rhq.cassandra.basedir", properties));
         setHeapSize(loadProperty("rhq.cassandra.max.heap.size", properties));
@@ -242,7 +245,7 @@ public class DeploymentOptions {
      */
     public void setClusterDir(String dir) {
         if (clusterDir == null) {
-            clusterDir = dir;
+            clusterDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -259,7 +262,7 @@ public class DeploymentOptions {
      */
     public void setBasedir(String dir) {
         if (basedir == null) {
-            basedir = dir;
+            basedir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -353,7 +356,7 @@ public class DeploymentOptions {
             nativeTransportPort = port;
         }
     }
-    
+
     /**
      * @return true whether the Thrift-based RPC should be started
      */
@@ -404,7 +407,7 @@ public class DeploymentOptions {
      * <strong>not</strong> a Cassandra configuration property. This deployment property is
      * written to rhq-server.properties at build time by the rhq-container.build.xml script.
      */
-    @DeploymentProperty(name = "rhq.cassandra.username")
+    @DeploymentProperty(name = "rhq.storage.username")
     public String getUsername() {
         return username;
     }
@@ -426,7 +429,7 @@ public class DeploymentOptions {
      * <strong>not</strong> a Cassandra configuration property. This deployment property is
      * written to rhq-server.properties at build time by the rhq-container.build.xml script.
      */
-    @DeploymentProperty(name = "rhq.cassandra.password")
+    @DeploymentProperty(name = "rhq.storage.password")
     public String getPassword() {
         return password;
     }
@@ -490,7 +493,7 @@ public class DeploymentOptions {
      */
     public void setDataDir(String dir) {
         if (dataDir == null) {
-            dataDir = dir;
+            dataDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -507,7 +510,7 @@ public class DeploymentOptions {
      */
     public void setCommitLogDir(String dir) {
         if (commitLogDir == null) {
-            commitLogDir = dir;
+            commitLogDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -524,7 +527,7 @@ public class DeploymentOptions {
      */
     public void setSavedCachesDir(String dir) {
         if (savedCachesDir == null) {
-            savedCachesDir = dir;
+            savedCachesDir = FileUtil.useForwardSlash(dir);
         }
     }
 
@@ -541,7 +544,7 @@ public class DeploymentOptions {
      */
     public void setLogFileName(String name) {
         if (logFileName == null) {
-            logFileName = name;
+            logFileName = FileUtil.useForwardSlash(name);
         }
     }
 

@@ -308,7 +308,7 @@ public class TestAgentClient implements AgentClient, BundleAgentService, DriftAg
     }
 
     @Override
-    public Availability getCurrentAvailability(Resource resource) {
+    public AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly) {
         return null;
     }
 

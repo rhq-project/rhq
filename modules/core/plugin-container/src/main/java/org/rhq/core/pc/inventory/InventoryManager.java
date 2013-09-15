@@ -28,6 +28,7 @@ import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -117,6 +118,7 @@ import org.rhq.core.pluginapi.inventory.ManualAddFacet;
 import org.rhq.core.pluginapi.inventory.ProcessScanResult;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
+import org.rhq.core.pluginapi.inventory.ResourceDiscoveryCallback;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryComponent;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.pluginapi.operation.OperationContext;
@@ -337,20 +339,107 @@ public class InventoryManager extends AgentService implements ContainerService, 
 
         long timeout = getDiscoveryComponentTimeout(context.getResourceType());
 
+        Set<DiscoveredResourceDetails> results;
+
         try {
             ResourceDiscoveryComponent proxy = this.discoveryComponentProxyFactory.getDiscoveryComponentProxy(
                 context.getResourceType(), component, timeout, parentResourceContainer);
-            Set<DiscoveredResourceDetails> results = proxy.discoverResources(context);
-            return results;
+            results = proxy.discoverResources(context);
         } catch (TimeoutException te) {
             log.warn("Discovery for Resources of [" + context.getResourceType() + "] has been running for more than "
                 + timeout + " milliseconds. This may be a plugin bug.", te);
-            return null;
+            results = null;
         } catch (BlacklistedException be) {
             // Discovery did not run, because the ResourceType was blacklisted during a prior discovery scan.
             log.debug(ThrowableUtil.getAllMessages(be));
-            return null;
+            results = null;
         }
+
+        if (results == null || results.isEmpty()) {
+            return results;
+        }
+
+        // find the discovery callbacks defined, if there are none, just return the results as-is
+        Map<String, List<String>> callbacks = this.pluginManager.getMetadataManager().getDiscoveryCallbacks(context.getResourceType());
+        if (callbacks == null || callbacks.isEmpty()) {
+            return results;
+        }
+
+        // funnel the results through the discovery callbacks that are defined on the discovered resource type
+        // we do them one discovered resource details as a time, giving each callback the opportunity to handle each
+        ResourceDiscoveryCallback.DiscoveryCallbackResults callbackResults;
+        PluginComponentFactory pluginComponentFactory = PluginContainer.getInstance().getPluginComponentFactory();
+        ClassLoader originalContextClassLoader = Thread.currentThread().getContextClassLoader();
+
+        for (Iterator<DiscoveredResourceDetails> detailsIterator = results.iterator(); detailsIterator.hasNext(); ) {
+            DiscoveredResourceDetails details = detailsIterator.next();
+            int callbackCount = 0;
+            boolean stopProcessing = false; // if true, a callback told us he found a details that he modified and we should stop
+            boolean abortDiscovery = false; // if true, multiple callbacks claimed ownership which isn't allowed - its discovery will be aborted
+            boolean vetoDiscovery = false; // if true, a callback veto'ed the resource - it should not be discovered at all
+            for (Map.Entry<String, List<String>> entry : callbacks.entrySet()) {
+                String pluginName = entry.getKey();
+                List<String> callbackClassNames = entry.getValue();
+                for (String className : callbackClassNames) {
+                    ResourceDiscoveryCallback callback = pluginComponentFactory.getDiscoveryCallback(pluginName, className);
+                    try {
+                        Thread.currentThread().setContextClassLoader(callback.getClass().getClassLoader());
+                        callbackResults= callback.discoveredResources(details);// inline in our calling thread - no time outs or anything; hopefully the plugin plays nice
+                        callbackCount++;
+                        if (log.isDebugEnabled()) {
+                            log.debug("Discovery callback [{" + pluginName + "}" + className + "] returned ["
+                                    + callbackResults + "] #invocations=" + callbackCount);
+                        }
+                        switch (callbackResults) {
+                            case PROCESSED: {
+                                if (stopProcessing) {
+                                    abortDiscovery = true;
+                                    log.warn("Another discovery callback [{" + pluginName + "}" + className
+                                            + "] processed details [" + details
+                                            + "]. This is not allowed. Discovery will be aborted for that resource");
+                                } else {
+                                    stopProcessing = true;
+                                }
+                                break;
+                            }
+                            case VETO: {
+                                vetoDiscovery = true;
+                                log.warn("Discovery callback [{" + pluginName + "}" + className
+                                        + "] vetoed resource [" + details
+                                        + "]. Discovery will be skipped for that resource and it will not be inventoried.");
+                                break;
+                            }
+                            default: {
+                                // callback left the details unprocessed, nothing to do.
+                                break;
+                            }
+                        }
+                        // note that we keep going, even if we set stopProcessing is true - this is because we
+                        // want to keep calling callbacks and check if they, too, think they can identify the details. If
+                        // they can, something is wrong and we want to abort since more than one callback should not be
+                        // claiming ownership of the same details. We could, in the future, not do this check and just
+                        // stop calling callbacks the first time a callback tells us it processed details
+                    } catch (Throwable t) {
+                        log.error("Discovery callback [{" + pluginName + "}" + className + "] failed", t);
+                    } finally {
+                        Thread.currentThread().setContextClassLoader(originalContextClassLoader);
+                    }
+                } // for each callback
+            } // for each plugin
+
+            if (abortDiscovery) {
+                // provide a backdoor escape hatch - you can avoid aborting by setting this sysprop to true
+                if (Boolean.getBoolean("rhq.agent.discovery-callbacks.never-abort") == false) {
+                    detailsIterator.remove(); // we do not want to process this details
+                }
+            }
+
+            if (vetoDiscovery) {
+                detailsIterator.remove();
+            }
+        }
+
+        return results;
     }
 
     /**
@@ -660,43 +749,30 @@ public class InventoryManager extends AgentService implements ContainerService, 
     }
 
     @NotNull
-    // TODO (ips): Perhaps refactor this so that it shares code with AvailabilityExecutor.checkInventory().
-    public Availability getCurrentAvailability(Resource resource) {
-        AvailabilityType availType = AvailabilityType.UNKNOWN;
-        ResourceContainer resourceContainer = getResourceContainer(resource);
-        if (resourceContainer != null) {
-            if (resourceContainer.getResourceComponentState() == ResourceComponentState.STARTED) {
-                AvailabilityFacet resourceComponent;
-                Lock lock = resourceContainer.getReadFacetLock();
-                if (lock.tryLock()) {
-                    // We have acquired the lock.
-                    try {
-                        ResourceCategory resourceCategory = resource.getResourceType().getCategory();
-                        // Give the call to getAvailability() a bit more time if the Resource is a server.
-                        long componentTimeout = (resourceCategory == ResourceCategory.SERVER) ? 10000 : 5000;
-                        // We already possess the lock, so tell the proxy not to do any locking of its own.
-                        resourceComponent = resourceContainer.createResourceComponentProxy(AvailabilityFacet.class,
-                            FacetLockType.NONE, componentTimeout, true, true, true);
-                        availType = resourceComponent.getAvailability();
-                    } catch (PluginContainerException e) {
-                        log.error("Failed to retrieve ResourceComponent for " + resource + ".", e);
-                    } catch (RuntimeException e) {
-                        log.error("Call to getAvailability() on ResourceComponent for " + resource + " failed.", e);
-                        availType = AvailabilityType.DOWN;
-                    } finally {
-                        lock.unlock();
-                    }
-                } else {
-                    // Some other thread possesses the lock - return the last-collected availability for the Resource if
-                    // there is one.
-                    if (resourceContainer.getAvailability() != null)
-                        return resourceContainer.getAvailability();
-                }
+    public AvailabilityReport getCurrentAvailability(Resource resource, boolean changesOnly) {
+        try {
+            //make sure we have the full version of the resource
+            ResourceContainer container = getResourceContainer(resource.getId());
+            if (container  == null) {
+                //don't bother doing anything
+                return new AvailabilityReport(changesOnly, getAgent().getName());
             }
-        } else {
-            log.error("No ResourceContainer exists for " + resource + ".");
+            resource = container.getResource();
+
+            AvailabilityExecutor availExec = new CustomScanRootAvailabilityExecutor(this, resource, true);
+            if (changesOnly) {
+                availExec.sendChangesOnlyReportNextTime();
+            } else {
+                availExec.sendFullReportNextTime();
+            }
+
+            return availabilityThreadPoolExecutor.submit((Callable<AvailabilityReport>) availExec).get();
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Availability scan execution was interrupted", e);
+        } catch (ExecutionException e) {
+            // Should never happen, reports are always generated, even if they're just to report the error
+            throw new RuntimeException("Unexpected exception", e);
         }
-        return new Availability(resource, availType);
     }
 
     public void requestAvailabilityCheck(Resource resource) {
@@ -1400,7 +1476,7 @@ public class InventoryManager extends AgentService implements ContainerService, 
      * the container's resource is guaranteed to be up to date.
      *
      * @param parentResource
-     * @param parentContainer
+     * @param container
      * @return the children, empty if parentContainer is null or there are no children. not null.
      * @return the children, may be empty, not null.
      */

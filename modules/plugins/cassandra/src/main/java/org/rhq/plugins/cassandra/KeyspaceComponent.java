@@ -25,16 +25,7 @@
 
 package org.rhq.plugins.cassandra;
 
-import static com.datastax.driver.core.querybuilder.QueryBuilder.eq;
-
 import java.io.File;
-import java.util.HashMap;
-
-import com.datastax.driver.core.Query;
-import com.datastax.driver.core.ResultSet;
-import com.datastax.driver.core.Row;
-import com.datastax.driver.core.Session;
-import com.datastax.driver.core.querybuilder.QueryBuilder;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -46,7 +37,6 @@ import org.mc4j.ems.connection.bean.operation.EmsOperation;
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.configuration.ConfigurationUpdateStatus;
 import org.rhq.core.domain.configuration.PropertyList;
-import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.pluginapi.configuration.ConfigurationFacet;
@@ -90,33 +80,8 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
 
     @Override
     public Configuration loadResourceConfiguration() throws Exception {
-        Session session = getCassandraSession();
-        Query q = QueryBuilder.select().from("system", "schema_keyspaces")
-            .where(eq("keyspace_name", context.getResourceKey()));
-        ResultSet resultSet = session.execute(q);
-
-        if (resultSet.isExhausted()) {
-            return null;
-        }
-
-        Row result = resultSet.one();
-
         Configuration config = new Configuration();
-        config.put(new PropertySimple("name", result.getString("keyspace_name")));
-        config.put(new PropertySimple("strategyClass", result.getString("strategy_class")));
-        config.put(new PropertySimple("durableWrites", result.getBool("durable_writes")));
-
-        //TODO: Enable back if needed but it needs JSON parsing added to the plugin
-        PropertyList list = new PropertyList("strategyOptions");
-        //Map<String, String> strategyOptions = result.getMap("strategy_options", String.class, String.class);
-        for (String optionName : (new HashMap<String, String>()).keySet()) {
-            PropertyMap map = new PropertyMap("strategyOptionsMap");
-            map.put(new PropertySimple("strategyOptionName", optionName));
-            //map.put(new PropertySimple("strategyOptionValue", strategyOptions.get(optionName)));
-            map.put(new PropertySimple("strategyOptionValue", ""));
-            list.add(map);
-        }
-        config.put(list);
+        config.put(new PropertySimple("name", context.getResourceKey()));
         config.put(this.getKeySpaceDataFileLocations());
         return config;
     }
@@ -313,15 +278,5 @@ public class KeyspaceComponent implements ResourceComponent<ResourceComponent<?>
      */
     public String getKeyspaceName() {
         return this.context.getResourceKey();
-    }
-
-    /**
-     * Retrieves a cluster connection from the parent resource.
-     *
-     * @return the cluster connection.
-     */
-    public Session getCassandraSession() {
-        CassandraNodeComponent parent = (CassandraNodeComponent) context.getParentResourceComponent();
-        return parent.getCassandraSession();
     }
 }

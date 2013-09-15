@@ -42,6 +42,13 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
             clusterSettings.setGossipPort(Integer.parseInt(settingsMap.get(
                 SystemSetting.STORAGE_GOSSIP_PORT.getInternalName())));
         }
+        
+        if (!settingsMap.containsKey(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT.getInternalName())) {
+            return null;
+        } else {
+            clusterSettings.setAutomaticDeployment(Boolean.parseBoolean(settingsMap
+                .get(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT.getInternalName())));
+        }
 
         return clusterSettings;
     }
@@ -52,6 +59,10 @@ public class StorageClusterSettingsManagerBean implements StorageClusterSettings
         SystemSettings settings = new SystemSettings();
         settings.put(SystemSetting.STORAGE_CQL_PORT, Integer.toString(clusterSettings.getCqlPort()));
         settings.put(SystemSetting.STORAGE_GOSSIP_PORT, Integer.toString(clusterSettings.getGossipPort()));
+        if (clusterSettings.getAutomaticDeployment() != null) {
+            settings.put(SystemSetting.STORAGE_AUTOMATIC_DEPLOYMENT,
+                Boolean.toString(clusterSettings.getAutomaticDeployment()));
+        }
         systemManager.setStorageClusterSettings(subject, settings);
     }
 

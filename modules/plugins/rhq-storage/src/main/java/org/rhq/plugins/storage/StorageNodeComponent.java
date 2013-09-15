@@ -130,8 +130,8 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
             return nodeRemoved(parameters);
         } else if (name.equals("prepareForUpgrade")) {
             return prepareForUpgrade(parameters);
-        } else if (name.equals("readRepair")) {
-            return readRepair();
+        } else if (name.equals("repair")) {
+            return repair();
         } else if (name.equals("updateConfiguration")) {
             return updateConfiguration(parameters);
         } else if (name.equals("announce")) {
@@ -197,6 +197,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
        return Long.parseLong(StreamUtil.slurp(new FileReader(pidFile)));
     }
 
+    @SuppressWarnings("unchecked")
     private ProcessInfo findProcessInfo(long pid) {
         List<ProcessScanResult> scanResults = getResourceContext().getNativeProcessesForType();
 
@@ -326,6 +327,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         return updateKnownNodes(params);
     }
 
+    @SuppressWarnings("deprecation")
     private OperationResult updateKnownNodes(Configuration params) {
         OperationResult result = new OperationResult();
 
@@ -358,6 +360,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         }
     }
 
+    @SuppressWarnings("rawtypes")
     private OperationResult prepareForBootstrap(Configuration params) {
         log.info("Preparing " + this + " for bootstrap...");
 
@@ -543,7 +546,7 @@ public class StorageNodeComponent extends CassandraNodeComponent implements Oper
         return result;
     }
 
-    private OperationResult readRepair() {
+    private OperationResult repair() {
         KeyspaceService keyspaceService = new KeyspaceService(getEmsConnection());
         OperationResult result = new OperationResult();
         Configuration resultConfig = result.getComplexResults();

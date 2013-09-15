@@ -56,8 +56,11 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
     @EJB
     private AlertConditionLogManagerLocal alertConditionLogManager;
 
+    @Override
     @TransactionAttribute(TransactionAttributeType.REQUIRES_NEW)
-    public void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId) {
+    public boolean processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId) {
+        boolean result = false;
+
         /*
          * note that ctime is the time when the condition was known to be true, not the time we're persisting the
          * condition log message
@@ -74,13 +77,15 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
                         + "ignoring " //
                         + activeConditionMessage);
                 }
-                return;
+                return result;
             }
 
             alertConditionLogManager.updateUnmatchedLogByAlertConditionId(activeConditionMessage.getAlertConditionId(),
                 activeConditionMessage.getTimestamp(), activeConditionMessage.getValue());
 
-            alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage.getAlertConditionId());
+            result = alertConditionLogManager.checkForCompletedAlertConditionSet(activeConditionMessage
+                .getAlertConditionId());
+
         } else if (conditionMessage instanceof InactiveAlertConditionMessage) {
             // first do some bookkeeping by removing partially matched condition logs 
             alertConditionLogManager.removeUnmatchedLogByAlertConditionId(conditionMessage.getAlertConditionId());
@@ -90,9 +95,12 @@ public class CachedConditionManagerBean implements CachedConditionManagerLocal {
             flyWeightDefinition.setId(definitionId);
             AlertDampeningEvent event = new AlertDampeningEvent(flyWeightDefinition, AlertDampeningEvent.Type.NEGATIVE);
             entityManager.persist(event);
+
         } else {
             log.error("Unsupported message type sent to consumer for processing: "
                 + conditionMessage.getClass().getSimpleName());
         }
+
+        return result;
     }
 }

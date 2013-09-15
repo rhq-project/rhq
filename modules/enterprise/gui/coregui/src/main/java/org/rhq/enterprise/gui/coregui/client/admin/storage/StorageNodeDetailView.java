@@ -21,11 +21,12 @@ package org.rhq.enterprise.gui.coregui.client.admin.storage;
 
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ADDRESS;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_ALERTS;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_AVAILABILITY;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CQL_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_CTIME;
-import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_JMX_PORT;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_MTIME;
 import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_OPERATION_MODE;
+import static org.rhq.enterprise.gui.coregui.client.admin.storage.StorageNodeDatasourceField.FIELD_STATUS;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -46,22 +47,24 @@ import com.smartgwt.client.widgets.layout.SectionStack;
 import com.smartgwt.client.widgets.layout.SectionStackSection;
 
 import org.rhq.core.domain.cloud.StorageNode;
+import org.rhq.core.domain.cloud.StorageNode.OperationMode;
 import org.rhq.core.domain.cloud.StorageNodeConfigurationComposite;
 import org.rhq.core.domain.criteria.StorageNodeCriteria;
+import org.rhq.core.domain.measurement.AvailabilityType;
+import org.rhq.core.domain.measurement.ResourceAvailability;
 import org.rhq.core.domain.measurement.composite.MeasurementDataNumericHighLowComposite;
 import org.rhq.core.domain.operation.ResourceOperationHistory;
 import org.rhq.core.domain.resource.Resource;
-import org.rhq.core.domain.resource.composite.ResourceComposite;
 import org.rhq.core.domain.util.PageList;
 import org.rhq.core.domain.util.collection.ArrayUtils;
 import org.rhq.enterprise.gui.coregui.client.BookmarkableView;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.ImageManager;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.ViewPath;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
 import org.rhq.enterprise.gui.coregui.client.gwt.GWTServiceLookup;
 import org.rhq.enterprise.gui.coregui.client.inventory.InventoryView;
-import org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.operation.history.ResourceOperationHistoryListView;
 import org.rhq.enterprise.gui.coregui.client.util.Log;
 import org.rhq.enterprise.gui.coregui.client.util.MeasurementUtility;
 import org.rhq.enterprise.gui.coregui.client.util.StringUtility;
@@ -77,9 +80,6 @@ import org.rhq.enterprise.gui.coregui.client.util.message.Message;
 public class StorageNodeDetailView extends EnhancedVLayout implements BookmarkableView {
 
     private final int storageNodeId;
-    
-//    String path = StorageNodeAdminView.VIEW_PATH + "/" + storageNodeId;
-//    CoreGUI.goToView(path, message);
 
     private static final int SECTION_COUNT = 3;
     private final SectionStack sectionStack;
@@ -87,11 +87,11 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
     private EnhancedHLayout detailsAndLoadLayout;
     private EnhancedVLayout loadLayout;
     private SectionStackSection configurationSection;
-    private SectionStackSection operationSection;
     private SectionStackSection detailsAndLoadSection;
     private StaticTextItem alertsItem;
     private HTMLFlow header;
     private boolean alerts = false;
+    private StaticTextItem jmxPortItem;
 
     private volatile int initSectionCount = 0;
     private int unackAlerts = -1;
@@ -172,6 +172,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
 
                     @Override
                     public void onSuccess(StorageNodeConfigurationComposite result) {
+                        jmxPortItem.setValue(result.getJmxPort());
                         prepareResourceConfigEditor(result);
                     }
                 });
@@ -223,7 +224,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                 public void onFailure(Throwable caught) {
                     Message message = new Message(MSG.view_inventory_resource_loadFailed(String.valueOf(storageNodeId)),
                         Message.Severity.Warning);
-                    CoreGUI.goToView(InventoryView.VIEW_ID.getName(), message);
+                    CoreGUI.getMessageCenter().notify(message);
                     initSectionCount = SECTION_COUNT;
                 }
 
@@ -234,7 +235,7 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                     } else {
                         unackAlerts = result.get(0);
                         if (alertsItem != null) {
-                            alertsItem.setValue(isResourceIdSet ? StorageNodeAdminView.getAlertsString("New Alerts", storageNodeId, unackAlerts) : "New Alerts (0)");
+                            alertsItem.setValue(isResourceIdSet ? StorageNodeAdminView.getAlertsString("Unacknowledged Alerts", storageNodeId, unackAlerts) : "New Alerts (0)");
                         }
                     }
                 }
@@ -300,29 +301,40 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         final StaticTextItem cqlPortItem = new StaticTextItem(FIELD_CQL_PORT.propertyName(), FIELD_CQL_PORT.title());
         cqlPortItem.setValue(storageNode.getCqlPort());
 
-        final StaticTextItem jmxPortItem = new StaticTextItem(FIELD_JMX_PORT.propertyName(), FIELD_JMX_PORT.title());
-        jmxPortItem.setValue(storageNode.getJmxPort());
-
-        //        final StaticTextItem jmxConnectionUrlItem = new StaticTextItem("jmxConnectionUrl",
-        //            MSG.view_adminTopology_storageNode_jmxConnectionUrl());
-        //        jmxConnectionUrlItem.setValue(storageNode.getJMXConnectionURL());
+        jmxPortItem = new StaticTextItem("jmxPort", "JMX Port");
 
         final StaticTextItem operationModeItem = new StaticTextItem(FIELD_OPERATION_MODE.propertyName(),
-            MSG.view_adminTopology_serverDetail_operationMode());
+            FIELD_OPERATION_MODE.title());
+
         operationModeItem.setValue(storageNode.getOperationMode());
+        final StaticTextItem clusterStatusItem = new StaticTextItem(FIELD_STATUS.propertyName(), FIELD_STATUS.title());
+        clusterStatusItem.setValue(storageNode.getStatus());
+
+        final StaticTextItem availabilityItem = new StaticTextItem(FIELD_AVAILABILITY.propertyName(),
+            FIELD_AVAILABILITY.title());
 
         // make clickable link to associated resource
         StaticTextItem resourceItem = new StaticTextItem("associatedResource", "Associated Resource");
         String storageNodeItemText = "";
+        String availabilityItemText = imgHTML(ImageManager.getAvailabilityIconFromAvailType(AvailabilityType.UNKNOWN));
         Resource storageNodeResource = storageNode.getResource();
         if (storageNodeResource != null && storageNodeResource.getName() != null) {
             String detailsUrl = LinkManager.getResourceLink(storageNodeResource.getId());
             String formattedValue = StringUtility.escapeHtml(storageNodeResource.getName());
             storageNodeItemText = LinkManager.getHref(detailsUrl, formattedValue);
+
+            // set the availability
+            ResourceAvailability availability = storageNodeResource.getCurrentAvailability();
+            if (storageNodeResource.getCurrentAvailability() != null
+                && storageNodeResource.getCurrentAvailability().getAvailabilityType() != null) {
+                availabilityItemText = imgHTML(ImageManager.getAvailabilityIconFromAvailType(availability
+                    .getAvailabilityType()));
+            }
         } else {
             storageNodeItemText = MSG.common_label_none();
         }
         resourceItem.setValue(storageNodeItemText);
+        availabilityItem.setValue(availabilityItemText);
 
         StaticTextItem installationDateItem = new StaticTextItem(FIELD_CTIME.propertyName(), FIELD_CTIME.title());
         installationDateItem.setValue(TimestampCellFormatter.format(Long.valueOf(storageNode.getCtime()),
@@ -336,19 +348,28 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         alertsItem
             .setPrompt("The number in brackets represents the number of unacknowledged alerts for this storage node.");
         if (unackAlerts != -1) {
-            alertsItem.setValue(StorageNodeAdminView.getAlertsString("New Alerts", storageNodeId, unackAlerts));
+            alertsItem.setValue(StorageNodeAdminView.getAlertsString("Unacknowledged Alerts", storageNodeId, unackAlerts));
         }
 
         StaticTextItem messageItem = new StaticTextItem("message", "Note");
         StringBuffer message = new StringBuffer();
         boolean isOk = true;
+        OperationMode operationMode = storageNode.getOperationMode();
+        boolean joining = operationMode == OperationMode.ANNOUNCE || operationMode == OperationMode.BOOTSTRAP
+            || operationMode == OperationMode.ADD_MAINTENANCE;
+        boolean leaving = operationMode == OperationMode.DECOMMISSION || operationMode == OperationMode.UNANNOUNCE
+            || operationMode == OperationMode.REMOVE_MAINTENANCE || operationMode == OperationMode.UNINSTALL;
         if (storageNode.getResource() == null) {
             message.append("Storage node has no associated resource.<br />");
             isOk = false;
         }
         if (storageNode.getErrorMessage() != null) {
+            String noteTextPrefix = (joining ? "Deployment error: " : (leaving ? "Undeployment error: " : ""));
+            message.append(noteTextPrefix);
             message.append(storageNode.getErrorMessage()).append("<br />");
             isOk = false;
+        } else if (storageNode.getFailedOperation() != null) {
+            message.append("Last operation has failed.<br />");
         }
         if (isOk) {
             message.append("Everything is ok");
@@ -363,15 +384,17 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
             String value = LinkManager.getSubsystemResourceOperationHistoryLink(operationHistory.getResource().getId(),
                 operationHistory.getId());
             lastOperation = new StaticTextItem("lastOp", "Operation");
-            lastOperation.setValue(LinkManager.getHref(value, operationHistory.getOperationDefinition()
+            String operationTextPrefix = (joining ? "Failed deployment operation: "
+                : (leaving ? "Failed undeployment operation: " : ""));
+            lastOperation.setValue(operationTextPrefix + LinkManager.getHref(value, operationHistory.getOperationDefinition()
                 .getDisplayName()));
         }
 
         List<FormItem> formItems = new ArrayList<FormItem>(6);
-        formItems.addAll(Arrays.asList(nameItem, resourceItem, cqlPortItem, jmxPortItem/*, jmxConnectionUrlItem*/));
+        formItems.addAll(Arrays.asList(nameItem, resourceItem, availabilityItem, cqlPortItem, jmxPortItem/*, jmxConnectionUrlItem*/));
         if (!CoreGUI.isDebugMode())
             formItems.add(operationModeItem); // debug mode fails if this item is added
-        formItems.addAll(Arrays.asList(installationDateItem, lastUpdateItem, alertsItem, messageItem));
+        formItems.addAll(Arrays.asList(clusterStatusItem, installationDateItem, lastUpdateItem, alertsItem, messageItem));
         if (isOperationFailed)
             formItems.add(lastOperation);
         form.setItems(formItems.toArray(new FormItem[] {}));
@@ -405,16 +428,6 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
         initSectionCount++;
     }
     
-    private void prepareOperationHistory(ResourceComposite resourceComposite) {
-        ResourceOperationHistoryListView historyView = new ResourceOperationHistoryListView(resourceComposite);
-        SectionStackSection section = new SectionStackSection("Operations");
-        section.setItems(historyView);
-        section.setExpanded(false);
-
-        operationSection = section;
-        initSectionCount++;
-    }
-    
     private void prepareResourceConfigEditor(final StorageNodeConfigurationComposite configuration) {
         LayoutSpacer spacer = new LayoutSpacer();
         spacer.setHeight(15);
@@ -434,14 +447,16 @@ public class StorageNodeDetailView extends EnhancedVLayout implements Bookmarkab
                 @Override
                 public void onFailure(Throwable caught) {
                     alerts = false;
-                    Message message = new Message("foobar", Message.Severity.Warning);
-//                  CoreGUI.goToView(VIEW_ID.getName(), message);
+                    CoreGUI.getErrorHandler().handleError(
+                        "Unable to fetch alerts for storage node with id " + storageNodeId + ". Caused by: "
+                            + caught.getMessage(), caught);
                 }
 
                 @Override
                 public void onSuccess(Integer[] result) {
                     if (result == null || result.length == 0) {
-                        onFailure(new Exception("foobaz"));
+                        onFailure(new Exception(
+                            "There were no resources under the storage node that could contain an alert."));
                     } else {
                         removeMember(sectionStack);
                         sectionStack.destroy();

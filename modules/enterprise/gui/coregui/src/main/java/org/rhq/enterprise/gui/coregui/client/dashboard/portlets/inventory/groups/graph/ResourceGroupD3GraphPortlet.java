@@ -321,7 +321,7 @@ public class ResourceGroupD3GraphPortlet extends MetricD3Graph implements AutoRe
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     @Override

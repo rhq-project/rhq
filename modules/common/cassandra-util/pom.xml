@@ -18,6 +18,12 @@
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.driver.version}</version>
     </dependency>
+
+    <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
   </dependencies>
 
   <profiles>

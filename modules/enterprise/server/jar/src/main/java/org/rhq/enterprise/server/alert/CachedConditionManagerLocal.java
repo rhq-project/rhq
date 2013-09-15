@@ -35,6 +35,10 @@ public interface CachedConditionManagerLocal {
      * completes, the caller knows that any information it has committed to the database
      * will be visible to it as well as any other thread that is blocked, waiting for it
      * to complete.
+     * 
+     * @param conditionMessage
+     * @param definitionId
+     * @return true if an alert was fired, false otherwise.
      */
-    void processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId);
+    boolean processCachedConditionMessage(AbstractAlertConditionMessage conditionMessage, Integer definitionId);
 }

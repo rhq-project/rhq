@@ -18,6 +18,8 @@
  */
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
+import static org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.ResourceDetailView.Tab;
+
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
@@ -88,6 +90,20 @@ public class ResourceGroupDetailView extends
     private Integer groupId;
     private ResourceGroupComposite groupComposite;
 
+    public static class GroupTab {
+        public static class Inventory {
+            public static class SubTab {
+                public static final String MEMBERS = "Members";
+            }
+        }
+
+        public static class Monitoring {
+            public static class SubTab {
+                public static final String GRAPHS = "Graphs";
+            }
+        }
+    }
+
     // tabs
     private TwoLevelTab summaryTab;
     private TwoLevelTab monitoringTab;
@@ -120,7 +136,39 @@ public class ResourceGroupDetailView extends
     private String currentSubTabName;
 
     public ResourceGroupDetailView(String baseViewPath) {
-        super(baseViewPath);
+        super(baseViewPath, createTitleBar(baseViewPath), createTabs());
+
+        summaryTab = getTabSet().getTabByName(Tab.Summary.NAME);
+        summaryActivity = summaryTab.getSubTabByName(Tab.Summary.SubTab.ACTIVITY);
+        summaryTimeline = summaryTab.getSubTabByName(Tab.Summary.SubTab.TIMELINE);
+
+        monitoringTab = getTabSet().getTabByName(Tab.Monitoring.NAME);
+        monitorCallTime = monitoringTab.getSubTabByName(Tab.Monitoring.SubTab.CALL_TIME);
+        monitorGraphs = monitoringTab.getSubTabByName(GroupTab.Monitoring.SubTab.GRAPHS);
+        monitorMetrics = monitoringTab.getSubTabByName(Tab.Monitoring.SubTab.METRICS);
+        monitorSched = monitoringTab.getSubTabByName(Tab.Monitoring.SubTab.SCHEDULES);
+        monitorTraits = monitoringTab.getSubTabByName(Tab.Monitoring.SubTab.TRAITS);
+
+        inventoryTab = getTabSet().getTabByName(Tab.Inventory.NAME);
+        inventoryConn = inventoryTab.getSubTabByName(Tab.Inventory.SubTab.CONNECTION_SETTINGS);
+        inventoryConnHistory = inventoryTab.getSubTabByName(Tab.Inventory.SubTab.CONNECTION_SETTINGS_HISTORY);
+        inventoryMembers = inventoryTab.getSubTabByName(GroupTab.Inventory.SubTab.MEMBERS);
+
+        operationsTab = getTabSet().getTabByName(Tab.Operations.NAME);
+        operationsHistory = operationsTab.getSubTabByName(Tab.Operations.SubTab.HISTORY);
+        operationsSchedules = operationsTab.getSubTabByName(Tab.Operations.SubTab.SCHEDULES);
+
+        alertsTab = getTabSet().getTabByName(Tab.Alerts.NAME);
+        alertDef = alertsTab.getSubTabByName(Tab.Alerts.SubTab.DEFINITIONS);
+        alertHistory = alertsTab.getSubTabByName(Tab.Alerts.SubTab.HISTORY);
+
+        configurationTab = getTabSet().getTabByName(Tab.Configuration.NAME);
+        configCurrent = configurationTab.getSubTabByName(Tab.Configuration.SubTab.CURRENT);
+        configHistory = configurationTab.getSubTabByName(Tab.Configuration.SubTab.HISTORY);
+
+        eventsTab = getTabSet().getTabByName(Tab.Events.NAME);
+        eventHistory = eventsTab.getSubTabByName(Tab.Events.SubTab.HISTORY);
+
         this.hide();
     }
 
@@ -150,9 +198,8 @@ public class ResourceGroupDetailView extends
         }
     }
 
-    @Override
-    protected ResourceGroupTitleBar createTitleBar() {
-        return new ResourceGroupTitleBar(isAutoGroup(), isAutoCluster());
+    private static ResourceGroupTitleBar createTitleBar(String baseViewPath) {
+        return new ResourceGroupTitleBar(isAutoGroup(baseViewPath), isAutoCluster(baseViewPath));
     }
 
     @Override
@@ -161,68 +208,67 @@ public class ResourceGroupDetailView extends
         return graphListView;
     }
 
-    @Override
-    protected List<TwoLevelTab> createTabs() {
+    private static TwoLevelTab[] createTabs() {
         List<TwoLevelTab> tabs = new ArrayList<TwoLevelTab>();
 
-        summaryTab = new TwoLevelTab(new ViewName("Summary", MSG.common_title_summary()), ImageManager.getResourceIcon(
+        TwoLevelTab summaryTab = new TwoLevelTab(new ViewName(Tab.Summary.NAME, MSG.common_title_summary()), ImageManager.getResourceIcon(
             ResourceCategory.SERVICE, AvailabilityType.UP));
 
-        summaryActivity = new SubTab(summaryTab, new ViewName("Activity", MSG.view_tabs_common_activity()), null);
-        summaryTimeline = new SubTab(summaryTab, new ViewName("Timeline", MSG.view_tabs_common_timeline()), null);
+        SubTab summaryActivity = new SubTab(summaryTab, new ViewName(Tab.Summary.SubTab.ACTIVITY, MSG.view_tabs_common_activity()), null);
+        SubTab summaryTimeline = new SubTab(summaryTab, new ViewName(Tab.Summary.SubTab.TIMELINE, MSG.view_tabs_common_timeline()), null);
         summaryTab.registerSubTabs(summaryActivity, summaryTimeline);
         tabs.add(summaryTab);
 
-        inventoryTab = new TwoLevelTab(new ViewName("Inventory", MSG.view_tabs_common_inventory()),
+        TwoLevelTab inventoryTab = new TwoLevelTab(new ViewName(Tab.Inventory.NAME, MSG.view_tabs_common_inventory()),
             IconEnum.INVENTORY_SUMMARY);
-        inventoryMembers = new SubTab(inventoryTab, new ViewName("Members", MSG.view_tabs_common_members()), null);
-        inventoryConn = new SubTab(inventoryTab, new ViewName("ConnectionSettings",
+        SubTab inventoryMembers = new SubTab(inventoryTab, new ViewName(GroupTab.Inventory.SubTab.MEMBERS, MSG.view_tabs_common_members()), null);
+        SubTab inventoryConn = new SubTab(inventoryTab, new ViewName(Tab.Inventory.SubTab.CONNECTION_SETTINGS,
             MSG.view_tabs_common_connectionSettings()), null);
-        inventoryConnHistory = new SubTab(inventoryTab, new ViewName("ConnectionSettingsHistory",
+        SubTab inventoryConnHistory = new SubTab(inventoryTab, new ViewName(Tab.Inventory.SubTab.CONNECTION_SETTINGS_HISTORY,
             MSG.view_tabs_common_connectionSettingsHistory()), null);
-        inventoryTab.registerSubTabs(this.inventoryMembers, this.inventoryConn, this.inventoryConnHistory);
+        inventoryTab.registerSubTabs(inventoryMembers, inventoryConn, inventoryConnHistory);
         tabs.add(inventoryTab);
 
-        alertsTab = new TwoLevelTab(new ViewName("Alerts", MSG.common_title_alerts()), IconEnum.ALERT_DEFINITIONS);
-        this.alertHistory = new SubTab(alertsTab, new ViewName("History", MSG.view_tabs_common_history()), null);
-        this.alertDef = new SubTab(alertsTab, new ViewName("Definitions", MSG.common_title_definitions()), null);
+        TwoLevelTab alertsTab = new TwoLevelTab(new ViewName(Tab.Alerts.NAME, MSG.common_title_alerts()), IconEnum.ALERT_DEFINITIONS);
+        SubTab alertHistory = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.HISTORY, MSG.view_tabs_common_history()), null);
+        SubTab alertDef = new SubTab(alertsTab, new ViewName(Tab.Alerts.SubTab.DEFINITIONS, MSG.common_title_definitions()), null);
         alertsTab.registerSubTabs(alertHistory, alertDef);
         tabs.add(alertsTab);
 
-        monitoringTab = new TwoLevelTab(new ViewName("Monitoring", MSG.view_tabs_common_monitoring()),
+        TwoLevelTab monitoringTab = new TwoLevelTab(new ViewName(Tab.Monitoring.NAME, MSG.view_tabs_common_monitoring()),
             IconEnum.SUSPECT_METRICS);
-        monitorGraphs = new SubTab(monitoringTab, new ViewName("Graphs", MSG.view_tabs_common_graphs()), null);
-        monitorMetrics = new SubTab(monitoringTab, new ViewName("Metrics", MSG.view_tabs_common_metrics()), null);
-        monitorTraits = new SubTab(monitoringTab, new ViewName("Traits", MSG.view_tabs_common_traits()), null);
+        SubTab monitorGraphs = new SubTab(monitoringTab, new ViewName(GroupTab.Monitoring.SubTab.GRAPHS, MSG.view_tabs_common_graphs()), null);
+        SubTab monitorMetrics = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.METRICS, MSG.view_tabs_common_metrics()), null);
+        SubTab monitorTraits = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.TRAITS, MSG.view_tabs_common_traits()), null);
 
-        monitorSched = new SubTab(monitoringTab, new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
-        monitorCallTime = new SubTab(monitoringTab, new ViewName("CallTime", MSG.view_tabs_common_calltime()), null);
+        SubTab monitorSched = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.SCHEDULES, MSG.view_tabs_common_schedules()), null);
+        SubTab monitorCallTime = new SubTab(monitoringTab, new ViewName(Tab.Monitoring.SubTab.CALL_TIME, MSG.view_tabs_common_calltime()), null);
         monitoringTab.registerSubTabs(monitorGraphs, monitorMetrics, monitorTraits, monitorSched,
             monitorCallTime);
         tabs.add(monitoringTab);
 
-        eventsTab = new TwoLevelTab(new ViewName("Events", MSG.view_tabs_common_events()), IconEnum.EVENTS);
-        this.eventHistory = new SubTab(eventsTab, new ViewName("History", MSG.view_tabs_common_history()), null);
+        TwoLevelTab eventsTab = new TwoLevelTab(new ViewName(Tab.Events.NAME, MSG.view_tabs_common_events()), IconEnum.EVENTS);
+        SubTab eventHistory = new SubTab(eventsTab, new ViewName(Tab.Events.SubTab.HISTORY, MSG.view_tabs_common_history()), null);
         eventsTab.registerSubTabs(eventHistory);
         tabs.add(eventsTab);
 
-        operationsTab = new TwoLevelTab(new ViewName("Operations", MSG.common_title_operations()),
+        TwoLevelTab operationsTab = new TwoLevelTab(new ViewName(Tab.Operations.NAME, MSG.common_title_operations()),
             IconEnum.RECENT_OPERATIONS);
-        this.operationsSchedules = new SubTab(operationsTab,
-            new ViewName("Schedules", MSG.view_tabs_common_schedules()), null);
-        this.operationsHistory = new SubTab(operationsTab, new ViewName("History", MSG.view_tabs_common_history()),
+        SubTab operationsSchedules = new SubTab(operationsTab,
+            new ViewName(Tab.Operations.SubTab.SCHEDULES, MSG.view_tabs_common_schedules()), null);
+        SubTab operationsHistory = new SubTab(operationsTab, new ViewName(Tab.Operations.SubTab.HISTORY, MSG.view_tabs_common_history()),
             null);
-        operationsTab.registerSubTabs(this.operationsSchedules, this.operationsHistory);
+        operationsTab.registerSubTabs(operationsSchedules, operationsHistory);
         tabs.add(operationsTab);
 
-        configurationTab = new TwoLevelTab(new ViewName("Configuration", MSG.common_title_configuration()),
+        TwoLevelTab configurationTab = new TwoLevelTab(new ViewName(Tab.Configuration.NAME, MSG.common_title_configuration()),
             IconEnum.CONFIGURATION_HISTORY);
-        this.configCurrent = new SubTab(configurationTab, new ViewName("Current", MSG.view_tabs_common_current()), null);
-        this.configHistory = new SubTab(configurationTab, new ViewName("History", MSG.view_tabs_common_history()), null);
-        configurationTab.registerSubTabs(this.configCurrent, this.configHistory);
+        SubTab configCurrent = new SubTab(configurationTab, new ViewName(Tab.Configuration.SubTab.CURRENT, MSG.view_tabs_common_current()), null);
+        SubTab configHistory = new SubTab(configurationTab, new ViewName(Tab.Configuration.SubTab.HISTORY, MSG.view_tabs_common_history()), null);
+        configurationTab.registerSubTabs(configCurrent, configHistory);
         tabs.add(configurationTab);
 
-        return tabs;
+        return tabs.toArray(new TwoLevelTab[tabs.size()]);
     }
 
     @Override
@@ -268,18 +314,14 @@ public class ResourceGroupDetailView extends
         ViewFactory viewFactory;
         boolean visible = hasMetricsOfType(this.groupComposite, null);
         if (updateTab(this.monitoringTab, visible, true)) {
-            final EntityContext groupContext = EntityContext.forGroup(groupComposite.getResourceGroup());
-            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT);
+            visible = hasMetricsOfType(this.groupComposite, DataType.MEASUREMENT) ||
+                hasMetricsOfType(this.groupComposite, DataType.AVAILABILITY);
             boolean showOnPage;
 
             if(BrowserUtility.isBrowserPreIE9()){
                 showOnPage = false;
             }else{
-                if(visible) {
-                    showOnPage = true;
-                }else {
-                    showOnPage = false;
-                }
+                showOnPage = visible;
             }
 
             viewFactory = (!showOnPage) ? null : new ViewFactory() {
@@ -499,11 +541,19 @@ public class ResourceGroupDetailView extends
     }
 
     private boolean isAutoGroup() {
-        return AUTO_GROUP_VIEW.equals(getBaseViewPath());
+        return isAutoGroup(getBaseViewPath());
+    }
+
+    private static boolean isAutoGroup(String baseViewPath) {
+        return AUTO_GROUP_VIEW.equals(baseViewPath);
     }
 
     private boolean isAutoCluster() {
-        return AUTO_CLUSTER_VIEW.equals(getBaseViewPath());
+        return isAutoCluster(getBaseViewPath());
+    }
+
+    private static boolean isAutoCluster(String baseViewPath) {
+        return AUTO_CLUSTER_VIEW.equals(baseViewPath);
     }
 
     private void loadResourceType(final ResourceGroupComposite groupComposite, final ViewPath viewPath) {

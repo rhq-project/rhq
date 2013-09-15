@@ -37,53 +37,66 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
 
     private AuthorizationManagerLocal authorizationManager = LookupUtil.getAuthorizationManager();
 
+    @Override
     public Set<Permission> getExplicitResourcePermissions(int resourceId) throws RuntimeException {
         try {
-            return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitResourcePermissions(
-                getSessionSubject(), resourceId)), "AuthorizationManager.getExplicitResourcePermissions");
+            return SerialUtility.prepare(
+                new HashSet<Permission>(authorizationManager.getExplicitResourcePermissions(getSessionSubject(),
+                    resourceId)), "AuthorizationManager.getExplicitResourcePermissions");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
+    @Override
     public Set<Permission> getImplicitResourcePermissions(int resourceId) throws RuntimeException {
         try {
-            return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitResourcePermissions(
-                getSessionSubject(), resourceId)), "AuthorizationManager.getImplicitResourcePermissions");
+            return SerialUtility.prepare(
+                new HashSet<Permission>(authorizationManager.getImplicitResourcePermissions(getSessionSubject(),
+                    resourceId)), "AuthorizationManager.getImplicitResourcePermissions");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
+    @Override
     public Set<Permission> getExplicitGroupPermissions(int groupId) throws RuntimeException {
         try {
-            return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getExplicitGroupPermissions(
-                getSessionSubject(), groupId)), "AuthorizationManager.getExplicitGroupPermissions");
+            return SerialUtility
+                .prepare(
+                    new HashSet<Permission>(authorizationManager.getExplicitGroupPermissions(getSessionSubject(),
+                        groupId)), "AuthorizationManager.getExplicitGroupPermissions");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
+    @Override
     public Set<Permission> getImplicitGroupPermissions(int groupId) throws RuntimeException {
         try {
-            return SerialUtility.prepare(new HashSet<Permission>(authorizationManager.getImplicitGroupPermissions(
-                getSessionSubject(), groupId)), "AuthorizationManager.getImplicitGroupPermissions");
+            return SerialUtility
+                .prepare(
+                    new HashSet<Permission>(authorizationManager.getImplicitGroupPermissions(getSessionSubject(),
+                        groupId)), "AuthorizationManager.getImplicitGroupPermissions");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
+    @Override
     public Set<Permission> getExplicitGlobalPermissions() throws RuntimeException {
         try {
-            return SerialUtility.prepare(new HashSet<Permission>(authorizationManager
-                .getExplicitGlobalPermissions(getSessionSubject())),
+            return SerialUtility.prepare(
+                new HashSet<Permission>(authorizationManager.getExplicitGlobalPermissions(getSessionSubject())),
                 "AuthorizationManager.getExplicitGlobalPermissions");
         } catch (Throwable t) {
             throw getExceptionToThrowToClient(t);
         }
     }
 
-    public boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds) throws RuntimeException {
+    @Override
+    public boolean hasResourcePermission(Permission permission, Collection<Integer> resourceIds)
+        throws RuntimeException {
         try {
             boolean result = authorizationManager.hasResourcePermission(getSessionSubject(), permission, resourceIds);
             return result;
@@ -92,4 +105,24 @@ public class AuthorizationGWTServiceImpl extends AbstractGWTServiceImpl implemen
         }
     }
 
+    @Override
+    public boolean hasBundlePermission(Permission permission, Collection<Integer> bundleIds) throws RuntimeException {
+        try {
+            boolean result = authorizationManager.hasBundlePermission(getSessionSubject(), permission, bundleIds);
+            return result;
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
+
+    @Override
+    public Set<Permission> getBundlePermissions(int bundleId) throws RuntimeException {
+        try {
+            return SerialUtility.prepare(
+                new HashSet<Permission>(authorizationManager.getBundlePermissions(getSessionSubject(), bundleId)),
+                "AuthorizationManager.getBundlePermissions");
+        } catch (Throwable t) {
+            throw getExceptionToThrowToClient(t);
+        }
+    }
 }

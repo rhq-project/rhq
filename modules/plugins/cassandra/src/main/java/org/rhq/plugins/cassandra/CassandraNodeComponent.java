@@ -41,10 +41,6 @@ import javax.management.remote.JMXConnector;
 import javax.management.remote.JMXConnectorFactory;
 import javax.management.remote.JMXServiceURL;
 
-import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Cluster.Builder;
-import com.datastax.driver.core.Session;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.hyperic.sigar.OperatingSystem;
@@ -79,9 +75,8 @@ import org.rhq.plugins.jmx.JMXServerComponent;
  * @author John Sanda
  */
 public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent<?>> implements OperationFacet {
-    private static final Log LOG = LogFactory.getLog(CassandraNodeComponent.class);
+    private static final Log log = LogFactory.getLog(CassandraNodeComponent.class);
 
-    private Session cassandraSession;
     private String host;
     private ProcessInfo processInfo;
 
@@ -91,47 +86,13 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         super.start(context);
 
         processInfo = context.getNativeProcess();
-
         host = context.getPluginConfiguration().getSimpleValue("host", "localhost");
-        String clusterName = context.getPluginConfiguration().getSimpleValue("clusterName", "unknown");
-        String username = context.getPluginConfiguration().getSimpleValue("username", "cassandra");
-        String password = context.getPluginConfiguration().getSimpleValue("password", "cassandra");
-        String authenticatorClassName = context.getPluginConfiguration().getSimpleValue("authenticator",
-            "org.apache.cassandra.auth.AllowAllAuthenticator");
-
-        Integer nativePort = 9042;
-        try {
-            nativePort = Integer.parseInt(context.getPluginConfiguration()
-                .getSimpleValue("nativeTransportPort", "9042"));
-        } catch (Exception e) {
-            LOG.debug("Native transport port parsing failed...", e);
-        }
-
-
-        try {
-            Builder clusterBuilder = Cluster
-                .builder()
-                .addContactPoints(new String[] { host })
-                .withoutMetrics()
-                .withPort(nativePort);
-
-            if (authenticatorClassName.endsWith("PasswordAuthenticator")) {
-                clusterBuilder = clusterBuilder.withCredentials(username, password);
-            }
-
-            this.cassandraSession = clusterBuilder.build().connect(clusterName);
-        } catch (Exception e) {
-            LOG.error("Connect to Cassandra " + host + ":" + nativePort, e);
-            throw e;
-        }
     };
 
     @Override
     public void stop() {
         processInfo = null;
-        LOG.info("Shutting down Cassandra client");
-        cassandraSession.getCluster().shutdown();
-        LOG.info("Shutdown is complete");
+        super.stop();
     }
 
     @Override
@@ -144,11 +105,11 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             return AvailabilityType.DOWN;
         } finally {
             long totalTimeMillis = NANOSECONDS.toMillis(System.nanoTime() - start);
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Finished availability check in " + totalTimeMillis + " ms");
+            if (log.isDebugEnabled()) {
+                log.debug("Finished availability check in " + totalTimeMillis + " ms");
             }
             if (totalTimeMillis > SECONDS.toMillis(5)) {
-                LOG.warn("Availability check exceeded five seconds. Total time was " + totalTimeMillis + " ms");
+                log.warn("Availability check exceeded five seconds. Total time was " + totalTimeMillis + " ms");
             }
         }
     }
@@ -169,8 +130,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
             return true;
         } catch (Exception e) {
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Failed to make JMX connection to StorageService", e);
+            if (log.isDebugEnabled()) {
+                log.debug("Failed to make JMX connection to StorageService", e);
             }
             return false;
         } finally {
@@ -178,8 +139,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
                 try {
                     connector.close();
                 } catch (IOException e) {
-                    if (LOG.isDebugEnabled()) {
-                        LOG.debug("An error occurred closing the JMX connector", e);
+                    if (log.isDebugEnabled()) {
+                        log.debug("An error occurred closing the JMX connector", e);
                     }
                 }
             }
@@ -207,28 +168,28 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
     protected OperationResult shutdownNode() {
         ResourceContext<?> context = getResourceContext();
 
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Starting shutdown operation on " + CassandraNodeComponent.class.getName() +
+        if (log.isInfoEnabled()) {
+            log.info("Starting shutdown operation on " + CassandraNodeComponent.class.getName() +
                 " with resource key " + context.getResourceKey());
         }
         EmsConnection emsConnection = getEmsConnection();
         EmsBean storageService = emsConnection.getBean("org.apache.cassandra.db:type=StorageService");
         Class[] emptyParams = new Class[0];
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Disabling thrift...");
+        if (log.isDebugEnabled()) {
+            log.debug("Disabling thrift...");
         }
         EmsOperation operation = storageService.getOperation("stopRPCServer", emptyParams);
         operation.invoke((Object[]) emptyParams);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Disabling gossip...");
+        if (log.isDebugEnabled()) {
+            log.debug("Disabling gossip...");
         }
         operation = storageService.getOperation("stopGossiping", emptyParams);
         operation.invoke((Object[]) emptyParams);
 
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Initiating drain...");
+        if (log.isDebugEnabled()) {
+            log.debug("Initiating drain...");
         }
         operation = storageService.getOperation("drain", emptyParams);
         operation.invoke((Object[]) emptyParams);
@@ -240,7 +201,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         ProcessInfo process = getResourceContext().getNativeProcess();
 
         if (process == null) {
-            LOG.warn("Failed to obtain process info. It appears Cassandra is already shutdown.");
+            log.warn("Failed to obtain process info. It appears Cassandra is already shutdown.");
             return new OperationResult("Failed to obtain process info. It appears Cassandra is already shutdown.");
         }
 
@@ -257,7 +218,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
             return new OperationResult("Successfully shut down Cassandra daemon with pid " + pid);
         } catch (SigarException e) {
-            LOG.warn("Failed to shut down Cassandra node with pid " + pid, e);
+            log.warn("Failed to shut down Cassandra node with pid " + pid, e);
             OperationResult failure = new OperationResult("Failed to shut down Cassandra node with pid " + pid);
             failure.setErrorMessage(ThrowableUtil.getAllMessages(e));
             return failure;
@@ -364,7 +325,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         try {
             updateSeedsList(addresses);
         }  catch (Exception e) {
-            LOG.error("An error occurred while updating the seeds list property", e);
+            log.error("An error occurred while updating the seeds list property", e);
             Throwable rootCause = ThrowableUtil.getRootCause(e);
             result.setErrorMessage(ThrowableUtil.getStackAsString(rootCause));
         }
@@ -380,12 +341,13 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         return addresses;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     protected void updateSeedsList(List<String> seeds) throws IOException {
         List<String> addresses = null;
         try {
             addresses = convertToIPAddresses(seeds);
         } catch (UnknownHostException e) {
-            LOG.error("Failed to update seeds list", e);
+            log.error("Failed to update seeds list", e);
             throw new IOException("Failed to update seeds list. Make sure that " + seeds + " is a list of valid " +
                 "hostnames or IP addresses that can be resolved.", e);
         }
@@ -437,7 +399,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         if (!yamlFile.delete()) {
             String msg = "Failed to delete [" + yamlFile + "] in preparation of writing updated configuration. The " +
                 "changes will be aborted.";
-            LOG.error(msg);
+            log.error(msg);
             deleteYamlBackupFile(yamlFileBackup);
             throw new IOException(msg);
         }
@@ -447,8 +409,8 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             yaml.dump(cassandraConfig, writer);
             deleteYamlBackupFile(yamlFileBackup);
         } catch (Exception e) {
-            LOG.error("An error occurred while trying to write the updated configuration back to " + yamlFile, e);
-            LOG.error("Reverting changes to " + yamlFile);
+            log.error("An error occurred while trying to write the updated configuration back to " + yamlFile, e);
+            log.error("Reverting changes to " + yamlFile);
 
             if (yamlFile.delete()) {
                 StreamUtil.copy(new FileInputStream(yamlFileBackup), new FileOutputStream(yamlFile));
@@ -456,7 +418,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
             } else {
                 String msg = "Failed updates to " + yamlFile.getName() + " cannot be rolled back. The file cannot be " +
                     "deleted. " + yamlFile + " should be replaced by " + yamlFileBackup;
-                LOG.error(msg);
+                log.error(msg);
                 throw new IOException(msg);
             }
         } finally {
@@ -475,7 +437,7 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
 
     private void deleteYamlBackupFile(File yamlBackup) {
         if (!yamlBackup.delete()) {
-            LOG.warn("Failed to delete Cassandra configuration backup file [" + yamlBackup + "]. This file " +
+            log.warn("Failed to delete Cassandra configuration backup file [" + yamlBackup + "]. This file " +
                     "should be deleted.");
         }
     }
@@ -489,10 +451,6 @@ public class CassandraNodeComponent extends JMXServerComponent<ResourceComponent
         } else {
             return "cassandra";
         }
-    }
-
-    public Session getCassandraSession() {
-        return this.cassandraSession;
     }
 
     public String getHost() {

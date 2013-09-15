@@ -451,6 +451,7 @@ public class ResourceTreeDatasource extends DataSource {
         private Resource parentResource;
         private ResourceType resourceType;
         private boolean parentSubcategory = false;
+        private Integer resourceGroupId; // set after the node is visited, otherwise null
 
         /**
          * @param resource resource.id must be set. resource.parentResource.id, .name must be set.
@@ -497,6 +498,14 @@ public class ResourceTreeDatasource extends DataSource {
          */
         public String getBackingGroupName() {
             return this.getParentResource().getName() + " ( " + this.getResourceType().getName() + " )";
+        }
+
+        public Integer getResourceGroupId() {
+            return resourceGroupId;
+        }
+
+        public void setResourceGroupId(Integer resourceGroupId) {
+            this.resourceGroupId = resourceGroupId;
         }
 
         public boolean isParentSubcategory() {

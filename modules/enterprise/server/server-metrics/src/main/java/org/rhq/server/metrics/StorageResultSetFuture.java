@@ -1,7 +1,5 @@
 package org.rhq.server.metrics;
 
-import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -18,11 +16,11 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
 
     private ResultSetFuture wrapperFuture;
 
-    private List<StorageStateListener> listeners;
+    private StorageSession session;
 
-    public StorageResultSetFuture(ResultSetFuture resultSetFuture, List<StorageStateListener> listeners) {
+    public StorageResultSetFuture(ResultSetFuture resultSetFuture, StorageSession session) {
         wrapperFuture = resultSetFuture;
-        this.listeners = listeners;
+        this.session = session;
     }
 
     @Override
@@ -45,32 +43,30 @@ public class StorageResultSetFuture implements ListenableFuture<ResultSet> {
         return wrapperFuture.isDone();
     }
 
+    /**
+     * Delegates to {@link com.datastax.driver.core.ResultSetFuture#getUninterruptibly()}
+     */
     @Override
-    public ResultSet get() throws InterruptedException, ExecutionException {
+    public ResultSet get() {
         try {
-            return wrapperFuture.get();
-        } catch (ExecutionException e) {
-            return handleException(e);
+            return wrapperFuture.getUninterruptibly();
+        } catch (NoHostAvailableException e) {
+            session.fireClusterDownEvent(e);
+            throw e;
         }
     }
 
+    /**
+     * Delegates to {@link ResultSetFuture#getUninterruptibly(long, java.util.concurrent.TimeUnit)}
+     */
     @Override
-    public ResultSet get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
-        TimeoutException {
+    public ResultSet get(long timeout, TimeUnit unit) throws TimeoutException {
         try {
-            return wrapperFuture.get(timeout, unit);
-        } catch (ExecutionException e) {
-            return handleException(e);
+            return wrapperFuture.getUninterruptibly(timeout, unit);
+        } catch (NoHostAvailableException e) {
+            session.fireClusterDownEvent(e);
+            throw e;
         }
     }
 
-    private ResultSet handleException(ExecutionException e) throws ExecutionException {
-        if (e.getCause() instanceof NoHostAvailableException) {
-            NoHostAvailableException cause = (NoHostAvailableException) e.getCause();
-            for (StorageStateListener listener : listeners) {
-                listener.onStorageClusterDown(cause);
-            }
-        }
-        throw e;
-    }
 }

@@ -59,17 +59,20 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected final String STORAGE_CONFIG_PROP = "rhqctl.install.storage-config";
 
-    protected void installWindowsService(File workingDir, String batFile, boolean start) throws Exception {
+    protected void installWindowsService(File workingDir, String batFile, boolean replaceExistingService, boolean start)
+        throws Exception {
         Executor executor = new DefaultExecutor();
         executor.setWorkingDirectory(workingDir);
         executor.setStreamHandler(new PumpStreamHandler());
         org.apache.commons.exec.CommandLine commandLine;
 
-        commandLine = getCommandLine(batFile, "stop");
-        executor.execute(commandLine);
+        if (replaceExistingService) {
+            commandLine = getCommandLine(batFile, "stop");
+            executor.execute(commandLine);
 
-        commandLine = getCommandLine(batFile, "remove");
-        executor.execute(commandLine);
+            commandLine = getCommandLine(batFile, "remove");
+            executor.execute(commandLine);
+        }
 
         commandLine = getCommandLine(batFile, "install");
         executor.execute(commandLine);

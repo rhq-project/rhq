@@ -42,7 +42,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
      */
     @Override
     public native void drawJsniChart() /*-{
-        console.log("Draw Stacked Bar jsni chart");
+        //console.log("Draw Stacked Bar jsni chart");
         var global = this,
 
         // create a chartContext object (from rhq.js) with the data required to render to a chart
@@ -106,8 +106,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     svg;
 
             // adjust the min scale so blue low line is not in axis
-            function determineLowBound(min, peak) {
-                //var newLow = min - ((peak - min) * 0.1);
+            function determineLowBound(min) {
                 newLow = min;
                 if (newLow < 0) {
                     return 0;
@@ -122,6 +121,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
             }
 
             function useSmallCharts() {
+                //console.log("getChartWidth: "+ getChartWidth());
                 return  getChartWidth() <= smallChartThresholdInPixels;
             }
 
@@ -131,14 +131,14 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
                     // if window is too small server up small chart
                     if (useSmallCharts()) {
-                        console.log("Using Small Charts Profile for width: "+getChartWidth());
+                        //console.log("Using Small Charts Profile for width: "+getChartWidth());
                         width = 250;
                         xTicks = 3;
                         xTickSubDivide = 2;
                         chartData = chartContext.data.slice(chartContext.data.length - numberOfBarsForSmallGraph, chartContext.data.length);
                     }
                     else {
-                        console.log("Using Large Charts Profile");
+                        //console.log("Using Large Charts Profile, width: "+ width);
                         //  we use the width already defined above
                         xTicks = 8;
                         xTickSubDivide = 5;
@@ -169,7 +169,7 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                     min = $wnd.d3.min(minFiltered.map(function (d) {
                             return d.low;
                     }));
-                    lowBound = determineLowBound(min, peak);
+                    lowBound = determineLowBound(min);
                     highBound = peak + ((peak - min) * 0.1);
                     oobMax = $wnd.d3.max(chartContext.data.map(function (d) {
                         if (typeof d.baselineMax === 'undefined') {
@@ -316,6 +316,79 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             }
 
+            function showFullMetricBarHover(d){
+
+                var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
+                        dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
+                        startDate = new Date(+d.x),
+                        metricGraphTooltipDiv =  $wnd.d3.select("#metricGraphTooltip");
+
+                metricGraphTooltipDiv.style("left", + timeScale(+d.x) + 55 + "px")
+                        .style("top",  "70px");
+
+                metricGraphTooltipDiv.select("#metricGraphTooltipTimeLabel")
+                        .text(chartContext.timeLabel);
+                metricGraphTooltipDiv.select("#metricGraphTooltipTimeValue")
+                        .text(timeFormatter(startDate));
+
+                metricGraphTooltipDiv.select("#metricGraphTooltipDateLabel")
+                        .text(chartContext.dateLabel);
+                metricGraphTooltipDiv.select("#metricGraphTooltipDateValue")
+                        .text(dateFormatter(startDate));
+
+                metricGraphTooltipDiv.select("#metricGraphTooltipDurationLabel")
+                        .text(chartContext.hoverBarLabel);
+                metricGraphTooltipDiv.select("#metricGraphTooltipDurationValue")
+                        .text(d.barDuration);
+
+                metricGraphTooltipDiv.select("#metricGraphTooltipMaxLabel")
+                        .text(chartContext.peakChartTitle);
+                metricGraphTooltipDiv.select("#metricGraphTooltipMaxValue")
+                        .text(d.high.toFixed(1));
+
+                metricGraphTooltipDiv.select("#metricGraphTooltipAvgLabel")
+                        .text(chartContext.avgChartTitle);
+                metricGraphTooltipDiv.select("#metricGraphTooltipAvgValue")
+                        .text(d.y.toFixed(1));
+
+
+                metricGraphTooltipDiv.select("#metricGraphTooltipMinLabel")
+                        .text(chartContext.minChartTitle);
+                metricGraphTooltipDiv.select("#metricGraphTooltipMinValue")
+                        .text(d.low.toFixed(1));
+
+
+                //Show the tooltip
+                $wnd.d3.select("#metricGraphTooltip").classed("hidden", false);
+
+            }
+            function showNoDataBarHover(d){
+                var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
+                    dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
+                    startDate = new Date(+d.x),
+                    noDataTooltipDiv =  $wnd.d3.select("#noDataTooltip");
+
+                noDataTooltipDiv.style("left", + timeScale(+d.x)+55 + "px")
+                        .style("top", "70px");
+
+                noDataTooltipDiv.select("#noDataTooltipTimeLabel")
+                    .text(chartContext.timeLabel);
+                noDataTooltipDiv.select("#noDataTooltipTimeValue")
+                    .text(timeFormatter(startDate));
+
+                noDataTooltipDiv.select("#noDataTooltipDateLabel")
+                    .text(chartContext.dateLabel);
+                noDataTooltipDiv.select("#noDataTooltipDateValue")
+                    .text(dateFormatter(startDate));
+
+                noDataTooltipDiv.select("#noDataLabel")
+                        .text(chartContext.noDataLabel);
+
+                //Show the tooltip
+                $wnd.d3.select("#noDataTooltip").classed("hidden", false);
+
+            }
+
             function createStackedBars() {
 
                 var pixelsOffHeight = 0;
@@ -356,7 +429,28 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             else {
                                 return  "#d3d3d6";
                             }
-                        });
+                        }).on("mouseover",function (d) {
+                        if (d.down || d.unknown || d.nodata) {
+                            showNoDataBarHover(d);
+                        }
+                        else {
+                            if(+d.high === +d.low){
+                                showSingleValueMetricBarHover(d);
+                            } else {
+                                showFullMetricBarHover(d);
+                            }
+                        }
+                    }).on("mouseout", function (d) {
+                        if (d.down || d.unknown || d.nodata) {
+                            $wnd.d3.select("#noDataTooltip").classed("hidden", true);
+                        }else {
+                            if(+d.high === +d.low){
+                                $wnd.d3.select("#singleValueTooltip").classed("hidden", true);
+                            } else {
+                                $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
+                            }
+                        }
+                    });
 
 
                 // upper portion representing avg to high
@@ -384,7 +478,17 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("data-rhq-value", function (d) {
                             return d.y;
                         })
-                        .attr("opacity", 0.9);
+                        .attr("opacity", 0.9)
+                        .on("mouseover",function (d) {
+                            showFullMetricBarHover(d);
+                        }).on("mouseout", function (d) {
+                            if (d.down || d.unknown || d.nodata) {
+                                $wnd.d3.select("#noDataTooltip").classed("hidden", true);
+                            }else {
+                                $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
+                            }
+                        });
+
 
 
                 // lower portion representing avg to low
@@ -409,7 +513,46 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         .attr("width", function () {
                             return  calcBarWidth();
                         })
-                        .attr("opacity", 0.9);
+                        .attr("opacity", 0.9)
+                        .on("mouseover",function (d) {
+                            showFullMetricBarHover(d);
+                        }).on("mouseout", function (d) {
+                            if (d.down || d.unknown || d.nodata) {
+                                $wnd.d3.select("#noDataTooltip").classed("hidden", true);
+                            }else {
+                                $wnd.d3.select("#metricGraphTooltip").classed("hidden", true);
+                            }
+                        });
+
+                function showSingleValueMetricBarHover(d){
+                    var timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
+                            dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
+                            startDate = new Date(+d.x),
+                            singleValueGraphTooltipDiv =  $wnd.d3.select("#singleValueTooltip")
+                                    .style("left", + timeScale(+d.x) +55 + "px")
+                                    .style("top",  +  yScale(+d.y)+  "px");
+
+                    singleValueGraphTooltipDiv.select("#singleValueTooltipTimeLabel")
+                            .text(chartContext.timeLabel);
+                    singleValueGraphTooltipDiv.select("#singleValueTooltipTimeValue")
+                            .text(timeFormatter(startDate));
+
+                    singleValueGraphTooltipDiv.select("#singleValueTooltipDateLabel")
+                            .text(chartContext.dateLabel);
+                    singleValueGraphTooltipDiv.select("#singleValueTooltipDateValue")
+                            .text(dateFormatter(startDate));
+
+                    singleValueGraphTooltipDiv.select("#singleValueTooltipValueLabel")
+                            .text(chartContext.singleValueLabel);
+                    singleValueGraphTooltipDiv.select("#singleValueTooltipValue")
+                            .text(d.y.toFixed(1));
+
+
+                    //Show the tooltip
+                    $wnd.d3.select("#singleValueTooltip").classed("hidden", false);
+
+                }
+
 
                 // if high == low put a "cap" on the bar to show non-aggregated bar
                 svg.selectAll("rect.singleValue")
@@ -446,6 +589,10 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                             else {
                                 return  "#70c4e2";
                             }
+                        }).on("mouseover",function (d) {
+                            showSingleValueMetricBarHover(d);
+                        }).on("mouseout", function () {
+                            $wnd.d3.select("#singleValueTooltip").classed("hidden", true);
                         });
             }
 
@@ -602,74 +749,13 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
 
             }
 
-            function formatHovers(chartContext, d) {
-                var hoverString,
-                        xValue = (typeof d.x === 'undefined') ? 0 : +d.x,
-                        date = new Date(+xValue),
-                        barDuration = d.barDuration,
-                        timeFormatter = $wnd.d3.time.format(chartContext.chartHoverTimeFormat),
-                        dateFormatter = $wnd.d3.time.format(chartContext.chartHoverDateFormat),
-                        highValue = d.high.toFixed(2),
-                        lowValue = d.low.toFixed(2),
-                        avgValue = d.y.toFixed(2);
-
-
-                // our special condition to indicate no data because avg lines dont like discontinuous data
-                if (d.y === 0 && d.high === 0 && d.low === 0) {
-                    // no data
-                    hoverString =
-                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
-                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                    '<hr class="chartHoverDivider" ></hr>' +
-                                    '<div class="chartHoverAlignRight"><span class="chartHoverLabelSpan">' + chartContext.noDataLabel + '</span></div>' +
-                                    '</div>';
-
-
-                } else if (d.y === d.high  && d.high === d.low ) {
-                    // single point of data not a duration
-                    hoverString =
-                        '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel" >' + chartContext.timeLabel + ': </span>' + timeFormatter(date) +
-                            '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ': </span>' + dateFormatter(date) + '</div>' +
-                                '<div class="chartHoverAlignRight"><span class="chartHoverDateLabel" >' + chartContext.singleValueLabel + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
-                            '</div>';
-                } else {
-                    // regular bar hover for duration
-                    hoverString =
-                            '<div class="chartHoverEnclosingDiv"><span class="chartHoverTimeLabel">' + chartContext.timeLabel + ':  </span><span style="width:50px;">' + timeFormatter(date) + '</span>' +
-                                    '<div class="chartHoverAlignLeft"><span class="chartHoverDateLabel">' + chartContext.dateLabel + ':  </span><span style="width:50px;">' + dateFormatter(date) + '</span></div>' +
-                                    '<div class="chartHoverAlignLeft"><span class="chartHoverLabelSpan">' + chartContext.hoverBarLabel + ": " + barDuration + '</span></div>' +
-                                    '<hr  class="chartHoverDivider"></hr>' +
-                                    '<div class="chartHoverAlignRight"><span id="chartHoverPeakValue" >' + chartContext.peakChartTitle + ': </span><span style="width:50px;">' + highValue + '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span id="chartHoverAvgValue" >' + chartContext.avgChartTitle + ':  </span><span style="width:50px;">' + avgValue + '</span></div>' +
-                                    '<div class="chartHoverAlignRight"><span id="chartHoverLowValue" >' + chartContext.minChartTitle + ': </span><span style="width:50px;">' + lowValue + '</span></div>' +
-                                    '</div>';
-                }
-                return hoverString;
-
-            }
-
-            function createHovers(chartContext) {
-                $wnd.jQuery('svg rect.leaderBar, svg rect.high, svg rect.low, svg rect.singleValue').tipsy({
-                    gravity: 'w',
-                    html: true,
-                    trigger: 'hover',
-                    title: function () {
-                        var d = this.__data__;
-                        return formatHovers(chartContext, d);
-                    },
-                    show: function (e, el) {
-                        el.css({ 'z-index': '990000'})
-                    }
-                });
-            }
-
             return {
                 // Public API
                 draw: function (chartContext) {
                     "use strict";
                     // Guard condition that can occur when a portlet has not been configured yet
                     if (chartContext.data.length > 0) {
-                        console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
+                        //console.log("Creating Chart: "+ chartContext.chartSelection + " --> "+ chartContext.chartTitle);
 
                         determineScale();
                         createHeader(chartContext.chartTitle);
@@ -682,10 +768,9 @@ public class StackedBarMetricGraphImpl extends AbstractMetricGraph {
                         createXandYAxes();
                         createAvgLines();
                         if (oobMax > 0) {
-                            console.log("OOB Data Exists!");
+                            //console.log("OOB Data Exists!");
                             createOOBLines();
                         }
-                        createHovers(chartContext);
                     }
                 }
             }; // end public closure

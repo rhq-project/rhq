@@ -154,7 +154,7 @@ public class Upgrade extends AbstractInstall {
             // if the agent already exists in the default location, it may be there from a prior install.
             if (isStorageInstalled() || isServerInstalled()) {
                 log.warn("RHQ is already installed so upgrade can not be performed.");
-                return;
+                //return;
             }
 
             // Stop the agent, if running.
@@ -406,6 +406,7 @@ public class Upgrade extends AbstractInstall {
         oldServerProps.remove("rhq.server.plugin-deployer-threads");
         oldServerProps.remove("rhq.server.database.xa-datasource-class");
         oldServerProps.remove("rhq.server.database.driver-class");
+        oldServerProps.remove("java.rmi.server.hostname");
 
         // do not set the keystore/truststore algorithms if they are the defaults to allow for runtime defaults to take effect
         String[] algPropNames = new String[] { "rhq.communications.connector.security.truststore.algorithm", //
@@ -432,6 +433,45 @@ public class Upgrade extends AbstractInstall {
             oldServerProps.setProperty("rhq.server.socket.binding.port.https", httpsPort);
         }
 
+        //Migrate storage node properties
+        String storageUsername = oldServerProps.getProperty("rhq.cassandra.username");
+        if (storageUsername != null) {
+            oldServerProps.remove("rhq.cassandra.username");
+            oldServerProps.setProperty("rhq.storage.username", storageUsername);
+        }
+
+        String storagePassword = oldServerProps.getProperty("rhq.cassandra.password");
+        if (storagePassword != null) {
+            // In RHQ 4.8 the Cassandra username/password had to be rhqadmin/rhqadmin; so,
+            // we can safely set rhq.storage.password to the obfuscated version freeing the
+            // user of performing the additional step of generated the obfuscated password.
+            oldServerProps.remove("rhq.cassandra.password");
+            oldServerProps.setProperty("rhq.storage.password", "1eeb2f255e832171df8592078de921bc");
+        }
+
+        String storageSeeds = oldServerProps.getProperty("rhq.cassandra.seeds");
+        if (storageSeeds != null) {
+            StringBuffer storageNodes = new StringBuffer();
+            String cqlPort = "";
+
+            String[] unparsedNodes = storageSeeds.split(",");
+            for (int index = 0; index < unparsedNodes.length; index++) {
+                String[] params = unparsedNodes[index].split("\\|");
+                if (params.length == 3) {
+                    storageNodes.append(params[0]);
+                    if (index < unparsedNodes.length - 1) {
+                        storageNodes.append(",");
+                    }
+
+                    cqlPort = params[2];
+                }
+            }
+
+            oldServerProps.remove("rhq.cassandra.seeds");
+            oldServerProps.setProperty("rhq.storage.nodes", storageNodes.toString());
+            oldServerProps.setProperty("rhq.storage.cql-port", cqlPort);
+        }
+
         // copy the old key/truststore files from the old location to the new server configuration directory
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.tomcat.security.truststore.file");
@@ -439,6 +479,13 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.communications.connector.security.truststore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
+
+        // In 4.8 the AS management user was always rhqadmin/obfuscated(rhqadmin); so, if not already in the
+        // old properties, insert the new property with the obfuscated value.
+        String managementPassword = oldServerProps.getProperty("rhq.server.management.password");
+        if (null == managementPassword) {
+            oldServerProps.setProperty("rhq.server.management.password", "35c160c1f841a889d4cda53f0bfc94b6");
+        }
 
         // now merge the old settings in with the default properties from the new server install
         String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
@@ -571,8 +618,7 @@ public class Upgrade extends AbstractInstall {
 
     private File getFileDownload(String directory, final String fileMatch) {
         File downloadDir = new File(getBaseDir(),
-            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/"
-                + directory);
+            "modules/org/rhq/server-startup/main/deployments/rhq.ear/rhq-downloads/" + directory);
         return downloadDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File file) {

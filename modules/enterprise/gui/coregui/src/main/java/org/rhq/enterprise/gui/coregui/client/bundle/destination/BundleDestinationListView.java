@@ -35,6 +35,7 @@ import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.core.domain.bundle.BundleDeploymentStatus;
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
 import org.rhq.enterprise.gui.coregui.client.components.table.TimestampCellFormatter;
@@ -50,8 +51,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
     }
 
     public BundleDestinationListView(Criteria criteria) {
-        super(MSG.view_bundle_bundleDestinations(), criteria);
-        setHeaderIcon("subsystems/bundle/BundleDestination_24.png");
+        super(MSG.view_bundle_bundleDestinations(), criteria, IconEnum.BUNDLE_DESTINATION.getIcon24x24Path());
         setDataSource(new BundleDestinationDataSource());
     }
 
@@ -62,7 +62,7 @@ public class BundleDestinationListView extends Table<BundleDestinationDataSource
         ListGridField descriptionField = new ListGridField(BundleDestinationDataSource.FIELD_DESCRIPTION,
             MSG.common_title_description());
         ListGridField bundleNameField = new ListGridField(BundleDestinationDataSource.FIELD_BUNDLE_NAME,
-            MSG.view_bundle_bundle());
+            MSG.common_title_bundle());
         ListGridField groupNameField = new ListGridField(BundleDestinationDataSource.FIELD_GROUP_NAME,
             MSG.view_bundle_dest_group());
         ListGridField baseDirNameField = new ListGridField(BundleDestinationDataSource.FIELD_BASE_DIR_NAME,

@@ -168,6 +168,29 @@ public interface AuthorizationManagerLocal {
     boolean hasBundlePermission(Subject subject, Permission permission, int bundleId);
 
     /**
+     * Returns true if the current user possesses either: 1) the specified bundle permission for *all* of the
+     * specified bundles, or 2) is a system superuser which, by definition, gives full access to all bundles
+     * NOTE: The size of the collection must be less than or equal to 1000 (due to an Oracle limitation).
+     *
+     * @param  subject     the current subject or caller
+     * @param  permission  a resource permission (i.e. permission.getTarget() == Permission.Target.RESOURCE)
+     * @param  bundleIds the ids of some Bundles to check permissions against (size of collection must be <= 1000)
+     *
+     * @return true if the current user possesses the specified resource permission for the specified resource
+     */
+    boolean hasBundlePermission(Subject subject, Permission permission, Collection<Integer> bundleIds);
+
+    /**
+     * Gets the set of permissions that the current user explicitly possesses for the specified {@link Bundle}.
+     *
+     * @param  subject    the current subject or caller
+     * @param  bundleId   the id of some Bundle to check permissions against
+     *
+     * @return the set of permissions that the current user possesses for the specified {@link Bundle} - never null
+     */
+    Set<Permission> getBundlePermissions(Subject subject, int bundleId);
+
+    /**
      * Returns true if the current user possesses the specified bundle permission for the specified bundle group.
      *
      * @param  subject     the current subject or caller

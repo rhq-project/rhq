@@ -304,8 +304,7 @@ public class ApplicationServerOperationsDelegate {
         processExecution.setWorkingDirectory(scriptFile.getParent());
 
         processExecution.setCaptureOutput(true);
-        processExecution.setWaitForCompletion(1000L); // 1 second // TODO:
-        // Should we wait longer than one second?
+        processExecution.setWaitForCompletion(1000L);
         processExecution.setKillOnTimeout(false);
     }
 
@@ -403,7 +402,7 @@ public class ApplicationServerOperationsDelegate {
         ProcessExecutionResults results = systemInfo.executeProcess(processExecution);
         logExecutionResults(results);
 
-        if (results.getError() != null || results.getExitCode() != 0) {
+        if (results.getError() != null || (results.getExitCode() != null && results.getExitCode() != 0)) {
             throw new ExecutionFailedException(
                 "Error executing shutdown script while stopping AS instance. Shutdown script returned exit code ["
                     + results.getExitCode() + "]"

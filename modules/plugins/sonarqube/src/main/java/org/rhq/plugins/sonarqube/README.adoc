@@ -1,0 +1,14 @@
+== SonarQube RHQ Plugin:
+This plugin has basic monitoring of a SonarQube Server and the projects on it. Once manually inventoried it can verify server availability and inventory projects.
+
+=== Configuration :
+To configure it use the *urlBase* property. This is the root url path to your sonarqube server interface (e.g. http://localhost:9000/)
+
+=== Metrics :
+For each project you have tow metrics :
+
+* *lastAnalysisTime* : Date of the last analysis of the project
+* *lastAnalysisElapsedTime* : Time in seconds since the last analysis of the project.
+
+
+-

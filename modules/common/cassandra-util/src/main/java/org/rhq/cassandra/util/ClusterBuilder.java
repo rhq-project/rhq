@@ -28,6 +28,10 @@ package org.rhq.cassandra.util;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.PoolingOptions;
 import com.datastax.driver.core.ProtocolOptions;
+import com.datastax.driver.core.policies.LoadBalancingPolicy;
+import com.datastax.driver.core.policies.RetryPolicy;
+
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
  * This class should generally be used for creating a {@link Cluster} instead of
@@ -66,6 +70,14 @@ public class ClusterBuilder {
     }
 
     /**
+     * @see Cluster.Builder#withCredentials(String, String)
+     */
+    public ClusterBuilder withCredentialsObfuscated(String username, String obfuscatedPassword) {
+        builder.withCredentials(username, PicketBoxObfuscator.decode(obfuscatedPassword));
+        return this;
+    }
+
+    /**
      * This method will throw an IllegalArgumentException if you try to use snappy
      * compression while running on an IBM JRE. See <a href="https://bugzilla.redhat.com/show_bug.cgi?id=907485">BZ 907485</a>
      * for details.
@@ -91,6 +103,22 @@ public class ClusterBuilder {
     }
 
     /**
+     * @see Cluster.Builder#withLoadBalancingPolicy(com.datastax.driver.core.policies.LoadBalancingPolicy)
+     */
+    public ClusterBuilder withLoadBalancingPolicy(LoadBalancingPolicy policy) {
+        builder.withLoadBalancingPolicy(policy);
+        return this;
+    }
+
+    /**
+     * @see Cluster.Builder#withRetryPolicy(com.datastax.driver.core.policies.RetryPolicy)
+     */
+    public ClusterBuilder withRetryPolicy(RetryPolicy policy) {
+        builder.withRetryPolicy(policy);
+        return this;
+    }
+
+    /**
      * @see com.datastax.driver.core.Cluster.Builder#build()
      */
     public Cluster build() {
@@ -104,5 +132,4 @@ public class ClusterBuilder {
     private boolean isIBMJRE() {
         return System.getProperty("java.vm.vendor").startsWith("IBM");
     }
-
 }

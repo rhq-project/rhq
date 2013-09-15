@@ -60,7 +60,7 @@ public class FavoriteGroupsPortlet extends ResourceGroupListView implements Auto
     private Timer refreshTimer;
 
     public FavoriteGroupsPortlet() {
-        super(createInitialCriteria(), NAME);
+        super(createInitialCriteria(), NAME, null);
         setOverflow(Overflow.VISIBLE);
 
         setShowHeader(false);
@@ -127,7 +127,7 @@ public class FavoriteGroupsPortlet extends ResourceGroupListView implements Auto
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     @Override

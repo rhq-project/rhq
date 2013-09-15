@@ -32,6 +32,7 @@ import com.smartgwt.client.widgets.grid.ListGridField;
 import com.smartgwt.client.widgets.grid.ListGridRecord;
 
 import org.rhq.enterprise.gui.coregui.client.CoreGUI;
+import org.rhq.enterprise.gui.coregui.client.IconEnum;
 import org.rhq.enterprise.gui.coregui.client.LinkManager;
 import org.rhq.enterprise.gui.coregui.client.bundle.list.BundleVersionDataSource;
 import org.rhq.enterprise.gui.coregui.client.components.table.Table;
@@ -46,8 +47,7 @@ public class BundleVersionListView extends Table<BundleVersionDataSource> {
     }
 
     public BundleVersionListView(Criteria criteria) {
-        super(MSG.view_bundle_bundleVersions(), criteria);
-        setHeaderIcon("subsystems/bundle/BundleVersion_24.png");
+        super(MSG.view_bundle_bundleVersions(), criteria, IconEnum.BUNDLE_VERSION.getIcon24x24Path());
         setDataSource(new BundleVersionDataSource());
     }
 

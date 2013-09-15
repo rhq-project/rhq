@@ -434,7 +434,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
             // See org.rhq.enterprise.server.rest.ResourceHandlerBean.createPlatformInternal()
             // See also https://docs.jboss.org/author/display/RHQ/Virtual+platforms+and+synthetic+agents
             if (agentClient != null) {
-                if (agentClient.getAgent() == null || agentClient.getAgent().getName() == null || !agentClient.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // don't do that on "REST-agents"
+                if (agentClient.getAgent() == null || agentClient.getAgent().getName() == null
+                    || !agentClient.getAgent().getName().startsWith(ResourceHandlerBean.DUMMY_AGENT_NAME_PREFIX)) { // don't do that on "REST-agents"
                     try {
                         agentClient.getDiscoveryAgentService().uninventoryResource(resourceId);
                     } catch (Exception e) {
@@ -582,7 +583,7 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
 
     private boolean uninventoryResourceBulkDeleteAsyncWork(Subject overlord, int resourceId) {
         String[] namedQueriesToExecute = new String[] { //
-            StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES, //remove storage node resource links
+        StorageNode.QUERY_UPDATE_REMOVE_LINKED_RESOURCES, //remove storage node resource links
             ResourceRepo.DELETE_BY_RESOURCES, //
             MeasurementBaseline.QUERY_DELETE_BY_RESOURCES, // baseline BEFORE schedules
             MeasurementDataTrait.QUERY_DELETE_BY_RESOURCES, // traits BEFORE schedules
@@ -712,7 +713,6 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 return resource;
             }
         }
-
 
         long now = System.currentTimeMillis();
         updateInventoryStatus(resource, newStatus, now);
@@ -2443,7 +2443,11 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
     @TransactionAttribute(TransactionAttributeType.NEVER)
     public ResourceAvailability getLiveResourceAvailability(Subject subject, int resourceId) {
         Resource res = getResourceById(subject, resourceId);
-        ResourceAvailability results = new ResourceAvailability(res, AvailabilityType.UNKNOWN);
+        //platforms are never unknown, just up or down, so we need to default the availability to a different value
+        //depending on the resource's category
+        ResourceAvailability results = new ResourceAvailability(res,
+            res.getResourceType().getCategory() == ResourceCategory.PLATFORM ? AvailabilityType.DOWN
+                : AvailabilityType.UNKNOWN);
 
         try {
             // first, quickly see if we can even ping the agent, if not, don't bother trying to get the resource avail
@@ -2452,6 +2456,8 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 throw new IllegalStateException("No agent is associated with the resource with id [" + resourceId + "]");
             }
 
+            AvailabilityReport report = null;
+
             boolean agentPing = client.ping(5000L);
             if (agentPing) {
                 // we can't serialize the resource due to the hibernate proxies (agent can't deserialize hibernate objs)
@@ -2459,16 +2465,29 @@ public class ResourceManagerBean implements ResourceManagerLocal, ResourceManage
                 Resource bareResource = new Resource(res.getResourceKey(), res.getName(), res.getResourceType());
                 bareResource.setId(res.getId());
                 bareResource.setUuid(res.getUuid());
-                Availability avail = client.getDiscoveryAgentService().getCurrentAvailability(bareResource);
-                if (avail != null) {
-                    results.setAvailabilityType(avail.getAvailabilityType());
-
-                    AvailabilityReport report = new AvailabilityReport(true, client.getAgent().getName());
-                    avail.setStartTime(System.currentTimeMillis());
-                    report.addAvailability(avail);
-                    availabilityManager.mergeAvailabilityReport(report);
-                }
+                report = client.getDiscoveryAgentService().getCurrentAvailability(bareResource, false);
             }
+
+            if (report == null) {
+                report = new AvailabilityReport(client.getAgent().getName());
+                Availability fakeAvail = new Availability(res,
+                    res.getResourceType().getCategory() == ResourceCategory.PLATFORM ? AvailabilityType.DOWN
+                        : AvailabilityType.UNKNOWN);
+                fakeAvail.setStartTime(System.currentTimeMillis());
+                report.addAvailability(fakeAvail);
+            }
+
+            // The report is most likely empty as it's unlikely the avail has changed.  Don't merge it and return
+            AvailabilityType foundAvail = report.forResource(res.getId());
+            if (foundAvail != null) {
+                availabilityManager.mergeAvailabilityReport(report);
+            } else {
+                foundAvail = res.getCurrentAvailability() == null ? AvailabilityType.UNKNOWN : res
+                    .getCurrentAvailability().getAvailabilityType();
+            }
+
+            results.setAvailabilityType(foundAvail);
+
         } catch (Exception e) {
             if (log.isInfoEnabled()) {
                 log.info("Failed to get live availability.", e);

@@ -42,8 +42,5 @@
     <put name="tabKey" value="resource.hub.ListResourcesTab"/>
   </definition>
 
-  <definition name=".resource.hub.minichart"
-              path="/resource/hub/MiniChart.jsp"
-              controllerUrl="/resource/hub/MiniChart.do"/>
 
 </tiles-definitions>

@@ -20,8 +20,20 @@
 
 package org.rhq.plugins.netservices;
 
+import static org.rhq.plugins.netservices.util.StringUtil.EMPTY_STRING;
+import static org.rhq.plugins.netservices.util.StringUtil.isBlank;
+
+import java.io.Closeable;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
 import org.rhq.core.domain.measurement.MeasurementDataNumeric;
@@ -32,15 +44,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.util.StringUtil;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Set;
 
 /**
  * @author Thomas Segismont
@@ -71,12 +74,12 @@ public class PortNetServiceComponent implements ResourceComponent, MeasurementFa
 
     static PortNetServiceComponentConfiguration createComponentConfiguration(Configuration pluginConfig)
         throws InvalidPluginConfigurationException {
-        String addressString = pluginConfig.getSimpleValue(ConfigKeys.ADDRESS, StringUtil.EMPTY_STRING);
-        if (StringUtil.isBlank(addressString)) {
+        String addressString = pluginConfig.getSimpleValue(ConfigKeys.ADDRESS, EMPTY_STRING);
+        if (isBlank(addressString)) {
             throw new InvalidPluginConfigurationException("Address is not defined");
         }
-        String portString = pluginConfig.getSimpleValue(ConfigKeys.PORT, StringUtil.EMPTY_STRING);
-        if (StringUtil.isBlank(portString)) {
+        String portString = pluginConfig.getSimpleValue(ConfigKeys.PORT, EMPTY_STRING);
+        if (isBlank(portString)) {
             throw new InvalidPluginConfigurationException("Port is not defined");
         }
         int port;

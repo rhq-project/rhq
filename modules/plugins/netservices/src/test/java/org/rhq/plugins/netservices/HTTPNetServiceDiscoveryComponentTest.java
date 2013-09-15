@@ -21,6 +21,16 @@
 package org.rhq.plugins.netservices;
 
 import static org.mockito.Mockito.when;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.METHOD;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.PROXY_HOST;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.PROXY_MODE;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.PROXY_PORT;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.URL;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys.VALIDATE_RESPONSE_PATTERN;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponentConfiguration.HttpMethod.GET;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponentConfiguration.HttpMethod.HEAD;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponentConfiguration.ProxyMode.MANUAL;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponentConfiguration.ProxyMode.SYS_PROPS;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.fail;
 
@@ -34,8 +44,6 @@ import org.rhq.core.domain.resource.ResourceType;
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
-import org.rhq.plugins.netservices.HTTPNetServiceComponent.ConfigKeys;
-import org.rhq.plugins.netservices.HTTPNetServiceComponent.HttpMethod;
 
 /**
  * @author Thomas Segismont
@@ -56,9 +64,9 @@ public class HTTPNetServiceDiscoveryComponentTest {
     protected void setUp() throws Exception {
         httpNetServiceDiscoveryComponent = new HTTPNetServiceDiscoveryComponent();
         configuration = new Configuration();
-        configuration.setSimpleValue(ConfigKeys.URL, "http://www.myhost.com/pipo/molo");
-        configuration.setSimpleValue(ConfigKeys.METHOD, HttpMethod.GET.name());
-        configuration.setSimpleValue(ConfigKeys.VALIDATE_RESPONSE_PATTERN, "(ok|success)");
+        configuration.setSimpleValue(URL, "http://www.myhost.com/pipo/molo");
+        configuration.setSimpleValue(METHOD, GET.name());
+        configuration.setSimpleValue(VALIDATE_RESPONSE_PATTERN, "(ok|success)");
         MockitoAnnotations.initMocks(this);
         when(resourceDiscoveryContext.getResourceType()).thenReturn(resourceType);
     }
@@ -83,7 +91,7 @@ public class HTTPNetServiceDiscoveryComponentTest {
     @Test
     public void testMissingUrl() {
         try {
-            configuration.remove(ConfigKeys.URL);
+            configuration.remove(URL);
             httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
             fail("Component configuration should be invalid");
         } catch (InvalidPluginConfigurationException e) {
@@ -95,7 +103,7 @@ public class HTTPNetServiceDiscoveryComponentTest {
     public void testMalformedUrl() {
         String configUrl = "pipomolo";
         try {
-            configuration.setSimpleValue(ConfigKeys.URL, configUrl);
+            configuration.setSimpleValue(URL, configUrl);
             httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
             fail("Component configuration should be invalid");
         } catch (InvalidPluginConfigurationException e) {
@@ -107,7 +115,7 @@ public class HTTPNetServiceDiscoveryComponentTest {
     public void testNotHttpOrHttpsUrl() {
         String configUrl = "ftp://pipo.com/molo.zipo";
         try {
-            configuration.setSimpleValue(ConfigKeys.URL, configUrl);
+            configuration.setSimpleValue(URL, configUrl);
             httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
             fail("Component configuration should be invalid");
         } catch (InvalidPluginConfigurationException e) {
@@ -118,7 +126,7 @@ public class HTTPNetServiceDiscoveryComponentTest {
     @Test
     public void testHttpsUrl() {
         try {
-            configuration.setSimpleValue(ConfigKeys.URL, "https://www.myhost.com/pipo/molo");
+            configuration.setSimpleValue(URL, "https://www.myhost.com/pipo/molo");
             DiscoveredResourceDetails resourceDetails = httpNetServiceDiscoveryComponent.discoverResource(
                 configuration, resourceDiscoveryContext);
             assertEquals(resourceDetails.getResourceType(), resourceType);
@@ -131,7 +139,7 @@ public class HTTPNetServiceDiscoveryComponentTest {
     public void testInvalidHttpMethod() {
         String configMethod = "DELETE";
         try {
-            configuration.setSimpleValue(ConfigKeys.METHOD, configMethod);
+            configuration.setSimpleValue(METHOD, configMethod);
             httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
             fail("Component configuration should be invalid");
         } catch (InvalidPluginConfigurationException e) {
@@ -142,8 +150,8 @@ public class HTTPNetServiceDiscoveryComponentTest {
     @Test
     public void testHeadMethod() {
         try {
-            configuration.setSimpleValue(ConfigKeys.METHOD, HttpMethod.HEAD.name());
-            configuration.remove(ConfigKeys.VALIDATE_RESPONSE_PATTERN);
+            configuration.setSimpleValue(METHOD, HEAD.name());
+            configuration.remove(VALIDATE_RESPONSE_PATTERN);
             DiscoveredResourceDetails resourceDetails = httpNetServiceDiscoveryComponent.discoverResource(
                 configuration, resourceDiscoveryContext);
             assertEquals(resourceDetails.getResourceType(), resourceType);
@@ -155,7 +163,7 @@ public class HTTPNetServiceDiscoveryComponentTest {
     @Test
     public void testUnableToValidateContentWithHeadRequest() {
         try {
-            configuration.setSimpleValue(ConfigKeys.METHOD, HttpMethod.HEAD.name());
+            configuration.setSimpleValue(METHOD, HEAD.name());
             httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
             fail("Component configuration should be invalid");
         } catch (InvalidPluginConfigurationException e) {
@@ -167,7 +175,7 @@ public class HTTPNetServiceDiscoveryComponentTest {
     public void testInvalidPatternSyntax() {
         String configValidateResponsePattern = "(pipo";
         try {
-            configuration.setSimpleValue(ConfigKeys.VALIDATE_RESPONSE_PATTERN, configValidateResponsePattern);
+            configuration.setSimpleValue(VALIDATE_RESPONSE_PATTERN, configValidateResponsePattern);
             httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
             fail("Component configuration should be invalid");
         } catch (InvalidPluginConfigurationException e) {
@@ -175,4 +183,82 @@ public class HTTPNetServiceDiscoveryComponentTest {
         }
     }
 
+    @Test
+    public void testSystemPropertiesProxyMode() {
+        try {
+            configuration.setSimpleValue(PROXY_MODE, SYS_PROPS.name());
+            DiscoveredResourceDetails resourceDetails = httpNetServiceDiscoveryComponent.discoverResource(
+                configuration, resourceDiscoveryContext);
+            assertEquals(resourceDetails.getResourceType(), resourceType);
+        } catch (InvalidPluginConfigurationException e) {
+            fail("Component configuration should be valid", e);
+        }
+    }
+
+    @Test
+    public void testManualProxyMode() {
+        try {
+            configuration.setSimpleValue(PROXY_MODE, MANUAL.name());
+            configuration.setSimpleValue(PROXY_HOST, "www.proxy.net");
+            configuration.setSimpleValue(PROXY_PORT, "8080");
+            DiscoveredResourceDetails resourceDetails = httpNetServiceDiscoveryComponent.discoverResource(
+                configuration, resourceDiscoveryContext);
+            assertEquals(resourceDetails.getResourceType(), resourceType);
+        } catch (InvalidPluginConfigurationException e) {
+            fail("Component configuration should be valid", e);
+        }
+    }
+
+    @Test
+    public void testMissingHostForManualProxyMode() {
+        try {
+            configuration.setSimpleValue(PROXY_MODE, MANUAL.name());
+            httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
+            fail("Component configuration should be invalid");
+        } catch (InvalidPluginConfigurationException e) {
+            assertEquals(e.getMessage(), "In '" + MANUAL.name() + "' proxy mode the " + PROXY_HOST
+                + " property must be set");
+        }
+    }
+
+    @Test
+    public void testMissingPortForManualProxyMode() {
+        try {
+            configuration.setSimpleValue(PROXY_MODE, MANUAL.name());
+            configuration.setSimpleValue(PROXY_HOST, "www.proxy.net");
+            httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
+            fail("Component configuration should be invalid");
+        } catch (InvalidPluginConfigurationException e) {
+            assertEquals(e.getMessage(), "In '" + MANUAL.name() + "' proxy mode the " + PROXY_PORT
+                + " property must be set");
+        }
+    }
+
+    @Test
+    public void testNotANumberPortForManualProxyMode() {
+        String configProxyPort = "pipomolo";
+        try {
+            configuration.setSimpleValue(PROXY_MODE, MANUAL.name());
+            configuration.setSimpleValue(PROXY_HOST, "www.proxy.net");
+            configuration.setSimpleValue(PROXY_PORT, configProxyPort);
+            httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
+            fail("Component configuration should be invalid");
+        } catch (InvalidPluginConfigurationException e) {
+            assertEquals(e.getMessage(), configProxyPort + " is not a number");
+        }
+    }
+
+    @Test
+    public void testNotAValidPortNumberForManualProxyMode() {
+        String configProxyPort = "99999999";
+        try {
+            configuration.setSimpleValue(PROXY_MODE, MANUAL.name());
+            configuration.setSimpleValue(PROXY_HOST, "www.proxy.net");
+            configuration.setSimpleValue(PROXY_PORT, configProxyPort);
+            httpNetServiceDiscoveryComponent.discoverResource(configuration, resourceDiscoveryContext);
+            fail("Component configuration should be invalid");
+        } catch (InvalidPluginConfigurationException e) {
+            assertEquals(e.getMessage(), configProxyPort + " is not a valid port number");
+        }
+    }
 }

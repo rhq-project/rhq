@@ -270,7 +270,7 @@ public abstract class AbstractOperationHistoryPortlet extends OperationHistoryVi
     }
 
     public void startRefreshCycle() {
-        refreshTimer = AutoRefreshUtil.startRefreshCycle(this, this, refreshTimer);
+        refreshTimer = AutoRefreshUtil.startRefreshCycleWithPageRefreshInterval(this, this, refreshTimer);
     }
 
     public boolean isRefreshing() {

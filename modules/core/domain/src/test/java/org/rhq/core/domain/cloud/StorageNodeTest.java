@@ -22,7 +22,6 @@
  */
 package org.rhq.core.domain.cloud;
 
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import org.rhq.core.domain.cloud.StorageNode.OperationMode;
@@ -33,79 +32,48 @@ public class StorageNodeTest {
         StorageNode localhost1 = new StorageNode();
         assert localhost1 != null;
         assert !localhost1.equals(null);
-        
+
         StorageNode localhost2 = new StorageNode();
         assert localhost2 != null;
         assert localhost1.equals(localhost2);
         assert localhost2.equals(localhost1);
-        
+
         localhost1.setAddress("127.0.0.1");
         assert !localhost1.equals(localhost2);
         assert !localhost2.equals(localhost1);
-        
+
         localhost2.setAddress("127.0.0.1");
         assert localhost1.equals(localhost2);
         assert localhost2.equals(localhost1);
-        
+
         StorageNode localhost3 = new StorageNode(42);
         localhost3.setAddress("sn.com");
         assert !localhost3.equals(null);
         assert !localhost3.equals(localhost1);
         assert localhost3.hashCode() != localhost1.hashCode();
         assert localhost2.hashCode() == localhost1.hashCode();
-        
+
         localhost3.setAddress("127.0.0.1");
         assert localhost3.equals(localhost1);
         assert localhost3.hashCode() == localhost1.hashCode();
     }
 
-    public void testParseNodeInformation1() {
+    public void testNodeInformation1() {
         StorageNode localhost1 = new StorageNode();
-        localhost1.parseNodeInformation("127.0.0.1|1234|4321");
+        localhost1.setAddress("127.0.0.1");
+        localhost1.setCqlPort(4321);
         assert "127.0.0.1".equals(localhost1.getAddress());
-        assert localhost1.getJmxPort() == 1234;
         assert localhost1.getCqlPort() == 4321;
-        assert "service:jmx:rmi:///jndi/rmi://127.0.0.1:1234/jmxrmi".equals(localhost1.getJMXConnectionURL());
-        
+
         localhost1.setOperationMode(OperationMode.INSTALLED);
         assert localhost1.getOperationMode() == OperationMode.INSTALLED;
         assert localhost1.getOperationMode().getMessage() != null;
         assert localhost1.getOperationMode().getMessage() != null;
         localhost1.setMtime(42);
         assert localhost1.getMtime() == 42;
-        
+
         StorageNode localhost2 = new StorageNode();
-        localhost2.parseNodeInformation("127.0.0.1|1235|5321");
+        localhost2.setAddress("127.0.0.1");
         assert localhost1.equals(localhost2);
-        assert !localhost1.getJMXConnectionURL().equals(localhost2.getJMXConnectionURL());
-    }
-    
-    public void testParseNodeInformation2() {
-        StorageNode localhost1 = new StorageNode();
-        try {
-            localhost1.parseNodeInformation("127.0.0.1|1234|4321|foo");
-            Assert.fail("The exception (IllegalArgumentException) should be thrown!");
-        } catch (IllegalArgumentException e) {
-        }
-        try {
-            localhost1.parseNodeInformation("127.0.0.1|1234");
-            Assert.fail("The exception (IllegalArgumentException) should be thrown!");
-        } catch (IllegalArgumentException e) {
-        }
-        try {
-            localhost1.parseNodeInformation("127.0.0.1|aaaa|4321");
-            Assert.fail("The exception (NumberFormatException) should be thrown!");
-        } catch (NumberFormatException e) {
-        }
-        try {
-            localhost1.parseNodeInformation("127.0.0.1|1234|bbbb");
-            Assert.fail("The exception (NumberFormatException) should be thrown!");
-        } catch (NumberFormatException e) {
-        }
-        try {
-            localhost1.parseNodeInformation(null);
-            Assert.fail("The exception (NullPointerException) should be thrown!");
-        } catch (NullPointerException e) {
-        }
     }
 }

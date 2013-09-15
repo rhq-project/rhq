@@ -688,7 +688,7 @@
         <c:simple-property name="no-recovery" required="false" type="boolean" readOnly="true" description="if true no recovery are tried for this connection pool"/>
 
         <c:group name="children:xa-datasource-properties:key+-" displayName="XA Datasource Properties">
-          <c:list-property name="*2" displayName="Properties" required="false" readOnly="false">
+          <c:list-property name="*2" displayName="Properties" required="true" readOnly="false" min="1">
             <c:map-property name="*:key" displayName="Name" readOnly="false">
               <c:simple-property name="key" displayName="Property-Name" readOnly="false"/>
               <c:simple-property name="value" displayName="Value" readOnly="false"/>

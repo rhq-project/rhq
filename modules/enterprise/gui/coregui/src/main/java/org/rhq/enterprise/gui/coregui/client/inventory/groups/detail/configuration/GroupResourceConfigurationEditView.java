@@ -225,7 +225,8 @@ public class GroupResourceConfigurationEditView extends EnhancedVLayout implemen
 
                 public void onSuccess(Void result) {
                     String configHistoryUrl = LinkManager.getEntityTabLink(EntityContext.forGroup(group),
-                        ResourceDetailView.Tab.CONFIGURATION, ResourceDetailView.ConfigurationSubTab.HISTORY);
+                        ResourceDetailView.Tab.Configuration.NAME,
+                        ResourceDetailView.Tab.Configuration.SubTab.HISTORY);
                     String configHistoryView = configHistoryUrl.substring(1); // chop off the leading '#'
                     Message message = new Message(MSG.view_group_resConfig_edit_saveInitiated_concise(), MSG
                         .view_group_resConfig_edit_saveInitiated_full(group.getResourceType().getName(),

@@ -32,10 +32,15 @@ import javax.ejb.ConcurrencyManagement;
 import javax.ejb.ConcurrencyManagementType;
 import javax.ejb.EJB;
 import javax.ejb.Singleton;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.ProtocolOptions;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.LoggingRetryPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -60,13 +65,14 @@ public class StorageClientManagerBean {
 
     private final Log log = LogFactory.getLog(StorageClientManagerBean.class);
 
-    private static final String USERNAME_PROP = "rhq.cassandra.username";
-    private static final String PASSWORD_PROP = "rhq.cassandra.password";
+    private static final String USERNAME_PROP = "rhq.storage.username";
+    private static final String PASSWORD_PROP = "rhq.storage.password";
     private static final String RHQ_KEYSPACE = "rhq";
 
     @EJB
     private StorageNodeManagerLocal storageNodeManager;
 
+    private Cluster cluster;
     private StorageSession session;
     private MetricsConfiguration metricsConfiguration;
     private MetricsDAO metricsDAO;
@@ -87,7 +93,21 @@ public class StorageClientManagerBean {
         String username = getRequiredStorageProperty(USERNAME_PROP);
         String password = getRequiredStorageProperty(PASSWORD_PROP);
 
-        List<StorageNode> storageNodes = storageNodeManager.getStorageNodes();
+        List<StorageNode> storageNodes = new ArrayList<StorageNode>();
+        for (StorageNode storageNode : storageNodeManager.getStorageNodes()) {
+            // We only want clustered nodes here because we won't be able to connect to
+            // node that is not part of the cluster. The filtering here on the operation
+            // mode is somewhat convservative because we could also include ADD_MAINTENANCE
+            // and REMOVE_MAINTENANCE, but this errors on the side of being safe. Lastly,
+            // if a storage node does not have a resource, then that means it was was
+            // deployed prior to installing the server.
+            if (storageNode.getOperationMode() == StorageNode.OperationMode.NORMAL ||
+                storageNode.getOperationMode() == StorageNode.OperationMode.MAINTENANCE ||
+                storageNode.getResource() == null) {
+                storageNodes.add(storageNode);
+            }
+        }
+
         if (storageNodes.isEmpty()) {
             throw new IllegalStateException(
                 "There is no storage node metadata stored in the relational database. This may have happened as a "
@@ -98,7 +118,7 @@ public class StorageClientManagerBean {
         checkSchemaCompability(username, password, storageNodes);
 
 
-        Session wrappedSession = createSession(username, password, storageNodeManager.getStorageNodes());
+        Session wrappedSession = createSession(username, password, storageNodes);
         session = new StorageSession(wrappedSession);
 
         storageClusterMonitor = new StorageClusterMonitor();
@@ -136,36 +156,49 @@ public class StorageClientManagerBean {
     }
 
     public synchronized void shutdown() {
-        if (!initialized) {
-            log.info("Storage client subsystem is already shut down. Skipping shutdown steps.");
-            return;
+        log.info("Shutting down storage client subsystem");
+
+        if (metricsServer != null) {
+            metricsServer.shutdown();
+            metricsServer = null;
         }
 
-        log.info("Shutting down storage client subsystem");
-        metricsServer.shutdown();
         metricsDAO = null;
-        metricsServer = null;
-        session.getCluster().shutdown();
+
+        try {
+            if (cluster != null) {
+                cluster.shutdown();
+            }
+        } catch (Exception e) {
+            log.error("Failed to shutdown the cluster connection manager for the storage cluster.", e);
+        }
+
+        cluster = null;
         session = null;
         initialized = false;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MetricsDAO getMetricsDAO() {
         return metricsDAO;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MetricsServer getMetricsServer() {
         return metricsServer;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public StorageSession getSession() {
         return session;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public MetricsConfiguration getMetricsConfiguration() {
         return metricsConfiguration;
     }
 
+    @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
     public boolean isClusterAvailable() {
         return storageClusterMonitor != null && storageClusterMonitor.isClusterAvailable();
     }
@@ -192,10 +225,12 @@ public class StorageClientManagerBean {
             log.debug("Storage client compression is disabled");
         }
 
-        Cluster cluster = new ClusterBuilder()
+        cluster = new ClusterBuilder()
             .addContactPoints(hostNames.toArray(new String[hostNames.size()]))
-            .withCredentials(username, password)
+            .withCredentialsObfuscated(username, password)
             .withPort(port)
+            .withLoadBalancingPolicy(new RoundRobinPolicy())
+            .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE))
             .withCompression(compression)
             .build();
 

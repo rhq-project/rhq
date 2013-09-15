@@ -60,6 +60,8 @@ import org.rhq.core.domain.resource.Resource;
         + "          WHERE s.address = :address"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE, query =
         "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode"),
+    @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODES, query =
+        "SELECT s FROM StorageNode s WHERE s.operationMode IN (:operationModes)"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_BY_MODE_EXCLUDING, query =
         "SELECT s FROM StorageNode s WHERE s.operationMode = :operationMode AND s <> :storageNode"),
     @NamedQuery(name = StorageNode.QUERY_FIND_ALL_NOT_INSTALLED, query = "SELECT s FROM StorageNode s WHERE NOT s.operationMode = 'INSTALLED'"),
@@ -99,6 +101,7 @@ public class StorageNode implements Serializable {
     public static final String QUERY_FIND_ALL = "StorageNode.findAll";
     public static final String QUERY_FIND_BY_ADDRESS = "StorageNode.findByAddress";
     public static final String QUERY_FIND_ALL_BY_MODE = "StorageNode.findAllByMode";
+    public static final String QUERY_FIND_ALL_BY_MODES = "StorageNode.findAllByModes";
     public static final String QUERY_FIND_ALL_BY_MODE_EXCLUDING = "StorageNode.findAllByModeExcluding";
     public static final String QUERY_FIND_ALL_NOT_INSTALLED = "StorageNode.findAllCloudMembers";
     public static final String QUERY_DELETE_BY_ID = "StorageNode.deleteById";
@@ -117,9 +120,6 @@ public class StorageNode implements Serializable {
 
     @Column(name = "ADDRESS", nullable = false)
     private String address;
-
-    @Column(name = "JMX_PORT", nullable = false)
-    private int jmxPort;
 
     @Column(name = "CQL_PORT", nullable = false)
     private int cqlPort;
@@ -172,14 +172,6 @@ public class StorageNode implements Serializable {
 
     public void setAddress(String address) {
         this.address = address;
-    }
-
-    public int getJmxPort() {
-        return jmxPort;
-    }
-
-    public void setJmxPort(int jmxPort) {
-        this.jmxPort = jmxPort;
     }
 
     public int getCqlPort() {
@@ -305,15 +297,9 @@ public class StorageNode implements Serializable {
         LEAVING
     }
 
-    public String getJMXConnectionURL() {
-        // GWT doesn't support String.format()
-        String[] split = JMX_CONNECTION_STRING.split("%s");
-        return split[0] + this.address + split[1] + this.jmxPort + split[2];
-    }
-
     @Override
     public String toString() {
-        return "StorageNode[id=" + id + ", address=" + address + ", jmxPort=" + jmxPort + ", cqlPort=" + cqlPort
+        return "StorageNode[id=" + id + ", address=" + address + ", cqlPort=" + cqlPort
             + ", operationMode=" + operationMode + ", mtime=" + mtime + "]";
     }
 
@@ -344,26 +330,13 @@ public class StorageNode implements Serializable {
         final StorageNode other = (StorageNode) obj;
 
         if (address == null) {
-            if (other.address != null) {
+            if (other.getAddress() != null) {
                 return false;
             }
-        } else if (!address.equals(other.address)) {
+        } else if (!address.equals(other.getAddress())) {
             return false;
         }
 
         return true;
     }
-
-    public void parseNodeInformation(String s) {
-        String[] params = s.split("\\|");
-        if (params.length != 3) {
-            throw new IllegalArgumentException("Expected string of the form, hostname|jmxPort|nativeTransportPort: ["
-                + s + "]");
-        }
-
-        this.setAddress(params[0]);
-        this.setJmxPort(Integer.parseInt(params[1]));
-        this.setCqlPort(Integer.parseInt(params[2]));
-    }
-
 }

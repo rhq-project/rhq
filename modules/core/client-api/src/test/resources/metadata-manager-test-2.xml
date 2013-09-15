@@ -3,7 +3,12 @@
         xmlns="urn:xmlns:rhq-plugin">
 
    <depends plugin="Test1" />
-   <server name="Extension Server B" discovery="ServerBComponent" class="ServerBServerComponent"
+
+    <discovery-callbacks>
+        <type-callback type="Extension Server B" plugin="Test2" callbackClass="DiscoveryCallbackTest2"/>
+    </discovery-callbacks>
+
+    <server name="Extension Server B" discovery="ServerBComponent" class="ServerBServerComponent"
            description="Extension Server B Test Server"
            sourcePlugin="Test1" sourceType="Server A">
            

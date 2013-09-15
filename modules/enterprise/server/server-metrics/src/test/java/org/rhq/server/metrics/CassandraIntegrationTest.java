@@ -1,26 +1,20 @@
 /*
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
+ * All rights reserved.
  *
- *  * RHQ Management Platform
- *  * Copyright (C) 2005-2012 Red Hat, Inc.
- *  * All rights reserved.
- *  *
- *  * This program is free software; you can redistribute it and/or modify
- *  * it under the terms of the GNU General Public License, version 2, as
- *  * published by the Free Software Foundation, and/or the GNU Lesser
- *  * General Public License, version 2.1, also as published by the Free
- *  * Software Foundation.
- *  *
- *  * This program is distributed in the hope that it will be useful,
- *  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
- *  * GNU General Public License and the GNU Lesser General Public License
- *  * for more details.
- *  *
- *  * You should have received a copy of the GNU General Public License
- *  * and the GNU Lesser General Public License along with this program;
- *  * if not, write to the Free Software Foundation, Inc.,
- *  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation version 2 of the License.
  *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
 package org.rhq.server.metrics;
@@ -64,6 +58,9 @@ import org.rhq.server.metrics.domain.SimplePagedResult;
 @Listeners({CCMTestNGListener.class})
 public class CassandraIntegrationTest {
 
+    private static final String RHQADMIN = "rhqadmin";
+    private static final String RHQADMIN_PASSWORD = "1eeb2f255e832171df8592078de921bc";
+
     protected static Session session;
 
     protected static StorageSession storageSession;
@@ -73,13 +70,13 @@ public class CassandraIntegrationTest {
     private final Log log = LogFactory.getLog(CassandraIntegrationTest.class);
 
     @BeforeSuite
-    @DeployCluster(numNodes = 2, username = "rhqadmin", password = "rhqadmin", waitForSchemaAgreement = true)
+    @DeployCluster(numNodes = 2, username = RHQADMIN, password = RHQADMIN_PASSWORD, waitForSchemaAgreement = true)
     public void deployCluster() throws Exception {
         dateTimeService = new DateTimeService();
 
         Cluster cluster = new ClusterBuilder()
-            .addContactPoints("127.0.0.1", "127.0.02")
-            .withCredentials("rhqadmin", "rhqadmin")
+            .addContactPoints("127.0.0.1", "127.0.0.2")
+            .withCredentialsObfuscated(RHQADMIN, RHQADMIN_PASSWORD)
             .build();
 
         cluster.register(new Host.StateListener() {

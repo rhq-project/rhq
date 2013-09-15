@@ -180,9 +180,9 @@
     <el.version>1.0</el.version>
 
     <!-- cassandra dependency versions -->
-    <cassandra.version>1.2.4</cassandra.version>
+    <cassandra.version>1.2.9</cassandra.version>
     <cassandra.thrift.version>0.7.0</cassandra.thrift.version>
-    <cassandra.driver.version>1.0.2-rhq-1.2.4</cassandra.driver.version>
+    <cassandra.driver.version>1.0.2</cassandra.driver.version>
     <cassandra.driver.netty.version>3.6.3.Final</cassandra.driver.netty.version>
     <cassandra.snappy.version>1.0.4.1-rhq-p1</cassandra.snappy.version>
     <cassandra.snakeyaml.version>1.6</cassandra.snakeyaml.version>
@@ -1625,6 +1625,16 @@
 
       </repository>
 
+      <!-- this is needed for swagger-annotations_2.9.1 in modules/enterprise/server/jar -->
+      <repository>
+          <id>sonatype-snapshots</id>
+          <name>Sonatype Snapshots</name>
+          <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+          <snapshots>
+             <enabled>true</enabled>
+          </snapshots>
+      </repository>
+
   </repositories>
 
   <pluginRepositories>
@@ -2409,6 +2419,11 @@
             <name>Rafael Chies</name>
             <timezone>-7</timezone>
             <url>http://blogdorafaelchies.wordpress.com/</url>
+        </contributor>
+        <contributor>
+            <name>Jérémie Lagarde</name>
+            <timezone>+1</timezone>
+            <url>http://printstacktrace.org/blog/</url>
         </contributor>
     </contributors>
 

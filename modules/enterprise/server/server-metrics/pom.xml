@@ -45,30 +45,11 @@
   </properties>
 
   <dependencies>
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>rhq-cassandra-ccm-testng</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-    </dependency>
 
     <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-core-domain</artifactId>
       <version>${project.version}</version>
-    </dependency>
-
-    <dependency>
-      <groupId>${project.groupId}</groupId>
-      <artifactId>test-utils</artifactId>
-      <version>${project.version}</version>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.slf4j</groupId>
-          <artifactId>slf4j-nop</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
 
     <dependency>
@@ -80,6 +61,7 @@
       <groupId>com.datastax.cassandra</groupId>
       <artifactId>cassandra-driver-core</artifactId>
       <version>${cassandra.driver.version}</version>
+      <scope>provided</scope>
     </dependency>
 
     <dependency>
@@ -121,6 +103,28 @@
       <artifactId>hibernate-entitymanager</artifactId>
     </dependency>
 
+    <!-- Test dependencies -->
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>rhq-cassandra-ccm-testng</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>${project.groupId}</groupId>
+      <artifactId>test-utils</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>org.slf4j</groupId>
+          <artifactId>slf4j-nop</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+
     <dependency>
       <groupId>org.powermock</groupId>
       <artifactId>powermock-module-testng</artifactId>
@@ -129,10 +133,16 @@
     </dependency>
 
     <dependency>
-       <groupId>org.powermock</groupId>
-       <artifactId>powermock-api-mockito</artifactId>
-       <version>${powermock.version}</version>
-       <scope>test</scope>
+      <groupId>org.powermock</groupId>
+      <artifactId>powermock-api-mockito</artifactId>
+      <version>${powermock.version}</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.picketbox</groupId>
+      <artifactId>picketbox</artifactId>
+      <scope>test</scope>
     </dependency>
 
   </dependencies>

@@ -19,24 +19,35 @@
 
 package org.rhq.plugins.netservices;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static org.rhq.plugins.netservices.HTTPNetServiceComponentConfiguration.createComponentConfiguration;
+import static org.rhq.plugins.netservices.util.StringUtil.EMPTY_STRING;
+import static org.rhq.plugins.netservices.util.StringUtil.isNotBlank;
+
+import java.io.IOException;
+import java.net.ProxySelector;
 import java.util.Date;
 import java.util.Set;
-import java.util.regex.Pattern;
-import java.util.regex.PatternSyntaxException;
 
-import org.apache.commons.httpclient.Header;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethodBase;
-import org.apache.commons.httpclient.SimpleHttpConnectionManager;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.HeadMethod;
-import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.http.Header;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.HttpResponse;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpHead;
+import org.apache.http.client.methods.HttpRequestBase;
+import org.apache.http.client.params.HttpClientParams;
+import org.apache.http.conn.params.ConnRoutePNames;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.BasicClientConnectionManager;
+import org.apache.http.impl.conn.ProxySelectorRoutePlanner;
+import org.apache.http.impl.cookie.DateUtils;
+import org.apache.http.params.HttpParams;
+import org.apache.http.util.EntityUtils;
 
 import org.rhq.core.domain.configuration.Configuration;
 import org.rhq.core.domain.measurement.AvailabilityType;
@@ -47,7 +58,6 @@ import org.rhq.core.pluginapi.inventory.InvalidPluginConfigurationException;
 import org.rhq.core.pluginapi.inventory.ResourceComponent;
 import org.rhq.core.pluginapi.inventory.ResourceContext;
 import org.rhq.core.pluginapi.measurement.MeasurementFacet;
-import org.rhq.core.util.StringUtil;
 
 /**
  * Monitoring of HTTP Servers
@@ -70,11 +80,10 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
         public static final String FOLOW_REDIRECTS = "followRedirects";
         public static final String VALIDATE_RESPONSE_CODE = "validateResponseCode";
         public static final String VALIDATE_RESPONSE_PATTERN = "validateResponsePattern";
+        public static final String PROXY_MODE = "proxyMode";
+        public static final String PROXY_HOST = "proxyHost";
+        public static final String PROXY_PORT = "proxyPort";
 
-    }
-
-    public static enum HttpMethod {
-        GET, HEAD
     }
 
     private static final Log LOG = LogFactory.getLog(HTTPNetServiceComponent.class);
@@ -90,61 +99,6 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
         this.resourceContext = resourceContext;
         pluginConfig = resourceContext.getPluginConfiguration();
         componentConfig = createComponentConfiguration(pluginConfig);
-    }
-
-    /**
-     * Create a foram {@link HTTPNetServiceComponentConfiguration} instance with the supplied {@link Configuration}.
-     * May throw {@link InvalidPluginConfigurationException} if:
-     * <ul>
-     * <li>Url is empty, invalid, or pointing an non http/https resource</li>
-     * <li>Http method is not HEAD or GET</li>
-     * <li>If both content validation and HEAD method are configured</li>
-     * <li>If the content validation pattern is invalid</li>
-     * <ul>
-     *
-     * @param pluginConfig
-     * @return
-     * @throws InvalidPluginConfigurationException
-     */
-    static HTTPNetServiceComponentConfiguration createComponentConfiguration(Configuration pluginConfig) {
-
-        URL endPointUrl = null;
-        String configUrl = pluginConfig.getSimpleValue(ConfigKeys.URL, StringUtil.EMPTY_STRING);
-        if (StringUtil.isBlank(configUrl)) {
-            throw new InvalidPluginConfigurationException("Endpoint URL is not defined");
-        }
-        try {
-            endPointUrl = new URL(configUrl);
-        } catch (MalformedURLException e) {
-            throw new InvalidPluginConfigurationException(configUrl + " is not a valid URL");
-        }
-        String protocol = endPointUrl.getProtocol();
-        if (!protocol.equals("http") && !protocol.equals("https")) {
-            throw new InvalidPluginConfigurationException(configUrl + "does not point to an http(s) resource");
-        }
-
-        HttpMethod httpMethod = null;
-        String configMethod = pluginConfig.getSimpleValue(ConfigKeys.METHOD, StringUtil.EMPTY_STRING);
-        try {
-            httpMethod = HttpMethod.valueOf(configMethod);
-        } catch (IllegalArgumentException e) {
-            throw new InvalidPluginConfigurationException("Invalid http method: " + configMethod);
-        }
-
-        Pattern responseValidationPattern = null;
-        String configValidateResponsePattern = pluginConfig.getSimpleValue(ConfigKeys.VALIDATE_RESPONSE_PATTERN);
-        if (configValidateResponsePattern != null) {
-            if (httpMethod.equals(HttpMethod.HEAD)) {
-                throw new InvalidPluginConfigurationException("Cannot validate response content with HEAD request");
-            }
-            try {
-                responseValidationPattern = Pattern.compile(configValidateResponsePattern);
-            } catch (PatternSyntaxException e) {
-                throw new InvalidPluginConfigurationException("Invalid pattern: " + configValidateResponsePattern);
-            }
-        }
-
-        return new HTTPNetServiceComponentConfiguration(endPointUrl, httpMethod, responseValidationPattern);
     }
 
     @Override
@@ -171,52 +125,67 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
     private boolean getValuesOrAvailability(MeasurementReport report, Set<MeasurementScheduleRequest> metrics)
         throws Exception {
 
-        SimpleHttpConnectionManager httpConnectionManager = new SimpleHttpConnectionManager();
-        HttpClient client = new HttpClient(httpConnectionManager);
+        BasicClientConnectionManager httpConnectionManager = new BasicClientConnectionManager();
+        DefaultHttpClient client = new DefaultHttpClient(httpConnectionManager);
 
-        String userName = pluginConfig.getSimpleValue(ConfigKeys.USER, StringUtil.EMPTY_STRING);
+        String userName = pluginConfig.getSimpleValue(ConfigKeys.USER, EMPTY_STRING);
         // Set credentials only if a user name is configured
-        if (StringUtil.isNotBlank(userName)) {
-            String password = pluginConfig.getSimpleValue(ConfigKeys.PASSWORD, StringUtil.EMPTY_STRING);
+        if (isNotBlank(userName)) {
+            String password = pluginConfig.getSimpleValue(ConfigKeys.PASSWORD, EMPTY_STRING);
             String realm = pluginConfig.getSimpleValue(ConfigKeys.REALM, AuthScope.ANY_REALM);
-            client.getState().setCredentials(
+            client.getCredentialsProvider().setCredentials(
                 new AuthScope(componentConfig.getEndPointUrl().getHost(), componentConfig.getEndPointUrl().getPort(),
                     realm), new UsernamePasswordCredentials(userName, password));
         }
 
-        HttpMethodBase method = null;
+        HttpRequestBase method;
         switch (componentConfig.getHttpMethod()) {
         case GET:
-            method = new GetMethod(componentConfig.getEndPointUrl().toExternalForm());
+            method = new HttpGet(componentConfig.getEndPointUrl().toExternalForm());
             break;
         case HEAD:
-            method = new HeadMethod(componentConfig.getEndPointUrl().toExternalForm());
+            method = new HttpHead(componentConfig.getEndPointUrl().toExternalForm());
             break;
         default:
             throw new RuntimeException("Unsupported http method: '" + componentConfig.getHttpMethod() + "'");
         }
         Boolean followRedirects = pluginConfig.getSimple(ConfigKeys.FOLOW_REDIRECTS).getBooleanValue();
-        method.setFollowRedirects(followRedirects == null ? false : followRedirects.booleanValue());
+        HttpParams httpParams = client.getParams();
+        HttpClientParams.setRedirecting(httpParams, followRedirects == null ? false : followRedirects.booleanValue());
+
+        switch (componentConfig.getProxyMode()) {
+        case MANUAL:
+            HttpHost proxy = new HttpHost(componentConfig.getProxyHost(), componentConfig.getProxyPort());
+            httpParams.setParameter(ConnRoutePNames.DEFAULT_PROXY, proxy);
+            break;
+        case SYS_PROPS:
+            ProxySelectorRoutePlanner routePlanner = new ProxySelectorRoutePlanner(client.getConnectionManager()
+                .getSchemeRegistry(), ProxySelector.getDefault());
+            client.setRoutePlanner(routePlanner);
+            break;
+        default:
+        }
 
         try {
 
-            long start = System.currentTimeMillis();
-            int responseCode = client.executeMethod(method);
-            long connectTime = System.currentTimeMillis() - start;
+            long start = System.nanoTime();
+            HttpResponse response = client.execute(method);
+            long connectTime = NANOSECONDS.toMillis(System.nanoTime() - start);
 
             // Availability may depend on reponse code value 
+            int responseCode = response.getStatusLine().getStatusCode();
             boolean success = !pluginConfig.getSimple(ConfigKeys.VALIDATE_RESPONSE_CODE).getBooleanValue()
                 || (responseCode >= 200 && responseCode <= 299);
             // Availability may depend on reponse content matching a pattern
             success = success
                 && (componentConfig.getResponseValidationPattern() == null || componentConfig
-                    .getResponseValidationPattern().matcher(method.getResponseBodyAsString()).find());
+                    .getResponseValidationPattern().matcher(getResponseBody(response)).find());
 
-            long readTime = (System.currentTimeMillis() - start);
+            long readTime = NANOSECONDS.toMillis(System.nanoTime() - start);
 
-            Header dateHeader = method.getResponseHeader("Date");
-            Date contentDate = dateHeader == null ? new Date(System.currentTimeMillis()) : DateUtil
-                .parseDate(dateHeader.getValue());
+            Header dateHeader = response.getFirstHeader("Date");
+            Date contentDate = dateHeader == null ? null : DateUtils.parseDate(dateHeader.getValue());
+            HttpEntity entity = response.getEntity();
 
             if (metrics != null) {
                 for (MeasurementScheduleRequest request : metrics) {
@@ -225,10 +194,14 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
                     } else if (request.getName().equals("readTime")) {
                         report.addData(new MeasurementDataNumeric(request, (double) readTime));
                     } else if (request.getName().equals("contentLength")) {
-                        report.addData(new MeasurementDataNumeric(request, (double) method.getResponseContentLength()));
+                        if (entity != null) {
+                            report.addData(new MeasurementDataNumeric(request, (double) entity.getContentLength()));
+                        }
                     } else if (request.getName().equals("contentAge")) {
-                        report.addData(new MeasurementDataNumeric(request,
-                            (double) (System.currentTimeMillis() - contentDate.getTime())));
+                        if (contentDate != null) {
+                            report.addData(new MeasurementDataNumeric(request,
+                                (double) (System.currentTimeMillis() - contentDate.getTime())));
+                        }
                     }
                 }
             }
@@ -238,12 +211,16 @@ public class HTTPNetServiceComponent implements ResourceComponent, MeasurementFa
         } catch (Exception e) {
             LOG.error(e);
         } finally {
-            // First release connection
-            method.releaseConnection();
-            // Then force close
-            httpConnectionManager.closeIdleConnections(0);
+            method.abort();
+            client.getConnectionManager().shutdown();
         }
         return false;
+    }
+
+    private String getResponseBody(HttpResponse response) throws IOException {
+        HttpEntity httpResponseEntity = response.getEntity();
+        return httpResponseEntity == null ? EMPTY_STRING : EntityUtils.toString(httpResponseEntity);
+
     }
 
 }

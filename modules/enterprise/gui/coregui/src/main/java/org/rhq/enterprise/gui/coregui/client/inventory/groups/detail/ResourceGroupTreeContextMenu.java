@@ -23,6 +23,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.groups.detail;
 
 import com.google.gwt.user.client.rpc.AsyncCallback;
+import com.smartgwt.client.widgets.layout.VLayout;
 import com.smartgwt.client.widgets.tree.TreeGrid;
 
 import org.rhq.core.domain.criteria.ResourceGroupCriteria;
@@ -43,7 +44,8 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
         super();
     }
 
-    public void showContextMenu(final TreeGrid treeGrid, final ResourceGroupEnhancedTreeNode node) {
+    public void showContextMenu(final VLayout treeView, final TreeGrid treeGrid,
+        final ResourceGroupEnhancedTreeNode node) {
 
         if (node.isAutoClusterNode()) {
             final ClusterKey clusterKey = (ClusterKey) node.getAttributeAsObject("key");
@@ -57,7 +59,7 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
 
                     @Override
                     public void onSuccess(ResourceGroup result) {
-                        showContextMenu(treeGrid, node, result);
+                        showContextMenu(treeView, treeGrid, node, result);
                     }
                 });
 
@@ -74,7 +76,7 @@ public class ResourceGroupTreeContextMenu extends ResourceGroupContextMenu {
 
                     @Override
                     public void onSuccess(PageList<ResourceGroup> result) {
-                        showContextMenu(treeGrid, node, result.get(0));
+                        showContextMenu(treeView, treeGrid, node, result.get(0));
                     }
                 });
         }

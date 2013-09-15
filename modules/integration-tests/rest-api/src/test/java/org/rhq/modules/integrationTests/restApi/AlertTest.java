@@ -24,6 +24,7 @@ import java.util.List;
 import com.jayway.restassured.config.RedirectConfig;
 import com.jayway.restassured.config.RestAssuredConfig;
 import com.jayway.restassured.http.ContentType;
+import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.path.xml.XmlPath;
 import com.jayway.restassured.response.Response;
 
@@ -666,7 +667,7 @@ public class AlertTest extends AbstractBase {
 
         int definitionId = createEmptyAlertDefinition(false);
 
-        int metricDefinitionId = findAMetricDefinition(_platformTypeId, "metric");
+        int metricDefinitionId = findAMetricDefinitionForResourceId(_platformId, "metric");
 
         // Now add a condition
         try {
@@ -706,7 +707,7 @@ public class AlertTest extends AbstractBase {
 
         int definitionId = createEmptyAlertDefinition(false);
 
-        int metricDefinitionId = findAMetricDefinition(_platformTypeId, "metric");
+        int metricDefinitionId = findAMetricDefinitionForResourceId(_platformId, "metric");
 
         // Now add a condition
         try {
@@ -769,7 +770,7 @@ public class AlertTest extends AbstractBase {
         }
     }
 
-    private int findAMetricDefinition(int resourceId, String type) {
+    private int findAMetricDefinitionForResourceId(int resourceId, String type) {
         Response response =
         given()
             .pathParam("id",resourceId)
@@ -781,9 +782,10 @@ public class AlertTest extends AbstractBase {
         .when()
             .get("/resource/{id}/schedules");
 
-        int scheduleId = response.jsonPath().getInt("[0].definitionId");
+        JsonPath jsonPath = response.jsonPath();
+        int definitionId = jsonPath.getInt("[0].definitionId");
 
-        return scheduleId;
+        return definitionId;
     }
 
     @Test
@@ -1122,9 +1124,37 @@ public class AlertTest extends AbstractBase {
     }
 
     @Test
+    public void testCreateUpdateConditionWithBadMetricDefinition() throws Exception {
+
+        int definitionId = createEmptyAlertDefinition(false);
+
+        try {
+            AlertCondition condition = new AlertCondition("THRESHOLD", "LESS_THAN");
+            condition.setOption("12345");
+            condition.setComparator(">");
+            condition.setMeasurementDefinition(10173);
+
+            given()
+                .header(acceptJson)
+                .contentType(ContentType.JSON)
+                .body(condition)
+                .pathParam("defId", definitionId)
+            .expect()
+                .statusCode(406)
+                .log().ifError()
+            .when()
+                .post("/alert/definition/{defId}/conditions");
+        } finally {
+            cleanupDefinition(definitionId);
+        }
+    }
+
+        @Test
     public void testCRUDCondition() throws Exception {
 
         int definitionId = createEmptyAlertDefinition(false);
+        int metricDefinitionId = findAMetricDefinitionForResourceId(_platformId, "metric");
+
 
         // Now add a condition
         try {
@@ -1132,7 +1162,7 @@ public class AlertTest extends AbstractBase {
             AlertCondition condition = new AlertCondition("THRESHOLD", "LESS_THAN");
             condition.setOption("12345");
             condition.setComparator(">");
-            condition.setMeasurementDefinition(10173);
+            condition.setMeasurementDefinition(metricDefinitionId);
 
             Integer cid =
             given()
@@ -2236,7 +2266,7 @@ public class AlertTest extends AbstractBase {
             alertCondition.setOption(".*JBAS123.*");
             addConditionToDefinition(definitionId, alertCondition);
 
-            int metricDef = findAMetricDefinition(_platformId,"metric");
+            int metricDef = findAMetricDefinitionForResourceId(_platformId, "metric");
             assert metricDef != 0;
             alertCondition = new AlertCondition("THRESHOLD");
             alertCondition.setComparator("<");
@@ -2259,7 +2289,7 @@ public class AlertTest extends AbstractBase {
             alertCondition.setMeasurementDefinition(metricDef);
             addConditionToDefinition(definitionId, alertCondition);
 
-            int traitDef = findAMetricDefinition(_platformId,"trait");
+            int traitDef = findAMetricDefinitionForResourceId(_platformId, "trait");
             assert traitDef!=0;
             alertCondition = new AlertCondition("TRAIT");
             alertCondition.setOption("10.*");

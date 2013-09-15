@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+      <artifactId>rhq-plugins-parent</artifactId>
+      <groupId>org.rhq</groupId>
+      <version>4.9.0</version>
+  </parent>
+
+  <artifactId>rhq-sonarqube-plugin</artifactId>
+  <packaging>jar</packaging>
+
+  <name>RHQ SonarQube Plugin</name>
+  <description>RHQ SonarQube Plugin</description>
+  
+  <dependencies>
+
+     <dependency>
+       <groupId>org.json</groupId>
+       <artifactId>json</artifactId>
+       <version>${project.json.version}</version>
+       <scope>provided</scope>
+     </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+
+      <!--
+      If your plugin has third-party jar dependencies that are not already
+      available when deployed in the plugin container, you can package these
+      jars in your plugin. They go in your plugin jar's "lib" directory.
+      Uncomment the maven plugin definition below and define one or more jar
+      files (aka "artifactItem" elements) that you want to include in your
+      plugin jar.
+      -->
+
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <executions>
+          <execution>
+            <id>copy-dependencies</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+
+                 <artifactItem>
+                   <groupId>org.json</groupId>
+                   <artifactId>json</artifactId>
+                   <version>${project.json.version}</version>
+                 </artifactItem>
+
+               </artifactItems>
+               <outputDirectory>${project.build.outputDirectory}/lib</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+

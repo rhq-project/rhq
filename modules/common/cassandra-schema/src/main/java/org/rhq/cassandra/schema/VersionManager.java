@@ -36,6 +36,7 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooAdvancedException;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
 import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
+import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
  * @author Stefan Negrea
@@ -106,7 +107,7 @@ class VersionManager extends AbstractManager {
         properties.put("replication_factor", calculateNewReplicationFactor() + "");
         properties.put("cassandra_user_password", UUID.randomUUID() + "");
         properties.put("rhq_admin_username", getUsername());
-        properties.put("rhq_admin_password", getPassword());
+        properties.put("rhq_admin_password", PicketBoxObfuscator.decode(getPassword()));
 
         /**
          * NOTE: Before applying any schema, we need to create the rhqadmin user. If we have more
@@ -213,6 +214,11 @@ class VersionManager extends AbstractManager {
             //1. Reinstated Cassandra superuser
             execute(updateFolder.getUpdateFiles().get(0), properties);
             log.info("Cassandra user reverted to default configuration.");
+        } catch (AuthenticationException e) {
+            //if the initial auth failed then let later code to attempt to use
+            //the generic user cassandra user to do the cleanup
+            log.debug("Cannot establish connection with the RHQ specific user. "
+                + "Will continue the drop procedure with the Cassandra admin user.");
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {

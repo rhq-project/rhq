@@ -1,9 +1,16 @@
-<plugin name="Test3" displayName="Test Two" package="org.rhq.plugins.test2"
+<plugin name="Test3" displayName="Test Three" package="org.rhq.plugins.test3"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xmlns="urn:xmlns:rhq-plugin">
 
    <depends plugin="Test1" />
    <depends plugin="Test2" />
+
+   <discovery-callbacks>
+       <type-callback type="Server A" plugin="Test1" callbackClass="DiscoveryCallback1"/>
+       <type-callback type="Server A" plugin="Test1" callbackClass="DiscoveryCallbackAnother1"/>
+       <type-callback type="Extension Server B" plugin="Test2" callbackClass="DiscoveryCallback2"/>
+   </discovery-callbacks>
+
    <server name="Injection C To Server A" discovery="ServerCComponent" class="ServerCServerComponent"
            description="injects child C to server A and server B">
       <runs-inside>

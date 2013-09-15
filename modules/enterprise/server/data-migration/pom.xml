@@ -20,6 +20,12 @@
 
  <dependencies>
     <dependency>
+      <groupId>${rhq.groupId}</groupId>
+      <artifactId>rhq-core-util</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+
+    <dependency>
       <groupId>${project.groupId}</groupId>
       <artifactId>rhq-server-metrics</artifactId>
       <version>${project.version}</version>
@@ -141,6 +147,11 @@
                 <artifactItem>
                   <groupId>${project.groupId}</groupId>
                   <artifactId>rhq-server-metrics</artifactId>
+                  <version>${project.version}</version>
+                </artifactItem>
+                <artifactItem>
+                  <groupId>${project.groupId}</groupId>
+                  <artifactId>rhq-core-util</artifactId>
                   <version>${project.version}</version>
                 </artifactItem>
                 <artifactItem>

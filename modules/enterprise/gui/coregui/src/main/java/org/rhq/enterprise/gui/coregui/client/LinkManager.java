@@ -276,6 +276,10 @@ public class LinkManager {
 
         return link;
     }
+    
+    public static String getStorageNodeLink(int storageNodeId) {
+        return "#Administration/Topology/StorageNodes/" + storageNodeId;
+    }
 
     public static String getAutodiscoveryQueueLink() {
         if (GWT) {
@@ -503,6 +507,10 @@ public class LinkManager {
 
     public static String getBundleLink(int bundleId) {
         return "#Bundles/Bundle/" + bundleId;
+    }
+
+    public static String getBundleGroupLink(int bundleGroupId) {
+        return "#Bundles/BundleGroup/" + bundleGroupId;
     }
 
     public static String getBundleVersionLink(int bundleId, int bundleVersionId) {

@@ -138,6 +138,7 @@ public class StorageInstallerTest {
         assertEquals(properties.getProperty("heap_min"), "-Xms512M", "The heap_min property is wrong");
         assertEquals(properties.getProperty("heap_max"), "-Xmx512M", "The heap_max property is wrong");
         assertEquals(properties.getProperty("heap_new"), "-Xmn128M", "The heap_new property is wrong");
+        assertEquals(properties.getProperty("thread_stack_size"), "-Xss256k", "The thread_stack_size property is wrong");
     }
 
     @Test

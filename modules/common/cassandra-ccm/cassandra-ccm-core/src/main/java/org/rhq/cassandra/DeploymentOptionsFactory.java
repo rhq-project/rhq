@@ -35,21 +35,11 @@ public class DeploymentOptionsFactory {
     /**
      * @return A new {@link DeploymentOptions}. This method checks the platform arch
      * (32 bit vs 64 bit) and the JRE being used to determine if any particular defaults
-     * need to be set. For example, on 32 bit arches running on OpenJDK 6, Cassandra
-     * cannot use its default thread stack stack of 180k. It causes the JVM to segfault on
-     * start up. When this runtime environment is detected, the factory will set the
-     * appropriate system property so that a default thread stack of 240k is used. That
-     * can be overridden by calling {@link DeploymentOptions#setStackSize(String)}.
+     * need to be set.
      */
     public DeploymentOptions newDeploymentOptions() {
-        String arch = System.getProperty("os.arch");
-        String javaVMName = System.getProperty("java.vm.name");
-        String javaVersion = System.getProperty("java.version");
-
-        if ((arch.equals("i386") || arch.equals("amd64") || arch.equals("i686")) && javaVMName.startsWith("OpenJDK")) {
-            System.setProperty("rhq.cassandra.stack.size", "240k");
-        }
-
+        // Make sure we have a high enough stack size. See https://bugzilla.redhat.com/show_bug.cgi?id=1008090
+        System.setProperty("rhq.cassandra.stack.size", "256k");
         return new DeploymentOptions();
     }
 

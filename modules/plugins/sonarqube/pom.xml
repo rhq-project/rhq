@@ -6,7 +6,7 @@
   <parent>
       <artifactId>rhq-plugins-parent</artifactId>
       <groupId>org.rhq</groupId>
-      <version>4.9.0</version>
+      <version>4.7.0.JON</version>
   </parent>
 
   <artifactId>rhq-sonarqube-plugin</artifactId>

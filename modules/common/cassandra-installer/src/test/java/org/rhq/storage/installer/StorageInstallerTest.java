@@ -295,7 +295,7 @@ public class StorageInstallerTest {
             fail("Failed to verify that " + serverPropsFile + " was updated", e);
         }
 
-        assertEquals(properties.getProperty("rhq.storage.nodes"), "127.0.0.1");
+        assertEquals(properties.getProperty("rhq.storage.nodes"), address);
         assertEquals(properties.getProperty("rhq.storage.cql-port"), "9142");
     }
 

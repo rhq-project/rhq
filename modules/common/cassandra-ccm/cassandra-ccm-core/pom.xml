@@ -106,6 +106,13 @@
             <artifactId>netty</artifactId>
             <version>3.6.6.Final</version>
           </dependency>
+          <dependency>
+            <groupId>org.apache.cassandra</groupId>
+            <artifactId>apache-cassandra</artifactId>
+            <version>${cassandra.version}</version>
+            <type>tar.gz</type>
+            <classifier>bin</classifier>
+          </dependency>
         </dependencies>
         <executions>
           <execution>
@@ -128,10 +135,6 @@
                           value="${project.build.directory}/cassandra-download"/>
                 <mkdir dir="${cassandra.download.dir}"/>
                 <mkdir dir="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}"/>
-                <get src="http://repo1.maven.org/maven2/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
-                     dest="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
-                     skipexisting="true"
-                     verbose="true"/>
                 <gunzip src="${settings.localRepository}/org/apache/cassandra/apache-cassandra/${cassandra.version}/apache-cassandra-${cassandra.version}-bin.tar.gz"
                         dest="${cassandra.download.dir}"/>
                 <untar src="${cassandra.download.dir}/apache-cassandra-${cassandra.version}-bin.tar"

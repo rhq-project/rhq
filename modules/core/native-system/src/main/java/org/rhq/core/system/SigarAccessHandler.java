@@ -29,6 +29,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.logging.Log;
@@ -76,6 +78,7 @@ class SigarAccessHandler implements InvocationHandler {
     private final ScheduledExecutorService scheduledExecutorService;
     private volatile int localSigarInstancesCount;
     private Sigar sharedSigar;
+    private volatile boolean closed;
 
     SigarAccessHandler() {
         this(new DefaultSigarFactory());
@@ -85,9 +88,24 @@ class SigarAccessHandler implements InvocationHandler {
         this.sigarFactory = sigarFactory;
         sharedSigarLock = new ReentrantLock();
         localSigarLock = new ReentrantLock();
-        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor();
+        scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(new ThreadFactory() {
+
+            private ThreadFactory defaultThreadFactory = Executors.defaultThreadFactory();
+
+            private AtomicInteger threadCounter = new AtomicInteger(0);
+
+            @Override
+            public Thread newThread(Runnable runnable) {
+                Thread thread = defaultThreadFactory.newThread(runnable);
+                thread.setName("SigarAccessHandler-" + threadCounter.incrementAndGet());
+                // With daemon threads, there is no need to call #shutdown on the executor to let the JVM go down
+                thread.setDaemon(true);
+                return thread;
+            }
+        });
         scheduledExecutorService.scheduleWithFixedDelay(new ThresholdChecker(), 1, 5, MINUTES);
         localSigarInstancesCount = 0;
+        closed = false;
     }
 
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -100,10 +118,13 @@ class SigarAccessHandler implements InvocationHandler {
         // Acquire lock for shared Sigar instance. Wait 'sharedSigarLockMaxWait' seconds at most
         boolean acquiredLock = sharedSigarLock.tryLock(SHARED_SIGAR_LOCK_MAX_WAIT, SECONDS);
         if (acquiredLock) {
-            if (sharedSigar == null) {
-                this.sharedSigar = sigarFactory.createSigarInstance();
-            }
             try {
+                if (closed) {
+                    throw new SystemInfoException("SigarAccess has been closed");
+                }
+                if (sharedSigar == null) {
+                    this.sharedSigar = sigarFactory.createSigarInstance();
+                }
                 return method.invoke(sharedSigar, args);
             } catch (InvocationTargetException e) {
                 throw e.getTargetException();
@@ -150,6 +171,7 @@ class SigarAccessHandler implements InvocationHandler {
         if (sharedSigar != null) {
             sharedSigarLock.lock();
             try {
+                closed = true;
                 sharedSigar.close();
                 sharedSigar = null;
             } finally {

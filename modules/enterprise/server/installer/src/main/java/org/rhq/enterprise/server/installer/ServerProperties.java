@@ -27,6 +27,8 @@ import java.util.Set;
  * @author John Mazzitelli
  */
 public class ServerProperties {
+    public static final String PROP_FILENAME = "rhq-server.properties";
+
     public static final String PROP_DATABASE_TYPE = "rhq.server.database.type-mapping";
     public static final String PROP_DATABASE_CONNECTION_URL = "rhq.server.database.connection-url";
     public static final String PROP_DATABASE_USERNAME = "rhq.server.database.user-name";
@@ -152,7 +154,6 @@ public class ServerProperties {
     static {
         STRING_PROPERTIES = new HashSet<String>();
         STRING_PROPERTIES.add(PROP_JBOSS_BIND_ADDRESS);
-        STRING_PROPERTIES.add(PROP_MGMT_USER_PASSWORD);
     }
 
     public static final Set<String> CLIENT_AUTH_MODES;

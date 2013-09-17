@@ -46,6 +46,7 @@ import org.apache.tools.ant.helper.ProjectHelper2;
 
 import org.jboss.as.controller.client.ModelControllerClient;
 import org.jboss.dmr.ModelNode;
+import org.jboss.sasl.util.UsernamePasswordHashUtil;
 
 import org.rhq.common.jbossas.client.controller.Address;
 import org.rhq.common.jbossas.client.controller.CoreJBossASClient;
@@ -937,10 +938,9 @@ public class ServerInstallUtil {
                 try {
                     LOG.info("Persisting to database new storage nodes for values specified in server configuration property [rhq.storage.nodes]");
 
-                    insertStorageNode = connection.prepareStatement(
-                            "INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime, maintenance_pending) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?)"
-                    );
+                    insertStorageNode = connection
+                        .prepareStatement("INSERT INTO rhq_storage_node (id, address, cql_port, operation_mode, ctime, mtime, maintenance_pending) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?)");
 
                     int id = 1001;
                     for (StorageNode storageNode : storageNodes) {
@@ -958,8 +958,8 @@ public class ServerInstallUtil {
 
                     connection.commit();
                 } catch (SQLException e) {
-                    LOG.error("Failed to persist to database the storage nodes specified by server configuration " +
-                        "property [rhq.storage.nodes]. Transaction will be rolled back.", e);
+                    LOG.error("Failed to persist to database the storage nodes specified by server configuration "
+                        + "property [rhq.storage.nodes]. Transaction will be rolled back.", e);
                     connection.rollback();
                     throw e;
                 }
@@ -996,10 +996,9 @@ public class ServerInstallUtil {
             connection = getDatabaseConnection(dbUrl, userName, password);
             connection.setAutoCommit(false);
 
-            updateClusterSetting = connection.prepareStatement(
-                "UPDATE rhq_system_config " +
-                    "SET property_value = ?, default_property_value = ? " +
-                    "WHERE property_key = ? AND property_value IS NULL AND default_property_value IS NULL");
+            updateClusterSetting = connection.prepareStatement("UPDATE rhq_system_config "
+                + "SET property_value = ?, default_property_value = ? "
+                + "WHERE property_key = ? AND property_value IS NULL AND default_property_value IS NULL");
 
             updateClusterSetting.setString(1, serverProperties.get("rhq.storage.cql-port"));
             updateClusterSetting.setString(2, serverProperties.get("rhq.storage.cql-port"));
@@ -1561,19 +1560,17 @@ public class ServerInstallUtil {
      * the password, if not set to the default then the AS7 plugin will fail to connect, and the
      * RHQ Server resource connection properties will need to be updated after discovery and import.  
      *
-     * @param serverProperties the server properties
+     * @param password the management password 
      * @param serverDetails details of the server being installed
      * @param configDirStr location of a configuration directory where the mgmt-users.properties file lives
      */
-    public static void createDefaultManagementUser(HashMap<String, String> serverProperties,
-        ServerDetails serverDetails, String configDirStr) {
+    public static void createDefaultManagementUser(String password, ServerDetails serverDetails, String configDirStr) {
         File confDir = new File(configDirStr);
         File mgmtUsers = new File(confDir, "mgmt-users.properties");
-        String password = serverProperties.get(RHQ_MGMT_USER_PASSWORD);
 
         if (ServerInstallUtil.isEmpty(password)) {
-            LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : "
-                + RHQ_MGMT_USER_PASSWORD + " is not set in rhq-server.properties.");
+            LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : invalid password ["
+                + password + "].");
             return;
         }
 
@@ -1593,8 +1590,11 @@ public class ServerInstallUtil {
             FileOutputStream fos = null;
 
             try {
+                String encodedPassword = new UsernamePasswordHashUtil().generateHashedHexURP(RHQ_MGMT_USER,
+                    "ManagementRealm", password.toCharArray());
+
                 fos = new FileOutputStream(mgmtUsers, true);
-                fos.write(("\n" + RHQ_MGMT_USER + "=" + password + "\n").getBytes());
+                fos.write(("\n" + RHQ_MGMT_USER + "=" + encodedPassword + "\n").getBytes());
 
             } catch (Exception e) {
                 LOG.warn("Could not create default management user in file: [" + mgmtUsers + "] : ", e);

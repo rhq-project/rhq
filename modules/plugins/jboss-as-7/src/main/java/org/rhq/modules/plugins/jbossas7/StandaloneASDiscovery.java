@@ -18,9 +18,6 @@
  */
 package org.rhq.modules.plugins.jbossas7;
 
-import java.io.File;
-import java.util.Arrays;
-
 import org.rhq.core.pluginapi.inventory.DiscoveredResourceDetails;
 import org.rhq.core.pluginapi.inventory.ResourceDiscoveryContext;
 import org.rhq.core.system.ProcessInfo;
@@ -84,12 +81,6 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
 
         DiscoveredResourceDetails resourceDetails = super.buildResourceDetails(discoveryContext, process, commandLine);
 
-        // Do RHQ Server specific work
-        if (isRhqServer(process)) {
-            String name = resourceDetails.getResourceName();
-            resourceDetails.setResourceName(name + " RHQ Server");
-        }
-
         return resourceDetails;
     }
 
@@ -97,26 +88,6 @@ public class StandaloneASDiscovery extends BaseProcessDiscovery {
     protected ProcessInfo getPotentialStartScriptProcess(ProcessInfo process) {
         // If the server was started via standalone.sh/bat, its parent process will be standalone.sh/bat.
         return process.getParentProcess();
-    }
-
-    private boolean isRhqServer(ProcessInfo process) {
-
-        // LINUX
-        if (File.separatorChar == '/') {
-            String prop = process.getEnvironmentVariable("JAVA_OPTS");
-            return (null != prop && prop.contains("-Dapp.name=rhq-server"));
-        }
-
-        // Windows
-        ProcessInfo parentProcess = process.getParentProcess();
-        if (null != parentProcess) {
-            String commandLine = Arrays.toString(parentProcess.getCommandLine());
-            if (null != commandLine && commandLine.contains("rhq-server-wrapper.conf")) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
 }

@@ -1,6 +1,6 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify

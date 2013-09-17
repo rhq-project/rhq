@@ -1,6 +1,6 @@
 /*
- * Jopr Management Platform
- * Copyright (C) 2005-2008 Red Hat, Inc.
+ * RHQ Management Platform
+ * Copyright (C) 2005-2013 Red Hat, Inc.
  * All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
@@ -29,7 +29,6 @@ import org.rhq.core.domain.configuration.PropertyList;
 import org.rhq.core.domain.configuration.PropertyMap;
 import org.rhq.core.domain.configuration.PropertySimple;
 import org.rhq.core.pluginapi.operation.OperationResult;
-import org.rhq.enterprise.communications.command.server.CommandProcessorMetrics.Calltime;
 import org.rhq.plugins.jmx.MBeanResourceComponent;
 
 /**

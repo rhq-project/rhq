@@ -480,13 +480,6 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.keystore.file");
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
 
-        // In 4.8 the AS management user was always rhqadmin/obfuscated(rhqadmin); so, if not already in the
-        // old properties, insert the new property with the obfuscated value.
-        String managementPassword = oldServerProps.getProperty("rhq.server.management.password");
-        if (null == managementPassword) {
-            oldServerProps.setProperty("rhq.server.management.password", "35c160c1f841a889d4cda53f0bfc94b6");
-        }
-
         // now merge the old settings in with the default properties from the new server install
         String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);

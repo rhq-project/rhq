@@ -19,6 +19,7 @@
 package org.rhq.enterprise.gui.coregui.client.inventory.resource.detail.monitoring.table;
 
 import java.util.List;
+import java.util.Set;
 
 import com.google.gwt.user.client.Timer;
 import com.google.gwt.user.client.rpc.AsyncCallback;
@@ -56,13 +57,16 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
     private final Resource resource;
     private EnhancedHLayout expandCollapseHLayout;
+    private MetricsTableView metricsTableView;
+    private Set<Integer> expandedRows;
 
-    public MetricsResourceView(Resource resource) {
+    public MetricsResourceView(Resource resource, Set<Integer> expandedRows) {
         super();
         setOverflow(Overflow.AUTO);
         setWidth100();
         setHeight100();
         this.resource = resource;
+        this.expandedRows = expandedRows;
     }
 
     @Override
@@ -72,7 +76,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
         final ResourceMetricAvailabilityView availabilityDetails = new ResourceMetricAvailabilityView(resource);
         availabilityDetails.hide();
 
-        final MetricsTableView metricsTableView = new MetricsTableView(resource, this);
+        metricsTableView = new MetricsTableView(resource, this, expandedRows);
         metricsTableView.setHeight100();
 
         availabilityGraph = new AvailabilityD3GraphView<AvailabilityOverUnderGraphType>(
@@ -99,7 +103,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
                     availabilityDetails.show();
 
                 }
-                refreshGraphs();
+                drawGraphs();
             }
         });
         expandCollapseHLayout.addMember(expandCollapseArrow);
@@ -116,7 +120,10 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
 
     public void refreshData() {
         Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
+        addAvailabilityGraph();
+    }
 
+    private void addAvailabilityGraph() {
         expandCollapseHLayout.removeMember(availabilityGraph);
         availabilityGraph.destroy();
 
@@ -129,7 +136,37 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
             buttonBarDateTimeRangeEditor.getEndTime(), null);
     }
 
-    public void refreshGraphs() {
+
+    @Override
+    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
+
+        final long timerStart = System.currentTimeMillis();
+
+        // now return the availability
+        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
+                endTime, new AsyncCallback<List<Availability>>() {
+            @Override
+            public void onFailure(Throwable caught) {
+                CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
+            }
+
+            @Override
+            public void onSuccess(List<Availability> availList) {
+                Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
+                        + " ms.");
+                availabilityGraph.setAvailabilityList(availList);
+                new Timer() {
+                    @Override
+                    public void run() {
+                        availabilityGraph.drawJsniChart();
+
+                    }
+                }.schedule(150);
+            }
+        });
+    }
+
+    private void drawGraphs() {
         new Timer() {
             @Override
             public void run() {
@@ -140,38 +177,9 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     }
 
     @Override
-    protected void queryAvailability(final EntityContext context, Long startTime, Long endTime, CountDownLatch notUsed) {
-
-        final long timerStart = System.currentTimeMillis();
-
-        // now return the availability
-        GWTServiceLookup.getAvailabilityService().getAvailabilitiesForResource(context.getResourceId(), startTime,
-            endTime, new AsyncCallback<List<Availability>>() {
-                @Override
-                public void onFailure(Throwable caught) {
-                    CoreGUI.getErrorHandler().handleError(MSG.view_resource_monitor_availability_loadFailed(), caught);
-                }
-
-                @Override
-                public void onSuccess(List<Availability> availList) {
-                    Log.debug("\nSuccessfully queried availability in: " + (System.currentTimeMillis() - timerStart)
-                        + " ms.");
-                    availabilityGraph.setAvailabilityList(availList);
-                    new Timer() {
-                        @Override
-                        public void run() {
-                            availabilityGraph.drawJsniChart();
-
-                        }
-                    }.schedule(150);
-                }
-            });
-    }
-
-    @Override
     public void onViewRendered() {
 
         // refresh the graphs on subtab nav because we are a cached view not new
-        refreshGraphs();
+        drawGraphs();
     }
 }

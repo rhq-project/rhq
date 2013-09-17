@@ -45,8 +45,8 @@ public class MeasurementUserPreferences {
     public static final String PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME = "Default";
 
     public static final String DEFAULT_VALUE_RANGE_RO = Boolean.FALSE.toString();
-    public static final Integer DEFAULT_VALUE_RANGE_LASTN = Integer.valueOf(8);
-    public static final Integer DEFAULT_VALUE_RANGE_UNIT = Integer.valueOf(3);
+    public static final Integer DEFAULT_VALUE_RANGE_LASTN = 8;
+    public static final Integer DEFAULT_VALUE_RANGE_UNIT = 3;
 
     private UserPreferences userPrefs;
 
@@ -79,7 +79,6 @@ public class MeasurementUserPreferences {
                 if (rangeString != null && rangeString.trim().length() > 0) {
                     if (rangeString.contains(",")) { // legacy support: old prefs used to use commas
                         rangeString = rangeString.replace(",", UserPreferences.PREF_LIST_DELIM);
-                        //userPrefs.setPreference(PREF_METRIC_RANGE, rangeString); // TODO set only if we don't support JSF anymore
                     }
                     String[] beginEnd = rangeString.split(UserPreferences.PREF_LIST_DELIM_REGEX);
                     prefs.begin = Long.parseLong(beginEnd[0]);
@@ -112,100 +111,28 @@ public class MeasurementUserPreferences {
         if (prefs.explicitBeginEnd) {
             // persist advanced mode
             userPrefs.setPreference(PREF_METRIC_RANGE, Arrays.asList(prefs.begin, prefs.end), allowRefresh);
-            //unsetPreference(PREF_METRIC_RANGE_LASTN);
-            //unsetPreference(PREF_METRIC_RANGE_UNIT);
         } else {
             userPrefs.setPreference(PREF_METRIC_RANGE_LASTN, String.valueOf(prefs.lastN), allowRefresh);
             userPrefs.setPreference(PREF_METRIC_RANGE_UNIT, String.valueOf(prefs.unit), allowRefresh);
-            //unsetPreference(PREF_METRIC_RANGE);
         }
     }
 
-    /*
-     * I believe these are now no longer used - these were probably for the old struts pages
-     * 
-    public Integer getMetricThresholdPreference() throws IllegalArgumentException {
-        return new Integer(userPrefs.getPreference(PREF_METRIC_THRESHOLD));
-    }
 
-    public void setMetricThresholdPreference(Integer value) throws IllegalArgumentException {
-        userPrefs.setPreference(PREF_METRIC_THRESHOLD, String.valueOf(value));
-    }
-     */
 
     public MetricViewsPreferences getMetricViews(String key) {
         MetricViewsPreferences prefs = new MetricViewsPreferences();
-        //TODO: jmarques - externalize default view name
-        // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
-        // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
         String value = userPrefs.getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + key,
             PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME);
         prefs.views = StringUtility.explode(value, UserPreferences.PREF_LIST_DELIM);
         return prefs;
     }
 
-    //    public void setMetricViews(MetricViewsPreferences prefs, String key) {
-    //        StringBuilder builder = new StringBuilder();
-    //        int index = 0;
-    //        for (String viewName : prefs.views) {
-    //            if (index != 0) {
-    //                builder.append(UserPreferences.PREF_LIST_DELIM);
-    //            }
-    //            builder.append(viewName);
-    //            index++;
-    //        }
-    //        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + key, builder.toString());
-    //    }
+
 
     public String getSelectedView(String key) {
         String value = userPrefs.getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + "selected." + key,
             PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME);
         return value;
     }
-
-    //    public void setSelectedView(String key, String viewName) {
-    //        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + "selected." + key, viewName);
-    //    }
-    //
-    //    public static class MetricViewData {
-    //        public List<String> charts;
-    //    }
-
-    //    public MetricViewData getMetricViewData(String context, String viewName) {
-    //        //TODO: jmarques - externalize default view name
-    //        // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
-    //        // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
-    //        if (viewName == null || "".equals(viewName)) {
-    //            viewName = PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME;
-    //        }
-    //        MetricViewData chartPreferences = new MetricViewData();
-    //        // important to let IllegalArgumentException bubble out of here, so the caller can persist the default set
-    //        String data = userPrefs.getPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
-    //        chartPreferences.charts = StringUtility.explode(data, UserPreferences.PREF_LIST_DELIM);
-    //        return chartPreferences;
-    //    }
-    //
-    //    public void setMetricViewData(String context, String viewName, MetricViewData prefs) {
-    //        //TODO: jmarques - externalize default view name
-    //        // instead of PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME
-    //        // lookup PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT from the bundle
-    //        if (viewName == null || "".equals(viewName)) {
-    //            viewName = PREF_MEASUREMENT_INDICATOR_VIEW_DEFAULT_NAME;
-    //        }
-    //        StringBuilder builder = new StringBuilder();
-    //        int index = 0;
-    //        for (String chart : prefs.charts) {
-    //            if (index != 0) {
-    //                builder.append(UserPreferences.PREF_LIST_DELIM);
-    //            }
-    //            builder.append(chart);
-    //            index++;
-    //        }
-    //        userPrefs.setPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName, builder.toString());
-    //    }
-    //
-    //    public void deleteMetricViewData(String context, String viewName) {
-    //        userPrefs.unsetPreference(PREF_MEASUREMENT_INDICATOR_VIEW_PREFIX + context + "." + viewName);
-    //    }
 
 }

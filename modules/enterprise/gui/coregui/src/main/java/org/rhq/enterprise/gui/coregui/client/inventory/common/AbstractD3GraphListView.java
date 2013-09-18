@@ -90,18 +90,21 @@ public abstract class AbstractD3GraphListView extends EnhancedVLayout implements
         if (isVisible() && !isRefreshing()) {
             isRefreshing = true;
             try {
-                Date now = new Date();
-                AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPrefs
-                    .getMetricRangePreferences();
-                long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
-                Date newStartDate = new Date(now.getTime() - timeRange);
-                buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
-                buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
-
+                updateTimeRangeToNow();
                 refreshData();
             } finally {
                 isRefreshing = false;
             }
         }
+    }
+
+    protected void updateTimeRangeToNow() {
+        Date now = new Date();
+        AbstractMeasurementRangeEditor.MetricRangePreferences metricRangePreferences = measurementUserPrefs
+            .getMetricRangePreferences();
+        long timeRange = metricRangePreferences.end - metricRangePreferences.begin;
+        Date newStartDate = new Date(now.getTime() - timeRange);
+        buttonBarDateTimeRangeEditor.updateDateTimeRangeDisplay(newStartDate, now);
+        buttonBarDateTimeRangeEditor.saveDateRange(newStartDate.getTime(), now.getTime());
     }
 }

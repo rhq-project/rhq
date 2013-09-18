@@ -142,7 +142,7 @@ public class MetricsTableView extends Table<MetricsViewDataSource> implements Re
      * Redraw Graphs in this context means to refresh the table and redraw open graphs.
      */
     public void refreshData() {
-        Log.debug("MetricsView.redrawGraphs.");
+        Log.debug("MetricsView.refreshData()");
         new Timer() {
 
             @Override

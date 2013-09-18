@@ -121,6 +121,7 @@ public class MetricsResourceView extends AbstractD3GraphListView implements
     public void refreshData() {
         Log.debug("MetricResourceView.refreshData() for: " + resource.getName() + " id: " + resource.getId());
         addAvailabilityGraph();
+        metricsTableView.refresh();
     }
 
     private void addAvailabilityGraph() {

@@ -4,7 +4,7 @@
    <parent>
       <groupId>org.rhq</groupId>
       <artifactId>rhq-parent</artifactId>
-      <version>4.7.0.JON</version>
+      <version>4.9.0.JON320ER1</version>
       <relativePath>../../pom.xml</relativePath>
    </parent>
 

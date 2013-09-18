@@ -3,13 +3,13 @@
     <parent>
         <artifactId>rhq-helpers</artifactId>
         <groupId>org.rhq.helpers</groupId>
-        <version>4.7.0.JON</version>
+        <version>4.9.0.JON320ER1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>org.rhq.helpers</groupId>
     <artifactId>bundleGen</artifactId>
-    <version>4.7.0.JON</version>
+    <version>4.9.0.JON320ER1</version>
 
     <build>
      <plugins>

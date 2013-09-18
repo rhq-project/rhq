@@ -4,7 +4,7 @@
     <parent>
         <artifactId>jndi-access-test-parent</artifactId>
         <groupId>org.rhq</groupId>
-        <version>4.7.0.JON</version>
+        <version>4.9.0.JON320ER1</version>
     </parent>
 
     <artifactId>jndi-access-test</artifactId>

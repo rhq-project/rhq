@@ -283,6 +283,10 @@ public class StorageInstallerTest {
     }
 
     private void assertRhqServerPropsUpdated() {
+        assertRhqServerPropsUpdated("127.0.0.1");
+    }
+
+    private void assertRhqServerPropsUpdated(String address) {
         File serverPropsFile = new File(serverDir, "rhq-server.properties");
         Properties properties = new Properties();
 
@@ -292,7 +296,7 @@ public class StorageInstallerTest {
             fail("Failed to verify that " + serverPropsFile + " was updated", e);
         }
 
-        assertEquals(properties.getProperty("rhq.storage.nodes"), "127.0.0.1");
+        assertEquals(properties.getProperty("rhq.storage.nodes"), address);
         assertEquals(properties.getProperty("rhq.storage.cql-port"), "9142");
     }
 

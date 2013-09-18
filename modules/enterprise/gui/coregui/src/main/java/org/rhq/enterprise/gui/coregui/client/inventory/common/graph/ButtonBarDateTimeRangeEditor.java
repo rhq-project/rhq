@@ -172,7 +172,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             }
         }
 
-        Log.debug("DateTimeSelection: " + dateTimeSelection + " = " + dateTimeOffset);
         return new Date(endDate.getTime() - dateTimeOffset);
     }
 
@@ -236,7 +235,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
                     IButton button = (IButton) clickEvent.getSource();
-                    Log.debug("Button pressed for: " + button.getTitle());
 
                 }
             };
@@ -298,7 +296,6 @@ public class ButtonBarDateTimeRangeEditor extends EnhancedVLayout {
             saveButton.addClickHandler(new ClickHandler() {
                 @Override
                 public void onClick(ClickEvent clickEvent) {
-                    Log.debug("Saving Custom Date Range Window.");
                     Date startTimeDate = (Date) startTimeItem.getValue();
                     Date endTimeDate = (Date) endTimeItem.getValue();
 

@@ -468,6 +468,15 @@ public class StorageInstaller {
             installerInfo.basedir = storageBasedir;
             installerInfo.logFile = new File(logDir, "rhq-storage.log");
 
+            boolean isRHQ48Install;
+            if (cassandraEnvFile.exists()) {
+                isRHQ48Install = true;
+                installerInfo.jmxPort = parseJmxPortFromCassandrEnv(cassandraEnvFile);
+            } else {
+                isRHQ48Install = false;
+                installerInfo.jmxPort = parseJmxPort(new File(oldConfDir, "cassandra-jvm.properties"));
+            }
+
             deploymentOptions.setBasedir(storageBasedir.getAbsolutePath());
             deploymentOptions.setLogFileName(installerInfo.logFile.getPath());
             deploymentOptions.setLoggingLevel("INFO");
@@ -484,9 +493,7 @@ public class StorageInstaller {
             deployer.applyConfigChanges();
             deployer.updateFilePerms();
 
-            if (cassandraEnvFile.exists()) {
-                // Then this is an RHQ 4.8 install
-                installerInfo.jmxPort = parseJmxPortFromCassandrEnv(cassandraEnvFile);
+            if (isRHQ48Install) {
                 Properties jvmProps = new Properties();
                 jvmProps.load(new FileInputStream(cassandraJvmPropsFile));
                 PropertiesFileUpdate propertiesUpdater = new PropertiesFileUpdate(
@@ -494,8 +501,6 @@ public class StorageInstaller {
                 jvmProps.setProperty("jmx_port", Integer.toString(installerInfo.jmxPort));
 
                 propertiesUpdater.update(jvmProps);
-            } else {
-                installerInfo.jmxPort = parseJmxPort(cassandraJvmPropsFile);
             }
 
             ConfigEditor oldYamlEditor = new ConfigEditor(oldYamlFile);

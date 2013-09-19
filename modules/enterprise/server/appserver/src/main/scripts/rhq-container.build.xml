@@ -826,6 +826,7 @@ rhq.server.agent-update.nonstrict-version-check=true
     <target name="fix-perms">
         <echo>Make sure shell scripts are readable and executable.</echo>
         <chmod dir="${project.build.outputDirectory}/bin" includes="*.sh,rhqctl" perm="ug+x" verbose="true" />
+        <chmod dir="${project.build.outputDirectory}/bin/internal" includes="*.sh" perm="ug+x" verbose="true" />
         <chmod dir="${jboss.home}/bin" includes="*.sh" perm="ug+x" verbose="true" />
     </target>
 

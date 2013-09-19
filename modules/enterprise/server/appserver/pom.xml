@@ -288,7 +288,7 @@
 
                                         <!-- Make sure shell scripts are readable and executable. -->
                                         <chmod perm="ug+x" verbose="true">
-                                            <fileset dir="${deployment.dir}/bin"         includes="*.sh,rhqctl" />
+                                            <fileset dir="${deployment.dir}/bin"         includes="**/*.sh,rhqctl" />
                                             <fileset dir="${deployment.dir}/jbossas/bin" includes="*.sh" />
                                         </chmod>
                                     </target>

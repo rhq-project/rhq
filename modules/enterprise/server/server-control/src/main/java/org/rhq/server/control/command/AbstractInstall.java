@@ -340,7 +340,7 @@ public abstract class AbstractInstall extends ControlCommand {
 
     protected void stopServer(File serverBasedir) throws Exception {
 
-        File serverBinDir = new File(serverBasedir, "bin");
+        File serverBinDir = new File(serverBasedir, "bin/internal");
         if (!serverBinDir.exists()) {
             throw new IllegalArgumentException("No Server found for base directory [" + serverBasedir.getPath() + "]");
         }

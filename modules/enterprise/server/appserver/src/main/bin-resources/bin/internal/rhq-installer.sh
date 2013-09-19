@@ -1,16 +1,16 @@
 #!/bin/sh
 
 # =============================================================================
-# RHQ Control Script
+# RHQ Server UNIX Install Script
 #
-# This file is used to perform install/upgrade/start/stop commands for
-# RHQ Servers (and their associated storage nodes/agents) on a UNIX platform.
+# This file is used to complete the installation of the RHQ Server on a
+# UNIX platform.
 #
 # This script is customizable by setting the following environment variables:
 #
-#    RHQ_CONTROL_DEBUG - If this is defined, the script will emit debug
-#                        messages. If this is not defined or set to "false"
-#                        debug messages are not emitted.
+#    RHQ_SERVER_DEBUG - If this is defined, the script will emit debug
+#                       messages. If this is not defined or set to "false"
+#                       debug messages are not emitted.
 #
 #    RHQ_SERVER_HOME - Defines where the server's home install directory is.
 #                      If not defined, it will be assumed to be the parent
@@ -38,19 +38,20 @@
 #                                    RHQ_SERVER_JAVA_HOME are not set, the
 #                                    Server's embedded JRE will be used.
 #
-#    RHQ_CONTROL_JAVA_OPTS - Java VM command line options to be
-#                            passed into the Java VM. If this is not defined
-#                            this script will pass in a default set of options.
-#                            If you only want to add options to the defaults,
-#                            then you will want to use
-#                            RHQ_CONTROL_ADDITIONAL_JAVA_OPTS instead.
+#    RHQ_SERVER_INSTALLER_JAVA_OPTS - Java VM command line options to be
+#                           passed into the Java VM. If this is not defined
+#                           this script will pass in a default set of options.
+#                           If you only want to add options to the defaults,
+#                           then you will want to use
+#                           RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS instead.
 #
-#    RHQ_CONTROL_ADDITIONAL_JAVA_OPTS - additional Java VM command
-#                                       line options to be passed into the VM.
-#                                       This is added to RHQ_CONTROL_JAVA_OPTS;
-#                                       it is mainly used to augment the
-#                                       default set of options. This can be
-#                                       left unset if it is not needed.
+#    RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS - additional Java VM command
+#                                      line options to be passed into the VM.
+#                                      This is added to
+#                                      RHQ_SERVER_INSTALLER_JAVA_OPTS; it
+#                                      is mainly used to augment the
+#                                      default set of options. This can be
+#                                      left unset if it is not needed.
 #
 # If the embedded JRE is to be used but is not available, the fallback
 # JRE to be used will be determined by the JAVA_HOME environment variable.
@@ -59,7 +60,7 @@
 debug_msg ()
 {
    # if debug variable is set, it is assumed to be on, unless its value is false
-   if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
+   if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
       echo $1
    fi
 }
@@ -90,12 +91,12 @@ fi
 # ----------------------------------------------------------------------
 # Determine the RHQ Server installation directory.
 # If RHQ_SERVER_HOME is not defined, we will assume we are running
-# directly from the server installation's bin directory.
+# directly from the server installation's bin/internal directory.
 # ----------------------------------------------------------------------
 
 if [ -z "$RHQ_SERVER_HOME" ]; then
    _DOLLARZERO=`readlink $_READLINK_ARG "$0" 2>/dev/null || echo "$0"`
-   RHQ_SERVER_HOME=`dirname "$_DOLLARZERO"`/..
+   RHQ_SERVER_HOME=`dirname "$_DOLLARZERO"`/../..
 else
    if [ ! -d "$RHQ_SERVER_HOME" ]; then
       echo "ERROR! RHQ_SERVER_HOME is not pointing to a valid directory"
@@ -202,25 +203,24 @@ fi
 # Prepare the VM command line options to be passed in
 # ----------------------------------------------------------------------
 
-if [ -z "$RHQ_CONTROL_JAVA_OPTS" ]; then
-   RHQ_CONTROL_JAVA_OPTS=" -Xmx512M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
+if [ -z "$RHQ_SERVER_INSTALLER_JAVA_OPTS" ]; then
+   RHQ_SERVER_INSTALLER_JAVA_OPTS="-Xms512M -Xmx512M -XX:PermSize=128M -XX:MaxPermSize=128M -Djava.net.preferIPv4Stack=true -Dorg.jboss.resolver.warning=true"
 fi
 
-# Add the JVM opts that we always want to specify, whether or not the user set RHQ_CCM_JAVA_OPTS.
-if [ -n "$RHQ_CONTROL_DEBUG" ] && [ "$RHQ_CONTROL_DEBUG" != "false" ]; then
+# Add the JVM opts that we always want to specify, whether or not the user set RHQ_SERVER_INSTALLER_JAVA_OPTS.
+if [ -n "$RHQ_SERVER_DEBUG" ] && [ "$RHQ_SERVER_DEBUG" != "false" ]; then
    _RHQ_LOGLEVEL="DEBUG"
 else
    _RHQ_LOGLEVEL="INFO"
 fi
 
-# debugging the logging level now for development/testing
-RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Djava.awt.headless=true -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.control.logdir=${RHQ_SERVER_HOME}/logs -Drhq.control.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME} -Drhqctl.properties-file=$RHQ_SERVER_HOME/bin/rhqctl.properties"
+RHQ_SERVER_INSTALLER_JAVA_OPTS="${RHQ_SERVER_INSTALLER_JAVA_OPTS} -Djava.awt.headless=true -Di18nlog.logger-type=commons -Drhq.server.properties-file=${RHQ_SERVER_HOME}/bin/rhq-server.properties -Drhq.server.installer.logdir=${RHQ_SERVER_HOME}/logs -Drhq.server.installer.loglevel=${_RHQ_LOGLEVEL} -Drhq.server.basedir=${RHQ_SERVER_HOME}"
 
 # Sample JPDA settings for remote socket debugging
-#RHQ_CONTROL_JAVA_OPTS="${RHQ_CONTROL_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8786,server=y,suspend=y"
+#RHQ_SERVER_INSTALLER_JAVA_OPTS="${RHQ_SERVER_INSTALLER_JAVA_OPTS} -Xrunjdwp:transport=dt_socket,address=8787,server=y,suspend=y"
 
-debug_msg "RHQ_CONTROL_JAVA_OPTS: $RHQ_CONTROL_JAVA_OPTS"
-debug_msg "RHQ_CONTROL_ADDITIONAL_JAVA_OPTS: $RHQ_CONTROL_ADDITIONAL_JAVA_OPTS"
+debug_msg "RHQ_SERVER_INSTALLER_JAVA_OPTS: $RHQ_SERVER_INSTALLER_JAVA_OPTS"
+debug_msg "RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS: $RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS"
 
 # ----------------------------------------------------------------------
 # We need to add our own modules to the core set of JBossAS modules.
@@ -235,7 +235,7 @@ _JBOSS_MODULEPATH="${_RHQ_MODULES_PATH}:${_INTERNAL_MODULES_PATH}"
 debug_msg "_JBOSS_MODULEPATH: $_JBOSS_MODULEPATH"
 
 # start the AS instance with our main installer module
-"$RHQ_SERVER_JAVA_EXE_FILE_PATH" ${RHQ_CONTROL_JAVA_OPTS} ${RHQ_CONTROL_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-server-control "$@"
+"$RHQ_SERVER_JAVA_EXE_FILE_PATH" ${RHQ_SERVER_INSTALLER_JAVA_OPTS} ${RHQ_SERVER_INSTALLER_ADDITIONAL_JAVA_OPTS} -jar "${RHQ_SERVER_JBOSS_HOME}/jboss-modules.jar" -mp "$_JBOSS_MODULEPATH" org.rhq.rhq-installer-util "$@"
 
 _EXIT_STATUS=$?
 exit $_EXIT_STATUS

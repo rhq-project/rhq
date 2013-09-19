@@ -227,7 +227,7 @@ public class Upgrade extends AbstractInstall {
             }
 
             Executor executor = new DefaultExecutor();
-            executor.setWorkingDirectory(getBinDir());
+            executor.setWorkingDirectory(new File(getBaseDir(), "bin")); // data migrator script is not in bin/internal
             executor.setStreamHandler(new PumpStreamHandler());
 
             int exitValue = executor.execute(commandLine);
@@ -251,7 +251,8 @@ public class Upgrade extends AbstractInstall {
                 // to not get a port conflict
                 waitForProcessToStop(getStoragePid());
 
-                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer", "--upgrade",
+                org.apache.commons.exec.CommandLine commandLine = getCommandLine("rhq-storage-installer",
+                    "--upgrade",
                     getFromServerDir(rhqctlCommandLine).getAbsolutePath());
                 Executor executor = new DefaultExecutor();
                 executor.setWorkingDirectory(getBinDir());
@@ -481,7 +482,7 @@ public class Upgrade extends AbstractInstall {
         copyReferredFile(commandLine, oldServerProps, "rhq.server.client.security.truststore.file");
 
         // now merge the old settings in with the default properties from the new server install
-        String newServerPropsFilePath = new File(getBinDir(), "rhq-server.properties").getAbsolutePath();
+        String newServerPropsFilePath = new File(getBaseDir(), "bin/rhq-server.properties").getAbsolutePath();
         PropertiesFileUpdate newServerPropsFile = new PropertiesFileUpdate(newServerPropsFilePath);
         newServerPropsFile.update(oldServerProps);
 
@@ -567,7 +568,14 @@ public class Upgrade extends AbstractInstall {
                     throw new FileNotFoundException("Missing agent to upgrade: " + oldAgentDir.getAbsolutePath());
                 }
             } else {
-                oldAgentDir = getAgentBasedir();
+                oldAgentDir = null;
+                File fromServerDir = getFromServerDir(rhqctlCommandLine);
+                if (fromServerDir != null && fromServerDir.isDirectory()) {
+                    File fromServerDirParent = fromServerDir.getParentFile();
+                    if (fromServerDirParent != null && fromServerDirParent.isDirectory()) {
+                        oldAgentDir = new File(fromServerDirParent, "rhq-agent");
+                    }
+                }
                 if (!oldAgentDir.isDirectory()) {
                     log.info("No agent found in the old server location... skipping agent upgrade");
                     return;
@@ -689,6 +697,10 @@ public class Upgrade extends AbstractInstall {
 
     protected boolean isRhq48OrLater(CommandLine commandLine) {
         return new File(getFromServerDir(commandLine), "bin/rhqctl").exists();
+    }
+
+    protected boolean isRhq410OrLater(CommandLine commandLine) {
+        return new File(getFromServerDir(commandLine), "bin/internal").isDirectory();
     }
 
     private void printDataMigrationNotice() {

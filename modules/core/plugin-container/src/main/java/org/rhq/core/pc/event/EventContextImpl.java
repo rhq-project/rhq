@@ -124,13 +124,12 @@ public class EventContextImpl implements EventContext {
         final int adjustedPollingInterval = Math.max(EventContext.MINIMUM_POLLING_INTERVAL, pollingInterval);
         // Registering the event poller has to be done in a callback listener to avoid a potential deadlock.
         // See https://bugzilla.redhat.com/show_bug.cgi?id=677349 for a detailed explaination.
-        PluginContainer.getInstance().addInitializationListener(this.getClass().getName(),
-            new PluginContainer.InitializationListener() {
-                @Override
-                public void initialized() {
-                    getEventManager().registerEventPoller(poller, adjustedPollingInterval, resource, sourceLocation);
-                }
-            });
+        PluginContainer.getInstance().addInitializationListener(new PluginContainer.InitializationListener() {
+            @Override
+            public void initialized() {
+                getEventManager().registerEventPoller(poller, adjustedPollingInterval, resource, sourceLocation);
+            }
+        });
     }
 
     private void unregisterEventPollerInternal(String eventType, String sourceLocation) {

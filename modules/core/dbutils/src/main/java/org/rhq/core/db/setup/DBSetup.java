@@ -30,6 +30,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -37,9 +38,10 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+
 import mazz.i18n.Logger;
 import mazz.i18n.Msg;
-import org.rhq.core.db.ExtendedSQLException;
+
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -47,11 +49,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
+
 import org.rhq.core.db.DatabaseType;
 import org.rhq.core.db.DatabaseTypeFactory;
 import org.rhq.core.db.DbUtil;
 import org.rhq.core.db.DbUtilsI18NFactory;
 import org.rhq.core.db.DbUtilsI18NResourceKeys;
+import org.rhq.core.db.ExtendedSQLException;
 import org.rhq.core.db.TypeMap;
 
 /**
@@ -113,14 +117,14 @@ public class DBSetup {
         m_connection = connection;
         m_databaseType = DatabaseTypeFactory.getDatabaseType(connection);
         m_consoleMode = false;
-        
+
         // MySQL complains if autocomit is true and you try to commit.
         // DDL operations are not transactional anyhow.
         m_connection.setAutoCommit(false);
-        
+
         m_doDisconnect = false;
     }
-    
+
     /**
      * A console application that can be used to run the DBSetup from a command line. The arguments are as follows:
      *
@@ -419,8 +423,8 @@ public class DBSetup {
             // Make sure we have a DBSetup XML file.
             if (node_root.getNodeName().equalsIgnoreCase(DBSETUP_ROOT_ELEMENT_NAME) == false) {
                 if (source instanceof String) {
-                    throw new IOException(LOG.getMsgString(DbUtilsI18NResourceKeys.DBSETUP_SOURCE_NOT_VALID, source
-                        .toString()));
+                    throw new IOException(LOG.getMsgString(DbUtilsI18NResourceKeys.DBSETUP_SOURCE_NOT_VALID,
+                        source.toString()));
                 }
 
                 throw new IOException(LOG.getMsgString(DbUtilsI18NResourceKeys.DBSETUP_SOURCE_NOT_VALID, "<stream>"));
@@ -443,8 +447,8 @@ public class DBSetup {
 
                             if (fileInclude.isAbsolute() == false) {
                                 if (!(source instanceof String)) {
-                                    throw new IOException(LOG
-                                        .getMsgString(DbUtilsI18NResourceKeys.DBSETUP_PATHS_NOT_RELATIVE_TO_STREAM));
+                                    throw new IOException(
+                                        LOG.getMsgString(DbUtilsI18NResourceKeys.DBSETUP_PATHS_NOT_RELATIVE_TO_STREAM));
                                 }
 
                                 fileInclude = new File(source_file.getParentFile(), nodeMap.getNodeValue());
@@ -553,8 +557,8 @@ public class DBSetup {
                                 index.getTable().getName());
                             created_indexes++;
                         } catch (SQLException e) {
-                            handleFatalSQLException(e, DbUtilsI18NResourceKeys.DBSETUP_CREATED_INDEX_ERROR, index
-                                .getName(), index.getTable().getName());
+                            handleFatalSQLException(e, DbUtilsI18NResourceKeys.DBSETUP_CREATED_INDEX_ERROR,
+                                index.getName(), index.getTable().getName());
                         }
                     }
                 }
@@ -692,8 +696,8 @@ public class DBSetup {
                 } catch (SQLException e) {
                     failed_tables_count++;
                     failed_tables.add(table); // add it to the list so we try to clear it again in our second pass
-                    log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_CLEARED_TABLE_ERROR_FIRST_PASS, table
-                        .getName(), DbUtil.getSQLExceptionString(e));
+                    log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_CLEARED_TABLE_ERROR_FIRST_PASS,
+                        table.getName(), DbUtil.getSQLExceptionString(e));
                 }
             }
 
@@ -715,8 +719,8 @@ public class DBSetup {
                         log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_CLEARED_TABLE, table.getName());
                     } catch (SQLException e) {
                         // crap - there is still a problem causing us to be unable to clear the data
-                        log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_CLEARED_TABLE_ERROR_SECOND_PASS, table
-                            .getName(), DbUtil.getSQLExceptionString(e));
+                        log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_CLEARED_TABLE_ERROR_SECOND_PASS,
+                            table.getName(), DbUtil.getSQLExceptionString(e));
                     }
                 }
             }
@@ -770,8 +774,7 @@ public class DBSetup {
                     log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DROPPED_VIEW, view.getName());
                 } catch (SQLException e) {
                     failed_views++;
-                    log(LogPriority.ERROR, DbUtilsI18NResourceKeys.DBSETUP_DROPPED_VIEW_ERROR, view.getName(), DbUtil
-                        .getSQLExceptionString(e));
+                    logDropFailureIfNecessary(DbUtilsI18NResourceKeys.DBSETUP_DROPPED_VIEW_ERROR, view.getName(), e);
                 }
             }
 
@@ -789,8 +792,7 @@ public class DBSetup {
                     log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DROPPED_TABLE, table.getName());
                 } catch (SQLException e) {
                     failed_tables++;
-                    log(LogPriority.ERROR, DbUtilsI18NResourceKeys.DBSETUP_DROPPED_TABLE_ERROR, table.getName(), DbUtil
-                        .getSQLExceptionString(e));
+                    logDropFailureIfNecessary(DbUtilsI18NResourceKeys.DBSETUP_DROPPED_TABLE_ERROR, table.getName(), e);
                 }
             }
 
@@ -809,6 +811,16 @@ public class DBSetup {
         }
 
         return ret_ok;
+    }
+
+    // skip logging an error if the drop failure is due to the object not existing
+    private void logDropFailureIfNecessary(String I18NKey, String objectName, SQLException e) {
+        String sqlExceptionString = DbUtil.getSQLExceptionString(e);
+        if (null != sqlExceptionString && sqlExceptionString.toLowerCase().contains("does not exist")) {
+            return;
+        }
+
+        log(LogPriority.ERROR, I18NKey, objectName, sqlExceptionString);
     }
 
     /**
@@ -858,8 +870,8 @@ public class DBSetup {
                 while (iterCols.hasNext() == true) {
                     Column col = (Column) iterCols.next();
 
-                    log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_EXPORT_FOUND_COLUMN, table.getName(), col
-                        .getName());
+                    log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_EXPORT_FOUND_COLUMN, table.getName(),
+                        col.getName());
 
                     Element elemChild = doc.createElement("column");
                     elemChild.setAttribute("name", col.getName());
@@ -969,8 +981,8 @@ public class DBSetup {
          * @see ErrorHandler#warning(SAXParseException)
          */
         public void warning(SAXParseException e) throws SAXException {
-            log(LogPriority.WARN, e, DbUtilsI18NResourceKeys.DBSETUP_SAX_WARNING, e.getLineNumber(), e
-                .getColumnNumber(), e.getMessage());
+            log(LogPriority.WARN, e, DbUtilsI18NResourceKeys.DBSETUP_SAX_WARNING, e.getLineNumber(),
+                e.getColumnNumber(), e.getMessage());
         }
     }
 
@@ -1039,7 +1051,7 @@ public class DBSetup {
         }
 
         long duration = System.currentTimeMillis() - start;
-//        log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DURATION, duration);
+        //        log(LogPriority.DEBUG, DbUtilsI18NResourceKeys.DBSETUP_DURATION, duration);
 
         // Reset the commit option
         this.getConnection().setAutoCommit(committing);
@@ -1087,7 +1099,7 @@ public class DBSetup {
         if (m_connection != null) {
             return m_connection;
         }
-        
+
         m_connection = DbUtil.getConnection(m_jdbcUrl, m_username, m_password);
 
         try {
@@ -1119,7 +1131,7 @@ public class DBSetup {
         if (!m_doDisconnect) {
             return;
         }
-        
+
         try {
             m_connection.close();
         } catch (Exception e) {

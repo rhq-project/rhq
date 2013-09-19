@@ -2036,6 +2036,8 @@
                 </schema-directSQL>
             </schemaSpec>
 
+<!-- RHQ 4.7.0 uses DB Schema 2.132 -->
+
             <schemaSpec version="2.133">
                 <!-- RHQ_STORAGE_NODE -->
                 <schema-createSequence name="RHQ_STORAGE_NODE_ID_SEQ" initial="10001" />
@@ -2072,6 +2074,8 @@
                     </statement>
                 </schema-directSQL>
             </schemaSpec>
+
+<!-- RHQ 4.7.0 uses DB Schema 2.133 -->
 
             <schemaSpec version="2.134">
               <!-- Make sure existing storage nodes are storing IP addresses and not hostnames -->
@@ -2252,6 +2256,33 @@
               </statement>
             </schema-directSQL>
           </schemaSpec>
+
+<!-- RHQ 4.9.0 uses DB Schema 2.140 -->
+
+            <schemaSpec version="2.141">
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage username">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (63, 'STORAGE_USERNAME', null, null, true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding storage username">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (63, 'STORAGE_USERNAME', null, null, 1)
+                </statement>
+              </schema-directSQL>
+
+              <schema-directSQL>
+                <statement targetDBVendor="postgresql" desc="Adding storage password">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (64, 'STORAGE_PASSWORD', null, null, true)
+                </statement>
+                <statement targetDBVendor="oracle" desc="Adding default storage password">
+                  INSERT INTO rhq_system_config (id, property_key, property_value, default_property_value, fread_only)
+                  VALUES (64, 'STORAGE_PASSWORD', null, null, 1)
+                </statement>
+              </schema-directSQL>
+            </schemaSpec>
+
         </dbupgrade>
     </target>
 </project>

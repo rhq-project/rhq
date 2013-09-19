@@ -36,7 +36,6 @@ import org.apache.commons.logging.LogFactory;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooAdvancedException;
 import org.rhq.cassandra.schema.exception.InstalledSchemaTooOldException;
 import org.rhq.cassandra.schema.exception.SchemaNotInstalledException;
-import org.rhq.core.util.obfuscation.PicketBoxObfuscator;
 
 /**
  * @author Stefan Negrea
@@ -107,7 +106,7 @@ class VersionManager extends AbstractManager {
         properties.put("replication_factor", calculateNewReplicationFactor() + "");
         properties.put("cassandra_user_password", UUID.randomUUID() + "");
         properties.put("rhq_admin_username", getUsername());
-        properties.put("rhq_admin_password", PicketBoxObfuscator.decode(getPassword()));
+        properties.put("rhq_admin_password", getPassword());
 
         /**
          * NOTE: Before applying any schema, we need to create the rhqadmin user. If we have more

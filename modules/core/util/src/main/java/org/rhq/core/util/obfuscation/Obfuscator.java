@@ -119,9 +119,18 @@ public final class Obfuscator {
         return new String(decode);
     }
 
-    // adapted from http://stackoverflow.com/questions/2863852/how-to-generate-a-random-string-in-java
+    /**
+     * Adapted from http://stackoverflow.com/questions/2863852/how-to-generate-a-random-string-in-java.
+     * <p/>
+     * The default set of validCharacters: 1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ
+     * 
+     * @param random
+     * @param validCharacters
+     * @param length
+     * @return
+     */
     public static String generateString(Random random, String validCharacters, int length) {
-        validCharacters = (null == validCharacters || validCharacters.isEmpty()) ? "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#$"
+        validCharacters = (null == validCharacters || validCharacters.isEmpty()) ? "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
             : validCharacters;
         length = (length < 1) ? 10 : length;
 

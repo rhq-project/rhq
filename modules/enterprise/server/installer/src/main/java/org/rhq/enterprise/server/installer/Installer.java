@@ -228,7 +228,7 @@ public class Installer {
             }
 
             case 'e': {
-                // prompt for the password. we don't use a command line option because then the plain test password
+                // prompt for the password. we don't use a command line option because then the plain text password
                 // could get captured in command history.
                 Console console = System.console();
                 if (null != console) {
@@ -262,13 +262,12 @@ public class Installer {
             }
         }
 
-        // if a password was asked to be obfuscated, that's all we do on the execution
+        // if a password was asked to be encoded, that's all we do on the execution
         if (passwordToEncode != null) {
-            String obfuscatedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
+            String encodedPassword = new InstallerServiceImpl(installerConfig).obfuscatePassword(String
                 .valueOf(passwordToEncode));
-            LOG.info("*** Encoded password properties for rhq-server.properties:");
-            LOG.info("***     rhq.server.database.password=" + obfuscatedPassword);
-            LOG.info("***             rhq.storage.password=" + obfuscatedPassword);
+            LOG.info("*** Encoded password for rhq-server.properties:");
+            LOG.info("***     rhq.server.database.password=" + encodedPassword);
 
             return new WhatToDo[] { WhatToDo.DO_NOTHING };
         }

@@ -21,9 +21,12 @@
 
     <property name="default.rhq.server.drift.binary.content" value="false"/>
 
+    <property name="default.rhq.storage.username" value=""/>
+    <property name="default.rhq.storage.password" value=""/>
+
 	<property name="default.jboss.bind.address" value=""/>
 
-    <target name="set-predeploy-prop">
+	<target name="set-predeploy-prop">
         <condition property="predeploy" value="true">
             <or>
                 <equals arg1="${dev.profile.active}" arg2="true" />
@@ -46,6 +49,9 @@
         <property name="rhq.server.quartz.selectWithLockSQL"   value="${rhq.dev.quartz.selectWithLockSQL}" />
         <property name="rhq.server.quartz.lockHandlerClass"    value="${rhq.dev.quartz.lockHandlerClass}" />
         <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
+        <!-- these are only set explicitly in dev envs, prod envs generate these at install time -->
+        <property name="rhq.storage.username"                  value="rhqadmin"/>
+        <property name="rhq.storage.password"                  value="1eeb2f255e832171df8592078de921bc"/>
         <!-- this is only set explicitly in dev envs, prod envs must set these manually for security -->
         <property name="jboss.bind.address"                    value="0.0.0.0"/>
     </target>
@@ -64,6 +70,9 @@
         <property name="rhq.server.quartz.selectWithLockSQL"   value="${default.rhq.server.quartz.selectWithLockSQL}" />
         <property name="rhq.server.quartz.lockHandlerClass"    value="${default.rhq.server.quartz.lockHandlerClass}" />
         <property name="rhq.server.drift.store-binary-content" value="${default.rhq.server.drift.binary.content}"/>
+        <!-- these are only set explicitly in dev envs, prod envs generate these at install time -->
+        <property name="rhq.storage.username"                  value="${default.rhq.storage.username}"/>
+        <property name="rhq.storage.password"                  value="${default.rhq.storage.password}"/>
         <!-- this is only set by default in dev envs, prod envs must set these manually for security -->
         <property name="jboss.bind.address"                    value="${default.jboss.bind.address}"/>
     </target>
@@ -419,10 +428,10 @@
     <target name="prepare-bin-dir">
         <echo>*** Preparing bin dir ***</echo>
 
-      <loadproperties>
-        <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
+        <loadproperties>
+          <zipentry zipfile="${settings.localRepository}/org/rhq/rhq-cassandra-ccm-core/${project.version}/rhq-cassandra-ccm-core-${project.version}.jar"
                   name="cassandra.properties"/>
-      </loadproperties>
+        </loadproperties>
 
         <echo>Connection URL is ${rhq.server.database.connection-url}</echo>
 

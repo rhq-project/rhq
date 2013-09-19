@@ -118,6 +118,12 @@ public class ServerProperties {
 
     public static final String PROP_MGMT_USER_PASSWORD = "rhq.server.management.password";
 
+    public static final String PROP_STORAGE_USERNAME = "rhq.storage.username";
+    public static final String PROP_STORAGE_PASSWORD = "rhq.storage.password";
+    public static final String PROP_STORAGE_NODES = "rhq.storage.nodes";
+    public static final String PROP_STORAGE_CQL_PORT = "rhq.storage.cql-port";
+    public static final String PROP_STORAGE_GOSSIP_PORT = "rhq.storage.gossip-port";
+
     // this list contains all the properties that are to have boolean values (true | false)
     public static final Set<String> BOOLEAN_PROPERTIES;
     static {
@@ -147,6 +153,8 @@ public class ServerProperties {
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_MEASSCHED_REQ);
         INTEGER_PROPERTIES.add(PROP_CONCURRENCY_LIMIT_WEBCONNS);
         INTEGER_PROPERTIES.add(PROP_AGENT_MULTICAST_DETECTOR_PORT);
+        INTEGER_PROPERTIES.add(PROP_STORAGE_CQL_PORT);
+        INTEGER_PROPERTIES.add(PROP_STORAGE_GOSSIP_PORT);
     }
 
     // this list contains all the properties that are to have non-empty string values

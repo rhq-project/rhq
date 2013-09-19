@@ -977,6 +977,64 @@ public class ServerInstallUtil {
         }
     }
 
+    public static Map<String, String> fetchStorageClusterSettings(HashMap<String, String> serverProperties,
+        String password) throws Exception {
+
+        Map<String, String> result = new HashMap<String, String>(4);
+        DatabaseType db = null;
+        Connection connection = null;
+        PreparedStatement statement = null;
+
+        try {
+            String dbUrl = serverProperties.get(ServerProperties.PROP_DATABASE_CONNECTION_URL);
+            String userName = serverProperties.get(ServerProperties.PROP_DATABASE_USERNAME);
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            db = DatabaseTypeFactory.getDatabaseType(connection);
+
+            if (!(db instanceof PostgresqlDatabaseType || db instanceof OracleDatabaseType)) {
+                throw new IllegalArgumentException("Unknown database type, can't continue: " + db);
+            }
+
+            connection = getDatabaseConnection(dbUrl, userName, password);
+            connection.setAutoCommit(false);
+
+            statement = connection.prepareStatement("" //
+                + "SELECT property_key, property_value FROM rhq_system_config " //
+                + " WHERE property_key LIKE 'STORAGE%' " //
+                + "   AND NOT property_value IS NULL ");
+            ResultSet rs = statement.executeQuery();
+
+            while (rs.next()) {
+                String key = rs.getString(1);
+                String value = rs.getString(2);
+
+                if (key.equals("STORAGE_USERNAME")) {
+                    result.put(ServerProperties.PROP_STORAGE_USERNAME, value);
+                } else if (key.equals("STORAGE_PASSWORD")) {
+                    result.put(ServerProperties.PROP_STORAGE_PASSWORD, value);
+                } else if (key.equals("STORAGE_GOSSIP_PORT")) {
+                    result.put(ServerProperties.PROP_STORAGE_GOSSIP_PORT, value);
+                } else if (key.equals("STORAGE_CQL_PORT")) {
+                    result.put(ServerProperties.PROP_STORAGE_CQL_PORT, value);
+                }
+            }
+
+            connection.commit();
+
+        } catch (SQLException e) {
+            LOG.error("Failed to fetch storage cluster settings. Transaction will be rolled back.", e);
+            connection.rollback();
+            throw e;
+        } finally {
+            if (db != null) {
+                db.closeStatement(statement);
+                db.closeConnection(connection);
+            }
+        }
+
+        return result;
+    }
+
     public static void persistStorageClusterSettingsIfNecessary(HashMap<String, String> serverProperties,
         String password) throws Exception {
         DatabaseType db = null;
@@ -1000,13 +1058,23 @@ public class ServerInstallUtil {
                 + "SET property_value = ?, default_property_value = ? "
                 + "WHERE property_key = ? AND property_value IS NULL AND default_property_value IS NULL");
 
-            updateClusterSetting.setString(1, serverProperties.get("rhq.storage.cql-port"));
-            updateClusterSetting.setString(2, serverProperties.get("rhq.storage.cql-port"));
+            updateClusterSetting.setString(1, serverProperties.get(ServerProperties.PROP_STORAGE_USERNAME));
+            updateClusterSetting.setString(2, serverProperties.get(ServerProperties.PROP_STORAGE_USERNAME));
+            updateClusterSetting.setString(3, "STORAGE_USERNAME");
+            updateClusterSetting.executeUpdate();
+
+            updateClusterSetting.setString(1, serverProperties.get(ServerProperties.PROP_STORAGE_PASSWORD));
+            updateClusterSetting.setString(2, serverProperties.get(ServerProperties.PROP_STORAGE_PASSWORD));
+            updateClusterSetting.setString(3, "STORAGE_PASSWORD");
+            updateClusterSetting.executeUpdate();
+
+            updateClusterSetting.setString(1, serverProperties.get(ServerProperties.PROP_STORAGE_CQL_PORT));
+            updateClusterSetting.setString(2, serverProperties.get(ServerProperties.PROP_STORAGE_CQL_PORT));
             updateClusterSetting.setString(3, "STORAGE_CQL_PORT");
             updateClusterSetting.executeUpdate();
 
-            updateClusterSetting.setString(1, serverProperties.get("rhq.storage.gossip-port"));
-            updateClusterSetting.setString(2, serverProperties.get("rhq.storage.gossip-port"));
+            updateClusterSetting.setString(1, serverProperties.get(ServerProperties.PROP_STORAGE_GOSSIP_PORT));
+            updateClusterSetting.setString(2, serverProperties.get(ServerProperties.PROP_STORAGE_GOSSIP_PORT));
             updateClusterSetting.setString(3, "STORAGE_GOSSIP_PORT");
             updateClusterSetting.executeUpdate();
 

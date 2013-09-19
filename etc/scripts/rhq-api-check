@@ -1,0 +1,4 @@
+#!/bin/bash
+
+rhq-trigger "rhq-api-check" "$@"
+

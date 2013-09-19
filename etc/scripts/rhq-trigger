@@ -1,0 +1,36 @@
+#!/bin/bash
+
+JOB=$1
+if [ $# -eq 2 ]; then
+  BRANCH=$2
+else
+  BRANCH=`git rev-parse --abbrev-ref HEAD`
+  status=$?
+  if [ $status -ne 0 ]; then
+    echo "Not in a Git repository. You must provide a branch name"
+    exit 1
+  fi
+fi
+
+echo "Will trigger job '$JOB' for branch '$BRANCH'"
+
+URL="https://jenkins.mw.lab.eng.bos.redhat.com/hudson/view/RHQ/view/RHQ%20On%20Demand/job/$JOB/buildWithParameters?THIS_VERSION_BRANCH=origin/$BRANCH"
+
+case "`uname`" in
+  CYGWIN*)
+    cygstart $URL
+    ;;
+
+  Darwin*)
+    open $URL
+    ;;
+
+  Linux)
+    xdg-open $URL > /dev/null 2>&1
+    ;;
+
+  *)
+    start '"browse"' "$URL"
+    ;;
+esac
+

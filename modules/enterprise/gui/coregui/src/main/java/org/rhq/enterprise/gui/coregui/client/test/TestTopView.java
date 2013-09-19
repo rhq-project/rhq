@@ -186,37 +186,37 @@ public class TestTopView extends AbstractSectionedLeftNavigationView {
 
         NavigationItem sqlItem = new NavigationItem(PAGE_SQL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/admin/test/sql.jsp");
+                return new FullHTMLPane("/portal/admin/test/sql.jsp");
             }
         });
 
         NavigationItem hibernateItem = new NavigationItem(PAGE_HIBERNATE, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/admin/test/hibernate.jsp");
+                return new FullHTMLPane("/portal/admin/test/hibernate.jsp");
             }
         });
 
         NavigationItem entityBrowserItem = new NavigationItem(PAGE_ENTITY_BROWSER, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/admin/test/browser.jsp");
+                return new FullHTMLPane("/portal/admin/test/browser.jsp");
             }
         });
 
         NavigationItem adminControlItem = new NavigationItem(PAGE_ADMIN_CONTROL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/admin/test/control.jsp");
+                return new FullHTMLPane("/portal/admin/test/control.jsp");
             }
         });
 
         NavigationItem emailItem = new NavigationItem(PAGE_EMAIL, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/admin/test/email.jsp");
+                return new FullHTMLPane("/portal/admin/test/email.jsp");
             }
         });
 
         NavigationItem agentItem = new NavigationItem(PAGE_AGENT, null, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/admin/test/agent.jsp");
+                return new FullHTMLPane("/portal/admin/test/agent.jsp");
             }
         });
 

@@ -260,7 +260,7 @@
                             <groupId>${project.groupId}</groupId>
                             <artifactId>rhq-portal</artifactId>
                             <bundleFileName>rhq-portal.war</bundleFileName>
-                            <contextRoot>/</contextRoot>
+                            <contextRoot>/portal</contextRoot>
                         </webModule>
 
                         <!-- used to expose content through http -->

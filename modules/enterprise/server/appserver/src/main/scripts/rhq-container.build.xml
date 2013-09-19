@@ -351,6 +351,8 @@
         <echo>Delete domain files - we only start in standalone mode</echo>
         <delete dir="${jboss.home}/domain" />
 
+        <antcall target="prepare-welcome-content" />
+
         <!-- TODO: setup our own welcome-content that points to our app -->
         <!--
         <echo>Setup welcome content</echo>
@@ -403,6 +405,47 @@
                dest="${jboss.modules.dir}" />
         -->
 
+    </target>
+
+    <target name="prepare-welcome-content">
+      <echo>Changing the default welcome content</echo>
+      <!-- Simple redirect script written in EcmaScript checking if the server has fully started -->
+      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;body&gt;' replace='
+        &lt;body>&#xA;
+        &lt;script type="text/JavaScript">&#xA;
+          &lt;!--&#xA;
+          function httpGet() {&#xA;
+            var url = "/portal/sessionAccess";&#xA;
+            var xmlHttp = null;&#xA;
+            xmlHttp = new XMLHttpRequest();&#xA;
+            xmlHttp.open("GET", url, false);&#xA;
+            xmlHttp.send(null);&#xA;
+            return xmlHttp.responseText;&#xA;
+          }&#xA;
+          function checkIfRunning() {&#xA;
+            var response = httpGet();&#xA;
+            if (response.trim() === "true") {&#xA;
+              location.href = "/coregui";&#xA;
+            } else {&#xA;
+              var el = document.getElementById("progress");
+              if (el != null) {&#xA;
+                el.innerHTML= el.innerHTML.trim() + ".";&#xA;
+              }&#xA;
+              setTimeout("checkIfRunning();", 4000);&#xA;
+            }&#xA;
+          }&#xA;
+          checkIfRunning();&#xA;
+          -->&#xA;
+        &lt;/script>'/>
+
+      <!-- Changing the default content of the welcome page -->
+      <replaceregexp file="${jboss.home}/welcome-content/index.html" flags="gis" match='&lt;div class="section">(.*?)&lt;/div>' replace='
+        &lt;div class="section">&#xA;
+          &lt;h1>EAP 6 Notification&lt;/h1>&#xA;
+          &lt;h3>Your RHQ Server is being started, please wait.&lt;/h3>&#xA;
+          &lt;p class="WarnBlock" id="progress">Starting..&lt;/p>&#xA;
+          &lt;sub>You will be automatically redirected once the RHQ server is up and running. If this takes more than 10 minutes, please check the server log for possible issues.&lt;/sub>&#xA;
+        &lt;/div>'/>
     </target>
 
     <target name="package-connectors">

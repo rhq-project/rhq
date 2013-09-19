@@ -557,28 +557,28 @@ public class ResourceDetailView extends
             updateSubTab(this.contentTab, this.contentDeployed, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane("/rhq/resource/content/view-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/portal/rhq/resource/content/view-plain.xhtml?id=" + resource.getId());
                 }
             });
 
             updateSubTab(this.contentTab, this.contentNew, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane("/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/portal/rhq/resource/content/deploy-plain.xhtml?id=" + resource.getId());
                 }
             });
 
             updateSubTab(this.contentTab, this.contentSubscrip, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane("/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/portal/rhq/resource/content/subscription-plain.xhtml?id=" + resource.getId());
                 }
             });
 
             updateSubTab(this.contentTab, this.contentHistory, true, true, new ViewFactory() {
                 @Override
                 public Canvas createView() {
-                    return new FullHTMLPane("/rhq/resource/content/history-plain.xhtml?id=" + resource.getId());
+                    return new FullHTMLPane("/portal/rhq/resource/content/history-plain.xhtml?id=" + resource.getId());
                 }
             });
         }

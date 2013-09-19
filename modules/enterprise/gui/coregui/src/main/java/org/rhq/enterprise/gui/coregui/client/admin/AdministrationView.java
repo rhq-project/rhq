@@ -244,13 +244,13 @@ public class AdministrationView extends AbstractSectionedLeftNavigationView {
     private NavigationSection buildContentSection() {
         NavigationItem contentSourcesItem = new NavigationItem(PAGE_CONTENT_SOURCES_VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/rhq/content/listContentProviders-plain.xhtml");
+                return new FullHTMLPane("/portal/rhq/content/listContentProviders-plain.xhtml");
             }
         }, getGlobalPermissions().contains(Permission.MANAGE_REPOSITORIES));
 
         NavigationItem reposItem = new NavigationItem(PAGE_REPOS_VIEW_ID, new ViewFactory() {
             public Canvas createView() {
-                return new FullHTMLPane("/rhq/content/listRepos-plain.xhtml");
+                return new FullHTMLPane("/portal/rhq/content/listRepos-plain.xhtml");
             }
         });
 

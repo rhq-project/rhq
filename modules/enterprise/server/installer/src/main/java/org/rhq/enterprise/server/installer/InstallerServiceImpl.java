@@ -1127,8 +1127,8 @@ public class InstallerServiceImpl implements InstallerService {
             // setup the email service
             ServerInstallUtil.setupMailService(mcc, serverProperties);
 
-            // we don't want to the JBossAS welcome screen; turn it off
-            new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
+            // we use the welcome root webapp for indicating the state of installation
+            // new WebJBossASClient(mcc).setEnableWelcomeRoot(false);
 
             // we don't want users to access the admin console
             new CoreJBossASClient(mcc).setEnableAdminConsole(false);

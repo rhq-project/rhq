@@ -28,24 +28,41 @@ import org.jboss.as.controller.client.ModelControllerClient;
  */
 public class MCCHelper {
 
+    private static final String RHQ_JBOSS_MANAGEMENT_PORT_PROPERTY = "jboss.management.native.port";
+    private static final int RHQ_JBOSS_MANAGEMENT_PORT_PROPERTY_DEFAULT_VALUE = 6999;
+
 
     public static ModelControllerClient getModelControllerClient() {
-        return getModelControllerClient("localhost",6999);
+        return getModelControllerClient("localhost", getPort());
     }
 
-    public static ModelControllerClient getModelControllerClient(String host,int port) {
+    public static ModelControllerClient getModelControllerClient(String host, int port) {
         ModelControllerClient client;
         try {
             if (host==null || host.isEmpty())
                 host = "localhost";
 
-            if (port <= 0)
-                port = 6999; // Default for RHQ TODO obtain from rhq-server.properties, jboss.management.native.port=6999 ?
+            if (port <= 0 || port > (1 << 16) - 1) {
+                port = RHQ_JBOSS_MANAGEMENT_PORT_PROPERTY_DEFAULT_VALUE;
+            }
             client = ModelControllerClient.Factory.create(host, port);
         } catch (Exception e) {
             throw new RuntimeException("Cannot obtain client connection to the app server", e);
         }
         return client;
+    }
+
+    private static int getPort() {
+        // The property may return "" so also use "" as the default to ensure we set it to something useful
+        String result = System.getProperty(RHQ_JBOSS_MANAGEMENT_PORT_PROPERTY, "");
+
+        if (!"".equals(result)) {
+            try {
+                return Integer.parseInt(result);
+            } catch (NumberFormatException nfe) {
+                return RHQ_JBOSS_MANAGEMENT_PORT_PROPERTY_DEFAULT_VALUE;
+            }
+        } else return RHQ_JBOSS_MANAGEMENT_PORT_PROPERTY_DEFAULT_VALUE;
     }
 
 }

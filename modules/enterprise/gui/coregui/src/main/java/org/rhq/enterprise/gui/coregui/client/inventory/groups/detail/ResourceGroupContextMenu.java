@@ -352,7 +352,7 @@ public class ResourceGroupContextMenu extends Menu {
                                                         grpGraphElements += "," + group.getResourceType().getId();
                                                     }
                                                     //construct portal.war url to access
-                                                    String baseUrl = "/resource/common/monitor/visibility/IndicatorCharts.do";
+                                                    String baseUrl = "/portal/resource/common/monitor/visibility/IndicatorCharts.do";
                                                     //No need to rebuild the autogroup url as everything handled as a compatible group now
                                                     //                                                if (isAutoGroup) {
                                                     //                                                    //Ex. ?parent=10001&ctype=1013&view=Default

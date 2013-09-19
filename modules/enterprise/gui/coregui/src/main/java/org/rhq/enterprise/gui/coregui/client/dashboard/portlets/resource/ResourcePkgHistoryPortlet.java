@@ -118,7 +118,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                         StaticTextItem iconItem = AbstractActivityView.newTextItemIcon(
                             "subsystems/content/Package_16.png", null);
                         String title = history.getPackageVersion().getFileName() + ":";
-                        String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
+                        String destination = "/portal/rhq/resource/content/audit-trail-item.xhtml?id=" + resourceId
                             + "&selectedHistoryId=" + history.getId();
                         //spinder 4/27/11: disabling links as they point into portal.war content pages
                         //                        LinkItem link = AbstractActivityView.newLinkItem(title, destination);
@@ -131,7 +131,7 @@ public class ResourcePkgHistoryPortlet extends GroupPkgHistoryPortlet {
                     }
                     //                    //insert see more link
                     //                    DynamicForm row = new DynamicForm();
-                    //                    String destination = "/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
+                    //                    String destination = "/portal/rhq/resource/content/audit-trail-item.xhtml?id=" + groupId;
                     //                    addSeeMoreLink(row, destination, column);
                 } else {
                     DynamicForm row = AbstractActivityView.createEmptyDisplayRow(MSG.view_portlet_results_empty());

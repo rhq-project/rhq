@@ -76,9 +76,12 @@ public class Remove extends ControlCommand {
                 if (isAgentInstalled()) {
                     removeAgentService();
                 }
-                if (isServerInstalled()) {
-                    removeServerService();
-                }
+
+                // the server service may be installed even if the full server install fails. The files to execute
+                // the remove are there after the initial unzip, so just go ahead and try to remove the service. This
+                // may help clean up a failed install.
+                removeServerService();
+
                 if (isStorageInstalled()) {
                     removeStorageService();
                 }
@@ -92,12 +95,10 @@ public class Remove extends ControlCommand {
                     }
                 }
                 if (commandLine.hasOption(SERVER_OPTION)) {
-                    if (isServerInstalled()) {
-                        removeServerService();
-                    } else {
-                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
-                            + " option will be ignored.");
-                    }
+                    // the server service may be installed even if the full server install fails. The files to execute
+                    // the remove are there after the initial unzip, so just go ahead and try to remove the service. This
+                    // may help clean up a failed install.
+                    removeServerService();
                 }
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {

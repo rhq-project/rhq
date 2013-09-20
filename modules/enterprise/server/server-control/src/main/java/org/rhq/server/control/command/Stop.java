@@ -70,9 +70,12 @@ public class Stop extends AbstractInstall {
                 if (isAgentInstalled()) {
                     stopAgent();
                 }
-                if (isServerInstalled()) {
-                    stopRHQServer();
-                }
+
+                // the server service may be installed even if the full server install fails. The files to execute
+                // the remove are there after the initial unzip, so just go ahead and try to stop the service. This
+                // may help clean up a failed install.
+                stopRHQServer();
+
                 if (isStorageInstalled()) {
                     stopStorage();
                 }
@@ -85,14 +88,14 @@ public class Stop extends AbstractInstall {
                             + " option will be ignored.");
                     }
                 }
+
                 if (commandLine.hasOption(SERVER_OPTION)) {
-                    if (isServerInstalled()) {
-                        stopRHQServer();
-                    } else {
-                        log.warn("It appears that the server is not installed. The --" + SERVER_OPTION
-                            + " option will be ignored.");
-                    }
+                    // the server service may be installed even if the full server install fails. The files to execute
+                    // the remove are there after the initial unzip, so just go ahead and try to stop the service. This
+                    // may help clean up a failed install.                    
+                    stopRHQServer();
                 }
+
                 if (commandLine.hasOption(STORAGE_OPTION)) {
                     if (isStorageInstalled()) {
                         stopStorage();
@@ -126,7 +129,7 @@ public class Stop extends AbstractInstall {
                 log.debug("Failed to stop storage service", e);
             }
         } else {
-            if(isStorageRunning()) {
+            if (isStorageRunning()) {
                 String pid = getStoragePid();
 
                 System.out.println("Stopping RHQ storage node...");

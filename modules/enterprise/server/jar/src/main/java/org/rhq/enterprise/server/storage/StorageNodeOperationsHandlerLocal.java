@@ -1,6 +1,5 @@
 package org.rhq.enterprise.server.storage;
 
-import java.net.InetAddress;
 import java.util.List;
 
 import javax.ejb.Asynchronous;
@@ -38,8 +37,6 @@ public interface StorageNodeOperationsHandlerLocal {
 
     void bootstrapStorageNode(Subject subject, StorageNode storageNode);
 
-    void performAddNodeMaintenanceIfNecessary(InetAddress storageNodeAddress);
-
     void performAddNodeMaintenance(Subject subject, StorageNode storageNode);
 
     void performAddMaintenance(Subject subject, StorageNode storageNode);
@@ -49,8 +46,6 @@ public interface StorageNodeOperationsHandlerLocal {
     void detachFromResource(StorageNode storageNode);
 
     void decommissionStorageNode(Subject subject, StorageNode storageNode);
-
-    void performRemoveNodeMaintenanceIfNecessary(InetAddress storageNodeAddress);
 
     void performRemoveNodeMaintenance(Subject subject, StorageNode storageNode);
 

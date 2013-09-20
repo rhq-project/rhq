@@ -13,10 +13,15 @@ import com.datastax.driver.core.ResultSetFuture;
 import com.datastax.driver.core.Session;
 import com.datastax.driver.core.exceptions.NoHostAvailableException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * @author John Sanda
  */
 public class StorageSession implements Host.StateListener {
+
+    private final Log log = LogFactory.getLog(StorageSession.class);
 
     private Session wrappedSession;
 
@@ -77,6 +82,7 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onAdd(Host host) {
+        log.info(host + " added");
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeUp(host.getAddress());
         }
@@ -84,6 +90,7 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onUp(Host host) {
+        log.info(host + " is up");
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeUp(host.getAddress());
         }
@@ -91,6 +98,7 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onDown(Host host) {
+        log.info(host + " is down");
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeDown(host.getAddress());
         }
@@ -98,6 +106,7 @@ public class StorageSession implements Host.StateListener {
 
     @Override
     public void onRemove(Host host) {
+        log.info(host + " has been removed");
         for (StorageStateListener listener : listeners) {
             listener.onStorageNodeRemoved(host.getAddress());
         }

@@ -156,7 +156,7 @@
                height="25" width="104"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
          <item value="Timeline"
-               link="/rhq/resource/monitor/timeline.xhtml" mode="timeline"
+               link="/portal/rhq/resource/monitor/timeline.xhtml" mode="timeline"
                height="25" width="104"
                classtype="org.rhq.enterprise.gui.legacy.util.Tab"/>
          <item value="Configure"
@@ -438,8 +438,8 @@
 
    <!-- monitor timeline -->
    <definition name=".resource.common.monitor.visibility.timeline"
-               path="/resource/common/monitor/visibility/Timeline.jsp"
-               controllerUrl="/resource/common/monitor/visibility/Timeline.do"/>
+               path="/portal/resource/common/monitor/visibility/Timeline.jsp"
+               controllerUrl="/portal/resource/common/monitor/visibility/Timeline.do"/>
                
    <definition name=".resource.common.events.Events"
                controllerUrl="/resource/common/events/EventsFormPrepare.do"

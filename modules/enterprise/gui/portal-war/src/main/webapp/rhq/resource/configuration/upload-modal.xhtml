@@ -13,7 +13,8 @@
       function prepareFormForUpload() {
         var form = document.getElementById('editResourceConfigurationForm');
         form.encoding = 'multipart/form-data';
-
+        form.setAttribute('action', 'upload-modal.xhtml');
+        
         return true;
       }
     </script>

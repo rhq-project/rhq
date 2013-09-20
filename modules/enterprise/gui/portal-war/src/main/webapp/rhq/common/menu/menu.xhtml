@@ -37,32 +37,32 @@
 
         <ui:remove>***** Overview > SYSTEM VIEWS *****</ui:remove>
         <rich:menuGroup value="Subsystem Views">
-            <rich:menuItem submitMode="none" icon="/images/icons/Configure_16.png"
-                           onclick="window.location = '/rhq/subsystem/configurationUpdate.xhtml'">Configuration Changes
+            <rich:menuItem submitMode="none" icon="/portal/images/icons/Configure_16.png"
+                           onclick="window.location = '/portal/rhq/subsystem/configurationUpdate.xhtml'">Configuration Changes
             </rich:menuItem>
-            <rich:menuItem submitMode="none" icon="/images/icons/Monitor_failed_16.png"
-                           onclick="window.location = '/rhq/subsystem/oobHistory.xhtml'">Suspect Metrics
+            <rich:menuItem submitMode="none" icon="/portal/images/icons/Monitor_failed_16.png"
+                           onclick="window.location = '/portal/rhq/subsystem/oobHistory.xhtml'">Suspect Metrics
             </rich:menuItem>
-            <rich:menuItem submitMode="none" icon="/images/icons/Operation_16.png"
-                           onclick="window.location = '/rhq/subsystem/operationHistory.xhtml'">Operations
+            <rich:menuItem submitMode="none" icon="/portal/images/icons/Operation_16.png"
+                           onclick="window.location = '/portal/rhq/subsystem/operationHistory.xhtml'">Operations
             </rich:menuItem>
-            <rich:menuItem submitMode="none" icon="/images/icons/Flag_blue_16.png"
-                           onclick="window.location = '/rhq/subsystem/alertHistory.xhtml'">Alerts
+            <rich:menuItem submitMode="none" icon="/portal/images/icons/Flag_blue_16.png"
+                           onclick="window.location = '/portal/rhq/subsystem/alertHistory.xhtml'">Alerts
             </rich:menuItem>
-            <rich:menuItem submitMode="none" icon="/images/icons/Flag_grey_16.png"
-                           onclick="window.location = '/rhq/subsystem/alertDefinitions.xhtml'">Alert Definitions
+            <rich:menuItem submitMode="none" icon="/portal/images/icons/Flag_grey_16.png"
+                           onclick="window.location = '/portal/rhq/subsystem/alertDefinitions.xhtml'">Alert Definitions
             </rich:menuItem>
         </rich:menuGroup>
 
         <ui:remove>***** Overview > AUTO-DISCOVERY QUEUE *****</ui:remove>
         <rich:menuItem submitMode="none"
-                       onclick="window.location = '/rhq/discovery/queue.xhtml'">
+                       onclick="window.location = '/portal/rhq/discovery/queue.xhtml'">
             <h:outputText value="Auto Discovery Queue"/>
         </rich:menuItem>
 
         <ui:remove>***** Overview > DASHBOARD *****</ui:remove>
         <rich:menuItem submitMode="none"
-                       onclick="window.location = '/Dashboard.do'">
+                       onclick="window.location = '/portal/Dashboard.do'">
             <h:outputText value="Dashboard"/>
         </rich:menuItem>
 
@@ -79,35 +79,35 @@
 
         <ui:remove>***** Resources > ALL RESOURCES *****</ui:remove>
         <rich:menuItem submitMode="none"
-                       onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=all'">
+                       onclick="window.location = '/portal/rhq/inventory/browseResources.xhtml?subtab=all'">
             <h:outputText value="#{msg['resource.hub.filter.resources']}"/>
         </rich:menuItem>
 
         <ui:remove>***** Resources > PLATFORMS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Platform_up_16.png"
-                       onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=platform'">
+        <rich:menuItem submitMode="none" icon="/portal/images/icons/Platform_up_16.png"
+                       onclick="window.location = '/portal/rhq/inventory/browseResources.xhtml?subtab=platform'">
             <h:outputText value="#{msg['resource.hub.filter.platform']}"/>
         </rich:menuItem>
 
         <ui:remove>***** Resources > SERVERS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Server_up_16.png"
-                       onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=server'">
+        <rich:menuItem submitMode="none" icon="/portal/images/icons/Server_up_16.png"
+                       onclick="window.location = '/portal/rhq/inventory/browseResources.xhtml?subtab=server'">
             <h:outputText value="#{msg['resource.hub.filter.server']}"/>
         </rich:menuItem>
 
         <ui:remove>***** Resources > SERVICES *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Service_up_16.png"
-                       onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=service'">
+        <rich:menuItem submitMode="none" icon="/portal/images/icons/Service_up_16.png"
+                       onclick="window.location = '/portal/rhq/inventory/browseResources.xhtml?subtab=service'">
             <h:outputText value="#{msg['resource.hub.filter.service']}"/>
         </rich:menuItem>
 
         <rich:menuSeparator/>
 
         <ui:remove>***** Resources > FAVORITE RESOURCES *****</ui:remove>
-        <rich:menuGroup value="Favorite Resources" icon="/images/icons/Favorite_16.png">
+        <rich:menuGroup value="Favorite Resources" icon="/portal/images/icons/Favorite_16.png">
             <c:forEach var="resource" items="#{UserPreferencesUIBean.resourceFavorites}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icons/#{resource.resourceType.category}_up_16.png"
+                               icon="/portal/images/icons/#{resource.resourceType.category}_up_16.png"
                                onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{resource.id}'">
                     <h:outputText value="#{resource.name}"/>
                 </rich:menuItem>
@@ -115,11 +115,11 @@
         </rich:menuGroup>
 
         <ui:remove>***** Resources > RECENTLY VIEWED *****</ui:remove>
-        <rich:menuGroup value="Recently Viewed Resources" icon="/images/icons/History_16.png">
+        <rich:menuGroup value="Recently Viewed Resources" icon="/portal/images/icons/History_16.png">
             <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
                 <c:if test="#{visit.kind == 'PLATFORM' or visit.kind == 'SERVER' or visit.kind == 'SERVICE'}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icons/#{visit.kind.displayName}_up_16.png"
+                               icon="/portal/images/icons/#{visit.kind.displayName}_up_16.png"
                                onclick="window.location = '#{onf:getDefaultResourceTabURL()}?id=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>
@@ -128,12 +128,12 @@
         </rich:menuGroup>
         
         <ui:remove>***** Resources > SAVED SEARCHES *****</ui:remove>
-        <rich:menuGroup value="Resource Saved Searches" icon="/images/bookmark.png">
+        <rich:menuGroup value="Resource Saved Searches" icon="/portal/images/bookmark.png">
             <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
                 <c:if test="#{savedSearch.searchSubsystem.name == 'RESOURCE'}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
-                               onclick="window.location = '/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
+                               icon="/portal/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
+                               onclick="window.location = '/portal/rhq/inventory/browseResources.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
                     <h:outputText value="#{savedSearch.name}" />
                     <h:outputText value=" (#{savedSearch.resultCount})"
                                   rendered="#{not empty savedSearch.resultCount}" />
@@ -145,7 +145,7 @@
         <rich:menuSeparator/>
 
         <ui:remove>***** Resources > SEARCH *****</ui:remove>
-        <rich:menuItem submitMode="none" disabled="true" iconDisabled="/images/icons/Search_16.png">
+        <rich:menuItem submitMode="none" disabled="true" iconDisabled="/portal/images/icons/Search_16.png">
             <h:outputText value="Search: " style="color: black;"/>
             <h:panelGroup>
                 <h:inputText id="selectedResource" style="width: 250px;" immediate="true"
@@ -161,7 +161,7 @@
                     <h:column>
                         <f:facet name="header">Avail</f:facet>
                         <h:graphicImage
-                                value="/images/icons/availability_#{result.original.availability == 'UP' ? 'green' : 'red'}_16.png"/>
+                                value="/portal/images/icons/availability_#{result.original.availability == 'UP' ? 'green' : 'red'}_16.png"/>
                     </h:column>
                     <h:column>
                         <f:facet name="header">Resource</f:facet>
@@ -189,38 +189,38 @@
 
         <ui:remove>***** Groups > ALL GROUPS *****</ui:remove>
         <rich:menuItem submitMode="none"
-                       onclick="window.location = '/rhq/inventory/browseGroups.xhtml?subtab=all'">
+                       onclick="window.location = '/portal/rhq/inventory/browseGroups.xhtml?subtab=all'">
             <h:outputText value="#{msg['resource.hub.filter.groups']}"/>
         </rich:menuItem>
 
         <ui:remove>***** Groups > COMPATIBLE GROUPS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Cluster_up_16.png"
-                       onclick="window.location = '/rhq/inventory/browseGroups.xhtml?subtab=compatible'">
+        <rich:menuItem submitMode="none" icon="/portal/images/icons/Cluster_up_16.png"
+                       onclick="window.location = '/portal/rhq/inventory/browseGroups.xhtml?subtab=compatible'">
             <h:outputText value="#{msg['resource.hub.filter.compatibleGroups']}"/>
         </rich:menuItem>
 
         <ui:remove>***** Groups > MIXED GROUPS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/icons/Group_up_16.png"
-                       onclick="window.location = '/rhq/inventory/browseGroups.xhtml?subtab=mixed'">
+        <rich:menuItem submitMode="none" icon="/portal/images/icons/Group_up_16.png"
+                       onclick="window.location = '/portal/rhq/inventory/browseGroups.xhtml?subtab=mixed'">
             <h:outputText value="#{msg['resource.hub.filter.mixedGroups']}"/>
         </rich:menuItem>
 
         <ui:remove>***** Groups > GROUP DEFINITIONS *****</ui:remove>
-        <rich:menuItem submitMode="none" icon="/images/GroupDefinition_16.png"
-                       onclick="window.location = '/rhq/definition/group/list.xhtml'">
+        <rich:menuItem submitMode="none" icon="/portal/images/GroupDefinition_16.png"
+                       onclick="window.location = '/portal/rhq/definition/group/list.xhtml'">
             <h:outputText value="#{msg['resource.hub.filter.groupDefinitions']}"/>
         </rich:menuItem>
 
         <rich:menuSeparator rendered="#{GlobalPermissionsUIBean.inventory}"/>
 
         <ui:remove>***** Groups > NEW RESOURCE GROUP *****</ui:remove>
-        <rich:menuItem submitMode="none" onclick="window.location = '/resource/group/Inventory.do?mode=new'"
+        <rich:menuItem submitMode="none" onclick="window.location = '/portal/resource/group/Inventory.do?mode=new'"
                        rendered="#{GlobalPermissionsUIBean.inventory}">
             <h:outputText value="#{msg['resource.hub.NewGroupLink']}"/>
         </rich:menuItem>
 
         <ui:remove>***** Groups > NEW GROUP DEFINITIONS *****</ui:remove>
-        <rich:menuItem submitMode="none" onclick="window.location = '/rhq/definition/group/new.xhtml'"
+        <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/definition/group/new.xhtml'"
                        rendered="#{GlobalPermissionsUIBean.inventory}">
             <h:outputText value="#{msg['resource.hub.NewGroupDefinitionLink']}"/>
         </rich:menuItem>
@@ -228,23 +228,23 @@
         <rich:menuSeparator/>
 
         <ui:remove>***** Groups > FAVORITE GROUPS *****</ui:remove>
-        <rich:menuGroup value="Favorite Groups" icon="/images/icons/Favorite_16.png">
+        <rich:menuGroup value="Favorite Groups" icon="/portal/images/icons/Favorite_16.png">
             <c:forEach var="group" items="#{UserPreferencesUIBean.groupFavorites}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
-                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
+                               icon="/portal/images/icons/#{group.groupCategory == 'MIXED' ? 'Group' : 'Cluster'}_up_16.png"
+                               onclick="window.location = '/portal/rhq/group/inventory/view.xhtml?groupId=#{group.id}'">
                     <h:outputText value="#{group.name}"/>
                 </rich:menuItem>
             </c:forEach>
         </rich:menuGroup>
 
         <ui:remove>***** Groups > RECENTLY VIEWED *****</ui:remove>
-        <rich:menuGroup value="Recently Viewed Groups" icon="/images/icons/History_16.png">
+        <rich:menuGroup value="Recently Viewed Groups" icon="/portal/images/icons/History_16.png">
             <c:forEach var="visit" items="#{UserPreferencesUIBean.recentVisits}">
                 <c:if test="#{visit.kind == 'COMPATIBLE_GROUP' or visit.kind == 'MIXED_GROUP'}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icons/#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'Group'}_up_16.png"
-                               onclick="window.location = '/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
+                               icon="/portal/images/icons/#{visit.kind == 'COMPATIBLE_GROUP' ? 'Cluster' : 'Group'}_up_16.png"
+                               onclick="window.location = '/portal/rhq/group/inventory/view.xhtml?groupId=#{visit.id}'">
                     <h:outputText value="#{visit.name}"/>
                 </rich:menuItem>
                 </c:if>
@@ -252,12 +252,12 @@
         </rich:menuGroup>
         
         <ui:remove>***** Groups > SAVED SEARCHES *****</ui:remove>
-        <rich:menuGroup value="Group Saved Searches" icon="/images/bookmark.png">
+        <rich:menuGroup value="Group Saved Searches" icon="/portal/images/bookmark.png">
             <c:forEach var="savedSearch" items="#{UserPreferencesUIBean.savedSearches}">
                 <c:if test="#{savedSearch.searchSubsystem.name == 'GROUP'}">
                 <rich:menuItem submitMode="none"
-                               icon="/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
-                               onclick="window.location = '/rhq/inventory/browseGroups.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
+                               icon="/portal/images/icons/Flag_#{savedSearch.global ? 'yellow' : 'blue'}_16.png"
+                               onclick="window.location = '/portal/rhq/inventory/browseGroups.xhtml?subtab=all&amp;searchId=#{savedSearch.id}'">
                     <h:outputText value="#{savedSearch.name}" />
                     <h:outputText value=" (#{savedSearch.resultCount})"
                                   rendered="#{not empty savedSearch.resultCount}" />
@@ -269,7 +269,7 @@
         <rich:menuSeparator/>
 
         <ui:remove>***** Groups > SEARCH *****</ui:remove>
-        <rich:menuItem submitMode="none" disabled="true" iconDisabled="/images/icons/Search_16.png">
+        <rich:menuItem submitMode="none" disabled="true" iconDisabled="/portal/images/icons/Search_16.png">
             <h:outputText value="Search: " style="color: black;"/>
             <h:panelGroup>
                 <h:inputText id="selectedGroup" style="width: 250px;" immediate="true"
@@ -280,14 +280,14 @@
                                     var="result" data="foo" fetchValue="#{result.groupQueryString}"
                                     nothingLabel="No matching groups found"
                                     style="background-color: #cccccc;"
-                                    onselect="document.location.href='/rhq/group/inventory/view.xhtml?' + #{rich:element('selectedGroup')}.value"
+                                    onselect="document.location.href='/portal/rhq/group/inventory/view.xhtml?' + #{rich:element('selectedGroup')}.value"
                                     usingSuggestObjects="false" width="700" height="400">
                     <h:column>
                         <f:facet name="header">Avail</f:facet>
-                        <h:graphicImage value="/images/icons/availability_green_16.png" rendered="#{result.implicitUp > 0 and result.implicitDown == 0}"/>
-                        <h:graphicImage value="/images/icons/availability_red_16.png" rendered="#{result.implicitUp == 0 and result.implicitDown > 0}"/>
-                        <h:graphicImage value="/images/icons/availability_yellow_16.png" rendered="#{result.implicitUp > 0 and result.implicitDown > 0}"/>
-                        <h:graphicImage value="/images/icons/availability_grey_16.png" rendered="#{result.implicitUp == 0 and result.implicitDown == 0}"/>
+                        <h:graphicImage value="/portal/images/icons/availability_green_16.png" rendered="#{result.implicitUp > 0 and result.implicitDown == 0}"/>
+                        <h:graphicImage value="/portal/images/icons/availability_red_16.png" rendered="#{result.implicitUp == 0 and result.implicitDown > 0}"/>
+                        <h:graphicImage value="/portal/images/icons/availability_yellow_16.png" rendered="#{result.implicitUp > 0 and result.implicitDown > 0}"/>
+                        <h:graphicImage value="/portal/images/icons/availability_grey_16.png" rendered="#{result.implicitUp == 0 and result.implicitDown == 0}"/>
                     </h:column>
                     <h:column>
                         <f:facet name="header">Group</f:facet>
@@ -315,30 +315,30 @@
 
         <ui:remove>***** Administration > SECURITY *****</ui:remove>
         <rich:menuGroup value="Security">
-            <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=list'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/admin/user/UserAdmin.do?mode=list'">
                 <h:outputText value="Users"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/admin/role/RoleAdmin.do?mode=list'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/admin/role/RoleAdmin.do?mode=list'">
                 <h:outputText value="Roles"/>
             </rich:menuItem>
         </rich:menuGroup>
 
         <ui:remove>***** Administration > SYSTEM CONFIGURATION *****</ui:remove>
         <rich:menuGroup value="System Configuration" rendered="#{GlobalPermissionsUIBean.settings || GlobalPermissionsUIBean.inventory}">
-            <rich:menuItem submitMode="none" onclick="window.location = '/admin/config/Config.do?mode=edit'"
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/admin/config/Config.do?mode=edit'"
                            rendered="#{GlobalPermissionsUIBean.settings}">
                 <h:outputText value="Settings"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/admin/plugin/plugin-list.xhtml'"
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/admin/plugin/plugin-list.xhtml'"
                            rendered="#{GlobalPermissionsUIBean.settings}">
                 <h:outputText value="Plugins"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all'"
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/admin/config/EditDefaults.do?mode=monitor&amp;viewMode=all'"
                            rendered="#{GlobalPermissionsUIBean.inventory}">
                 <h:outputText value="Templates"/>
             </rich:menuItem>
             <ui:remove>
-               <rich:menuItem submitMode="none" onclick="window.location = '/rhq/admin/alert/template/notification/list.xhtml'"
+               <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/admin/alert/template/notification/list.xhtml'"
                               rendered="#{GlobalPermissionsUIBean.settings}">
                    <h:outputText value="Alert Notification Templates"/>
                </rich:menuItem>
@@ -347,15 +347,15 @@
 
         <ui:remove>***** Administration > CONTENT *****</ui:remove>
         <rich:menuGroup value="Content" rendered="#{GlobalPermissionsUIBean.inventory || GlobalPermissionsUIBean.bundle}">
-            <rich:menuItem submitMode="none" onclick="window.location = '/coregui/CoreGUI.html#Bundles'"
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/coregui/CoreGUI.html#Bundles'"
                            rendered="#{GlobalPermissionsUIBean.bundle}">
                 <h:outputText value="Bundles"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listContentProviders.xhtml'"
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/content/listContentProviders.xhtml'"
                            rendered="#{GlobalPermissionsUIBean.inventory}">
                 <h:outputText value="Content Sources"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/content/listRepos.xhtml'"
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/content/listRepos.xhtml'"
                            rendered="#{GlobalPermissionsUIBean.inventory}">
                 <h:outputText value="Repositories"/>
             </rich:menuItem>
@@ -363,16 +363,16 @@
 
         <ui:remove>***** Administration > HIGH AVAILABILITY *****</ui:remove>
         <rich:menuGroup value="High Availability" rendered="#{GlobalPermissionsUIBean.inventory}">
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listServers.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/ha/listServers.xhtml'">
                 <h:outputText value="Servers"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listAgents.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/ha/listAgents.xhtml'">
                 <h:outputText value="Agents"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listAffinityGroups.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/ha/listAffinityGroups.xhtml'">
                 <h:outputText value="Affinity Groups"/>
             </rich:menuItem>
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/ha/listPartitionEvents.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/ha/listPartitionEvents.xhtml'">
                 <h:outputText value="Partition Events"/>
             </rich:menuItem>
         </rich:menuGroup>
@@ -380,15 +380,15 @@
 
 
         <rich:menuGroup value="Reports">
-            <rich:menuItem submitMode="none" onclick="window.location = '/rhq/admin/report/resourceInstallReport.xhtml'">
+            <rich:menuItem submitMode="none" onclick="window.location = '/portal/rhq/admin/report/resourceInstallReport.xhtml'">
                 <h:outputText value="Resource Version Inventory Report"/>
             </rich:menuItem>
 
         </rich:menuGroup>
 
         <rich:menuItem submitMode="none"
-                       icon="/images/icons/Save_16.png"
-                       onclick="window.location = '/rhq/admin/downloads.xhtml'">
+                       icon="/portal/images/icons/Save_16.png"
+                       onclick="window.location = '/portal/rhq/admin/downloads.xhtml'">
             <h:outputText value="Downloads"/>
        </rich:menuItem>
 
@@ -406,32 +406,32 @@
         </f:facet>
 
         <rich:menuItem submitMode="none"
-                       onclick="window.open('/admin/test/sql.jsp')"
+                       onclick="window.open('/portal/admin/test/sql.jsp')"
                        target="blank_">
             <h:outputText value="SQL Interface"/>
         </rich:menuItem>
         <rich:menuItem submitMode="none"
-                       onclick="window.open('/admin/test/hibernate.jsp')"
+                       onclick="window.open('/portal/admin/test/hibernate.jsp')"
                        target="blank_">
             <h:outputText value="JPQL/HQL Interface"/>
         </rich:menuItem>
         <rich:menuItem submitMode="none"
-                       onclick="window.open('/admin/test/browser.jsp')"
+                       onclick="window.open('/portal/admin/test/browser.jsp')"
                        target="blank_">
             <h:outputText value="Hibernate Entity Browser"/>
         </rich:menuItem>
         <rich:menuItem submitMode="none"
-                       onclick="window.open('/admin/test/control.jsp')"
+                       onclick="window.open('/portal/admin/test/control.jsp')"
                        target="blank_">
             <h:outputText value="Administrative Control"/>
         </rich:menuItem>
         <rich:menuItem submitMode="none"
-                       onclick="window.open('/admin/test/email.jsp')"
+                       onclick="window.open('/portal/admin/test/email.jsp')"
                        target="blank_">
             <h:outputText value="Test Email Configuration"/>
         </rich:menuItem>
 v        <rich:menuItem submitMode="none"
-                       onclick="window.open('/admin/test/agent.jsp')"
+                       onclick="window.open('/portal/admin/test/agent.jsp')"
                        target="blank_">
             <h:outputText value="Test Agent Communications"/>
         </rich:menuItem>
@@ -477,7 +477,7 @@ v        <rich:menuItem submitMode="none"
         <rich:menuSeparator/>
 
         <ui:remove>***** Help > ABOUT *****</ui:remove>
-        <rich:menuItem submitMode="none" id="aboutLink" icon="/images/icons/availability_grey_16.png">
+        <rich:menuItem submitMode="none" id="aboutLink" icon="/portal/images/icons/availability_grey_16.png">
                 <h:outputText value="#{msg['header.about.link']}"/>
                 <rich:componentControl for="aboutPanel" attachTo="aboutLink" operation="show" event="onclick"/>
         </rich:menuItem>
@@ -490,7 +490,7 @@ v        <rich:menuItem submitMode="none"
     <a4j:status id="commonStatus" layout="block"
                 startStyle=" filter:alpha(opacity=85); -moz-opacity: 0.85; opacity: 0.85; vertical-align: middle;">
         <f:facet name="start">
-            <img src="/images/ajax-loader.gif" alt="" style="vertical-align:middle;"/> <span
+            <img src="/portal/images/ajax-loader.gif" alt="" style="vertical-align:middle;"/> <span
                 style="vertical-align: middle;">Loading...</span>
         </f:facet>
     </a4j:status>
@@ -500,10 +500,10 @@ v        <rich:menuItem submitMode="none"
                <f:facet name="label">
                   <h:panelGroup>
                      <h:graphicImage
-                        value="/images/refreshRunning.gif"
+                        value="/portal/images/refreshRunning.gif"
                         rendered="#{UserPreferencesUIBean.pageRefresh != 0}" />
                      <h:graphicImage
-                        value="/images/refreshStopped.gif"
+                        value="/portal/images/refreshStopped.gif"
                         rendered="#{UserPreferencesUIBean.pageRefresh == 0}" />
                      <span
                         id="refreshTimeLeft"
@@ -521,7 +521,7 @@ v        <rich:menuItem submitMode="none"
                   <h:outputText value="Stop" />
                   <f:facet name="icon">
                      <h:graphicImage
-                        value="/images/#{UserPreferencesUIBean.pageRefresh == 0 ? 'check.png' : 'spacer.gif'}"
+                        value="/portal/images/#{UserPreferencesUIBean.pageRefresh == 0 ? 'check.png' : 'spacer.gif'}"
                         width="16"
                         height="16" />
                   </f:facet>
@@ -532,7 +532,7 @@ v        <rich:menuItem submitMode="none"
                   <h:outputText value="Refresh every 1 minute" />
                   <f:facet name="icon">
                      <h:graphicImage
-                        value="/images/#{UserPreferencesUIBean.pageRefresh == 60 ? 'check.png' : 'spacer.gif'}"
+                        value="/portal/images/#{UserPreferencesUIBean.pageRefresh == 60 ? 'check.png' : 'spacer.gif'}"
                         width="16"
                         height="16" />
                   </f:facet>
@@ -543,7 +543,7 @@ v        <rich:menuItem submitMode="none"
                   <h:outputText value="Refresh every 5 minutes" />
                   <f:facet name="icon">
                      <h:graphicImage
-                        value="/images/#{UserPreferencesUIBean.pageRefresh == 300 ? 'check.png' : 'spacer.gif'}"
+                        value="/portal/images/#{UserPreferencesUIBean.pageRefresh == 300 ? 'check.png' : 'spacer.gif'}"
                         width="16"
                         height="16" />
                   </f:facet>
@@ -554,7 +554,7 @@ v        <rich:menuItem submitMode="none"
                   <h:outputText value="Refresh every 10 minutes" />
                   <f:facet name="icon">
                      <h:graphicImage
-                        value="/images/#{UserPreferencesUIBean.pageRefresh == 600 ? 'check.png' : 'spacer.gif'}"
+                        value="/portal/images/#{UserPreferencesUIBean.pageRefresh == 600 ? 'check.png' : 'spacer.gif'}"
                         width="16"
                         height="16" />
                   </f:facet>
@@ -572,12 +572,12 @@ v        <rich:menuItem submitMode="none"
         </f:facet>
 
         <ui:remove>***** Logged in as > EDIT DETAILS *****</ui:remove>
-        <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=edit&amp;u=#{UserPreferencesUIBean.subject.id}'">
+        <rich:menuItem submitMode="none" onclick="window.location = '/portal/admin/user/UserAdmin.do?mode=edit&amp;u=#{UserPreferencesUIBean.subject.id}'">
             <h:outputText value="Edit Details"/>
         </rich:menuItem>
 
         <ui:remove>***** Logged in as > CHANGE PASSWORD *****</ui:remove>
-        <rich:menuItem submitMode="none" onclick="window.location = '/admin/user/UserAdmin.do?mode=editPass&amp;u=#{UserPreferencesUIBean.subject.id}'">
+        <rich:menuItem submitMode="none" onclick="window.location = '/portal/admin/user/UserAdmin.do?mode=editPass&amp;u=#{UserPreferencesUIBean.subject.id}'">
             <h:outputText value="Change Password"/>
         </rich:menuItem>
 
@@ -600,7 +600,7 @@ v        <rich:menuItem submitMode="none"
     </f:facet>
     <f:facet name="controls">
         <h:panelGroup>
-            <h:graphicImage value="/images/close.png" style="cursor:pointer;" id="hidelink"/>
+            <h:graphicImage value="/portal/images/close.png" style="cursor:pointer;" id="hidelink"/>
             <rich:componentControl for="aboutPanel" attachTo="hidelink" operation="hide" event="onclick"/>
         </h:panelGroup>
     </f:facet>
@@ -615,7 +615,7 @@ v        <rich:menuItem submitMode="none"
 
     <p>
         <a href="http://jboss.org/">
-            <img src="/images/jboss_logo.png" alt="JBoss Homepage" title="JBoss by Red Hat" height="55" />
+            <img src="/portal/images/jboss_logo.png" alt="JBoss Homepage" title="JBoss by Red Hat" height="55" />
         </a>
     </p>
 
@@ -626,7 +626,7 @@ v        <rich:menuItem submitMode="none"
 
     <p>
         <a href="http://www.jboss.org/rhq">
-            <h:graphicImage value="/images/logo_icon.png" style="vertical-align:middle" />
+            <h:graphicImage value="/portal/images/logo_icon.png" style="vertical-align:middle" />
             RHQ Project
         </a>
 

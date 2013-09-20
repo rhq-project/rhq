@@ -29,8 +29,8 @@
     <%
         SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z", Locale.US);
         String link = "/coregui/CoreGUI.html#Resource/" + resourceId;
-        String iconDiscovered = "/images/icons/Inventory_grey_16.png";
-        String iconCommitted = "/images/icons/Inventory_16.png";
+        String iconDiscovered = "/portal/images/icons/Inventory_grey_16.png";
+        String iconCommitted = "/portal/images/icons/Inventory_16.png";
     %>
 
 { "start" : "<%=sdf.format(resource.getCtime())%>",

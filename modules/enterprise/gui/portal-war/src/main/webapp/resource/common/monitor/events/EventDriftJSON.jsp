@@ -40,7 +40,7 @@
 <%
     SimpleDateFormat sdf = new SimpleDateFormat("EEE MMM dd yyyy HH:mm:ss Z", Locale.US);
     String link = "/coregui/CoreGUI.html#Resource/" + resourceId + "/Drift/ChangeSets";
-    String icon = "/images/icons/Drift_16.png";
+    String icon = "/portal/images/icons/Drift_16.png";
     boolean first = true;
     for (DriftChangeSet entry : results) {
         if (!first) {

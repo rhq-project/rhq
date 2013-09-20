@@ -19,7 +19,7 @@
                   <input type="button"
                          class="buttonmed"
                          value="UPLOAD FILE..."
-                         onclick="javascript:open('/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
+                         onclick="javascript:open('/portal/rhq/resource/content/file-upload.xhtml', 'uploadwin', 'titlebar=0,toolbar=0,location=0,menubar=0,directories=0,resizable=0,height=160,width=450')"/>
                   <rich:spacer width="5" />
                   <h:outputText rendered="#{UploadNewPackageUIBean.fileUploaded}"
                                 value="File Uploaded: #{UploadNewPackageUIBean.fileItem.fileName}"/>
@@ -140,6 +140,10 @@
          </h:panelGrid>
 
       </h:form>
+<script>
+document.getElementById('uploadForm').setAttribute('action', 'create-plain.xhtml');
+</script>
+
 
    </ui:define>
 

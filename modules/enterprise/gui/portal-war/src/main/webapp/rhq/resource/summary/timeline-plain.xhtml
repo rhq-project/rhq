@@ -24,7 +24,7 @@
             </f:facet>
 
             <h:panelGrid columns="1" width="97%">
-               <iframe src ="/resource/common/monitor/events/EventsView.jsp?id=#{param.id}" 
+               <iframe src ="/portal/resource/common/monitor/events/EventsView.jsp?id=#{param.id}" 
                        width="100%" height="550" scrolling="no" frameborder="0" />
             </h:panelGrid>
             
@@ -39,7 +39,7 @@
                <td>
                   <h:commandLink rendered="#{not MetricComponentUtilityUIBean.readOnly}"
                                 action="#{MetricComponentUtilityUIBean.update}" >
-                     <img src="/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
+                     <img src="/portal/images/dash-button_go-arrow.gif" alt="Apply Metric Settings "/>
                   </h:commandLink>
                   <h:commandLink rendered="#{MetricComponentUtilityUIBean.readOnly}" 
                                 action="#{MetricComponentUtilityUIBean.switchToSimpleMode}">

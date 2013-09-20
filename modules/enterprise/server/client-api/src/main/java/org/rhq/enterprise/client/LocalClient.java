@@ -28,6 +28,7 @@ import java.util.Map;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.rhq.bindings.client.AbstractRhqFacade;
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.util.InterfaceSimplifier;
@@ -39,7 +40,7 @@ import org.rhq.enterprise.server.util.LookupUtil;
  *
  * @author Lukas Krejci
  */
-public class LocalClient implements RhqFacade {
+public class LocalClient extends AbstractRhqFacade {
 
     private static final Log LOG = LogFactory.getLog(LocalClient.class);
 

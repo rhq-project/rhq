@@ -239,7 +239,7 @@ public class StorageInstaller {
                 if (isWindows()) {
                     File basedir = new File(System.getProperty("rhq.server.basedir"));
                     basedir = (null == basedir) ? installerInfo.basedir.getParentFile() : basedir;
-                    binDir = new File(basedir, "bin");
+                    binDir = new File(basedir, "bin/internal");
                 } else {
                     binDir = new File(installerInfo.basedir, "bin");
                 }

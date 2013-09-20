@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 
 import org.rhq.core.domain.common.SystemConfiguration;
 import org.rhq.core.domain.common.composite.SystemSetting;
+import org.rhq.core.domain.common.composite.SystemSettings;
 import org.rhq.enterprise.server.RHQConstants;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerBean;
 import org.rhq.enterprise.server.resource.group.LdapGroupManagerLocal;
@@ -439,9 +440,10 @@ public class LdapGroupManagerBeanTest extends AbstractEJB3Test {
      * Helper methods
      ---------------*/
     private void setSystemConfigProperty(final String name, final String value) throws Exception {
-        Properties sysConfig = systemManager.getSystemConfiguration(LookupUtil.getSubjectManager().getOverlord());
-        sysConfig.setProperty(name, value);
-        systemManager.setSystemConfiguration(LookupUtil.getSubjectManager().getOverlord(), sysConfig, true);
+        SystemSettings sysConfig = systemManager.getSystemSettings(LookupUtil.getSubjectManager().getOverlord());
+        SystemSetting retrievedKey = SystemSetting.valueOf(name);
+        sysConfig.put(retrievedKey, value);
+        systemManager.setSystemSettings(LookupUtil.getSubjectManager().getOverlord(), sysConfig);
     }
 
     private void setLdapGroupFilter(String filter) throws Exception {

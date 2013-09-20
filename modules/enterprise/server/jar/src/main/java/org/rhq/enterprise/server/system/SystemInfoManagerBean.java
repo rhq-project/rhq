@@ -77,7 +77,9 @@ public class SystemInfoManagerBean implements  SystemInfoManagerLocal{
         for (Map.Entry<String,String> detail : settingsMap.entrySet()) {
             String key = detail.getKey();
             if (key.equals(SystemSetting.LDAP_BIND_PW.getInternalName())
-                || key.equals(SystemSetting.HELP_PASSWORD.getInternalName())) {
+                || key.toLowerCase().contains("passw")
+                || key.equals(SystemSetting.HELP_PASSWORD.getInternalName())
+                || key.equals(SystemSetting.STORAGE_PASSWORD.getInternalName())) {
                 if (detail.getValue()==null)
                     result.put(key,"- null -");
                 else

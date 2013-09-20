@@ -44,7 +44,7 @@ public class AbstractRhqFacadeProxyTest {
         void method();
     }
 
-    public static class TestFacade implements RhqFacade {
+    public static class TestFacade extends AbstractRhqFacade {
 
         private Subject subject;
 

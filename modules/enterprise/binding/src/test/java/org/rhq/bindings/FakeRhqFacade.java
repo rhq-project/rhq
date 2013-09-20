@@ -22,11 +22,12 @@ package org.rhq.bindings;
 import java.util.Collections;
 import java.util.Map;
 
+import org.rhq.bindings.client.AbstractRhqFacade;
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.client.RhqManager;
 import org.rhq.core.domain.auth.Subject;
 
-public class FakeRhqFacade implements RhqFacade {
+public class FakeRhqFacade extends AbstractRhqFacade {
 
     public Subject getSubject() {
         return null;

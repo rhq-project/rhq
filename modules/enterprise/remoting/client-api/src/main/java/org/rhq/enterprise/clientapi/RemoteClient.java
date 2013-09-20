@@ -35,6 +35,7 @@ import org.jboss.remoting.invocation.NameBasedInvocation;
 import org.jboss.remoting.security.SSLSocketBuilder;
 import org.jboss.remoting.transport.http.ssl.HTTPSClientInvoker;
 
+import org.rhq.bindings.client.AbstractRhqFacade;
 import org.rhq.bindings.client.RhqFacade;
 import org.rhq.bindings.client.RhqManager;
 import org.rhq.bindings.util.InterfaceSimplifier;
@@ -52,7 +53,7 @@ import org.rhq.enterprise.server.system.SystemManagerRemote;
  * @author Jay Shaughnessy
  * @author John Mazzitelli
  */
-public class RemoteClient implements RhqFacade {
+public class RemoteClient extends AbstractRhqFacade {
 
     private static final Log LOG = LogFactory.getLog(RemoteClient.class);
 

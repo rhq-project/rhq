@@ -22,6 +22,35 @@ package org.rhq.bindings.client;
 import java.util.Map;
 
 import org.rhq.core.domain.auth.Subject;
+import org.rhq.enterprise.server.alert.AlertDefinitionManagerRemote;
+import org.rhq.enterprise.server.alert.AlertManagerRemote;
+import org.rhq.enterprise.server.auth.SubjectManagerRemote;
+import org.rhq.enterprise.server.authz.RoleManagerRemote;
+import org.rhq.enterprise.server.bundle.BundleManagerRemote;
+import org.rhq.enterprise.server.configuration.ConfigurationManagerRemote;
+import org.rhq.enterprise.server.content.ContentManagerRemote;
+import org.rhq.enterprise.server.content.RepoManagerRemote;
+import org.rhq.enterprise.server.discovery.DiscoveryBossRemote;
+import org.rhq.enterprise.server.drift.DriftManagerRemote;
+import org.rhq.enterprise.server.event.EventManagerRemote;
+import org.rhq.enterprise.server.install.remote.RemoteInstallManagerRemote;
+import org.rhq.enterprise.server.measurement.AvailabilityManagerRemote;
+import org.rhq.enterprise.server.measurement.CallTimeDataManagerRemote;
+import org.rhq.enterprise.server.measurement.MeasurementBaselineManagerRemote;
+import org.rhq.enterprise.server.measurement.MeasurementDataManagerRemote;
+import org.rhq.enterprise.server.measurement.MeasurementDefinitionManagerRemote;
+import org.rhq.enterprise.server.measurement.MeasurementScheduleManagerRemote;
+import org.rhq.enterprise.server.operation.OperationManagerRemote;
+import org.rhq.enterprise.server.report.DataAccessManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceFactoryManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceManagerRemote;
+import org.rhq.enterprise.server.resource.ResourceTypeManagerRemote;
+import org.rhq.enterprise.server.resource.group.ResourceGroupManagerRemote;
+import org.rhq.enterprise.server.search.SavedSearchManagerRemote;
+import org.rhq.enterprise.server.support.SupportManagerRemote;
+import org.rhq.enterprise.server.sync.SynchronizationManagerRemote;
+import org.rhq.enterprise.server.system.SystemManagerRemote;
+import org.rhq.enterprise.server.tagging.TagManagerRemote;
 
 /**
  * This is an interface through which the script can communicate with RHQ server.
@@ -59,4 +88,192 @@ public interface RhqFacade {
      * @return the proxy of the remote API interface backed by this facade
      */
     <T> T getProxy(Class<T> remoteApiIface);
+
+    ///////////////////// deprecated methods added to re-introduce compatibility with RHQ 4.4.0
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    AlertDefinitionManagerRemote getAlertDefinitionManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    AlertManagerRemote getAlertManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    AvailabilityManagerRemote getAvailabilityManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    BundleManagerRemote getBundleManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    CallTimeDataManagerRemote getCallTimeDataManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    ConfigurationManagerRemote getConfigurationManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    ContentManagerRemote getContentManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    DataAccessManagerRemote getDataAccessManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    DiscoveryBossRemote getDiscoveryBoss();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    DriftManagerRemote getDriftManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    EventManagerRemote getEventManager();
+
+    /**
+     * Kept for backwards compatibility but otherwise unused.
+     * In RHQ prior to 4.5.0, the values in the map, i.e. the manager objects themselves both implemented the various
+     * {@code *Remote} interfaces and contained methods with the modified signatures with the {@link Subject} parameter
+     * removed.
+     * <p />
+     * Since RHQ 4.5.0 the returned objects no longer contain the modified method. If you want to obtain objects with
+     * such methods (intended for use in scripted environments), use {@link #getScriptingAPI()} method instead.
+     */
+    @Deprecated
+    Map<RhqManagers, Object> getManagers();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    MeasurementBaselineManagerRemote getMeasurementBaselineManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    MeasurementDataManagerRemote getMeasurementDataManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    MeasurementDefinitionManagerRemote getMeasurementDefinitionManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    MeasurementScheduleManagerRemote getMeasurementScheduleManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    OperationManagerRemote getOperationManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    RemoteInstallManagerRemote getRemoteInstallManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    RepoManagerRemote getRepoManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    ResourceFactoryManagerRemote getResourceFactoryManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    ResourceGroupManagerRemote getResourceGroupManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    ResourceManagerRemote getResourceManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    ResourceTypeManagerRemote getResourceTypeManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    RoleManagerRemote getRoleManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    SavedSearchManagerRemote getSavedSearchManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    SubjectManagerRemote getSubjectManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    SupportManagerRemote getSupportManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    SynchronizationManagerRemote getSynchronizationManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    SystemManagerRemote getSystemManager();
+
+    /**
+     * deprecated use {@code RhqFacade.getProxy(RhqManager.XXX.remote())} instead
+     */
+    @Deprecated
+    TagManagerRemote getTagManager();
 }

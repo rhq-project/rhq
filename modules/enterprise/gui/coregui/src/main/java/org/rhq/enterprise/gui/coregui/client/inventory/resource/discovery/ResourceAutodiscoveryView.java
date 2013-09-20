@@ -259,6 +259,7 @@ public class ResourceAutodiscoveryView extends LocatableVLayout implements Refre
                     //       to cause it to redraw, but it is obviously not reasonable to expect that. So we must
                     //       explicitly call redraw() here.
                     treeGrid.redraw();
+                    treeGrid.resizeBy(0, -1);
                 }
             }
         });

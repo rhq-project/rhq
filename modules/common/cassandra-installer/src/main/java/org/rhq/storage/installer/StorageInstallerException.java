@@ -26,6 +26,8 @@
 package org.rhq.storage.installer;
 
 /**
+ * Thrown to indicate that installation has failed.
+ *
  * @author John Sanda
  */
 public class StorageInstallerException extends Exception {

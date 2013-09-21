@@ -12,11 +12,16 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.net.ServerSocket;
 import java.util.Properties;
+
+import com.google.common.collect.ImmutableMap;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.PosixParser;
+import org.apache.commons.exec.Executor;
 import org.apache.commons.io.FileUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -45,6 +50,7 @@ public class StorageInstallerTest {
 
     @BeforeMethod
     public void initDirs(Method test) throws Exception {
+        System.out.println("BEGIN " + test);
         digestGenerator = new MessageDigestGenerator(MessageDigestGenerator.SHA_256);
 
         File dir = new File(getClass().getResource(".").toURI());
@@ -65,11 +71,13 @@ public class StorageInstallerTest {
         installer = new StorageInstaller();
     }
 
-    @AfterMethod
+    @AfterMethod(alwaysRun = true)
     public void shutdownStorageNode() throws Exception {
+        System.out.println("END");
         if (FileUtils.getFile(storageDir, "bin", "cassandra.pid").exists()) {
             CassandraClusterManager ccm = new CassandraClusterManager();
             ccm.killNode(storageDir);
+            Thread.sleep(1000);
         }
     }
 
@@ -209,6 +217,67 @@ public class StorageInstallerTest {
         assertEquals(properties.getProperty("heap_max"), "-Xmx512M", "The heap_max property is wrong");
         assertEquals(properties.getProperty("heap_new"), "-Xmn128M", "The heap_new property is wrong");
         assertEquals(properties.getProperty("thread_stack_size"), "-Xss256k", "The thread_stack_size property is wrong");
+    }
+
+    @Test
+    public void performValidInstallWithOutputToStderr() throws Exception {
+        installer = new StorageInstaller() {
+            @Override
+            protected void exec(Executor executor, org.apache.commons.exec.CommandLine cmdLine) throws IOException {
+                executor.execute(cmdLine, ImmutableMap.of("JAVA_TOOL_OPTIONS", "-Dfile.encoding=UTF8"));
+            }
+        };
+
+        System.setProperty("-Dfile.encoding", "UTF8");
+
+        CommandLineParser parser = new PosixParser();
+        CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {});
+
+        int status = installer.run(cmdLine);
+
+        assertEquals(status, 0, "A zero status code should be returned even when the storage node writes to stderr.");
+    }
+
+    @Test
+    public void installWithJMXPortConflict() throws Exception {
+        ServerSocket serverSocket = null;
+        try {
+            String address = InetAddress.getLocalHost().getHostAddress();
+            serverSocket = new ServerSocket();
+            serverSocket.bind(new InetSocketAddress(address, 7799));
+
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {"--jmx-port", "7799"});
+
+            int status = installer.run(cmdLine);
+
+            assertEquals(status, StorageInstaller.STATUS_JMX_PORT_CONFLICT, "The status code is wrong");
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+        }
+    }
+
+    @Test
+    public void installWithCQLPortConflict() throws Exception {
+        ServerSocket serverSocket = null;
+        try {
+            String address = InetAddress.getLocalHost().getHostAddress();
+            serverSocket = new ServerSocket();
+            serverSocket.bind(new InetSocketAddress(address, 9342));
+
+            CommandLineParser parser = new PosixParser();
+            CommandLine cmdLine = parser.parse(installer.getOptions(), new String[] {"--client-port", "9342"});
+
+            int status = installer.run(cmdLine);
+
+            assertEquals(status, StorageInstaller.STATUS_CQL_PORT_CONFLICT, "The status code is wrong");
+        } finally {
+            if (serverSocket != null) {
+                serverSocket.close();
+            }
+        }
     }
 
     @Test
@@ -368,14 +437,6 @@ public class StorageInstallerTest {
 
         assertEquals(properties.getProperty("rhq.storage.nodes"), address);
         assertEquals(properties.getProperty("rhq.storage.cql-port"), "9142");
-    }
-
-    private String sha256(File file) {
-        try {
-            return digestGenerator.calcDigestString(file);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to calculate SHA-256 hash for " + file.getPath(), e);
-        }
     }
 
 }

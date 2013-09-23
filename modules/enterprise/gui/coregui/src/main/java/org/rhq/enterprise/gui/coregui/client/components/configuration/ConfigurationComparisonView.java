@@ -173,7 +173,15 @@ public class ConfigurationComparisonView extends VLayout {
                 TreeNode mapNode = new TreeNode(defMap.getDisplayName());
                 ArrayList<PropertyMap> properties = new ArrayList<PropertyMap>();
                 for (AbstractPropertyMap map : maps) {
-                    properties.add((PropertyMap) map);
+                    if (map instanceof PropertyMap) {
+                        properties.add((PropertyMap) map);
+                    } else {
+                        // map is a Configuration
+                        String name = definition.getName();
+                        PropertyMap innerMap = map.getMap(name);
+                        properties.add(innerMap);
+                        // TODO recursively add the map's items
+                    }
                 }
                 buildNode(mapNode, defMap.getOrderedPropertyDefinitions(), properties);
                 if (!mapNode.getAttributeAsBoolean(ATTRIB_ALL_SAME)) {
